@@ -20,7 +20,7 @@ namespace NEO {
 
 void TbxCommandStreamFixture::SetUp(MockDevice *pDevice) {
     // Create our TBX command stream receiver based on HW type
-    pCommandStreamReceiver = TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    pCommandStreamReceiver = TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     ASSERT_NE(nullptr, pCommandStreamReceiver);
     memoryManager = new OsAgnosticMemoryManager(*pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);

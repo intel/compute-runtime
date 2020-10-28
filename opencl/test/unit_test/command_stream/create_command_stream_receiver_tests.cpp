@@ -33,7 +33,7 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;
     DebugManager.flags.SetCommandStreamReceiver.set(csrType);
-    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 0));
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 0, 1));
 
     if (csrType < CommandStreamReceiverType::CSR_TYPES_NUM) {
         EXPECT_NE(nullptr, csr.get());

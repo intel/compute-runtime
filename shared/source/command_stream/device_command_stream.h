@@ -15,11 +15,11 @@ class DeviceCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     typedef CommandStreamReceiverHw<GfxFamily> BaseClass;
 
   protected:
-    DeviceCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
-        : BaseClass(executionEnvironment, rootDeviceIndex) {
+    DeviceCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+        : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield) {
     }
 
   public:
-    static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+    static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
 };
 } // namespace NEO

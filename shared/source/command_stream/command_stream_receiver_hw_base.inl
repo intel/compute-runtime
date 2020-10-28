@@ -40,8 +40,10 @@ template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::~CommandStreamReceiverHw() = default;
 
 template <typename GfxFamily>
-CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
-    : CommandStreamReceiver(executionEnvironment, rootDeviceIndex) {
+CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment,
+                                                            uint32_t rootDeviceIndex,
+                                                            DeviceBitfield deviceBitfield)
+    : CommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
 
     auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
     localMemoryEnabled = hwHelper.getEnableLocalMemory(peekHwInfo());

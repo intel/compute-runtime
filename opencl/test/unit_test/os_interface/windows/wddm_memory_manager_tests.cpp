@@ -375,7 +375,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegi
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
     }
     const uint32_t rootDeviceIndex = 1;
-    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, rootDeviceIndex));
+    DeviceBitfield deviceBitfield(2);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, rootDeviceIndex, deviceBitfield));
 
     auto wddm2 = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get()));
     wddm2->init();
@@ -383,7 +384,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegi
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[1].first,
-                                              2, PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false, false, false);
+                                              deviceBitfield, PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
+                                              false, false, false);
     ASSERT_EQ(2u, memoryManager->getRegisteredEnginesCount());
 
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({0u, 32, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield}));
@@ -407,7 +409,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
     }
-    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, rootDeviceIndex));
+    DeviceBitfield deviceBitfield(2);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, rootDeviceIndex, deviceBitfield));
 
     auto wddm2 = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get()));
     wddm2->init();
@@ -415,7 +418,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[1].first,
-                                              2, PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false, false, false);
+                                              deviceBitfield, PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
+                                              false, false, false);
     ASSERT_EQ(2u, memoryManager->getRegisteredEnginesCount());
 
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({0u, 32, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield}));
@@ -1603,9 +1607,9 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenC
         wddm->init();
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     }
-    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 0u));
-    std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(*executionEnvironment, 1u));
-    std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 2u));
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 0u, 1));
+    std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(*executionEnvironment, 1u, 2));
+    std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 2u, 3));
     memoryManager->createAndRegisterOsContext(csr.get(), aub_stream::ENGINE_RCS, 1,
                                               PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false, false, false);
     memoryManager->createAndRegisterOsContext(csr1.get(), aub_stream::ENGINE_RCS, 2,
@@ -1627,9 +1631,9 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithE
         wddm->init();
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     }
-    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 0u));
-    std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(*executionEnvironment, 1u));
-    std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 2u));
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 0u, 1));
+    std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(*executionEnvironment, 1u, 2));
+    std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 2u, 3));
     memoryManager->createAndRegisterOsContext(csr.get(), aub_stream::ENGINE_RCS, 1,
                                               PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false, false, false);
     memoryManager->createAndRegisterOsContext(csr1.get(), aub_stream::ENGINE_RCS, 2,
@@ -1874,7 +1878,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
 
 TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {
     ExecutionEnvironment &executionEnvironment = *platform()->peekExecutionEnvironment();
-    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 0));
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 0, 1));
     auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0].get());
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
     wddm->init();

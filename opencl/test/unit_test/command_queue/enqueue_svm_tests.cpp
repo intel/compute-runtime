@@ -1786,7 +1786,7 @@ HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenHostPtrAllocationCreationFailsThenRe
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = ptrSVM;
     MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
-    auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex());
+    auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
     retVal = cmdQ.enqueueSVMMemcpy(
@@ -1807,7 +1807,7 @@ HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenHostPtrAllocationCreation
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = srcHostPtr;
     MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
-    auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex());
+    auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
     retVal = cmdQ.enqueueSVMMemcpy(
@@ -1829,7 +1829,7 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenHostPtrAllocationCreati
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = srcHostPtr;
     MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
-    auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex());
+    auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
     retVal = cmdQ.enqueueSVMMemcpy(

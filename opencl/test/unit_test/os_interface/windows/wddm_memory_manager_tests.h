@@ -65,7 +65,7 @@ class MockWddmMemoryManagerFixture {
         executionEnvironment->initializeMemoryManager();
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
-        csr.reset(createCommandStream(*executionEnvironment, 0u));
+        csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
                                                               HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first,
@@ -117,7 +117,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         executionEnvironment->memoryManager.reset(memoryManager);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
-        csr.reset(createCommandStream(*executionEnvironment, 0u));
+        csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
                                                               HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first,

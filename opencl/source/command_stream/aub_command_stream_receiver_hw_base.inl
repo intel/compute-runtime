@@ -43,8 +43,12 @@
 namespace NEO {
 
 template <typename GfxFamily>
-AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
-    : BaseClass(executionEnvironment, rootDeviceIndex),
+AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::string &fileName,
+                                                                  bool standalone,
+                                                                  ExecutionEnvironment &executionEnvironment,
+                                                                  uint32_t rootDeviceIndex,
+                                                                  DeviceBitfield deviceBitfield)
+    : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield),
       standalone(standalone) {
 
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(this->isLocalMemoryEnabled(), fileName, this->getType());
@@ -279,8 +283,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
 }
 
 template <typename GfxFamily>
-CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
-    auto csr = std::make_unique<AUBCommandStreamReceiverHw<GfxFamily>>(fileName, standalone, executionEnvironment, rootDeviceIndex);
+CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const std::string &fileName,
+                                                                     bool standalone,
+                                                                     ExecutionEnvironment &executionEnvironment,
+                                                                     uint32_t rootDeviceIndex,
+                                                                     DeviceBitfield deviceBitfield) {
+    auto csr = std::make_unique<AUBCommandStreamReceiverHw<GfxFamily>>(fileName, standalone, executionEnvironment, rootDeviceIndex, deviceBitfield);
 
     if (!csr->subCaptureManager->isSubCaptureMode()) {
         csr->openFile(fileName);

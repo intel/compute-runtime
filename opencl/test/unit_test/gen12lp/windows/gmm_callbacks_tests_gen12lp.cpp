@@ -36,7 +36,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCsrWithoutAubDumpWhenNotifyAubCaptu
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     executionEnvironment->initializeMemoryManager();
-    auto csr = std::make_unique<WddmCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0);
+    auto csr = std::make_unique<WddmCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, 1);
     uint64_t address = 0xFEDCBA9876543210;
     size_t size = 1024;
 
@@ -49,7 +49,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenWddmCsrWhenWriteL3CalledThenWriteTw
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
-    UltCommandStreamReceiver<FamilyType> csr(*executionEnvironment, 0);
+    UltCommandStreamReceiver<FamilyType> csr(*executionEnvironment, 0, 1);
     uint8_t buffer[128] = {};
     csr.commandStream.replaceBuffer(buffer, 128);
 
@@ -83,7 +83,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsEnabledhenWriteL3CalledThenSetRe
     executionEnvironment.prepareRootDeviceEnvironments(1u);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
     executionEnvironment.initializeMemoryManager();
-    UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0);
+    UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1);
     uint8_t buffer[128] = {};
     csr.commandStream.replaceBuffer(buffer, 128);
 
@@ -111,7 +111,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsDisabledhenWriteL3CalledThenSetR
     executionEnvironment.prepareRootDeviceEnvironments(1u);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
     executionEnvironment.initializeMemoryManager();
-    UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0);
+    UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1);
     uint8_t buffer[128] = {};
     csr.commandStream.replaceBuffer(buffer, 128);
 

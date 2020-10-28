@@ -914,7 +914,7 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWa
     EXPECT_EQ(1u, engines.size());
 
     auto csr0 = static_cast<MockCommandStreamReceiver *>(engines[0].commandStreamReceiver);
-    auto csr1 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0);
+    auto csr1 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
     uint32_t csr0GpuTag = taskCountNotReady;
     uint32_t csr1GpuTag = taskCountNotReady;
     csr0->tagAddress = &csr0GpuTag;

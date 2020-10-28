@@ -210,7 +210,7 @@ using CommandQueueCommands = Test<DeviceFixture>;
 HWTEST_F(CommandQueueCommands, givenCommandQueueWhenExecutingCommandListsThenHardwareContextIsProgrammedAndGlobalAllocationResident) {
     const ze_command_queue_desc_t desc = {};
 
-    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0);
+    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
@@ -246,7 +246,7 @@ using CommandQueueIndirectAllocations = Test<ModuleFixture>;
 HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandListsThenExpectedIndirectAllocationsAddedToResidencyContainer) {
     const ze_command_queue_desc_t desc = {};
 
-    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0);
+    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
@@ -443,7 +443,8 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
         ~SynchronizeCsr() override {
             delete tagAddress;
         }
-        SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment) : NEO::UltCommandStreamReceiver<FamilyType>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0) {
+        SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+            : NEO::UltCommandStreamReceiver<FamilyType>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
             tagAddress = new uint32_t;
         }
         bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
@@ -458,7 +459,8 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
         uint32_t *tagAddress;
     };
 
-    auto csr = std::unique_ptr<SynchronizeCsr>(new SynchronizeCsr(*device->getNEODevice()->getExecutionEnvironment()));
+    auto csr = std::unique_ptr<SynchronizeCsr>(new SynchronizeCsr(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                  device->getNEODevice()->getDeviceBitfield()));
     ze_command_queue_desc_t desc = {};
     ze_command_queue_handle_t commandQueue = {};
     ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);

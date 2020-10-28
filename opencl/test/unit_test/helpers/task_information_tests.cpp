@@ -24,7 +24,7 @@ using namespace NEO;
 TEST(CommandTest, GivenNoTerminateFlagWhenSubmittingMapUnmapThenCsrIsFlushed) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -41,7 +41,7 @@ TEST(CommandTest, GivenNoTerminateFlagWhenSubmittingMapUnmapThenCsrIsFlushed) {
 TEST(CommandTest, GivenTerminateFlagWhenSubmittingMapUnmapThenFlushIsAborted) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -61,7 +61,7 @@ TEST(CommandTest, GivenTerminateFlagWhenSubmittingMapUnmapThenFlushIsAborted) {
 TEST(CommandTest, GivenNoTerminateFlagWhenSubmittingMarkerThenCsrIsNotFlushed) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -75,7 +75,7 @@ TEST(CommandTest, GivenNoTerminateFlagWhenSubmittingMarkerThenCsrIsNotFlushed) {
 TEST(CommandTest, GivenTerminateFlagWhenSubmittingMarkerThenFlushIsAborted) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -165,7 +165,8 @@ class MockCsr1 : public CommandStreamReceiverHw<GfxFamily> {
         passedDispatchFlags = dispatchFlags;
         return CompletionStamp();
     }
-    MockCsr1(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment, rootDeviceIndex) {}
+    MockCsr1(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+        : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
     DispatchFlags passedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     using CommandStreamReceiver::timestampPacketWriteEnabled;
 };

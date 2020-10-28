@@ -244,7 +244,8 @@ HWTEST_P(PreemptionTest, whenFailToCreatePreemptionAllocationThenFailToCreateDev
     class MockUltCsr : public UltCommandStreamReceiver<FamilyType> {
 
       public:
-        MockUltCsr(ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0) {
+        MockUltCsr(ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+            : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield) {
         }
 
         bool createPreemptionAllocation() override {
@@ -260,7 +261,7 @@ HWTEST_P(PreemptionTest, whenFailToCreatePreemptionAllocationThenFailToCreateDev
             return true;
         }
         std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
-            return std::make_unique<MockUltCsr>(*executionEnvironment);
+            return std::make_unique<MockUltCsr>(*executionEnvironment, getDeviceBitfield());
         }
     };
 

@@ -1406,12 +1406,13 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenVerifyHandleThenRe
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenGpuAddressIsSetThenAllocationWithSpecifiedGpuAddressInSystemMemoryIsCreated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto memoryManager = new OsAgnosticMemoryManager(executionEnvironment);
-
-    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
+    DeviceBitfield deviceBitfield(1);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
     executionEnvironment.memoryManager.reset(memoryManager);
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(),
                                                                HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0].first,
-                                                               1, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
+                                                               deviceBitfield,
+                                                               PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                                                false, false, false);
 
     MockAllocationProperties properties = {0, MemoryConstants::pageSize};
@@ -1827,10 +1828,11 @@ TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCo
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
-    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
+    DeviceBitfield deviceBitfield(1);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
     memoryManager->createAndRegisterOsContext(csr.get(),
                                               HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0].first,
-                                              1, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
+                                              deviceBitfield, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                               false, false, false);
     EXPECT_EQ(1u, memoryManager->getRegisteredEnginesCount());
     EXPECT_EQ(1, memoryManager->registeredEngines[0].osContext->getRefInternalCount());
@@ -1854,8 +1856,8 @@ TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValu
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
-    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
-    DeviceBitfield deviceBitfield = 0b11;
+    DeviceBitfield deviceBitfield(0b11);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
     PreemptionMode preemptionMode = PreemptionMode::MidThread;
     memoryManager->createAndRegisterOsContext(csr.get(),
                                               HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0].first,
@@ -1870,15 +1872,16 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLower
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
     auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
-    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
-    std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(executionEnvironment, 1u));
+    DeviceBitfield deviceBitfield(1);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
+    std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(executionEnvironment, 1u, deviceBitfield));
     memoryManager->createAndRegisterOsContext(csr.get(),
                                               HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0].first,
-                                              1, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
+                                              deviceBitfield, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                               false, false, false);
     memoryManager->createAndRegisterOsContext(csr1.get(),
                                               HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[1].first,
-                                              1, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
+                                              deviceBitfield, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                               false, false, false);
     EXPECT_EQ(2u, memoryManager->getRegisteredEnginesCount());
     EXPECT_EQ(1, memoryManager->registeredEngines[0].osContext->getRefInternalCount());

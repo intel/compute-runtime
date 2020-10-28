@@ -23,16 +23,16 @@ namespace NEO {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
-CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
+CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
     if (ultHwConfig.useHwCsr) {
-        return createCommandStreamImpl(executionEnvironment, rootDeviceIndex);
+        return createCommandStreamImpl(executionEnvironment, rootDeviceIndex, deviceBitfield);
     }
 
     auto funcCreate = commandStreamReceiverFactory[IGFX_MAX_CORE + hwInfo->platform.eRenderCoreFamily];
     if (funcCreate) {
-        return funcCreate(false, executionEnvironment, rootDeviceIndex);
+        return funcCreate(false, executionEnvironment, rootDeviceIndex, deviceBitfield);
     }
     return nullptr;
 }

@@ -17,13 +17,16 @@ namespace NEO {
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
 
 template <typename BaseCSR>
-CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(const std::string &baseName, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
-    : BaseCSR(executionEnvironment, rootDeviceIndex) {
+CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(const std::string &baseName,
+                                                                            ExecutionEnvironment &executionEnvironment,
+                                                                            uint32_t rootDeviceIndex,
+                                                                            DeviceBitfield deviceBitfield)
+    : BaseCSR(executionEnvironment, rootDeviceIndex, deviceBitfield) {
     bool isAubManager = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter && executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter->getAubManager();
     bool isTbxMode = CommandStreamReceiverType::CSR_TBX == BaseCSR::getType();
     bool createAubCsr = (isAubManager && isTbxMode) ? false : true;
     if (createAubCsr) {
-        aubCSR.reset(AUBCommandStreamReceiver::create(baseName, false, executionEnvironment, rootDeviceIndex));
+        aubCSR.reset(AUBCommandStreamReceiver::create(baseName, false, executionEnvironment, rootDeviceIndex, deviceBitfield));
         UNRECOVERABLE_IF(!aubCSR->initializeTagAllocation());
         *aubCSR->getTagAddress() = std::numeric_limits<uint32_t>::max();
     }

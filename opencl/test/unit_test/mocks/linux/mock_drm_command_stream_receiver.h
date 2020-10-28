@@ -23,11 +23,11 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
 
-    TestedDrmCommandStreamReceiver(gemCloseWorkerMode mode, ExecutionEnvironment &executionEnvironment)
-        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, mode) {
+    TestedDrmCommandStreamReceiver(gemCloseWorkerMode mode, ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, deviceBitfield, mode) {
     }
-    TestedDrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
-        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, gemCloseWorkerMode::gemCloseWorkerInactive) {
+    TestedDrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield, gemCloseWorkerMode::gemCloseWorkerInactive) {
     }
 
     void overrideDispatchPolicy(DispatchMode overrideValue) {

@@ -15,7 +15,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
 
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {}
 
@@ -95,7 +95,7 @@ bool RootDevice::createEngines() {
 }
 
 void RootDevice::initializeRootCommandStreamReceiver() {
-    std::unique_ptr<CommandStreamReceiver> rootCommandStreamReceiver(createCommandStream(*executionEnvironment, rootDeviceIndex));
+    std::unique_ptr<CommandStreamReceiver> rootCommandStreamReceiver(createCommandStream(*executionEnvironment, rootDeviceIndex, getDeviceBitfield()));
 
     auto &hwInfo = getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(hwInfo);

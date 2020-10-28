@@ -22,7 +22,8 @@ struct ComputeModeRequirements : public ::testing::Test {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiverHw<FamilyType>::lastSentThreadArbitrationPolicy;
         using CommandStreamReceiverHw<FamilyType>::requiredThreadArbitrationPolicy;
-        myCsr(ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0){};
+        myCsr(ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+            : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &this->csrSizeRequestFlags; }
     };
     void makeResidentSharedAlloc() {
@@ -67,7 +68,7 @@ struct ComputeModeRequirements : public ::testing::Test {
     template <typename FamilyType>
     void SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo));
-        csr = new myCsr<FamilyType>(*device->executionEnvironment);
+        csr = new myCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
         device->resetCommandStreamReceiver(csr);
         AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
 

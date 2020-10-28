@@ -649,7 +649,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenCommandStreamWithDuplicate
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCsrCreatedWithInactiveGemCloseWorkerPolicyThenThreadIsNotCreated) {
     TestedDrmCommandStreamReceiver<FamilyType> testedCsr(gemCloseWorkerMode::gemCloseWorkerInactive,
-                                                         *this->executionEnvironment);
+                                                         *this->executionEnvironment,
+                                                         1);
     EXPECT_EQ(gemCloseWorkerMode::gemCloseWorkerInactive, testedCsr.peekGemCloseWorkerOperationMode());
 }
 
@@ -1578,7 +1579,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreate
     executionEnvironment.rootDeviceEnvironments[1]->initGmm();
     executionEnvironment.rootDeviceEnvironments[1]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[1]->osInterface->get()->setDrm(new DrmMockCustom());
-    auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, gemCloseWorkerMode::gemCloseWorkerActive);
+    auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, 1, gemCloseWorkerMode::gemCloseWorkerActive);
     auto pageTableManager = csr->createPageTableManager();
     EXPECT_EQ(executionEnvironment.rootDeviceEnvironments[1]->pageTableManager.get(), pageTableManager);
 }
@@ -1589,11 +1590,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmC
         DebugManagerStateRestore restore;
         DebugManager.flags.EnableLocalMemory.set(1);
 
-        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
         EXPECT_EQ(DispatchMode::BatchedDispatch, csr1.dispatchMode);
 
         DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
-        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
         EXPECT_EQ(DispatchMode::ImmediateDispatch, csr2.dispatchMode);
     }
 
@@ -1601,11 +1602,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmC
         DebugManagerStateRestore restore;
         DebugManager.flags.EnableLocalMemory.set(0);
 
-        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
         EXPECT_EQ(DispatchMode::ImmediateDispatch, csr1.dispatchMode);
 
         DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::BatchedDispatch));
-        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
         EXPECT_EQ(DispatchMode::BatchedDispatch, csr2.dispatchMode);
     }
 }

@@ -830,7 +830,7 @@ HWTEST_F(DirectSubmissionTest, givenSuperBaseCsrWhenCheckingDirectSubmissionAvai
 
     int32_t executionStamp = 0;
     std::unique_ptr<MockCsr<FamilyType>> mockCsr =
-        std::make_unique<MockCsr<FamilyType>>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+        std::make_unique<MockCsr<FamilyType>>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     bool ret = mockCsr->isDirectSubmissionEnabled();
     EXPECT_FALSE(ret);
@@ -845,7 +845,7 @@ HWTEST_F(DirectSubmissionTest, givenBaseCsrWhenCheckingDirectSubmissionAvailable
 
     int32_t executionStamp = 0;
     std::unique_ptr<MockCsr<FamilyType>> mockCsr =
-        std::make_unique<MockCsr<FamilyType>>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+        std::make_unique<MockCsr<FamilyType>>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     bool ret = mockCsr->isDirectSubmissionEnabled();
     EXPECT_FALSE(ret);
@@ -857,7 +857,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAvailableWhenProgrammingEndi
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     int32_t executionStamp = 0;
     std::unique_ptr<MockCsr<FamilyType>> mockCsr =
-        std::make_unique<MockCsr<FamilyType>>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+        std::make_unique<MockCsr<FamilyType>>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     mockCsr->directSubmissionAvailable = true;
     bool ret = mockCsr->isDirectSubmissionEnabled();
     EXPECT_TRUE(ret);

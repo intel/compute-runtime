@@ -163,7 +163,7 @@ HWTEST_F(DeviceTest, WhenDeviceIsCreatedThenActualEngineTypeIsSameAsDefault) {
 
 HWTEST_F(DeviceTest, givenNoHwCsrTypeAndModifiedDefaultEngineIndexWhenIsSimulationIsCalledThenTrueIsReturned) {
     EXPECT_FALSE(pDevice->isSimulation());
-    auto csr = TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, 0);
+    auto csr = TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, 0, 1);
     pDevice->defaultEngineIndex = 1;
     pDevice->resetCommandStreamReceiver(csr);
 
@@ -181,7 +181,7 @@ HWTEST_F(DeviceTest, givenNoHwCsrTypeAndModifiedDefaultEngineIndexWhenIsSimulati
 
 TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCalled) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockCommandStreamReceiver *csr = new MockCommandStreamReceiver(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex());
+    MockCommandStreamReceiver *csr = new MockCommandStreamReceiver(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
     mockDevice->resetCommandStreamReceiver(csr);
     int flushedBatchedSubmissionsCalledCount = 0;
     csr->flushBatchedSubmissionsCallCounter = &flushedBatchedSubmissionsCalledCount;
@@ -388,8 +388,8 @@ HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableM
 HWTEST_F(DeviceHwTest, givenDeviceCreationWhenCsrFailsToCreateGlobalSyncAllocationThenReturnNull) {
     class MockUltCsrThatFailsToCreateGlobalFenceAllocation : public UltCommandStreamReceiver<FamilyType> {
       public:
-        MockUltCsrThatFailsToCreateGlobalFenceAllocation(ExecutionEnvironment &executionEnvironment)
-            : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0) {}
+        MockUltCsrThatFailsToCreateGlobalFenceAllocation(ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+            : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield) {}
         bool createGlobalFenceAllocation() override {
             return false;
         }
@@ -399,7 +399,7 @@ HWTEST_F(DeviceHwTest, givenDeviceCreationWhenCsrFailsToCreateGlobalSyncAllocati
         MockDeviceThatFailsToCreateGlobalFenceAllocation(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
             : MockDevice(executionEnvironment, deviceIndex) {}
         std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
-            return std::make_unique<MockUltCsrThatFailsToCreateGlobalFenceAllocation>(*executionEnvironment);
+            return std::make_unique<MockUltCsrThatFailsToCreateGlobalFenceAllocation>(*executionEnvironment, getDeviceBitfield());
         }
     };
 

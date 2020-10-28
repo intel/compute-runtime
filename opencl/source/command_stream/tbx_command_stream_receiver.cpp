@@ -17,7 +17,11 @@ namespace NEO {
 
 TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
 
-CommandStreamReceiver *TbxCommandStreamReceiver::create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
+CommandStreamReceiver *TbxCommandStreamReceiver::create(const std::string &baseName,
+                                                        bool withAubDump,
+                                                        ExecutionEnvironment &executionEnvironment,
+                                                        uint32_t rootDeviceIndex,
+                                                        DeviceBitfield deviceBitfield) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
     if (hwInfo->platform.eRenderCoreFamily >= IGFX_MAX_CORE) {
@@ -27,6 +31,6 @@ CommandStreamReceiver *TbxCommandStreamReceiver::create(const std::string &baseN
 
     auto pCreate = tbxCommandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily];
 
-    return pCreate ? pCreate(baseName, withAubDump, executionEnvironment, rootDeviceIndex) : nullptr;
+    return pCreate ? pCreate(baseName, withAubDump, executionEnvironment, rootDeviceIndex, deviceBitfield) : nullptr;
 }
 } // namespace NEO

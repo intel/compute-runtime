@@ -345,16 +345,19 @@ TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
 }
 
 HWTEST_F(TimestampPacketTests, givenCommandStreamReceiverHwWhenObtainingPreferredTagPoolSizeThenReturnCorrectValue) {
-    CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0);
+    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
+
+    CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
     EXPECT_EQ(2048u, csr.getPreferredTagPoolSize());
 }
 
 HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAllocatorThenDisableReusingAndLimitPoolSize) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisableTimestampPacketOptimizations.set(true);
+    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
 
-    CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0);
-    csr.setupContext(*executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext);
+    CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
+    csr.setupContext(osContext);
     EXPECT_EQ(1u, csr.getPreferredTagPoolSize());
 
     auto tag = csr.getTimestampPacketAllocator()->getTag();
@@ -1635,7 +1638,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
 HWTEST_F(TimestampPacketTests, givenBlockedEnqueueWithoutKernelWhenSubmittingThenDispatchBlockedCommands) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
     device->resetCommandStreamReceiver(mockCsr);
     mockCsr->timestampPacketWriteEnabled = true;
     mockCsr->storeFlushedTaskStream = true;

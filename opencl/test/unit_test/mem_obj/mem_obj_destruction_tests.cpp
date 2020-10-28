@@ -27,7 +27,8 @@ using namespace NEO;
 template <typename Family>
 class MyCsr : public UltCommandStreamReceiver<Family> {
   public:
-    MyCsr(const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0) {}
+    MyCsr(const ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+        : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
     MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
 };
 
@@ -140,8 +141,8 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     auto rootDeviceIndex = device->getRootDeviceIndex();
 
-    auto mockCsr0 = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
-    auto mockCsr1 = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    auto mockCsr0 = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment, device->getDeviceBitfield());
+    auto mockCsr1 = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment, device->getDeviceBitfield());
     device->resetCommandStreamReceiver(mockCsr0, 0);
     device->resetCommandStreamReceiver(mockCsr1, 1);
     *mockCsr0->getTagAddress() = 0;
@@ -192,7 +193,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         memObj->setAllocatedMapPtr(allocatedPtr);
     }
 
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment, device->getDeviceBitfield());
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
     auto osContextId = mockCsr->getOsContext().getContextId();
@@ -235,7 +236,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     }
 
     makeMemObjUsed();
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment, device->getDeviceBitfield());
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
 
@@ -270,7 +271,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     } else {
         makeMemObjNotReady();
     }
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment, device->getDeviceBitfield());
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
 
@@ -297,7 +298,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     } else {
         makeMemObjNotReady();
     }
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment, device->getDeviceBitfield());
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
 
@@ -316,7 +317,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
 HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestructionsAreDisabledThenWaitForCompletionWithTimeoutOnMapAllocation) {
     auto isMapAllocationUsed = GetParam();
 
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment, device->getDeviceBitfield());
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
 
@@ -354,7 +355,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestruc
 HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestructionsAreDisabledThenMapAllocationIsNotDeferred) {
     auto hasMapAllocation = GetParam();
 
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment, device->getDeviceBitfield());
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
 
@@ -385,7 +386,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestruc
 HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithoutMemUseHostPtrFlagWhenAsyncDestructionsAreEnabledThenMapAllocationIsDeferred) {
     auto hasMapAllocation = GetParam();
 
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment, device->getDeviceBitfield());
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
 
@@ -424,7 +425,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithoutMemUseHo
 HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithMemUseHostPtrFlagWhenAsyncDestructionsAreEnabledThenMapAllocationIsNotDeferred) {
     auto hasMapAllocation = GetParam();
 
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment, device->getDeviceBitfield());
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
 
@@ -485,9 +486,9 @@ HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledTh
         GTEST_SKIP();
     }
 
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*mockDevice.executionEnvironment);
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*mockDevice.executionEnvironment, 1);
     auto osContext = mockDevice.executionEnvironment->memoryManager->createAndRegisterOsContext(mockDevice.engines[0].commandStreamReceiver,
-                                                                                                aub_stream::ENGINE_RCS, {},
+                                                                                                aub_stream::ENGINE_RCS, 1,
                                                                                                 PreemptionMode::Disabled,
                                                                                                 false, false, false);
     mockDevice.engines[0].osContext = osContext;
@@ -524,9 +525,9 @@ HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWait
         GTEST_SKIP();
     }
 
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*mockDevice.executionEnvironment);
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*mockDevice.executionEnvironment, 1);
     auto osContext = mockDevice.executionEnvironment->memoryManager->createAndRegisterOsContext(mockDevice.engines[0].commandStreamReceiver,
-                                                                                                aub_stream::ENGINE_RCS, {},
+                                                                                                aub_stream::ENGINE_RCS, 1,
                                                                                                 PreemptionMode::Disabled,
                                                                                                 false, false, false);
     mockDevice.engines[0].osContext = osContext;

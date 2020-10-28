@@ -25,7 +25,7 @@ decltype(&createCommandStream) MockDevice::createCommandStreamReceiverFunc = cre
 
 MockDevice::MockDevice()
     : MockDevice(new MockExecutionEnvironment(), 0u) {
-    CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment, this->getRootDeviceIndex());
+    CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment, this->getRootDeviceIndex(), this->getDeviceBitfield());
     commandStreamReceivers.resize(1);
     commandStreamReceivers[0].reset(commandStreamReceiver);
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);

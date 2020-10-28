@@ -20,11 +20,14 @@
 namespace NEO {
 
 template <typename GfxFamily>
-CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
+CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(bool withAubDump,
+                                                                      ExecutionEnvironment &executionEnvironment,
+                                                                      uint32_t rootDeviceIndex,
+                                                                      DeviceBitfield deviceBitfield) {
     if (withAubDump) {
-        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>("aubfile", executionEnvironment, rootDeviceIndex);
+        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>("aubfile", executionEnvironment, rootDeviceIndex, deviceBitfield);
     } else {
-        return new WddmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex);
+        return new WddmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield);
     }
 }
 } // namespace NEO

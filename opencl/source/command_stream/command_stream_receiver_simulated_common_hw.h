@@ -33,7 +33,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     MOCKABLE_VIRTUAL uint32_t getDeviceIndex() const;
 
   public:
-    CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+    CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
     ~CommandStreamReceiverSimulatedCommonHw() override;
     uint64_t getGTTBits() const {
         return 0u;

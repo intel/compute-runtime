@@ -18,6 +18,7 @@ struct EngineControl {
     EngineControl(CommandStreamReceiver *commandStreamReceiver, OsContext *osContext)
         : commandStreamReceiver(commandStreamReceiver),
           osContext(osContext){};
+
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     OsContext *osContext = nullptr;
 

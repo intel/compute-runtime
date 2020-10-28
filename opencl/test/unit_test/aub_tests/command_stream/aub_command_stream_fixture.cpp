@@ -35,9 +35,9 @@ void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
     if (testMode == TestMode::AubTestsWithTbx) {
-        pCommandStreamReceiver = TbxCommandStreamReceiver::create(strfilename.str(), true, *device.executionEnvironment, device.getRootDeviceIndex());
+        pCommandStreamReceiver = TbxCommandStreamReceiver::create(strfilename.str(), true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
     } else {
-        pCommandStreamReceiver = AUBCommandStreamReceiver::create(strfilename.str(), true, *device.executionEnvironment, device.getRootDeviceIndex());
+        pCommandStreamReceiver = AUBCommandStreamReceiver::create(strfilename.str(), true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
     }
     ASSERT_NE(nullptr, pCommandStreamReceiver);
 

@@ -27,11 +27,11 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
 
   public:
-    static CommandStreamReceiver *create(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
-        return new CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex);
+    static CommandStreamReceiver *create(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+        return new CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield);
     }
 
-    CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+    CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
     ~CommandStreamReceiverHw() override;
 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;

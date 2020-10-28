@@ -23,7 +23,7 @@
 namespace NEO {
 
 decltype(&PerformanceCounters::create) Device::createPerformanceCountersFunc = PerformanceCounters::create;
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
 
 Device::Device(ExecutionEnvironment *executionEnvironment)
     : executionEnvironment(executionEnvironment) {
@@ -112,7 +112,7 @@ bool Device::createEngines() {
 }
 
 std::unique_ptr<CommandStreamReceiver> Device::createCommandStreamReceiver() const {
-    return std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, getRootDeviceIndex()));
+    return std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
 }
 
 bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) {

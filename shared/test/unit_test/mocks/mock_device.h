@@ -23,14 +23,14 @@ class OSTime;
 template <typename GfxFamily>
 class UltCommandStreamReceiver;
 
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
 
 struct MockSubDevice : public SubDevice {
     using SubDevice::getGlobalMemorySize;
     using SubDevice::SubDevice;
 
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
-        return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex()));
+        return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
     }
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 };
@@ -121,7 +121,7 @@ class MockDevice : public RootDevice {
     }
 
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
-        return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex()));
+        return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
     }
 
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
@@ -172,8 +172,8 @@ struct EnvironmentWithCsrWrapper {
     }
 
     template <typename CsrType>
-    static CommandStreamReceiver *createCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
-        return new CsrType(executionEnvironment, rootDeviceIndex);
+    static CommandStreamReceiver *createCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+        return new CsrType(executionEnvironment, rootDeviceIndex, deviceBitfield);
     }
 
     VariableBackup<decltype(MockSubDevice::createCommandStreamReceiverFunc)> createSubDeviceCsrFuncBackup{&MockSubDevice::createCommandStreamReceiverFunc};

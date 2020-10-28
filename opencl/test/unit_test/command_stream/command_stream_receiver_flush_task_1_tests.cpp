@@ -211,7 +211,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
@@ -258,7 +258,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenDeviceWith
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
 
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
@@ -900,8 +900,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
 
 template <typename FamilyType>
 struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> {
-    CommandStreamReceiverHwLog(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : UltCommandStreamReceiver<FamilyType>(executionEnvironment, rootDeviceIndex),
-                                                                                                       flushCount(0) {
+    CommandStreamReceiverHwLog(ExecutionEnvironment &executionEnvironment,
+                               uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+        : UltCommandStreamReceiver<FamilyType>(executionEnvironment, rootDeviceIndex, deviceBitfield),
+          flushCount(0) {
     }
 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
@@ -913,7 +915,7 @@ struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> 
 };
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenFlushOnce) {
-    CommandStreamReceiverHwLog<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    CommandStreamReceiverHwLog<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver.setupContext(*pDevice->getDefaultEngine().osContext);
     commandStreamReceiver.initializeTagAllocation();
     commandStreamReceiver.createPreemptionAllocation();
@@ -1008,7 +1010,7 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, WhenGettingCsThenReturnCsWithEno
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenBlockingWhenFlushingTaskThenAddPipeControlOnlyToTaskCs) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
     // Configure the CSR to not need to submit any state or commands
@@ -1150,7 +1152,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWhenCallFlushTaskThenThreadArbitrationPolicyIsSetProperly) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);

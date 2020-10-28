@@ -76,7 +76,7 @@ struct WddmResidencyControllerTest : ::testing::Test {
         rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         wddm->init();
-        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 0, aub_stream::ENGINE_RCS,
+        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 1, aub_stream::ENGINE_RCS,
                                                               PreemptionMode::Disabled, false, false, false);
         wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin);
         residencyController = &mockOsContextWin->mockResidencyController;
@@ -129,7 +129,7 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
 
-        csr.reset(createCommandStream(*executionEnvironment, 0u));
+        csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
                                                               HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first, 1, preemptionMode,
@@ -165,7 +165,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         executionEnvironment->initializeMemoryManager();
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
-        csr.reset(createCommandStream(*executionEnvironment, 0u));
+        csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
                                                               HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first,

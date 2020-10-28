@@ -34,7 +34,10 @@ extern const wchar_t *currentLibraryPath;
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
 
-CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump,
+                                                       ExecutionEnvironment &executionEnvironment,
+                                                       uint32_t rootDeviceIndex,
+                                                       DeviceBitfield deviceBitfield);
 
 class DriverInfoDeviceTest : public ::testing::Test {
   public:
@@ -52,8 +55,8 @@ class DriverInfoDeviceTest : public ::testing::Test {
     const HardwareInfo *hwInfo;
 };
 
-CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
-    auto csr = new MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex);
+CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+    auto csr = new MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield);
     if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface) {
         auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
         wddm->init();

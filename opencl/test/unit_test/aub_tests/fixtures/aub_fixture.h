@@ -48,9 +48,9 @@ class AUBFixture : public CommandQueueHwFixture {
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
 
         if (testMode == TestMode::AubTestsWithTbx) {
-            this->csr = TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0);
+            this->csr = TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, device->getDeviceBitfield());
         } else {
-            this->csr = AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0);
+            this->csr = AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, device->getDeviceBitfield());
         }
 
         device->resetCommandStreamReceiver(this->csr);

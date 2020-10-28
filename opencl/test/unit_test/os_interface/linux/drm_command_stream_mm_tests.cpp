@@ -34,7 +34,7 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
 
-    DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+    DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
 
     auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
@@ -53,7 +53,7 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
 
-    DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+    DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
     auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
 
     executionEnvironment.memoryManager.reset(memoryManager);

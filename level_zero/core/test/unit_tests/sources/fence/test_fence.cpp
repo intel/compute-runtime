@@ -18,7 +18,7 @@ namespace ult {
 
 using FenceTest = Test<DeviceFixture>;
 TEST_F(FenceTest, whenQueryingStatusThenCsrAllocationsAreDownloaded) {
-    auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
 
     Mock<CommandQueue> cmdQueue(device, csr.get());
     auto fence = Fence::create(&cmdQueue, nullptr);

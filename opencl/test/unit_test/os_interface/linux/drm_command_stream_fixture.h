@@ -43,7 +43,7 @@ class DrmCommandStreamTest : public ::testing::Test {
                                                      PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
                                                      false, false, false);
 
-        csr = new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerActive);
+        csr = new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
         csr->setupContext(*osContext);
 
@@ -108,7 +108,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(mock);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex);
 
-        csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment, rootDeviceIndex);
+        csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment, rootDeviceIndex, 1);
         ASSERT_NE(nullptr, csr);
         mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
                                   DebugManager.flags.EnableForcePin.get(),

@@ -377,7 +377,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingMapBufferWillWaitForEv
 
 HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIsUnblockedThenAllSurfacesForBlockedCommandsAreMadeResident) {
     int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCSR);
 
     auto userEvent = make_releaseable<UserEvent>(context);
@@ -1074,7 +1074,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
 
     int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     pDevice->resetCommandStreamReceiver(mockCSR);
 
@@ -1154,7 +1154,7 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
 
     int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCSR);
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
@@ -1315,9 +1315,8 @@ struct MockCommandQueueHwWithOverwrittenCsr : public CommandQueueHw<GfxFamily> {
 };
 
 HWTEST_F(CommandQueueHwTest, givenFlushWhenFlushBatchedSubmissionsFailsThenErrorIsRetured) {
-
     MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, pClDevice, nullptr, false);
-    MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0);
+    MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0, pDevice->getDeviceBitfield());
     cmdQueue.csr = &csr;
     cl_int errorCode = cmdQueue.flush();
     EXPECT_EQ(CL_OUT_OF_RESOURCES, errorCode);
@@ -1325,7 +1324,7 @@ HWTEST_F(CommandQueueHwTest, givenFlushWhenFlushBatchedSubmissionsFailsThenError
 
 HWTEST_F(CommandQueueHwTest, givenFinishWhenFlushBatchedSubmissionsFailsThenErrorIsRetured) {
     MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, pClDevice, nullptr, false);
-    MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0);
+    MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0, pDevice->getDeviceBitfield());
     cmdQueue.csr = &csr;
     cl_int errorCode = cmdQueue.finish();
     EXPECT_EQ(CL_OUT_OF_RESOURCES, errorCode);

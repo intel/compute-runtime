@@ -20,7 +20,7 @@ typedef ::testing::Test Gen8CoherencyRequirements;
 GEN8TEST_F(Gen8CoherencyRequirements, WhenMemoryManagerIsInitializedThenNoCoherencyProgramming) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
-    CommandStreamReceiverHw<BDWFamily> csr(*executionEnvironment, 0);
+    CommandStreamReceiverHw<BDWFamily> csr(*executionEnvironment, 0, 1);
     LinearStream stream;
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 

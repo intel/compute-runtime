@@ -38,7 +38,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         BcsMockContext(ClDevice *device) : MockContext(device) {
             bcsOsContext.reset(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
                                                  false, false, false));
-            bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment(), device->getRootDeviceIndex()));
+            bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
             bcsCsr->setupContext(*bcsOsContext);
             bcsCsr->initializeTagAllocation();
 
@@ -1111,8 +1111,8 @@ struct BlitEnqueueFlushTests : public BlitEnqueueTests<1> {
             return UltCommandStreamReceiver<FamilyType>::flush(batchBuffer, allocationsForResidency);
         }
 
-        static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
-            return new MyUltCsr<FamilyType>(executionEnvironment, rootDeviceIndex);
+        static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+            return new MyUltCsr<FamilyType>(executionEnvironment, rootDeviceIndex, deviceBitfield);
         }
 
         uint32_t *flushCounter = nullptr;
