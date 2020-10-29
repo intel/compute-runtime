@@ -591,6 +591,12 @@ void testSysmanListenEvents(ze_driver_handle_t driver, std::vector<ze_device_han
                 if (pEvents[index] & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
                     std::cout << "Device " << index << "got reset required event" << std::endl;
                 }
+                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
+                    std::cout << "Device " << index << "got DEVICE_DETACH event" << std::endl;
+                }
+                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
+                    std::cout << "Device " << index << "got DEVICE_ATTACH event" << std::endl;
+                }
             }
         }
     }
@@ -722,9 +728,11 @@ int main(int argc, char *argv[]) {
             break;
         case 'E':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                zesDeviceEventRegister(device, ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED);
+                zesDeviceEventRegister(device,
+                                       ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH);
             });
-            testSysmanListenEvents(driver, devices, ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED);
+            testSysmanListenEvents(driver, devices,
+                                   ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH);
             break;
 
         default:

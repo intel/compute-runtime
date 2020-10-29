@@ -12,7 +12,8 @@ namespace L0 {
 
 class WddmEventsImp : public OsEvents {
   public:
-    bool isResetRequired(zes_event_type_flags_t &pEvent) override;
+    bool eventListen(zes_event_type_flags_t &pEvent) override;
+    ze_result_t eventRegister(zes_event_type_flags_t events) override;
     WddmEventsImp(OsSysman *pOsSysman);
     ~WddmEventsImp() = default;
 
@@ -21,8 +22,12 @@ class WddmEventsImp : public OsEvents {
     WddmEventsImp &operator=(const WddmEventsImp &obj) = delete;
 };
 
-bool WddmEventsImp::isResetRequired(zes_event_type_flags_t &pEvent) {
+bool WddmEventsImp::eventListen(zes_event_type_flags_t &pEvent) {
     return false;
+}
+
+ze_result_t WddmEventsImp::eventRegister(zes_event_type_flags_t events) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 WddmEventsImp::WddmEventsImp(OsSysman *pOsSysman) {

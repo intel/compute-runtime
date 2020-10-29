@@ -9,11 +9,21 @@ ACTION=="change", \
 SUBSYSTEM=="drm", \
 ENV{RESET_FAILED}=="1", \
 ENV{RESET_UNIT}=="gt", \
-RUN+="echo 1 > /var/lib/libze_intel_gpu/wedged_file"
+RUN+="/bin/sh -c 'echo 1 > /var/lib/libze_intel_gpu/wedged_file'"
 ACTION=="unbind", \
 SUBSYSTEM=="drm", \
-RUN+="echo 0 > /var/lib/libze_intel_gpu/pci_bind_status_file"
+RUN+="/bin/sh -c 'echo 0 > /var/lib/libze_intel_gpu/pci_bind_status_file'"
 ACTION=="bind", \
 SUBSYSTEM=="drm", \
-RUN+="echo 1 > /var/lib/libze_intel_gpu/pci_bind_status_file", \
-RUN+="echo 0 > /var/lib/libze_intel_gpu/wedged_file"
+RUN+="/bin/sh -c 'echo 1 > /var/lib/libze_intel_gpu/pci_bind_status_file'", \
+RUN+="/bin/sh -c 'echo 0 > /var/lib/libze_intel_gpu/wedged_file'"
+ACTION=="remove", \
+SUBSYSTEM=="drm", \
+ENV{DEVNAME}=="/dev/dri/card*", \
+ENV{ID_PATH_TAG}=="pci-*", \
+RUN+="/bin/sh -c 'touch /var/lib/libze_intel_gpu/remove-$env{ID_PATH_TAG}; echo 1 > /var/lib/libze_intel_gpu/remove-$env{ID_PATH_TAG}; rm /var/lib/libze_intel_gpu/add-$env{ID_PATH_TAG};'"
+ACTION=="add", \
+SUBSYSTEM=="drm", \
+ENV{DEVNAME}=="/dev/dri/card*", \
+ENV{ID_PATH_TAG}=="pci-*", \
+RUN+="/bin/sh -c 'touch /var/lib/libze_intel_gpu/add-$env{ID_PATH_TAG}; echo 1 > /var/lib/libze_intel_gpu/add-$env{ID_PATH_TAG}; rm /var/lib/libze_intel_gpu/remove-$env{ID_PATH_TAG}; echo 0 > /var/lib/libze_intel_gpu/wedged_file;'"

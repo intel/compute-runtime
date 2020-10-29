@@ -15,7 +15,8 @@ namespace L0 {
 class OsEvents {
   public:
     static OsEvents *create(OsSysman *pOsSysman);
-    virtual bool isResetRequired(zes_event_type_flags_t &pEvent) = 0;
+    virtual bool eventListen(zes_event_type_flags_t &pEvent) = 0;
+    virtual ze_result_t eventRegister(zes_event_type_flags_t events) = 0;
     virtual ~OsEvents() {}
 };
 

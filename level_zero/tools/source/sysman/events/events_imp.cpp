@@ -11,11 +11,12 @@
 
 namespace L0 {
 
+ze_result_t EventsImp::eventRegister(zes_event_type_flags_t events) {
+    return pOsEvents->eventRegister(events);
+}
+
 bool EventsImp::eventListen(zes_event_type_flags_t &pEvent) {
-    if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
-        return pOsEvents->isResetRequired(pEvent);
-    }
-    return false;
+    return pOsEvents->eventListen(pEvent);
 }
 
 void EventsImp::init() {
