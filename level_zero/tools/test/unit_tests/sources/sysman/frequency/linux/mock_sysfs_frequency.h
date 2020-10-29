@@ -14,7 +14,7 @@ namespace ult {
 const std::string minFreqFile("gt_min_freq_mhz");
 const std::string maxFreqFile("gt_max_freq_mhz");
 const std::string requestFreqFile("gt_punit_req_freq_mhz");
-const std::string tdpFreqFile("gt_raplPL1_freq_mhz");
+const std::string tdpFreqFile("gt_rapl_PL1_freq_mhz");
 const std::string actualFreqFile("gt_act_freq_mhz");
 const std::string efficientFreqFile("gt_RP1_freq_mhz");
 const std::string maxValFreqFile("gt_RP0_freq_mhz");
