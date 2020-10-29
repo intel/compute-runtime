@@ -1110,8 +1110,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     uintptr_t dstPtr = reinterpret_cast<uintptr_t>(ptr);
-    size_t dstOffset = 0;
-    NEO::EncodeSurfaceState<GfxFamily>::getSshAlignedPointer(dstPtr, dstOffset);
+
+    auto dstAllocation = this->getAlignedAllocation(this->device, reinterpret_cast<void *>(dstPtr), size);
 
     uintptr_t srcPtr = reinterpret_cast<uintptr_t>(const_cast<void *>(pattern));
     size_t srcOffset = 0;
@@ -1126,14 +1126,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
 
         groupSizeX = builtinFunction->getImmutableData()->getDescriptor().kernelAttributes.simdSize;
+        if (groupSizeX > static_cast<uint32_t>(size)) {
+            groupSizeX = static_cast<uint32_t>(size);
+        }
         if (builtinFunction->setGroupSize(groupSizeX, 1u, 1u)) {
             DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
         uint32_t value = *(reinterpret_cast<uint32_t *>(const_cast<void *>(pattern)));
-        builtinFunction->setArgumentValue(0, sizeof(dstPtr), &dstPtr);
-        builtinFunction->setArgumentValue(1, sizeof(dstOffset), &dstOffset);
+        builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
+        builtinFunction->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
         builtinFunction->setArgumentValue(2, sizeof(value), &value);
 
     } else {
@@ -1146,14 +1149,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
         srcOffset += patternAlloc.offset;
 
-        groupSizeX = static_cast<uint32_t>(patternSize);
+        groupSizeX = static_cast<uint32_t>(std::min(patternSize, size));
         if (builtinFunction->setGroupSize(groupSizeX, 1u, 1u)) {
             DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
-        builtinFunction->setArgumentValue(0, sizeof(dstPtr), &dstPtr);
-        builtinFunction->setArgumentValue(1, sizeof(dstOffset), &dstOffset);
+        builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
+        builtinFunction->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
         builtinFunction->setArgBufferWithAlloc(2, patternAlloc.alignedAllocationPtr,
                                                patternAlloc.alloc);
         builtinFunction->setArgumentValue(3, sizeof(srcOffset), &srcOffset);
@@ -1178,11 +1181,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
         ze_group_count_t dispatchFuncArgs{1u, 1u, 1u};
 
-        dstPtr = dstPtr + (size - groupRemainderSizeX);
-        dstOffset = 0;
-        NEO::EncodeSurfaceState<GfxFamily>::getSshAlignedPointer(dstPtr, dstOffset);
-
-        builtinFunction->setArgumentValue(0, sizeof(dstPtr), &dstPtr);
+        size_t dstOffset = dstAllocation.offset + (size - groupRemainderSizeX);
+        builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
         builtinFunction->setArgumentValue(1, sizeof(dstOffset), &dstOffset);
 
         res = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinFunction->toHandle(),

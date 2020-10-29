@@ -69,6 +69,7 @@ class MockCommandListForMemFillHostPtr : public WhiteBox<::L0::CommandListCoreFa
     }
 };
 
+uint32_t memoryFillMockGroupSizeX = 0, memoryFillMockGroupSizeY = 0, memoryFillMockGroupSizeZ = 0;
 struct AppendMemoryFillFixture {
     class MockDriverHandleHostPtr : public L0::DriverHandleImp {
       public:
@@ -91,10 +92,28 @@ struct AppendMemoryFillFixture {
         std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
         NEO::SvmAllocationData data{rootDeviceIndex};
     };
+    struct MockKernelImmutableDataForMemFill : KernelImmutableData {
+        MockKernelImmutableDataForMemFill(L0::Device *l0device = nullptr) {
+            mockKernelDescriptor = new NEO::KernelDescriptor;
+            mockKernelDescriptor->kernelAttributes.simdSize = 32;
+            kernelDescriptor = mockKernelDescriptor;
+            return;
+        }
+        ~MockKernelImmutableDataForMemFill() override {
+            delete mockKernelDescriptor;
+        }
+        NEO::KernelDescriptor *mockKernelDescriptor = nullptr;
+    };
     class MockKernelForMemFill : public L0::KernelImp {
       public:
+        MockKernelForMemFill() {
+            mockKernelImmData = new MockKernelImmutableDataForMemFill();
+        }
         ze_result_t setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                                  uint32_t groupSizeZ) override {
+            memoryFillMockGroupSizeX = groupSizeX;
+            memoryFillMockGroupSizeY = groupSizeY;
+            memoryFillMockGroupSizeZ = groupSizeZ;
             return ZE_RESULT_ERROR_UNKNOWN;
         }
         void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
@@ -103,7 +122,14 @@ struct AppendMemoryFillFixture {
         void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
             return;
         }
+        const MockKernelImmutableDataForMemFill *getImmutableData() const override {
+            return mockKernelImmData;
+        }
+        ~MockKernelForMemFill() override {
+            delete mockKernelImmData;
+        }
         std::unique_ptr<Kernel> clone() const override { return nullptr; }
+        MockKernelImmutableDataForMemFill *mockKernelImmData = nullptr;
     };
 
     struct MockBuiltinFunctionsForMemFill : BuiltinFunctionsLibImpl {
@@ -132,6 +158,9 @@ struct AppendMemoryFillFixture {
         MockBuiltinFunctionsForMemFill *tmpMockBultinLib = nullptr;
     };
     virtual void SetUp() { // NOLINT(readability-identifier-naming)
+        memoryFillMockGroupSizeX = 0;
+        memoryFillMockGroupSizeY = 0;
+        memoryFillMockGroupSizeZ = 0;
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         NEO::DeviceVector devices;
@@ -424,6 +453,48 @@ HWTEST2_F(AppendMemoryfillHostPtr, givenCommandListAndHostPointerWhenMemoryfillC
     void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
     cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
     EXPECT_EQ(cmdList.hostPtrMap.size(), 1u);
+    deviceMock.get()->setDriverHandle(driverHandle.get());
+}
+
+HWTEST2_F(AppendMemoryfillHostPtr, givenCommandListAndHostPointerWithPatternSizeGreaterThanSizeWhenMemoryfillCalledThenGroupSizeXEqualsSize, Platforms) {
+    MockCommandListForMemFillHostPtr<gfxCoreFamily> cmdList;
+    MockDriverHandleHostPtr driverHandleMock;
+    size_t patternSize = 0x1001;
+    size_t dstSize = 0x1000;
+    deviceMock.get()->setDriverHandle(&driverHandleMock);
+    cmdList.initialize(deviceMock.get(), NEO::EngineGroupType::RenderCompute);
+    uint64_t pattern[4] = {1, 2, 3, 4};
+    void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
+    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), patternSize, dstSize, nullptr);
+    EXPECT_EQ(memoryFillMockGroupSizeX, 0x1000u);
+    deviceMock.get()->setDriverHandle(driverHandle.get());
+}
+
+HWTEST2_F(AppendMemoryfillHostPtr, givenCommandListAndHostPointerWithSizeLessThanSimdWhenMemoryfillCalledThenGroupSizeXEqualsSize, Platforms) {
+    MockCommandListForMemFillHostPtr<gfxCoreFamily> cmdList;
+    MockDriverHandleHostPtr driverHandleMock;
+    size_t patternSize = 1;
+    size_t dstSize = 16;
+    deviceMock.get()->setDriverHandle(&driverHandleMock);
+    cmdList.initialize(deviceMock.get(), NEO::EngineGroupType::RenderCompute);
+    uint64_t pattern[4] = {1, 2, 3, 4};
+    void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
+    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), patternSize, dstSize, nullptr);
+    EXPECT_EQ(memoryFillMockGroupSizeX, 16u);
+    deviceMock.get()->setDriverHandle(driverHandle.get());
+}
+
+HWTEST2_F(AppendMemoryfillHostPtr, givenCommandListAndHostPointerWithSizeLargerThanSimdWhenMemoryfillCalledThenGroupSizeIsSimd, Platforms) {
+    MockCommandListForMemFillHostPtr<gfxCoreFamily> cmdList;
+    MockDriverHandleHostPtr driverHandleMock;
+    size_t patternSize = 1;
+    size_t dstSize = 64;
+    deviceMock.get()->setDriverHandle(&driverHandleMock);
+    cmdList.initialize(deviceMock.get(), NEO::EngineGroupType::RenderCompute);
+    uint64_t pattern[4] = {1, 2, 3, 4};
+    void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
+    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), patternSize, dstSize, nullptr);
+    EXPECT_EQ(memoryFillMockGroupSizeX, 32u);
     deviceMock.get()->setDriverHandle(driverHandle.get());
 }
 
