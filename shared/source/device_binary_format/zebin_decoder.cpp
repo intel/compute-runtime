@@ -583,20 +583,29 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
 
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeArgBypointer: {
         auto &argTraits = dst.payloadMappings.explicitArgs[src.argIndex].getTraits();
-        auto &argAsPointer = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
         switch (src.addrspace) {
         default:
             UNRECOVERABLE_IF(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceUnknown != src.addrspace);
             argTraits.addressQualifier = KernelArgMetadata::AddrUnknown;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceGlobal:
             argTraits.addressQualifier = KernelArgMetadata::AddrGlobal;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceLocal:
             argTraits.addressQualifier = KernelArgMetadata::AddrLocal;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceConstant:
             argTraits.addressQualifier = KernelArgMetadata::AddrConstant;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
+            break;
+        case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceImage:
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(true);
+            break;
+        case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceSampler:
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(true);
             break;
         }
 
@@ -624,15 +633,25 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeStateful:
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeStateless:
-            argAsPointer.stateless = src.offset;
-            argAsPointer.pointerSize = src.size;
+            if (false == dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
+                outErrReason.append("Invalid or missing memory addressing " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::MemoryAddressingMode::stateless.str() + " for arg idx : " + std::to_string(src.argIndex) + " in context of : " + dst.kernelMetadata.kernelName + ".\n");
+                return DecodeError::InvalidBinary;
+            }
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).stateless = src.offset;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).pointerSize = src.size;
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeBindless:
-            argAsPointer.bindless = src.offset;
+            if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
+                dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).bindless = src.offset;
+            } else if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTImage>()) {
+                dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(false).bindless = src.offset;
+            } else {
+                dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(false).bindless = src.offset;
+            }
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeSharedLocalMemory:
-            argAsPointer.slmOffset = src.offset;
-            argAsPointer.requiredSlmAlignment = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults::slmArgAlignment;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).slmOffset = src.offset;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).requiredSlmAlignment = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults::slmArgAlignment;
             break;
         }
         break;
@@ -869,6 +888,10 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
             default:
                 outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : Invalid binding table entry for non-pointer and non-image argument idx : " + std::to_string(bti.argIndex) + ".\n");
                 return DecodeError::InvalidBinary;
+            case ArgDescriptor::ArgTImage: {
+                explicitArg.as<ArgDescImage>().bindful = bti.btiValue * maxSurfaceStateSize;
+                break;
+            }
             case ArgDescriptor::ArgTPointer: {
                 explicitArg.as<ArgDescPointer>().bindful = bti.btiValue * maxSurfaceStateSize;
                 break;

@@ -2326,6 +2326,7 @@ kernels:
           size:            8
           arg_index:       1
           addrmode : stateful
+          addrspace : image
       binding_table_indices:
         - arg_index: 0
           bti_value:2
@@ -2356,7 +2357,7 @@ kernels:
 
     ASSERT_EQ(2U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
     EXPECT_EQ(128, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>().bindful);
-    EXPECT_EQ(448, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[1].as<ArgDescPointer>().bindful);
+    EXPECT_EQ(448, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[1].as<ArgDescImage>().bindful);
     EXPECT_EQ(8U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.bindingTable.numEntries);
     EXPECT_EQ(512U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.bindingTable.tableOffset);
     ASSERT_EQ(576U, programInfo.kernelInfos[0]->heapInfo.SurfaceStateHeapSize);
@@ -3015,17 +3016,17 @@ TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypePackedLocalIdWhenSizeIsV
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAddresspaceIsKnownThenPopulatesArgDescriptorAccordingly) {
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenBufferPointerArgWhenAddressSpaceIsKnownThenPopulatesArgDescriptorAccordingly) {
     using AddressSpace = NEO::KernelArgMetadata::AddressSpaceQualifier;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AddrSpace;
-    std::pair<NEO::ConstStringRef, AddressSpace> addresSpaces[] = {
+    std::pair<NEO::ConstStringRef, AddressSpace> addressSpaces[] = {
         {global, AddressSpace::AddrGlobal},
         {local, AddressSpace::AddrLocal},
         {constant, AddressSpace::AddrConstant},
         {"", AddressSpace::AddrUnknown},
     };
 
-    for (auto addressSpace : addresSpaces) {
+    for (auto addressSpace : addressSpaces) {
         std::string zeinfo = R"===(
         kernels:
             - name : 'some_kernel'
@@ -3063,8 +3064,91 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAddresspaceIsKn
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(1U, programInfo.kernelInfos.size());
         ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTPointer>());
         EXPECT_EQ(addressSpace.second, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].getTraits().getAddressQualifier());
     }
+}
+
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAddressSpaceIsImageThenPopulatesArgDescriptorAccordingly) {
+    using AddressSpace = NEO::KernelArgMetadata::AddressSpaceQualifier;
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AddrSpace;
+
+    std::string zeinfo = R"===(
+    kernels:
+        - name : 'some_kernel'
+            execution_env:   
+                simd_size: 32
+            payload_arguments: 
+              - arg_type : arg_bypointer
+                arg_index	: 0
+                addrspace:       image
+                access_type:     readwrite
+                addrmode: stateful
+    )===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, programInfo.kernelInfos.size());
+    ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+    EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTImage>());
+}
+
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAddressSpaceIsSamplerThenPopulatesArgDescriptorAccordingly) {
+    using AddressSpace = NEO::KernelArgMetadata::AddressSpaceQualifier;
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AddrSpace;
+
+    std::string zeinfo = R"===(
+    kernels:
+        - name : 'some_kernel'
+            execution_env:   
+                simd_size: 32
+            payload_arguments: 
+                - arg_type : arg_bypointer
+                  arg_index	: 0
+                  addrspace:       sampler
+                  access_type:     readwrite
+                  addrmode: stateful
+    )===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, programInfo.kernelInfos.size());
+    ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+    EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTSampler>());
 }
 
 TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAccessQualifierIsKnownThenPopulatesArgDescriptorAccordingly) {
@@ -3118,7 +3202,51 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAccessQualifier
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAcessModeIsUknownThenFail) {
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenNonPointerArgWhenAddressSpaceIsStatelessThenFails) {
+    using AccessQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier;
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::AddrSpace;
+    NEO::ConstStringRef nonPtrAddrSpace[] = {image, sampler};
+
+    for (auto addrSpace : nonPtrAddrSpace) {
+        std::string zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:   
+                simd_size: 32
+              payload_arguments: 
+                - arg_type : arg_bypointer
+                  offset : 16
+                  size : 8	
+                  arg_index	: 0
+                  addrmode : stateless
+                  addrspace : )===" +
+                             addrSpace.str() +
+                             R"===(
+        )===";
+        NEO::ProgramInfo programInfo;
+        ZebinTestData::ValidEmptyProgram zebin;
+        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+        std::string errors, warnings;
+        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+        NEO::Yaml::YamlParser parser;
+        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+        NEO::ZebinSections zebinSections;
+        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_STREQ("Invalid or missing memory addressing stateless for arg idx : 0 in context of : some_kernel.\n", errors.c_str());
+        EXPECT_TRUE(warnings.empty()) << warnings;
+    }
+}
+
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressingModeIsUknownThenFail) {
     NEO::ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
@@ -3152,7 +3280,7 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAcessModeIsKnownThenPopulatesArgDescriptorAccordingly) {
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressingModeIsKnownThenPopulatesArgDescriptorAccordingly) {
     using AddressingMode = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingMode;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::MemoryAddressingMode;
     std::pair<NEO::ConstStringRef, AddressingMode> addressingModes[] = {{stateful, AddressingMode::MemoryAddressingModeStateful},
@@ -3174,6 +3302,27 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAcessMode
                   )===" + (addressingMode.first.empty() ? "" : ("addrmode	: " + addressingMode.first.str())) +
                              R"===(
         )===";
+        uint32_t expectedArgsCount = 1U;
+        bool statefulOrBindlessAdressing = (AddressingMode::MemoryAddressingModeStateful == addressingMode.second) || (AddressingMode::MemoryAddressingModeBindless == addressingMode.second);
+        if (statefulOrBindlessAdressing) {
+            zeinfo += R"===(
+                -arg_type : arg_bypointer
+                    offset : 24
+                    size : 8
+                    arg_index : 1
+                    addrspace:       image
+                    )===" +
+                      (addressingMode.first.empty() ? "" : ("addrmode	: " + addressingMode.first.str())) + R"===(
+                -arg_type : arg_bypointer
+                    offset : 32
+                    size : 8
+                    arg_index : 2
+                    addrspace:       sampler
+                    )===" +
+                      (addressingMode.first.empty() ? "" : ("addrmode	: " + addressingMode.first.str())) + R"===(
+        )===";
+            expectedArgsCount += 2;
+        }
         NEO::ProgramInfo programInfo;
         ZebinTestData::ValidEmptyProgram zebin;
         zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
@@ -3195,7 +3344,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAcessMode
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(1U, programInfo.kernelInfos.size());
-        ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        ASSERT_EQ(expectedArgsCount, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
         auto &argAsPointer = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
         switch (addressingMode.second) {
         default:
@@ -3212,6 +3361,22 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAcessMode
             EXPECT_EQ(16, argAsPointer.slmOffset);
             EXPECT_EQ(16, argAsPointer.requiredSlmAlignment);
             break;
+        }
+
+        if (statefulOrBindlessAdressing) {
+            auto &argAsImage = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[1].as<NEO::ArgDescImage>();
+            auto &argAsSampler = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[2].as<NEO::ArgDescSampler>();
+            switch (addressingMode.second) {
+            default:
+                ASSERT_FALSE(true);
+                break;
+            case AddressingMode::MemoryAddressingModeStateful:
+                break;
+            case AddressingMode::MemoryAddressingModeBindless:
+                EXPECT_EQ(24U, argAsImage.bindless);
+                EXPECT_EQ(32U, argAsSampler.bindless);
+                break;
+            }
         }
     }
 }
