@@ -112,5 +112,16 @@ TEST_F(SysmanDeviceFixture, GivenPmuInterfaceHandleWhenCallinggetPmuInterfaceThe
     EXPECT_EQ(pLinuxSysmanImp->getPmuInterface(), pLinuxSysmanImp->pPmuInterface);
 }
 
+TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValidatingSysmanHandlesForSubdevicesThenSysmanHandleForSubdeviceWillBeSameAsSysmanHandleForDevice) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getSubDevices(&count, nullptr));
+    std::vector<ze_device_handle_t> subDeviceHandles(count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getSubDevices(&count, subDeviceHandles.data()));
+    for (auto subDeviceHandle : subDeviceHandles) {
+        L0::DeviceImp *subDeviceHandleImp = static_cast<DeviceImp *>(Device::fromHandle(subDeviceHandle));
+        EXPECT_EQ(subDeviceHandleImp->getSysmanHandle(), device->getSysmanHandle());
+    }
+}
+
 } // namespace ult
 } // namespace L0

@@ -20,6 +20,10 @@ SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
     SysmanDeviceImp *sysmanDevice = new SysmanDeviceImp(coreDevice);
     UNRECOVERABLE_IF(!sysmanDevice);
     sysmanDevice->init();
+    L0::DeviceImp *device = static_cast<DeviceImp *>(Device::fromHandle(coreDevice));
+    for (auto &subDevice : device->subDevices) {
+        static_cast<DeviceImp *>(subDevice)->setSysmanHandle(sysmanDevice);
+    }
     return sysmanDevice;
 }
 
