@@ -62,9 +62,9 @@ void *SharingFactory::getExtensionFunctionAddress(const std::string &functionNam
     return nullptr;
 }
 
-bool SharingFactory::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
+bool SharingFactory::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
     for (auto &sharing : sharings) {
-        if (sharing->processProperties(propertyType, propertyValue, errcodeRet))
+        if (sharing->processProperties(propertyType, propertyValue))
             return true;
     }
     return false;

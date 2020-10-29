@@ -44,10 +44,8 @@ TEST(UnifiedSharingTests, givenExternalDeviceHandleWhenProcessingBySharingContex
     MockUnifiedSharingContextBuilder builder{};
     cl_context_properties propertyType = static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceHandle);
     cl_context_properties propertyValue = 0x1234;
-    cl_int retVal{};
-    bool result = builder.processProperties(propertyType, propertyValue, retVal);
+    bool result = builder.processProperties(propertyType, propertyValue);
     EXPECT_TRUE(result);
-    EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, builder.contextData);
 }
 
@@ -55,10 +53,8 @@ TEST(UnifiedSharingTests, givenExternalDeviceGroupHandleWhenProcessingBySharingC
     MockUnifiedSharingContextBuilder builder{};
     cl_context_properties propertyType = static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceGroup);
     cl_context_properties propertyValue = 0x1234;
-    cl_int retVal{};
-    bool result = builder.processProperties(propertyType, propertyValue, retVal);
+    bool result = builder.processProperties(propertyType, propertyValue);
     EXPECT_TRUE(result);
-    EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, builder.contextData);
 }
 
@@ -66,10 +62,8 @@ TEST(UnifiedSharingTests, givenExternalDeviceGroupHandleWhenProcessingBySharingC
     MockUnifiedSharingContextBuilder builder{};
     cl_context_properties propertyType = CL_CONTEXT_PLATFORM;
     cl_context_properties propertyValue = 0x1234;
-    cl_int retVal{};
-    bool result = builder.processProperties(propertyType, propertyValue, retVal);
+    bool result = builder.processProperties(propertyType, propertyValue);
     EXPECT_FALSE(result);
-    EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, builder.contextData);
 }
 

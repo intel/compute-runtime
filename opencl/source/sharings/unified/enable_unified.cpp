@@ -20,8 +20,7 @@
 
 namespace NEO {
 
-bool UnifiedSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue,
-                                                     cl_int &errcodeRet) {
+bool UnifiedSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
     switch (propertyType) {
     case static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceHandle):
     case static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceGroup):

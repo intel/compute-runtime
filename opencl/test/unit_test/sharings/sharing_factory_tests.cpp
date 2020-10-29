@@ -94,11 +94,11 @@ class MockSharingContextBuilder : public SharingContextBuilder {
     cl_context_properties value;
 
   public:
-    bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) override;
+    bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) override;
     bool finalizeProperties(Context &context, int32_t &errcodeRet) override;
 };
 
-bool MockSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
+bool MockSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
     if (propertyType == clContextPropertyMock) {
         if (propertyValue) {
             value = propertyValue;

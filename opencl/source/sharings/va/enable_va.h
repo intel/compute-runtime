@@ -25,7 +25,7 @@ class VaSharingContextBuilder : public SharingContextBuilder {
     std::unique_ptr<VaCreateContextProperties> contextData;
 
   public:
-    bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) override;
+    bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) override;
     bool finalizeProperties(Context &context, int32_t &errcodeRet) override;
 };
 

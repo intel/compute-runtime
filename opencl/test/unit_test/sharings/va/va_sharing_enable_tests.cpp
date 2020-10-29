@@ -111,34 +111,29 @@ TEST_F(VaSharingEnablerTests, givenVaFactoryWhenAskedThenBuilderIsCreated) {
     EXPECT_NE(nullptr, builder);
 }
 
-TEST_F(VaSharingEnablerTests, givenVaBuilderWhenUnknownPropertyThenFalseIsReturnedAndErrcodeUnchanged) {
+TEST_F(VaSharingEnablerTests, givenVaBuilderWhenUnknownPropertyThenFalseIsReturned) {
     auto builder = factory->createContextBuilder();
     ASSERT_NE(nullptr, builder);
 
     cl_context_properties property = CL_CONTEXT_PLATFORM;
     cl_context_properties value;
-    int32_t errcodeRet = CL_SUCCESS;
-    auto res = builder->processProperties(property, value, errcodeRet);
+    auto res = builder->processProperties(property, value);
     EXPECT_FALSE(res);
-    EXPECT_EQ(CL_SUCCESS, errcodeRet);
 }
 
-TEST_F(VaSharingEnablerTests, givenVaBuilderWhenValidPropertyThenTrueIsReturnedAndErrcodeUnchanged) {
+TEST_F(VaSharingEnablerTests, givenVaBuilderWhenValidPropertyThenTrueIsReturned) {
     auto builder = factory->createContextBuilder();
     ASSERT_NE(nullptr, builder);
 
     cl_context_properties property = CL_CONTEXT_VA_API_DISPLAY_INTEL;
     cl_context_properties value = 0x1243;
-    int32_t errcodeRet = CL_SUCCESS;
-    auto res = builder->processProperties(property, value, errcodeRet);
+    auto res = builder->processProperties(property, value);
     EXPECT_TRUE(res);
-    EXPECT_EQ(CL_SUCCESS, errcodeRet);
 
     //repeat to check if we don't allocate twice
     auto prevAllocations = MemoryManagement::numAllocations.load();
-    res = builder->processProperties(property, value, errcodeRet);
+    res = builder->processProperties(property, value);
     EXPECT_TRUE(res);
-    EXPECT_EQ(CL_SUCCESS, errcodeRet);
     auto currAllocations = MemoryManagement::numAllocations.load();
     EXPECT_EQ(prevAllocations, currAllocations);
 }
@@ -160,13 +155,11 @@ TEST_F(VaSharingEnablerTests, givenVaBuilderWhenInvalidPropertiesThenFinalizerRe
 
     cl_context_properties property = CL_CONTEXT_PLATFORM;
     cl_context_properties value;
-    int32_t errcodeRet = CL_SUCCESS;
-    auto res = builder->processProperties(property, value, errcodeRet);
+    auto res = builder->processProperties(property, value);
     EXPECT_FALSE(res);
-    EXPECT_EQ(CL_SUCCESS, errcodeRet);
 
     MockContext context;
-    errcodeRet = CL_SUCCESS;
+    int32_t errcodeRet = CL_SUCCESS;
     res = builder->finalizeProperties(context, errcodeRet);
     EXPECT_TRUE(res);
     EXPECT_EQ(CL_SUCCESS, errcodeRet);
@@ -179,13 +172,11 @@ TEST_F(VaSharingEnablerTests, givenVaBuilderWhenValidPropertyButInvalidDisplayTh
     vaDisplayIsValidRet = 0;
     cl_context_properties property = CL_CONTEXT_VA_API_DISPLAY_INTEL;
     cl_context_properties value = 0x10000;
-    int32_t errcodeRet = CL_SUCCESS;
-    auto res = builder->processProperties(property, value, errcodeRet);
+    auto res = builder->processProperties(property, value);
     EXPECT_TRUE(res);
-    EXPECT_EQ(CL_SUCCESS, errcodeRet);
 
     MockContext context;
-    errcodeRet = CL_SUCCESS;
+    int32_t errcodeRet = CL_SUCCESS;
     res = builder->finalizeProperties(context, errcodeRet);
     EXPECT_FALSE(res);
     EXPECT_EQ(CL_INVALID_VA_API_MEDIA_ADAPTER_INTEL, errcodeRet);
@@ -198,13 +189,11 @@ TEST_F(VaSharingEnablerTests, givenVaBuilderWhenValidPropertyButValidDisplayThen
     vaDisplayIsValidRet = 1;
     cl_context_properties property = CL_CONTEXT_VA_API_DISPLAY_INTEL;
     cl_context_properties value = 0x10000;
-    int32_t errcodeRet = CL_SUCCESS;
-    auto res = builder->processProperties(property, value, errcodeRet);
+    auto res = builder->processProperties(property, value);
     EXPECT_TRUE(res);
-    EXPECT_EQ(CL_SUCCESS, errcodeRet);
 
     MockContext context;
-    errcodeRet = CL_SUCCESS;
+    int32_t errcodeRet = CL_SUCCESS;
     res = builder->finalizeProperties(context, errcodeRet);
     EXPECT_TRUE(res);
     EXPECT_EQ(CL_SUCCESS, errcodeRet);

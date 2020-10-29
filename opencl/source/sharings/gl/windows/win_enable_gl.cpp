@@ -20,39 +20,29 @@
 
 namespace NEO {
 
-bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue,
-                                                cl_int &errcodeRet) {
+bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
     if (contextData.get() == nullptr) {
         contextData = std::make_unique<GlCreateContextProperties>();
     }
-    bool res = false;
 
     switch (propertyType) {
     case CL_GL_CONTEXT_KHR:
         contextData->GLHGLRCHandle = (GLContext)propertyValue;
-        res = true;
-        break;
+        return true;
     case CL_WGL_HDC_KHR:
         contextData->GLHDCType = (GLType)CL_WGL_HDC_KHR;
         contextData->GLHDCHandle = (GLDisplay)propertyValue;
-        res = true;
-        break;
+        return true;
     case CL_GLX_DISPLAY_KHR:
         contextData->GLHDCType = (GLType)CL_GLX_DISPLAY_KHR;
         contextData->GLHDCHandle = (GLDisplay)propertyValue;
-        res = true;
-        break;
+        return true;
     case CL_EGL_DISPLAY_KHR:
         contextData->GLHDCType = (GLType)CL_EGL_DISPLAY_KHR;
         contextData->GLHDCHandle = (GLDisplay)propertyValue;
-        res = true;
-        break;
-    case CL_CGL_SHAREGROUP_KHR:
-        errcodeRet = CL_INVALID_PROPERTY;
-        res = true;
-        break;
+        return true;
     }
-    return res;
+    return false;
 }
 
 bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errcodeRet) {

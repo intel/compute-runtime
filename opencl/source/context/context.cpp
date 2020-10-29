@@ -153,10 +153,8 @@ bool Context::createImpl(const cl_context_properties *properties,
             interopUserSync = propertyValue > 0;
             break;
         default:
-            if (!sharingBuilder->processProperties(propertyType, propertyValue, errcodeRet)) {
-                errcodeRet = processExtraProperties(propertyType, propertyValue);
-            }
-            if (errcodeRet != CL_SUCCESS) {
+            if (!sharingBuilder->processProperties(propertyType, propertyValue)) {
+                errcodeRet = CL_INVALID_PROPERTY;
                 return false;
             }
             break;

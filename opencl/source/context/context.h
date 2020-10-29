@@ -178,7 +178,6 @@ class Context : public BaseObject<_cl_context> {
     // OS specific implementation
     void *getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize);
 
-    cl_int processExtraProperties(cl_context_properties propertyType, cl_context_properties propertyValue);
     void setupContextType();
 
     std::set<uint32_t> rootDeviceIndices = {};
