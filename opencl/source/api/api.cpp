@@ -3678,7 +3678,7 @@ void *clSharedMemAllocINTEL(
         err.set(CL_INVALID_BUFFER_SIZE);
         return nullptr;
     }
-    auto ptr = neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(neoDevice->getRootDeviceIndex(), size, unifiedMemoryProperties, neoContext->getSpecialQueue());
+    auto ptr = neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(neoDevice->getRootDeviceIndex(), size, unifiedMemoryProperties, neoContext->getSpecialQueue(neoDevice->getRootDeviceIndex()));
     if (!ptr) {
         err.set(CL_OUT_OF_RESOURCES);
     }

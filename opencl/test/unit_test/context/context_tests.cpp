@@ -107,19 +107,19 @@ TEST_F(ContextTest, WhenCreatingContextThenPropertiesAreValid) {
 }
 
 TEST_F(ContextTest, WhenCreatingContextThenSpecialQueueIsAvailable) {
-    auto specialQ = context->getSpecialQueue();
+    auto specialQ = context->getSpecialQueue(0u);
     EXPECT_NE(specialQ, nullptr);
 }
 
 TEST_F(ContextTest, WhenSettingSpecialQueueThenQueueIsAvailable) {
     MockContext context((ClDevice *)devices[0], true);
 
-    auto specialQ = context.getSpecialQueue();
+    auto specialQ = context.getSpecialQueue(0u);
     EXPECT_EQ(specialQ, nullptr);
 
     auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
-    context.setSpecialQueue(cmdQ);
-    specialQ = context.getSpecialQueue();
+    context.setSpecialQueue(cmdQ, 0u);
+    specialQ = context.getSpecialQueue(0u);
     EXPECT_NE(specialQ, nullptr);
 }
 
@@ -235,7 +235,7 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextAutoDelet
     EXPECT_EQ(1, context.getRefInternalCount());
 
     auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
-    context.overrideSpecialQueueAndDecrementRefCount(cmdQ);
+    context.overrideSpecialQueueAndDecrementRefCount(cmdQ, 0u);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     //special queue is to be deleted implicitly by context
@@ -246,13 +246,13 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextDeletedTh
     EXPECT_EQ(1, context.getRefInternalCount());
 
     auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0);
-    context.overrideSpecialQueueAndDecrementRefCount(cmdQ);
+    context.overrideSpecialQueueAndDecrementRefCount(cmdQ, 0u);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     delete cmdQ;
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    context.setSpecialQueue(nullptr);
+    context.setSpecialQueue(nullptr, 0u);
 }
 
 TEST_F(ContextTest, GivenInteropSyncParamWhenCreateContextThenSetContextParam) {
@@ -332,7 +332,7 @@ TEST(Context, whenCreateContextThenSpecialQueueUsesInternalEngine) {
     ASSERT_NE(nullptr, context);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto specialQueueEngine = context->getSpecialQueue()->getGpgpuEngine();
+    auto specialQueueEngine = context->getSpecialQueue(device->getRootDeviceIndex())->getGpgpuEngine();
     auto internalEngine = device->getInternalEngine();
     EXPECT_EQ(internalEngine.commandStreamReceiver, specialQueueEngine.commandStreamReceiver);
 }

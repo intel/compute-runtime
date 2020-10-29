@@ -398,7 +398,7 @@ HWTEST_F(Nv12ImageTest, WhenCreatingParentImageThenPlanesAreWritten) {
     auto contextWithMockCmdQ = new MockContext(device.get(), true);
     auto cmdQ = new MockCommandQueueHw<FamilyType>(contextWithMockCmdQ, device.get(), 0);
 
-    contextWithMockCmdQ->overrideSpecialQueueAndDecrementRefCount(cmdQ);
+    contextWithMockCmdQ->overrideSpecialQueueAndDecrementRefCount(cmdQ, device->getRootDeviceIndex());
 
     // Create Parent NV12 image
     cl_mem_flags flags = CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_USE_HOST_PTR;

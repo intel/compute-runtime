@@ -402,10 +402,10 @@ Image *Image::create(Context *context,
             }
 
             if (!imgInfo.linearStorage || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
-                auto cmdQ = context->getSpecialQueue();
+                auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
 
                 if (IsNV12Image(&image->getImageFormat())) {
-                    errcodeRet = image->writeNV12Planes(hostPtr, hostPtrRowPitch);
+                    errcodeRet = image->writeNV12Planes(hostPtr, hostPtrRowPitch, rootDeviceIndex);
                 } else {
                     errcodeRet = cmdQ->enqueueWriteImage(image, CL_TRUE, &copyOrigin[0], &copyRegion[0],
                                                          hostPtrRowPitch, hostPtrSlicePitch,
@@ -1022,8 +1022,8 @@ void Image::transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray
                  copySize, copyOffset);
 }
 
-cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch) {
-    CommandQueue *cmdQ = context->getSpecialQueue();
+cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint32_t rootDeviceIndex) {
+    CommandQueue *cmdQ = context->getSpecialQueue(rootDeviceIndex);
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {this->imageDesc.image_width, this->imageDesc.image_height, 1};
 

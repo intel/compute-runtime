@@ -49,8 +49,11 @@ Context::Context(
 
 Context::~Context() {
     delete[] properties;
-    if (specialQueue) {
-        delete specialQueue;
+
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < specialQueues.size(); rootDeviceIndex++) {
+        if (specialQueues[rootDeviceIndex]) {
+            delete specialQueues[rootDeviceIndex];
+        }
     }
     if (svmAllocsManager) {
         delete svmAllocsManager;
@@ -100,15 +103,15 @@ void Context::setDefaultDeviceQueue(DeviceQueue *queue) {
     defaultDeviceQueue = queue;
 }
 
-CommandQueue *Context::getSpecialQueue() {
-    return specialQueue;
+CommandQueue *Context::getSpecialQueue(uint32_t rootDeviceIndex) {
+    return specialQueues[rootDeviceIndex];
 }
 
-void Context::setSpecialQueue(CommandQueue *commandQueue) {
-    specialQueue = commandQueue;
+void Context::setSpecialQueue(CommandQueue *commandQueue, uint32_t rootDeviceIndex) {
+    specialQueues[rootDeviceIndex] = commandQueue;
 }
-void Context::overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueue) {
-    setSpecialQueue(commandQueue);
+void Context::overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueue, uint32_t rootDeviceIndex) {
+    setSpecialQueue(commandQueue, rootDeviceIndex);
     commandQueue->setIsSpecialCommandQueue(true);
     //decrement ref count that special queue added
     this->decRefInternal();
@@ -197,7 +200,7 @@ bool Context::createImpl(const cl_context_properties *properties,
         return false;
     }
 
-    this->devices = inputDevices;
+    devices = inputDevices;
     for (auto &rootDeviceIndex : rootDeviceIndices) {
         DeviceBitfield deviceBitfield{};
         for (const auto &pDevice : devices) {
@@ -210,6 +213,7 @@ bool Context::createImpl(const cl_context_properties *properties,
 
     if (devices.size() > 0) {
         maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
+        specialQueues.resize(maxRootDeviceIndex + 1u);
         auto device = this->getDevice(0);
         this->memoryManager = device->getMemoryManager();
         if (memoryManager->isAsyncDeleterEnabled()) {
@@ -228,9 +232,13 @@ bool Context::createImpl(const cl_context_properties *properties,
         setupContextType();
     }
 
-    auto commandQueue = CommandQueue::create(this, devices[0], nullptr, true, errcodeRet);
-    DEBUG_BREAK_IF(commandQueue == nullptr);
-    overrideSpecialQueueAndDecrementRefCount(commandQueue);
+    for (auto &device : devices) {
+        if (!specialQueues[device->getRootDeviceIndex()]) {
+            auto commandQueue = CommandQueue::create(this, device, nullptr, true, errcodeRet); // NOLINT
+            DEBUG_BREAK_IF(commandQueue == nullptr);
+            overrideSpecialQueueAndDecrementRefCount(commandQueue, device->getRootDeviceIndex());
+        }
+    }
 
     return true;
 }

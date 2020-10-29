@@ -89,6 +89,7 @@ TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenOutOrH
     EXPECT_EQ(nullptr, context);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
+
 TEST_F(clCreateContextTests, givenEnabledMultipleRootDeviceSupportWhenCreateContextWithMultipleRootDevicesThenContextIsCreated) {
     UltClDeviceFactory deviceFactory{2, 0};
     DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
@@ -128,6 +129,33 @@ TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenMaxRoo
 
     auto pContext = castToObject<Context>(context);
     EXPECT_EQ(2u, pContext->getMaxRootDeviceIndex());
+
+    clReleaseContext(context);
+}
+
+TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenSpecialQueueIsProperlyFilled) {
+    UltClDeviceFactory deviceFactory{3, 0};
+    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[2]};
+    auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto pContext = castToObject<Context>(context);
+    auto rootDeviceIndices = pContext->getRootDeviceIndices();
+
+    EXPECT_EQ(2u, pContext->getMaxRootDeviceIndex());
+    StackVec<CommandQueue *, 1> specialQueues;
+    specialQueues.resize(pContext->getMaxRootDeviceIndex());
+
+    for (auto numDevice = 0u; numDevice < pContext->getNumDevices(); numDevice++) {
+        auto rootDeviceIndex = rootDeviceIndices.find(pContext->getDevice(numDevice)->getRootDeviceIndex());
+        EXPECT_EQ(*rootDeviceIndex, pContext->getDevice(numDevice)->getRootDeviceIndex());
+        EXPECT_EQ(*rootDeviceIndex, pContext->getSpecialQueue(*rootDeviceIndex)->getDevice().getRootDeviceIndex());
+        specialQueues[numDevice] = pContext->getSpecialQueue(*rootDeviceIndex);
+    }
+
+    EXPECT_EQ(2u, specialQueues.size());
 
     clReleaseContext(context);
 }

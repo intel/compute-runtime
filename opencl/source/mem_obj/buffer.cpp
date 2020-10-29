@@ -383,7 +383,7 @@ Buffer *Buffer::create(Context *context,
                 auto blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(pBuffer->getContext()->getDevice(rootDeviceIndex)->getDevice(), allocationInfo[rootDeviceIndex].memory, pBuffer->getOffset(), hostPtr, {size, 1, 1});
 
                 if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
-                    auto cmdQ = context->getSpecialQueue();
+                    auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
                     if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, allocationInfo[rootDeviceIndex].mapAllocation, 0, nullptr, nullptr)) {
                         errcodeRet = CL_OUT_OF_RESOURCES;
                     }

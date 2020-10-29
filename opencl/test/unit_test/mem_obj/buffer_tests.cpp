@@ -617,7 +617,7 @@ struct RenderCompressedBuffersCopyHostMemoryTests : public RenderCompressedBuffe
         device->injectMemoryManager(new MockMemoryManager(true, false, *platform()->peekExecutionEnvironment()));
         context->memoryManager = device->getMemoryManager();
         mockCmdQ = new MockCommandQueue();
-        context->setSpecialQueue(mockCmdQ);
+        context->setSpecialQueue(mockCmdQ, device->getRootDeviceIndex());
     }
 
     MockCommandQueue *mockCmdQ = nullptr;
