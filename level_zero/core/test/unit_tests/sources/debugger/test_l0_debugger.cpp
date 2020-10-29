@@ -61,6 +61,7 @@ HWTEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuff
         allocations.push_back(sbaAllocation);
 
         EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, sbaAllocation->getAllocationType());
+        EXPECT_EQ(MemoryPool::System4KBPages, sbaAllocation->getMemoryPool());
     }
 
     for (uint32_t i = 0; i < allocations.size() - 1; i++) {
