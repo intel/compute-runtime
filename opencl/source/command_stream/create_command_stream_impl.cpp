@@ -17,7 +17,9 @@ namespace NEO {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
 
-CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEnvironment,
+                                               uint32_t rootDeviceIndex,
+                                               const DeviceBitfield deviceBitfield) {
     auto funcCreate = commandStreamReceiverFactory[executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily];
     if (funcCreate == nullptr) {
         return nullptr;

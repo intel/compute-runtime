@@ -72,9 +72,13 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
                                          bool standalone,
                                          ExecutionEnvironment &executionEnvironment,
                                          uint32_t rootDeviceIndex,
-                                         DeviceBitfield deviceBitfield);
+                                         const DeviceBitfield deviceBitfield);
 
-    AUBCommandStreamReceiverHw(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
+    AUBCommandStreamReceiverHw(const std::string &fileName,
+                               bool standalone,
+                               ExecutionEnvironment &executionEnvironment,
+                               uint32_t rootDeviceIndex,
+                               const DeviceBitfield deviceBitfield);
     ~AUBCommandStreamReceiverHw() override;
 
     AUBCommandStreamReceiverHw(const AUBCommandStreamReceiverHw &) = delete;

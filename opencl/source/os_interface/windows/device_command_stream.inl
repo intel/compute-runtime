@@ -23,9 +23,12 @@ template <typename GfxFamily>
 CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(bool withAubDump,
                                                                       ExecutionEnvironment &executionEnvironment,
                                                                       uint32_t rootDeviceIndex,
-                                                                      DeviceBitfield deviceBitfield) {
+                                                                      const DeviceBitfield deviceBitfield) {
     if (withAubDump) {
-        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>("aubfile", executionEnvironment, rootDeviceIndex, deviceBitfield);
+        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>("aubfile",
+                                                                                          executionEnvironment,
+                                                                                          rootDeviceIndex,
+                                                                                          deviceBitfield);
     } else {
         return new WddmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield);
     }

@@ -1601,7 +1601,8 @@ class UltCommandStreamReceiverForDispatchFlags : public UltCommandStreamReceiver
     using BaseClass = UltCommandStreamReceiver<GfxFamily>;
 
   public:
-    UltCommandStreamReceiverForDispatchFlags(ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+    UltCommandStreamReceiverForDispatchFlags(ExecutionEnvironment &executionEnvironment,
+                                             const DeviceBitfield deviceBitfield)
         : BaseClass(executionEnvironment, 0, deviceBitfield) {}
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
@@ -1725,7 +1726,9 @@ class MockCsrWithFailingFlush : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::latestSentTaskCount;
     using CommandStreamReceiverHw<GfxFamily>::submissionAggregator;
 
-    MockCsrWithFailingFlush(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+    MockCsrWithFailingFlush(ExecutionEnvironment &executionEnvironment,
+                            uint32_t rootDeviceIndex,
+                            const DeviceBitfield deviceBitfield)
         : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {
         this->dispatchMode = DispatchMode::BatchedDispatch;
         this->tagAddress = &tag;

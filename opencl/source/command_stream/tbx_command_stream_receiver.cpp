@@ -21,7 +21,7 @@ CommandStreamReceiver *TbxCommandStreamReceiver::create(const std::string &baseN
                                                         bool withAubDump,
                                                         ExecutionEnvironment &executionEnvironment,
                                                         uint32_t rootDeviceIndex,
-                                                        DeviceBitfield deviceBitfield) {
+                                                        const DeviceBitfield deviceBitfield) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
     if (hwInfo->platform.eRenderCoreFamily >= IGFX_MAX_CORE) {

@@ -47,7 +47,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
                                                                   bool standalone,
                                                                   ExecutionEnvironment &executionEnvironment,
                                                                   uint32_t rootDeviceIndex,
-                                                                  DeviceBitfield deviceBitfield)
+                                                                  const DeviceBitfield deviceBitfield)
     : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield),
       standalone(standalone) {
 
@@ -287,7 +287,7 @@ CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const std::
                                                                      bool standalone,
                                                                      ExecutionEnvironment &executionEnvironment,
                                                                      uint32_t rootDeviceIndex,
-                                                                     DeviceBitfield deviceBitfield) {
+                                                                     const DeviceBitfield deviceBitfield) {
     auto csr = std::make_unique<AUBCommandStreamReceiverHw<GfxFamily>>(fileName, standalone, executionEnvironment, rootDeviceIndex, deviceBitfield);
 
     if (!csr->subCaptureManager->isSubCaptureMode()) {

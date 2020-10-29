@@ -21,7 +21,7 @@ struct AUBCommandStreamReceiver {
                                          bool standalone,
                                          ExecutionEnvironment &executionEnvironment,
                                          uint32_t rootDeviceIndex,
-                                         DeviceBitfield deviceBitfield);
+                                         const DeviceBitfield deviceBitfield);
     static std::string createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename);
 
     using AubFileStream = AubMemDump::AubFileStream;
@@ -31,5 +31,5 @@ typedef CommandStreamReceiver *(*AubCommandStreamReceiverCreateFunc)(const std::
                                                                      bool standalone,
                                                                      ExecutionEnvironment &executionEnvironment,
                                                                      uint32_t rootDeviceIndex,
-                                                                     DeviceBitfield deviceBitfield);
+                                                                     const DeviceBitfield deviceBitfield);
 } // namespace NEO

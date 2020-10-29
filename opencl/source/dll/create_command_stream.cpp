@@ -15,7 +15,9 @@
 
 namespace NEO {
 
-CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
+                                           uint32_t rootDeviceIndex,
+                                           const DeviceBitfield deviceBitfield) {
     return createCommandStreamImpl(executionEnvironment, rootDeviceIndex, deviceBitfield);
 }
 

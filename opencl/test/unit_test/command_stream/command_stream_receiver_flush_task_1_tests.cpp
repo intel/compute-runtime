@@ -901,7 +901,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
 template <typename FamilyType>
 struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> {
     CommandStreamReceiverHwLog(ExecutionEnvironment &executionEnvironment,
-                               uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+                               uint32_t rootDeviceIndex,
+                               const DeviceBitfield deviceBitfield)
         : UltCommandStreamReceiver<FamilyType>(executionEnvironment, rootDeviceIndex, deviceBitfield),
           flushCount(0) {
     }

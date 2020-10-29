@@ -21,7 +21,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     CommandStreamReceiverWithAUBDump(const std::string &baseName,
                                      ExecutionEnvironment &executionEnvironment,
                                      uint32_t rootDeviceIndex,
-                                     DeviceBitfield deviceBitfield);
+                                     const DeviceBitfield deviceBitfield);
 
     CommandStreamReceiverWithAUBDump(const CommandStreamReceiverWithAUBDump &) = delete;
     CommandStreamReceiverWithAUBDump &operator=(const CommandStreamReceiverWithAUBDump &) = delete;

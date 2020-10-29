@@ -24,7 +24,10 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
 
     MockCsrBase() = delete;
 
-    MockCsrBase(int32_t &execStamp, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+    MockCsrBase(int32_t &execStamp,
+                ExecutionEnvironment &executionEnvironment,
+                uint32_t rootDeviceIndex,
+                const DeviceBitfield deviceBitfield)
         : BaseUltCsrClass(executionEnvironment, rootDeviceIndex, deviceBitfield), executionStamp(&execStamp), flushTaskStamp(-1) {
     }
 
@@ -78,7 +81,10 @@ using MockCsrHw = MockCsrBase<GfxFamily>;
 template <typename GfxFamily>
 class MockCsrAub : public MockCsrBase<GfxFamily> {
   public:
-    MockCsrAub(int32_t &execStamp, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+    MockCsrAub(int32_t &execStamp,
+               ExecutionEnvironment &executionEnvironment,
+               uint32_t rootDeviceIndex,
+               const DeviceBitfield deviceBitfield)
         : MockCsrBase<GfxFamily>(execStamp, executionEnvironment, rootDeviceIndex, deviceBitfield) {}
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_AUB;
@@ -94,7 +100,10 @@ class MockCsr : public MockCsrBase<GfxFamily> {
 
     MockCsr() = delete;
     MockCsr(const HardwareInfo &hwInfoIn) = delete;
-    MockCsr(int32_t &execStamp, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+    MockCsr(int32_t &execStamp,
+            ExecutionEnvironment &executionEnvironment,
+            uint32_t rootDeviceIndex,
+            const DeviceBitfield deviceBitfield)
         : BaseClass(execStamp, executionEnvironment, rootDeviceIndex, deviceBitfield) {
     }
 

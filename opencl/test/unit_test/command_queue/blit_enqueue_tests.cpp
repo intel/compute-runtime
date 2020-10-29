@@ -1111,7 +1111,9 @@ struct BlitEnqueueFlushTests : public BlitEnqueueTests<1> {
             return UltCommandStreamReceiver<FamilyType>::flush(batchBuffer, allocationsForResidency);
         }
 
-        static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+        static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment,
+                                             uint32_t rootDeviceIndex,
+                                             const DeviceBitfield deviceBitfield) {
             return new MyUltCsr<FamilyType>(executionEnvironment, rootDeviceIndex, deviceBitfield);
         }
 

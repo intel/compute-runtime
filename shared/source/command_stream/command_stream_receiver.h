@@ -65,7 +65,9 @@ class CommandStreamReceiver {
     };
 
     using MutexType = std::recursive_mutex;
-    CommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
+    CommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
+                          uint32_t rootDeviceIndex,
+                          const DeviceBitfield deviceBitfield);
     virtual ~CommandStreamReceiver();
 
     virtual bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) = 0;
@@ -285,7 +287,7 @@ class CommandStreamReceiver {
     uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
 
     const uint32_t rootDeviceIndex;
-    DeviceBitfield deviceBitfield;
+    const DeviceBitfield deviceBitfield;
 
     int8_t lastSentCoherencyRequest = -1;
     int8_t lastMediaSamplerConfig = -1;
@@ -311,5 +313,8 @@ class CommandStreamReceiver {
     bool useGpuIdleImplicitFlush = false;
 };
 
-typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
+typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,
+                                                                  ExecutionEnvironment &executionEnvironment,
+                                                                  uint32_t rootDeviceIndex,
+                                                                  const DeviceBitfield deviceBitfield);
 } // namespace NEO

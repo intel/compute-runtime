@@ -106,7 +106,7 @@ uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getDeviceIndex() con
 template <typename GfxFamily>
 CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment,
                                                                                           uint32_t rootDeviceIndex,
-                                                                                          DeviceBitfield deviceBitfield)
+                                                                                          const DeviceBitfield deviceBitfield)
     : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {
     this->useNewResourceImplicitFlush = false;
     this->useGpuIdleImplicitFlush = false;

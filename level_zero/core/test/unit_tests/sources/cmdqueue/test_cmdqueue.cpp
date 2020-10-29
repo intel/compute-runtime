@@ -443,7 +443,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
         ~SynchronizeCsr() override {
             delete tagAddress;
         }
-        SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+        SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
             : NEO::UltCommandStreamReceiver<FamilyType>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
             tagAddress = new uint32_t;
         }

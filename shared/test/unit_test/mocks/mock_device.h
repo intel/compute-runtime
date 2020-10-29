@@ -23,7 +23,9 @@ class OSTime;
 template <typename GfxFamily>
 class UltCommandStreamReceiver;
 
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
+                                                  uint32_t rootDeviceIndex,
+                                                  const DeviceBitfield deviceBitfield);
 
 struct MockSubDevice : public SubDevice {
     using SubDevice::getGlobalMemorySize;
@@ -173,7 +175,9 @@ struct EnvironmentWithCsrWrapper {
     }
 
     template <typename CsrType>
-    static CommandStreamReceiver *createCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+    static CommandStreamReceiver *createCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
+                                                              uint32_t rootDeviceIndex,
+                                                              const DeviceBitfield deviceBitfield) {
         return new CsrType(executionEnvironment, rootDeviceIndex, deviceBitfield);
     }
 

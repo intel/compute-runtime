@@ -165,7 +165,7 @@ class MockCsr1 : public CommandStreamReceiverHw<GfxFamily> {
         passedDispatchFlags = dispatchFlags;
         return CompletionStamp();
     }
-    MockCsr1(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+    MockCsr1(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
         : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
     DispatchFlags passedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     using CommandStreamReceiver::timestampPacketWriteEnabled;

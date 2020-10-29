@@ -388,7 +388,8 @@ HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableM
 HWTEST_F(DeviceHwTest, givenDeviceCreationWhenCsrFailsToCreateGlobalSyncAllocationThenReturnNull) {
     class MockUltCsrThatFailsToCreateGlobalFenceAllocation : public UltCommandStreamReceiver<FamilyType> {
       public:
-        MockUltCsrThatFailsToCreateGlobalFenceAllocation(ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+        MockUltCsrThatFailsToCreateGlobalFenceAllocation(ExecutionEnvironment &executionEnvironment,
+                                                         const DeviceBitfield deviceBitfield)
             : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield) {}
         bool createGlobalFenceAllocation() override {
             return false;

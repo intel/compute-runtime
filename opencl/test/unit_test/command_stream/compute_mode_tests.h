@@ -22,7 +22,7 @@ struct ComputeModeRequirements : public ::testing::Test {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiverHw<FamilyType>::lastSentThreadArbitrationPolicy;
         using CommandStreamReceiverHw<FamilyType>::requiredThreadArbitrationPolicy;
-        myCsr(ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+        myCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
             : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &this->csrSizeRequestFlags; }
     };

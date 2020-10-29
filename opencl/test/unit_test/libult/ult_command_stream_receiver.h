@@ -101,12 +101,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     UltCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                              uint32_t rootDeviceIndex,
-                             DeviceBitfield deviceBitfield) : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), recursiveLockCounter(0),
-                                                              recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()) {}
+                             const DeviceBitfield deviceBitfield)
+        : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), recursiveLockCounter(0),
+          recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()) {}
     static CommandStreamReceiver *create(bool withAubDump,
                                          ExecutionEnvironment &executionEnvironment,
                                          uint32_t rootDeviceIndex,
-                                         DeviceBitfield deviceBitfield) {
+                                         const DeviceBitfield deviceBitfield) {
         return new UltCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield);
     }
 

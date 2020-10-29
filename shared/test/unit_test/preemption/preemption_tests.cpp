@@ -244,7 +244,7 @@ HWTEST_P(PreemptionTest, whenFailToCreatePreemptionAllocationThenFailToCreateDev
     class MockUltCsr : public UltCommandStreamReceiver<FamilyType> {
 
       public:
-        MockUltCsr(ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+        MockUltCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
             : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield) {
         }
 

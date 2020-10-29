@@ -42,7 +42,7 @@ struct TbxCommandStreamReceiver {
                                          bool withAubDump,
                                          ExecutionEnvironment &executionEnvironment,
                                          uint32_t rootDeviceIndex,
-                                         DeviceBitfield deviceBitfield);
+                                         const DeviceBitfield deviceBitfield);
 
     using TbxStream = NEO::TbxStream;
 };
@@ -51,5 +51,5 @@ typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const std::
                                                                      bool withAubDump,
                                                                      ExecutionEnvironment &executionEnvironment,
                                                                      uint32_t rootDeviceIndex,
-                                                                     DeviceBitfield deviceBitfield);
+                                                                     const DeviceBitfield deviceBitfield);
 } // namespace NEO

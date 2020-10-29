@@ -20,7 +20,7 @@ template <typename BaseCSR>
 CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(const std::string &baseName,
                                                                             ExecutionEnvironment &executionEnvironment,
                                                                             uint32_t rootDeviceIndex,
-                                                                            DeviceBitfield deviceBitfield)
+                                                                            const DeviceBitfield deviceBitfield)
     : BaseCSR(executionEnvironment, rootDeviceIndex, deviceBitfield) {
     bool isAubManager = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter && executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter->getAubManager();
     bool isTbxMode = CommandStreamReceiverType::CSR_TBX == BaseCSR::getType();

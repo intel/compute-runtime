@@ -23,15 +23,24 @@ class UltAubCommandStreamReceiver : public AUBCommandStreamReceiverHw<GfxFamily>
     using BaseClass::useGpuIdleImplicitFlush;
     using BaseClass::useNewResourceImplicitFlush;
 
-    UltAubCommandStreamReceiver(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+    UltAubCommandStreamReceiver(const std::string &fileName,
+                                bool standalone,
+                                ExecutionEnvironment &executionEnvironment,
+                                uint32_t rootDeviceIndex,
+                                const DeviceBitfield deviceBitfield)
         : BaseClass(fileName, standalone, executionEnvironment, rootDeviceIndex, deviceBitfield) {
     }
 
-    UltAubCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+    UltAubCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
+                                uint32_t rootDeviceIndex,
+                                const DeviceBitfield deviceBitfield)
         : BaseClass("aubfile", true, executionEnvironment, rootDeviceIndex, deviceBitfield) {
     }
 
-    static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+    static CommandStreamReceiver *create(bool withAubDump,
+                                         ExecutionEnvironment &executionEnvironment,
+                                         uint32_t rootDeviceIndex,
+                                         const DeviceBitfield deviceBitfield) {
         auto csr = new UltAubCommandStreamReceiver<GfxFamily>("aubfile", true, executionEnvironment, rootDeviceIndex, deviceBitfield);
 
         if (!csr->subCaptureManager->isSubCaptureMode()) {

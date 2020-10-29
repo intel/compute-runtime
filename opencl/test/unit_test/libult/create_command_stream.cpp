@@ -23,7 +23,9 @@ namespace NEO {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
-CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
+CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
+                                           uint32_t rootDeviceIndex,
+                                           const DeviceBitfield deviceBitfield) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
     if (ultHwConfig.useHwCsr) {

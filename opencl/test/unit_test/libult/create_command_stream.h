@@ -17,6 +17,8 @@ class ExecutionEnvironment;
 
 using DeviceBitfield = std::bitset<32>;
 
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
+                                                  uint32_t rootDeviceIndex,
+                                                  const DeviceBitfield deviceBitfield);
 extern bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment);
 } // namespace NEO

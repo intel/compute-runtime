@@ -33,7 +33,9 @@
 using namespace NEO;
 
 struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
-    MyMockCsr(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield)
+    MyMockCsr(ExecutionEnvironment &executionEnvironment,
+              uint32_t rootDeviceIndex,
+              const DeviceBitfield deviceBitfield)
         : UltCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
     }
 
@@ -103,7 +105,9 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
 
 template <typename BaseCSR>
 struct MyMockCsrWithAubDump : CommandStreamReceiverWithAUBDump<BaseCSR> {
-    MyMockCsrWithAubDump<BaseCSR>(bool createAubCSR, ExecutionEnvironment &executionEnvironment, DeviceBitfield deviceBitfield)
+    MyMockCsrWithAubDump<BaseCSR>(bool createAubCSR,
+                                  ExecutionEnvironment &executionEnvironment,
+                                  const DeviceBitfield deviceBitfield)
         : CommandStreamReceiverWithAUBDump<BaseCSR>("aubfile", executionEnvironment, 0, deviceBitfield) {
         this->aubCSR.reset(createAubCSR ? new MyMockCsr(executionEnvironment, 0, deviceBitfield) : nullptr);
     }

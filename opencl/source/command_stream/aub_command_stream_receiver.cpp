@@ -55,7 +55,7 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseN
                                                         bool standalone,
                                                         ExecutionEnvironment &executionEnvironment,
                                                         uint32_t rootDeviceIndex,
-                                                        DeviceBitfield deviceBitfield) {
+                                                        const DeviceBitfield deviceBitfield) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     std::string filePath = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName);
     if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {

@@ -20,7 +20,9 @@ template <typename GfxFamily>
 class UltCommandStreamReceiver;
 struct HardwareInfo;
 
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
+                                                  uint32_t rootDeviceIndex,
+                                                  const DeviceBitfield deviceBitfield);
 
 class MockClDevice : public ClDevice {
   public:
