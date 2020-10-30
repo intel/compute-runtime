@@ -12,6 +12,7 @@
 #include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "engine_node.h"
@@ -424,6 +425,39 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenL1ForceDisabledWhenRequestingMocsThenPro
     EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, true));
     EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, false));
     EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, true));
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenAllocationTypeWithCpuAccessRequiredWhenCpuAccessIsDisallowedThenSystemMemoryIsRequested) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+
+    const GraphicsAllocation::AllocationType allocationTypesToUseSystemMemory[] = {
+        GraphicsAllocation::AllocationType::COMMAND_BUFFER,
+        GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
+        GraphicsAllocation::AllocationType::GLOBAL_SURFACE,
+        GraphicsAllocation::AllocationType::INTERNAL_HEAP,
+        GraphicsAllocation::AllocationType::LINEAR_STREAM,
+        GraphicsAllocation::AllocationType::PIPE,
+        GraphicsAllocation::AllocationType::PRINTF_SURFACE,
+        GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
+        GraphicsAllocation::AllocationType::RING_BUFFER,
+        GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER};
+
+    MockMemoryManager mockMemoryManager;
+    for (auto allocationType : allocationTypesToUseSystemMemory) {
+        AllocationData allocData{};
+        AllocationProperties properties(mockRootDeviceIndex, true, 10, allocationType, false, mockDeviceBitfield);
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+
+        EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+        EXPECT_TRUE(allocData.flags.useSystemMemory);
+    }
+
+    AllocationData allocData{};
+    AllocationProperties properties(mockRootDeviceIndex, true, 10, GraphicsAllocation::AllocationType::BUFFER, false, mockDeviceBitfield);
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_FALSE(allocData.flags.requiresCpuAccess);
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
 HWTEST2_F(HwHelperTestGen12Lp, givenRevisionEnumThenProperValueForIsWorkaroundRequiredIsReturned, IsRKL) {

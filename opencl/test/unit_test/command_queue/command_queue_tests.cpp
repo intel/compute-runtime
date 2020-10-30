@@ -1160,16 +1160,29 @@ TEST(CommandQueue, giveClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectVa
     MockCommandQueue queue(&context, context.getDevice(0), 0);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
 
-    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
-    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER));
-    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER));
-    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER_RECT));
-    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER_RECT));
-    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT));
-    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY));
-    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_IMAGE));
-    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE));
-    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
+    if (queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
+        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER));
+        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER));
+        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER_RECT));
+        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER_RECT));
+        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT));
+        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY));
+        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_IMAGE));
+        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE));
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
+    } else {
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER));
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER));
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER_RECT));
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER_RECT));
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT));
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY));
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_READ_IMAGE));
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE));
+        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
+    }
 }
 
 TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenReturnCorrectValue) {

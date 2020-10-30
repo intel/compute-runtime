@@ -205,6 +205,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenWritingImageThenMediaVfeS
 HWTEST_F(EnqueueWriteImageTest, givenDeviceWithBlitterSupportWhenEnqueueWriteImageThenBlitEnqueueImageAllowedReturnsCorrectResult) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideInvalidEngineWithDefault.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     auto &capabilityTable = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
     capabilityTable.blitterOperationsSupported = true;

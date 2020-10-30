@@ -433,6 +433,7 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DThatIsZeroCopyWhenReadImageWithTheSam
 HWTEST_F(EnqueueReadImageTest, givenDeviceWithBlitterSupportWhenEnqueueReadImageThenBlitEnqueueImageAllowedReturnsCorrectResult) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideInvalidEngineWithDefault.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     auto &capabilityTable = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
     capabilityTable.blitterOperationsSupported = true;

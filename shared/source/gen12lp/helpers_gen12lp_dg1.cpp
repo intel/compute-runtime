@@ -98,5 +98,13 @@ bool forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo, GraphicsAllocat
     return false;
 }
 
+bool obtainBlitterPreference(const HardwareInfo &hwInfo) {
+    return false;
+}
+
+LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) {
+    return LocalMemoryAccessMode::Default;
+}
+
 } // namespace Gen12LPHelpers
 } // namespace NEO
