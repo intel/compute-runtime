@@ -1627,7 +1627,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
             commandContainer.addToResidencyContainer(allocData->cpuAllocation);
             groupCountOffset = ptrDiff(pThreadGroupDimensions, allocData->cpuAllocation->getUnderlyingBuffer());
         } else {
-            UNRECOVERABLE_IF(reinterpret_cast<uint64_t>(alloc->getUnderlyingBuffer()) != alloc->getGpuAddress());
             groupCountOffset = ptrDiff(pThreadGroupDimensions, alloc->getGpuAddress());
         }
 
