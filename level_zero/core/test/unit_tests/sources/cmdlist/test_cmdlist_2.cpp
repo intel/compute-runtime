@@ -192,8 +192,8 @@ HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimest
     for (auto it : iterator) {
         auto cmd = genCmdCast<MI_FLUSH_DW *>(*it);
 
-        if ((cmd->getPostSyncOperation(), MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER) &&
-            (cmd->getDestinationAddress(), timestampAddress)) {
+        if ((cmd->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER) &&
+            (cmd->getDestinationAddress() == timestampAddress)) {
             postSyncFound = true;
         }
     }
