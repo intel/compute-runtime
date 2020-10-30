@@ -42,10 +42,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
     Program *pProgram = CreateProgramFromBinary(kernelFilename);
     ASSERT_NE(nullptr, pProgram);
 
-    cl_device_id device = pClDevice;
     retVal = pProgram->build(
-        1,
-        &device,
+        pProgram->getDevices(),
         nullptr,
         false);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -267,11 +265,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
     Program *pProgram = CreateProgramFromBinary(kernelFilename);
     ASSERT_NE(nullptr, pProgram);
 
-    cl_device_id device = pClDevice;
-
     retVal = pProgram->build(
-        1,
-        &device,
+        pProgram->getDevices(),
         "",
         false);
     ASSERT_EQ(CL_SUCCESS, retVal);

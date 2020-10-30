@@ -14,7 +14,7 @@ void BuiltinDispatchInfoBuilder::populate(ClDevice &device, EBuiltInOps::Type op
     ClDeviceVector deviceVector;
     deviceVector.push_back(&device);
     prog.reset(BuiltinDispatchInfoBuilder::createProgramFromCode(src, deviceVector).release());
-    prog->build(0, nullptr, options.data(), kernelsLib.isCacheingEnabled());
+    prog->build(deviceVector, options.data(), kernelsLib.isCacheingEnabled());
     grabKernels(std::forward<KernelsDescArgsT>(desc)...);
 }
 } // namespace NEO

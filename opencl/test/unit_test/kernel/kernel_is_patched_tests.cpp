@@ -22,8 +22,7 @@ class PatchedKernelTest : public ::testing::Test {
         context.reset(new MockContext(device.get()));
         program.reset(Program::createBuiltInFromSource("FillBufferBytes", context.get(), context->getDevices(), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
-        cl_device_id clDevice = device.get();
-        program->build(1, &clDevice, nullptr, false);
+        program->build(program->getDevices(), nullptr, false);
         kernel.reset(Kernel::create(program.get(), *program->getKernelInfo("FillBufferBytes"), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }

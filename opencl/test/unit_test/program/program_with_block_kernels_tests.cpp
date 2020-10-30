@@ -57,8 +57,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuil
     ASSERT_NE(nullptr, mockProgram);
 
     retVal = mockProgram->build(
-        1,
-        &device,
+        pProgram->getDevices(),
         nullptr,
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);

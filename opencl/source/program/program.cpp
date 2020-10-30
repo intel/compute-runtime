@@ -48,7 +48,6 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
     ClDevice *pClDevice = castToObject<ClDevice>(pDevice->getSpecializedDevice<ClDevice>());
 
     numDevices = static_cast<uint32_t>(clDevicesIn.size());
-    bool force32BitAddressess = false;
 
     uint32_t maxRootDeviceIndex = 0;
 
@@ -60,7 +59,11 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
     }
 
     buildInfos.resize(maxRootDeviceIndex + 1);
-
+    kernelDebugEnabled = pClDevice->isDebuggerActive();
+}
+void Program::initInternalOptions(std::string &internalOptions) const {
+    auto pClDevice = clDevices[0];
+    auto force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;
     auto enabledClVersion = pClDevice->getEnabledClVersion();
     if (enabledClVersion == 30) {
         internalOptions = "-ocl-version=300 ";
@@ -69,7 +72,6 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
     } else {
         internalOptions = "-ocl-version=120 ";
     }
-    force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;
 
     if (force32BitAddressess && !isBuiltIn) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
@@ -84,8 +86,6 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessBuffers);
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
     }
-
-    kernelDebugEnabled = pClDevice->isDebuggerActive();
 
     auto enableStatelessToStatefullWithOffset = pClDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
     if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {

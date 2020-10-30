@@ -190,8 +190,7 @@ TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqu
 
     mockProgram->setBuildOptions("-cl-std=CL2.1");
     retVal = mockProgram->build(
-        1,
-        &device,
+        mockProgram->getDevices(),
         nullptr,
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -230,8 +229,7 @@ TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqu
 
     mockProgram->setBuildOptions("-cl-std=CL2.0");
     retVal = mockProgram->build(
-        1,
-        &device,
+        mockProgram->getDevices(),
         nullptr,
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -268,8 +266,7 @@ TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInva
 
     mockProgram->setBuildOptions("-cl-std=CL1.2");
     retVal = mockProgram->build(
-        1,
-        &device,
+        mockProgram->getDevices(),
         nullptr,
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);

@@ -81,7 +81,7 @@ Program *Vme::createBuiltInProgram(
         builtinsBuilders["block_advanced_motion_estimate_bidirectional_check_intel"] =
             &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, device);
 
-        errcodeRet = pBuiltInProgram->build(&device.getDevice(), mediaKernelsBuildOptions, true, builtinsBuilders);
+        errcodeRet = pBuiltInProgram->build(deviceVector, mediaKernelsBuildOptions, true, builtinsBuilders);
     } else {
         errcodeRet = CL_INVALID_VALUE;
     }

@@ -44,11 +44,10 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
             kbHelper = new KernelBinaryHelper(filename, false);
             CreateProgramWithSource(
                 pContext,
-                &device,
                 "copybuffer.cl");
             pProgram->enableKernelDebug();
 
-            cl_int retVal = pProgram->build(1, &device, nullptr, false);
+            cl_int retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
             ASSERT_EQ(CL_SUCCESS, retVal);
 
             // create a kernel

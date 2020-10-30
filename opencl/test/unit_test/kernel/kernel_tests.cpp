@@ -58,10 +58,8 @@ class KernelTest : public ProgramFromBinaryTest {
         ASSERT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        cl_device_id device = pClDevice;
         retVal = pProgram->build(
-            1,
-            &device,
+            pProgram->getDevices(),
             nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -343,14 +341,11 @@ class KernelFromBinaryTest : public ProgramSimpleFixture {
 typedef Test<KernelFromBinaryTest> KernelFromBinaryTests;
 
 TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKernelArgsIsReturned) {
-    cl_device_id device = pClDevice;
-
     CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_num_args");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
-        1,
-        &device,
+        pProgram->getDevices(),
         nullptr,
         false);
 
@@ -384,14 +379,11 @@ TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKerne
 }
 
 TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
-    cl_device_id device = pClDevice;
-
     CreateProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
-        1,
-        &device,
+        pProgram->getDevices(),
         nullptr,
         false);
 
@@ -417,14 +409,11 @@ TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
 }
 
 TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreatedThenArgumentIsMarkedAsReadOnly) {
-    cl_device_id device = pClDevice;
-
     CreateProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
-        1,
-        &device,
+        pProgram->getDevices(),
         nullptr,
         false);
 

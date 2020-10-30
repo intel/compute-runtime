@@ -31,10 +31,8 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
         ASSERT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        cl_device_id device = pClDevice;
         retVal = pProgram->build(
-            1,
-            &device,
+            pProgram->getDevices(),
             nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);

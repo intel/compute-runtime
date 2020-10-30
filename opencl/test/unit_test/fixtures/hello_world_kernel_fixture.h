@@ -68,11 +68,8 @@ struct HelloWorldKernelFixture : public ProgramFixture {
 
         ASSERT_NE(nullptr, pProgram);
 
-        cl_device_id device = pDevice;
-
         retVal = pProgram->build(
-            1,
-            &device,
+            pProgram->getDevices(),
             nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);

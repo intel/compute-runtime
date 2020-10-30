@@ -1511,8 +1511,14 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
 
     retVal = validateObjects(WithCastToInternal(program, &pProgram), Program::isValidCallback(funcNotify, userData));
 
+    ClDeviceVector deviceVector;
+    ClDeviceVector *deviceVectorPtr = &deviceVector;
+
     if (CL_SUCCESS == retVal) {
-        retVal = pProgram->build(numDevices, deviceList, options, clCacheEnabled);
+        retVal = Program::processInputDevices(deviceVectorPtr, numDevices, deviceList, pProgram->getDevices());
+    }
+    if (CL_SUCCESS == retVal) {
+        retVal = pProgram->build(*deviceVectorPtr, options, clCacheEnabled);
         pProgram->invokeCallback(funcNotify, userData);
     }
 

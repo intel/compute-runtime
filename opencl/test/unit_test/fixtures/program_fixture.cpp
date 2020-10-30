@@ -12,7 +12,6 @@
 
 namespace NEO {
 void ProgramFixture::CreateProgramWithSource(Context *pContext,
-                                             cl_device_id *deviceList,
                                              const std::string &sourceFileName) {
     Cleanup();
     cl_int retVal = CL_SUCCESS;

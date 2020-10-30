@@ -38,7 +38,10 @@ cl_int Program::link(
     auto defaultClDevice = deviceVector[0];
     UNRECOVERABLE_IF(defaultClDevice == nullptr);
     auto &defaultDevice = defaultClDevice->getDevice();
-    internalOptions.clear();
+    std::unordered_map<uint32_t, bool> kernelDebugDataNotified;
+    std::unordered_map<uint32_t, bool> debugOptionsAppended;
+    std::string internalOptions;
+    initInternalOptions(internalOptions);
     do {
         if ((numInputPrograms == 0) || (inputPrograms == nullptr)) {
             retVal = CL_INVALID_VALUE;
@@ -51,6 +54,8 @@ cl_int Program::link(
         }
 
         for (const auto &device : deviceVector) {
+            kernelDebugDataNotified[device->getRootDeviceIndex()] = false;
+            debugOptionsAppended[device->getRootDeviceIndex()] = false;
             buildStatuses[device] = CL_BUILD_IN_PROGRESS;
         }
 
@@ -65,7 +70,14 @@ cl_int Program::link(
         }
 
         if (isKernelDebugEnabled()) {
-            appendKernelDebugOptions();
+            for (auto &device : deviceVector) {
+                if (debugOptionsAppended[device->getRootDeviceIndex()]) {
+                    continue;
+                }
+                appendKernelDebugOptions(*device, internalOptions);
+
+                debugOptionsAppended[device->getRootDeviceIndex()] = true;
+            }
         }
 
         isCreateLibrary = CompilerOptions::contains(options, CompilerOptions::createLibrary);
@@ -154,6 +166,9 @@ cl_int Program::link(
                 programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
 
                 if (isKernelDebugEnabled()) {
+                    if (kernelDebugDataNotified[device->getRootDeviceIndex()]) {
+                        continue;
+                    }
                     processDebugData();
                     for (auto kernelInfo : kernelInfoArray) {
                         device->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
@@ -161,6 +176,7 @@ cl_int Program::link(
                                                                                 kernelInfo->heapInfo.pKernelHeap,
                                                                                 kernelInfo->heapInfo.KernelHeapSize);
                     }
+                    kernelDebugDataNotified[device->getRootDeviceIndex()] = true;
                 }
             }
 
@@ -200,8 +216,6 @@ cl_int Program::link(
             buildStatuses[device] = CL_BUILD_SUCCESS;
         }
     }
-
-    internalOptions.clear();
 
     return retVal;
 }

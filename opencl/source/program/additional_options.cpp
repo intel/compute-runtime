@@ -8,6 +8,6 @@
 #include "opencl/source/program/program.h"
 
 namespace NEO {
-void Program::applyAdditionalOptions() {
+void Program::applyAdditionalOptions(std::string &internalOptions) {
 }
 }; // namespace NEO

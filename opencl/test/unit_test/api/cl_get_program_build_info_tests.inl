@@ -451,4 +451,133 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingWithoutInputDe
     retVal = clReleaseProgram(outProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDevicesThenOnlySpecificDevicesReportBuildStatus) {
+    MockProgram *pProgram = nullptr;
+    std::unique_ptr<char[]> pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
+
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+
+    pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+
+    MockUnrestrictiveContextMultiGPU context;
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    pProgram = Program::create<MockProgram>(
+        &context,
+        1,
+        sources,
+        &sourceSize,
+        retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_build_status buildStatus;
+    for (const auto &device : context.getDevices()) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+    }
+
+    cl_device_id devicesForBuild[] = {context.getDevice(1), context.getDevice(3)};
+    cl_device_id devicesNotForBuild[] = {context.getDevice(0), context.getDevice(2), context.getDevice(4), context.getDevice(5)};
+
+    retVal = clBuildProgram(
+        pProgram,
+        2,
+        devicesForBuild,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    for (const auto &device : devicesForBuild) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+    }
+    for (const auto &device : devicesNotForBuild) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
+    MockProgram *pProgram = nullptr;
+    std::unique_ptr<char[]> pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
+
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+
+    pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+
+    MockUnrestrictiveContextMultiGPU context;
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    pProgram = Program::create<MockProgram>(
+        &context,
+        1,
+        sources,
+        &sourceSize,
+        retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_build_status buildStatus;
+    for (const auto &device : context.getDevices()) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+    }
+
+    retVal = clBuildProgram(
+        pProgram,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    for (const auto &device : context.getDevices()) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 } // namespace ULT

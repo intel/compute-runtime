@@ -30,7 +30,6 @@ class ProgramFixture {
                                  const std::string &options = "");
 
     void CreateProgramWithSource(Context *pContext,
-                                 cl_device_id *pDeviceList,
                                  const std::string &sourceFileName);
 
   protected:

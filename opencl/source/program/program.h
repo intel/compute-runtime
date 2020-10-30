@@ -126,10 +126,10 @@ class Program : public BaseObject<_cl_program> {
     Program(const Program &) = delete;
     Program &operator=(const Program &) = delete;
 
-    cl_int build(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
+    cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions,
                  bool enableCaching);
 
-    cl_int build(const Device *pDevice, const char *buildOptions, bool enableCaching,
+    cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions, bool enableCaching,
                  std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
 
     MOCKABLE_VIRTUAL cl_int processGenBinary(uint32_t rootDeviceIndex);
@@ -215,8 +215,6 @@ class Program : public BaseObject<_cl_program> {
 
     const std::string &getOptions() const { return options; }
 
-    const std::string &getInternalOptions() const { return internalOptions; }
-
     bool getAllowNonUniform() const {
         return allowNonUniform;
     }
@@ -267,6 +265,7 @@ class Program : public BaseObject<_cl_program> {
     bool isDeviceAssociated(const ClDevice &clDevice) const;
 
     static cl_int processInputDevices(ClDeviceVector *&deviceVectorPtr, cl_uint numDevices, const cl_device_id *deviceList, const ClDeviceVector &allAvailableDevices);
+    MOCKABLE_VIRTUAL void initInternalOptions(std::string &internalOptions) const;
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, uint32_t rootDeviceIndex);
@@ -280,13 +279,13 @@ class Program : public BaseObject<_cl_program> {
     void updateNonUniformFlag();
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
 
-    void extractInternalOptions(const std::string &options);
+    void extractInternalOptions(const std::string &options, std::string &internalOptions);
     MOCKABLE_VIRTUAL bool isFlagOption(ConstStringRef option);
     MOCKABLE_VIRTUAL bool isOptionValueValid(ConstStringRef option, ConstStringRef value);
-    MOCKABLE_VIRTUAL void applyAdditionalOptions();
+    MOCKABLE_VIRTUAL void applyAdditionalOptions(std::string &internalOptions);
 
-    MOCKABLE_VIRTUAL bool appendKernelDebugOptions();
-    void notifyDebuggerWithSourceCode(std::string &filename);
+    MOCKABLE_VIRTUAL bool appendKernelDebugOptions(ClDevice &clDevice, std::string &internalOptions);
+    void notifyDebuggerWithSourceCode(ClDevice &clDevice, std::string &filename);
 
     void setBuildStatus(cl_build_status status);
 
@@ -310,7 +309,6 @@ class Program : public BaseObject<_cl_program> {
 
     std::string sourceCode;
     std::string options;
-    std::string internalOptions;
     static const std::vector<ConstStringRef> internalOptionsToExtract;
 
     uint32_t programOptionVersion = 12U;

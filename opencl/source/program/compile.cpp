@@ -36,7 +36,9 @@ cl_int Program::compile(
     auto defaultClDevice = deviceVector[0];
     UNRECOVERABLE_IF(defaultClDevice == nullptr);
     auto &defaultDevice = defaultClDevice->getDevice();
-    internalOptions.clear();
+    std::string internalOptions;
+    initInternalOptions(internalOptions);
+    std::unordered_map<uint32_t, bool> sourceLevelDebuggerNotified;
     do {
         if (numInputHeaders == 0) {
             if ((headerIncludeNames != nullptr) || (inputHeaders != nullptr)) {
@@ -60,6 +62,7 @@ cl_int Program::compile(
             break;
         }
         for (const auto &device : deviceVector) {
+            sourceLevelDebuggerNotified[device->getRootDeviceIndex()] = false;
             buildStatuses[device] = CL_BUILD_IN_PROGRESS;
         }
 
@@ -121,11 +124,18 @@ cl_int Program::compile(
         }
 
         if (isKernelDebugEnabled()) {
-            std::string filename;
-            appendKernelDebugOptions();
-            notifyDebuggerWithSourceCode(filename);
-            if (!filename.empty()) {
-                options = std::string("-s ") + filename + " " + options;
+            for (const auto &device : deviceVector) {
+                if (sourceLevelDebuggerNotified[device->getRootDeviceIndex()]) {
+                    continue;
+                }
+                appendKernelDebugOptions(*device, internalOptions);
+                std::string filename;
+                notifyDebuggerWithSourceCode(*device, filename);
+                if (!filename.empty()) {
+                    options = std::string("-s ") + filename + " " + options;
+                }
+
+                sourceLevelDebuggerNotified[device->getRootDeviceIndex()] = true;
             }
         }
 
@@ -165,7 +175,6 @@ cl_int Program::compile(
         programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
     }
 
-    internalOptions.clear();
     return retVal;
 }
 } // namespace NEO

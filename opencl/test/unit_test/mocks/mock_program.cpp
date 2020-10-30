@@ -30,12 +30,14 @@ ClDeviceVector toClDeviceVector(ClDevice &clDevice) {
 }
 ProgramInfo *GlobalMockSipProgram::globalSipProgramInfo;
 Device *MockProgram::getDevicePtr() { return this->pDevice; }
+int MockProgram::initInternalOptionsCalled = 0;
 
 std::string MockProgram::getCachedFileName() const {
     auto hwInfo = this->context->getDevice(0)->getHardwareInfo();
     auto input = ArrayRef<const char>(this->sourceCode.c_str(), this->sourceCode.size());
     auto opts = ArrayRef<const char>(this->options.c_str(), this->options.size());
-    auto internalOpts = ArrayRef<const char>(this->internalOptions.c_str(), this->internalOptions.size());
+    auto internalOptions = getInitInternalOptions();
+    auto internalOpts = ArrayRef<const char>(internalOptions.c_str(), internalOptions.size());
     return CompilerCache::getCachedFileName(hwInfo, input, opts, internalOpts);
 }
 

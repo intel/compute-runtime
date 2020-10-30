@@ -41,7 +41,6 @@ class ProgramFromSourceTest : public ContextFixture,
 
         CreateProgramWithSource(
             pContext,
-            &device,
             SourceFileName);
     }
 

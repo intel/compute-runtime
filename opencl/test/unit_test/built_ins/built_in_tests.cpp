@@ -1381,7 +1381,9 @@ TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenDeviceSupportSharedSystemAl
     EXPECT_NE(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
-    EXPECT_THAT(program->getInternalOptions(), testing::HasSubstr(std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
+    std::string builtinInternalOptions;
+    program->initInternalOptions(builtinInternalOptions);
+    EXPECT_THAT(builtinInternalOptions, testing::HasSubstr(std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
 }
 
 TEST_F(BuiltInTests, GivenTypeIntermediateWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
@@ -1426,7 +1428,8 @@ TEST_F(BuiltInTests, GivenForce32bitWhenCreatingProgramThenCorrectKernelIsCreate
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     ASSERT_NE(nullptr, program.get());
 
-    auto builtinInternalOptions = program->getInternalOptions();
+    std::string builtinInternalOptions;
+    program->initInternalOptions(builtinInternalOptions);
     auto it = builtinInternalOptions.find(NEO::CompilerOptions::arch32bit.data());
     EXPECT_EQ(std::string::npos, it);
 

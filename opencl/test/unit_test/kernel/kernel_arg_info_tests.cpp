@@ -31,10 +31,8 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
         ASSERT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        cl_device_id device = pPlatform->getClDevice(0);
         retVal = pProgram->build(
-            1,
-            &device,
+            pProgram->getDevices(),
             nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
