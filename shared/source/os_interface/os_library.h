@@ -32,6 +32,7 @@ class OsLibrary {
     virtual ~OsLibrary() = default;
 
     static OsLibrary *load(const std::string &name);
+    static const std::string createFullSystemPath(const std::string &name);
 
     ConvertibleProcAddr operator[](const std::string &name) {
         return ConvertibleProcAddr{getProcAddress(name)};

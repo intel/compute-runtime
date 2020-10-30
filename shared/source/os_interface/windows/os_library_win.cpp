@@ -19,9 +19,20 @@ OsLibrary *OsLibrary::load(const std::string &name) {
     return ptr;
 }
 
+const std::string OsLibrary::createFullSystemPath(const std::string &name) {
+    CHAR buff[MAX_PATH];
+    UINT ret = 0;
+    ret = Windows::OsLibrary::getSystemDirectoryA(buff, MAX_PATH);
+    buff[ret] = '\\';
+    buff[ret + 1] = 0;
+    strncat_s(&buff[0], sizeof(buff), name.c_str(), _TRUNCATE);
+    return std::string(buff);
+}
+
 namespace Windows {
 decltype(&LoadLibraryExA) OsLibrary::loadLibraryExA = LoadLibraryExA;
 decltype(&GetModuleFileNameA) OsLibrary::getModuleFileNameA = GetModuleFileNameA;
+decltype(&GetSystemDirectoryA) OsLibrary::getSystemDirectoryA = GetSystemDirectoryA;
 
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 __inline HINSTANCE GetModuleHINSTANCE() { return (HINSTANCE)&__ImageBase; }

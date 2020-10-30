@@ -10,6 +10,6 @@
 namespace NEO {
 
 OsLibrary *SourceLevelDebugger::loadDebugger() {
-    return OsLibrary::load(SourceLevelDebugger::dllName);
+    return OsLibrary::load(OsLibrary::createFullSystemPath(SourceLevelDebugger::dllName));
 }
 } // namespace NEO

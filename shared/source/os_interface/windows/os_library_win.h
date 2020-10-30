@@ -24,6 +24,7 @@ class OsLibrary : public NEO::OsLibrary {
 
     bool isLoaded();
     void *getProcAddress(const std::string &procName);
+    static decltype(&GetSystemDirectoryA) getSystemDirectoryA;
 
   protected:
     HMODULE loadDependency(const std::string &dependencyFileName) const;

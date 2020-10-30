@@ -23,6 +23,11 @@ OsLibrary *OsLibrary::load(const std::string &name) {
     }
     return ptr;
 }
+
+const std::string OsLibrary::createFullSystemPath(const std::string &name) {
+    return name;
+}
+
 namespace Linux {
 
 OsLibrary::OsLibrary(const std::string &name) {

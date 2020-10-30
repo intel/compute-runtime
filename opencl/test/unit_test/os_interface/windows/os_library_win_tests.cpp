@@ -27,16 +27,21 @@ class OsLibraryBackup : public Windows::OsLibrary {
     using ModuleNameType = decltype(Windows::OsLibrary::getModuleFileNameA);
     using ModuleNameBackupType = typename VariableBackup<ModuleNameType>;
 
+    using SystemDirectoryType = decltype(Windows::OsLibrary::getSystemDirectoryA);
+    using SystemDirectoryBackupType = typename VariableBackup<SystemDirectoryType>;
+
     struct Backup {
         std::unique_ptr<BackupType> bkp1 = nullptr;
         std::unique_ptr<ModuleNameBackupType> bkp2 = nullptr;
+        std::unique_ptr<SystemDirectoryBackupType> bkp3 = nullptr;
     };
 
   public:
-    static std::unique_ptr<Backup> backup(Type newValue, ModuleNameType newModuleName) {
+    static std::unique_ptr<Backup> backup(Type newValue, ModuleNameType newModuleName, SystemDirectoryType newSystemDirectoryName) {
         std::unique_ptr<Backup> bkp(new Backup());
         bkp->bkp1.reset(new BackupType(&OsLibrary::loadLibraryExA, newValue));
         bkp->bkp2.reset(new ModuleNameBackupType(&OsLibrary::getModuleFileNameA, newModuleName));
+        bkp->bkp3.reset(new SystemDirectoryBackupType(&OsLibrary::getSystemDirectoryA, newSystemDirectoryName));
         return bkp;
     };
 };
@@ -69,17 +74,31 @@ HMODULE WINAPI LoadLibraryExAMock(LPCSTR lpFileName, HANDLE hFile, DWORD dwFlags
     return (HMODULE)1;
 }
 
+UINT WINAPI GetSystemDirectoryAMock(LPSTR lpBuffer, UINT uSize) {
+    const char path[] = "C:\\System";
+    strcpy_s(lpBuffer, sizeof(path), path);
+    return sizeof(path) - 1; // do not include terminating null
+}
+
 TEST(OSLibraryWinTest, WhenLoadDependencyFailsThenFallbackToNonDriverStore) {
-    auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock);
+    auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock, GetSystemDirectoryAMock);
 
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
 
 TEST(OSLibraryWinTest, WhenDependencyLoadsThenProperPathIsConstructed) {
-    auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock);
+    auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock, GetSystemDirectoryAMock);
     VariableBackup<bool> bkpM(&mockWillFail, false);
 
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
     EXPECT_NE(nullptr, library);
+}
+
+TEST(OSLibraryWinTest, WhenCreatingFullSystemPathThenProperPathIsConstructed) {
+    auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock, GetSystemDirectoryAMock);
+    VariableBackup<bool> bkpM(&mockWillFail, false);
+
+    auto fullPath = OsLibrary::createFullSystemPath("test");
+    EXPECT_STREQ("C:\\System\\test", fullPath.c_str());
 }
