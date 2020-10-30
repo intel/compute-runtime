@@ -89,5 +89,5 @@ TEST(MemoryManagerTest, givenOsAgnosticMemoryManagerWhenGetLocalMemoryIsCalledTh
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, false, executionEnvironment);
 
-    EXPECT_EQ(0 * GB, memoryManager.getLocalMemorySize(0u));
+    EXPECT_EQ(0 * GB, memoryManager.getLocalMemorySize(0u, 0xF));
 }

@@ -23,7 +23,7 @@ bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const v
     return mapGpuVaForOneHandleAllocation(allocation, requiredPtr);
 }
 
-uint64_t WddmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex) {
+uint64_t WddmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {
     return 0 * GB;
 }
 } // namespace NEO

@@ -41,7 +41,7 @@ bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloca
     return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
 }
 
-uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex) {
+uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {
     return 0 * GB;
 }
 } // namespace NEO

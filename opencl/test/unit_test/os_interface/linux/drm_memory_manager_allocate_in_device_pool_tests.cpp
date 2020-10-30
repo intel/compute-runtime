@@ -102,7 +102,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationThen
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenGetLocalMemoryIsCalledThenSizeOfLocalMemoryIsReturned) {
-    EXPECT_EQ(0 * GB, memoryManager->getLocalMemorySize(rootDeviceIndex));
+    EXPECT_EQ(0 * GB, memoryManager->getLocalMemorySize(rootDeviceIndex, 0xF));
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMakeAllBuffersResidentSetWhenFlushThenDrmMemoryOperationHandlerIsLocked) {

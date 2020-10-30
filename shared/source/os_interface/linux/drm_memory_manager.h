@@ -40,7 +40,7 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override { return nullptr; }
 
     uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override;
-    uint64_t getLocalMemorySize(uint32_t rootDeviceIndex) override;
+    uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
     void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;

@@ -41,7 +41,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
     return nullptr;
 }
 
-uint64_t OsAgnosticMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex) {
+uint64_t OsAgnosticMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) {
     return 0 * GB;
 }
 

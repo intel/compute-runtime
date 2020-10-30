@@ -473,7 +473,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     auto enabledOcl21Features = device->areOcl21FeaturesEnabled();
     bool addressing32Bit = is32bit || (is64bit && (enabledOcl21Features == false)) || DebugManager.flags.Force32bitAddressing.get();
 
-    auto localMem = pMemManager->getLocalMemorySize(0u);
+    auto localMem = pMemManager->getLocalMemorySize(0u, static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
     auto maxAppAddrSpace = pMemManager->getMaxApplicationAddress() + 1;
     auto memSize = std::min(localMem, maxAppAddrSpace);
     memSize = static_cast<cl_ulong>(memSize * 0.8);

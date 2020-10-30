@@ -114,7 +114,7 @@ class MemoryManager {
     void checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation);
 
     virtual uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) = 0;
-    virtual uint64_t getLocalMemorySize(uint32_t rootDeviceIndex) = 0;
+    virtual uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) = 0;
 
     uint64_t getMaxApplicationAddress() { return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress; };
     MOCKABLE_VIRTUAL uint64_t getInternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory) { return getGfxPartition(rootDeviceIndex)->getHeapBase(selectInternalHeap(useLocalMemory)); }

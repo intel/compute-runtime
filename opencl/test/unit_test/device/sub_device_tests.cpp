@@ -255,11 +255,15 @@ TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWhenGettingGlobalMemorySizeThe
     const uint32_t numSubDevices = 2u;
     UltDeviceFactory deviceFactory{1, numSubDevices};
 
-    auto totalGlobalMemorySize = deviceFactory.rootDevices[0]->getGlobalMemorySize();
+    auto rootDevice = deviceFactory.rootDevices[0];
+
+    auto totalGlobalMemorySize = rootDevice->getGlobalMemorySize(static_cast<uint32_t>(rootDevice->getDeviceBitfield().to_ulong()));
     auto expectedGlobalMemorySize = totalGlobalMemorySize / numSubDevices;
 
     for (const auto &subDevice : deviceFactory.subDevices) {
-        EXPECT_EQ(expectedGlobalMemorySize, static_cast<MockSubDevice *>(subDevice)->getGlobalMemorySize());
+        auto mockSubDevice = static_cast<MockSubDevice *>(subDevice);
+        auto subDeviceBitfield = static_cast<uint32_t>(mockSubDevice->getDeviceBitfield().to_ulong());
+        EXPECT_EQ(expectedGlobalMemorySize, mockSubDevice->getGlobalMemorySize(subDeviceBitfield));
     }
 }
 

@@ -105,7 +105,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationThen
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenGetLocalMemoryIsCalledThenSizeOfLocalMemoryIsReturned) {
-    EXPECT_EQ(0 * GB, memoryManager->getLocalMemorySize(rootDeviceIndex));
+    EXPECT_EQ(0 * GB, memoryManager->getLocalMemorySize(rootDeviceIndex, 0xF));
 }
 
 namespace NEO {
@@ -1204,7 +1204,7 @@ TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCal
 
     auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
     ASSERT_NE(nullptr, memoryInfo);
-    EXPECT_EQ(memoryInfo->getMemoryRegionSize(MemoryBanks::Bank0), memoryManager.getLocalMemorySize(0u));
+    EXPECT_EQ(memoryInfo->getMemoryRegionSize(MemoryBanks::Bank0), memoryManager.getLocalMemorySize(0u, 0xF));
 }
 
 TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledButMemoryInfoIsNotAvailableThenSizeZeroIsReturned) {
@@ -1214,7 +1214,7 @@ TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCal
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
     TestedDrmMemoryManager memoryManager(executionEnvironment);
 
-    EXPECT_EQ(0u, memoryManager.getLocalMemorySize(0u));
+    EXPECT_EQ(0u, memoryManager.getLocalMemorySize(0u, 0xF));
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenGraphicsAllocationInDevicePoolIsAllocatedForImage1DWhenTheSizeReturnedFromGmmIsUnalignedThenCreateBufferObjectWithSizeAlignedTo64KB) {
