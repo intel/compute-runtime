@@ -12,6 +12,6 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> SkylakeOnlyTest;
 
-SKLTEST_F(SkylakeOnlyTest, shouldPassOnSkl) {
+SKLTEST_F(SkylakeOnlyTest, WhenGettingProductFamilyThenSkylakeIsReturned) {
     EXPECT_EQ(IGFX_SKYLAKE, pDevice->getHardwareInfo().platform.eProductFamily);
 }

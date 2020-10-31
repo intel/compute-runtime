@@ -12,7 +12,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> BroadwellOnlyTest;
 
-BDWTEST_F(BroadwellOnlyTest, shouldPassOnBdw) {
+BDWTEST_F(BroadwellOnlyTest, WhenGettingProductFamilyThenBroadwellIsReturned) {
     EXPECT_EQ(IGFX_BROADWELL, pDevice->getHardwareInfo().platform.eProductFamily);
 }
 
