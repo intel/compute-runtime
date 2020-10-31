@@ -24,7 +24,7 @@
 using namespace NEO;
 using namespace BuiltinKernelsSimulation;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, SchedulerSourceTest, PatchGpgpuWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, SchedulerSourceTest, WhenEnqueingThenGpgpuWalkerIsPatchedCorrectly) {
     using MEDIA_STATE_FLUSH = typename FamilyType::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
