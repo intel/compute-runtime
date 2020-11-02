@@ -49,20 +49,23 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
     GraphicsAllocation *createdAllocations[maxThreads];
     std::thread threads[maxThreads];
     std::atomic<size_t> index(0);
+    std::atomic<size_t> allocateCount(0);
 
     auto createFunction = [&]() {
         size_t indexFree = index++;
         AllocationProperties properties(0, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
         createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false);
         EXPECT_NE(nullptr, createdAllocations[indexFree]);
+        EXPECT_GE(1u, memoryManager->peekSharedBosSize());
+        allocateCount++;
     };
 
     for (size_t i = 0; i < maxThreads; i++) {
         threads[i] = std::thread(createFunction);
     }
 
-    while (index < maxThreads) {
-        EXPECT_GE(1u, memoryManager->sharingBufferObjects.size());
+    while (allocateCount < maxThreads) {
+        EXPECT_GE(1u, memoryManager->peekSharedBosSize());
     }
 
     for (size_t i = 0; i < maxThreads; i++) {

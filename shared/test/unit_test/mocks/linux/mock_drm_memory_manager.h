@@ -94,5 +94,11 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
 
     DrmAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
     ~TestedDrmMemoryManager() override;
+    size_t peekSharedBosSize() {
+        size_t size = 0;
+        std::unique_lock<std::mutex> lock(mtx);
+        size = sharingBufferObjects.size();
+        return size;
+    }
 };
 } // namespace NEO
