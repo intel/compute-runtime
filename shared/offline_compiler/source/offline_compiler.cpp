@@ -577,18 +577,18 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (inputFile.empty()) {
             argHelper->printf("Error: Input file name missing.\n");
             retVal = INVALID_COMMAND_LINE;
-        } else if (deviceName.empty()) {
+        } else if (deviceName.empty() && (false == onlySpirV)) {
             argHelper->printf("Error: Device name missing.\n");
             retVal = INVALID_COMMAND_LINE;
         } else if (!argHelper->fileExists(inputFile)) {
             argHelper->printf("Error: Input file %s missing.\n", inputFile.c_str());
             retVal = INVALID_FILE;
         } else {
-            retVal = getHardwareInfo(deviceName.c_str());
-            if (retVal != SUCCESS) {
+            retVal = deviceName.empty() ? 0 : getHardwareInfo(deviceName.c_str());
+            if (retVal != 0) {
                 argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
-            } else {
-                std::string extensionsList = getExtensionsList(hwInfo);
+            } else if (false == deviceName.empty()) {
+                std::string extensionsList = deviceName.empty() ? "" : getExtensionsList(hwInfo);
                 if (requiresOpenClCFeatures(options)) {
                     OpenClCFeaturesContainer openclCFeatures;
                     getOpenclCFeaturesList(hwInfo, openclCFeatures);
@@ -601,6 +601,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                     auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), emptyOpenClCFeatures);
                     CompilerOptions::concatenateAppend(internalOptions, compilerExtensions);
                 }
+            } else {
+                this->internalOptions = CompilerOptions::concatenate("-cl-ext=-all,+cl_khr_3d_image_writes", this->internalOptions);
             }
         }
     }
