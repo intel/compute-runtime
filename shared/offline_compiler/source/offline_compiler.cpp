@@ -7,6 +7,7 @@
 
 #include "offline_compiler.h"
 
+#include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
@@ -153,15 +154,44 @@ int OfflineCompiler::buildIrBinary() {
     return retVal;
 }
 
+std::string OfflineCompiler::validateInputType(const std::string &input, bool isLlvm, bool isSpirv) {
+    auto asBitcode = ArrayRef<const uint8_t>::fromAny(input.data(), input.size());
+    if (isSpirv) {
+        if (NEO::isSpirVBitcode(asBitcode)) {
+            return "";
+        }
+        return "Warning : file does not look like spirv bitcode (wrong magic numbers)";
+    }
+
+    if (isLlvm) {
+        if (NEO::isLlvmBitcode(asBitcode)) {
+            return "";
+        }
+        return "Warning : file does not look like llvm bitcode (wrong magic numbers)";
+    }
+
+    if (NEO::isSpirVBitcode(asBitcode)) {
+        return "Warning : file looks like spirv bitcode (based on magic numbers) - please make sure proper CLI flags are present";
+    }
+
+    if (NEO::isLlvmBitcode(asBitcode)) {
+        return "Warning : file looks like llvm bitcode (based on magic numbers) - please make sure proper CLI flags are present";
+    }
+
+    return "";
+}
+
 int OfflineCompiler::buildSourceCode() {
     int retVal = SUCCESS;
 
     do {
-        if (strcmp(sourceCode.c_str(), "") == 0) {
+        if (sourceCode.empty()) {
             retVal = INVALID_PROGRAM;
             break;
         }
         UNRECOVERABLE_IF(igcDeviceCtx == nullptr);
+        auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm, inputFileSpirV);
+        this->argHelper->printf(inputTypeWarnings.c_str());
 
         CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
         bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;

@@ -14,6 +14,7 @@ namespace NEO {
 
 class MockOfflineCompiler : public OfflineCompiler {
   public:
+    using OfflineCompiler::argHelper;
     using OfflineCompiler::deviceName;
     using OfflineCompiler::elfBinary;
     using OfflineCompiler::fclDeviceCtx;
@@ -71,6 +72,11 @@ class MockOfflineCompiler : public OfflineCompiler {
     void writeOutAllFiles() override {
         writeOutAllFilesCalled++;
         OfflineCompiler::writeOutAllFiles();
+    }
+
+    void clearLog() {
+        uniqueHelper = std::make_unique<OclocArgHelper>();
+        argHelper = uniqueHelper.get();
     }
 
     int buildSourceCodeStatus = 0;

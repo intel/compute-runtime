@@ -86,6 +86,7 @@ class OfflineCompiler {
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
     MOCKABLE_VIRTUAL int buildSourceCode();
+    MOCKABLE_VIRTUAL std::string validateInputType(const std::string &input, bool isLlvm, bool isSpirv);
     int buildIrBinary();
     void updateBuildLog(const char *pErrorString, const size_t errorStringSize);
     MOCKABLE_VIRTUAL bool generateElfBinary();
