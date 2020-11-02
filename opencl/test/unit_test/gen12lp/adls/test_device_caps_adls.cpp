@@ -5,7 +5,6 @@
  *
  */
 
-#include "opencl/source/dll/linux/devices/device_ids.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
@@ -15,7 +14,7 @@ using AdlsUsDeviceIdTest = Test<ClDeviceFixture>;
 
 ADLSTEST_F(AdlsUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short adlsSimulationIds[2] = {
-        DEVICE_ID_4680,
+        0x4680,
         0, // default, non-simulation
     };
     NEO::MockDevice *mockDevice = nullptr;

@@ -15,14 +15,14 @@ using namespace NEO;
 
 TEST(TglLpDeviceIdTest, supportedDeviceId) {
     std::array<DeviceDescriptor, 8> expectedDescriptors = {{
-        {DEV_ID_FF20, &TGLLP_1x6x16::hwInfo, &TGLLP_1x6x16::setupHardwareInfo, GTTYPE_GT2},
-        {DEV_ID_9A49, &TGLLP_1x6x16::hwInfo, &TGLLP_1x6x16::setupHardwareInfo, GTTYPE_GT2},
-        {DEV_ID_9A40, &TGLLP_1x6x16::hwInfo, &TGLLP_1x6x16::setupHardwareInfo, GTTYPE_GT2},
-        {DEV_ID_9A59, &TGLLP_1x6x16::hwInfo, &TGLLP_1x6x16::setupHardwareInfo, GTTYPE_GT2},
-        {DEV_ID_9A60, &TGLLP_1x2x16::hwInfo, &TGLLP_1x2x16::setupHardwareInfo, GTTYPE_GT2},
-        {DEV_ID_9A68, &TGLLP_1x2x16::hwInfo, &TGLLP_1x2x16::setupHardwareInfo, GTTYPE_GT2},
-        {DEV_ID_9A70, &TGLLP_1x2x16::hwInfo, &TGLLP_1x2x16::setupHardwareInfo, GTTYPE_GT2},
-        {DEV_ID_9A78, &TGLLP_1x2x16::hwInfo, &TGLLP_1x2x16::setupHardwareInfo, GTTYPE_GT2},
+        {0xFF20, &TGLLP_1x6x16::hwInfo, &TGLLP_1x6x16::setupHardwareInfo, GTTYPE_GT2},
+        {0x9A49, &TGLLP_1x6x16::hwInfo, &TGLLP_1x6x16::setupHardwareInfo, GTTYPE_GT2},
+        {0x9A40, &TGLLP_1x6x16::hwInfo, &TGLLP_1x6x16::setupHardwareInfo, GTTYPE_GT2},
+        {0x9A59, &TGLLP_1x6x16::hwInfo, &TGLLP_1x6x16::setupHardwareInfo, GTTYPE_GT2},
+        {0x9A60, &TGLLP_1x2x16::hwInfo, &TGLLP_1x2x16::setupHardwareInfo, GTTYPE_GT2},
+        {0x9A68, &TGLLP_1x2x16::hwInfo, &TGLLP_1x2x16::setupHardwareInfo, GTTYPE_GT2},
+        {0x9A70, &TGLLP_1x2x16::hwInfo, &TGLLP_1x2x16::setupHardwareInfo, GTTYPE_GT2},
+        {0x9A78, &TGLLP_1x2x16::hwInfo, &TGLLP_1x2x16::setupHardwareInfo, GTTYPE_GT2},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {

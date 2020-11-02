@@ -15,27 +15,27 @@ using namespace NEO;
 
 TEST(BdwDeviceIdTest, supportedDeviceId) {
     std::array<DeviceDescriptor, 19> expectedDescriptors = {{
-        {IBDW_GT1_DESK_DEVICE_F0_ID, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {IBDW_GT1_HALO_MOBL_DEVICE_F0_ID, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {IBDW_GT1_SERV_DEVICE_F0_ID, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {IBDW_GT1_ULT_MOBL_DEVICE_F0_ID, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {IBDW_GT1_ULX_DEVICE_F0_ID, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
-        {IBDW_GT1_WRK_DEVICE_F0_ID, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {0x0BD1, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {0x1602, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {0x160A, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {0x1606, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {0x160E, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {0x160D, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
 
-        {IBDW_GT2_DESK_DEVICE_F0_ID, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IBDW_GT2_HALO_MOBL_DEVICE_F0_ID, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IBDW_GT2_SERV_DEVICE_F0_ID, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IBDW_GT2_ULT_MOBL_DEVICE_F0_ID, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IBDW_GT2_ULX_DEVICE_F0_ID, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
-        {IBDW_GT2_WRK_DEVICE_F0_ID, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {0x0BD2, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {0x1612, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {0x161A, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {0x1616, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {0x161E, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {0x161D, &BDW_1x3x8::hwInfo, &BDW_1x3x8::setupHardwareInfo, GTTYPE_GT2},
 
-        {IBDW_GT3_DESK_DEVICE_F0_ID, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {IBDW_GT3_HALO_MOBL_DEVICE_F0_ID, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {IBDW_GT3_SERV_DEVICE_F0_ID, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {IBDW_GT3_ULT_MOBL_DEVICE_F0_ID, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {IBDW_GT3_ULT25W_MOBL_DEVICE_F0_ID, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {IBDW_GT3_ULX_DEVICE_F0_ID, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
-        {IBDW_GT3_WRK_DEVICE_F0_ID, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {0x0BD3, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {0x1622, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {0x162A, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {0x1626, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {0x162B, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {0x162E, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {0x162D, &BDW_2x3x8::hwInfo, &BDW_2x3x8::setupHardwareInfo, GTTYPE_GT3},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {

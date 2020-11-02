@@ -44,7 +44,6 @@ set(RUNTIME_SRCS_DLL_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/create_drm_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/devices${BRANCH_DIR_SUFFIX}/devices.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/devices/devices_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/linux/devices/device_ids.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/options_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/os_interface.cpp

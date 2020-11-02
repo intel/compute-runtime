@@ -15,7 +15,7 @@ using namespace NEO;
 
 TEST(LkfDeviceIdTest, supportedDeviceId) {
     std::array<DeviceDescriptor, 1> expectedDescriptors = {{
-        {ILKF_1x8x8_DESK_DEVICE_F0_ID, &LKF_1x8x8::hwInfo, &LKF_1x8x8::setupHardwareInfo, GTTYPE_GT1},
+        {0x9840, &LKF_1x8x8::hwInfo, &LKF_1x8x8::setupHardwareInfo, GTTYPE_GT1},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {

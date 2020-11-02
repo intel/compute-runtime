@@ -14,8 +14,9 @@
 using namespace NEO;
 
 TEST(GlkDeviceIdTest, supportedDeviceId) {
-    std::array<DeviceDescriptor, 1> expectedDescriptors = {{
-        {IGLK_GT2_ULT_18EU_DEVICE_F0_ID, &GLK_1x3x6::hwInfo, &GLK_1x3x6::setupHardwareInfo, GTTYPE_GTA},
+    std::array<DeviceDescriptor, 2> expectedDescriptors = {{
+        {0x3184, &GLK_1x3x6::hwInfo, &GLK_1x3x6::setupHardwareInfo, GTTYPE_GTA},
+        {0x3185, &GLK_1x2x6::hwInfo, &GLK_1x2x6::setupHardwareInfo, GTTYPE_GTA},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
