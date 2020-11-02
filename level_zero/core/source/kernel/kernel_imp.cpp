@@ -574,43 +574,22 @@ ze_result_t KernelImp::getKernelName(size_t *pSize, char *pName) {
 }
 
 ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) {
-
-    pKernelProperties->requiredGroupSizeX = this->groupSize[0];
-    pKernelProperties->requiredGroupSizeY = this->groupSize[1];
-    pKernelProperties->requiredGroupSizeZ = this->groupSize[2];
-
-    pKernelProperties->numKernelArgs =
-        static_cast<uint32_t>(this->kernelImmData->getDescriptor().payloadMappings.explicitArgs.size());
-
-    ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);
-    NEO::KernelInfo *ki = nullptr;
-    for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
-        ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
-        if (ki->kernelDescriptor.kernelMetadata.kernelName.compare(0, ki->kernelDescriptor.kernelMetadata.kernelName.size(), this->kernelImmData->getDescriptor().kernelMetadata.kernelName) == 0) {
-            break;
-        }
-    }
-
-    if (nullptr == ki) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-
-    pKernelProperties->requiredNumSubGroups = static_cast<uint32_t>(ki->patchInfo.executionEnvironment->CompiledSubGroupsNumber);
-    pKernelProperties->requiredSubgroupSize = static_cast<uint32_t>(ki->requiredSubGroupSize);
-    pKernelProperties->maxSubgroupSize = ki->getMaxSimdSize();
-
-    uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
-    uint32_t maxRequiredWorkGroupSize = static_cast<uint32_t>(ki->getMaxRequiredWorkGroupSize(maxKernelWorkGroupSize));
-    uint32_t largestCompiledSIMDSize = static_cast<uint32_t>(ki->patchInfo.executionEnvironment->LargestCompiledSIMDSize);
-    pKernelProperties->maxNumSubgroups = static_cast<uint32_t>(Math::divideAndRoundUp(maxRequiredWorkGroupSize, largestCompiledSIMDSize));
-
-    pKernelProperties->localMemSize = static_cast<uint32_t>(moduleImp->getDevice()->getNEODevice()->getDeviceInfo().localMemSize);
-    pKernelProperties->privateMemSize = ki->patchInfo.pAllocateStatelessPrivateSurface ? ki->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize
-                                                                                       : 0;
-    pKernelProperties->spillMemSize = ki->patchInfo.mediavfestate ? ki->patchInfo.mediavfestate->PerThreadScratchSpace
-                                                                  : 0;
+    const auto &kernelDescriptor = this->kernelImmData->getDescriptor();
+    pKernelProperties->numKernelArgs = static_cast<uint32_t>(kernelDescriptor.payloadMappings.explicitArgs.size());
+    pKernelProperties->requiredGroupSizeX = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
+    pKernelProperties->requiredGroupSizeY = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
+    pKernelProperties->requiredGroupSizeZ = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];
+    pKernelProperties->requiredNumSubGroups = kernelDescriptor.kernelMetadata.compiledSubGroupsNumber;
+    pKernelProperties->requiredSubgroupSize = kernelDescriptor.kernelMetadata.requiredSubGroupSize;
+    pKernelProperties->maxSubgroupSize = kernelDescriptor.kernelAttributes.simdSize;
+    pKernelProperties->localMemSize = kernelDescriptor.kernelAttributes.slmInlineSize;
+    pKernelProperties->privateMemSize = kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
+    pKernelProperties->spillMemSize = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
     memset(pKernelProperties->uuid.kid, 0, ZE_MAX_KERNEL_UUID_SIZE);
     memset(pKernelProperties->uuid.mid, 0, ZE_MAX_MODULE_UUID_SIZE);
+
+    uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
+    pKernelProperties->maxNumSubgroups = maxKernelWorkGroupSize / kernelDescriptor.kernelAttributes.simdSize;
 
     return ZE_RESULT_SUCCESS;
 }

@@ -245,21 +245,6 @@ HWTEST_F(KernelPropertiesTests, givenKernelThenCorrectNameIsRetrieved) {
     delete[] kernelNameRetrieved;
 }
 
-HWTEST_F(KernelPropertiesTests, givenInvalidKernelThenUnitializedIsReturned) {
-    ze_kernel_properties_t kernelProperties = {};
-
-    std::vector<KernelInfo *> prevKernelInfos;
-    L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
-    moduleImp->getTranslationUnit()->programInfo.kernelInfos.swap(prevKernelInfos);
-    EXPECT_EQ(0u, moduleImp->getTranslationUnit()->programInfo.kernelInfos.size());
-
-    ze_result_t res = kernel->getProperties(&kernelProperties);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
-
-    prevKernelInfos.swap(moduleImp->getTranslationUnit()->programInfo.kernelInfos);
-    EXPECT_NE(0u, moduleImp->getTranslationUnit()->programInfo.kernelInfos.size());
-}
-
 HWTEST_F(KernelPropertiesTests, whenInitializingThenCalculatesProperPrivateSurfaceSize) {
     uint32_t computeUnitsUsedForSratch = 0x300;
 
@@ -297,42 +282,22 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
     ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_EQ(numKernelArguments, kernelProperties.numKernelArgs);
+    EXPECT_EQ(6U, kernelProperties.numKernelArgs);
 
-    L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
-    NEO::KernelInfo *ki = nullptr;
-    for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
-        ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
-        if (ki->kernelDescriptor.kernelMetadata.kernelName.compare(0, ki->kernelDescriptor.kernelMetadata.kernelName.size(), kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName) == 0) {
-            break;
-        }
-    }
+    EXPECT_EQ(0U, kernelProperties.requiredNumSubGroups);
+    EXPECT_EQ(0U, kernelProperties.requiredSubgroupSize);
 
-    uint32_t requiredNumSubGroups = static_cast<uint32_t>(ki->patchInfo.executionEnvironment->CompiledSubGroupsNumber);
-    EXPECT_EQ(requiredNumSubGroups, kernelProperties.requiredNumSubGroups);
-
-    uint32_t requiredSubgroupSize = static_cast<uint32_t>(ki->requiredSubGroupSize);
-    EXPECT_EQ(requiredSubgroupSize, kernelProperties.requiredSubgroupSize);
-
-    uint32_t maxSubgroupSize = ki->getMaxSimdSize();
+    uint32_t maxSubgroupSize = this->kernel->getKernelDescriptor().kernelAttributes.simdSize;
+    ASSERT_NE(0U, maxSubgroupSize);
     EXPECT_EQ(maxSubgroupSize, kernelProperties.maxSubgroupSize);
 
     uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
-    uint32_t maxRequiredWorkGroupSize = static_cast<uint32_t>(ki->getMaxRequiredWorkGroupSize(maxKernelWorkGroupSize));
-    uint32_t largestCompiledSIMDSize = static_cast<uint32_t>(ki->patchInfo.executionEnvironment->LargestCompiledSIMDSize);
-    uint32_t maxNumSubgroups = static_cast<uint32_t>(Math::divideAndRoundUp(maxRequiredWorkGroupSize, largestCompiledSIMDSize));
+    uint32_t maxNumSubgroups = maxKernelWorkGroupSize / maxSubgroupSize;
     EXPECT_EQ(maxNumSubgroups, kernelProperties.maxNumSubgroups);
 
-    uint32_t localMemSize = static_cast<uint32_t>(moduleImp->getDevice()->getNEODevice()->getDeviceInfo().localMemSize);
-    EXPECT_EQ(localMemSize, kernelProperties.localMemSize);
-
-    uint32_t privateMemSize = ki->patchInfo.pAllocateStatelessPrivateSurface ? ki->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize
-                                                                             : 0;
-    EXPECT_EQ(privateMemSize, kernelProperties.privateMemSize);
-
-    uint32_t spillMemSize = ki->patchInfo.mediavfestate ? ki->patchInfo.mediavfestate->PerThreadScratchSpace
-                                                        : 0;
-    EXPECT_EQ(spillMemSize, kernelProperties.spillMemSize);
+    EXPECT_EQ(sizeof(float) * 16U, kernelProperties.localMemSize);
+    EXPECT_EQ(0U, kernelProperties.privateMemSize);
+    EXPECT_EQ(0U, kernelProperties.spillMemSize);
 
     uint8_t zeroKid[ZE_MAX_KERNEL_UUID_SIZE];
     uint8_t zeroMid[ZE_MAX_MODULE_UUID_SIZE];

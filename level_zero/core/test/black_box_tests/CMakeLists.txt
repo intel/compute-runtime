@@ -7,8 +7,9 @@
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   set(L0_BLACK_BOX_TEST_PROJECT_FOLDER "ze_intel_gpu/black_box_tests")
   set(TEST_TARGETS
-      zello_world_gpu
       zello_timestamp
+      zello_world_gpu
+      zello_world_jitc_ocloc
   )
 
   foreach(TEST_NAME ${TEST_TARGETS})
@@ -18,7 +19,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
                           PROPERTIES
                           VS_DEBUGGER_COMMAND "$(TargetPath)"
                           VS_DEBUGGER_COMMAND_ARGUMENTS ""
-                          VS_DEBUGGER_WORKING_DIRECTORY "$(OutputPath)"
+                          VS_DEBUGGER_WORKING_DIRECTORY "${TargetDir}"
     )
 
     add_dependencies(${TEST_NAME} ${TARGET_NAME_L0})
@@ -26,4 +27,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 
     set_target_properties(${TEST_NAME} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
   endforeach()
+
+  target_link_libraries(zello_world_jitc_ocloc PUBLIC ocloc_lib)
 endif()
