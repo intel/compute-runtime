@@ -60,12 +60,14 @@ add_custom_target(run_ocloc_segfault_test ALL
                   DEPENDS ocloc_segfault_test
 )
 
-add_custom_command(
-                   TARGET run_ocloc_segfault_test
-                   POST_BUILD
-                   COMMAND echo Running ocloc_segfault_test
-                   COMMAND ocloc_segfault_test
-                   WORKING_DIRECTORY ${TargetDir}
-)
+if(NOT USE_TSAN)
+  add_custom_command(
+                     TARGET run_ocloc_segfault_test
+                     POST_BUILD
+                     COMMAND echo Running ocloc_segfault_test
+                     COMMAND ocloc_segfault_test
+                     WORKING_DIRECTORY ${TargetDir}
+  )
+endif()
 
 set_property(TARGET run_ocloc_segfault_test PROPERTY FOLDER ${CLOC_FOLDER})
