@@ -6,11 +6,11 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 

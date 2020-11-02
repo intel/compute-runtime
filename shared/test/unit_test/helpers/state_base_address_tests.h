@@ -10,8 +10,8 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/unit_test/fixtures/device_fixture.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 struct SBATest : public NEO::DeviceFixture, public ::testing::Test {

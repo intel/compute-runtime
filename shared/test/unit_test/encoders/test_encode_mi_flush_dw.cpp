@@ -9,8 +9,8 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 using namespace NEO;

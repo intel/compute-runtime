@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/utilities/compiler_support.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 using HwHelperTestDg1 = HwHelperTest;
 

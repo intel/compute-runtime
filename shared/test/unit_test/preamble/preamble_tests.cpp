@@ -14,8 +14,8 @@
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 #include <gtest/gtest.h>

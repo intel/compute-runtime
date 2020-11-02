@@ -12,12 +12,12 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 

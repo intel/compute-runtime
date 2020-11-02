@@ -9,9 +9,9 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/enqueue_read_write_image_aub_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

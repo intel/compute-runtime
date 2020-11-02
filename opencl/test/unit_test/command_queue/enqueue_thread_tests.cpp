@@ -7,13 +7,13 @@
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

@@ -12,6 +12,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
@@ -21,7 +22,6 @@
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"

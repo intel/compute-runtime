@@ -9,9 +9,9 @@
 #include "shared/test/unit_test/fixtures/device_fixture.h"
 #include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
 

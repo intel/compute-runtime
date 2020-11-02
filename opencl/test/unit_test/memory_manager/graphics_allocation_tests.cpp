@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
 

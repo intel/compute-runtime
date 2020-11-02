@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -14,7 +15,6 @@
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
 

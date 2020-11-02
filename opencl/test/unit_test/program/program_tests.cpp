@@ -26,6 +26,7 @@
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_compiler_interface.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/gtpin/gtpin_notify.h"
@@ -38,7 +39,6 @@
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

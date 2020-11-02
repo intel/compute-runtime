@@ -19,6 +19,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/dispatch_info.h"
@@ -41,7 +42,6 @@
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"

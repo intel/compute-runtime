@@ -7,7 +7,7 @@
 
 #include "mock_driver_handle.h"
 
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 namespace L0 {
 namespace ult {

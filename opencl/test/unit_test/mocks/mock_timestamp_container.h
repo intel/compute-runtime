@@ -7,8 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/timestamp_packet.h"
-
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 namespace NEO {
 

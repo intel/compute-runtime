@@ -6,9 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"

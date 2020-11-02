@@ -8,8 +8,8 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"

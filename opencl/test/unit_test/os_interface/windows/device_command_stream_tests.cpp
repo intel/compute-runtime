@@ -23,6 +23,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
@@ -39,7 +40,6 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_io_functions.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

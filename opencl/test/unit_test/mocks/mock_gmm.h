@@ -9,11 +9,11 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 namespace NEO {

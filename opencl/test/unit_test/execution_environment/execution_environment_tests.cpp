@@ -13,6 +13,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
@@ -21,7 +22,6 @@
 #include "shared/test/unit_test/utilities/destructor_counted.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"

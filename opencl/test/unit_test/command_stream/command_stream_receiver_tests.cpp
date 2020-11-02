@@ -20,6 +20,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"
@@ -34,7 +35,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

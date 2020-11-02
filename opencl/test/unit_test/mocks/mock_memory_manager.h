@@ -7,9 +7,9 @@
 
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_host_ptr_manager.h"
 

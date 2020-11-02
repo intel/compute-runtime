@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -19,11 +19,10 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/os_memory.h"
-
-#include "opencl/source/helpers/surface_formats.h"
 
 #include <cassert>
 

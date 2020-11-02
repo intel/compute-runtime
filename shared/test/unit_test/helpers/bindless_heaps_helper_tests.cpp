@@ -9,9 +9,9 @@
 #include "shared/test/unit_test/fixtures/front_window_fixture.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/mocks/ult_device_factory.h"
 
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 using namespace NEO;

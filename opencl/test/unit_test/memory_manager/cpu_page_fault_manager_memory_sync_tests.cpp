@@ -6,13 +6,13 @@
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 #include "gtest/gtest.h"

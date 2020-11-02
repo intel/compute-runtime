@@ -41,6 +41,9 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_graphics_allocation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_graphics_allocation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/os_agnostic_memory_manager_allocate_in_device_pool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/physical_address_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/residency.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/residency.h

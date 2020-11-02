@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"

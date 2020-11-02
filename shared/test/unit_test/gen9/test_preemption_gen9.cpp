@@ -12,8 +12,7 @@
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
 #include "shared/test/unit_test/mocks/mock_command_stream_receiver.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
-
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

@@ -8,6 +8,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
@@ -19,7 +20,6 @@
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"

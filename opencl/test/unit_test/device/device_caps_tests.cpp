@@ -6,13 +6,13 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"

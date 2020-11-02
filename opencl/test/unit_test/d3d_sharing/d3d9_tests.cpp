@@ -5,11 +5,11 @@
  *
  */
 
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/os_interface/windows/d3d_sharing_functions.h"
 #include "opencl/source/sharings/d3d/cl_d3d_api.h"
 #include "opencl/source/sharings/d3d/d3d_surface.h"

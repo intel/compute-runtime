@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/test/unit_test/fixtures/aub_command_stream_receiver_fixture.h"
@@ -22,7 +23,6 @@
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"

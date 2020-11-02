@@ -24,13 +24,13 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/source/helpers/neo_driver_version.h"
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
 #include "driver_version.h"

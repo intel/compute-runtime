@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"

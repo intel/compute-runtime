@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/kernel/kernel.h"
@@ -14,7 +15,6 @@
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

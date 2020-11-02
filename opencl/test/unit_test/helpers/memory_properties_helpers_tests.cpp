@@ -6,12 +6,12 @@
  */
 
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/mocks/ult_device_factory.h"
 
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "CL/cl_ext_intel.h"
 #include "gtest/gtest.h"

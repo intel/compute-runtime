@@ -7,9 +7,9 @@
 
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/program/kernel_info.h"
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 #include "level_zero/core/source/context/context.h"

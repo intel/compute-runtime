@@ -10,9 +10,9 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 

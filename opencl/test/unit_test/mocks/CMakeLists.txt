@@ -52,7 +52,6 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_ptr_manager.h

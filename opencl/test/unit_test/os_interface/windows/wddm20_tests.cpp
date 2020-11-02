@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
@@ -24,7 +25,6 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
 
-#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
