@@ -72,7 +72,7 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
     }
 
     if ((result != 0) && (logLen == 0)) {
-        outCompilerLog = "Unknown error, ocloc returnerd : " + std::to_string(result) + "\n";
+        outCompilerLog = "Unknown error, ocloc returned : " + std::to_string(result) + "\n";
         return ret;
     }
 
