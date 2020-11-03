@@ -164,7 +164,7 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
     }
 };
 
-TEST_P(EnqueueWaitlistTest, BlockingWaitlist) {
+TEST_P(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenWaitingForOutputEventThenOutputEventIsCompleted) {
 
     // Set up a user event, which we use as a gate for the second event
     clEventWrapper gateEvent = clCreateUserEvent(context, &error);
@@ -186,7 +186,7 @@ TEST_P(EnqueueWaitlistTest, BlockingWaitlist) {
 }
 
 typedef EnqueueWaitlistTest EnqueueWaitlistTestTwoMapEnqueues;
-TEST_P(EnqueueWaitlistTestTwoMapEnqueues, TestPreviousVirtualEvent) {
+TEST_P(EnqueueWaitlistTestTwoMapEnqueues, GivenCompletedUserEventOnWaitlistWhenWaitingForOutputEventThenOutputEventIsCompleted) {
 
     // Set up a user event, which we use as a gate for the second event
     clEventWrapper gateEvent = clCreateUserEvent(context, &error);
@@ -206,7 +206,7 @@ TEST_P(EnqueueWaitlistTestTwoMapEnqueues, TestPreviousVirtualEvent) {
     test_error(error, "Unable to wait for actual test event");
 }
 
-TEST_P(EnqueueWaitlistTest, BlockingWaitlistNoOutEvent) {
+TEST_P(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenFinishingCommandQueueThenSuccessIsReturned) {
 
     // Set up a user event, which we use as a gate for the second event
     clEventWrapper gateEvent = clCreateUserEvent(context, &error);
