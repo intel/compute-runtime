@@ -514,30 +514,6 @@ void DeviceImp::activateMetricGroups() {
 }
 uint32_t DeviceImp::getMaxNumHwThreads() const { return maxNumHwThreads; }
 
-ze_result_t DeviceImp::registerCLMemory(cl_context context, cl_mem mem, void **ptr) {
-    NEO::MemObj *memObj = static_cast<NEO::MemObj *>(mem);
-    NEO::GraphicsAllocation *graphicsAllocation = memObj->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
-    DEBUG_BREAK_IF(graphicsAllocation == nullptr);
-
-    auto allocation = allocateManagedMemoryFromHostPtr(
-        graphicsAllocation->getUnderlyingBuffer(),
-        graphicsAllocation->getUnderlyingBufferSize(), nullptr);
-
-    *ptr = allocation->getUnderlyingBuffer();
-
-    return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t DeviceImp::registerCLProgram(cl_context context, cl_program program,
-                                         ze_module_handle_t *phModule) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t DeviceImp::registerCLCommandQueue(cl_context context, cl_command_queue commandQueue,
-                                              ze_command_queue_handle_t *phCommandQueue) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 const NEO::HardwareInfo &DeviceImp::getHwInfo() const { return neoDevice->getHardwareInfo(); }
 
 bool DeviceImp::isMultiDeviceCapable() const {

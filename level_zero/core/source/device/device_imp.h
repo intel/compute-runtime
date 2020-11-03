@@ -55,11 +55,6 @@ struct DeviceImp : public Device {
     uint32_t getPlatformInfo() const override;
     MetricContext &getMetricContext() override;
     uint32_t getMaxNumHwThreads() const override;
-    ze_result_t registerCLMemory(cl_context context, cl_mem mem, void **ptr) override;
-    ze_result_t registerCLProgram(cl_context context, cl_program program,
-                                  ze_module_handle_t *phModule) override;
-    ze_result_t registerCLCommandQueue(cl_context context, cl_command_queue commandQueue,
-                                       ze_command_queue_handle_t *phCommandQueue) override;
     ze_result_t activateMetricGroups(uint32_t count,
                                      zet_metric_group_handle_t *phMetricGroups) override;
 

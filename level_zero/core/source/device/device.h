@@ -72,11 +72,6 @@ struct Device : _ze_device_handle_t {
                                                        ze_command_queue_group_properties_t *pCommandQueueGroupProperties) = 0;
     virtual ze_result_t systemBarrier() = 0;
 
-    virtual ze_result_t registerCLMemory(cl_context context, cl_mem mem, void **ptr) = 0;
-    virtual ze_result_t registerCLProgram(cl_context context, cl_program program,
-                                          ze_module_handle_t *phModule) = 0;
-    virtual ze_result_t registerCLCommandQueue(cl_context context, cl_command_queue commandQueue,
-                                               ze_command_queue_handle_t *phCommandQueue) = 0;
     virtual ~Device() = default;
 
     virtual void *getExecEnvironment() = 0;
