@@ -113,7 +113,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetExternalMemoryProperties(
     ze_device_handle_t hDevice,
     ze_device_external_memory_properties_t *pExternalMemoryProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Device::fromHandle(hDevice)->getExternalMemoryProperties(pExternalMemoryProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

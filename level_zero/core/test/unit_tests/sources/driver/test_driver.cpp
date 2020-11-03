@@ -35,11 +35,12 @@ TEST(zeInit, whenCallingZeInitThenInitializeOnDriverIsCalled) {
 
 using DriverVersionTest = Test<DeviceFixture>;
 
-TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenUnsupportedIsReturned) {
+TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenZeroExtensionPropertiesAreReturned) {
     uint32_t count = 0;
     ze_driver_extension_properties_t properties;
     ze_result_t res = driverHandle->getExtensionProperties(&count, &properties);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+    EXPECT_EQ(count, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 TEST_F(DriverVersionTest, returnsExpectedDriverVersion) {

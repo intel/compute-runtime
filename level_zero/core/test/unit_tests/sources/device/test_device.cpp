@@ -267,6 +267,21 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenTimestampValidBitsAreCorrectly
     EXPECT_EQ(32u, deviceProps.kernelTimestampValidBits);
 }
 
+TEST_F(DeviceTest, whenGetExternalMemoryPropertiesIsCalledThenSuccessIsReturnedAndNoPropertiesAreReturned) {
+    ze_device_external_memory_properties_t externalMemoryProperties;
+
+    ze_result_t result = device->getExternalMemoryProperties(&externalMemoryProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(externalMemoryProperties.imageExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD, 0u);
+    EXPECT_EQ(externalMemoryProperties.imageExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF, 0u);
+    EXPECT_EQ(externalMemoryProperties.imageImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD, 0u);
+    EXPECT_EQ(externalMemoryProperties.imageImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF, 0u);
+    EXPECT_EQ(externalMemoryProperties.memoryAllocationExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD, 0u);
+    EXPECT_EQ(externalMemoryProperties.memoryAllocationExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF, 0u);
+    EXPECT_EQ(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD, 0u);
+    EXPECT_EQ(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF, 0u);
+}
+
 struct DeviceHasNoDoubleFp64Test : public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);

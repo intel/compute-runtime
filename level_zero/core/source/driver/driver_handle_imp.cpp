@@ -105,7 +105,10 @@ ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, 
 
 ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
                                                     ze_driver_extension_properties_t *pExtensionProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    *pCount = 0;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DriverHandleImp::getMemAllocProperties(const void *ptr,
