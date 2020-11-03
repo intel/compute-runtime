@@ -486,6 +486,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDe
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     cl_build_status buildStatus;
+    cl_program_binary_type binaryType;
+    cl_program_binary_type expectedBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
     for (const auto &device : context.getDevices()) {
         retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -509,6 +511,9 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDe
         retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(expectedBinaryType, binaryType);
     }
     for (const auto &device : devicesNotForBuild) {
         retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
@@ -554,6 +559,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingWithoutInputD
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     cl_build_status buildStatus;
+    cl_program_binary_type binaryType;
+    cl_program_binary_type expectedBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
     for (const auto &device : context.getDevices()) {
         retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -574,6 +581,9 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingWithoutInputD
         retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(expectedBinaryType, binaryType);
     }
 
     retVal = clReleaseProgram(pProgram);

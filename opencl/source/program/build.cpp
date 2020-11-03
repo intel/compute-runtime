@@ -206,6 +206,7 @@ cl_int Program::build(
         for (const auto &device : deviceVector) {
             buildStatuses[device] = CL_BUILD_SUCCESS;
         }
+        programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
     }
 
     return retVal;
