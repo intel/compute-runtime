@@ -218,7 +218,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
         }
         tmpCmd.setTransferWidth(static_cast<uint32_t>(width));
         tmpCmd.setTransferHeight(static_cast<uint32_t>(height));
-        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width * patternSize));
+        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
 
         appendBlitCommandsForFillBuffer(dstAlloc, tmpCmd, rootDeviceEnvironment);
 

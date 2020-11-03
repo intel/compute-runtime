@@ -58,8 +58,8 @@ constexpr uint64_t MB = MemoryConstants::megaByte;
 constexpr uint64_t GB = MemoryConstants::gigaByte;
 
 namespace BlitterConstants {
-constexpr uint64_t maxBlitWidth = 0x3F80;      // 0x4000 aligned to 128
-constexpr uint64_t maxBlitHeight = 0x3FC0;     // 0x4000 aligned to cacheline size
+constexpr uint64_t maxBlitWidth = 0x4000;
+constexpr uint64_t maxBlitHeight = 0x4000;
 constexpr uint64_t maxBlitSetWidth = 0x1FF80;  // 0x20000 aligned to 128
 constexpr uint64_t maxBlitSetHeight = 0x1FFC0; // 0x20000 aligned to cacheline size
 

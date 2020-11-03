@@ -206,7 +206,7 @@ HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBli
     {
         auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
         EXPECT_EQ(cmd->getTransferHeight(), 2u);
-        EXPECT_EQ(cmd->getDestinationPitch(), BlitterConstants::maxBlitWidth * sizeof(uint32_t));
+        EXPECT_EQ(cmd->getDestinationPitch(), BlitterConstants::maxBlitWidth);
     }
 }
 
