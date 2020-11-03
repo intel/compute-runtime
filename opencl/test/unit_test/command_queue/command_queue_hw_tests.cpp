@@ -413,6 +413,16 @@ HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIs
     mockCSR->getMemoryManager()->freeGraphicsMemory(constantSurface);
 }
 
+HWTEST_F(CommandQueueHwTest, whenReleaseQueueCalledThenFlushIsCalled) {
+    cl_int retVal = 0;
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
+    mockCmdQ->incRefInternal();
+    releaseQueue<CommandQueue>(mockCmdQ, retVal);
+    EXPECT_TRUE(mockCmdQ->flushCalled);
+    //this call will release the queue
+    mockCmdQ->decRefInternal();
+}
+
 typedef CommandQueueHwTest BlockedCommandQueueTest;
 
 HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhenBlockedCommandIsBeingSubmittedThenQueueHeapsAreNotUsed) {

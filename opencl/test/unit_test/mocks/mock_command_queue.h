@@ -209,6 +209,11 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
                        cl_queue_properties *properties) : BaseClass(context, device, properties, false) {
     }
 
+    cl_int flush() override {
+        flushCalled = true;
+        return BaseClass::flush();
+    }
+
     void setOoqEnabled() {
         commandQueueProperties |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     }
@@ -323,6 +328,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     } overrideIsCacheFlushForBcsRequired;
     BuiltinOpParams kernelParams;
     std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
+    bool flushCalled = false;
 
     LinearStream *peekCommandStream() {
         return this->commandStream;

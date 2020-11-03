@@ -50,6 +50,18 @@ void releaseQueue(cl_command_queue commandQueue, cl_int &retVal) {
     }
 }
 
+template <>
+inline void releaseQueue<CommandQueue>(cl_command_queue commandQueue, cl_int &retVal) {
+    using BaseType = typename CommandQueue::BaseType;
+    auto queue = castToObject<CommandQueue>(static_cast<BaseType *>(commandQueue));
+    if (queue) {
+        queue->flush();
+        releaseVirtualEvent(*queue);
+        queue->release();
+        retVal = CL_SUCCESS;
+    }
+}
+
 template <typename QueueType>
 cl_int getQueueInfo(QueueType *queue,
                     cl_command_queue_info paramName,
