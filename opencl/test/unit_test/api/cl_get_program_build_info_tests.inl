@@ -98,7 +98,7 @@ TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledT
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingForSpecificDevicesThenOnlySpecificDevicesReportBuildStatus) {
+TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingForSpecificDevicesThenOnlySpecificDevicesAndTheirSubDevicesReportBuildStatus) {
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -139,7 +139,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingForSpecificD
     }
 
     cl_device_id devicesForCompilation[] = {context.getDevice(1), context.getDevice(3)};
-    cl_device_id devicesNotForCompilation[] = {context.getDevice(0), context.getDevice(2), context.getDevice(4), context.getDevice(5)};
+    cl_device_id associatedSubDevices[] = {context.getDevice(4), context.getDevice(5)};
+    cl_device_id devicesNotForCompilation[] = {context.getDevice(0), context.getDevice(2)};
 
     retVal = clCompileProgram(
         pProgram,
@@ -160,6 +161,11 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingForSpecificD
         EXPECT_EQ(CL_BUILD_NONE, buildStatus);
     }
     for (const auto &device : devicesForCompilation) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+    }
+    for (const auto &device : associatedSubDevices) {
         retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
@@ -452,7 +458,7 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingWithoutInputDe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDevicesThenOnlySpecificDevicesReportBuildStatus) {
+TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDevicesThenOnlySpecificDevicesAndTheirSubDevicesReportBuildStatus) {
     MockProgram *pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -495,7 +501,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDe
     }
 
     cl_device_id devicesForBuild[] = {context.getDevice(1), context.getDevice(3)};
-    cl_device_id devicesNotForBuild[] = {context.getDevice(0), context.getDevice(2), context.getDevice(4), context.getDevice(5)};
+    cl_device_id associatedSubDevices[] = {context.getDevice(4), context.getDevice(5)};
+    cl_device_id devicesNotForBuild[] = {context.getDevice(0), context.getDevice(2)};
 
     retVal = clBuildProgram(
         pProgram,
@@ -508,6 +515,14 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDe
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     for (const auto &device : devicesForBuild) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(expectedBinaryType, binaryType);
+    }
+    for (const auto &device : associatedSubDevices) {
         retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);

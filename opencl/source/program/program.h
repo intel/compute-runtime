@@ -155,7 +155,7 @@ class Program : public BaseObject<_cl_program> {
                         size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
 
     bool isBuilt() const {
-        return std::all_of(this->buildStatuses.begin(), this->buildStatuses.end(), [](auto pair) { return pair.second == CL_SUCCESS; });
+        return std::all_of(this->deviceBuildInfos.begin(), this->deviceBuildInfos.end(), [](auto deviceBuildInfo) { return deviceBuildInfo.second.buildStatus == CL_SUCCESS; });
     }
 
     Context &getContext() const {
@@ -288,6 +288,7 @@ class Program : public BaseObject<_cl_program> {
     void notifyDebuggerWithSourceCode(ClDevice &clDevice, std::string &filename);
 
     void setBuildStatus(cl_build_status status);
+    void setBuildStatusSuccess(const ClDeviceVector &deviceVector);
 
     cl_program_binary_type programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     bool isSpirV = false;
@@ -304,7 +305,12 @@ class Program : public BaseObject<_cl_program> {
     std::vector<KernelInfo *> parentKernelInfoArray;
     std::vector<KernelInfo *> subgroupKernelInfoArray;
 
-    std::unordered_map<ClDevice *, int> buildStatuses;
+    struct DeviceBuildInfo {
+        StackVec<ClDevice *, 2> associatedSubDevices;
+        cl_build_status buildStatus = CL_BUILD_NONE;
+    };
+
+    std::unordered_map<ClDevice *, DeviceBuildInfo> deviceBuildInfos;
     bool isCreatedFromBinary = false;
 
     std::string sourceCode;

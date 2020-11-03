@@ -52,7 +52,7 @@ cl_int Program::compile(
             }
         }
 
-        if (std::any_of(deviceVector.begin(), deviceVector.end(), [&](auto device) { return CL_BUILD_IN_PROGRESS == buildStatuses[device]; })) {
+        if (std::any_of(deviceVector.begin(), deviceVector.end(), [&](auto device) { return CL_BUILD_IN_PROGRESS == deviceBuildInfos[device].buildStatus; })) {
             retVal = CL_INVALID_OPERATION;
             break;
         }
@@ -63,7 +63,7 @@ cl_int Program::compile(
         }
         for (const auto &device : deviceVector) {
             sourceLevelDebuggerNotified[device->getRootDeviceIndex()] = false;
-            buildStatuses[device] = CL_BUILD_IN_PROGRESS;
+            deviceBuildInfos[device].buildStatus = CL_BUILD_IN_PROGRESS;
         }
 
         options = (buildOptions != nullptr) ? buildOptions : "";
@@ -165,13 +165,11 @@ cl_int Program::compile(
 
     if (retVal != CL_SUCCESS) {
         for (const auto &device : deviceVector) {
-            buildStatuses[device] = CL_BUILD_ERROR;
+            deviceBuildInfos[device].buildStatus = CL_BUILD_ERROR;
         }
         programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     } else {
-        for (const auto &device : deviceVector) {
-            buildStatuses[device] = CL_BUILD_SUCCESS;
-        }
+        setBuildStatusSuccess(deviceVector);
         programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
     }
 

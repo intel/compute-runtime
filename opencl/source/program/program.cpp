@@ -55,7 +55,15 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
         if (device->getRootDeviceIndex() > maxRootDeviceIndex) {
             maxRootDeviceIndex = device->getRootDeviceIndex();
         }
-        buildStatuses[device] = CL_BUILD_NONE;
+        deviceBuildInfos[device] = {};
+        if (device->getNumAvailableDevices() > 1) {
+            for (auto i = 0u; i < device->getNumAvailableDevices(); i++) {
+                auto subDevice = device->getDeviceById(i);
+                if (isDeviceAssociated(*subDevice)) {
+                    deviceBuildInfos[device].associatedSubDevices.push_back(subDevice);
+                }
+            }
+        }
     }
 
     buildInfos.resize(maxRootDeviceIndex + 1);
@@ -484,8 +492,16 @@ cl_int Program::packDeviceBinary(uint32_t rootDeviceIndex) {
 }
 
 void Program::setBuildStatus(cl_build_status status) {
-    for (auto &buildStatusPair : buildStatuses) {
-        buildStatusPair.second = status;
+    for (auto &deviceBuildInfo : deviceBuildInfos) {
+        deviceBuildInfo.second.buildStatus = status;
+    }
+}
+void Program::setBuildStatusSuccess(const ClDeviceVector &deviceVector) {
+    for (const auto &device : deviceVector) {
+        deviceBuildInfos[device].buildStatus = CL_BUILD_SUCCESS;
+        for (const auto &subDevice : deviceBuildInfos[device].associatedSubDevices) {
+            deviceBuildInfos[subDevice].buildStatus = CL_BUILD_SUCCESS;
+        }
     }
 }
 

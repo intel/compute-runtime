@@ -187,7 +187,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
     switch (paramName) {
     case CL_PROGRAM_BUILD_STATUS:
         srcSize = retSize = sizeof(cl_build_status);
-        pSrc = &buildStatuses.at(pClDev);
+        pSrc = &deviceBuildInfos.at(pClDev).buildStatus;
         break;
 
     case CL_PROGRAM_BUILD_OPTIONS:
