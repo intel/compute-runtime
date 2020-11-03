@@ -954,6 +954,26 @@ TEST_F(clCreateImage2DTest, GivenValidParametersWhenCreating2DImageThenImageIsCr
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clCreateImage2DTest, GivenValidParametersWhenCreating2DImageAndImageFormatIsClIntencityClFloatThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
+    cl_image_format imageFormatRW = {CL_INTENSITY, CL_FLOAT};
+    auto image = clCreateImage2D(
+        pContext,
+        CL_MEM_READ_WRITE,
+        &imageFormatRW,
+        10,
+        10,
+        0,
+        0,
+        &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST_F(clCreateImage2DTest, GivenNoPtrToReturnValueWhenCreating2DImageThenImageIsCreated) {
     REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     auto image = clCreateImage2D(
