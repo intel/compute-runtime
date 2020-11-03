@@ -14,19 +14,18 @@
 namespace NEO {
 
 constexpr size_t globalSshAllocationSize = 4 * MemoryConstants::pageSize64k;
+using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
 
 BindlessHeapsHelper::BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex) : memManager(memManager), isMultiOsContextCapable(isMultiOsContextCapable), rootDeviceIndex(rootDeviceIndex) {
-    auto specialHeapAllocation = getHeapAllocation(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k);
-    UNRECOVERABLE_IF(specialHeapAllocation == nullptr);
-    ssHeapsAllocations.push_back(specialHeapAllocation);
-    specialSsh = std::make_unique<IndirectHeap>(specialHeapAllocation, false);
+    for (auto heapType = 0; heapType < BindlesHeapType::NUM_HEAP_TYPES; heapType++) {
+        auto allocInFrontWindow = heapType != BindlesHeapType::GLOBAL_DSH;
+        auto heapAllocation = getHeapAllocation(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, allocInFrontWindow);
+        UNRECOVERABLE_IF(heapAllocation == nullptr);
+        ssHeapsAllocations.push_back(heapAllocation);
+        surfaceStateHeaps[heapType] = std::make_unique<IndirectHeap>(heapAllocation, false);
+    }
 
-    auto globalSshAllocation = getHeapAllocation(globalSshAllocationSize, MemoryConstants::pageSize64k);
-    UNRECOVERABLE_IF(globalSshAllocation == nullptr);
-    ssHeapsAllocations.push_back(globalSshAllocation);
-    globalSsh = std::make_unique<IndirectHeap>(globalSshAllocation, false);
-
-    borderColorStates = getHeapAllocation(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    borderColorStates = getHeapAllocation(MemoryConstants::pageSize, MemoryConstants::pageSize, true);
     UNRECOVERABLE_IF(borderColorStates == nullptr);
     float borderColorDefault[4] = {0, 0, 0, 0};
     memcpy_s(borderColorStates->getUnderlyingBuffer(), sizeof(borderColorDefault), borderColorDefault, sizeof(borderColorDefault));
@@ -42,38 +41,46 @@ BindlessHeapsHelper::~BindlessHeapsHelper() {
     ssHeapsAllocations.clear();
 }
 
-GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size_t alignment) {
+GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow) {
     auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
     NEO::AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType, isMultiOsContextCapable, false};
-    properties.flags.use32BitFrontWindow = true;
+    properties.flags.use32BitFrontWindow = allocInFrontWindow;
     properties.alignment = alignment;
 
     return this->memManager->allocateGraphicsMemoryWithProperties(properties);
 }
 
-SurfaceStateInHeapInfo *BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, void *ssPtr, GraphicsAllocation *surfaceAllocation) {
-    auto ssAllocatedInfo = surfaceStateInHeapAllocationMap.find(surfaceAllocation);
-    if (ssAllocatedInfo != surfaceStateInHeapAllocationMap.end()) {
-        return ssAllocatedInfo->second.get();
+SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType) {
+    auto heap = surfaceStateHeaps[heapType].get();
+    if (heapType == BindlesHeapType::GLOBAL_SSH) {
+        auto ssAllocatedInfo = surfaceStateInHeapAllocationMap.find(surfaceAllocation);
+        if (ssAllocatedInfo != surfaceStateInHeapAllocationMap.end()) {
+            return *ssAllocatedInfo->second.get();
+        }
     }
-    void *ptrInHeap = getSpaceInSsh(ssSize);
-    memcpy_s(ptrInHeap, ssSize, ssPtr, ssSize);
-    auto bindlessOffset = globalSsh->getGraphicsAllocation()->getGpuAddress() - globalSsh->getGraphicsAllocation()->getGpuBaseAddress() + globalSsh->getUsed() - ssSize;
-    std::pair<GraphicsAllocation *, std::unique_ptr<SurfaceStateInHeapInfo>> pair(surfaceAllocation, std::make_unique<SurfaceStateInHeapInfo>(SurfaceStateInHeapInfo{globalSsh->getGraphicsAllocation(), bindlessOffset}));
-    auto bindlesInfo = pair.second.get();
-    surfaceStateInHeapAllocationMap.insert(std::move(pair));
+    void *ptrInHeap = getSpaceInHeap(ssSize, heapType);
+    auto bindlessOffset = heap->getGraphicsAllocation()->getGpuAddress() - heap->getGraphicsAllocation()->getGpuBaseAddress() + heap->getUsed() - ssSize;
+    SurfaceStateInHeapInfo bindlesInfo;
+    if (heapType == BindlesHeapType::GLOBAL_SSH) {
+        std::pair<GraphicsAllocation *, std::unique_ptr<SurfaceStateInHeapInfo>> pair(surfaceAllocation, std::make_unique<SurfaceStateInHeapInfo>(SurfaceStateInHeapInfo{heap->getGraphicsAllocation(), bindlessOffset, ptrInHeap}));
+        bindlesInfo = *pair.second;
+        surfaceStateInHeapAllocationMap.insert(std::move(pair));
+    } else {
+        bindlesInfo = SurfaceStateInHeapInfo{heap->getGraphicsAllocation(), bindlessOffset, ptrInHeap};
+    }
     return bindlesInfo;
 }
 
-void *BindlessHeapsHelper::getSpaceInSsh(size_t ssSize) {
-    if (globalSsh->getAvailableSpace() < ssSize) {
-        growGlobalSSh();
+void *BindlessHeapsHelper::getSpaceInHeap(size_t ssSize, BindlesHeapType heapType) {
+    auto heap = surfaceStateHeaps[heapType].get();
+    if (heap->getAvailableSpace() < ssSize) {
+        growHeap(heapType);
     }
-    return globalSsh->getSpace(ssSize);
+    return heap->getSpace(ssSize);
 }
 
-uint64_t BindlessHeapsHelper::getGlobalSshBase() {
-    return globalSsh->getGraphicsAllocation()->getGpuBaseAddress();
+uint64_t BindlessHeapsHelper::getGlobalHeapsBase() {
+    return surfaceStateHeaps[BindlesHeapType::GLOBAL_SSH]->getGraphicsAllocation()->getGpuBaseAddress();
 }
 
 uint32_t BindlessHeapsHelper::getDefaultBorderColorOffset() {
@@ -83,13 +90,15 @@ uint32_t BindlessHeapsHelper::getAlphaBorderColorOffset() {
     return getDefaultBorderColorOffset() + 4 * sizeof(float);
 }
 
-void BindlessHeapsHelper::growGlobalSSh() {
-    auto newAlloc = getHeapAllocation(globalSshAllocationSize, MemoryConstants::pageSize64k);
+void BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {
+    auto heap = surfaceStateHeaps[heapType].get();
+    auto allocInFrontWindow = heapType != BindlesHeapType::GLOBAL_DSH;
+    auto newAlloc = getHeapAllocation(globalSshAllocationSize, MemoryConstants::pageSize64k, allocInFrontWindow);
     UNRECOVERABLE_IF(newAlloc == nullptr);
     ssHeapsAllocations.push_back(newAlloc);
-    globalSsh->replaceGraphicsAllocation(newAlloc);
-    globalSsh->replaceBuffer(newAlloc->getUnderlyingBuffer(),
-                             newAlloc->getUnderlyingBufferSize());
+    heap->replaceGraphicsAllocation(newAlloc);
+    heap->replaceBuffer(newAlloc->getUnderlyingBuffer(),
+                        newAlloc->getUnderlyingBufferSize());
 }
 
 } // namespace NEO
