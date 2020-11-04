@@ -116,9 +116,10 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
 
     UNRECOVERABLE_IF(csr == nullptr);
 
-    *commandQueue = CommandQueue::create(productFamily, this, csr, desc, NEO::EngineGroupType::Copy == static_cast<NEO::EngineGroupType>(engineGroupIndex));
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    *commandQueue = CommandQueue::create(productFamily, this, csr, desc, NEO::EngineGroupType::Copy == static_cast<NEO::EngineGroupType>(engineGroupIndex), returnValue);
 
-    return ZE_RESULT_SUCCESS;
+    return returnValue;
 }
 
 ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,

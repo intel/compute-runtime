@@ -28,14 +28,20 @@ ze_result_t CommandQueueImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-void CommandQueueImp::initialize(bool copyOnly) {
-    buffers.initialize(device, totalCmdBufferSize);
-    NEO::GraphicsAllocation *bufferAllocation = buffers.getCurrentBufferAllocation();
-    commandStream = new NEO::LinearStream(bufferAllocation->getUnderlyingBuffer(),
-                                          defaultQueueCmdBufferSize);
-    UNRECOVERABLE_IF(commandStream == nullptr);
-    commandStream->replaceGraphicsAllocation(bufferAllocation);
-    isCopyOnlyCommandQueue = copyOnly;
+ze_result_t CommandQueueImp::initialize(bool copyOnly) {
+    ze_result_t returnValue;
+    returnValue = buffers.initialize(device, totalCmdBufferSize);
+    if (returnValue == ZE_RESULT_SUCCESS) {
+        NEO::GraphicsAllocation *bufferAllocation = buffers.getCurrentBufferAllocation();
+        commandStream = new NEO::LinearStream(bufferAllocation->getUnderlyingBuffer(),
+                                              defaultQueueCmdBufferSize);
+        if (!commandStream) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
+        commandStream->replaceGraphicsAllocation(bufferAllocation);
+        isCopyOnlyCommandQueue = copyOnly;
+    }
+    return returnValue;
 }
 
 void CommandQueueImp::reserveLinearStreamSize(size_t size) {
@@ -99,17 +105,22 @@ void CommandQueueImp::printFunctionsPrintfOutput() {
 }
 
 CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
-                                   const ze_command_queue_desc_t *desc, bool isCopyOnly) {
+                                   const ze_command_queue_desc_t *desc, bool isCopyOnly, ze_result_t &returnValue) {
     CommandQueueAllocatorFn allocator = nullptr;
     if (productFamily < IGFX_MAX_PRODUCT) {
         allocator = commandQueueFactory[productFamily];
     }
 
     CommandQueueImp *commandQueue = nullptr;
+    returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
+
     if (allocator) {
         commandQueue = static_cast<CommandQueueImp *>((*allocator)(device, csr, desc));
-
-        commandQueue->initialize(isCopyOnly);
+        returnValue = commandQueue->initialize(isCopyOnly);
+        if (returnValue != ZE_RESULT_SUCCESS) {
+            commandQueue->destroy();
+            commandQueue = nullptr;
+        }
     }
     return commandQueue;
 }
@@ -118,7 +129,7 @@ ze_command_queue_mode_t CommandQueueImp::getSynchronousMode() {
     return desc.mode;
 }
 
-void CommandQueueImp::CommandBufferManager::initialize(Device *device, size_t sizeRequested) {
+ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, size_t sizeRequested) {
     size_t alignedSize = alignUp<size_t>(sizeRequested, MemoryConstants::pageSize64k);
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, alignedSize,
                                          NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER,
@@ -127,21 +138,28 @@ void CommandQueueImp::CommandBufferManager::initialize(Device *device, size_t si
                                          CommonConstants::allDevicesBitfield};
 
     buffers[BUFFER_ALLOCATION::FIRST] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-
-    UNRECOVERABLE_IF(nullptr == buffers[BUFFER_ALLOCATION::FIRST]);
-    memset(buffers[BUFFER_ALLOCATION::FIRST]->getUnderlyingBuffer(), 0, buffers[BUFFER_ALLOCATION::FIRST]->getUnderlyingBufferSize());
-
     buffers[BUFFER_ALLOCATION::SECOND] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
-    UNRECOVERABLE_IF(nullptr == buffers[BUFFER_ALLOCATION::SECOND]);
+    if (!buffers[BUFFER_ALLOCATION::FIRST] || !buffers[BUFFER_ALLOCATION::SECOND]) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    memset(buffers[BUFFER_ALLOCATION::FIRST]->getUnderlyingBuffer(), 0, buffers[BUFFER_ALLOCATION::FIRST]->getUnderlyingBufferSize());
     memset(buffers[BUFFER_ALLOCATION::SECOND]->getUnderlyingBuffer(), 0, buffers[BUFFER_ALLOCATION::SECOND]->getUnderlyingBufferSize());
     flushId[BUFFER_ALLOCATION::FIRST] = 0u;
     flushId[BUFFER_ALLOCATION::SECOND] = 0u;
+    return ZE_RESULT_SUCCESS;
 }
 
 void CommandQueueImp::CommandBufferManager::destroy(NEO::MemoryManager *memoryManager) {
-    memoryManager->freeGraphicsMemory(buffers[BUFFER_ALLOCATION::FIRST]);
-    memoryManager->freeGraphicsMemory(buffers[BUFFER_ALLOCATION::SECOND]);
+    if (buffers[BUFFER_ALLOCATION::FIRST]) {
+        memoryManager->freeGraphicsMemory(buffers[BUFFER_ALLOCATION::FIRST]);
+        buffers[BUFFER_ALLOCATION::FIRST] = nullptr;
+    }
+    if (buffers[BUFFER_ALLOCATION::SECOND]) {
+        memoryManager->freeGraphicsMemory(buffers[BUFFER_ALLOCATION::SECOND]);
+        buffers[BUFFER_ALLOCATION::SECOND] = nullptr;
+    }
 }
 
 void CommandQueueImp::CommandBufferManager::switchBuffers(NEO::CommandStreamReceiver *csr) {

@@ -35,7 +35,7 @@ struct CommandQueueImp : public CommandQueue {
             COUNT
         };
 
-        void initialize(Device *device, size_t sizeRequested);
+        ze_result_t initialize(Device *device, size_t sizeRequested);
         void destroy(NEO::MemoryManager *memoryManager);
         void switchBuffers(NEO::CommandStreamReceiver *csr);
 
@@ -69,7 +69,7 @@ struct CommandQueueImp : public CommandQueue {
 
     ze_result_t synchronize(uint64_t timeout) override;
 
-    void initialize(bool copyOnly);
+    ze_result_t initialize(bool copyOnly);
 
     Device *getDevice() { return device; }
 

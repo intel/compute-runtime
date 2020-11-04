@@ -12,6 +12,7 @@
 #include "shared/test/unit_test/mocks/mock_command_stream_receiver.h"
 
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -32,11 +33,13 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     const ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
 
+    ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           csr.get(),
                                                           &desc,
-                                                          false);
+                                                          false,
+                                                          returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
     L0::CommandQueueImp *commandQueueImp = reinterpret_cast<L0::CommandQueueImp *>(commandQueue);
@@ -52,11 +55,13 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueWithInvalidProductFamilyThenF
     const ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
 
+    ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(PRODUCT_FAMILY::IGFX_MAX_PRODUCT,
                                                           device,
                                                           csr.get(),
                                                           &desc,
-                                                          false);
+                                                          false,
+                                                          returnValue);
     ASSERT_EQ(nullptr, commandQueue);
 }
 
@@ -151,14 +156,15 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingNonCopyBlitComm
 
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
 
+    ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           csr.get(),
                                                           &desc,
-                                                          true);
+                                                          true,
+                                                          returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
     auto commandListHandle = commandList->toHandle();
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
@@ -172,14 +178,15 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommand
     const ze_command_queue_desc_t desc = {};
 
     auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           defaultCsr,
                                                           &desc,
-                                                          true);
+                                                          true,
+                                                          returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, returnValue));
     auto commandListHandle = commandList->toHandle();
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
@@ -214,14 +221,15 @@ HWTEST_F(CommandQueueCommands, givenCommandQueueWhenExecutingCommandListsThenHar
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
+    ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           &csr,
                                                           &desc,
-                                                          true);
+                                                          true,
+                                                          returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, returnValue));
     auto commandListHandle = commandList->toHandle();
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
@@ -250,14 +258,15 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandL
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
+    ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           &csr,
                                                           &desc,
-                                                          true);
+                                                          true,
+                                                          returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, returnValue));
 
     void *deviceAlloc = nullptr;
@@ -486,6 +495,66 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
     EXPECT_EQ(csr->waitForComplitionCalledTimes, 2u);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+struct MemoryManagerCommandQueueCreateNegativeTest : public NEO::MockMemoryManager {
+    MemoryManagerCommandQueueCreateNegativeTest(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
+    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const NEO::AllocationProperties &properties) override {
+        if (forceFailureInPrimaryAllocation) {
+            return nullptr;
+        }
+        return NEO::MemoryManager::allocateGraphicsMemoryWithProperties(properties);
+    }
+    bool forceFailureInPrimaryAllocation = false;
+};
+
+struct CommandQueueCreateNegativeTest : public ::testing::Test {
+    void SetUp() override {
+        executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (uint32_t i = 0; i < numRootDevices; i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+        }
+
+        memoryManager = new MemoryManagerCommandQueueCreateNegativeTest(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+
+        std::vector<std::unique_ptr<NEO::Device>> devices;
+        for (uint32_t i = 0; i < numRootDevices; i++) {
+            neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, i);
+            devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        }
+
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+
+        device = driverHandle->devices[0];
+    }
+    void TearDown() override {
+    }
+
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    MemoryManagerCommandQueueCreateNegativeTest *memoryManager = nullptr;
+    const uint32_t numRootDevices = 1u;
+};
+
+TEST_F(CommandQueueCreateNegativeTest, whenDeviceAllocationFailsDuringCommandQueueCreateThenAppropriateValueIsReturned) {
+    const ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    ze_result_t returnValue;
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr.get(),
+                                                          &desc,
+                                                          false,
+                                                          returnValue);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
+    ASSERT_EQ(nullptr, commandQueue);
 }
 
 } // namespace ult

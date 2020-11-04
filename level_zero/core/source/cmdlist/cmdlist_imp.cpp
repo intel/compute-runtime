@@ -101,11 +101,10 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
         UNRECOVERABLE_IF(nullptr == csr);
 
-        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, NEO::EngineGroupType::Copy == engineGroupType);
+        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, NEO::EngineGroupType::Copy == engineGroupType, returnValue);
         if (!commandQueue) {
             commandList->destroy();
             commandList = nullptr;
-            returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
             return commandList;
         }
 

@@ -46,13 +46,14 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
         ASSERT_NE(nullptr, device);
 
         ze_command_queue_desc_t queueDesc = {};
+        ze_result_t returnValue;
         commandQueue = whitebox_cast(CommandQueue::create(productFamily, device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &queueDesc,
-                                                          false));
+                                                          false,
+                                                          returnValue));
         ASSERT_NE(nullptr, commandQueue->commandStream);
 
-        ze_result_t returnValue;
         commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue);
         ASSERT_NE(nullptr, commandList);
     }
