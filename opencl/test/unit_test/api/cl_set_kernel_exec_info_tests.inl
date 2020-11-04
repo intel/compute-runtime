@@ -254,6 +254,30 @@ TEST_F(clSetKernelExecInfoTests, GivenMultipleSettingKernelInfoOperationsWhenSet
     }
 }
 
+TEST_F(clSetKernelExecInfoTests, givenNonExistingParamNameWithValuesWhenSettingAdditionalKernelInfoThenInvalidValueIsReturned) {
+    uint32_t paramName = 1234u;
+    size_t size = sizeof(cl_bool);
+    retVal = clSetKernelExecInfo(pMockKernel, paramName, size, nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    size = 2 * sizeof(cl_bool);
+    cl_bool paramValue = CL_TRUE;
+    retVal = clSetKernelExecInfo(pMockKernel, paramName, size, &paramValue);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    retVal = clSetKernelExecInfo(pMockKernel, paramName, size, nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    size = sizeof(cl_bool);
+    paramValue = CL_FALSE;
+    retVal = clSetKernelExecInfo(pMockKernel, paramName, size, &paramValue);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    paramValue = CL_TRUE;
+    retVal = clSetKernelExecInfo(pMockKernel, paramName, size, &paramValue);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
 HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
     uint32_t newThreadArbitrationPolicy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
     size_t ptrSizeInBytes = sizeof(uint32_t *);

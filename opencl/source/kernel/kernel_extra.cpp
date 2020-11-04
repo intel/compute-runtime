@@ -37,7 +37,7 @@ bool Kernel::requiresLimitedWorkgroupSize() const {
     return this->isBuiltIn;
 }
 
-int32_t Kernel::setAdditionalKernelExecInfoWithParam(uint32_t paramName) {
+int32_t Kernel::setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue) {
     return CL_INVALID_VALUE;
 }
 

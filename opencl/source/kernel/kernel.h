@@ -418,7 +418,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool requiresPerDssBackedBuffer() const;
     bool requiresLimitedWorkgroupSize() const;
     bool isKernelDebugEnabled() const { return debugEnabled; }
-    int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName);
+    int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue);
     void setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo);
     uint32_t getAdditionalKernelExecInfo() const;
     MOCKABLE_VIRTUAL bool requiresWaDisableRccRhwoOptimization() const;

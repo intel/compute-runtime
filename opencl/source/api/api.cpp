@@ -4707,7 +4707,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         return retVal;
     }
     default: {
-        retVal = pKernel->setAdditionalKernelExecInfoWithParam(paramName);
+        retVal = pKernel->setAdditionalKernelExecInfoWithParam(paramName, paramValueSize, paramValue);
         TRACING_EXIT(clSetKernelExecInfo, &retVal);
         return retVal;
     }
