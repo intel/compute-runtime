@@ -110,8 +110,10 @@ void HardwareCommandsHelper<GfxFamily>::programPerThreadData(
         simd,
         grfSize,
         numChannels,
-        localWorkSize,
-        kernel.getKernelInfo().workgroupDimensionsOrder,
+        std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSize[0]), static_cast<uint16_t>(localWorkSize[1]), static_cast<uint16_t>(localWorkSize[2])}},
+        std::array<uint8_t, 3>{{kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
+                                kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
+                                kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
         kernel.usesOnlyImages());
 
     updatePerThreadDataTotal(sizePerThreadData, simd, numChannels, sizePerThreadDataTotal, localWorkItems);

@@ -185,23 +185,6 @@ KernelInfo::~KernelInfo() {
 
 void KernelInfo::storePatchToken(const SPatchExecutionEnvironment *execEnv) {
     this->patchInfo.executionEnvironment = execEnv;
-    this->workgroupWalkOrder[0] = 0;
-    this->workgroupWalkOrder[1] = 1;
-    this->workgroupWalkOrder[2] = 2;
-    if (execEnv->WorkgroupWalkOrderDims) {
-        constexpr auto dimensionMask = 0b11;
-        constexpr auto dimensionSize = 2;
-        this->workgroupWalkOrder[0] = execEnv->WorkgroupWalkOrderDims & dimensionMask;
-        this->workgroupWalkOrder[1] = (execEnv->WorkgroupWalkOrderDims >> dimensionSize) & dimensionMask;
-        this->workgroupWalkOrder[2] = (execEnv->WorkgroupWalkOrderDims >> dimensionSize * 2) & dimensionMask;
-        this->requiresWorkGroupOrder = true;
-    }
-
-    for (uint32_t i = 0; i < 3; ++i) {
-        // inverts the walk order mapping (from ORDER_ID->DIM_ID to DIM_ID->ORDER_ID)
-        this->workgroupDimensionsOrder[this->workgroupWalkOrder[i]] = i;
-    }
-
     if (execEnv->CompiledForGreaterThan4GBBuffers == false) {
         this->requiresSshForBuffers = true;
     }

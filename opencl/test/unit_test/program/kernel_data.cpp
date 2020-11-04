@@ -487,11 +487,11 @@ TEST_F(KernelDataTest, WhenDecodingExecutionEnvironmentTokenThenWalkOrderIsForce
 
     buildAndDecode();
 
-    std::array<uint8_t, 3> expectedWalkOrder = {{0, 1, 2}};
-    std::array<uint8_t, 3> expectedDimsIds = {{0, 1, 2}};
-    EXPECT_EQ(expectedWalkOrder, pKernelInfo->workgroupWalkOrder);
-    EXPECT_EQ(expectedDimsIds, pKernelInfo->workgroupDimensionsOrder);
-    EXPECT_FALSE(pKernelInfo->requiresWorkGroupOrder);
+    const uint8_t expectedWalkOrder[3] = {0, 1, 2};
+    const uint8_t expectedDimsIds[3] = {0, 1, 2};
+    EXPECT_EQ(0, memcmp(expectedWalkOrder, pKernelInfo->kernelDescriptor.kernelAttributes.workgroupWalkOrder, sizeof(expectedWalkOrder)));
+    EXPECT_EQ(0, memcmp(expectedDimsIds, pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder, sizeof(expectedDimsIds)));
+    EXPECT_FALSE(pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder);
 }
 
 TEST_F(KernelDataTest, whenWorkgroupOrderIsSpecifiedViaPatchTokenThenProperWorkGroupOrderIsParsed) {
@@ -506,11 +506,11 @@ TEST_F(KernelDataTest, whenWorkgroupOrderIsSpecifiedViaPatchTokenThenProperWorkG
     patchListSize = executionEnvironment.Size;
 
     buildAndDecode();
-    std::array<uint8_t, 3> expectedWalkOrder = {{1, 2, 0}};
-    std::array<uint8_t, 3> expectedDimsIds = {{2, 0, 1}};
-    EXPECT_EQ(expectedWalkOrder, pKernelInfo->workgroupWalkOrder);
-    EXPECT_EQ(expectedDimsIds, pKernelInfo->workgroupDimensionsOrder);
-    EXPECT_TRUE(pKernelInfo->requiresWorkGroupOrder);
+    uint8_t expectedWalkOrder[3] = {1, 2, 0};
+    uint8_t expectedDimsIds[3] = {2, 0, 1};
+    EXPECT_EQ(0, memcmp(expectedWalkOrder, pKernelInfo->kernelDescriptor.kernelAttributes.workgroupWalkOrder, sizeof(expectedWalkOrder)));
+    EXPECT_EQ(0, memcmp(expectedDimsIds, pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder, sizeof(expectedDimsIds)));
+    EXPECT_TRUE(pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder);
 }
 
 TEST_F(KernelDataTest, whenWorkgroupOrderIsSpecifiedViaPatchToken2ThenProperWorkGroupOrderIsParsed) {
@@ -525,11 +525,12 @@ TEST_F(KernelDataTest, whenWorkgroupOrderIsSpecifiedViaPatchToken2ThenProperWork
     patchListSize = executionEnvironment.Size;
 
     buildAndDecode();
-    std::array<uint8_t, 3> expectedWalkOrder = {{2, 0, 1}};
-    std::array<uint8_t, 3> expectedDimsIds = {{1, 2, 0}};
-    EXPECT_EQ(expectedWalkOrder, pKernelInfo->workgroupWalkOrder);
-    EXPECT_EQ(expectedDimsIds, pKernelInfo->workgroupDimensionsOrder);
-    EXPECT_TRUE(pKernelInfo->requiresWorkGroupOrder);
+
+    uint8_t expectedWalkOrder[3] = {2, 0, 1};
+    uint8_t expectedDimsIds[3] = {1, 2, 0};
+    EXPECT_EQ(0, memcmp(expectedWalkOrder, pKernelInfo->kernelDescriptor.kernelAttributes.workgroupWalkOrder, sizeof(expectedWalkOrder)));
+    EXPECT_EQ(0, memcmp(expectedDimsIds, pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder, sizeof(expectedDimsIds)));
+    EXPECT_TRUE(pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder);
 }
 
 // Test all the different data parameters with the same "made up" data

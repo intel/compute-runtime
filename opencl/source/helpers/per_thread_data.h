@@ -38,7 +38,7 @@ struct PerThreadDataHelper {
         uint32_t simd,
         uint32_t grfSize,
         uint32_t numChannels,
-        const size_t localWorkSizes[3],
+        const std::array<uint16_t, 3> &localWorkSizes,
         const std::array<uint8_t, 3> &workgroupWalkOrder,
         bool hasKernelOnlyImages);
 
