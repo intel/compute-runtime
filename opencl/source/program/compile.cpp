@@ -57,7 +57,7 @@ cl_int Program::compile(
             break;
         }
 
-        if ((createdFrom == CreatedFrom::IL) || (this->programBinaryType == CL_PROGRAM_BINARY_TYPE_INTERMEDIATE)) {
+        if ((createdFrom == CreatedFrom::IL) || std::all_of(deviceVector.begin(), deviceVector.end(), [&](auto device) { return CL_PROGRAM_BINARY_TYPE_INTERMEDIATE == deviceBuildInfos[device].programBinaryType; })) {
             retVal = CL_SUCCESS;
             break;
         }
@@ -166,11 +166,10 @@ cl_int Program::compile(
     if (retVal != CL_SUCCESS) {
         for (const auto &device : deviceVector) {
             deviceBuildInfos[device].buildStatus = CL_BUILD_ERROR;
+            deviceBuildInfos[device].programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
         }
-        programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     } else {
-        setBuildStatusSuccess(deviceVector);
-        programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
+        setBuildStatusSuccess(deviceVector, CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT);
     }
 
     return retVal;

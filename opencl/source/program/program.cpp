@@ -143,8 +143,9 @@ Program::~Program() {
 
 cl_int Program::createProgramFromBinary(
     const void *pBinary,
-    size_t binarySize, uint32_t rootDeviceIndex) {
+    size_t binarySize, ClDevice &clDevice) {
 
+    auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     cl_int retVal = CL_INVALID_BINARY;
 
     this->irBinary.reset();
@@ -160,10 +161,10 @@ cl_int Program::createProgramFromBinary(
     bool isSpirV = NEO::isSpirVBitcode(archive);
 
     if (isSpirV || NEO::isLlvmBitcode(archive)) {
-        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
+        deviceBuildInfos[&clDevice].programBinaryType = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
         retVal = processSpirBinary(archive.begin(), archive.size(), isSpirV);
     } else if (isAnyDeviceBinaryFormat(archive)) {
-        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+        deviceBuildInfos[&clDevice].programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
         this->isCreatedFromBinary = true;
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
@@ -209,10 +210,10 @@ cl_int Program::createProgramFromBinary(
             default:
                 break;
             case DeviceBinaryFormat::OclLibrary:
-                this->programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+                deviceBuildInfos[&clDevice].programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
                 break;
             case DeviceBinaryFormat::OclCompiledObject:
-                this->programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
+                deviceBuildInfos[&clDevice].programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
                 break;
             }
         }
@@ -445,7 +446,8 @@ void Program::replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newB
     }
 }
 
-cl_int Program::packDeviceBinary(uint32_t rootDeviceIndex) {
+cl_int Program::packDeviceBinary(ClDevice &clDevice) {
+    auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     if (nullptr != buildInfos[rootDeviceIndex].packedDeviceBinary) {
         return CL_SUCCESS;
     }
@@ -474,7 +476,7 @@ cl_int Program::packDeviceBinary(uint32_t rootDeviceIndex) {
         this->buildInfos[rootDeviceIndex].packedDeviceBinarySize = packedDeviceBinary.size();
     } else if (nullptr != this->irBinary.get()) {
         NEO::Elf::ElfEncoder<> elfEncoder(true, true, 1U);
-        if (this->programBinaryType == CL_PROGRAM_BINARY_TYPE_LIBRARY) {
+        if (deviceBuildInfos[&clDevice].programBinaryType == CL_PROGRAM_BINARY_TYPE_LIBRARY) {
             elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_LIBRARY;
         } else {
             elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
@@ -496,11 +498,13 @@ void Program::setBuildStatus(cl_build_status status) {
         deviceBuildInfo.second.buildStatus = status;
     }
 }
-void Program::setBuildStatusSuccess(const ClDeviceVector &deviceVector) {
+void Program::setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_program_binary_type binaryType) {
     for (const auto &device : deviceVector) {
         deviceBuildInfos[device].buildStatus = CL_BUILD_SUCCESS;
+        deviceBuildInfos[device].programBinaryType = binaryType;
         for (const auto &subDevice : deviceBuildInfos[device].associatedSubDevices) {
             deviceBuildInfos[subDevice].buildStatus = CL_BUILD_SUCCESS;
+            deviceBuildInfos[subDevice].programBinaryType = binaryType;
         }
     }
 }

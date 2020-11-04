@@ -200,11 +200,10 @@ cl_int Program::build(
     if (retVal != CL_SUCCESS) {
         for (const auto &device : deviceVector) {
             deviceBuildInfos[device].buildStatus = CL_BUILD_ERROR;
+            deviceBuildInfos[device].programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
         }
-        programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     } else {
-        setBuildStatusSuccess(deviceVector);
-        programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+        setBuildStatusSuccess(deviceVector, CL_PROGRAM_BINARY_TYPE_EXECUTABLE);
     }
 
     return retVal;

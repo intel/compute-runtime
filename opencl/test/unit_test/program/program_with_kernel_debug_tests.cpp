@@ -49,7 +49,7 @@ TEST(ProgramFromBinary, givenBinaryWithDebugDataWhenCreatingProgramFromBinaryThe
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, device->getRootDeviceIndex());
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, program->getDebugData());

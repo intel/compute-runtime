@@ -67,7 +67,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
     case CL_PROGRAM_BINARY_SIZES:
         for (auto i = 0u; i < clDevices.size(); i++) {
             auto rootDeviceIndex = clDevices[i]->getRootDeviceIndex();
-            packDeviceBinary(rootDeviceIndex);
+            packDeviceBinary(*clDevices[i]);
             binarySizes.push_back(buildInfos[rootDeviceIndex].packedDeviceBinarySize);
         }
 
@@ -204,7 +204,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
 
     case CL_PROGRAM_BINARY_TYPE:
         srcSize = retSize = sizeof(cl_program_binary_type);
-        pSrc = &programBinaryType;
+        pSrc = &deviceBuildInfos.at(pClDev).programBinaryType;
         break;
 
     case CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE:

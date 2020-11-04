@@ -185,8 +185,8 @@ class Program : public BaseObject<_cl_program> {
 
     const char *getBuildLog(uint32_t rootDeviceIndex) const;
 
-    cl_uint getProgramBinaryType() const {
-        return programBinaryType;
+    cl_uint getProgramBinaryType(ClDevice *clDevice) const {
+        return deviceBuildInfos.at(clDevice).programBinaryType;
     }
 
     bool getIsSpirV() const {
@@ -268,9 +268,9 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL void initInternalOptions(std::string &internalOptions) const;
 
   protected:
-    MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
 
-    cl_int packDeviceBinary(uint32_t rootDeviceIndex);
+    cl_int packDeviceBinary(ClDevice &clDevice);
 
     MOCKABLE_VIRTUAL cl_int linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData);
 
@@ -288,9 +288,8 @@ class Program : public BaseObject<_cl_program> {
     void notifyDebuggerWithSourceCode(ClDevice &clDevice, std::string &filename);
 
     void setBuildStatus(cl_build_status status);
-    void setBuildStatusSuccess(const ClDeviceVector &deviceVector);
+    void setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_program_binary_type binaryType);
 
-    cl_program_binary_type programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     bool isSpirV = false;
 
     std::unique_ptr<char[]> irBinary;
@@ -308,6 +307,7 @@ class Program : public BaseObject<_cl_program> {
     struct DeviceBuildInfo {
         StackVec<ClDevice *, 2> associatedSubDevices;
         cl_build_status buildStatus = CL_BUILD_NONE;
+        cl_program_binary_type programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     };
 
     std::unordered_map<ClDevice *, DeviceBuildInfo> deviceBuildInfos;

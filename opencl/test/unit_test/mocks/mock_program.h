@@ -28,6 +28,7 @@ ClDeviceVector toClDeviceVector(ClDevice &clDevice);
 class MockProgram : public Program {
   public:
     using Program::createProgramFromBinary;
+    using Program::deviceBuildInfos;
     using Program::internalOptionsToExtract;
     using Program::kernelDebugEnabled;
     using Program::linkBinary;
@@ -52,7 +53,6 @@ class MockProgram : public Program {
     using Program::packDeviceBinary;
     using Program::pDevice;
     using Program::Program;
-    using Program::programBinaryType;
     using Program::sourceCode;
     using Program::specConstantsIds;
     using Program::specConstantsSizes;

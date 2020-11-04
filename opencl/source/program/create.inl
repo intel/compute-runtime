@@ -33,7 +33,7 @@ T *Program::create(
 
     for (auto i = 0u; i < deviceVector.size(); i++) {
         auto device = deviceVector[i];
-        retVal = program->createProgramFromBinary(binaries[i], lengths[i], device->getRootDeviceIndex());
+        retVal = program->createProgramFromBinary(binaries[i], lengths[i], *device);
         if (retVal != CL_SUCCESS) {
             break;
         }
@@ -129,10 +129,9 @@ T *Program::createBuiltInFromGenBinary(
             if (program->buildInfos[device->getRootDeviceIndex()].packedDeviceBinarySize == 0) {
                 program->replaceDeviceBinary(makeCopy(binary, size), size, device->getRootDeviceIndex());
             }
-            program->deviceBuildInfos[device].buildStatus = CL_BUILD_SUCCESS;
         }
+        program->setBuildStatusSuccess(deviceVector, CL_PROGRAM_BINARY_TYPE_EXECUTABLE);
         program->isCreatedFromBinary = true;
-        program->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
         program->createdFrom = CreatedFrom::BINARY;
     }
 
@@ -158,7 +157,7 @@ T *Program::createFromIL(Context *context,
     auto deviceVector = context->getDevices();
     T *program = new T(context, false, deviceVector);
     for (const auto &device : deviceVector) {
-        errcodeRet = program->createProgramFromBinary(il, length, device->getRootDeviceIndex());
+        errcodeRet = program->createProgramFromBinary(il, length, *device);
         if (errcodeRet != CL_SUCCESS) {
             break;
         }

@@ -42,6 +42,7 @@ cl_int Program::link(
     std::unordered_map<uint32_t, bool> debugOptionsAppended;
     std::string internalOptions;
     initInternalOptions(internalOptions);
+    cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     do {
         if ((numInputPrograms == 0) || (inputPrograms == nullptr)) {
             retVal = CL_INVALID_VALUE;
@@ -163,7 +164,7 @@ cl_int Program::link(
                 if (retVal != CL_SUCCESS) {
                     break;
                 }
-                programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+                binaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
 
                 if (isKernelDebugEnabled()) {
                     if (kernelDebugDataNotified[device->getRootDeviceIndex()]) {
@@ -197,7 +198,7 @@ cl_int Program::link(
             this->isSpirV = (compilerOuput.intermediateCodeType == IGC::CodeType::spirV);
             this->debugData = std::move(compilerOuput.debugData.mem);
             this->debugDataSize = compilerOuput.debugData.size;
-            programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+            binaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
         }
         if (retVal != CL_SUCCESS) {
             break;
@@ -209,10 +210,10 @@ cl_int Program::link(
     if (retVal != CL_SUCCESS) {
         for (const auto &device : deviceVector) {
             deviceBuildInfos[device].buildStatus = CL_BUILD_ERROR;
+            deviceBuildInfos[device].programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
         }
-        programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     } else {
-        setBuildStatusSuccess(deviceVector);
+        setBuildStatusSuccess(deviceVector, binaryType);
     }
 
     return retVal;

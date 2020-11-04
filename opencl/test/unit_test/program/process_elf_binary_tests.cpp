@@ -38,14 +38,14 @@ class ProcessElfBinaryTests : public ::testing::Test {
 };
 
 TEST_F(ProcessElfBinaryTests, GivenNullWhenCreatingProgramFromBinaryThenInvalidBinaryErrorIsReturned) {
-    cl_int retVal = program->createProgramFromBinary(nullptr, 0, rootDeviceIndex);
+    cl_int retVal = program->createProgramFromBinary(nullptr, 0, *device);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
 TEST_F(ProcessElfBinaryTests, GivenInvalidBinaryWhenCreatingProgramFromBinaryThenInvalidBinaryErrorIsReturned) {
     char pBinary[] = "thisistotallyinvalid\0";
     size_t binarySize = strnlen_s(pBinary, 21);
-    cl_int retVal = program->createProgramFromBinary(pBinary, binarySize, rootDeviceIndex);
+    cl_int retVal = program->createProgramFromBinary(pBinary, binarySize, *device);
 
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
@@ -56,7 +56,7 @@ TEST_F(ProcessElfBinaryTests, GivenValidBinaryWhenCreatingProgramFromBinaryThenS
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, rootDeviceIndex);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0, memcmp(pBinary.get(), program->buildInfos[rootDeviceIndex].packedDeviceBinary.get(), binarySize));
@@ -71,13 +71,13 @@ TEST_F(ProcessElfBinaryTests, GivenValidSpirBinaryWhenCreatingProgramFromBinaryT
     program->isSpirV = true;
     program->irBinary = makeCopy(spirvBinary, spirvBinarySize);
     program->irBinarySize = spirvBinarySize;
-    program->programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+    program->deviceBuildInfos[device.get()].programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
     EXPECT_NE(nullptr, program->irBinary);
     EXPECT_NE(0u, program->irBinarySize);
     EXPECT_TRUE(program->getIsSpirV());
 
     //clGetProgramInfo => SPIR-V stored as ELF binary
-    cl_int retVal = program->packDeviceBinary(rootDeviceIndex);
+    cl_int retVal = program->packDeviceBinary(*device);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].packedDeviceBinary);
     EXPECT_NE(0u, program->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
@@ -102,7 +102,7 @@ TEST_F(ProcessElfBinaryTests, GivenValidSpirBinaryWhenCreatingProgramFromBinaryT
     //clCreateProgramWithBinary => new program should recognize SPIR-V binary
     program->isSpirV = false;
     auto elfBinary = makeCopy(program->buildInfos[rootDeviceIndex].packedDeviceBinary.get(), program->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
-    retVal = program->createProgramFromBinary(elfBinary.get(), program->buildInfos[rootDeviceIndex].packedDeviceBinarySize, rootDeviceIndex);
+    retVal = program->createProgramFromBinary(elfBinary.get(), program->buildInfos[rootDeviceIndex].packedDeviceBinarySize, *device);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(program->getIsSpirV());
 }
@@ -130,7 +130,7 @@ TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThe
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, rootDeviceIndex);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
     auto options = program->options;
     auto genBinary = makeCopy(program->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get(), program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
     auto genBinarySize = program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize;
@@ -144,8 +144,8 @@ TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThe
     // delete program's elf reference to force a resolve
     program->buildInfos[rootDeviceIndex].packedDeviceBinary.reset();
     program->buildInfos[rootDeviceIndex].packedDeviceBinarySize = 0U;
-    program->programBinaryType = GetParam();
-    retVal = program->packDeviceBinary(rootDeviceIndex);
+    program->deviceBuildInfos[device.get()].programBinaryType = GetParam();
+    retVal = program->packDeviceBinary(*device);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, program->buildInfos[rootDeviceIndex].packedDeviceBinary);
 
@@ -192,7 +192,7 @@ TEST_F(ProcessElfBinaryTests, GivenMultipleCallsWhenCreatingProgramFromBinaryThe
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, rootDeviceIndex);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0, memcmp(pBinary.get(), program->buildInfos[rootDeviceIndex].packedDeviceBinary.get(), binarySize));
@@ -201,7 +201,7 @@ TEST_F(ProcessElfBinaryTests, GivenMultipleCallsWhenCreatingProgramFromBinaryThe
     retrieveBinaryKernelFilename(filePath2, "simple_arg_int_", ".bin");
 
     pBinary = loadDataFromFile(filePath2.c_str(), binarySize);
-    retVal = program->createProgramFromBinary(pBinary.get(), binarySize, rootDeviceIndex);
+    retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0, memcmp(pBinary.get(), program->buildInfos[rootDeviceIndex].packedDeviceBinary.get(), binarySize));
@@ -213,7 +213,7 @@ TEST_F(ProcessElfBinaryTests, GivenEmptyBuildOptionsWhenCreatingProgramFromBinar
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, rootDeviceIndex);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     const auto &options = program->getOptions();
@@ -227,7 +227,7 @@ TEST_F(ProcessElfBinaryTests, GivenNonEmptyBuildOptionsWhenCreatingProgramFromBi
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, rootDeviceIndex);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     const auto &options = program->getOptions();
@@ -242,7 +242,7 @@ TEST_F(ProcessElfBinaryTests, GivenBinaryWhenIncompatiblePatchtokenVerionThenPro
         elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
         elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, NEO::Elf::SectionNamesOpenCl::deviceBinary, programTokens.storage);
         auto elfBinary = elfEncoder.encode();
-        cl_int retVal = program->createProgramFromBinary(elfBinary.data(), elfBinary.size(), rootDeviceIndex);
+        cl_int retVal = program->createProgramFromBinary(elfBinary.data(), elfBinary.size(), *device);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 
@@ -252,7 +252,7 @@ TEST_F(ProcessElfBinaryTests, GivenBinaryWhenIncompatiblePatchtokenVerionThenPro
         elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
         elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, NEO::Elf::SectionNamesOpenCl::deviceBinary, programTokens.storage);
         auto elfBinary = elfEncoder.encode();
-        cl_int retVal = program->createProgramFromBinary(elfBinary.data(), elfBinary.size(), rootDeviceIndex);
+        cl_int retVal = program->createProgramFromBinary(elfBinary.data(), elfBinary.size(), *device);
         EXPECT_EQ(CL_INVALID_BINARY, retVal);
     }
 }
