@@ -12,6 +12,4 @@
 using namespace NEO;
 
 void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {}
-void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {}
-
 void Gmm::applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo) { this->useSystemMemoryPool = systemMemoryPool; }

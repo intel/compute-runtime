@@ -123,6 +123,18 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
     applyAuxFlagsForImage(imgInfo);
 }
 
+void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {
+    bool allowRenderCompression = HwHelper::renderCompressedBuffersSupported(*clientContext->getHardwareInfo()) &&
+                                  preferRenderCompression;
+
+    if (allowRenderCompression) {
+        resourceParams.Flags.Info.RenderCompressed = 1;
+        resourceParams.Flags.Gpu.CCS = 1;
+        resourceParams.Flags.Gpu.UnifiedAuxSurface = 1;
+        isRenderCompressed = true;
+    }
+}
+
 void Gmm::queryImageParams(ImageInfo &imgInfo) {
     auto imageCount = this->gmmResourceInfo->getArraySize();
     imgInfo.size = this->gmmResourceInfo->getSizeAllocation();

@@ -45,8 +45,10 @@ struct GmmTests : public MockExecutionEnvironmentGmmFixtureTest {
     void SetUp() override {
         MockExecutionEnvironmentGmmFixture::SetUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        localPlatformDevice = rootDeviceEnvironment->getMutableHardwareInfo();
     }
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
+    HardwareInfo *localPlatformDevice = nullptr;
 };
 
 TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
@@ -809,6 +811,72 @@ TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceT
     EXPECT_EQ(0, memcmp(&expectedFtrTable, &passedFtrTable, sizeof(SKU_FEATURE_TABLE)));
     EXPECT_EQ(0, memcmp(&expectedWaTable, &passedWaTable, sizeof(WA_TABLE)));
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
+}
+
+using GmmCompressionTest = GmmTests;
+TEST_F(GmmCompressionTest, givenEnabledAndPreferredE2ECWhenApplyingForBuffersThenSetValidFlags) {
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, false));
+    gmm->resourceParams = {};
+
+    localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    gmm->applyAuxFlagsForBuffer(true);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_TRUE(gmm->isRenderCompressed);
+}
+
+TEST_F(GmmCompressionTest, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingForBuffersThenSetValidFlags) {
+    DebugManagerStateRestore restore;
+    Gmm gmm(getGmmClientContext(), nullptr, 1, false);
+    gmm.resourceParams = {};
+
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = false;
+
+    gmm.applyAuxFlagsForBuffer(true);
+    EXPECT_EQ(1u, gmm.resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, gmm.resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(1u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_TRUE(gmm.isRenderCompressed);
+
+    gmm.resourceParams = {};
+    gmm.isRenderCompressed = false;
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    gmm.applyAuxFlagsForBuffer(true);
+    EXPECT_EQ(0u, gmm.resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_FALSE(gmm.isRenderCompressed);
+}
+
+TEST_F(GmmCompressionTest, givenEnabledAndNotPreferredE2ECWhenApplyingForBuffersThenDontSetValidFlags) {
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, false));
+    gmm->resourceParams = {};
+
+    localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    gmm->applyAuxFlagsForBuffer(false);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_FALSE(gmm->isRenderCompressed);
+}
+
+TEST_F(GmmCompressionTest, givenDisabledAndPreferredE2ECWhenApplyingForBuffersThenDontSetValidFlags) {
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, false));
+    gmm->resourceParams = {};
+
+    localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = false;
+
+    gmm->applyAuxFlagsForBuffer(true);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_FALSE(gmm->isRenderCompressed);
 }
 
 } // namespace NEO

@@ -18,9 +18,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass = WddmMemoryManager;
 
   public:
-    using BaseClass::allocateGraphicsMemory64kb;
     using BaseClass::allocateGraphicsMemoryForNonSvmHostPtr;
-    using BaseClass::allocateGraphicsMemoryInDevicePool;
     using BaseClass::allocateGraphicsMemoryWithGpuVa;
     using BaseClass::allocateGraphicsMemoryWithProperties;
     using BaseClass::allocateShareableMemory;
@@ -32,6 +30,18 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::supportsMultiStorageResources;
     using MemoryManagerCreate<WddmMemoryManager>::MemoryManagerCreate;
     using BaseClass::getHugeGfxMemoryChunkSize;
+
+    GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override {
+        allocationGraphicsMemory64kbCreated = true;
+        return BaseClass::allocateGraphicsMemory64kb(allocationData);
+    }
+    GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override {
+        if (allocateGraphicsMemoryInNonDevicePool) {
+            status = AllocationStatus::RetryInNonDevicePool;
+            return nullptr;
+        }
+        return BaseClass::allocateGraphicsMemoryInDevicePool(allocationData, status);
+    }
 
     size_t hugeGfxMemoryChunkSize = BaseClass::getHugeGfxMemoryChunkSize();
     size_t getHugeGfxMemoryChunkSize() const override { return hugeGfxMemoryChunkSize; }
@@ -63,5 +73,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     }
 
     uint32_t freeGraphicsMemoryImplCalled = 0u;
+    bool allocationGraphicsMemory64kbCreated = false;
+    bool allocateGraphicsMemoryInNonDevicePool = false;
 };
 } // namespace NEO

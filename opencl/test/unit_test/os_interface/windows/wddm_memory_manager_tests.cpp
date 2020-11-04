@@ -35,6 +35,8 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 
+#include "mock_gmm_client_context.h"
+
 using namespace NEO;
 using namespace ::testing;
 
@@ -677,6 +679,59 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShared
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(size, gpuAllocation->getUnderlyingBufferSize());
     memoryManager->freeGraphicsMemory(gpuAllocation);
+}
+
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemoryWithSetAllocattionPropertisWithAllocationTypeBufferCompressedIsCalledThenIsRendeCompressedTrueAndGpuMappingIsSetWithGoodAddressRange) {
+    void *ptr = reinterpret_cast<void *>(0x1001);
+    auto size = MemoryConstants::pageSize;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    rootDeviceEnvironment->setHwInfo(&hwInfo);
+
+    auto memoryManager = std::make_unique<MockWddmMemoryManager>(true, false, *executionEnvironment);
+    memoryManager->allocateGraphicsMemoryInNonDevicePool = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, mockDeviceBitfield}, ptr);
+
+    auto gfxPartition = memoryManager->getGfxPartition(mockRootDeviceIndex);
+    D3DGPU_VIRTUAL_ADDRESS standard64kbRangeMinimumAddress = gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB);
+    D3DGPU_VIRTUAL_ADDRESS standard64kbRangeMaximumAddress = gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB);
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_TRUE(memoryManager->allocationGraphicsMemory64kbCreated);
+    EXPECT_TRUE(allocation->getDefaultGmm()->isRenderCompressed);
+    if ((is32bit || rootDeviceEnvironment->isFullRangeSvm()) &&
+        allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {
+        EXPECT_GE(GmmHelper::decanonize(allocation->getGpuAddress()), standard64kbRangeMinimumAddress);
+        EXPECT_LE(GmmHelper::decanonize(allocation->getGpuAddress()), standard64kbRangeMaximumAddress);
+    }
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemoryWithSetAllocattionPropertisWithAllocationTypeBufferIsCalledThenIsRendeCompressedFalseAndCorrectAddressRange) {
+    void *ptr = reinterpret_cast<void *>(0x1001);
+    auto size = MemoryConstants::pageSize;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    rootDeviceEnvironment->setHwInfo(&hwInfo);
+
+    auto memoryManager = std::make_unique<MockWddmMemoryManager>(false, false, *executionEnvironment);
+    memoryManager->allocateGraphicsMemoryInNonDevicePool = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield}, ptr);
+
+    auto gfxPartition = memoryManager->getGfxPartition(mockRootDeviceIndex);
+    D3DGPU_VIRTUAL_ADDRESS svmRangeMinimumAddress = gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_SVM);
+    D3DGPU_VIRTUAL_ADDRESS svmRangeMaximumAddress = gfxPartition->getHeapLimit(HeapIndex::HEAP_SVM);
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_FALSE(memoryManager->allocationGraphicsMemory64kbCreated);
+    EXPECT_FALSE(allocation->getDefaultGmm()->isRenderCompressed);
+    if (is32bit || rootDeviceEnvironment->isFullRangeSvm()) {
+
+        EXPECT_GE(GmmHelper::decanonize(allocation->getGpuAddress()), svmRangeMinimumAddress);
+        EXPECT_LE(GmmHelper::decanonize(allocation->getGpuAddress()), svmRangeMaximumAddress);
+    }
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFailsThenReturnNull) {
