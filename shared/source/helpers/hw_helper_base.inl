@@ -499,4 +499,9 @@ bool HwHelperHw<GfxFamily>::isCooperativeDispatchSupported(const aub_stream::Eng
     return true;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isMediaBlockIOSupported(const HardwareInfo &hwInfo) const {
+    return hwInfo.capabilityTable.supportsImages;
+}
+
 } // namespace NEO
