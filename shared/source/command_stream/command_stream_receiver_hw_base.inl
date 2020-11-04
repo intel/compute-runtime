@@ -443,7 +443,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         requiresInstructionCacheFlush = false;
     }
 
-    // Add a PC if we have a dependency on a previous walker to avoid concurrency issues.
+    // Add a Pipe Control if we have a dependency on a previous walker to avoid concurrency issues.
     if (taskLevel > this->taskLevel) {
         if (!timestampPacketWriteEnabled) {
             PipeControlArgs args;
