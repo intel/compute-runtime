@@ -8,11 +8,15 @@
 #pragma once
 #include "shared/source/memory_manager/graphics_allocation.h"
 
+#include <mutex>
+
 namespace NEO {
 
 class MultiGraphicsAllocation {
   public:
     MultiGraphicsAllocation(uint32_t maxRootDeviceIndex);
+
+    MultiGraphicsAllocation(const MultiGraphicsAllocation &obj);
 
     GraphicsAllocation *getDefaultGraphicsAllocation() const;
 
@@ -28,8 +32,17 @@ class MultiGraphicsAllocation {
 
     StackVec<GraphicsAllocation *, 1> const &getGraphicsAllocations() const;
 
+    void ensureMemoryOnDevice(MemoryManager &memoryManager, uint32_t requiredRootDeviceIndex);
+
+    uint32_t getLastUsedRootDeviceIndex() const { return lastUsedRootDeviceIndex; }
+
   protected:
     StackVec<GraphicsAllocation *, 1> graphicsAllocations;
+
+    uint32_t lastUsedRootDeviceIndex = std::numeric_limits<uint32_t>::max();
+    uint32_t requiredRootDeviceIndex = std::numeric_limits<uint32_t>::max();
+
+    std::mutex transferMutex;
 };
 
 } // namespace NEO

@@ -25,7 +25,7 @@ class MultiRootDeviceFixture : public ::testing::Test {
         cl_device_id devices[] = {
             device.get(), device2.get()};
 
-        context.reset(new MockContext(ClDeviceVector(devices, 2)));
+        context.reset(new MockContext(ClDeviceVector(devices, 2), false));
         mockMemoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
     }
 

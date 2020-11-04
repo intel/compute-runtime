@@ -131,6 +131,7 @@ class MemObj : public BaseObject<_cl_mem> {
     const cl_mem_flags &getFlags() const { return flags; }
     const cl_mem_flags &getFlagsIntel() const { return flagsIntel; }
     const MultiGraphicsAllocation &getMultiGraphicsAllocation() const { return multiGraphicsAllocation; }
+    MultiGraphicsAllocation &getMigrateableMultiGraphicsAllocation() { return multiGraphicsAllocation; }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);

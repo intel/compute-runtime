@@ -27,8 +27,8 @@ MockContext::MockContext(ClDevice *pDevice, bool noSpecialQueue) {
     initializeWithDevices(ClDeviceVector{&deviceId, 1}, noSpecialQueue);
 }
 
-MockContext::MockContext(const ClDeviceVector &clDeviceVector) {
-    initializeWithDevices(clDeviceVector, true);
+MockContext::MockContext(const ClDeviceVector &clDeviceVector, bool noSpecialQueue) {
+    initializeWithDevices(clDeviceVector, noSpecialQueue);
 }
 
 MockContext::MockContext(
@@ -40,7 +40,6 @@ MockContext::MockContext(
     contextCallback = funcNotify;
     userData = data;
     memoryManager = nullptr;
-    StackVec<CommandQueue *, 1> specialQueues;
     defaultDeviceQueue = nullptr;
     driverDiagnostics = nullptr;
     rootDeviceIndices = {};

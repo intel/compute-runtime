@@ -32,6 +32,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     const cl_event *eventWaitList,
     cl_event *event) {
 
+    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+
+    buffer->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
+
     const cl_command_type cmdType = CL_COMMAND_WRITE_BUFFER;
     auto isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingWrite, size, const_cast<void *>(ptr),
@@ -39,7 +43,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
 
     //check if we are dealing with SVM pointer here for which we already have an allocation
     if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
-        auto rootDeviceIndex = getDevice().getRootDeviceIndex();
         auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
         if (svmEntry) {
             if ((svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {

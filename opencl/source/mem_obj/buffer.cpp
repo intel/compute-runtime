@@ -178,6 +178,7 @@ Buffer *Buffer::create(Context *context,
 
     void *ptr = nullptr;
     bool forceCopyHostPtr = false;
+    bool copyExecuted = false;
 
     for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
         allocationInfo[rootDeviceIndex] = {};
@@ -375,7 +376,7 @@ Buffer *Buffer::create(Context *context,
         }
         pBuffer->setHostPtrMinSize(size);
 
-        if (allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr) {
+        if (allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr && !copyExecuted) {
             auto gmm = allocationInfo[rootDeviceIndex].memory->getDefaultGmm();
             bool gpuCopyRequired = (gmm && gmm->isRenderCompressed) || !MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
 
@@ -388,8 +389,10 @@ Buffer *Buffer::create(Context *context,
                         errcodeRet = CL_OUT_OF_RESOURCES;
                     }
                 }
+                copyExecuted = true;
             } else {
                 memcpy_s(allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer(), size, hostPtr, size);
+                copyExecuted = true;
             }
         }
     }
