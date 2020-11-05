@@ -964,7 +964,6 @@ HWTEST_F(HwHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessMod
 HWTEST_F(HwHelperTest, WhenIsMediaBlockIOSupportedThenReturnCorrectResult) {
     auto &helper = HwHelper::get(renderCoreFamily);
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
     {
         hwInfo.capabilityTable.supportsImages = true;
         EXPECT_TRUE(helper.isMediaBlockIOSupported(hwInfo));
