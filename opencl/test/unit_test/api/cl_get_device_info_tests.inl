@@ -85,7 +85,7 @@ TEST_F(clGetDeviceInfoTests, GivenNullDeviceWhenGettingDeviceInfoThenInvalidDevi
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeCorrectValueIsReturned) {
+TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeThenCorrectValueIsReturned) {
 
     cl_device_svm_capabilities svmCaps;
 
