@@ -21,7 +21,7 @@ void CL_CALLBACK eventCallBack(const char *, const void *,
     cbInvoked++;
 }
 
-TEST_F(clCreateContextTests, returnsSuccess) {
+TEST_F(clCreateContextTests, GivenValidParamsWhenCreatingContextThenContextIsCreated) {
     auto context =
         clCreateContext(nullptr, 1u, &testedClDevice, nullptr, nullptr, &retVal);
 
@@ -34,7 +34,7 @@ TEST_F(clCreateContextTests, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateContextTests, noRet) {
+TEST_F(clCreateContextTests, GivenNullptrRetValWhenCreatingContextThenContextIsCreated) {
     auto context =
         clCreateContext(nullptr, 1u, &testedClDevice, nullptr, nullptr, nullptr);
 
@@ -46,19 +46,20 @@ TEST_F(clCreateContextTests, noRet) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateContextTests, returnsFail) {
-    auto context =
-        clCreateContext(nullptr, 0, &testedClDevice, nullptr, nullptr, &retVal);
-    ASSERT_EQ(nullptr, context);
-    ASSERT_EQ(CL_INVALID_VALUE, retVal);
-
-    cl_int someData = 25;
-    context = clCreateContext(nullptr, 1u, &testedClDevice, nullptr, &someData, &retVal);
+TEST_F(clCreateContextTests, GivenZeroDevicesWhenCreatingContextThenInvalidValueErrorIsReturned) {
+    auto context = clCreateContext(nullptr, 0, &testedClDevice, nullptr, nullptr, &retVal);
     ASSERT_EQ(nullptr, context);
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateContextTests, invalidDevices) {
+TEST_F(clCreateContextTests, GivenInvalidUserDataWhenCreatingContextThenInvalidValueErrorIsReturned) {
+    cl_int someData = 25;
+    auto context = clCreateContext(nullptr, 1u, &testedClDevice, nullptr, &someData, &retVal);
+    ASSERT_EQ(nullptr, context);
+    ASSERT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(clCreateContextTests, GivenInvalidDeviceListWhenCreatingContextThenInvalidDeviceErrorIsReturned) {
     cl_device_id devList[2];
     devList[0] = testedClDevice;
     devList[1] = (cl_device_id)ptrGarbage;
@@ -68,13 +69,13 @@ TEST_F(clCreateContextTests, invalidDevices) {
     ASSERT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clCreateContextTests, nullDevices) {
+TEST_F(clCreateContextTests, GivenNullDeviceListWhenCreatingContextThenInvalidValueErrorIsReturned) {
     auto context = clCreateContext(nullptr, 2, nullptr, nullptr, nullptr, &retVal);
     ASSERT_EQ(nullptr, context);
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateContextTests, nullUserData) {
+TEST_F(clCreateContextTests, GivenNullUserDataWhenCreatingContextThenContextIsCreated) {
     auto context = clCreateContext(nullptr, 1u, &testedClDevice, eventCallBack, nullptr, &retVal);
     ASSERT_NE(nullptr, context);
 
