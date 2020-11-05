@@ -13,7 +13,7 @@ using namespace NEO;
 struct HwInfoConfigTestLinuxBdw : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
-        drm->StoredDeviceID = IBDW_GT2_ULT_MOBL_DEVICE_F0_ID;
+        drm->StoredDeviceID = 0x1616;
         drm->setGtType(GTTYPE_GT2);
     }
 };
@@ -40,7 +40,7 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
-    drm->StoredDeviceID = IBDW_GT1_HALO_MOBL_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x1602;
     drm->setGtType(GTTYPE_GT1);
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -60,7 +60,7 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
-    drm->StoredDeviceID = IBDW_GT3_ULT_MOBL_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x1626;
     drm->setGtType(GTTYPE_GT3);
     drm->StoredSSVal = 6;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
@@ -136,14 +136,14 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, configureHwInfoEdram) {
     EXPECT_EQ_VAL(0u, outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrEDram);
 
-    drm->StoredDeviceID = IBDW_GT3_HALO_MOBL_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x1622;
     drm->setGtType(GTTYPE_GT3);
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
 
-    drm->StoredDeviceID = IBDW_GT3_SERV_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x162A;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);

@@ -57,11 +57,11 @@ typedef Test<ClDeviceFixture> BdwUsDeviceIdTest;
 
 BDWTEST_F(BdwUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short bdwSimulationIds[6] = {
-        IBDW_GT0_DESK_DEVICE_F0_ID,
-        IBDW_GT1_DESK_DEVICE_F0_ID,
-        IBDW_GT2_DESK_DEVICE_F0_ID,
-        IBDW_GT3_DESK_DEVICE_F0_ID,
-        IBDW_GT4_DESK_DEVICE_F0_ID,
+        0x0BD0,
+        0x0BD1,
+        0x0BD2,
+        0x0BD3,
+        0x0BD4,
         0, // default, non-simulation
     };
     NEO::MockDevice *mockDevice = nullptr;

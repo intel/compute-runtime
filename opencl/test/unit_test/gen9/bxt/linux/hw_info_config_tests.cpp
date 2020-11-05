@@ -13,7 +13,7 @@ using namespace NEO;
 struct HwInfoConfigTestLinuxBxt : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
-        drm->StoredDeviceID = IBXT_P_3x6_DEVICE_ID;
+        drm->StoredDeviceID = 0x5A84;
         drm->setGtType(GTTYPE_GTA);
         drm->StoredEUVal = 18;
         drm->StoredHasPooledEU = 1;
@@ -50,8 +50,8 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
-    drm->StoredDeviceID = IBXT_P_12EU_3x6_DEVICE_ID;
-    drm->setGtType(GTTYPE_GTC); //IBXT_P_12EU_3x6_DEVICE_ID is GTA, but fot test sake make it GTC
+    drm->StoredDeviceID = 0x5A85;
+    drm->setGtType(GTTYPE_GTC); //0x5A85 is GTA, but for test make it GTC
     drm->StoredMinEUinPool = 6;
     drm->StoredDeviceRevID = 4;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
@@ -75,8 +75,8 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfo) {
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrGTC);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
-    drm->StoredDeviceID = IBXT_P_12EU_3x6_DEVICE_ID;
-    drm->setGtType(GTTYPE_GTX); //IBXT_P_12EU_3x6_DEVICE_ID is GTA, but fot test sake make it GTX
+    drm->StoredDeviceID = 0x5A85;
+    drm->setGtType(GTTYPE_GTX); //0x5A85 is GTA, but for test make it GTX
     drm->StoredMinEUinPool = 9;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);

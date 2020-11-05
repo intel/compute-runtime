@@ -26,8 +26,8 @@ int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo,
     gtSystemInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = 1;
     gtSystemInfo->VEBoxInfo.IsValid = true;
 
-    if (hwInfo->platform.usDeviceID == IKBL_GT3_28W_ULT_DEVICE_F0_ID ||
-        hwInfo->platform.usDeviceID == IKBL_GT3_15W_ULT_DEVICE_F0_ID) {
+    if (hwInfo->platform.usDeviceID == 0x5927 ||
+        hwInfo->platform.usDeviceID == 0x5926) {
         gtSystemInfo->EdramSizeInKb = 64 * 1024;
     }
 

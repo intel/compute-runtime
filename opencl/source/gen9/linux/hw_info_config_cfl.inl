@@ -26,8 +26,8 @@ int HwInfoConfigHw<IGFX_COFFEELAKE>::configureHardwareCustom(HardwareInfo *hwInf
     gtSystemInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = true;
     gtSystemInfo->VEBoxInfo.IsValid = true;
 
-    if (hwInfo->platform.usDeviceID == ICFL_GT3_ULT_28W_DEVICE_F0_ID ||
-        hwInfo->platform.usDeviceID == ICFL_GT3_ULT_15W_DEVICE_F0_ID) {
+    if (hwInfo->platform.usDeviceID == 0x3EA8 ||
+        hwInfo->platform.usDeviceID == 0x3EA6) {
         gtSystemInfo->EdramSizeInKb = 64 * 1024;
     }
 

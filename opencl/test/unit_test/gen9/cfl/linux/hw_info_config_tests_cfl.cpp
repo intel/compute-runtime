@@ -15,7 +15,7 @@ using namespace NEO;
 struct HwInfoConfigTestLinuxCfl : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
-        drm->StoredDeviceID = ICFL_GT2_DT_DEVICE_F0_ID;
+        drm->StoredDeviceID = 0x3E92;
         drm->setGtType(GTTYPE_GT2);
     }
 };
@@ -44,7 +44,7 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, configureHwInfo) {
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.VEBoxInfo.Instances.Bits.VEBox0Enabled);
     EXPECT_TRUE(outHwInfo.gtSystemInfo.VEBoxInfo.IsValid);
 
-    drm->StoredDeviceID = ICFL_GT1_DT_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x3E90;
     drm->StoredSSVal = 3;
     drm->setGtType(GTTYPE_GT1);
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
@@ -66,7 +66,7 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
-    drm->StoredDeviceID = ICFL_GT3_ULT_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x3EA5;
     drm->StoredSSVal = 6;
     drm->setGtType(GTTYPE_GT3);
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
@@ -150,14 +150,14 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, configureHwInfoEdram) {
     EXPECT_EQ_VAL(0u, outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrEDram);
 
-    drm->StoredDeviceID = ICFL_GT3_ULT_28W_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x3EA8;
     drm->setGtType(GTTYPE_GT3);
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
 
-    drm->StoredDeviceID = ICFL_GT3_ULT_15W_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x3EA6;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);

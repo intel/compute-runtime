@@ -17,7 +17,7 @@ const char *HwMapper<IGFX_TIGERLAKE_LP>::abbreviation = "tgllp";
 
 bool isSimulationTGLLP(unsigned short deviceId) {
     switch (deviceId) {
-    case DEV_ID_FF20:
+    case 0xFF20:
         return true;
     }
     return false;

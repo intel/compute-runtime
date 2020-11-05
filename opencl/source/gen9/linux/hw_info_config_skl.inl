@@ -24,14 +24,14 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     gtSystemInfo->VEBoxInfo.IsValid = true;
     gtSystemInfo->VDBoxInfo.IsValid = true;
 
-    if (hwInfo->platform.usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_540 ||
-        hwInfo->platform.usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_550 ||
-        hwInfo->platform.usDeviceID == ISKL_GT3_MEDIA_SERV_DEVICE_F0_ID) {
+    if (hwInfo->platform.usDeviceID == 0x1926 ||
+        hwInfo->platform.usDeviceID == 0x1927 ||
+        hwInfo->platform.usDeviceID == 0x192D) {
         gtSystemInfo->EdramSizeInKb = 64 * 1024;
     }
 
-    if (hwInfo->platform.usDeviceID == ISKL_GT4_HALO_MOBL_DEVICE_F0_ID ||
-        hwInfo->platform.usDeviceID == ISKL_GT4_WRK_DEVICE_F0_ID) {
+    if (hwInfo->platform.usDeviceID == 0x193B ||
+        hwInfo->platform.usDeviceID == 0x193D) {
         gtSystemInfo->EdramSizeInKb = 128 * 1024;
     }
 

@@ -46,8 +46,8 @@ typedef Test<ClDeviceFixture> BxtUsDeviceIdTest;
 
 BXTTEST_F(BxtUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short bxtSimulationIds[3] = {
-        IBXT_A_DEVICE_F0_ID,
-        IBXT_C_DEVICE_F0_ID,
+        0x9906,
+        0x9907,
         0, // default, non-simulation
     };
     NEO::MockDevice *mockDevice = nullptr;

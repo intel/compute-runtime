@@ -13,7 +13,7 @@ using namespace NEO;
 struct HwInfoConfigTestLinuxSkl : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
-        drm->StoredDeviceID = ISKL_GT2_DESK_DEVICE_F0_ID;
+        drm->StoredDeviceID = 0x0902;
         drm->setGtType(GTTYPE_GT2);
     }
 };
@@ -44,7 +44,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfo) {
     EXPECT_TRUE(outHwInfo.gtSystemInfo.VEBoxInfo.IsValid);
     EXPECT_TRUE(outHwInfo.gtSystemInfo.VDBoxInfo.IsValid);
 
-    drm->StoredDeviceID = ISKL_GT1_DT_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x1902;
     drm->setGtType(GTTYPE_GT1);
     drm->StoredSSVal = 3;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
@@ -66,7 +66,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
-    drm->StoredDeviceID = ISKL_GT1_5_DT_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x1917;
     drm->setGtType(GTTYPE_GT1_5);
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -86,7 +86,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
-    drm->StoredDeviceID = ISKL_GT3_DESK_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x0903;
     drm->setGtType(GTTYPE_GT3);
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -106,7 +106,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
-    drm->StoredDeviceID = ISKL_GT4_DESK_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x0904;
     drm->setGtType(GTTYPE_GT4);
     drm->StoredSSVal = 6;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
@@ -210,33 +210,33 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfoEdram) {
     EXPECT_EQ_VAL(0u, outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrEDram);
 
-    drm->StoredDeviceID = ISKL_GT3e_ULT_DEVICE_F0_ID_540;
+    drm->StoredDeviceID = 0x1926;
     drm->setGtType(GTTYPE_GT3);
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
 
-    drm->StoredDeviceID = ISKL_GT3e_ULT_DEVICE_F0_ID_550;
+    drm->StoredDeviceID = 0x1927;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
 
-    drm->StoredDeviceID = ISKL_GT3_MEDIA_SERV_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x192D;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
 
-    drm->StoredDeviceID = ISKL_GT4_HALO_MOBL_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x193B;
     drm->setGtType(GTTYPE_GT4);
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
 
-    drm->StoredDeviceID = ISKL_GT4_WRK_DEVICE_F0_ID;
+    drm->StoredDeviceID = 0x193D;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);

@@ -14,7 +14,7 @@ struct HwInfoConfigTestLinuxGlk : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
-        drm->StoredDeviceID = IGLK_GT2_ULT_12EU_DEVICE_F0_ID;
+        drm->StoredDeviceID = 0x3185;
         drm->setGtType(GTTYPE_GTA);
         drm->StoredEUVal = 18;
         drm->StoredHasPooledEU = 1;
@@ -47,8 +47,8 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfo) {
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.VEBoxInfo.Instances.Bits.VEBox0Enabled);
     EXPECT_TRUE(outHwInfo.gtSystemInfo.VEBoxInfo.IsValid);
 
-    drm->StoredDeviceID = IGLK_GT2_ULT_18EU_DEVICE_F0_ID;
-    drm->setGtType(GTTYPE_GTC); //IGLK_GT2_ULT_18EU_DEVICE_F0_ID is GTA, but fot test sake make it GTC
+    drm->StoredDeviceID = 0x3184;
+    drm->setGtType(GTTYPE_GTC); //0x3184 is GTA, but for test make it GTC
     drm->StoredMinEUinPool = 6;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -71,8 +71,8 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfo) {
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrGTC);
     EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
-    drm->StoredDeviceID = IGLK_GT2_ULT_12EU_DEVICE_F0_ID;
-    drm->setGtType(GTTYPE_GTX); //IGLK_GT2_ULT_18EU_DEVICE_F0_ID is GTA, but fot test sake make it GTX
+    drm->StoredDeviceID = 0x3185;
+    drm->setGtType(GTTYPE_GTX); //0x3185 is GTA, but for test make it GTX
     drm->StoredMinEUinPool = 9;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);

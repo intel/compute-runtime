@@ -37,8 +37,8 @@ typedef Test<ClDeviceFixture> GlkUsDeviceIdTest;
 
 GLKTEST_F(GlkUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short glkSimulationIds[3] = {
-        IGLK_GT2_ULT_18EU_DEVICE_F0_ID,
-        IGLK_GT2_ULT_12EU_DEVICE_F0_ID,
+        0x3184,
+        0x3185,
         0, // default, non-simulation
     };
     NEO::MockDevice *mockDevice = nullptr;
