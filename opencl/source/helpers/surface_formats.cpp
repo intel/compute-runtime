@@ -86,6 +86,7 @@ namespace NEO {
 //Initialize this with the required formats first.
 //Append the optional one later
 const ClSurfaceFormatInfo SurfaceFormats::readOnlySurfaceFormats12[] = { COMMONFORMATS, READONLYFORMATS };
+
 const ClSurfaceFormatInfo SurfaceFormats::readOnlySurfaceFormats20[] = { COMMONFORMATS, READONLYFORMATS, SRGBFORMATS };
 
 const ClSurfaceFormatInfo SurfaceFormats::writeOnlySurfaceFormats[] = { COMMONFORMATS };
@@ -104,7 +105,7 @@ const ClSurfaceFormatInfo SurfaceFormats::planarYuvSurfaceFormats[] = {
 };
 
 const ClSurfaceFormatInfo SurfaceFormats::packedSurfaceFormats[] = {
-    {{CL_RG,            CL_UNORM_INT16},    {GMM_FORMAT_Y210,                       GFX3DSTATE_SURFACEFORMAT_PACKED_422_16           , 0, 2, 2, 4}},
+    {{CL_RGBA,          CL_UNORM_INT16},    {GMM_FORMAT_Y210,                       GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM      , 0, 4, 2, 8}},
     {{CL_RG,            CL_UNORM_INT16},    {GMM_FORMAT_YUY2_2x1,                   GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM       , 0, 2, 2, 4}}
  };
 
