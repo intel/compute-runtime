@@ -286,6 +286,12 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = sizeof(cl_device_feature_capabilities_intel);
         break;
     }
+    case CL_DEVICE_PCI_BUS_INFO_KHR:
+        if (isPciBusInfoValid()) {
+            src = &deviceInfo.pciBusInfo;
+            retSize = srcSize = sizeof(deviceInfo.pciBusInfo);
+        }
+        break;
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !getSharedDeviceInfo().imageSupport) {
             src = &value;

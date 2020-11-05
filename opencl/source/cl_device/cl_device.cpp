@@ -263,4 +263,9 @@ void ClDevice::getQueueFamilyName(char *outputName, size_t maxOutputNameLength, 
 Platform *ClDevice::getPlatform() const {
     return castToObject<Platform>(platformId);
 }
+bool ClDevice::isPciBusInfoValid() const {
+    return deviceInfo.pciBusInfo.pci_domain != PhysicalDevicePciBusInfo::InvalidValue && deviceInfo.pciBusInfo.pci_bus != PhysicalDevicePciBusInfo::InvalidValue &&
+           deviceInfo.pciBusInfo.pci_device != PhysicalDevicePciBusInfo::InvalidValue && deviceInfo.pciBusInfo.pci_function != PhysicalDevicePciBusInfo::InvalidValue;
+}
+
 } // namespace NEO

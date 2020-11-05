@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
@@ -127,6 +128,8 @@ class Drm {
     int setupHardwareInfo(DeviceDescriptor *, bool);
     void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo &sysInfo);
     void setupCacheInfo(const HardwareInfo &hwInfo);
+
+    PhysicalDevicePciBusInfo getPciBusInfo() const;
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
     void checkNonPersistentContextsSupport();

@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
@@ -170,6 +171,8 @@ class Wddm {
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return rootDeviceEnvironment; }
 
     const uint32_t getTimestampFrequency() const { return timestampFrequency; }
+
+    PhysicalDevicePciBusInfo getPciBusInfo() const;
 
   protected:
     std::unique_ptr<HwDeviceId> hwDeviceId;

@@ -9,6 +9,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -715,4 +716,50 @@ TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatfor
 
     EXPECT_EQ(nullptr, platformsImpl);
     platformsImpl = new std::vector<std::unique_ptr<Platform>>;
+}
+
+TEST_F(DrmTests, givenInvalidPciPathThenPciBusInfoIsNotAvailable) {
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, false);
+    VariableBackup<decltype(entryIndex)> backupEntryIndex(&entryIndex, 0u);
+
+    openFull = openWithCounter;
+    entryIndex = 1;
+    openCounter = 1;
+
+    const uint32_t invVal = PhysicalDevicePciBusInfo::InvalidValue;
+
+    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    ASSERT_NE(drm, nullptr);
+    EXPECT_EQ(drm->getPciBusInfo().pciDomain, invVal);
+    EXPECT_EQ(drm->getPciBusInfo().pciBus, invVal);
+    EXPECT_EQ(drm->getPciBusInfo().pciDevice, invVal);
+    EXPECT_EQ(drm->getPciBusInfo().pciFunction, invVal);
+}
+
+TEST_F(DrmTests, givenValidPciPathThenPciBusInfoIsAvailable) {
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, false);
+    VariableBackup<decltype(entryIndex)> backupEntryIndex(&entryIndex, 0u);
+
+    openFull = openWithCounter;
+    entryIndex = 4;
+    openCounter = 2;
+
+    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    ASSERT_NE(drm, nullptr);
+    EXPECT_EQ(drm->getPciBusInfo().pciDomain, 0u);
+    EXPECT_EQ(drm->getPciBusInfo().pciBus, 0u);
+    EXPECT_EQ(drm->getPciBusInfo().pciDevice, 2u);
+    EXPECT_EQ(drm->getPciBusInfo().pciFunction, 1u);
+
+    entryIndex = 5;
+    openCounter = 1;
+
+    drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    ASSERT_NE(drm, nullptr);
+    EXPECT_EQ(drm->getPciBusInfo().pciDomain, 0u);
+    EXPECT_EQ(drm->getPciBusInfo().pciBus, 3u);
+    EXPECT_EQ(drm->getPciBusInfo().pciDevice, 0u);
+    EXPECT_EQ(drm->getPciBusInfo().pciFunction, 0u);
 }

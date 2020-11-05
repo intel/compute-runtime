@@ -129,6 +129,7 @@ struct ClDeviceInfo {
     cl_uint                                                                                           internalDriverVersion;
     cl_uint                                                                                           grfSize;
     bool                                                                                              preemptionSupported;
+    cl_device_pci_bus_info_khr                                                                        pciBusInfo;
     /* Extensions supported */
     bool                                                                                              nv12Extension;
     bool                                                                                              vmeExtension;

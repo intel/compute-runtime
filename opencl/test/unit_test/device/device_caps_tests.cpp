@@ -8,11 +8,11 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
 #include "opencl/source/platform/extensions.h"
@@ -1219,31 +1219,57 @@ HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxW
     EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / hwHelper.getMinimalSIMDSize(), device->getDeviceInfo().maxNumOfSubGroups);
 }
 
-class DriverInfoMock : public DriverInfo {
-  public:
-    DriverInfoMock(){};
-
-    const static std::string testDeviceName;
-    const static std::string testVersion;
-
-    std::string getDeviceName(std::string defaultName) override { return testDeviceName; };
-    std::string getVersion(std::string defaultVersion) override { return testVersion; };
-};
-
-const std::string DriverInfoMock::testDeviceName = "testDeviceName";
-const std::string DriverInfoMock::testVersion = "testVersion";
-
 TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenGettingNameAndVersionThenReturnValuesFromDriverInfo) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
+    const std::string testDeviceName = "testDeviceName";
+    const std::string testVersion = "testVersion";
+
     DriverInfoMock *driverInfoMock = new DriverInfoMock();
+    driverInfoMock->setDeviceName(testDeviceName);
+    driverInfoMock->setVersion(testVersion);
+
     device->driverInfo.reset(driverInfoMock);
     device->initializeCaps();
 
     const auto &caps = device->getDeviceInfo();
 
-    EXPECT_STREQ(DriverInfoMock::testDeviceName.c_str(), caps.name);
-    EXPECT_STREQ(DriverInfoMock::testVersion.c_str(), caps.driverVersion);
+    EXPECT_STREQ(testDeviceName.c_str(), caps.name);
+    EXPECT_STREQ(testVersion.c_str(), caps.driverVersion);
+}
+
+TEST_F(DeviceGetCapsTest, givenNoPciBusInfoThenPciBusInfoExtensionNotAvailable) {
+    const PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+
+    DriverInfoMock *driverInfoMock = new DriverInfoMock();
+    driverInfoMock->setPciBusInfo(pciBusInfo);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->driverInfo.reset(driverInfoMock);
+    device->initializeCaps();
+
+    const auto &caps = device->getDeviceInfo();
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr("cl_khr_pci_bus_info")));
+}
+
+TEST_F(DeviceGetCapsTest, givenPciBusInfoThenPciBusInfoExtensionAvailable) {
+    const PhysicalDevicePciBusInfo pciBusInfo(1, 2, 3, 4);
+
+    DriverInfoMock *driverInfoMock = new DriverInfoMock();
+    driverInfoMock->setPciBusInfo(pciBusInfo);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->driverInfo.reset(driverInfoMock);
+    device->initializeCaps();
+
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr("cl_khr_pci_bus_info"));
+
+    EXPECT_EQ(caps.pciBusInfo.pci_domain, pciBusInfo.pciDomain);
+    EXPECT_EQ(caps.pciBusInfo.pci_bus, pciBusInfo.pciBus);
+    EXPECT_EQ(caps.pciBusInfo.pci_device, pciBusInfo.pciDevice);
+    EXPECT_EQ(caps.pciBusInfo.pci_function, pciBusInfo.pciFunction);
 }
 
 static bool getPlanarYuvHeightCalled = false;
