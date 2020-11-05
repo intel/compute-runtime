@@ -25,35 +25,32 @@ zesGetDeviceProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    pDdiTable->pfnGetProperties = (zes_pfnDeviceGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceGetProperties);
-    pDdiTable->pfnGetState = (zes_pfnDeviceGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceGetState);
-    pDdiTable->pfnReset = (zes_pfnDeviceReset_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceReset);
-    pDdiTable->pfnProcessesGetState = (zes_pfnDeviceProcessesGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceProcessesGetState);
-    pDdiTable->pfnPciGetProperties = (zes_pfnDevicePciGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDevicePciGetProperties);
-    pDdiTable->pfnPciGetState = (zes_pfnDevicePciGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDevicePciGetState);
-    pDdiTable->pfnPciGetBars = (zes_pfnDevicePciGetBars_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDevicePciGetBars);
-    pDdiTable->pfnPciGetStats = (zes_pfnDevicePciGetStats_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDevicePciGetStats);
-    pDdiTable->pfnEnumDiagnosticTestSuites = (zes_pfnDeviceEnumDiagnosticTestSuites_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumDiagnosticTestSuites);
-    pDdiTable->pfnEnumEngineGroups = (zes_pfnDeviceEnumEngineGroups_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumEngineGroups);
-    pDdiTable->pfnEventRegister = (zes_pfnDeviceEventRegister_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEventRegister);
-    pDdiTable->pfnEnumFabricPorts = (zes_pfnDeviceEnumFabricPorts_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumFabricPorts);
-    pDdiTable->pfnEnumFans = (zes_pfnDeviceEnumFans_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumFans);
-    pDdiTable->pfnEnumFirmwares = (zes_pfnDeviceEnumFirmwares_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumFirmwares);
-    pDdiTable->pfnEnumFrequencyDomains = (zes_pfnDeviceEnumFrequencyDomains_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumFrequencyDomains);
-    pDdiTable->pfnEnumLeds = (zes_pfnDeviceEnumLeds_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumLeds);
-    pDdiTable->pfnEnumMemoryModules = (zes_pfnDeviceEnumMemoryModules_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumMemoryModules);
-    pDdiTable->pfnEnumPerformanceFactorDomains = (zes_pfnDeviceEnumPerformanceFactorDomains_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumPerformanceFactorDomains);
-    pDdiTable->pfnEnumPowerDomains = (zes_pfnDeviceEnumPowerDomains_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumPowerDomains);
-    pDdiTable->pfnEnumPsus = (zes_pfnDeviceEnumPsus_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumPsus);
-    pDdiTable->pfnEnumRasErrorSets = (zes_pfnDeviceEnumRasErrorSets_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumRasErrorSets);
-    pDdiTable->pfnEnumSchedulers = (zes_pfnDeviceEnumSchedulers_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumSchedulers);
-    pDdiTable->pfnEnumStandbyDomains = (zes_pfnDeviceEnumStandbyDomains_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumStandbyDomains);
-    pDdiTable->pfnEnumTemperatureSensors = (zes_pfnDeviceEnumTemperatureSensors_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDeviceEnumTemperatureSensors);
+    pDdiTable->pfnGetProperties = zesDeviceGetProperties;
+    pDdiTable->pfnGetState = zesDeviceGetState;
+    pDdiTable->pfnReset = zesDeviceReset;
+    pDdiTable->pfnProcessesGetState = zesDeviceProcessesGetState;
+    pDdiTable->pfnPciGetProperties = zesDevicePciGetProperties;
+    pDdiTable->pfnPciGetState = zesDevicePciGetState;
+    pDdiTable->pfnPciGetBars = zesDevicePciGetBars;
+    pDdiTable->pfnPciGetStats = zesDevicePciGetStats;
+    pDdiTable->pfnEnumDiagnosticTestSuites = zesDeviceEnumDiagnosticTestSuites;
+    pDdiTable->pfnEnumEngineGroups = zesDeviceEnumEngineGroups;
+    pDdiTable->pfnEventRegister = zesDeviceEventRegister;
+    pDdiTable->pfnEnumFabricPorts = zesDeviceEnumFabricPorts;
+    pDdiTable->pfnEnumFans = zesDeviceEnumFans;
+    pDdiTable->pfnEnumFirmwares = zesDeviceEnumFirmwares;
+    pDdiTable->pfnEnumFrequencyDomains = zesDeviceEnumFrequencyDomains;
+    pDdiTable->pfnEnumLeds = zesDeviceEnumLeds;
+    pDdiTable->pfnEnumMemoryModules = zesDeviceEnumMemoryModules;
+    pDdiTable->pfnEnumPerformanceFactorDomains = zesDeviceEnumPerformanceFactorDomains;
+    pDdiTable->pfnEnumPowerDomains = zesDeviceEnumPowerDomains;
+    pDdiTable->pfnEnumPsus = zesDeviceEnumPsus;
+    pDdiTable->pfnEnumRasErrorSets = zesDeviceEnumRasErrorSets;
+    pDdiTable->pfnEnumSchedulers = zesDeviceEnumSchedulers;
+    pDdiTable->pfnEnumStandbyDomains = zesDeviceEnumStandbyDomains;
+    pDdiTable->pfnEnumTemperatureSensors = zesDeviceEnumTemperatureSensors;
     return result;
 }
 
@@ -65,11 +62,8 @@ zesGetDriverProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnEventListen = (zes_pfnDriverEventListen_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDriverEventListen);
+    pDdiTable->pfnEventListen = zesDriverEventListen;
     return result;
 }
 
@@ -81,13 +75,10 @@ zesGetDiagnosticsProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnDiagnosticsGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDiagnosticsGetProperties);
-    pDdiTable->pfnGetTests = (zes_pfnDiagnosticsGetTests_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDiagnosticsGetTests);
-    pDdiTable->pfnRunTests = (zes_pfnDiagnosticsRunTests_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesDiagnosticsRunTests);
+    pDdiTable->pfnGetProperties = zesDiagnosticsGetProperties;
+    pDdiTable->pfnGetTests = zesDiagnosticsGetTests;
+    pDdiTable->pfnRunTests = zesDiagnosticsRunTests;
 
     return result;
 }
@@ -100,12 +91,10 @@ zesGetEngineProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnEngineGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesEngineGetProperties);
-    pDdiTable->pfnGetActivity = (zes_pfnEngineGetActivity_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesEngineGetActivity);
+    pDdiTable->pfnGetProperties = zesEngineGetProperties;
+    pDdiTable->pfnGetActivity = zesEngineGetActivity;
 
     return result;
 }
@@ -118,17 +107,14 @@ zesGetFabricPortProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    pDdiTable->pfnGetProperties = (zes_pfnFabricPortGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFabricPortGetProperties);
-    pDdiTable->pfnGetLinkType = (zes_pfnFabricPortGetLinkType_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFabricPortGetLinkType);
-    pDdiTable->pfnGetConfig = (zes_pfnFabricPortGetConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFabricPortGetConfig);
-    pDdiTable->pfnSetConfig = (zes_pfnFabricPortSetConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFabricPortSetConfig);
-    pDdiTable->pfnGetState = (zes_pfnFabricPortGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFabricPortGetState);
-    pDdiTable->pfnGetThroughput = (zes_pfnFabricPortGetThroughput_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFabricPortGetThroughput);
+    pDdiTable->pfnGetProperties = zesFabricPortGetProperties;
+    pDdiTable->pfnGetLinkType = zesFabricPortGetLinkType;
+    pDdiTable->pfnGetConfig = zesFabricPortGetConfig;
+    pDdiTable->pfnSetConfig = zesFabricPortSetConfig;
+    pDdiTable->pfnGetState = zesFabricPortGetState;
+    pDdiTable->pfnGetThroughput = zesFabricPortGetThroughput;
 
     return result;
 }
@@ -141,17 +127,14 @@ zesGetFanProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    pDdiTable->pfnGetProperties = (zes_pfnFanGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFanGetProperties);
-    pDdiTable->pfnGetConfig = (zes_pfnFanGetConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFanGetConfig);
-    pDdiTable->pfnSetDefaultMode = (zes_pfnFanSetDefaultMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFanSetDefaultMode);
-    pDdiTable->pfnSetFixedSpeedMode = (zes_pfnFanSetFixedSpeedMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFanSetFixedSpeedMode);
-    pDdiTable->pfnSetSpeedTableMode = (zes_pfnFanSetSpeedTableMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFanSetSpeedTableMode);
-    pDdiTable->pfnGetState = (zes_pfnFanGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFanGetState);
+    pDdiTable->pfnGetProperties = zesFanGetProperties;
+    pDdiTable->pfnGetConfig = zesFanGetConfig;
+    pDdiTable->pfnSetDefaultMode = zesFanSetDefaultMode;
+    pDdiTable->pfnSetFixedSpeedMode = zesFanSetFixedSpeedMode;
+    pDdiTable->pfnSetSpeedTableMode = zesFanSetSpeedTableMode;
+    pDdiTable->pfnGetState = zesFanGetState;
 
     return result;
 }
@@ -164,12 +147,9 @@ zesGetFirmwareProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnFirmwareGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFirmwareGetProperties);
-    pDdiTable->pfnFlash = (zes_pfnFirmwareFlash_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFirmwareFlash);
+    pDdiTable->pfnGetProperties = zesFirmwareGetProperties;
+    pDdiTable->pfnFlash = zesFirmwareFlash;
 
     return result;
 }
@@ -182,27 +162,25 @@ zesGetFrequencyProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnFrequencyGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyGetProperties);
-    pDdiTable->pfnGetAvailableClocks = (zes_pfnFrequencyGetAvailableClocks_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyGetAvailableClocks);
-    pDdiTable->pfnGetRange = (zes_pfnFrequencyGetRange_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyGetRange);
-    pDdiTable->pfnSetRange = (zes_pfnFrequencySetRange_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencySetRange);
-    pDdiTable->pfnGetState = (zes_pfnFrequencyGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyGetState);
-    pDdiTable->pfnGetThrottleTime = (zes_pfnFrequencyGetThrottleTime_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyGetThrottleTime);
-    pDdiTable->pfnOcGetCapabilities = (zes_pfnFrequencyOcGetCapabilities_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcGetCapabilities);
-    pDdiTable->pfnOcGetFrequencyTarget = (zes_pfnFrequencyOcGetFrequencyTarget_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcGetFrequencyTarget);
-    pDdiTable->pfnOcSetFrequencyTarget = (zes_pfnFrequencyOcSetFrequencyTarget_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcSetFrequencyTarget);
-    pDdiTable->pfnOcGetVoltageTarget = (zes_pfnFrequencyOcGetVoltageTarget_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcGetVoltageTarget);
-    pDdiTable->pfnOcSetVoltageTarget = (zes_pfnFrequencyOcSetVoltageTarget_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcSetVoltageTarget);
-    pDdiTable->pfnOcSetMode = (zes_pfnFrequencyOcSetMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcSetMode);
-    pDdiTable->pfnOcGetMode = (zes_pfnFrequencyOcGetMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcGetMode);
-    pDdiTable->pfnOcGetIccMax = (zes_pfnFrequencyOcGetIccMax_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcGetIccMax);
-    pDdiTable->pfnOcSetIccMax = (zes_pfnFrequencyOcSetIccMax_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcSetIccMax);
-    pDdiTable->pfnOcGetTjMax = (zes_pfnFrequencyOcGetTjMax_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcGetTjMax);
-    pDdiTable->pfnOcSetTjMax = (zes_pfnFrequencyOcSetTjMax_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesFrequencyOcSetTjMax);
+    pDdiTable->pfnGetProperties = zesFrequencyGetProperties;
+    pDdiTable->pfnGetAvailableClocks = zesFrequencyGetAvailableClocks;
+    pDdiTable->pfnGetRange = zesFrequencyGetRange;
+    pDdiTable->pfnSetRange = zesFrequencySetRange;
+    pDdiTable->pfnGetState = zesFrequencyGetState;
+    pDdiTable->pfnGetThrottleTime = zesFrequencyGetThrottleTime;
+    pDdiTable->pfnOcGetCapabilities = zesFrequencyOcGetCapabilities;
+    pDdiTable->pfnOcGetFrequencyTarget = zesFrequencyOcGetFrequencyTarget;
+    pDdiTable->pfnOcSetFrequencyTarget = zesFrequencyOcSetFrequencyTarget;
+    pDdiTable->pfnOcGetVoltageTarget = zesFrequencyOcGetVoltageTarget;
+    pDdiTable->pfnOcSetVoltageTarget = zesFrequencyOcSetVoltageTarget;
+    pDdiTable->pfnOcSetMode = zesFrequencyOcSetMode;
+    pDdiTable->pfnOcGetMode = zesFrequencyOcGetMode;
+    pDdiTable->pfnOcGetIccMax = zesFrequencyOcGetIccMax;
+    pDdiTable->pfnOcSetIccMax = zesFrequencyOcSetIccMax;
+    pDdiTable->pfnOcGetTjMax = zesFrequencyOcGetTjMax;
+    pDdiTable->pfnOcSetTjMax = zesFrequencyOcSetTjMax;
 
     return result;
 }
@@ -215,14 +193,11 @@ zesGetLedProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnLedGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesLedGetProperties);
-    pDdiTable->pfnGetState = (zes_pfnLedGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesLedGetState);
-    pDdiTable->pfnSetState = (zes_pfnLedSetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesLedSetState);
-    pDdiTable->pfnSetColor = (zes_pfnLedSetColor_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesLedSetColor);
+    pDdiTable->pfnGetProperties = zesLedGetProperties;
+    pDdiTable->pfnGetState = zesLedGetState;
+    pDdiTable->pfnSetState = zesLedSetState;
+    pDdiTable->pfnSetColor = zesLedSetColor;
 
     return result;
 }
@@ -235,13 +210,10 @@ zesGetMemoryProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnMemoryGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesMemoryGetProperties);
-    pDdiTable->pfnGetState = (zes_pfnMemoryGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesMemoryGetState);
-    pDdiTable->pfnGetBandwidth = (zes_pfnMemoryGetBandwidth_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesMemoryGetBandwidth);
+    pDdiTable->pfnGetProperties = zesMemoryGetProperties;
+    pDdiTable->pfnGetState = zesMemoryGetState;
+    pDdiTable->pfnGetBandwidth = zesMemoryGetBandwidth;
 
     return result;
 }
@@ -254,13 +226,10 @@ zesGetPerformanceFactorProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnPerformanceFactorGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPerformanceFactorGetProperties);
-    pDdiTable->pfnGetConfig = (zes_pfnPerformanceFactorGetConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPerformanceFactorGetConfig);
-    pDdiTable->pfnSetConfig = (zes_pfnPerformanceFactorSetConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPerformanceFactorSetConfig);
+    pDdiTable->pfnGetProperties = zesPerformanceFactorGetProperties;
+    pDdiTable->pfnGetConfig = zesPerformanceFactorGetConfig;
+    pDdiTable->pfnSetConfig = zesPerformanceFactorSetConfig;
 
     return result;
 }
@@ -273,16 +242,13 @@ zesGetPowerProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnPowerGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPowerGetProperties);
-    pDdiTable->pfnGetEnergyCounter = (zes_pfnPowerGetEnergyCounter_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPowerGetEnergyCounter);
-    pDdiTable->pfnGetLimits = (zes_pfnPowerGetLimits_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPowerGetLimits);
-    pDdiTable->pfnSetLimits = (zes_pfnPowerSetLimits_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPowerSetLimits);
-    pDdiTable->pfnGetEnergyThreshold = (zes_pfnPowerGetEnergyThreshold_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPowerGetEnergyThreshold);
-    pDdiTable->pfnSetEnergyThreshold = (zes_pfnPowerSetEnergyThreshold_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPowerSetEnergyThreshold);
+    pDdiTable->pfnGetProperties = zesPowerGetProperties;
+    pDdiTable->pfnGetEnergyCounter = zesPowerGetEnergyCounter;
+    pDdiTable->pfnGetLimits = zesPowerGetLimits;
+    pDdiTable->pfnSetLimits = zesPowerSetLimits;
+    pDdiTable->pfnGetEnergyThreshold = zesPowerGetEnergyThreshold;
+    pDdiTable->pfnSetEnergyThreshold = zesPowerSetEnergyThreshold;
 
     return result;
 }
@@ -295,12 +261,9 @@ zesGetPsuProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnPsuGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPsuGetProperties);
-    pDdiTable->pfnGetState = (zes_pfnPsuGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesPsuGetState);
+    pDdiTable->pfnGetProperties = zesPsuGetProperties;
+    pDdiTable->pfnGetState = zesPsuGetState;
 
     return result;
 }
@@ -313,14 +276,11 @@ zesGetRasProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnRasGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesRasGetProperties);
-    pDdiTable->pfnGetConfig = (zes_pfnRasGetConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesRasGetConfig);
-    pDdiTable->pfnSetConfig = (zes_pfnRasSetConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesRasSetConfig);
-    pDdiTable->pfnGetState = (zes_pfnRasGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesRasGetState);
+    pDdiTable->pfnGetProperties = zesRasGetProperties;
+    pDdiTable->pfnGetConfig = zesRasGetConfig;
+    pDdiTable->pfnSetConfig = zesRasSetConfig;
+    pDdiTable->pfnGetState = zesRasGetState;
 
     return result;
 }
@@ -333,18 +293,15 @@ zesGetSchedulerProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnSchedulerGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesSchedulerGetProperties);
-    pDdiTable->pfnGetCurrentMode = (zes_pfnSchedulerGetCurrentMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesSchedulerGetCurrentMode);
-    pDdiTable->pfnGetTimeoutModeProperties = (zes_pfnSchedulerGetTimeoutModeProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesSchedulerGetTimeoutModeProperties);
-    pDdiTable->pfnGetTimesliceModeProperties = (zes_pfnSchedulerGetTimesliceModeProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesSchedulerGetTimesliceModeProperties);
-    pDdiTable->pfnSetTimeoutMode = (zes_pfnSchedulerSetTimeoutMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesSchedulerSetTimeoutMode);
-    pDdiTable->pfnSetTimesliceMode = (zes_pfnSchedulerSetTimesliceMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesSchedulerSetTimesliceMode);
-    pDdiTable->pfnSetExclusiveMode = (zes_pfnSchedulerSetExclusiveMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesSchedulerSetExclusiveMode);
-    pDdiTable->pfnSetComputeUnitDebugMode = (zes_pfnSchedulerSetComputeUnitDebugMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesSchedulerSetComputeUnitDebugMode);
+    pDdiTable->pfnGetProperties = zesSchedulerGetProperties;
+    pDdiTable->pfnGetCurrentMode = zesSchedulerGetCurrentMode;
+    pDdiTable->pfnGetTimeoutModeProperties = zesSchedulerGetTimeoutModeProperties;
+    pDdiTable->pfnGetTimesliceModeProperties = zesSchedulerGetTimesliceModeProperties;
+    pDdiTable->pfnSetTimeoutMode = zesSchedulerSetTimeoutMode;
+    pDdiTable->pfnSetTimesliceMode = zesSchedulerSetTimesliceMode;
+    pDdiTable->pfnSetExclusiveMode = zesSchedulerSetExclusiveMode;
+    pDdiTable->pfnSetComputeUnitDebugMode = zesSchedulerSetComputeUnitDebugMode;
 
     return result;
 }
@@ -357,13 +314,10 @@ zesGetStandbyProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnStandbyGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesStandbyGetProperties);
-    pDdiTable->pfnGetMode = (zes_pfnStandbyGetMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesStandbyGetMode);
-    pDdiTable->pfnSetMode = (zes_pfnStandbySetMode_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesStandbySetMode);
+    pDdiTable->pfnGetProperties = zesStandbyGetProperties;
+    pDdiTable->pfnGetMode = zesStandbyGetMode;
+    pDdiTable->pfnSetMode = zesStandbySetMode;
 
     return result;
 }
@@ -376,14 +330,11 @@ zesGetTemperatureProcAddrTable(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     if (driver_ddiTable.version < version)
         return ZE_RESULT_ERROR_UNKNOWN;
-    if (nullptr == driver_ddiTable.driverLibrary) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProperties = (zes_pfnTemperatureGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesTemperatureGetProperties);
-    pDdiTable->pfnGetConfig = (zes_pfnTemperatureGetConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesTemperatureGetConfig);
-    pDdiTable->pfnSetConfig = (zes_pfnTemperatureSetConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesTemperatureSetConfig);
-    pDdiTable->pfnGetState = (zes_pfnTemperatureGetState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, zesTemperatureGetState);
+    pDdiTable->pfnGetProperties = zesTemperatureGetProperties;
+    pDdiTable->pfnGetConfig = zesTemperatureGetConfig;
+    pDdiTable->pfnSetConfig = zesTemperatureSetConfig;
+    pDdiTable->pfnGetState = zesTemperatureGetState;
 
     return result;
 }

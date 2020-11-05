@@ -26,9 +26,6 @@ typedef struct _ze_gpu_driver_dditable_t {
     ze_api_version_t version = ZE_API_VERSION_1_0;
 
     bool enableTracing;
-
-    void *driverLibrary;
-
 } ze_gpu_driver_dditable_t;
 
 extern ze_gpu_driver_dditable_t driver_ddiTable;
