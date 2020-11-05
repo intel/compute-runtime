@@ -210,3 +210,18 @@ typedef cl_bitfield cl_device_feature_capabilities_intel;
 
 /* For GPU devices, version 1.0.0: */
 #define CL_DEVICE_FEATURE_FLAG_DP4A_INTEL (1 << 0)
+
+/****************************************
+ * cl_khr_pci_bus_info extension *
+ ***************************************/
+#define cl_khr_pci_bus_info 1
+
+// New queries for clGetDeviceInfo:
+#define CL_DEVICE_PCI_BUS_INFO_KHR 0x410F
+
+typedef struct _cl_device_pci_bus_info_khr {
+    cl_uint pci_domain;
+    cl_uint pci_bus;
+    cl_uint pci_device;
+    cl_uint pci_function;
+} cl_device_pci_bus_info_khr;

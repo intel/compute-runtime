@@ -102,16 +102,18 @@ DIR *opendir(const char *name) {
 int closedir(DIR *dirp) {
     return 0u;
 }
-uint32_t entryIndex = 0u;
-const uint32_t numEntries = 4u;
 
 struct dirent entries[] = {
     {0, 0, 0, 0, "."},
     {0, 0, 0, 0, "pci-0000:test1-render"},
     {0, 0, 0, 0, "pci-0000:test2-render"},
     {0, 0, 0, 0, "pci-0000:1234-render"},
-
+    {0, 0, 0, 0, "pci-0000:0:2.1-render"},
+    {0, 0, 0, 0, "pci-0000:3:0.0-render"},
 };
+
+uint32_t entryIndex = 0u;
+const uint32_t numEntries = sizeof(entries) / sizeof(entries[0]);
 
 struct dirent *readdir(DIR *dir) {
     if (entryIndex >= numEntries) {

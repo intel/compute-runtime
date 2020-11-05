@@ -34,20 +34,24 @@ std::string getCurrentLibraryPath() {
 
 namespace NEO {
 
-DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, OSInterface *osInterface) {
-    if (osInterface) {
-        auto wddm = osInterface->get()->getWddm();
-        DEBUG_BREAK_IF(wddm == nullptr);
-
-        std::string path(wddm->getDeviceRegistryPath());
-        return new DriverInfoWindows(std::move(path));
+DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, const OSInterface *osInterface) {
+    if (osInterface == nullptr) {
+        return nullptr;
     }
 
-    return nullptr;
+    auto osInterfaceImpl = osInterface->get();
+    UNRECOVERABLE_IF(osInterfaceImpl == nullptr);
+
+    auto wddm = osInterfaceImpl->getWddm();
+    UNRECOVERABLE_IF(wddm == nullptr);
+
+    return new DriverInfoWindows(wddm->getDeviceRegistryPath(), wddm->getPciBusInfo());
 };
 
-DriverInfoWindows::DriverInfoWindows(std::string &&fullPath) : path(DriverInfoWindows::trimRegistryKey(fullPath)),
-                                                               registryReader(createRegistryReaderFunc(path)) {}
+DriverInfoWindows::DriverInfoWindows(const std::string &fullPath, const PhysicalDevicePciBusInfo &pciBusInfo)
+    : path(DriverInfoWindows::trimRegistryKey(fullPath)), registryReader(createRegistryReaderFunc(path)) {
+    this->pciBusInfo = pciBusInfo;
+}
 
 DriverInfoWindows::~DriverInfoWindows() = default;
 
@@ -80,7 +84,7 @@ bool DriverInfoWindows::isCompatibleDriverStore() const {
 }
 
 bool isCompatibleDriverStore(std::string &&deviceRegistryPath) {
-    DriverInfoWindows driverInfo(std::move(deviceRegistryPath));
+    DriverInfoWindows driverInfo(deviceRegistryPath, PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue));
     return driverInfo.isCompatibleDriverStore();
 }
 

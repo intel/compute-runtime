@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
@@ -145,6 +146,36 @@ TEST_F(DeviceTest, WhenRetainingThenReferenceIsOneAndApiIsUsed) {
 
     ASSERT_FALSE(pClDevice->releaseApi().isUnused());
     ASSERT_EQ(1, pClDevice->getReference());
+}
+
+TEST_F(DeviceTest, givenNoPciBusInfoThenIsPciBusInfoValidReturnsFalse) {
+    PhysicalDevicePciBusInfo invalidPciBusInfoList[] = {
+        PhysicalDevicePciBusInfo(0, 1, 2, PhysicalDevicePciBusInfo::InvalidValue),
+        PhysicalDevicePciBusInfo(0, 1, PhysicalDevicePciBusInfo::InvalidValue, 3),
+        PhysicalDevicePciBusInfo(0, PhysicalDevicePciBusInfo::InvalidValue, 2, 3),
+        PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, 1, 2, 3)};
+
+    for (auto pciBusInfo : invalidPciBusInfoList) {
+        auto driverInfo = new DriverInfoMock();
+        driverInfo->setPciBusInfo(pciBusInfo);
+
+        pClDevice->driverInfo.reset(driverInfo);
+        pClDevice->initializeCaps();
+
+        EXPECT_FALSE(pClDevice->isPciBusInfoValid());
+    }
+}
+
+TEST_F(DeviceTest, givenPciBusInfoThenIsPciBusInfoValidReturnsTrue) {
+    PhysicalDevicePciBusInfo pciBusInfo(0, 1, 2, 3);
+
+    auto driverInfo = new DriverInfoMock();
+    driverInfo->setPciBusInfo(pciBusInfo);
+
+    pClDevice->driverInfo.reset(driverInfo);
+    pClDevice->initializeCaps();
+
+    EXPECT_TRUE(pClDevice->isPciBusInfoValid());
 }
 
 HWTEST_F(DeviceTest, WhenDeviceIsCreatedThenActualEngineTypeIsSameAsDefault) {

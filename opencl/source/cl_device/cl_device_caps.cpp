@@ -202,6 +202,21 @@ void ClDevice::initializeCaps() {
         deviceExtensions += sharingFactory.getExtensions(driverInfo.get());
     }
 
+    PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+
+    if (driverInfo) {
+        pciBusInfo = driverInfo->getPciBusInfo();
+    }
+
+    deviceInfo.pciBusInfo.pci_domain = pciBusInfo.pciDomain;
+    deviceInfo.pciBusInfo.pci_bus = pciBusInfo.pciBus;
+    deviceInfo.pciBusInfo.pci_device = pciBusInfo.pciDevice;
+    deviceInfo.pciBusInfo.pci_function = pciBusInfo.pciFunction;
+
+    if (isPciBusInfoValid()) {
+        deviceExtensions += "cl_khr_pci_bus_info ";
+    }
+
     deviceExtensions += hwHelper.getExtensions();
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 

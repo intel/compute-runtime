@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/get_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_driver_info.h"
 
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
@@ -992,6 +993,48 @@ TEST(GetDeviceInfoTest, givenDeviceWithSubDevicesWhenGettingNumberOfComputeUnits
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_EQ(expectedComputeUnitsForRootDevice, numComputeUnits);
     EXPECT_EQ(sizeof(numComputeUnits), retSize);
+}
+
+TEST(GetDeviceInfoTest, givenPciBusInfoWhenGettingPciBusInfoForDeviceThenPciBusInfoIsReturned) {
+    PhysicalDevicePciBusInfo pciBusInfo(0, 1, 2, 3);
+
+    auto driverInfo = new DriverInfoMock();
+    driverInfo->setPciBusInfo(pciBusInfo);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device->driverInfo.reset(driverInfo);
+    device->initializeCaps();
+
+    cl_device_pci_bus_info_khr devicePciBusInfo;
+
+    size_t sizeReturned = 0;
+    auto retVal = device->getDeviceInfo(CL_DEVICE_PCI_BUS_INFO_KHR, 0, nullptr, &sizeReturned);
+
+    ASSERT_EQ(retVal, CL_SUCCESS);
+    ASSERT_EQ(sizeReturned, sizeof(devicePciBusInfo));
+
+    retVal = device->getDeviceInfo(CL_DEVICE_PCI_BUS_INFO_KHR, sizeof(devicePciBusInfo), &devicePciBusInfo, nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(devicePciBusInfo.pci_domain, pciBusInfo.pciDomain);
+    EXPECT_EQ(devicePciBusInfo.pci_bus, pciBusInfo.pciBus);
+    EXPECT_EQ(devicePciBusInfo.pci_device, pciBusInfo.pciDevice);
+    EXPECT_EQ(devicePciBusInfo.pci_function, pciBusInfo.pciFunction);
+}
+
+TEST(GetDeviceInfoTest, givenPciBusInfoIsNotAvailableWhenGettingPciBusInfoForDeviceThenInvalidValueIsReturned) {
+    PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+
+    auto driverInfo = new DriverInfoMock();
+    driverInfo->setPciBusInfo(pciBusInfo);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device->driverInfo.reset(driverInfo);
+    device->initializeCaps();
+
+    auto retVal = device->getDeviceInfo(CL_DEVICE_PCI_BUS_INFO_KHR, 0, nullptr, nullptr);
+
+    ASSERT_EQ(retVal, CL_INVALID_VALUE);
 }
 
 struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {

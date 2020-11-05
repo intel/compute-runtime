@@ -260,8 +260,7 @@ bool validDriverStorePath(OsEnvironmentWin &osEnvironment, D3DKMT_HANDLE adapter
         return nullptr;
     }
 
-    std::string deviceRegistryPath = adapterInfo.DeviceRegistryPath;
-    DriverInfoWindows driverInfo(std::move(deviceRegistryPath));
+    DriverInfoWindows driverInfo(adapterInfo.DeviceRegistryPath, PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue));
     return driverInfo.isCompatibleDriverStore();
 }
 
@@ -1169,4 +1168,24 @@ void Wddm::createPagingFenceLogger() {
         residencyLogger = std::make_unique<WddmResidencyLogger>(device, pagingFenceAddress);
     }
 }
+
+PhysicalDevicePciBusInfo Wddm::getPciBusInfo() const {
+    D3DKMT_ADAPTERADDRESS adapterAddress;
+    D3DKMT_QUERYADAPTERINFO queryAdapterInfo;
+
+    queryAdapterInfo.hAdapter = getAdapter();
+    queryAdapterInfo.Type = KMTQAITYPE_ADAPTERADDRESS;
+    queryAdapterInfo.pPrivateDriverData = &adapterAddress;
+    queryAdapterInfo.PrivateDriverDataSize = sizeof(adapterAddress);
+
+    auto gdi = getGdi();
+    UNRECOVERABLE_IF(gdi == nullptr);
+
+    if (gdi->queryAdapterInfo(&queryAdapterInfo) == STATUS_SUCCESS) {
+        return PhysicalDevicePciBusInfo(0, adapterAddress.BusNumber, adapterAddress.DeviceNumber, adapterAddress.FunctionNumber);
+    }
+
+    return PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+}
+
 } // namespace NEO

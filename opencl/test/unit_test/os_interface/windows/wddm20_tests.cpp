@@ -1553,3 +1553,83 @@ TEST_F(WddmTestWithMockGdiDll, givenValidInputwhenSettingAllocationPriorityThenT
     EXPECT_TRUE(wddm->setAllocationPriority(handles, 2, DXGI_RESOURCE_PRIORITY_NORMAL));
     EXPECT_EQ(DXGI_RESOURCE_PRIORITY_NORMAL, getLastPriorityFcn());
 }
+
+struct GdiWithMockedQueryAdapterInfoFunc : public MockGdi {
+    GdiWithMockedQueryAdapterInfoFunc() : MockGdi() {
+        queryAdapterInfo = mockQueryAdapterInfo;
+        GdiWithMockedQueryAdapterInfoFunc::queryAdapterInfoCalled = 0u;
+    }
+    static NTSTATUS __stdcall mockQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *adapterInfo) {
+        ++queryAdapterInfoCalled;
+
+        if (queryAdapterInfoCallAlwaysReturnsUnsuccessful) {
+            return STATUS_UNSUCCESSFUL;
+        }
+
+        if (adapterInfo->Type != KMTQAITYPE_ADAPTERADDRESS) {
+            return STATUS_NOT_IMPLEMENTED;
+        }
+
+        if (adapterInfo->PrivateDriverDataSize != sizeof(D3DKMT_ADAPTERADDRESS)) {
+            return STATUS_INFO_LENGTH_MISMATCH;
+        }
+
+        D3DKMT_ADAPTERADDRESS *adapterAddress = static_cast<D3DKMT_ADAPTERADDRESS *>(adapterInfo->pPrivateDriverData);
+        adapterAddress->BusNumber = 1;
+        adapterAddress->DeviceNumber = 2;
+        adapterAddress->FunctionNumber = 3;
+
+        return STATUS_SUCCESS;
+    }
+    static uint32_t queryAdapterInfoCalled;
+    static bool queryAdapterInfoCallAlwaysReturnsUnsuccessful;
+};
+
+uint32_t GdiWithMockedQueryAdapterInfoFunc::queryAdapterInfoCalled;
+bool GdiWithMockedQueryAdapterInfoFunc::queryAdapterInfoCallAlwaysReturnsUnsuccessful;
+
+TEST(VerifyPciBusInfo, givenQueryAdapterInfoCallReturnsSuccesThenPciBusInfoIsValid) {
+    GdiWithMockedQueryAdapterInfoFunc::queryAdapterInfoCallAlwaysReturnsUnsuccessful = false;
+
+    auto osEnv = std::make_unique<OsEnvironmentWin>();
+    osEnv->gdi = std::make_unique<GdiWithMockedQueryAdapterInfoFunc>();
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.osEnvironment = std::move(osEnv);
+
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
+
+    auto pciBusInfo = wddm->getPciBusInfo();
+
+    EXPECT_EQ(GdiWithMockedQueryAdapterInfoFunc::queryAdapterInfoCalled, 1u);
+
+    EXPECT_EQ(pciBusInfo.pciDomain, 0u);
+    EXPECT_EQ(pciBusInfo.pciBus, 1u);
+    EXPECT_EQ(pciBusInfo.pciDevice, 2u);
+    EXPECT_EQ(pciBusInfo.pciFunction, 3u);
+}
+
+TEST(VerifyPciBusInfo, givenQueryAdapterInfoCallReturnsErrorThenPciBusInfoIsNotValid) {
+    GdiWithMockedQueryAdapterInfoFunc::queryAdapterInfoCallAlwaysReturnsUnsuccessful = true;
+
+    auto osEnv = std::make_unique<OsEnvironmentWin>();
+    osEnv->gdi = std::make_unique<GdiWithMockedQueryAdapterInfoFunc>();
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.osEnvironment = std::move(osEnv);
+
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
+
+    auto pciBusInfo = wddm->getPciBusInfo();
+
+    EXPECT_EQ(GdiWithMockedQueryAdapterInfoFunc::queryAdapterInfoCalled, 1u);
+
+    EXPECT_EQ(pciBusInfo.pciDomain, PhysicalDevicePciBusInfo::InvalidValue);
+    EXPECT_EQ(pciBusInfo.pciBus, PhysicalDevicePciBusInfo::InvalidValue);
+    EXPECT_EQ(pciBusInfo.pciDevice, PhysicalDevicePciBusInfo::InvalidValue);
+    EXPECT_EQ(pciBusInfo.pciFunction, PhysicalDevicePciBusInfo::InvalidValue);
+}
