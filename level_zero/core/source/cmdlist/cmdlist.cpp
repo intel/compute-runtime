@@ -106,7 +106,9 @@ void CommandList::eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocati
 }
 
 bool CommandList::isCopyOnly() const {
-    return NEO::EngineGroupType::Copy == engineGroupType;
+    const auto &hardwareInfo = device->getNEODevice()->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    return hwHelper.isCopyOnlyEngineType(engineGroupType);
 }
 
 NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *kernel) {

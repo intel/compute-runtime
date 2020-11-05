@@ -504,4 +504,9 @@ bool HwHelperHw<GfxFamily>::isMediaBlockIOSupported(const HardwareInfo &hwInfo) 
     return hwInfo.capabilityTable.supportsImages;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isCopyOnlyEngineType(EngineGroupType type) const {
+    return NEO::EngineGroupType::Copy == type;
+}
+
 } // namespace NEO

@@ -14,6 +14,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "engine_group_types.h"
 #include "hw_cmds.h"
 
 #include <cstdint>
@@ -34,13 +35,6 @@ enum class LocalMemoryAccessMode {
     Default = 0,
     CpuAccessAllowed = 1,
     CpuAccessDisallowed = 3
-};
-
-enum class EngineGroupType : uint32_t {
-    RenderCompute = 0,
-    Compute,
-    Copy,
-    MaxEngineGroups
 };
 
 class HwHelper {
@@ -129,6 +123,7 @@ class HwHelper {
     virtual bool isCooperativeDispatchSupported(const aub_stream::EngineType engine, const PRODUCT_FAMILY productFamily) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual bool isMediaBlockIOSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isCopyOnlyEngineType(EngineGroupType type) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -312,9 +307,12 @@ class HwHelperHw : public HwHelper {
     bool packedFormatsSupported() const override;
 
     bool isCooperativeDispatchSupported(const aub_stream::EngineType engine, const PRODUCT_FAMILY productFamily) const override;
+
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 
     bool isMediaBlockIOSupported(const HardwareInfo &hwInfo) const override;
+
+    bool isCopyOnlyEngineType(EngineGroupType type) const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
