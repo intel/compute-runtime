@@ -1391,6 +1391,36 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
 
     svmManager->freeSVMAlloc(unifiedMemoryPtr);
 }
+
+HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyContainerThenOnlyOnceIsAdded) {
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, pDevice->getDeviceBitfield());
+    unifiedMemoryProperties.device = pDevice;
+    auto allocationSize = 4096u;
+    auto svmManager = this->context->getSVMAllocsManager();
+    EXPECT_NE(0u, svmManager->getNumAllocs());
+    auto unifiedMemoryPtr = svmManager->createUnifiedMemoryAllocation(pDevice->getRootDeviceIndex(), allocationSize, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, unifiedMemoryPtr);
+    EXPECT_EQ(2u, svmManager->getNumAllocs());
+
+    ResidencyContainer residencyContainer;
+    EXPECT_EQ(0u, residencyContainer.size());
+
+    svmManager->addInternalAllocationsToResidencyContainer(pDevice->getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+
+    //only unified memory allocation is added to residency container
+    EXPECT_EQ(1u, residencyContainer.size());
+    EXPECT_EQ(residencyContainer[0]->getGpuAddress(), castToUint64(unifiedMemoryPtr));
+
+    svmManager->addInternalAllocationsToResidencyContainer(pDevice->getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(1u, residencyContainer.size());
+
+    svmManager->freeSVMAlloc(unifiedMemoryPtr);
+}
+
 struct createHostUnifiedMemoryAllocationTest : public ::testing::Test {
     void SetUp() override {
         device0 = context.pRootDevice0;

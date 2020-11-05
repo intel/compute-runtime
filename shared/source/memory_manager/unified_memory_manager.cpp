@@ -83,7 +83,11 @@ void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootD
             (nullptr == allocation.second.gpuAllocations.getGraphicsAllocation(rootDeviceIndex))) {
             continue;
         }
-        residencyContainer.push_back(allocation.second.gpuAllocations.getGraphicsAllocation(rootDeviceIndex));
+
+        auto alloc = allocation.second.gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+        if (residencyContainer.end() == std::find(residencyContainer.begin(), residencyContainer.end(), alloc)) {
+            residencyContainer.push_back(alloc);
+        }
     }
 }
 
