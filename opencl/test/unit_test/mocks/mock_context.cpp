@@ -124,6 +124,8 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
             }
         }
     }
+
+    setupContextType();
 }
 
 MockDefaultContext::MockDefaultContext() : MockContext(nullptr, nullptr) {
