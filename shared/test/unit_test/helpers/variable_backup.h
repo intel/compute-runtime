@@ -27,6 +27,10 @@ class VariableBackup {
     void operator=(const T &val) {
         *pValue = val;
     }
+    template <typename T2>
+    bool operator==(const T2 &val) const {
+        return *pValue == val;
+    }
 
   private:
     T oldValue;
