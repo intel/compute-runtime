@@ -537,7 +537,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZeEventPoolCreateIsCalledTh
     ze_event_pool_handle_t eventPoolHandle = {};
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = 0;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
 
     // Create event pool.
@@ -554,7 +554,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZeEventCreateIsCalledThen
     ze_event_pool_handle_t eventPoolHandle = {};
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = 0;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
 
     // Create event pool.
