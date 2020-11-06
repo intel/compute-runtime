@@ -18,7 +18,9 @@ const char *HwMapper<IGFX_DG1>::abbreviation = "dg1";
 
 bool isSimulationDG1(unsigned short deviceId) {
     switch (deviceId) {
-    case DEV_ID_4905:
+    case 0x4905:
+    case 0x4906:
+    case 0x4907:
         return true;
     }
 
