@@ -20,6 +20,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/os_thread.h"
+#include "shared/source/utilities/spinlock.h"
 
 #include "csr_properties_flags.h"
 
@@ -251,7 +252,8 @@ class CommandStreamReceiver {
     uint64_t totalMemoryUsed = 0u;
 
     volatile uint32_t *tagAddress = nullptr;
-    volatile DebugPauseState *debugPauseStateAddress = nullptr;
+    DebugPauseState *debugPauseStateAddress;
+    SpinLock debugPauseStateLock;
     static void *asyncDebugBreakConfirmation(void *arg);
     std::function<void()> debugConfirmationFunction = []() { std::cin.get(); };
 
