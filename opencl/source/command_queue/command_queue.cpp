@@ -661,8 +661,14 @@ bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
 }
 
 bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region) {
+    auto blitEnqueuImageAllowed = false;
 
-    return (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
+    if (DebugManager.flags.EnableBlitterForReadWriteImage.get() != -1) {
+        blitEnqueuImageAllowed = DebugManager.flags.EnableBlitterForReadWriteImage.get();
+        blitEnqueuImageAllowed &= (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
+    }
+
+    return blitEnqueuImageAllowed;
 }
 
 bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue) const {

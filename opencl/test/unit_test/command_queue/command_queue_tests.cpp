@@ -1186,6 +1186,8 @@ TEST(CommandQueue, giveClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectVa
 }
 
 TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0);
 
