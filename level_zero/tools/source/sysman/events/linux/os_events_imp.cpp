@@ -64,7 +64,7 @@ bool LinuxEventsImp::checkDeviceAttachEvent(zes_event_type_flags_t &pEvent) {
     return false;
 }
 
-bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent) {
+bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) {
     if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
         if (isResetRequired(pEvent)) {
             return true;

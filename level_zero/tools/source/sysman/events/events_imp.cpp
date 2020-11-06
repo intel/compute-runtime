@@ -15,8 +15,8 @@ ze_result_t EventsImp::eventRegister(zes_event_type_flags_t events) {
     return pOsEvents->eventRegister(events);
 }
 
-bool EventsImp::eventListen(zes_event_type_flags_t &pEvent) {
-    return pOsEvents->eventListen(pEvent);
+bool EventsImp::eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) {
+    return pOsEvents->eventListen(pEvent, timeout);
 }
 
 void EventsImp::init() {

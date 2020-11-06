@@ -5,32 +5,113 @@
  *
  */
 
-#include "level_zero/tools/source/sysman/events/os_events.h"
+#include "level_zero/tools/source/sysman/events/windows/os_events_imp.h"
+
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
 namespace L0 {
 
-class WddmEventsImp : public OsEvents {
-  public:
-    bool eventListen(zes_event_type_flags_t &pEvent) override;
-    ze_result_t eventRegister(zes_event_type_flags_t events) override;
-    WddmEventsImp(OsSysman *pOsSysman);
-    ~WddmEventsImp() = default;
+void WddmEventsImp::registerEvents(zes_event_type_flags_t eventId, uint32_t requestId) {
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    EventHandler event;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
 
-    // Don't allow copies of the WddmEventsImp object
-    WddmEventsImp(const WddmEventsImp &obj) = delete;
-    WddmEventsImp &operator=(const WddmEventsImp &obj) = delete;
-};
+    request.requestId = requestId;
+    request.commandId = KmdSysman::Command::RegisterEvent;
+    request.componentId = KmdSysman::Component::InterfaceProperties;
+    request.dataSize = sizeof(HANDLE);
 
-bool WddmEventsImp::eventListen(zes_event_type_flags_t &pEvent) {
-    return false;
+    event.requestId = requestId;
+    event.id = eventId;
+
+    event.windowsHandle = CreateEvent(NULL, FALSE, FALSE, NULL);
+    memcpy_s(request.dataBuffer, sizeof(HANDLE), &event.windowsHandle, sizeof(HANDLE));
+
+    status = pKmdSysManager->requestSingle(request, response);
+
+    if (status != ZE_RESULT_SUCCESS) {
+        CloseHandle(event.windowsHandle);
+        return;
+    }
+
+    eventList.push_back(event);
+}
+
+void WddmEventsImp::unregisterEvents() {
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    EventHandler event;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+
+    request.commandId = KmdSysman::Command::UnregisterEvent;
+    request.componentId = KmdSysman::Component::InterfaceProperties;
+    request.dataSize = sizeof(HANDLE);
+
+    for (uint32_t i = 0; i < eventList.size(); i++) {
+        request.requestId = eventList[i].requestId;
+        event.windowsHandle = eventList[i].windowsHandle;
+
+        memcpy_s(request.dataBuffer, sizeof(HANDLE), &event.windowsHandle, sizeof(HANDLE));
+
+        status = pKmdSysManager->requestSingle(request, response);
+
+        if (status == ZE_RESULT_SUCCESS) {
+            CloseHandle(event.windowsHandle);
+        }
+    }
+
+    eventList.clear();
 }
 
 ze_result_t WddmEventsImp::eventRegister(zes_event_type_flags_t events) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    unregisterEvents();
+
+    if (events & ZES_EVENT_TYPE_FLAG_ENERGY_THRESHOLD_CROSSED) {
+        registerEvents(ZES_EVENT_TYPE_FLAG_ENERGY_THRESHOLD_CROSSED, KmdSysman::Events::EnergyThresholdCrossed);
+    }
+
+    if (events & ZES_EVENT_TYPE_FLAG_DEVICE_SLEEP_STATE_ENTER) {
+        registerEvents(ZES_EVENT_TYPE_FLAG_DEVICE_SLEEP_STATE_ENTER, KmdSysman::Events::EnterD3);
+    }
+
+    if (events & ZES_EVENT_TYPE_FLAG_DEVICE_SLEEP_STATE_EXIT) {
+        registerEvents(ZES_EVENT_TYPE_FLAG_DEVICE_SLEEP_STATE_EXIT, KmdSysman::Events::EnterD0);
+    }
+
+    if (events & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
+        registerEvents(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, KmdSysman::Events::EnterTDR);
+    }
+
+    return (eventList.size() == 0) ? ZE_RESULT_ERROR_UNSUPPORTED_FEATURE : ZE_RESULT_SUCCESS;
+}
+
+bool WddmEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) {
+    HANDLE events[MAXIMUM_WAIT_OBJECTS];
+
+    if (eventList.size() == 0) {
+        return false;
+    }
+
+    for (uint32_t i = 0; i < eventList.size(); i++) {
+        events[i] = eventList[i].windowsHandle;
+    }
+
+    uint32_t signaledEvent = WaitForMultipleObjects(static_cast<uint32_t>(eventList.size()), events, FALSE, timeout);
+
+    if (signaledEvent >= eventList.size()) {
+        return false;
+    }
+
+    pEvent = eventList[signaledEvent].id;
+
+    return true;
 }
 
 WddmEventsImp::WddmEventsImp(OsSysman *pOsSysman) {
+    WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
+    pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
 OsEvents *OsEvents::create(OsSysman *pOsSysman) {

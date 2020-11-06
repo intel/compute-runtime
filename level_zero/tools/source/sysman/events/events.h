@@ -13,7 +13,7 @@ class Events {
   public:
     virtual ~Events(){};
     virtual ze_result_t eventRegister(zes_event_type_flags_t events) = 0;
-    virtual bool eventListen(zes_event_type_flags_t &pEvent) = 0;
+    virtual bool eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) = 0;
     virtual void init() = 0;
 };
 

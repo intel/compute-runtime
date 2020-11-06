@@ -17,7 +17,7 @@ class EventsImp : public Events, NEO::NonCopyableOrMovableClass {
   public:
     void init() override;
     ze_result_t eventRegister(zes_event_type_flags_t events) override;
-    bool eventListen(zes_event_type_flags_t &pEvent) override;
+    bool eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) override;
     OsEvents *pOsEvents = nullptr;
 
     EventsImp() = default;

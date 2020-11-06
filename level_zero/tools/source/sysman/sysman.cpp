@@ -45,7 +45,7 @@ ze_result_t DriverHandleImp::sysmanEventsListen(
     auto timeToExitLoop = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
     do {
         for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
-            gotSysmanEvent = L0::SysmanDevice::fromHandle(phDevices[devIndex])->deviceEventListen(pEvents[devIndex]);
+            gotSysmanEvent = L0::SysmanDevice::fromHandle(phDevices[devIndex])->deviceEventListen(pEvents[devIndex], timeout);
             if (gotSysmanEvent) {
                 *pNumDeviceEvents = 1;
                 break;

@@ -13,7 +13,7 @@ namespace L0 {
 
 class LinuxEventsImp : public OsEvents, NEO::NonCopyableOrMovableClass {
   public:
-    bool eventListen(zes_event_type_flags_t &pEvent) override;
+    bool eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) override;
     ze_result_t eventRegister(zes_event_type_flags_t events) override;
     LinuxEventsImp() = default;
     LinuxEventsImp(OsSysman *pOsSysman);

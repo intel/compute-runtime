@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
@@ -14,11 +15,17 @@
 namespace L0 {
 namespace ult {
 
-class MockKmdSysManager : public KmdSysManager {};
-
 constexpr uint32_t mockKmdVersionMajor = 1;
 constexpr uint32_t mockKmdVersionMinor = 0;
 constexpr uint32_t mockKmdPatchNumber = 0;
+constexpr uint32_t mockKmdMaxHandlesPerEvent = 20;
+
+struct MockEventHandle {
+    HANDLE eventHandle;
+    bool inited = false;
+};
+
+class MockKmdSysManager : public KmdSysManager {};
 
 template <>
 struct Mock<MockKmdSysManager> : public MockKmdSysManager {
@@ -26,6 +33,8 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
     ze_bool_t allowSetCalls = false;
 
     uint32_t mockPowerLimit1 = 2500;
+
+    MockEventHandle handles[KmdSysman::Events::MaxEvents][mockKmdMaxHandlesPerEvent];
 
     MOCK_METHOD(bool, escape, (uint32_t escapeOp, uint64_t pDataIn, uint32_t dataInSize, uint64_t pDataOut, uint32_t dataOutSize));
 
@@ -175,12 +184,15 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
 
         for (uint32_t i = 0; i < pHeaderIn->inNumElements; i++) {
             KmdSysman::GfxSysmanReqHeaderIn *pRequest = reinterpret_cast<KmdSysman::GfxSysmanReqHeaderIn *>(pBufferPtr);
-            if (pRequest->inCommand == KmdSysman::Command::Get || pRequest->inCommand == KmdSysman::Command::Set) {
+            if (pRequest->inCommand == KmdSysman::Command::Get ||
+                pRequest->inCommand == KmdSysman::Command::Set ||
+                pRequest->inCommand == KmdSysman::Command::RegisterEvent) {
                 if (pRequest->inComponent >= KmdSysman::Component::InterfaceProperties && pRequest->inComponent < KmdSysman::Component::MaxComponents) {
                     pBufferPtr += sizeof(KmdSysman::GfxSysmanReqHeaderIn);
                     sizeCheck -= sizeof(KmdSysman::GfxSysmanReqHeaderIn);
 
-                    if (pRequest->inCommand == KmdSysman::Command::Set) {
+                    if (pRequest->inCommand == KmdSysman::Command::Set ||
+                        pRequest->inCommand == KmdSysman::Command::RegisterEvent) {
                         if (pRequest->inDataSize == 0) {
                             return false;
                         }
@@ -200,6 +212,69 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         }
 
         return true;
+    }
+
+    void registerEvent(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
+        if (!allowSetCalls) {
+            pResponse->outDataSize = 0;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            return;
+        }
+
+        uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pRequest);
+        pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderIn);
+
+        pResponse->outDataSize = 0;
+
+        switch (pRequest->inRequestId) {
+        case KmdSysman::Events::EnterD0:
+        case KmdSysman::Events::EnterD3:
+        case KmdSysman::Events::EnterTDR:
+        case KmdSysman::Events::ExitTDR:
+        case KmdSysman::Events::EnergyThresholdCrossed: {
+            bool found = false;
+            for (uint32_t i = 0; i < mockKmdMaxHandlesPerEvent; i++) {
+                if (!handles[pRequest->inRequestId][i].inited) {
+                    handles[pRequest->inRequestId][i].inited = true;
+                    unsigned long long eventID = *(unsigned long long *)pBuffer;
+                    handles[pRequest->inRequestId][i].eventHandle = reinterpret_cast<HANDLE>(eventID);
+                    found = true;
+                    break;
+                }
+            }
+            pResponse->outReturnCode = found ? KmdSysman::KmdSysmanSuccess : KmdSysman::KmdSysmanFail;
+        } break;
+        default:
+            pResponse->outDataSize = 0;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            break;
+        }
+    }
+
+    void signalEvent(uint32_t idEvent) {
+
+        uint32_t arrayID = 0;
+        if (idEvent & ZES_EVENT_TYPE_FLAG_ENERGY_THRESHOLD_CROSSED) {
+            arrayID = KmdSysman::Events::EnergyThresholdCrossed;
+        }
+
+        if (idEvent & ZES_EVENT_TYPE_FLAG_DEVICE_SLEEP_STATE_ENTER) {
+            arrayID = KmdSysman::Events::EnterD3;
+        }
+
+        if (idEvent & ZES_EVENT_TYPE_FLAG_DEVICE_SLEEP_STATE_EXIT) {
+            arrayID = KmdSysman::Events::EnterD0;
+        }
+
+        if (idEvent & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
+            arrayID = KmdSysman::Events::EnterTDR;
+        }
+
+        for (uint32_t i = 0; i < mockKmdMaxHandlesPerEvent; i++) {
+            if (handles[arrayID][i].inited) {
+                SetEvent(handles[arrayID][i].eventHandle);
+            }
+        }
     }
 
     void setProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
@@ -347,6 +422,12 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
             } break;
             case KmdSysman::Command::Set: {
                 setProperty(pRequest, pResponse);
+                requestOffset = sizeof(KmdSysman::GfxSysmanReqHeaderIn);
+                requestOffset += pRequest->inDataSize;
+                responseOffset = sizeof(KmdSysman::GfxSysmanReqHeaderOut);
+            } break;
+            case KmdSysman::Command::RegisterEvent: {
+                registerEvent(pRequest, pResponse);
                 requestOffset = sizeof(KmdSysman::GfxSysmanReqHeaderIn);
                 requestOffset += pRequest->inDataSize;
                 responseOffset = sizeof(KmdSysman::GfxSysmanReqHeaderOut);
