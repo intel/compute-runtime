@@ -10,7 +10,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/utilities/cpu_info.h"
 
 namespace NEO {
 
@@ -139,8 +138,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
         gfxBase = maxNBitValue(32) + 1;
         heapInit(HeapIndex::HEAP_SVM, 0ull, gfxBase);
     } else {
-        auto cpuVirtualAddressSize = CpuInfo::getInstance().getVirtualAddressSize();
-        if (cpuVirtualAddressSize == 48 && gpuAddressSpace == maxNBitValue(48)) {
+        if (gpuAddressSpace == maxNBitValue(48)) {
             gfxBase = maxNBitValue(48 - 1) + 1;
             heapInit(HeapIndex::HEAP_SVM, 0ull, gfxBase);
         } else if (gpuAddressSpace == maxNBitValue(47)) {
@@ -163,7 +161,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = 0ull;
             heapInit(HeapIndex::HEAP_SVM, 0ull, 0ull);
         } else {
-            if (!initAdditionalRange(cpuVirtualAddressSize, gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, numRootDevices)) {
+            if (!initAdditionalRange(gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, numRootDevices)) {
                 return false;
             }
         }

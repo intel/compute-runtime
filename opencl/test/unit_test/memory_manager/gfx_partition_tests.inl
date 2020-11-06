@@ -9,28 +9,10 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_memory.h"
-#include "shared/source/utilities/cpu_info.h"
 
 #include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 
 #include "gtest/gtest.h"
-
-// CpuInfo is a singleton object so we have to patch it in place
-class CpuInfoOverrideCpuVirtualAddressSize {
-  public:
-    class MockCpuInfo : public CpuInfo {
-      public:
-        using CpuInfo::virtualAddressSize;
-    } *mockCpuInfo = reinterpret_cast<MockCpuInfo *>(const_cast<CpuInfo *>(&CpuInfo::getInstance()));
-    CpuInfoOverrideCpuVirtualAddressSize(uint32_t newCpuVirtualAddressSize) {
-        virtualAddressSizeSave = mockCpuInfo->getVirtualAddressSize();
-        mockCpuInfo->virtualAddressSize = newCpuVirtualAddressSize;
-    }
-    ~CpuInfoOverrideCpuVirtualAddressSize() {
-        mockCpuInfo->virtualAddressSize = virtualAddressSizeSave;
-    }
-    uint32_t virtualAddressSizeSave = 0;
-};
 
 using namespace NEO;
 
@@ -157,16 +139,6 @@ TEST(GfxPartitionTest, testGfxPartitionUnsupportedRange) {
 
     MockGfxPartition gfxPartition;
     EXPECT_FALSE(gfxPartition.init(maxNBitValue(48 + 1), reservedCpuAddressRangeSize, 0, 1));
-}
-
-TEST(GfxPartitionTest, testGfxPartitionUnsupportedCpuVirualAddressSize) {
-    if (is32bit) {
-        GTEST_SKIP();
-    }
-
-    CpuInfoOverrideCpuVirtualAddressSize overrideCpuVirtualAddressSize(48 + 1);
-    MockGfxPartition gfxPartition;
-    EXPECT_FALSE(gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1));
 }
 
 TEST(GfxPartitionTest, testGfxPartitionFullRange48BitSVMHeap64KBSplit) {
