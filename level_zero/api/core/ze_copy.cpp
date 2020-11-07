@@ -14,10 +14,10 @@ zeCommandListAppendMemoryCopy(
     void *dstptr,
     const void *srcptr,
     size_t size,
-    ze_event_handle_t hEvent,
+    ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendMemoryCopy(dstptr, srcptr, size, hEvent, 0, nullptr);
+    return L0::CommandList::fromHandle(hCommandList)->appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -55,10 +55,10 @@ zeCommandListAppendImageCopy(
     ze_command_list_handle_t hCommandList,
     ze_image_handle_t hDstImage,
     ze_image_handle_t hSrcImage,
-    ze_event_handle_t hEvent,
+    ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendImageCopy(hDstImage, hSrcImage, hEvent, 0, nullptr);
+    return L0::CommandList::fromHandle(hCommandList)->appendImageCopy(hDstImage, hSrcImage, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -68,10 +68,10 @@ zeCommandListAppendImageCopyRegion(
     ze_image_handle_t hSrcImage,
     const ze_image_region_t *pDstRegion,
     const ze_image_region_t *pSrcRegion,
-    ze_event_handle_t hEvent,
+    ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hEvent, 0, nullptr);
+    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -80,10 +80,10 @@ zeCommandListAppendImageCopyToMemory(
     void *dstptr,
     ze_image_handle_t hSrcImage,
     const ze_image_region_t *pSrcRegion,
-    ze_event_handle_t hEvent,
+    ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyToMemory(dstptr, hSrcImage, pSrcRegion, hEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyToMemory(dstptr, hSrcImage, pSrcRegion, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -92,10 +92,10 @@ zeCommandListAppendImageCopyFromMemory(
     ze_image_handle_t hDstImage,
     const void *srcptr,
     const ze_image_region_t *pDstRegion,
-    ze_event_handle_t hEvent,
+    ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyFromMemory(hDstImage, srcptr, pDstRegion, hEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyFromMemory(hDstImage, srcptr, pDstRegion, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

@@ -688,8 +688,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
                                                                        uint64_t dstOffset, uintptr_t srcPtr,
                                                                        NEO::GraphicsAllocation *srcPtrAlloc,
                                                                        uint64_t srcOffset,
-                                                                       uint32_t size,
-                                                                       ze_event_handle_t hSignalEvent) {
+                                                                       uint32_t size) {
     dstOffset += ptrDiff<uintptr_t>(dstPtr, dstPtrAlloc->getGpuAddress());
     srcOffset += ptrDiff<uintptr_t>(srcPtr, srcPtrAlloc->getGpuAddress());
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -840,14 +839,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     auto dstAllocationStruct = getAlignedAllocation(this->device, dstptr, size);
     auto srcAllocationStruct = getAlignedAllocation(this->device, srcptr, size);
 
-    ze_result_t ret = ZE_RESULT_SUCCESS;
+    ze_result_t ret = addEventsToCmdList(hSignalEvent, numWaitEvents, phWaitEvents);
 
-    appendEventForProfiling(hSignalEvent, true);
+    if (ret) {
+        return ret;
+    }
+
     if (ret == ZE_RESULT_SUCCESS && leftSize) {
         ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                                   dstAllocationStruct.alloc, dstAllocationStruct.offset,
                                                   srcAllocationStruct.alignedAllocationPtr,
-                                                  srcAllocationStruct.alloc, srcAllocationStruct.offset, static_cast<uint32_t>(leftSize), hSignalEvent)
+                                                  srcAllocationStruct.alloc, srcAllocationStruct.offset, static_cast<uint32_t>(leftSize))
                            : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
                                                           dstAllocationStruct.alloc, dstAllocationStruct.offset,
                                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
@@ -860,7 +862,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                                   dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
                                                   srcAllocationStruct.alignedAllocationPtr,
-                                                  srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset, static_cast<uint32_t>(middleSizeBytes), hSignalEvent)
+                                                  srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset, static_cast<uint32_t>(middleSizeBytes))
                            : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
                                                           dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
                                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
@@ -874,7 +876,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                                   dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
                                                   srcAllocationStruct.alignedAllocationPtr,
-                                                  srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset, static_cast<uint32_t>(rightSize), hSignalEvent)
+                                                  srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset, static_cast<uint32_t>(rightSize))
                            : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
                                                           dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
                                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
