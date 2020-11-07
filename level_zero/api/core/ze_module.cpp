@@ -225,5 +225,5 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetCacheConfig(
     ze_kernel_handle_t hKernel,
     ze_cache_config_flags_t flags) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Kernel::fromHandle(hKernel)->setCacheConfig(flags);
 }

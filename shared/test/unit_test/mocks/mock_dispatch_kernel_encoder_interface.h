@@ -44,6 +44,8 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
 
     MOCK_METHOD(bool, requiresGenerationOfLocalIdsByRuntime, (), (const, override));
 
+    MOCK_METHOD(SlmPolicy, getSlmPolicy, (), (const, override));
+
     uint32_t getRequiredWorkgroupOrder() const override {
         return requiredWalkGroupOrder;
     }

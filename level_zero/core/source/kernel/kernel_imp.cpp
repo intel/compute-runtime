@@ -785,6 +785,11 @@ uint32_t KernelImp::getSlmTotalSize() const {
     return slmArgsTotalSize + getImmutableData()->getDescriptor().kernelAttributes.slmInlineSize;
 }
 
+ze_result_t KernelImp::setCacheConfig(ze_cache_config_flags_t flags) {
+    cacheConfigFlags = flags;
+    return ZE_RESULT_SUCCESS;
+}
+
 NEO::GraphicsAllocation *KernelImp::getIsaAllocation() const {
     return getImmutableData()->getIsaGraphicsAllocation();
 }

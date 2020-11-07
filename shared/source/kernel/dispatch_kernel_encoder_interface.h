@@ -12,12 +12,19 @@ namespace NEO {
 class GraphicsAllocation;
 struct KernelDescriptor;
 
+enum class SlmPolicy {
+    SlmPolicyNone,
+    SlmPolicyLargeSlm,
+    SlmPolicyLargeData
+};
+
 struct DispatchKernelEncoderI {
     virtual ~DispatchKernelEncoderI() = default;
 
     virtual const KernelDescriptor &getKernelDescriptor() const = 0;
     virtual const uint32_t *getGroupSize() const = 0;
     virtual uint32_t getSlmTotalSize() const = 0;
+    virtual SlmPolicy getSlmPolicy() const = 0;
 
     virtual const uint8_t *getCrossThreadData() const = 0;
     virtual uint32_t getCrossThreadDataSize() const = 0;

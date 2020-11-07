@@ -99,6 +99,17 @@ struct KernelImp : Kernel {
         return groupSize;
     }
     uint32_t getSlmTotalSize() const override;
+
+    NEO::SlmPolicy getSlmPolicy() const override {
+        if (cacheConfigFlags & ZE_CACHE_CONFIG_FLAG_LARGE_SLM) {
+            return NEO::SlmPolicy::SlmPolicyLargeSlm;
+        } else if (cacheConfigFlags & ZE_CACHE_CONFIG_FLAG_LARGE_DATA) {
+            return NEO::SlmPolicy::SlmPolicyLargeData;
+        } else {
+            return NEO::SlmPolicy::SlmPolicyNone;
+        }
+    }
+
     NEO::GraphicsAllocation *getIsaAllocation() const override;
 
     uint32_t getRequiredWorkgroupOrder() const override { return requiredWorkgroupOrder; }
@@ -110,6 +121,8 @@ struct KernelImp : Kernel {
     }
     ze_result_t setGlobalOffsetExp(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) override;
     uint32_t patchGlobalOffset() override;
+
+    ze_result_t setCacheConfig(ze_cache_config_flags_t flags) override;
 
   protected:
     KernelImp() = default;
@@ -157,6 +170,8 @@ struct KernelImp : Kernel {
     bool kernelRequiresUncachedMocs = false;
 
     uint32_t globalOffsets[3] = {};
+
+    ze_cache_config_flags_t cacheConfigFlags = 0u;
 };
 
 } // namespace L0
