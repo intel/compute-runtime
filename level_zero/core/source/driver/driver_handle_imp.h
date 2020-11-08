@@ -11,6 +11,7 @@
 
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
+#include "level_zero/extensions/public/ze_exp_ext.h"
 
 namespace L0 {
 
@@ -70,7 +71,6 @@ struct DriverHandleImp : public DriverHandle {
     uint32_t parseAffinityMask(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
 
     uint32_t numDevices = 0;
-    std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
     std::vector<Device *> devices;
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
@@ -80,6 +80,13 @@ struct DriverHandleImp : public DriverHandle {
     std::string affinityMaskString = "";
     bool enableProgramDebugging = false;
     bool enableSysman = false;
+
+    // Spec extensions
+    const std::vector<std::pair<std::string, uint32_t>> extensionsSupported = {
+        {ZE_MODULE_PROGRAM_EXP_NAME, ZE_MODULE_PROGRAM_EXP_VERSION_CURRENT}};
+
+    // Experimental functions
+    std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
 };
 
 extern struct DriverHandleImp *GlobalDriver;

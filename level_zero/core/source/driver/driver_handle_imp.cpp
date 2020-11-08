@@ -105,8 +105,19 @@ ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, 
 
 ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
                                                     ze_driver_extension_properties_t *pExtensionProperties) {
+    if (nullptr == pExtensionProperties) {
+        *pCount = static_cast<uint32_t>(this->extensionsSupported.size());
+        return ZE_RESULT_SUCCESS;
+    }
 
-    *pCount = 0;
+    *pCount = std::min(static_cast<uint32_t>(this->extensionsSupported.size()), *pCount);
+
+    for (uint32_t i = 0; i < *pCount; i++) {
+        auto extension = this->extensionsSupported[i];
+        strncpy_s(pExtensionProperties[i].name, ZE_MAX_EXTENSION_NAME,
+                  extension.first.c_str(), extension.first.length() + 1);
+        pExtensionProperties[i].version = extension.second;
+    }
 
     return ZE_RESULT_SUCCESS;
 }

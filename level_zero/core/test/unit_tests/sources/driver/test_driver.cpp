@@ -37,12 +37,27 @@ TEST(zeInit, whenCallingZeInitThenInitializeOnDriverIsCalled) {
 
 using DriverVersionTest = Test<DeviceFixture>;
 
-TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenZeroExtensionPropertiesAreReturned) {
+TEST_F(DriverVersionTest,
+       givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
     uint32_t count = 0;
-    ze_driver_extension_properties_t properties;
-    ze_result_t res = driverHandle->getExtensionProperties(&count, &properties);
-    EXPECT_EQ(count, 0u);
+    ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
+    EXPECT_EQ(count, static_cast<uint32_t>(driverHandle->extensionsSupported.size()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_driver_extension_properties_t *extensionProperties = new ze_driver_extension_properties_t[count];
+    count++;
+    res = driverHandle->getExtensionProperties(&count, extensionProperties);
+    EXPECT_EQ(count, static_cast<uint32_t>(driverHandle->extensionsSupported.size()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle.get());
+    for (uint32_t i = 0; i < count; i++) {
+        auto extension = extensionProperties[i];
+        EXPECT_EQ(0, strcmp(extension.name, driverHandleImp->extensionsSupported[i].first.c_str()));
+        EXPECT_EQ(extension.version, driverHandleImp->extensionsSupported[i].second);
+    }
+
+    delete[] extensionProperties;
 }
 
 TEST_F(DriverVersionTest, returnsExpectedDriverVersion) {
