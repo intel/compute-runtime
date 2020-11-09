@@ -91,7 +91,7 @@ void KernelDataTest::buildAndDecode() {
 
     ProgramInfo programInfo;
     NEO::populateProgramInfo(programInfo, programFromPatchtokens);
-    error = program->processProgramInfo(programInfo);
+    error = program->processProgramInfo(programInfo, *pContext->getDevice(0));
     EXPECT_EQ(CL_SUCCESS, error);
 
     // extract the kernel info

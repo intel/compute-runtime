@@ -1693,7 +1693,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenLocalMemoryAccessNotAllowedWhenGlobalCons
 
     EXPECT_EQ(0u, bcsMockContext->bcsCsr->peekTaskCount());
 
-    program.processProgramInfo(programInfo);
+    program.processProgramInfo(programInfo, *device);
 
     EXPECT_EQ(1u, bcsMockContext->bcsCsr->peekTaskCount());
 

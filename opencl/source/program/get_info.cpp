@@ -33,6 +33,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
     cl_uint clFalse = CL_FALSE;
     std::vector<cl_device_id> devicesToExpose;
     StackVec<size_t, 1> binarySizes;
+    uint32_t numDevices = static_cast<uint32_t>(clDevices.size());
 
     switch (paramName) {
     case CL_PROGRAM_CONTEXT:

@@ -29,7 +29,6 @@ ClDeviceVector toClDeviceVector(ClDevice &clDevice) {
     return deviceVector;
 }
 ProgramInfo *GlobalMockSipProgram::globalSipProgramInfo;
-Device *MockProgram::getDevicePtr() { return this->pDevice; }
 int MockProgram::initInternalOptionsCalled = 0;
 
 std::string MockProgram::getCachedFileName() const {

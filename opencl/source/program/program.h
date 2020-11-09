@@ -132,8 +132,8 @@ class Program : public BaseObject<_cl_program> {
     cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions, bool enableCaching,
                  std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
 
-    MOCKABLE_VIRTUAL cl_int processGenBinary(uint32_t rootDeviceIndex);
-    MOCKABLE_VIRTUAL cl_int processProgramInfo(ProgramInfo &dst);
+    MOCKABLE_VIRTUAL cl_int processGenBinary(const ClDevice &clDevice);
+    MOCKABLE_VIRTUAL cl_int processProgramInfo(ProgramInfo &dst, const ClDevice &clDevice);
 
     cl_int compile(const ClDeviceVector &deviceVector, const char *buildOptions,
                    cl_uint numInputHeaders, const cl_program *inputHeaders, const char **headerIncludeNames);
@@ -170,11 +170,6 @@ class Program : public BaseObject<_cl_program> {
         return executionEnvironment;
     }
 
-    const Device &getDevice() const {
-        UNRECOVERABLE_IF(pDevice == nullptr);
-        return *pDevice;
-    }
-
     cl_int processSpirBinary(const void *pBinary, size_t binarySize, bool isSpirV);
 
     cl_int getSource(std::string &binary) const;
@@ -209,7 +204,7 @@ class Program : public BaseObject<_cl_program> {
         return blockKernelManager;
     }
 
-    void allocateBlockPrivateSurfaces(uint32_t rootDeviceIndex);
+    void allocateBlockPrivateSurfaces(const ClDevice &clDevice);
     void freeBlockResources();
     void cleanCurrentKernelInfo();
 
@@ -346,8 +341,6 @@ class Program : public BaseObject<_cl_program> {
     BlockKernelManager *blockKernelManager = nullptr;
     ExecutionEnvironment &executionEnvironment;
     Context *context = nullptr;
-    Device *pDevice = nullptr;
-    cl_uint numDevices = 0U;
     ClDeviceVector clDevices;
 
     bool isBuiltIn = false;

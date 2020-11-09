@@ -160,9 +160,9 @@ cl_int Program::build(
                 continue;
             }
             if (DebugManager.flags.PrintProgramBinaryProcessingTime.get()) {
-                retVal = TimeMeasureWrapper::functionExecution(*this, &Program::processGenBinary, clDevice->getRootDeviceIndex());
+                retVal = TimeMeasureWrapper::functionExecution(*this, &Program::processGenBinary, *clDevice);
             } else {
-                retVal = processGenBinary(clDevice->getRootDeviceIndex());
+                retVal = processGenBinary(*clDevice);
             }
 
             if (retVal != CL_SUCCESS) {

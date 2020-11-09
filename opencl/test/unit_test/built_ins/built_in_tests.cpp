@@ -2012,7 +2012,7 @@ TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquired
     cl_int errCode = CL_BUILD_PROGRAM_FAILURE;
     auto p = Program::createBuiltInFromGenBinary(pContext, pContext->getDevices(), mockCompilerInterface->sipKernelBinaryOverride.data(), mockCompilerInterface->sipKernelBinaryOverride.size(), &errCode);
     ASSERT_EQ(CL_SUCCESS, errCode);
-    errCode = p->processGenBinary(rootDeviceIndex);
+    errCode = p->processGenBinary(*pClDevice);
     ASSERT_EQ(CL_SUCCESS, errCode);
 
     const SipKernel &sipKern = mockBuiltins.getSipKernel(SipKernelType::Csr, pContext->getDevice(0)->getDevice());

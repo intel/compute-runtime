@@ -391,7 +391,7 @@ cl_int Kernel::initialize() {
         }
 
         if (isParentKernel) {
-            program->allocateBlockPrivateSurfaces(device.getRootDeviceIndex());
+            program->allocateBlockPrivateSurfaces(device);
         }
 
         if (program->isKernelDebugEnabled() && getKernelInfo().patchInfo.pAllocateSystemThreadSurface) {

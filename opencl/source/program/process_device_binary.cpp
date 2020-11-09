@@ -111,16 +111,17 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
             }
             auto &kernHeapInfo = kernelInfo->heapInfo;
             auto segmentId = &kernelInfo - &this->kernelInfoArray[0];
-            this->pDevice->getMemoryManager()->copyMemoryToAllocation(kernelInfo->getGraphicsAllocation(), 0,
-                                                                      isaSegmentsForPatching[segmentId].hostPointer,
-                                                                      kernHeapInfo.KernelHeapSize);
+            pDevice->getMemoryManager()->copyMemoryToAllocation(kernelInfo->getGraphicsAllocation(), 0,
+                                                                isaSegmentsForPatching[segmentId].hostPointer,
+                                                                kernHeapInfo.KernelHeapSize);
         }
     }
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->getSymbols(pDevice->getRootDeviceIndex())));
     return CL_SUCCESS;
 }
 
-cl_int Program::processGenBinary(uint32_t rootDeviceIndex) {
+cl_int Program::processGenBinary(const ClDevice &clDevice) {
+    auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     if (nullptr == this->buildInfos[rootDeviceIndex].unpackedDeviceBinary) {
         return CL_INVALID_BINARY;
     }
@@ -128,8 +129,8 @@ cl_int Program::processGenBinary(uint32_t rootDeviceIndex) {
     cleanCurrentKernelInfo();
     for (auto &buildInfo : buildInfos) {
         if (buildInfo.constantSurface || buildInfo.globalSurface) {
-            pDevice->getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface);
-            pDevice->getMemoryManager()->freeGraphicsMemory(buildInfo.globalSurface);
+            clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface);
+            clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.globalSurface);
             buildInfo.constantSurface = nullptr;
             buildInfo.globalSurface = nullptr;
         }
@@ -154,23 +155,24 @@ cl_int Program::processGenBinary(uint32_t rootDeviceIndex) {
         return CL_INVALID_BINARY;
     }
 
-    return this->processProgramInfo(programInfo);
+    return this->processProgramInfo(programInfo, clDevice);
 }
 
-cl_int Program::processProgramInfo(ProgramInfo &src) {
+cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
+    auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     size_t slmNeeded = getMaxInlineSlmNeeded(src);
     size_t slmAvailable = 0U;
     NEO::DeviceInfoKernelPayloadConstants deviceInfoConstants;
     LinkerInput *linkerInput = nullptr;
-    slmAvailable = static_cast<size_t>(this->pDevice->getDeviceInfo().localMemSize);
-    deviceInfoConstants.maxWorkGroupSize = (uint32_t)this->pDevice->getDeviceInfo().maxWorkGroupSize;
-    deviceInfoConstants.computeUnitsUsedForScratch = this->pDevice->getDeviceInfo().computeUnitsUsedForScratch;
-    deviceInfoConstants.slmWindowSize = (uint32_t)this->pDevice->getDeviceInfo().localMemSize;
+    slmAvailable = static_cast<size_t>(clDevice.getSharedDeviceInfo().localMemSize);
+    deviceInfoConstants.maxWorkGroupSize = static_cast<uint32_t>(clDevice.getSharedDeviceInfo().maxWorkGroupSize);
+    deviceInfoConstants.computeUnitsUsedForScratch = clDevice.getSharedDeviceInfo().computeUnitsUsedForScratch;
+    deviceInfoConstants.slmWindowSize = static_cast<uint32_t>(clDevice.getSharedDeviceInfo().localMemSize);
     if (requiresLocalMemoryWindowVA(src)) {
         deviceInfoConstants.slmWindow = this->executionEnvironment.memoryManager->getReservedMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
     }
     linkerInput = src.linkerInput.get();
-    setLinkerInput(pDevice->getRootDeviceIndex(), std::move(src.linkerInput));
+    setLinkerInput(rootDeviceIndex, std::move(src.linkerInput));
 
     if (slmNeeded > slmAvailable) {
         return CL_OUT_OF_RESOURCES;
@@ -178,17 +180,15 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
 
     this->kernelInfoArray = std::move(src.kernelInfos);
     auto svmAllocsManager = context ? context->getSVMAllocsManager() : nullptr;
-    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     if (src.globalConstants.size != 0) {
-        UNRECOVERABLE_IF(nullptr == pDevice);
-        buildInfos[rootDeviceIndex].constantSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalConstants.size, true, linkerInput, src.globalConstants.initData);
+        buildInfos[rootDeviceIndex].constantSurface = allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), src.globalConstants.size, true, linkerInput, src.globalConstants.initData);
     }
 
     buildInfos[rootDeviceIndex].globalVarTotalSize = src.globalVariables.size;
 
     if (src.globalVariables.size != 0) {
-        buildInfos[rootDeviceIndex].globalSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalVariables.size, false, linkerInput, src.globalVariables.initData);
-        if (pDevice->getSpecializedDevice<ClDevice>()->areOcl21FeaturesEnabled() == false) {
+        buildInfos[rootDeviceIndex].globalSurface = allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), src.globalVariables.size, false, linkerInput, src.globalVariables.initData);
+        if (clDevice.areOcl21FeaturesEnabled() == false) {
             buildInfos[rootDeviceIndex].globalVarTotalSize = 0u;
         }
     }
@@ -196,7 +196,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
     for (auto &kernelInfo : this->kernelInfoArray) {
         cl_int retVal = CL_SUCCESS;
         if (kernelInfo->heapInfo.KernelHeapSize) {
-            retVal = kernelInfo->createKernelAllocation(*this->pDevice) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
+            retVal = kernelInfo->createKernelAllocation(clDevice.getDevice()) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
         }
 
         if (retVal != CL_SUCCESS) {
@@ -213,7 +213,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
         kernelInfo->apply(deviceInfoConstants);
     }
 
-    return linkBinary(this->pDevice, src.globalConstants.initData, src.globalVariables.initData);
+    return linkBinary(&clDevice.getDevice(), src.globalConstants.initData, src.globalVariables.initData);
 }
 
 void Program::processDebugData() {

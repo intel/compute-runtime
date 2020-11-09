@@ -99,13 +99,13 @@ class NoCompilerInterfaceRootDeviceEnvironment : public RootDeviceEnvironment {
 class FailingGenBinaryProgram : public MockProgram {
   public:
     using MockProgram::MockProgram;
-    cl_int processGenBinary(uint32_t rootDeviceIndex) override { return CL_INVALID_BINARY; }
+    cl_int processGenBinary(const ClDevice &clDevice) override { return CL_INVALID_BINARY; }
 };
 
 class SucceedingGenBinaryProgram : public MockProgram {
   public:
     using MockProgram::MockProgram;
-    cl_int processGenBinary(uint32_t rootDeviceIndex) override { return CL_SUCCESS; }
+    cl_int processGenBinary(const ClDevice &clDevice) override { return CL_SUCCESS; }
 };
 
 TEST_P(ProgramFromBinaryTest, WhenBuildingProgramThenSuccessIsReturned) {
@@ -568,7 +568,7 @@ TEST_P(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlo
     char constantData[1024] = {};
     programInfo.globalVariables.initData = constantData;
     programInfo.globalVariables.size = sizeof(constantData);
-    p->processProgramInfo(programInfo);
+    p->processProgramInfo(programInfo, *pClDevice);
 
     // get build info once again
     retVal = pProgram->getBuildInfo(
@@ -599,7 +599,7 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     EXPECT_NE(kernelInfo->heapInfo.pKernelHeap, kernelIsa);
     EXPECT_EQ(0, memcmp(kernelIsa, kernelInfo->heapInfo.pKernelHeap, kernelInfo->heapInfo.KernelHeapSize));
     auto rootDeviceIndex = graphicsAllocation->getRootDeviceIndex();
-    EXPECT_EQ(GmmHelper::decanonize(graphicsAllocation->getGpuBaseAddress()), pProgram->getDevice().getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, graphicsAllocation->isAllocatedInLocalMemoryPool()));
+    EXPECT_EQ(GmmHelper::decanonize(graphicsAllocation->getGpuBaseAddress()), pDevice->getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, graphicsAllocation->isAllocatedInLocalMemoryPool()));
 }
 
 TEST_P(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreed) {
@@ -608,12 +608,12 @@ TEST_P(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffers
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
 
     pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface = new MockGraphicsAllocation();
-    pProgram->processGenBinary(rootDeviceIndex);
+    pProgram->processGenBinary(*pClDevice);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
 
     pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
-    pProgram->processGenBinary(rootDeviceIndex);
+    pProgram->processGenBinary(*pClDevice);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
 }
@@ -1503,7 +1503,7 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
         ASSERT_NE(nullptr, pProgram.get());
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        retVal = pProgram->processGenBinary(mockRootDeviceIndex);
+        retVal = pProgram->processGenBinary(*device);
         EXPECT_EQ(CL_INVALID_BINARY, retVal);
     }
 }
@@ -1529,7 +1529,7 @@ TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
 
     auto rootDeviceIndex = mockRootDeviceIndex;
     pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary.reset(nullptr);
-    retVal = pProgram->processGenBinary(rootDeviceIndex);
+    retVal = pProgram->processGenBinary(*device);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
@@ -1901,7 +1901,7 @@ TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimit
     auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
-    auto retVal = program->processGenBinary(rootDeviceIndex);
+    auto retVal = program->processGenBinary(*pClDevice);
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }
@@ -2001,7 +2001,7 @@ TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfaces
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
-    program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
+    program->allocateBlockPrivateSurfaces(*pClDevice);
 
     EXPECT_EQ(nullptr, program->getBlockKernelManager()->getPrivateSurface(0));
 
@@ -2027,7 +2027,7 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
-    program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
+    program->allocateBlockPrivateSurfaces(*pClDevice);
 
     EXPECT_NE(nullptr, program->getBlockKernelManager()->getPrivateSurface(0));
 
@@ -2053,13 +2053,13 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
-    program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
+    program->allocateBlockPrivateSurfaces(*pClDevice);
 
     GraphicsAllocation *privateSurface = program->getBlockKernelManager()->getPrivateSurface(0);
 
     EXPECT_NE(nullptr, privateSurface);
 
-    program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
+    program->allocateBlockPrivateSurfaces(*pClDevice);
 
     GraphicsAllocation *privateSurface2 = program->getBlockKernelManager()->getPrivateSurface(0);
 
@@ -2087,7 +2087,7 @@ TEST_F(ProgramTests, givenProgramWithBlockKernelsWhenfreeBlockResourcesisCalledT
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
-    GraphicsAllocation *privateSurface = program->getDevice().getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    GraphicsAllocation *privateSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
     EXPECT_NE(nullptr, privateSurface);
 
     program->getBlockKernelManager()->pushPrivateSurface(privateSurface, 0);
@@ -2133,7 +2133,7 @@ TEST_F(ProgramTests, givenNewProgramTheStatelessToStatefulBufferOffsetOtimizatio
     auto internalOptions = program.getInitInternalOptions();
 
     HardwareCapabilities hwCaps = {0};
-    HwHelper::get(program.getDevice().getHardwareInfo().platform.eRenderCoreFamily).setupHardwareCapabilities(&hwCaps, program.getDevice().getHardwareInfo());
+    HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily).setupHardwareCapabilities(&hwCaps, pDevice->getHardwareInfo());
     if (hwCaps.isStatelesToStatefullWithOffsetSupported) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));
     } else {
@@ -2635,7 +2635,6 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsNotForc
 
     auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), programTokens.storage.data(), programTokens.storage.size(), &retVal));
-    pProgram->pDevice = &clDevice->getDevice();
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -2882,7 +2881,7 @@ TEST_F(ProgramMultiRootDeviceTests, WhenPrivateSurfaceIsCreatedThenItHasCorrectR
     infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock.get();
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock.release());
-    program->allocateBlockPrivateSurfaces(device->getRootDeviceIndex());
+    program->allocateBlockPrivateSurfaces(*device);
 
     auto privateSurface = program->getBlockKernelManager()->getPrivateSurface(0);
     EXPECT_NE(nullptr, privateSurface);

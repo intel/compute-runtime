@@ -160,7 +160,7 @@ cl_int Program::link(
                 this->debugData = std::move(compilerOuput.debugData.mem);
                 this->debugDataSize = compilerOuput.debugData.size;
 
-                retVal = processGenBinary(device->getRootDeviceIndex());
+                retVal = processGenBinary(*device);
                 if (retVal != CL_SUCCESS) {
                     break;
                 }

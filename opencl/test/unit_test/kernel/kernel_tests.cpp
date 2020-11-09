@@ -3237,7 +3237,11 @@ TEST_F(KernelMultiRootDeviceTest, WhenGettingRootDeviceIndexThenCorrectRootDevic
 
 TEST(KernelCreateTest, whenInitFailedThenReturnNull) {
     struct MockProgram {
-        Device &getDevice() { return mDevice.getDevice(); }
+        ClDeviceVector getDevices() {
+            ClDeviceVector deviceVector;
+            deviceVector.push_back(&mDevice);
+            return deviceVector;
+        }
         void getSource(std::string &) {}
         MockClDevice mDevice{new MockDevice};
     } mockProgram;

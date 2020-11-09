@@ -44,7 +44,6 @@ TEST(ProgramFromBinary, givenBinaryWithDebugDataWhenCreatingProgramFromBinaryThe
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto program = std::make_unique<MockProgram>(toClDeviceVector(*device));
-    program->pDevice = &device->getDevice();
     program->enableKernelDebug();
 
     size_t binarySize = 0;

@@ -276,8 +276,8 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingLwsThenCorrectValuesAreReturned) {
     }
 
     size_t expectedResult[] = {16u, 16u, 1u};
-    const auto &hwInfo = pProgram->getDevice().getHardwareInfo();
-    auto isSimulation = pProgram->getDevice().isSimulation();
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    auto isSimulation = pDevice->isSimulation();
 
     EXPECT_FALSE(isSimulation);
 

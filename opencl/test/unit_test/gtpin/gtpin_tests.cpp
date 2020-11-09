@@ -1028,7 +1028,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
 
     pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(reinterpret_cast<char *>(programTokens.storage.data()), programTokens.storage.size());
     pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = programTokens.storage.size();
-    retVal = pProgram->processGenBinary(rootDeviceIndex);
+    retVal = pProgram->processGenBinary(*pContext->getDevice(0));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount = KernelCreateCallbackCount;
@@ -1167,7 +1167,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GTPinTests, givenInitializedGTPinInterfaceWhenKernel
 
     pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(&binary[0], binSize);
     pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = binSize;
-    retVal = pProgram->processGenBinary(rootDeviceIndex);
+    retVal = pProgram->processGenBinary(*pDevice);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Verify that GT-Pin Kernel Create callback is not called
@@ -2113,7 +2113,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
 
         pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(programTokens.storage.data(), programTokens.storage.size());
         pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = programTokens.storage.size();
-        retVal = pProgram->processGenBinary(rootDeviceIndex);
+        retVal = pProgram->processGenBinary(*pDevice);
         if (retVal == CL_OUT_OF_HOST_MEMORY) {
             auto nonFailingAlloc = MemoryManagement::nonfailingAllocation;
             EXPECT_NE(nonFailingAlloc, failureIndex);

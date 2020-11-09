@@ -80,7 +80,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         cl_int retVal;
         kernel_t *pKernel = nullptr;
 
-        auto clDevice = program->getDevice().template getSpecializedDevice<ClDevice>();
+        auto clDevice = program->getDevices()[0];
 
         pKernel = new kernel_t(program, kernelInfo, *clDevice);
         retVal = pKernel->initialize();

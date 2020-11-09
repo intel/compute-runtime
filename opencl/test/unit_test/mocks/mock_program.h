@@ -51,7 +51,6 @@ class MockProgram : public Program {
     using Program::isSpirV;
     using Program::options;
     using Program::packDeviceBinary;
-    using Program::pDevice;
     using Program::Program;
     using Program::sourceCode;
     using Program::specConstantsIds;
@@ -127,8 +126,6 @@ class MockProgram : public Program {
         allowNonUniform = allow;
     }
 
-    Device *getDevicePtr();
-
     bool isFlagOption(ConstStringRef option) override {
         if (isFlagOptionOverride != -1) {
             return (isFlagOptionOverride > 0);
@@ -158,13 +155,14 @@ class MockProgram : public Program {
         }
         Program::replaceDeviceBinary(std::move(newBinary), newBinarySize, rootDeviceIndex);
     }
-    cl_int processGenBinary(uint32_t rootDeviceIndex) override {
+    cl_int processGenBinary(const ClDevice &clDevice) override {
+        auto rootDeviceIndex = clDevice.getRootDeviceIndex();
         if (processGenBinaryCalledPerRootDevice.find(rootDeviceIndex) == processGenBinaryCalledPerRootDevice.end()) {
             processGenBinaryCalledPerRootDevice.insert({rootDeviceIndex, 1});
         } else {
             processGenBinaryCalledPerRootDevice[rootDeviceIndex]++;
         }
-        return Program::processGenBinary(rootDeviceIndex);
+        return Program::processGenBinary(clDevice);
     }
 
     void initInternalOptions(std::string &internalOptions) const override {

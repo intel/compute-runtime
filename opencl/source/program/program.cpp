@@ -38,16 +38,12 @@ namespace NEO {
 
 Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevicesIn) : executionEnvironment(*clDevicesIn[0]->getExecutionEnvironment()),
                                                                                         context(context),
-                                                                                        pDevice(&clDevicesIn[0]->getDevice()),
                                                                                         clDevices(clDevicesIn),
                                                                                         isBuiltIn(isBuiltIn) {
     if (this->context && !this->isBuiltIn) {
         this->context->incRefInternal();
     }
     blockKernelManager = new BlockKernelManager();
-    ClDevice *pClDevice = castToObject<ClDevice>(pDevice->getSpecializedDevice<ClDevice>());
-
-    numDevices = static_cast<uint32_t>(clDevicesIn.size());
 
     uint32_t maxRootDeviceIndex = 0;
 
@@ -67,7 +63,7 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
     }
 
     buildInfos.resize(maxRootDeviceIndex + 1);
-    kernelDebugEnabled = pClDevice->isDebuggerActive();
+    kernelDebugEnabled = clDevices[0]->isDebuggerActive();
 }
 void Program::initInternalOptions(std::string &internalOptions) const {
     auto pClDevice = clDevices[0];
@@ -229,15 +225,16 @@ cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize
 
     static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
+    auto &device = clDevices[0]->getDevice();
 
     if (!areSpecializationConstantsInitialized) {
-        auto pCompilerInterface = this->pDevice->getCompilerInterface();
+        auto pCompilerInterface = device.getCompilerInterface();
         if (nullptr == pCompilerInterface) {
             return CL_OUT_OF_HOST_MEMORY;
         }
 
         SpecConstantInfo specConstInfo;
-        auto retVal = pCompilerInterface->getSpecConstantsInfo(this->getDevice(), ArrayRef<const char>(irBinary.get(), irBinarySize), specConstInfo);
+        auto retVal = pCompilerInterface->getSpecConstantsInfo(device, ArrayRef<const char>(irBinary.get(), irBinarySize), specConstInfo);
 
         if (retVal != TranslationOutput::ErrorCode::Success) {
             return CL_INVALID_VALUE;
@@ -344,7 +341,8 @@ void Program::separateBlockKernels() {
     allKernelInfos.clear();
 }
 
-void Program::allocateBlockPrivateSurfaces(uint32_t rootDeviceIndex) {
+void Program::allocateBlockPrivateSurfaces(const ClDevice &clDevice) {
+    auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     size_t blockCount = blockKernelManager->getCount();
 
     for (uint32_t i = 0; i < blockCount; i++) {
@@ -354,9 +352,10 @@ void Program::allocateBlockPrivateSurfaces(uint32_t rootDeviceIndex) {
             auto perHwThreadPrivateMemorySize = PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(info->patchInfo.pAllocateStatelessPrivateSurface, info->getMaxSimdSize());
 
             if (perHwThreadPrivateMemorySize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
-                auto privateSize = static_cast<size_t>(KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, getDevice().getDeviceInfo().computeUnitsUsedForScratch));
+                auto privateSize = static_cast<size_t>(KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, clDevice.getSharedDeviceInfo().computeUnitsUsedForScratch));
 
-                auto *privateSurface = this->executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, privateSize, GraphicsAllocation::AllocationType::PRIVATE_SURFACE, getDevice().getDeviceBitfield()});
+                auto *privateSurface = this->executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
+                    {rootDeviceIndex, privateSize, GraphicsAllocation::AllocationType::PRIVATE_SURFACE, clDevice.getDeviceBitfield()});
                 blockKernelManager->pushPrivateSurface(privateSurface, i);
             }
         }
