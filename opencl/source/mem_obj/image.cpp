@@ -255,7 +255,7 @@ Image *Image::create(Context *context,
             UNRECOVERABLE_IF(imgInfo.offset != 0);
             imgInfo.offset = parentBuffer->getOffset();
 
-            if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) {
+            if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D) && (memory->getUnderlyingBuffer() != 0)) {
                 // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
                 auto queryGmmImgInfo(imgInfo);
                 auto gmm = std::make_unique<Gmm>(clientContext, queryGmmImgInfo, StorageInfo{});
