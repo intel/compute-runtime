@@ -51,6 +51,7 @@ struct RuntimeCapabilityTable {
     bool instrumentationEnabled;
     bool forceStatelessCompilationFor32Bit;
     const char *platformType;
+    const char *deviceName;
     bool debuggerSupported;
     bool supportsVme;
     bool supportCacheFlushAfterWalker;
@@ -82,7 +83,7 @@ struct HardwareInfo {
     WorkaroundTable workaroundTable = {};
     alignas(4) GT_SYSTEM_INFO gtSystemInfo = {};
 
-    RuntimeCapabilityTable capabilityTable = {};
+    alignas(8) RuntimeCapabilityTable capabilityTable = {};
 };
 
 template <PRODUCT_FAMILY product>

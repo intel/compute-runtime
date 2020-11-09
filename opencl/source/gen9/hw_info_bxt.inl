@@ -68,6 +68,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     true,                                          // instrumentationEnabled
     false,                                         // forceStatelessCompilationFor32Bit
     "lp",                                          // platformType
+    "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker

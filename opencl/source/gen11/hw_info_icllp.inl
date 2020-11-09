@@ -67,6 +67,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // instrumentationEnabled
     true,                                            // forceStatelessCompilationFor32Bit
     "lp",                                            // platformType
+    "",                                              // deviceName
     true,                                            // sourceLevelDebuggerSupported
     true,                                            // supportsVme
     false,                                           // supportCacheFlushAfterWalker
@@ -78,7 +79,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // supportsIndependentForwardProgress
     true,                                            // hostPtrTrackingEnabled
     true,                                            // levelZeroSupported
-    true                                             // isIntegratedDevice
+    true,                                            // isIntegratedDevice
 };
 
 WorkaroundTable ICLLP::workaroundTable = {};

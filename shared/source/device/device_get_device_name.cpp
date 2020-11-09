@@ -11,8 +11,6 @@
 namespace NEO {
 
 const std::string Device::getDeviceName(const HardwareInfo &hwInfo) const {
-    std::string deviceName = "Intel(R) Graphics ";
-    deviceName += familyName[hwInfo.platform.eRenderCoreFamily];
-    return deviceName;
+    return std::string(hwInfo.capabilityTable.deviceName).empty() ? "Intel(R) Graphics" : hwInfo.capabilityTable.deviceName;
 }
 } // namespace NEO

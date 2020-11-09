@@ -63,6 +63,7 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     true,                                          // instrumentationEnabled
     true,                                          // forceStatelessCompilationFor32Bit
     "core",                                        // platformType
+    "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker

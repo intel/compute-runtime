@@ -71,6 +71,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // instrumentationEnabled
     true,                                          // forceStatelessCompilationFor32Bit
     "core",                                        // platformType
+    "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
@@ -84,6 +85,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // levelZeroSupported
     true                                           // isIntegratedDevice
 };
+
 WorkaroundTable SKL::workaroundTable = {};
 FeatureTable SKL::featureTable = {};
 void SKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {

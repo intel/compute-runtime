@@ -43,6 +43,7 @@ struct DeviceDescriptor { // NOLINT(clang-analyzer-optin.performance.Padding)
     const HardwareInfo *pHwInfo;
     void (*setupHardwareInfo)(HardwareInfo *, bool);
     GTTYPE eGtType;
+    const char *devName;
 };
 
 extern const DeviceDescriptor deviceDescriptorTable[];

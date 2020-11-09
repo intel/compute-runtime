@@ -72,6 +72,7 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     true,                                          // instrumentationEnabled
     true,                                          // forceStatelessCompilationFor32Bit
     "lp",                                          // platformType
+    "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported
     false,                                         // supportsVme
     true,                                          // supportCacheFlushAfterWalker

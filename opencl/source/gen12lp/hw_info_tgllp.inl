@@ -68,6 +68,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     true,                                            // forceStatelessCompilationFor32Bit
     true,                                            // ftr64KBpages
     "lp",                                            // platformType
+    "",                                              // deviceName
     true,                                            // sourceLevelDebuggerSupported
     false,                                           // supportsVme
     false,                                           // supportCacheFlushAfterWalker

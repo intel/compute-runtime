@@ -24,9 +24,11 @@
 
 namespace NEO {
 const DeviceDescriptor deviceDescriptorTable[] = {
-#define DEVICE(devId, gt, gtType) {devId, &gt::hwInfo, &gt::setupHardwareInfo, gtType},
+#define NAMEDDEVICE(devId, gt, gtType, devName) {devId, &gt::hwInfo, &gt::setupHardwareInfo, gtType, devName},
+#define DEVICE(devId, gt, gtType) {devId, &gt::hwInfo, &gt::setupHardwareInfo, gtType, ""},
 #include "devices.inl"
 #undef DEVICE
+#undef NAMEDDEVICE
     {0, nullptr, nullptr, GTTYPE_UNDEFINED}};
 
 Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
@@ -52,11 +54,13 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
     }
 
     const DeviceDescriptor *device = nullptr;
+    const char *devName = "";
     GTTYPE eGtType = GTTYPE_UNDEFINED;
     for (auto &d : deviceDescriptorTable) {
         if (drmObject->deviceId == d.deviceId) {
             device = &d;
             eGtType = d.eGtType;
+            devName = d.devName;
             break;
         }
     }
@@ -67,6 +71,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
         }
         drmObject->setGtType(eGtType);
         rootDeviceEnvironment.setHwInfo(device->pHwInfo);
+        rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.deviceName = devName;
     } else {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,
                          "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", drmObject->deviceId, drmObject->revisionId);

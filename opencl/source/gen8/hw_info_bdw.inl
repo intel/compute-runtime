@@ -71,6 +71,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     true,                                          // instrumentationEnabled
     true,                                          // forceStatelessCompilationFor32Bit
     "core",                                        // platformType
+    "",                                            // deviceName
     false,                                         // sourceLevelDebuggerSupported
     false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker

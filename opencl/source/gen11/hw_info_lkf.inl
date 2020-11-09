@@ -66,6 +66,7 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     true,                                          // instrumentationEnabled
     true,                                          // forceStatelessCompilationFor32Bit
     "lp",                                          // platformType
+    "",                                            // deviceName
     true,                                          // sourceLevelDebuggerSupported
     false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker
