@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "Windows.h"
+#include "windows.h"
 #include <d3dkmthk.h>
 
 #include <cstdint>

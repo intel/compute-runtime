@@ -23,7 +23,7 @@
 #include <dlfcn.h>
 #include <execinfo.h>
 #elif defined(_WIN32)
-#include <Windows.h>
+#include <windows.h>
 
 #include <DbgHelp.h>
 #endif

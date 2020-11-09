@@ -10,13 +10,8 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/windows/os_time_win.h"
 
-#include <d3d10_1.h>
-#include <d3d9types.h>
-
-#include "Windows.h"
 #include "umKmInc/sharedata.h"
-#include <d3d10.h>
-#include <d3dkmthk.h>
+#include "windows.h"
 
 #define DECL_FUNCTIONS()                                                                                 \
     FUNCTION(OpenAdapterFromHdc, IN OUT D3DKMT_OPENADAPTERFROMHDC *)                                     \

@@ -9,7 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include <Windows.h>
+#include <windows.h>
 
 uint32_t getEnvironmentVariable(const char *name, char *outBuffer, uint32_t outBufferSize) {
     if (NEO::DebugManager.registryReadAvailable() == false) {

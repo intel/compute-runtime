@@ -7,7 +7,7 @@
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
-#include <Windows.h>
+#include <windows.h>
 
 using namespace L0;
 

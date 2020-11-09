@@ -9,7 +9,7 @@
 
 #include "shared/source/utilities/debug_settings_reader.h"
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <stdint.h>
 #include <string>

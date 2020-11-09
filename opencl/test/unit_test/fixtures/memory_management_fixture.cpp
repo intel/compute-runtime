@@ -17,7 +17,7 @@
 #include <dlfcn.h>
 #include <execinfo.h>
 #elif defined(_WIN32)
-#include <Windows.h>
+#include <windows.h>
 #pragma warning(push)           // Saves the current warning state.
 #pragma warning(disable : 4091) // Temporarily disables warning 4091.
 #include <DbgHelp.h>
