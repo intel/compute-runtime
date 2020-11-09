@@ -30,7 +30,7 @@ TEST_F(clIcdGetPlatformIDsKHRTests, WhenGettingNumberOfPlatformsThenGreaterThanZ
     EXPECT_GT(numPlatforms, (cl_uint)0);
 }
 
-TEST_F(clIcdGetPlatformIDsKHRTests, WheGettingExtensionFunctionAddressThenCorrectPointerIsReturned) {
+TEST_F(clIcdGetPlatformIDsKHRTests, WhenGettingExtensionFunctionAddressThenCorrectPointerIsReturned) {
     void *funPtr = clGetExtensionFunctionAddress("clIcdGetPlatformIDsKHR");
     decltype(&clIcdGetPlatformIDsKHR) expected = clIcdGetPlatformIDsKHR;
     EXPECT_NE(nullptr, funPtr);
