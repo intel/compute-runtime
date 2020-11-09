@@ -96,7 +96,8 @@ HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenRetu
 
     DebugManagerStateRestore restore{};
 
-    EXPECT_EQ(arbCheckSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize());
+    EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize());
+
     DebugManager.flags.PostBlitCommand.set(0);
     EXPECT_EQ(arbCheckSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize());
 
@@ -117,9 +118,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
 
     // -1: default
     BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream);
-    CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
-    auto arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
-    EXPECT_NE(commands.end(), arbCheck);
+    EXPECT_EQ(0u, linearStream.getUsed());
 
     // 0: MI_ARB_CHECK
     memset(streamBuffer, 0, sizeof(streamBuffer));
@@ -128,7 +127,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     DebugManager.flags.PostBlitCommand.set(0);
     BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream);
     CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
-    arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
+    auto arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
     EXPECT_NE(commands.end(), arbCheck);
 
     // 1: MI_FLUSH_DW
