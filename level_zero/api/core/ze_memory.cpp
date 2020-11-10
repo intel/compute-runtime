@@ -28,7 +28,7 @@ zeMemAllocDevice(
     size_t alignment,
     ze_device_handle_t hDevice,
     void **pptr) {
-    return L0::Context::fromHandle(hContext)->allocDeviceMem(hDevice, 0, size, alignment, pptr);
+    return L0::Context::fromHandle(hContext)->allocDeviceMem(hDevice, deviceDesc, size, alignment, pptr);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -38,7 +38,7 @@ zeMemAllocHost(
     size_t size,
     size_t alignment,
     void **pptr) {
-    return L0::Context::fromHandle(hContext)->allocHostMem(0, size, alignment, pptr);
+    return L0::Context::fromHandle(hContext)->allocHostMem(hostDesc, size, alignment, pptr);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

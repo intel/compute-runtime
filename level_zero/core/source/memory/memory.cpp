@@ -99,7 +99,7 @@ ze_result_t DriverHandleImp::getMemAddressRange(const void *ptr, void **pBase, s
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t DriverHandleImp::allocHostMem(ze_host_mem_alloc_flags_t flags, size_t size, size_t alignment,
+ze_result_t DriverHandleImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment,
                                           void **ptr) {
     if (size > this->devices[0]->getDeviceInfo().maxMemAllocSize) {
         *ptr = nullptr;
@@ -119,7 +119,7 @@ ze_result_t DriverHandleImp::allocHostMem(ze_host_mem_alloc_flags_t flags, size_
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t flags,
+ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc,
                                             size_t size, size_t alignment, void **ptr) {
     if (size > this->devices[0]->getNEODevice()->getHardwareCapabilities().maxMemAllocSize) {
         *ptr = nullptr;

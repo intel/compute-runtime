@@ -99,7 +99,7 @@ struct Mock<DriverHandle> : public DriverHandleImp {
                 (override));
     MOCK_METHOD(ze_result_t,
                 allocHostMem,
-                (ze_host_mem_alloc_flags_t flags,
+                (const ze_host_mem_alloc_desc_t *hostDesc,
                  size_t size,
                  size_t alignment,
                  void **ptr),
@@ -107,7 +107,7 @@ struct Mock<DriverHandle> : public DriverHandleImp {
     MOCK_METHOD(ze_result_t,
                 allocDeviceMem,
                 (ze_device_handle_t hDevice,
-                 ze_device_mem_alloc_flags_t flags,
+                 const ze_device_mem_alloc_desc_t *deviceDesc,
                  size_t size,
                  size_t alignment,
                  void **ptr),
@@ -139,12 +139,12 @@ struct Mock<DriverHandle> : public DriverHandleImp {
                             ze_device_handle_t *phDevices);
     NEO::MemoryManager *doGetMemoryManager();
     NEO::SVMAllocsManager *doGetSvmAllocManager();
-    ze_result_t doAllocHostMem(ze_host_mem_alloc_flags_t flags,
+    ze_result_t doAllocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                size_t size,
                                size_t alignment,
                                void **ptr);
     ze_result_t doAllocDeviceMem(ze_device_handle_t hDevice,
-                                 ze_device_mem_alloc_flags_t flags,
+                                 const ze_device_mem_alloc_desc_t *deviceDesc,
                                  size_t size,
                                  size_t alignment,
                                  void **ptr);

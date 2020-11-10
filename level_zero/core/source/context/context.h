@@ -23,12 +23,12 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t getStatus() = 0;
     virtual DriverHandle *getDriverHandle() = 0;
-    virtual ze_result_t allocHostMem(ze_host_mem_alloc_flags_t flags,
+    virtual ze_result_t allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t size,
                                      size_t alignment,
                                      void **ptr) = 0;
     virtual ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
-                                       ze_device_mem_alloc_flags_t flags,
+                                       const ze_device_mem_alloc_desc_t *deviceDesc,
                                        size_t size,
                                        size_t alignment, void **ptr) = 0;
     virtual ze_result_t allocSharedMem(ze_device_handle_t hDevice,

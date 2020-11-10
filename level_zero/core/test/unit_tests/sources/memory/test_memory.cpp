@@ -22,8 +22,9 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsDeviceHa
     size_t alignment = 1u;
     void *ptr = nullptr;
 
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_result_t result = driverHandle->allocDeviceMem(device->toHandle(),
-                                                      0u,
+                                                      &deviceDesc,
                                                       size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
@@ -48,8 +49,9 @@ TEST_F(DeviceMemorySizeTest, givenSizeGreaterThanLimitThenDeviceAllocationFails)
     size_t alignment = 1u;
     void *ptr = nullptr;
 
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_result_t result = driverHandle->allocDeviceMem(nullptr,
-                                                      0u,
+                                                      &deviceDesc,
                                                       size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
 }
@@ -84,7 +86,8 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsNullDevice
     size_t alignment = 1u;
     void *ptr = nullptr;
 
-    ze_result_t result = driverHandle->allocHostMem(0u,
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = driverHandle->allocHostMem(&hostDesc,
                                                     size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
@@ -188,8 +191,9 @@ struct MemoryBitfieldTest : testing::Test {
 };
 
 TEST_F(MemoryBitfieldTest, givenDeviceWithValidBitfieldWhenAllocatingDeviceMemoryThenPassProperBitfield) {
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = driverHandle->allocDeviceMem(device->toHandle(),
-                                               0u,
+                                               &deviceDesc,
                                                size, alignment, &ptr);
     EXPECT_EQ(neoDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
 
@@ -307,7 +311,8 @@ TEST_F(AllocHostMemoryTest,
 
     memoryManager->allocateGraphicsMemoryWithPropertiesCount = 0;
 
-    ze_result_t result = driverHandle->allocHostMem(0u,
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = driverHandle->allocHostMem(&hostDesc,
                                                     4096u, 0u, &ptr);
     EXPECT_EQ(memoryManager->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -325,7 +330,8 @@ TEST_F(AllocHostMemoryTest,
 
     memoryManager->allocateGraphicsMemoryWithPropertiesCount = 0;
 
-    ze_result_t result = driverHandle->allocHostMem(0u,
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = driverHandle->allocHostMem(&hostDesc,
                                                     4096u, 0u, &ptr);
     EXPECT_EQ(memoryManager->allocateGraphicsMemoryWithPropertiesCount, 1u);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
@@ -341,7 +347,8 @@ TEST_F(AllocHostMemoryTest,
 
     memoryManager->allocateGraphicsMemoryWithPropertiesCount = 0;
 
-    ze_result_t result = driverHandle->allocHostMem(0u,
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = driverHandle->allocHostMem(&hostDesc,
                                                     4096u, 0u, &ptr);
     EXPECT_EQ(memoryManager->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
@@ -371,7 +378,8 @@ TEST_F(ContextMemoryTest, whenAllocatingHostAllocationFromContextThenAllocationS
     size_t alignment = 1u;
     void *ptr = nullptr;
 
-    ze_result_t result = context->allocHostMem(0u,
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
                                                size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
@@ -385,8 +393,9 @@ TEST_F(ContextMemoryTest, whenAllocatingDeviceAllocationFromContextThenAllocatio
     size_t alignment = 1u;
     void *ptr = nullptr;
 
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 0u,
+                                                 &deviceDesc,
                                                  size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
@@ -400,8 +409,9 @@ TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForDeviceAllocationThenRange
     size_t alignment = 1u;
     void *allocPtr = nullptr;
 
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 0u,
+                                                 &deviceDesc,
                                                  allocSize, alignment, &allocPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, allocPtr);

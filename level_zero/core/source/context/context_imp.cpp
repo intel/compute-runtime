@@ -40,24 +40,24 @@ ContextImp::ContextImp(DriverHandle *driverHandle) {
     this->driverHandle = driverHandle;
 }
 
-ze_result_t ContextImp::allocHostMem(ze_host_mem_alloc_flags_t flags,
+ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t size,
                                      size_t alignment,
                                      void **ptr) {
     DEBUG_BREAK_IF(nullptr == this->driverHandle);
-    return this->driverHandle->allocHostMem(flags,
+    return this->driverHandle->allocHostMem(hostDesc,
                                             size,
                                             alignment,
                                             ptr);
 }
 
 ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
-                                       ze_device_mem_alloc_flags_t flags,
+                                       const ze_device_mem_alloc_desc_t *deviceDesc,
                                        size_t size,
                                        size_t alignment, void **ptr) {
     DEBUG_BREAK_IF(nullptr == this->driverHandle);
     return this->driverHandle->allocDeviceMem(hDevice,
-                                              flags,
+                                              deviceDesc,
                                               size,
                                               alignment,
                                               ptr);

@@ -41,7 +41,7 @@ struct Mock<Context> : public Context {
                 (override));
     MOCK_METHOD(ze_result_t,
                 allocHostMem,
-                (ze_host_mem_alloc_flags_t flags,
+                (const ze_host_mem_alloc_desc_t *hostDesc,
                  size_t size,
                  size_t alignment,
                  void **ptr),
@@ -49,7 +49,7 @@ struct Mock<Context> : public Context {
     MOCK_METHOD(ze_result_t,
                 allocDeviceMem,
                 (ze_device_handle_t hDevice,
-                 ze_device_mem_alloc_flags_t flags,
+                 const ze_device_mem_alloc_desc_t *deviceDesc,
                  size_t size,
                  size_t alignment,
                  void **ptr),

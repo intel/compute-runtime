@@ -142,8 +142,9 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseReturnsSuccess) {
     size_t alignment = 1u;
     void *ptr = nullptr;
 
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     auto res = driverHandle->allocDeviceMem(device->toHandle(),
-                                            0u,
+                                            &deviceDesc,
                                             size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, ptr);
@@ -164,8 +165,9 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemoryPrefetchReturnsSuccess) {
     size_t alignment = 1u;
     void *ptr = nullptr;
 
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     auto res = driverHandle->allocDeviceMem(device->toHandle(),
-                                            0u,
+                                            &deviceDesc,
                                             size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, ptr);
@@ -417,7 +419,8 @@ HWTEST_F(CommandListCreate, givenCommandListWithInvalidWaitEventArgWhenAppendQue
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     void *alloc;
-    auto result = driverHandle->allocDeviceMem(device, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = driverHandle->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     auto eventHandle = event.toHandle();
 
@@ -483,7 +486,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     void *alloc;
-    auto result = driverHandle->allocDeviceMem(device, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = driverHandle->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
 
@@ -524,10 +528,11 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     void *alloc;
-    auto result = driverHandle->allocDeviceMem(device, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = driverHandle->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     void *offsetAlloc;
-    result = driverHandle->allocDeviceMem(device, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &offsetAlloc);
+    result = driverHandle->allocDeviceMem(device, &deviceDesc, 128, 1, &offsetAlloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
 
@@ -580,7 +585,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     void *alloc;
-    auto result = driverHandle->allocDeviceMem(device, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = driverHandle->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     size_t eventCount = device->getNEODevice()->getDeviceInfo().maxWorkItemSizes[0] * 2u;
     std::unique_ptr<ze_event_handle_t[]> events = std::make_unique<ze_event_handle_t[]>(eventCount);
@@ -681,7 +687,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     void *alloc;
-    auto result = driverHandle->allocDeviceMem(&mockDevice, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = driverHandle->allocDeviceMem(&mockDevice, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);
@@ -765,7 +772,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     void *alloc;
-    auto result = driverHandle->allocDeviceMem(&mockDevice, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = driverHandle->allocDeviceMem(&mockDevice, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);

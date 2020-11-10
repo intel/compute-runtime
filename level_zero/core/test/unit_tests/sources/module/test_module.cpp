@@ -86,8 +86,9 @@ HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, 
     auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
 
     void *devicePtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
-                                                    0u,
+                                                    &deviceDesc,
                                                     16384u,
                                                     0u,
                                                     &devicePtr);
@@ -356,7 +357,8 @@ class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Tes
         ze_result_t res = module.get()->createKernel(&kernelDesc, kernelHandle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-        res = driverHandle->allocHostMem(0u, 4096u, rootDeviceIndex, ptr);
+        ze_host_mem_alloc_desc_t hostDesc = {};
+        res = driverHandle->allocHostMem(&hostDesc, 4096u, rootDeviceIndex, ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     }
 };
@@ -417,7 +419,8 @@ class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, publi
         ze_result_t res = modules[rootDeviceIndex].get()->createKernel(&kernelDesc, kernelHandle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-        res = driverHandle->allocHostMem(0u, 4096u, rootDeviceIndex, ptr);
+        ze_host_mem_alloc_desc_t hostDesc = {};
+        res = driverHandle->allocHostMem(&hostDesc, 4096u, rootDeviceIndex, ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     }
 };
