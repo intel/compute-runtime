@@ -105,10 +105,7 @@ MemObj::~MemObj() {
             releaseAllocatedMapPtr();
         }
     }
-    for (auto callback : destructorCallbacks) {
-        callback->invoke(this);
-        delete callback;
-    }
+    destructorCallbacks.invoke(this);
 
     context->decRefInternal();
 }
@@ -214,10 +211,8 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
 
 cl_int MemObj::setDestructorCallback(void(CL_CALLBACK *funcNotify)(cl_mem, void *),
                                      void *userData) {
-    auto cb = new MemObjDestructorCallback(funcNotify, userData);
-
     std::unique_lock<std::mutex> theLock(mtx);
-    destructorCallbacks.push_front(cb);
+    destructorCallbacks.add(funcNotify, userData);
     return CL_SUCCESS;
 }
 

@@ -17,7 +17,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/convert_color.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/destructor_callback.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/destructor_callbacks.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder.h

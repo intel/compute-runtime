@@ -14,7 +14,7 @@
 #include "opencl/source/context/context_type.h"
 #include "opencl/source/context/driver_diagnostics.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/destructor_callback.h"
+#include "opencl/source/helpers/destructor_callbacks.h"
 
 #include <list>
 #include <map>
@@ -184,7 +184,7 @@ class Context : public BaseObject<_cl_context> {
     std::map<uint32_t, DeviceBitfield> deviceBitfields;
     std::vector<std::unique_ptr<SharingFunctions>> sharingFunctions;
     ClDeviceVector devices;
-    std::list<ContextDestructorCallback *> destructorCallbacks;
+    ContextDestructorCallbacks destructorCallbacks;
     std::unique_ptr<BuiltInKernel> schedulerBuiltIn;
 
     const cl_context_properties *properties = nullptr;

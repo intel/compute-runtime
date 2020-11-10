@@ -12,7 +12,7 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/destructor_callback.h"
+#include "opencl/source/helpers/destructor_callbacks.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/map_operations_handler.h"
 #include "opencl/source/sharings/sharing.h"
@@ -163,6 +163,6 @@ class MemObj : public BaseObject<_cl_mem> {
     std::shared_ptr<SharingHandler> sharingHandler;
     std::vector<uint64_t> propertiesVector;
 
-    std::list<MemObjDestructorCallback *> destructorCallbacks;
+    MemObjDestructorCallbacks destructorCallbacks;
 };
 } // namespace NEO

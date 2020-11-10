@@ -16,7 +16,6 @@
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/destructor_callback.h"
 
 #include "cif/builtins/memory/buffer/buffer.h"
 #include "patch_list.h"
