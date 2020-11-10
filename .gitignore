@@ -1,2 +1,5 @@
+.vs/*
+CMakeSettings.json
 build/*
 build_linux/*
+out/*
