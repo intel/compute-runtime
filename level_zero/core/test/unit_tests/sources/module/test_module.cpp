@@ -602,5 +602,35 @@ TEST(BuildOptions, givenSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenOptionI
     EXPECT_EQ(std::string::npos, srcNames.find(NEO::CompilerOptions::optDisable.str()));
 }
 
+TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPassed) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    auto module = std::make_unique<ModuleImp>(device, nullptr);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions("", buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessBuffers));
+    EXPECT_TRUE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessImages));
+}
+
+TEST_F(ModuleTest, givenInternalOptionsWhenBindlessDisabledThenBindlesOptionsNotPassed) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(0);
+    auto module = std::make_unique<ModuleImp>(device, nullptr);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions("", buildOptions, internalBuildOptions);
+
+    EXPECT_FALSE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessBuffers));
+    EXPECT_FALSE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessImages));
+}
+
 } // namespace ult
 } // namespace L0

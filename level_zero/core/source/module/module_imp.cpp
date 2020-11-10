@@ -10,6 +10,7 @@
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -364,6 +365,10 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optDisable, BuildOptions::optDisable);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired, BuildOptions::greaterThan4GbRequired);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::allowZebin, NEO::CompilerOptions::allowZebin);
+        if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
+            NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::bindlessBuffers.str());
+            NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::bindlessImages.str());
+        }
         createBuildExtraOptions(apiOptions, internalBuildOptions);
     }
 }
