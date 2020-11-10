@@ -37,4 +37,9 @@ inline bool ClHwHelperHw<GfxFamily>::hasStatelessAccessToBuffer(const KernelInfo
     return hasStatelessAccessToBuffer;
 }
 
+template <typename GfxFamily>
+inline bool ClHwHelperHw<GfxFamily>::allowRenderCompressionForContext(const HardwareInfo &hwInfo, const Context &context) const {
+    return true;
+}
+
 } // namespace NEO

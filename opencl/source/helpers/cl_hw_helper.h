@@ -11,6 +11,7 @@
 
 namespace NEO {
 
+class Context;
 struct HardwareInfo;
 struct KernelInfo;
 struct MultiDispatchInfo;
@@ -20,6 +21,7 @@ class ClHwHelper {
     static ClHwHelper &get(GFXCORE_FAMILY gfxCore);
 
     virtual bool requiresAuxResolves(const KernelInfo &kernelInfo) const = 0;
+    virtual bool allowRenderCompressionForContext(const HardwareInfo &hwInfo, const Context &context) const = 0;
 
   protected:
     virtual bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const = 0;
@@ -37,6 +39,7 @@ class ClHwHelperHw : public ClHwHelper {
 
     static bool isBlitAuxTranslationRequired(const HardwareInfo &hwInfo, const MultiDispatchInfo &multiDispatchInfo);
     bool requiresAuxResolves(const KernelInfo &kernelInfo) const override;
+    bool allowRenderCompressionForContext(const HardwareInfo &hwInfo, const Context &context) const override;
 
   protected:
     bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const override;

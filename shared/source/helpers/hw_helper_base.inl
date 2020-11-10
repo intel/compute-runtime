@@ -27,7 +27,7 @@ template <typename Family>
 const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Builtin;
 
 template <typename Family>
-bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size) const {
+bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t size) const {
     return size > KB;
 }
 
