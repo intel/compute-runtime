@@ -140,12 +140,6 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
               pDevice->getMemoryManager()->getInternalHeapBaseAddress(0, !hwHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo())));
 }
 
-TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeWithoutDeviceThenReturnedFalse) {
-    CommandContainer cmdContainer;
-    auto status = cmdContainer.initialize(nullptr);
-    EXPECT_EQ(ErrorCode::INVALID_DEVICE, status);
-}
-
 TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateGfxMemoryFailsThenErrorIsReturned) {
     CommandContainer cmdContainer;
     pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(0, *pDevice->executionEnvironment));

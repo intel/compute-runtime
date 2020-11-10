@@ -44,10 +44,6 @@ CommandContainer::~CommandContainer() {
 }
 
 ErrorCode CommandContainer::initialize(Device *device) {
-    if (!device) {
-        DEBUG_BREAK_IF(device);
-        return ErrorCode::INVALID_DEVICE;
-    }
     this->device = device;
 
     size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);

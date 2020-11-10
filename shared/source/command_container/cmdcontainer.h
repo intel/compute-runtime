@@ -27,8 +27,7 @@ using HeapType = IndirectHeap::Type;
 
 enum class ErrorCode {
     SUCCESS = 0,
-    INVALID_DEVICE = 1,
-    OUT_OF_DEVICE_MEMORY = 2
+    OUT_OF_DEVICE_MEMORY = 1
 };
 
 class CommandContainer : public NonCopyableOrMovableClass {

@@ -40,8 +40,6 @@ struct EncodeStateBaseAddress;
 
 inline ze_result_t parseErrorCode(NEO::ErrorCode returnValue) {
     switch (returnValue) {
-    case NEO::ErrorCode::INVALID_DEVICE:
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
     case NEO::ErrorCode::OUT_OF_DEVICE_MEMORY:
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     default:

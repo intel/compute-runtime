@@ -36,9 +36,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
         NEO::GraphicsAllocation *bufferAllocation = buffers.getCurrentBufferAllocation();
         commandStream = new NEO::LinearStream(bufferAllocation->getUnderlyingBuffer(),
                                               defaultQueueCmdBufferSize);
-        if (!commandStream) {
-            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-        }
+        UNRECOVERABLE_IF(commandStream == nullptr);
         commandStream->replaceGraphicsAllocation(bufferAllocation);
         isCopyOnlyCommandQueue = copyOnly;
     }
