@@ -17,7 +17,7 @@ zeMemAllocShared(
     size_t alignment,
     ze_device_handle_t hDevice,
     void **pptr) {
-    return L0::Context::fromHandle(hContext)->allocSharedMem(hDevice, deviceDesc->flags, hostDesc->flags, size, alignment, pptr);
+    return L0::Context::fromHandle(hContext)->allocSharedMem(hDevice, deviceDesc, hostDesc, size, alignment, pptr);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

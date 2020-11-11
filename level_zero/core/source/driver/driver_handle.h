@@ -41,8 +41,10 @@ struct DriverHandle : _ze_driver_handle_t {
     virtual ze_result_t allocDeviceMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc, size_t size,
                                        size_t alignment, void **ptr) = 0;
 
-    virtual ze_result_t allocSharedMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t deviceFlags,
-                                       ze_host_mem_alloc_flags_t hostFlags, size_t size, size_t alignment,
+    virtual ze_result_t allocSharedMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc,
+                                       const ze_host_mem_alloc_desc_t *hostDesc,
+                                       size_t size,
+                                       size_t alignment,
                                        void **ptr) = 0;
     virtual ze_result_t freeMem(const void *ptr) = 0;
     virtual NEO::MemoryManager *getMemoryManager() = 0;

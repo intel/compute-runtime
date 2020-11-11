@@ -61,9 +61,11 @@ TEST_F(MemoryTest, givenSharedPointerThenDriverGetAllocPropertiesReturnsDeviceHa
     size_t alignment = 1u;
     void *ptr = nullptr;
 
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = driverHandle->allocSharedMem(device->toHandle(),
-                                                      0u,
-                                                      0u,
+                                                      &deviceDesc,
+                                                      &hostDesc,
                                                       size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
@@ -125,9 +127,11 @@ TEST_F(MemoryTest, givenSharedPointerAndDeviceHandleAsNullThenDriverReturnsSucce
     void *ptr = nullptr;
 
     ASSERT_NE(nullptr, device->toHandle());
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = driverHandle->allocSharedMem(nullptr,
-                                                      0u,
-                                                      0u,
+                                                      &deviceDesc,
+                                                      &hostDesc,
                                                       size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
@@ -142,9 +146,11 @@ TEST_F(MemoryTest, givenNoDeviceWhenAllocatingSharedMemoryThenDeviceInAllocation
     void *ptr = nullptr;
 
     ASSERT_NE(nullptr, device->toHandle());
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = driverHandle->allocSharedMem(nullptr,
-                                                      0u,
-                                                      0u,
+                                                      &deviceDesc,
+                                                      &hostDesc,
                                                       size, alignment, &ptr);
     auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     EXPECT_EQ(alloc->device, nullptr);
@@ -227,9 +233,11 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     ASSERT_NE(nullptr, driverHandle->devices[1]->toHandle());
     EXPECT_NE(neoDevice0->getDeviceBitfield(), neoDevice1->getDeviceBitfield());
     EXPECT_NE(neoDevice0->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
     auto result = driverHandle->allocSharedMem(nullptr,
-                                               ZE_DEVICE_MEMORY_PROPERTY_FLAG_TBD,
-                                               0u,
+                                               &deviceDesc,
+                                               &hostDesc,
                                                size, alignment, &ptr);
     EXPECT_EQ(neoDevice0->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
 
@@ -241,8 +249,8 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     memoryManager->recentlyPassedDeviceBitfield = {};
     EXPECT_NE(neoDevice1->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
     result = driverHandle->allocSharedMem(driverHandle->devices[1]->toHandle(),
-                                          ZE_DEVICE_MEMORY_PROPERTY_FLAG_TBD,
-                                          0u,
+                                          &deviceDesc,
+                                          &hostDesc,
                                           size, alignment, &ptr);
     EXPECT_EQ(neoDevice1->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
 
@@ -362,9 +370,11 @@ TEST_F(ContextMemoryTest, whenAllocatingSharedAllocationFromContextThenAllocatio
     size_t alignment = 1u;
     void *ptr = nullptr;
 
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocSharedMem(device->toHandle(),
-                                                 0u,
-                                                 0u,
+                                                 &deviceDesc,
+                                                 &hostDesc,
                                                  size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);

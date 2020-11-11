@@ -139,8 +139,10 @@ ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, const ze
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t deviceFlags,
-                                            ze_host_mem_alloc_flags_t hostFlags, size_t size, size_t alignment,
+ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc,
+                                            const ze_host_mem_alloc_desc_t *hostDesc,
+                                            size_t size,
+                                            size_t alignment,
                                             void **ptr) {
     ze_device_handle_t device;
     void *unifiedMemoryPropertiesDevice = nullptr;
