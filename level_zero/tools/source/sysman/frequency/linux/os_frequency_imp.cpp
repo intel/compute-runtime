@@ -34,9 +34,14 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &p
 ze_result_t LinuxFrequencyImp::osFrequencyGetRange(zes_freq_range_t *pLimits) {
     ze_result_t result = getMax(pLimits->max);
     if (ZE_RESULT_SUCCESS != result) {
-        return result;
+        pLimits->max = -1;
     }
-    return getMin(pLimits->min);
+
+    result = getMin(pLimits->min);
+    if (ZE_RESULT_SUCCESS != result) {
+        pLimits->min = -1;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimits) {
@@ -69,28 +74,28 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
 
     result = getRequest(pState->request);
     if (ZE_RESULT_SUCCESS != result) {
-        return result;
+        pState->request = -1;
     }
 
     result = getTdp(pState->tdp);
     if (ZE_RESULT_SUCCESS != result) {
-        return result;
+        pState->tdp = -1;
     }
 
     result = getEfficient(pState->efficient);
     if (ZE_RESULT_SUCCESS != result) {
-        return result;
+        pState->efficient = -1;
     }
 
     result = getActual(pState->actual);
     if (ZE_RESULT_SUCCESS != result) {
-        return result;
+        pState->actual = -1;
     }
 
     pState->pNext = nullptr;
     pState->currentVoltage = -1.0;
     pState->throttleReasons = 0u;
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxFrequencyImp::osFrequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) {
