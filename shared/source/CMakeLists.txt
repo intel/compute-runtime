@@ -39,9 +39,12 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
                              ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
   )
 
+  if(WIN32 OR WDDM_LINUX)
+    target_include_directories(${LIB_NAME} PUBLIC ${WDK_INCLUDE_PATHS})
+  endif()
+
   if(WIN32)
     target_include_directories(${LIB_NAME} PUBLIC
-                               ${WDK_INCLUDE_PATHS}
                                ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/windows
     )
   else()

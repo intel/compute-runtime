@@ -293,7 +293,7 @@ if(NOT THIRD_PARTY_DIR)
 endif()
 message(STATUS "Third party dir: ${THIRD_PARTY_DIR}")
 
-if(WIN32)
+if(WIN32 OR WDDM_LINUX)
   # get WDK location and version to use
   if(NOT WDK_DIR)
     if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../wdk")
@@ -333,6 +333,12 @@ if(WIN32)
       "${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/shared"
       "${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/km"
   )
+
+  if(WDDM_LINUX AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../wsl")
+    get_filename_component(WSL_HEADERS "../wsl" ABSOLUTE)
+    list(APPEND WDK_INCLUDE_PATHS ${WSL_HEADERS})
+  endif()
+
   message(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
 endif()
 

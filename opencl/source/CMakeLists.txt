@@ -64,10 +64,13 @@ target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC
                            ${NEO__IGC_COMPILE_DEFINITIONS}
 )
 
+if(WIN32 OR WDDM_LINUX)
+  target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC ${WDK_INCLUDE_PATHS})
+endif()
+
 if(WIN32)
   set(IGDRCL_EXTRA_LIBS Ws2_32)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
-                             ${WDK_INCLUDE_PATHS}
                              ${NEO_SHARED_DIRECTORY}/os_interface/windows
                              ${NEO_SOURCE_DIR}/opencl/source/os_interface/windows
   )
