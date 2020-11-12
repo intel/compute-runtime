@@ -611,6 +611,116 @@ void testSysmanListenEvents(ze_driver_handle_t driver, std::vector<ze_device_han
     }
 }
 
+std::string getFabricPortStatus(zes_fabric_port_status_t status) {
+    static const std::map<zes_fabric_port_status_t, std::string> fabricPortStatus{
+        {ZES_FABRIC_PORT_STATUS_UNKNOWN, "ZES_FABRIC_PORT_STATUS_UNKNOWN"},
+        {ZES_FABRIC_PORT_STATUS_HEALTHY, "ZES_FABRIC_PORT_STATUS_HEALTHY"},
+        {ZES_FABRIC_PORT_STATUS_DEGRADED, "ZES_FABRIC_PORT_STATUS_DEGRADED"},
+        {ZES_FABRIC_PORT_STATUS_FAILED, "ZES_FABRIC_PORT_STATUS_FAILED"},
+        {ZES_FABRIC_PORT_STATUS_DISABLED, "ZES_FABRIC_PORT_STATUS_DISABLED"}};
+    auto i = fabricPortStatus.find(status);
+    if (i == fabricPortStatus.end())
+        return "UNEXPECTED STATUS";
+    else
+        return fabricPortStatus.at(status);
+}
+
+std::string getFabricPortQualityIssues(zes_fabric_port_qual_issue_flags_t qualityIssues) {
+    std::string returnValue;
+    returnValue.clear();
+    if (qualityIssues & ZES_FABRIC_PORT_QUAL_ISSUE_FLAG_LINK_ERRORS) {
+        returnValue.append("ZES_FABRIC_PORT_QUAL_ISSUE_FLAG_LINK_ERRORS ");
+    }
+    if (qualityIssues & ZES_FABRIC_PORT_QUAL_ISSUE_FLAG_SPEED) {
+        returnValue.append("ZES_FABRIC_PORT_QUAL_ISSUE_FLAG_SPEED");
+    }
+    return returnValue;
+}
+
+std::string getFabricPortFailureReasons(zes_fabric_port_failure_flags_t failureReasons) {
+    std::string returnValue;
+    returnValue.clear();
+    if (failureReasons & ZES_FABRIC_PORT_FAILURE_FLAG_FAILED) {
+        returnValue.append("ZES_FABRIC_PORT_FAILURE_FLAG_FAILED ");
+    }
+    if (failureReasons & ZES_FABRIC_PORT_FAILURE_FLAG_TRAINING_TIMEOUT) {
+        returnValue.append("ZES_FABRIC_PORT_FAILURE_FLAG_TRAINING_TIMEOUT ");
+    }
+    if (failureReasons & ZES_FABRIC_PORT_FAILURE_FLAG_FLAPPING) {
+        returnValue.append("ZES_FABRIC_PORT_FAILURE_FLAG_FLAPPING ");
+    }
+    return returnValue;
+}
+
+void testSysmanFabricPort(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  FabricPort tests ---- " << std::endl;
+    uint32_t count = 0;
+    VALIDATECALL(zesDeviceEnumFabricPorts(device, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve FabricPorts" << std::endl;
+        return;
+    }
+    std::vector<zes_fabric_port_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumFabricPorts(device, &count, handles.data()));
+
+    for (auto handle : handles) {
+        zes_fabric_port_properties_t fabricPortProperties = {};
+        zes_fabric_link_type_t fabricPortLinkType = {};
+        zes_fabric_port_config_t fabricPortConfig = {};
+        zes_fabric_port_state_t fabricPortState = {};
+        zes_fabric_port_throughput_t fabricPortThroughput = {};
+
+        VALIDATECALL(zesFabricPortGetProperties(handle, &fabricPortProperties));
+        if (verbose) {
+            std::cout << "Model = " << fabricPortProperties.model << std::endl;
+            std::cout << "On Subdevice = " << fabricPortProperties.onSubdevice << std::endl;
+            std::cout << "Subdevice Id = " << fabricPortProperties.subdeviceId << std::endl;
+            std::cout << "Port ID = [" << fabricPortProperties.portId.fabricId
+                      << ":" << fabricPortProperties.portId.attachId
+                      << ":" << fabricPortProperties.portId.portNumber << "]" << std::endl;
+            std::cout << "Max Rx Speed = " << fabricPortProperties.maxRxSpeed.bitRate
+                      << " pbs, " << fabricPortProperties.maxRxSpeed.width << " lanes" << std::endl;
+            std::cout << "Max Tx Speed = " << fabricPortProperties.maxTxSpeed.bitRate
+                      << " pbs, " << fabricPortProperties.maxTxSpeed.width << " lanes" << std::endl;
+        }
+
+        VALIDATECALL(zesFabricPortGetLinkType(handle, &fabricPortLinkType));
+        if (verbose) {
+            std::cout << "Link Type = " << fabricPortLinkType.desc << std::endl;
+        }
+
+        VALIDATECALL(zesFabricPortGetConfig(handle, &fabricPortConfig));
+        if (verbose) {
+            std::cout << "Enabled = " << fabricPortConfig.enabled << std::endl;
+            std::cout << "Beaconing = " << fabricPortConfig.beaconing << std::endl;
+        }
+
+        VALIDATECALL(zesFabricPortGetState(handle, &fabricPortState));
+        if (verbose) {
+            std::cout << "Status = " << getFabricPortStatus(fabricPortState.status) << std::endl;
+            std::cout << "Quality Issues = " << getFabricPortQualityIssues(fabricPortState.qualityIssues)
+                      << std::hex << fabricPortState.qualityIssues << std::endl;
+            std::cout << "Failure Reasons = " << getFabricPortFailureReasons(fabricPortState.failureReasons)
+                      << std::hex << fabricPortState.failureReasons << std::endl;
+            std::cout << "Remote Port ID = [" << fabricPortState.remotePortId.fabricId
+                      << ":" << fabricPortState.remotePortId.attachId
+                      << ":" << fabricPortState.remotePortId.portNumber << "]" << std::endl;
+            std::cout << "Rx Speed = " << fabricPortState.rxSpeed.bitRate
+                      << " pbs, " << fabricPortState.rxSpeed.width << " lanes" << std::endl;
+            std::cout << "Tx Speed = " << fabricPortState.txSpeed.bitRate
+                      << " pbs, " << fabricPortState.txSpeed.width << " lanes" << std::endl;
+        }
+
+        VALIDATECALL(zesFabricPortGetThroughput(handle, &fabricPortThroughput));
+        if (verbose) {
+            std::cout << "Timestamp = " << fabricPortThroughput.timestamp << std::endl;
+            std::cout << "RX Counter = " << fabricPortThroughput.rxCounter << std::endl;
+            std::cout << "TX Counter = " << fabricPortThroughput.txCounter << std::endl;
+        }
+    }
+}
+
 void testSysmanGlobalOperations(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Global Operations tests ---- " << std::endl;
@@ -668,10 +778,11 @@ int main(int argc, char *argv[]) {
         {"memory", no_argument, nullptr, 'm'},
         {"event", no_argument, nullptr, 'E'},
         {"reset", required_argument, nullptr, 'r'},
+        {"fabricport", no_argument, nullptr, 'F'},
         {0, 0, 0, 0},
     };
     bool force = false;
-    while ((opt = getopt_long(argc, argv, "hpfsectogmrE:", long_opts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hpfsectogmrFE:", long_opts, nullptr)) != -1) {
         switch (opt) {
         case 'h':
             usage();
@@ -742,6 +853,11 @@ int main(int argc, char *argv[]) {
             });
             testSysmanListenEvents(driver, devices,
                                    ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH);
+            break;
+        case 'F':
+            std::for_each(devices.begin(), devices.end(), [&](auto device) {
+                testSysmanFabricPort(device);
+            });
             break;
 
         default:

@@ -34,14 +34,7 @@ void fabricPortGetTimestamp(uint64_t &timestamp) {
 }
 
 ze_result_t FabricPortImp::fabricPortGetProperties(zes_fabric_port_properties_t *pProperties) {
-    pOsFabricPort->getModel(pProperties->model);
-    pProperties->onSubdevice = onSubdevice;
-    pProperties->subdeviceId = subdeviceId;
-    pOsFabricPort->getPortId(pProperties->portId);
-    pOsFabricPort->getMaxRxSpeed(pProperties->maxRxSpeed);
-    pOsFabricPort->getMaxTxSpeed(pProperties->maxTxSpeed);
-
-    return ZE_RESULT_SUCCESS;
+    return pOsFabricPort->getProperties(pProperties);
 }
 
 ze_result_t FabricPortImp::fabricPortGetLinkType(zes_fabric_link_type_t *pLinkType) {
@@ -66,8 +59,6 @@ ze_result_t FabricPortImp::fabricPortGetThroughput(zes_fabric_port_throughput_t 
 }
 
 void FabricPortImp::init() {
-    onSubdevice = false;
-    subdeviceId = 0L;
 }
 
 FabricPortImp::FabricPortImp(FabricDevice *pFabricDevice, uint32_t portNum) {

@@ -43,10 +43,6 @@ class FabricPortImp : public FabricPort, NEO::NonCopyableOrMovableClass {
   protected:
     void init();
     OsFabricPort *pOsFabricPort = nullptr;
-
-  private:
-    bool onSubdevice = false;
-    uint32_t subdeviceId = 0U;
 };
 
 } // namespace L0

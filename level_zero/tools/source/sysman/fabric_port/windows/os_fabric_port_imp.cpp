@@ -41,20 +41,14 @@ ze_result_t WddmFabricPortImp::getThroughput(zes_fabric_port_throughput_t *pThro
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-void WddmFabricPortImp::getModel(char *model) {
-    ::memset(model, '\0', ZES_MAX_FABRIC_PORT_MODEL_SIZE);
-}
-
-void WddmFabricPortImp::getPortId(zes_fabric_port_id_t &portId) {
-    ::memset(&portId, '\0', sizeof(portId));
-}
-
-void WddmFabricPortImp::getMaxRxSpeed(zes_fabric_port_speed_t &maxRxSpeed) {
-    ::memset(&maxRxSpeed, '\0', sizeof(maxRxSpeed));
-}
-
-void WddmFabricPortImp::getMaxTxSpeed(zes_fabric_port_speed_t &maxTxSpeed) {
-    ::memset(&maxTxSpeed, '\0', sizeof(maxTxSpeed));
+ze_result_t WddmFabricPortImp::getProperties(zes_fabric_port_properties_t *pProperties) {
+    ::memset(pProperties->model, '\0', ZES_MAX_FABRIC_PORT_MODEL_SIZE);
+    pProperties->onSubdevice = false;
+    pProperties->subdeviceId = 0U;
+    ::memset(&pProperties->portId, '\0', sizeof(pProperties->portId));
+    ::memset(&pProperties->maxRxSpeed, '\0', sizeof(pProperties->maxRxSpeed));
+    ::memset(&pProperties->maxTxSpeed, '\0', sizeof(pProperties->maxTxSpeed));
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 WddmFabricPortImp::WddmFabricPortImp(OsFabricDevice *pOsFabricDevice, uint32_t portNum) {

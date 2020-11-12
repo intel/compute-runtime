@@ -56,20 +56,14 @@ ze_result_t LinuxFabricPortImp::getThroughput(zes_fabric_port_throughput_t *pThr
     return ZE_RESULT_SUCCESS;
 }
 
-void LinuxFabricPortImp::getModel(char *model) {
-    ::snprintf(model, ZES_MAX_FABRIC_PORT_MODEL_SIZE, "%s", this->model.c_str());
-}
-
-void LinuxFabricPortImp::getPortId(zes_fabric_port_id_t &portId) {
-    portId = this->portId;
-}
-
-void LinuxFabricPortImp::getMaxRxSpeed(zes_fabric_port_speed_t &maxRxSpeed) {
-    maxRxSpeed = this->maxRxSpeed;
-}
-
-void LinuxFabricPortImp::getMaxTxSpeed(zes_fabric_port_speed_t &maxTxSpeed) {
-    maxTxSpeed = this->maxTxSpeed;
+ze_result_t LinuxFabricPortImp::getProperties(zes_fabric_port_properties_t *pProperties) {
+    ::snprintf(pProperties->model, ZES_MAX_FABRIC_PORT_MODEL_SIZE, "%s", this->model.c_str());
+    pProperties->onSubdevice = false;
+    pProperties->subdeviceId = 0U;
+    pProperties->portId = this->portId;
+    pProperties->maxRxSpeed = this->maxRxSpeed;
+    pProperties->maxTxSpeed = this->maxTxSpeed;
+    return ZE_RESULT_SUCCESS;
 }
 
 LinuxFabricPortImp::LinuxFabricPortImp(OsFabricDevice *pOsFabricDevice, uint32_t portNum) {
