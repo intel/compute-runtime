@@ -40,7 +40,7 @@ class KernelSlmArgTest : public Test<ClDeviceFixture> {
         pKernelInfo->workloadInfo.slmStaticSize = 3 * KB;
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
-        pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
+        pKernel = new MockKernel(program.get(), *pKernelInfo);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgLocal);

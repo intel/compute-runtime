@@ -83,12 +83,12 @@ class CloneKernelFixture : public ContextFixture, public ClDeviceFixture {
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
-        pSourceKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
+        pSourceKernel = new MockKernel(pProgram, *pKernelInfo);
         ASSERT_EQ(CL_SUCCESS, pSourceKernel->initialize());
         char pSourceCrossThreadData[64] = {};
         pSourceKernel->setCrossThreadData(pSourceCrossThreadData, sizeof(pSourceCrossThreadData));
 
-        pClonedKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
+        pClonedKernel = new MockKernel(pProgram, *pKernelInfo);
         ASSERT_EQ(CL_SUCCESS, pClonedKernel->initialize());
         char pClonedCrossThreadData[64] = {};
         pClonedKernel->setCrossThreadData(pClonedCrossThreadData, sizeof(pClonedCrossThreadData));

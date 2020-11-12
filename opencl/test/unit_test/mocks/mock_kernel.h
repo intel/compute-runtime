@@ -92,8 +92,8 @@ class MockKernel : public Kernel {
         }
     };
 
-    MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg, bool scheduler = false)
-        : Kernel(programArg, kernelInfoArg, deviceArg, scheduler) {
+    MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, bool scheduler = false)
+        : Kernel(programArg, kernelInfoArg, scheduler) {
     }
 
     ~MockKernel() override {
@@ -118,7 +118,6 @@ class MockKernel : public Kernel {
     static KernelType *create(Device &device, Program *program, uint32_t grfNumber) {
         auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
-        auto pClDevice = device.getSpecializedDevice<ClDevice>();
 
         SPatchThreadPayload *threadPayload = new SPatchThreadPayload;
         threadPayload->LocalIDXPresent = 0;
@@ -138,7 +137,7 @@ class MockKernel : public Kernel {
 
         info->crossThreadData = new char[crossThreadSize];
 
-        auto kernel = new KernelType(program, *info, *pClDevice);
+        auto kernel = new KernelType(program, *info);
         kernel->crossThreadData = new char[crossThreadSize];
         memset(kernel->crossThreadData, 0, crossThreadSize);
         kernel->crossThreadDataSize = crossThreadSize;
@@ -289,7 +288,7 @@ class MockKernelWithInternals {
         deviceVector.push_back(&deviceArg);
 
         mockProgram = new MockProgram(context, false, deviceVector);
-        mockKernel = new MockKernel(mockProgram, kernelInfo, deviceArg);
+        mockKernel = new MockKernel(mockProgram, kernelInfo);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
         mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal));
 
@@ -428,7 +427,7 @@ class MockParentKernel : public Kernel {
         UNRECOVERABLE_IF(crossThreadSize < crossThreadOffset + 8);
         info->crossThreadData = new char[crossThreadSize];
 
-        auto parent = new MockParentKernel(mockProgram, *info, *clDevice);
+        auto parent = new MockParentKernel(mockProgram, *info);
         parent->crossThreadData = new char[crossThreadSize];
         memset(parent->crossThreadData, 0, crossThreadSize);
         parent->crossThreadDataSize = crossThreadSize;
@@ -534,7 +533,7 @@ class MockParentKernel : public Kernel {
         return parent;
     }
 
-    MockParentKernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg) : Kernel(programArg, kernelInfoArg, deviceArg) {
+    MockParentKernel(Program *programArg, const KernelInfo &kernelInfoArg) : Kernel(programArg, kernelInfoArg, false) {
     }
 
     ~MockParentKernel() override {
@@ -579,12 +578,12 @@ class MockParentKernel : public Kernel {
 
 class MockSchedulerKernel : public SchedulerKernel {
   public:
-    MockSchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg) : SchedulerKernel(programArg, kernelInfoArg, deviceArg){};
+    MockSchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg) : SchedulerKernel(programArg, kernelInfoArg){};
 };
 
 class MockDebugKernel : public MockKernel {
   public:
-    MockDebugKernel(Program *program, KernelInfo &kernelInfo, const ClDevice &device) : MockKernel(program, kernelInfo, device) {
+    MockDebugKernel(Program *program, KernelInfo &kernelInfo) : MockKernel(program, kernelInfo) {
         if (!kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
             SPatchAllocateSystemThreadSurface *patchToken = new SPatchAllocateSystemThreadSurface;
 

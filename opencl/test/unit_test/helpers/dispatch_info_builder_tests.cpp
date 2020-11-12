@@ -67,7 +67,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
-        pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
+        pKernel = new MockKernel(pProgram, *pKernelInfo);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
         pKernel->setKernelArgHandler(0, &Kernel::setArgBuffer);

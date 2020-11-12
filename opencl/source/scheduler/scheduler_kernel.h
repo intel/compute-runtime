@@ -55,13 +55,13 @@ class SchedulerKernel : public Kernel {
     static BuiltinCode loadSchedulerKernel(Device *device);
 
   protected:
-    SchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg) : Kernel(programArg, kernelInfoArg, deviceArg, true), gws(0) {
+    SchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg) : Kernel(programArg, kernelInfoArg, true) {
         computeGws();
     };
 
     void computeGws();
 
-    size_t gws;
+    size_t gws = 0u;
 };
 
 } // namespace NEO

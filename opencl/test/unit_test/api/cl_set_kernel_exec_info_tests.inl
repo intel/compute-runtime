@@ -21,7 +21,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
 
         pKernelInfo = std::make_unique<KernelInfo>();
 
-        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
+        pMockKernel = new MockKernel(pProgram, *pKernelInfo);
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
         svmCapabilities = pDevice->getDeviceInfo().svmCapabilities;
         if (svmCapabilities != 0) {
@@ -64,11 +64,10 @@ TEST_F(clSetKernelExecInfoTests, GivenNullKernelWhenSettingAdditionalKernelInfoT
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKernelExecInfoThenInvalidOperationErrorIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.ftrSvm = false;
-    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo->capabilityTable.ftrSvm = false;
 
-    auto pMockKernel = std::make_unique<MockKernel>(pProgram, *pKernelInfo, *pDevice);
+    auto pMockKernel = std::make_unique<MockKernel>(pProgram, *pKernelInfo);
     auto retVal = clSetKernelExecInfo(
         pMockKernel.get(),            // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name

@@ -55,7 +55,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
         pKernelInfo->kernelArgInfo[1].isSampler = true;
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
-        pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
+        pKernel = new MockKernel(program.get(), *pKernelInfo);
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
@@ -200,7 +200,7 @@ HWTEST_F(SamplerSetArgTest, GivenSamplerObjectWhenSetKernelArgIsCalledThenSample
 }
 
 HWTEST_F(SamplerSetArgTest, GivenSamplerObjectWhenSetKernelArgIsCalledAndKernelIsDeletedThenRefCountIsUnchanged) {
-    auto myKernel = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pClDevice);
+    auto myKernel = std::make_unique<MockKernel>(program.get(), *pKernelInfo);
     ASSERT_NE(nullptr, myKernel.get());
     ASSERT_EQ(CL_SUCCESS, myKernel->initialize());
 
@@ -374,7 +374,7 @@ TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndIsSamplerTrueWhenInitializeKerne
     pKernelInfo->kernelArgInfo[1].metadataExtended->type = "sampler";
     pKernelInfo->kernelArgInfo[1].isSampler = true;
 
-    auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pClDevice);
+    auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo);
     ASSERT_EQ(CL_SUCCESS, pMockKernell->initialize());
     EXPECT_EQ(pMockKernell->getKernelArguments()[0].type, MockKernel::SAMPLER_OBJ);
     EXPECT_EQ(pMockKernell->getKernelArguments()[1].type, MockKernel::SAMPLER_OBJ);
@@ -389,7 +389,7 @@ TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndAndIsSamplerFalseWhenInitializeK
     pKernelInfo->kernelArgInfo[1].metadataExtended->type = "sampler";
     pKernelInfo->kernelArgInfo[1].isSampler = false;
 
-    auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pClDevice);
+    auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo);
     ASSERT_EQ(CL_SUCCESS, pMockKernell->initialize());
     EXPECT_NE(pMockKernell->getKernelArguments()[0].type, MockKernel::SAMPLER_OBJ);
     EXPECT_NE(pMockKernell->getKernelArguments()[1].type, MockKernel::SAMPLER_OBJ);

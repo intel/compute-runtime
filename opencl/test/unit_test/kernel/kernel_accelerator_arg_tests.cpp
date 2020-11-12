@@ -61,7 +61,7 @@ class KernelArgAcceleratorFixture : public ContextFixture, public ClDeviceFixtur
         pKernelInfo->kernelArgInfo[0].offsetVmeSearchPathType = 0x1c;
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
-        pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
+        pKernel = new MockKernel(pProgram, *pKernelInfo);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgAccelerator);

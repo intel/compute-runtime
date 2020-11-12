@@ -606,7 +606,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNonParentKernelWhenCreatingKernelRe
     MockClDevice device{new MockDevice};
     MockProgram program(toClDeviceVector(device));
     KernelInfo info;
-    MockKernel kernel(&program, info, device);
+    MockKernel kernel(&program, info);
 
     EXPECT_FALSE(kernel.isParentKernel);
 
@@ -624,7 +624,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNonSchedulerKernelWithForcedSchedul
     MockClDevice device{new MockDevice};
     MockProgram program(toClDeviceVector(device));
     KernelInfo info;
-    MockKernel kernel(&program, info, device);
+    MockKernel kernel(&program, info);
 
     EXPECT_FALSE(kernel.isParentKernel);
 
@@ -661,7 +661,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNoKernelArgsWhenObtainingKernelRefl
     bindingTableState.SurfaceStateOffset = 0;
     info.patchInfo.bindingTableState = &bindingTableState;
 
-    MockKernel kernel(&program, info, *device.get());
+    MockKernel kernel(&program, info);
 
     EXPECT_TRUE(kernel.isParentKernel);
 
@@ -724,7 +724,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKe
     info.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = devQueueCurbeOffset;
     info.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = devQueueCurbeSize;
 
-    MockKernel kernel(&program, info, *device.get());
+    MockKernel kernel(&program, info);
 
     EXPECT_TRUE(kernel.isParentKernel);
 
@@ -2131,7 +2131,7 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelRefl
     bindingTableState.SurfaceStateOffset = 0;
     info.patchInfo.bindingTableState = &bindingTableState;
 
-    MockKernel kernel(&program, info, *device.get());
+    MockKernel kernel(&program, info);
 
     EXPECT_TRUE(kernel.isParentKernel);
 
@@ -2194,7 +2194,7 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKe
     info.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = devQueueCurbeOffset;
     info.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = devQueueCurbeSize;
 
-    MockKernel kernel(&program, info, *device.get());
+    MockKernel kernel(&program, info);
 
     EXPECT_TRUE(kernel.isParentKernel);
 

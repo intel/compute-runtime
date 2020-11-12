@@ -16,11 +16,10 @@
 
 using namespace NEO;
 
-class KernelArgSvmFixture : public ApiFixture<>, public ClDeviceFixture {
+class KernelArgSvmFixture : public ApiFixture<> {
   protected:
     void SetUp() override {
         ApiFixture::SetUp();
-        ClDeviceFixture::SetUp();
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
 
         // define kernel info
@@ -40,7 +39,7 @@ class KernelArgSvmFixture : public ApiFixture<>, public ClDeviceFixture {
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
         pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrGlobal;
 
-        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *this->pClDevice);
+        pMockKernel = new MockKernel(pProgram, *pKernelInfo);
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
         pMockKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
     }
@@ -50,7 +49,6 @@ class KernelArgSvmFixture : public ApiFixture<>, public ClDeviceFixture {
             delete pMockKernel;
         }
 
-        ClDeviceFixture::TearDown();
         ApiFixture::TearDown();
     }
 
@@ -84,11 +82,10 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgIndexWhenSettingKernelArgTh
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKernelArgSVMPointerThenInvalidOperationErrorIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.ftrSvm = false;
-    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo->capabilityTable.ftrSvm = false;
 
-    auto pMockKernel = std::make_unique<MockKernel>(pProgram, *pKernelInfo, *pDevice);
+    auto pMockKernel = std::make_unique<MockKernel>(pProgram, *pKernelInfo);
     auto retVal = clSetKernelArgSVMPointer(
         pMockKernel.get(), // cl_kernel kernel
         (cl_uint)-1,       // cl_uint arg_index
@@ -109,8 +106,8 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenLocalAddressAndNullArgValueWhenSettin
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
-    pClDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
-    pClDevice->sharedDeviceInfo.sharedSystemAllocationsSupport = false;
+    pDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
+    pDevice->sharedDeviceInfo.sharedSystemAllocationsSupport = false;
     void *ptrHost = malloc(256);
     EXPECT_NE(nullptr, ptrHost);
 
@@ -125,7 +122,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgTh
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndNullArgValueWhenSettingKernelArgThenSuccessIsReturned) {
-    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto retVal = clSetKernelArgSVMPointer(
             pMockKernel, // cl_kernel kernel
@@ -137,7 +134,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndNullArgValueWhenSettingKernelAr
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingKernelArgThenSuccessIsReturned) {
-    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
@@ -154,7 +151,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingKernelA
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndConstantAddressWhenSettingKernelArgThenSuccessIsReturned) {
-    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
@@ -173,7 +170,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndConstantAddressWhenSettingKerne
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithOffsetWhenSettingKernelArgThenSuccessIsReturned) {
-    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         size_t offset = 256 / 2;
@@ -191,9 +188,9 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithOffsetWhenSettingKer
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
-    pClDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
-    pClDevice->sharedDeviceInfo.sharedSystemAllocationsSupport = false;
-    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    pDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
+    pDevice->sharedDeviceInfo.sharedSystemAllocationsSupport = false;
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);

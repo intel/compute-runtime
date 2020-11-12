@@ -80,9 +80,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         cl_int retVal;
         kernel_t *pKernel = nullptr;
 
-        auto clDevice = program->getDevices()[0];
-
-        pKernel = new kernel_t(program, kernelInfo, *clDevice);
+        pKernel = new kernel_t(program, kernelInfo);
         retVal = pKernel->initialize();
 
         if (retVal != CL_SUCCESS) {
@@ -191,7 +189,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
 
     const ClDevice &getDevice() const {
-        return device;
+        return *deviceVector[0];
     }
 
     Context &getContext() const {
@@ -501,7 +499,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const PatchTokenT &patch);
 
     void getParentObjectCounts(ObjectCounts &objectCount);
-    Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg, bool schedulerKernel = false);
+    Kernel(Program *programArg, const KernelInfo &kernelInfoArg, bool schedulerKernel = false);
     void provideInitializationHints();
 
     void patchBlocksCurbeWithConstantValues();
@@ -514,7 +512,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
     Program *program;
     Context *context = nullptr;
-    const ClDevice &device;
+    const ClDeviceVector &deviceVector;
     const KernelInfo &kernelInfo;
 
     std::vector<SimpleKernelArgInfo> kernelArguments;

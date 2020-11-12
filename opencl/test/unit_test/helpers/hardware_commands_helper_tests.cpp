@@ -180,7 +180,7 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
     auto kernelInfo = std::make_unique<KernelInfo>();
 
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo));
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
 
@@ -246,7 +246,7 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
     auto kernelInfo = std::make_unique<KernelInfo>();
 
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo));
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     indirectHeap.getSpace(128u);
@@ -548,7 +548,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     modifiedKernelInfo.workgroupDimensionsOrder[0] = 2;
     modifiedKernelInfo.workgroupDimensionsOrder[1] = 1;
     modifiedKernelInfo.workgroupDimensionsOrder[2] = 0;
-    MockKernel mockKernel{kernel->getProgram(), modifiedKernelInfo, kernel->getDevice(), false};
+    MockKernel mockKernel{kernel->getProgram(), modifiedKernelInfo, false};
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(mockKernel);
@@ -724,7 +724,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
     program.setConstantSurface(&gfxConstAlloc);
 
     // create kernel
-    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo);
 
     // setup surface state heap
     constexpr uint32_t numSurfaces = 5;
@@ -841,7 +841,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
     // create kernel
-    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo);
 
     // setup surface state heap
     char surfaceStateHeap[256];
@@ -896,7 +896,7 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
     // create kernel
-    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo);
 
     // setup surface state heap
     char surfaceStateHeap[256];

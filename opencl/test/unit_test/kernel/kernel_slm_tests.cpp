@@ -72,7 +72,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     executionEnvironment.HasBarriers = 1;
     kernelInfo.workloadInfo.slmStaticSize = GetParam() * KB;
 
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
+    MockKernel kernel(program.get(), kernelInfo);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     // After creating Mock Kernel now create Indirect Heap

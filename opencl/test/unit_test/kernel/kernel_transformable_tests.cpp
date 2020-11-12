@@ -45,7 +45,7 @@ class KernelTransformableTest : public ::testing::Test {
         pKernelInfo->argumentsToPatchNum = 4;
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*context.getDevice(0)));
-        pKernel.reset(new MockKernel(program.get(), *pKernelInfo, *context.getDevice(0)));
+        pKernel.reset(new MockKernel(program.get(), *pKernelInfo));
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgSampler);

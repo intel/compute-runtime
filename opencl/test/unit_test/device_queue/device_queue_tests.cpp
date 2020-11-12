@@ -291,7 +291,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, WhenDispatchingSchedulerThenNoAsser
     MockProgram program(toClDeviceVector(*device));
     MockCommandQueue cmdQ(nullptr, nullptr, 0);
     KernelInfo info;
-    MockSchedulerKernel *kernel = new MockSchedulerKernel(&program, info, *device);
+    MockSchedulerKernel *kernel = new MockSchedulerKernel(&program, info);
     LinearStream cmdStream;
 
     devQueue.dispatchScheduler(cmdStream, *kernel, device->getPreemptionMode(), nullptr, nullptr, false);

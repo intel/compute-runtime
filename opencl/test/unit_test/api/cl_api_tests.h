@@ -17,6 +17,7 @@
 #include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/tracing/tracing_api.h"
 #include "opencl/test/unit_test/helpers/ult_limits.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
@@ -25,8 +26,6 @@
 
 namespace NEO {
 
-class MockClDevice;
-
 template <uint32_t rootDeviceIndex = 1u>
 struct ApiFixture {
 
@@ -34,12 +33,12 @@ struct ApiFixture {
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         executionEnvironment = new ClExecutionEnvironment();
         prepareDeviceEnvironments(*executionEnvironment);
-        Device *rootDevice = MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, rootDeviceIndex);
+        auto rootDevice = MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, rootDeviceIndex);
         if (rootDeviceIndex != 0u) {
             rootDeviceEnvironmentBackup.swap(executionEnvironment->rootDeviceEnvironments[0]);
         }
 
-        pDevice = new ClDevice(*rootDevice, nullptr);
+        pDevice = new MockClDevice(rootDevice);
         ASSERT_NE(nullptr, pDevice);
 
         testedClDevice = pDevice;
@@ -50,7 +49,7 @@ struct ApiFixture {
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pDevice));
 
-        pKernel = new MockKernel(pProgram, pProgram->mockKernelInfo, *pDevice);
+        pKernel = new MockKernel(pProgram, pProgram->mockKernelInfo);
         ASSERT_NE(nullptr, pKernel);
     }
 
@@ -75,7 +74,7 @@ struct ApiFixture {
     constexpr static uint32_t numRootDevices = maxRootDeviceCount;
     constexpr static uint32_t testedRootDeviceIndex = rootDeviceIndex;
     cl_device_id testedClDevice = nullptr;
-    ClDevice *pDevice = nullptr;
+    MockClDevice *pDevice = nullptr;
     ClExecutionEnvironment *executionEnvironment = nullptr;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironmentBackup;
 };

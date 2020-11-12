@@ -106,12 +106,12 @@ TEST(KernelNonUniform, WhenSettingAllowNonUniformThenGettingAllowNonUniformRetur
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));
     struct KernelMock : Kernel {
-        KernelMock(Program *p, KernelInfo &ki, ClDevice &d)
-            : Kernel(p, ki, d) {
+        KernelMock(Program *p, KernelInfo &ki)
+            : Kernel(p, ki, false) {
         }
     };
 
-    KernelMock k{&program, kernelInfo, device};
+    KernelMock k{&program, kernelInfo};
     program.setAllowNonUniform(false);
     EXPECT_FALSE(k.getAllowNonUniform());
     program.setAllowNonUniform(true);

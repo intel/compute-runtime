@@ -27,7 +27,7 @@ class MockKernelWithArgumentAccess : public Kernel {
     class ObjectCountsPublic : public Kernel::ObjectCounts {
     };
 
-    MockKernelWithArgumentAccess(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg) : Kernel(programArg, kernelInfoArg, deviceArg) {
+    MockKernelWithArgumentAccess(Program *programArg, const KernelInfo &kernelInfoArg) : Kernel(programArg, kernelInfoArg, false) {
     }
 
     void getParentObjectCountsPublic(MockKernelWithArgumentAccess::ObjectCountsPublic &objectCount) {
@@ -44,7 +44,7 @@ TEST(ParentKernelTest, WhenArgsAddedThenObjectCountsAreIncremented) {
 
     info.patchInfo.executionEnvironment = &environment;
 
-    MockKernelWithArgumentAccess kernel(&program, info, *device);
+    MockKernelWithArgumentAccess kernel(&program, info);
 
     std::vector<Kernel::SimpleKernelArgInfo> &args = kernel.getKernelArguments();
 
