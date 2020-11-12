@@ -4001,8 +4001,7 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenAllocatingThenAllocationIsR
 
     NEO::AllocationProperties properties{0, true, MemoryConstants::pageSize,
                                          NEO::GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
-                                         false,
-                                         CommonConstants::allDevicesBitfield};
+                                         false, 1};
 
     properties.gpuAddress = 0x20000;
     auto sbaAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
@@ -4032,8 +4031,7 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenFreeingThenRegisteredHandle
 
     NEO::AllocationProperties properties{0, true, MemoryConstants::pageSize,
                                          NEO::GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
-                                         false,
-                                         CommonConstants::allDevicesBitfield};
+                                         false, 1};
 
     properties.gpuAddress = 0x20000;
     auto sbaAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);

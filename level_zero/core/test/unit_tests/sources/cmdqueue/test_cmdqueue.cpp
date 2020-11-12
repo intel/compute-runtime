@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+#include "shared/test/unit_test/helpers/variable_backup.h"
 #include "shared/test/unit_test/mocks/mock_command_stream_receiver.h"
 
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
@@ -556,6 +557,73 @@ TEST_F(CommandQueueCreateNegativeTest, whenDeviceAllocationFailsDuringCommandQue
                                                           returnValue);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
     ASSERT_EQ(nullptr, commandQueue);
+}
+
+struct CommandQueueInitTests : public ::testing::Test {
+    class MyMemoryManager : public OsAgnosticMemoryManager {
+      public:
+        using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+
+        NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+            storedAllocationProperties.push_back(properties);
+            return OsAgnosticMemoryManager::allocateGraphicsMemoryWithProperties(properties);
+        }
+
+        std::vector<AllocationProperties> storedAllocationProperties;
+    };
+
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+
+        auto executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+
+        memoryManager = new MyMemoryManager(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+
+        neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0);
+        std::vector<std::unique_ptr<NEO::Device>> devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+
+        device = driverHandle->devices[0];
+    }
+
+    VariableBackup<bool> mockDeviceFlagBackup{&NEO::MockDevice::createSingleDevice, false};
+    DebugManagerStateRestore restore;
+
+    NEO::MockDevice *neoDevice = nullptr;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    L0::Device *device = nullptr;
+    MyMemoryManager *memoryManager = nullptr;
+    const uint32_t numRootDevices = 1;
+    const uint32_t numSubDevices = 4;
+};
+
+TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocateForAllSubDevices) {
+    ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+
+    ze_result_t returnValue;
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, returnValue);
+    EXPECT_NE(nullptr, commandQueue);
+
+    const uint64_t expectedBitfield = maxNBitValue(numSubDevices);
+
+    uint32_t cmdBufferAllocationsFound = 0;
+    for (auto &allocationProperties : memoryManager->storedAllocationProperties) {
+        if (allocationProperties.allocationType == NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER) {
+            cmdBufferAllocationsFound++;
+            EXPECT_EQ(expectedBitfield, allocationProperties.subDevicesBitfield.to_ulong());
+        }
+    }
+
+    EXPECT_EQ(static_cast<uint32_t>(CommandQueueImp::CommandBufferManager::BUFFER_ALLOCATION::COUNT), cmdBufferAllocationsFound);
+
+    commandQueue->destroy();
 }
 
 } // namespace ult

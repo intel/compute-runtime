@@ -135,7 +135,7 @@ ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, si
                                          NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER,
                                          device->isMultiDeviceCapable(),
                                          false,
-                                         CommonConstants::allDevicesBitfield};
+                                         device->getNEODevice()->getDeviceBitfield()};
 
     buffers[BUFFER_ALLOCATION::FIRST] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     buffers[BUFFER_ALLOCATION::SECOND] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
