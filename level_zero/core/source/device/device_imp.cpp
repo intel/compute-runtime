@@ -198,14 +198,14 @@ ze_result_t DeviceImp::createSampler(const ze_sampler_desc_t *desc,
 }
 
 ze_result_t DeviceImp::createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
-                                    ze_module_build_log_handle_t *buildLog) {
+                                    ze_module_build_log_handle_t *buildLog, ModuleType type) {
     ModuleBuildLog *moduleBuildLog = nullptr;
 
     if (buildLog) {
         moduleBuildLog = ModuleBuildLog::create();
         *buildLog = moduleBuildLog->toHandle();
     }
-    auto modulePtr = Module::create(this, desc, moduleBuildLog);
+    auto modulePtr = Module::create(this, desc, moduleBuildLog, type);
     if (modulePtr == nullptr) {
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }

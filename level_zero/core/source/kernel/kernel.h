@@ -35,7 +35,7 @@ struct KernelImmutableData {
 
     void initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryManager &memoryManager, const NEO::Device *device,
                     uint32_t computeUnitsUsedForSratch,
-                    NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer);
+                    NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer, bool internalKernel);
 
     const std::vector<NEO::GraphicsAllocation *> &getResidencyContainer() const {
         return residencyContainer;

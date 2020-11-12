@@ -69,6 +69,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         INTERNAL_HEAP,
         INTERNAL_HOST_MEMORY,
         KERNEL_ISA,
+        KERNEL_ISA_INTERNAL,
         LINEAR_STREAM,
         MAP_ALLOCATION,
         MCS,
@@ -221,6 +222,12 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::RING_BUFFER ||
                allocationType == AllocationType::SEMAPHORE_BUFFER;
     }
+
+    static bool isIsaAllocationType(GraphicsAllocation::AllocationType type) {
+        return type == GraphicsAllocation::AllocationType::KERNEL_ISA ||
+               type == GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
+    }
+
     void *getReservedAddressPtr() const {
         return this->reservedAddressRangeInfo.addressPtr;
     }

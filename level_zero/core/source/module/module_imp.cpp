@@ -285,9 +285,9 @@ void ModuleTranslationUnit::processDebugData() {
     }
 }
 
-ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog)
+ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type)
     : device(device), translationUnit(std::make_unique<ModuleTranslationUnit>(device)),
-      moduleBuildLog(moduleBuildLog) {
+      moduleBuildLog(moduleBuildLog), type(type) {
     productFamily = device->getHwInfo().platform.eProductFamily;
 }
 
@@ -340,7 +340,8 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         kernelImmData->initialize(ki, *(device->getNEODevice()->getMemoryManager()),
                                   device->getNEODevice(),
                                   device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  this->translationUnit->globalConstBuffer, this->translationUnit->globalVarBuffer);
+                                  this->translationUnit->globalConstBuffer, this->translationUnit->globalVarBuffer,
+                                  this->type == ModuleType::Builtin);
         kernelImmDatas.push_back(std::move(kernelImmData));
     }
     this->maxGroupSize = static_cast<uint32_t>(this->translationUnit->device->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
@@ -522,8 +523,8 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, void **pPtr) {
 }
 
 Module *Module::create(Device *device, const ze_module_desc_t *desc,
-                       ModuleBuildLog *moduleBuildLog) {
-    auto module = new ModuleImp(device, moduleBuildLog);
+                       ModuleBuildLog *moduleBuildLog, ModuleType type) {
+    auto module = new ModuleImp(device, moduleBuildLog, type);
 
     bool success = module->initialize(desc, device->getNEODevice());
     if (success == false) {

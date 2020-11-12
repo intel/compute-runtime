@@ -90,7 +90,7 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceThen
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenIntermediateCodeForBuiltinsIsRequested) {
     struct MockDeviceForRebuildBuilins : public Mock<DeviceImp> {
         struct MockModuleForRebuildBuiltins : public ModuleImp {
-            MockModuleForRebuildBuiltins(Device *device) : ModuleImp(device, nullptr) {}
+            MockModuleForRebuildBuiltins(Device *device) : ModuleImp(device, nullptr, ModuleType::Builtin) {}
 
             ze_result_t createKernel(const ze_kernel_desc_t *desc,
                                      ze_kernel_handle_t *phFunction) override {
@@ -106,7 +106,7 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenRebuildPrecompiledKernelsDebugFlagWhe
 
         ze_result_t createModule(const ze_module_desc_t *desc,
                                  ze_module_handle_t *module,
-                                 ze_module_build_log_handle_t *buildLog) override {
+                                 ze_module_build_log_handle_t *buildLog, ModuleType type) override {
             EXPECT_EQ(desc->format, ZE_MODULE_FORMAT_IL_SPIRV);
             EXPECT_GT(desc->inputSize, 0u);
             EXPECT_NE(desc->pInputModule, nullptr);
@@ -138,13 +138,13 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenNotToRebuildPrecompiledKernelsDebugFl
 
         ze_result_t createModule(const ze_module_desc_t *desc,
                                  ze_module_handle_t *module,
-                                 ze_module_build_log_handle_t *buildLog) override {
+                                 ze_module_build_log_handle_t *buildLog, ModuleType type) override {
             EXPECT_EQ(desc->format, ZE_MODULE_FORMAT_NATIVE);
             EXPECT_GT(desc->inputSize, 0u);
             EXPECT_NE(desc->pInputModule, nullptr);
             wasCreatedModuleCalled = true;
 
-            return DeviceImp::createModule(desc, module, buildLog);
+            return DeviceImp::createModule(desc, module, buildLog, type);
         }
 
         bool wasCreatedModuleCalled = false;
@@ -157,6 +157,32 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenNotToRebuildPrecompiledKernelsDebugFl
     testDevice.getBuiltinFunctionsLib()->initFunctions();
 
     EXPECT_TRUE(testDevice.wasCreatedModuleCalled);
+}
+
+HWTEST_F(TestBuiltinFunctionsLibImpl, GivenBuiltinsWhenInitializingFunctionsThenModulesWithProperTypeAreCreated) {
+    struct MockDeviceWithBuilins : public Mock<DeviceImp> {
+        MockDeviceWithBuilins(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+            driverHandle = device->getDriverHandle();
+            builtins = BuiltinFunctionsLib::create(this, neoDevice->getBuiltIns());
+        }
+
+        ze_result_t createModule(const ze_module_desc_t *desc,
+                                 ze_module_handle_t *module,
+                                 ze_module_build_log_handle_t *buildLog, ModuleType type) override {
+
+            typeCreated = type;
+            EXPECT_EQ(ModuleType::Builtin, type);
+
+            return DeviceImp::createModule(desc, module, buildLog, type);
+        }
+
+        ModuleType typeCreated = ModuleType::User;
+    };
+
+    MockDeviceWithBuilins testDevice(device);
+    testDevice.getBuiltinFunctionsLib()->initFunctions();
+
+    EXPECT_EQ(ModuleType::Builtin, testDevice.typeCreated);
 }
 
 } // namespace ult

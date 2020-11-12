@@ -20,10 +20,14 @@ class AlocationHelperTests : public Test<DeviceFixture> {
 HWTEST_F(AlocationHelperTests, givenKernelIsaTypeWhenUse32BitHeapCalledThenTrueReturned) {
 
     EXPECT_TRUE(heapAssigner.use32BitHeap(GraphicsAllocation::AllocationType::KERNEL_ISA));
+    EXPECT_TRUE(heapAssigner.use32BitHeap(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL));
 }
 
 HWTEST_F(AlocationHelperTests, givenKernelIsaTypeWhenUseIternalAllocatorThenUseHeapInternal) {
     auto heapIndex = heapAssigner.get32BitHeapIndex(GraphicsAllocation::AllocationType::KERNEL_ISA, true, *defaultHwInfo, false);
+    EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY);
+
+    heapIndex = heapAssigner.get32BitHeapIndex(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, true, *defaultHwInfo, false);
     EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY);
 }
 
@@ -32,8 +36,9 @@ HWTEST_F(AlocationHelperTests, givenNotInternalTypeWhenUseIternalAllocatorThenUs
     EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY);
 }
 
-HWTEST_F(AlocationHelperTests, givenKernelIsaTypeWhenUseInternalAllocatorCalledThenTrueReturned) {
+HWTEST_F(AlocationHelperTests, givenKernelIsaTypesWhenUseInternalAllocatorCalledThenTrueReturned) {
     EXPECT_TRUE(heapAssigner.useInternal32BitHeap(GraphicsAllocation::AllocationType::KERNEL_ISA));
+    EXPECT_TRUE(heapAssigner.useInternal32BitHeap(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL));
 }
 
 HWTEST_F(AlocationHelperTests, givenInternalHeapTypeWhenUseInternalAllocatorCalledThenTrueReturned) {

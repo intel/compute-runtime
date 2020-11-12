@@ -2197,12 +2197,20 @@ TEST_F(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenIntern
     GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     allocation.set32BitAllocation(true);
     EXPECT_EQ(MemoryManager::selectInternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false, false));
+
+    GraphicsAllocation allocation2{0, GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
+    allocation2.set32BitAllocation(true);
+    EXPECT_EQ(MemoryManager::selectInternalHeap(allocation2.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation2, false, false, false));
 }
 
 TEST_F(HeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     allocation.set32BitAllocation(false);
     EXPECT_EQ(MemoryManager::selectInternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false, false));
+
+    GraphicsAllocation allocation2{0, GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
+    allocation2.set32BitAllocation(false);
+    EXPECT_EQ(MemoryManager::selectInternalHeap(allocation2.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation2, false, false, false));
 }
 
 TEST_F(HeapSelectorTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {

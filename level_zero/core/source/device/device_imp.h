@@ -11,6 +11,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/module/module.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 namespace L0 {
@@ -26,7 +27,7 @@ struct DeviceImp : public Device {
                                    ze_command_queue_handle_t *commandQueue) override;
     ze_result_t createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) override;
     ze_result_t createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
-                             ze_module_build_log_handle_t *buildLog) override;
+                             ze_module_build_log_handle_t *buildLog, ModuleType type) override;
     ze_result_t createSampler(const ze_sampler_desc_t *pDesc,
                               ze_sampler_handle_t *phSampler) override;
     ze_result_t getComputeProperties(ze_device_compute_properties_t *pComputeProperties) override;

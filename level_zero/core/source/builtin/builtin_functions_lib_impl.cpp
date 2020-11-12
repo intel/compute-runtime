@@ -158,7 +158,7 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
     moduleDesc.format = builtInCode.type == BuiltInCodeType::Binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtInCode.resource[0]);
     moduleDesc.inputSize = builtInCode.resource.size();
-    res = device->createModule(&moduleDesc, &moduleHandle, nullptr);
+    res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::Builtin);
     UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
 
     module.reset(Module::fromHandle(moduleHandle));

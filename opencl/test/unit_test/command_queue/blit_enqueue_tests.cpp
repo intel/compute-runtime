@@ -1628,7 +1628,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 
     auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
 
-    kernelInfo.createKernelAllocation(device->getDevice());
+    kernelInfo.createKernelAllocation(device->getDevice(), false);
 
     if (kernelInfo.kernelAllocation->isAllocatedInLocalMemoryPool()) {
         EXPECT_EQ(initialTaskCount + 1, bcsMockContext->bcsCsr->peekTaskCount());
@@ -1650,7 +1650,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 
     auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
 
-    kernelInfo.createKernelAllocation(device->getDevice());
+    kernelInfo.createKernelAllocation(device->getDevice(), false);
 
     EXPECT_EQ(initialTaskCount, bcsMockContext->bcsCsr->peekTaskCount());
 
@@ -1670,7 +1670,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 
     auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
 
-    kernelInfo.createKernelAllocation(device->getDevice());
+    kernelInfo.createKernelAllocation(device->getDevice(), false);
 
     EXPECT_EQ(initialTaskCount, bcsMockContext->bcsCsr->peekTaskCount());
 

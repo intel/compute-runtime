@@ -254,7 +254,7 @@ HWTEST_F(KernelPropertiesTests, whenInitializingThenCalculatesProperPrivateSurfa
     kernelAttributes.simdSize = 8;
 
     KernelImmutableData kernelImmutableData(device);
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), computeUnitsUsedForSratch, nullptr, nullptr);
+    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), computeUnitsUsedForSratch, nullptr, nullptr, false);
 
     size_t expectedSize = static_cast<size_t>(kernelAttributes.perHwThreadPrivateMemorySize) * computeUnitsUsedForSratch;
     EXPECT_GE(expectedSize, kernelImmutableData.getPrivateMemoryGraphicsAllocation()->getUnderlyingBufferSize());
@@ -470,7 +470,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllo
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr);
+    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, false);
 
     if (kernelImmutableData.getIsaGraphicsAllocation()->isAllocatedInLocalMemoryPool()) {
         EXPECT_EQ(initialTaskCount + 1, bcsCsr->peekTaskCount());
@@ -496,7 +496,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowed
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr);
+    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, false);
 
     EXPECT_EQ(initialTaskCount, bcsCsr->peekTaskCount());
 
@@ -520,11 +520,35 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallo
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr);
+    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, false);
 
     EXPECT_EQ(initialTaskCount, bcsCsr->peekTaskCount());
 
     device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(kernelInfo.kernelAllocation);
+}
+
+TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithInternalIsaThenCorrectAllocationTypeIsUsed) {
+    uint32_t kernelHeap = 0;
+    KernelInfo kernelInfo;
+    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+
+    KernelImmutableData kernelImmutableData(device);
+
+    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, true);
+    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
+}
+
+TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonInternalIsaThenCorrectAllocationTypeIsUsed) {
+    uint32_t kernelHeap = 0;
+    KernelInfo kernelInfo;
+    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+
+    KernelImmutableData kernelImmutableData(device);
+
+    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, false);
+    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
 }
 
 } // namespace ult

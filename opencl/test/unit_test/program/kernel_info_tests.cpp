@@ -119,11 +119,43 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKerne
         heap[i] = static_cast<char>(i);
     }
 
-    auto retVal = kernelInfo.createKernelAllocation(*device);
+    auto retVal = kernelInfo.createKernelAllocation(*device, false);
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), heap, heapSize));
     EXPECT_EQ(heapSize, allocation->getUnderlyingBufferSize());
+    device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
+}
+
+TEST(KernelInfoTest, givenKernelInfoWhenCreatingKernelAllocationWithInternalIsaFalseTypeThenCorrectAllocationTypeIsUsed) {
+    KernelInfo kernelInfo;
+    auto factory = UltDeviceFactory{1, 0};
+    auto device = factory.rootDevices[0];
+    const size_t heapSize = 0x40;
+    char heap[heapSize];
+    kernelInfo.heapInfo.KernelHeapSize = heapSize;
+    kernelInfo.heapInfo.pKernelHeap = &heap;
+
+    auto retVal = kernelInfo.createKernelAllocation(*device, false);
+    EXPECT_TRUE(retVal);
+    auto allocation = kernelInfo.kernelAllocation;
+    EXPECT_EQ(GraphicsAllocation::AllocationType::KERNEL_ISA, allocation->getAllocationType());
+    device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
+}
+
+TEST(KernelInfoTest, givenKernelInfoWhenCreatingKernelAllocationWithInternalIsaTrueTypeThenCorrectAllocationTypeIsUsed) {
+    KernelInfo kernelInfo;
+    auto factory = UltDeviceFactory{1, 0};
+    auto device = factory.rootDevices[0];
+    const size_t heapSize = 0x40;
+    char heap[heapSize];
+    kernelInfo.heapInfo.KernelHeapSize = heapSize;
+    kernelInfo.heapInfo.pKernelHeap = &heap;
+
+    auto retVal = kernelInfo.createKernelAllocation(*device, true);
+    EXPECT_TRUE(retVal);
+    auto allocation = kernelInfo.kernelAllocation;
+    EXPECT_EQ(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, allocation->getAllocationType());
     device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
 }
 
@@ -138,7 +170,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateM
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
     executionEnvironment->memoryManager.reset(new MyMemoryManager(*executionEnvironment));
     auto device = std::unique_ptr<Device>(Device::create<RootDevice>(executionEnvironment, mockRootDeviceIndex));
-    auto retVal = kernelInfo.createKernelAllocation(*device);
+    auto retVal = kernelInfo.createKernelAllocation(*device, false);
     EXPECT_FALSE(retVal);
 }
 
@@ -237,7 +269,7 @@ TEST_F(KernelInfoMultiRootDeviceTests, kernelAllocationHasCorrectRootDeviceIndex
     kernelInfo.heapInfo.KernelHeapSize = heapSize;
     kernelInfo.heapInfo.pKernelHeap = &heap;
 
-    auto retVal = kernelInfo.createKernelAllocation(device->getDevice());
+    auto retVal = kernelInfo.createKernelAllocation(device->getDevice(), false);
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
     ASSERT_NE(nullptr, allocation);

@@ -184,7 +184,7 @@ struct KernelInfo {
         return -1;
     }
 
-    bool createKernelAllocation(const Device &device);
+    bool createKernelAllocation(const Device &device, bool internalIsa);
     void apply(const DeviceInfoKernelPayloadConstants &constants);
 
     std::string attributes;

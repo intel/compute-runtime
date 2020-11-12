@@ -125,6 +125,7 @@ uint64_t getGpuAddress(GraphicsAllocation::AllocationType allocType, GfxPartitio
         sizeAllocated = 0;
         break;
     case GraphicsAllocation::AllocationType::KERNEL_ISA:
+    case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
     case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
         gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, sizeAllocated));
         break;

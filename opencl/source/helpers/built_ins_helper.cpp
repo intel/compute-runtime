@@ -30,7 +30,7 @@ ProgramInfo createProgramInfoForSip(std::vector<char> &binary, size_t size, cons
     std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, deviceBinary, decodeErrors, decodeWarnings);
     UNRECOVERABLE_IF(DecodeError::Success != decodeError);
 
-    auto success = programInfo.kernelInfos[0]->createKernelAllocation(device);
+    auto success = programInfo.kernelInfos[0]->createKernelAllocation(device, true);
     UNRECOVERABLE_IF(!success);
 
     return programInfo;

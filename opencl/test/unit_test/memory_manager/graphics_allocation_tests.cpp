@@ -134,6 +134,10 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsKernelIsaThenCpuAccessIsNotRequ
     EXPECT_FALSE(GraphicsAllocation::isCpuAccessRequired(GraphicsAllocation::AllocationType::KERNEL_ISA));
 }
 
+TEST(GraphicsAllocationTest, whenAllocationTypeIsKernelIsaInternalThenCpuAccessIsNotRequired) {
+    EXPECT_FALSE(GraphicsAllocation::isCpuAccessRequired(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL));
+}
+
 TEST(GraphicsAllocationTest, whenAllocationTypeIsLinearStreamThenCpuAccessIsRequired) {
     EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(GraphicsAllocation::AllocationType::LINEAR_STREAM));
 }

@@ -720,6 +720,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
         GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
         GraphicsAllocation::AllocationType::GLOBAL_SURFACE,
         GraphicsAllocation::AllocationType::KERNEL_ISA,
+        GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL,
         GraphicsAllocation::AllocationType::PRIVATE_SURFACE,
         GraphicsAllocation::AllocationType::SCRATCH_SURFACE,
         GraphicsAllocation::AllocationType::BUFFER,

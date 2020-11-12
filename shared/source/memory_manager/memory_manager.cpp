@@ -349,7 +349,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
-    if (properties.allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA) {
+    if (GraphicsAllocation::isIsaAllocationType(properties.allocationType)) {
         allocationData.flags.useSystemMemory = hwHelper.useSystemMemoryPlacementForISA(*hwInfo);
     }
 
@@ -361,6 +361,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::INSTRUCTION_HEAP:
     case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
     case GraphicsAllocation::AllocationType::KERNEL_ISA:
+    case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
     case GraphicsAllocation::AllocationType::LINEAR_STREAM:
     case GraphicsAllocation::AllocationType::MCS:
     case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:

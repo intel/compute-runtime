@@ -909,6 +909,7 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::INTERNAL_HEAP, "INTERNAL_HEAP"},
     {GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, "INTERNAL_HOST_MEMORY"},
     {GraphicsAllocation::AllocationType::KERNEL_ISA, "KERNEL_ISA"},
+    {GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, "KERNEL_ISA_INTERNAL"},
     {GraphicsAllocation::AllocationType::LINEAR_STREAM, "LINEAR_STREAM"},
     {GraphicsAllocation::AllocationType::MAP_ALLOCATION, "MAP_ALLOCATION"},
     {GraphicsAllocation::AllocationType::MCS, "MCS"},

@@ -280,6 +280,8 @@ const char *FileLogger<DebugLevel>::getAllocationTypeString(GraphicsAllocation c
         return "INTERNAL_HOST_MEMORY";
     case GraphicsAllocation::AllocationType::KERNEL_ISA:
         return "KERNEL_ISA";
+    case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
+        return "KERNEL_ISA_INTERNAL";
     case GraphicsAllocation::AllocationType::LINEAR_STREAM:
         return "LINEAR_STREAM";
     case GraphicsAllocation::AllocationType::MAP_ALLOCATION:

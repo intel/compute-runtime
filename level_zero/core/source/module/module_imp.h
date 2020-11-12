@@ -66,7 +66,7 @@ struct ModuleTranslationUnit {
 struct ModuleImp : public Module {
     ModuleImp() = delete;
 
-    ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog);
+    ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type);
 
     ~ModuleImp() override;
 
@@ -127,6 +127,7 @@ struct ModuleImp : public Module {
     NEO::Linker::RelocatedSymbolsMap symbols;
     bool debugEnabled = false;
     bool isFullyLinked = false;
+    ModuleType type;
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};
 };

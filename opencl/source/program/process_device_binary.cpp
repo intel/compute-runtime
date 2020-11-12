@@ -196,7 +196,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
     for (auto &kernelInfo : this->kernelInfoArray) {
         cl_int retVal = CL_SUCCESS;
         if (kernelInfo->heapInfo.KernelHeapSize) {
-            retVal = kernelInfo->createKernelAllocation(clDevice.getDevice()) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
+            retVal = kernelInfo->createKernelAllocation(clDevice.getDevice(), isBuiltIn) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
         }
 
         if (retVal != CL_SUCCESS) {

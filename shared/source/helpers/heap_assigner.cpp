@@ -17,7 +17,7 @@ HeapAssigner::HeapAssigner() {
     apiAllowExternalHeapForSshAndDsh = ApiSpecificConfig::getHeapConfiguration();
 }
 bool HeapAssigner::useInternal32BitHeap(GraphicsAllocation::AllocationType allocType) {
-    return allocType == GraphicsAllocation::AllocationType::KERNEL_ISA ||
+    return GraphicsAllocation::isIsaAllocationType(allocType) ||
            allocType == GraphicsAllocation::AllocationType::INTERNAL_HEAP ||
            allocType == GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA;
 }

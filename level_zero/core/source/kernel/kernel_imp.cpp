@@ -97,14 +97,15 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
 void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryManager &memoryManager,
                                      const NEO::Device *device, uint32_t computeUnitsUsedForSratch,
                                      NEO::GraphicsAllocation *globalConstBuffer,
-                                     NEO::GraphicsAllocation *globalVarBuffer) {
+                                     NEO::GraphicsAllocation *globalVarBuffer, bool internalKernel) {
     UNRECOVERABLE_IF(kernelInfo == nullptr);
     this->kernelDescriptor = &kernelInfo->kernelDescriptor;
 
     auto kernelIsaSize = kernelInfo->heapInfo.KernelHeapSize;
+    const auto allocType = internalKernel ? NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL : NEO::GraphicsAllocation::AllocationType::KERNEL_ISA;
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), kernelIsaSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, device->getDeviceBitfield()});
+        {device->getRootDeviceIndex(), kernelIsaSize, allocType, device->getDeviceBitfield()});
     UNRECOVERABLE_IF(allocation == nullptr);
 
     auto &hwInfo = device->getHardwareInfo();

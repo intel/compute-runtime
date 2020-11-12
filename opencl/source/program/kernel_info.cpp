@@ -416,10 +416,11 @@ uint32_t KernelInfo::getConstantBufferSize() const {
     return patchInfo.dataParameterStream ? patchInfo.dataParameterStream->DataParameterStreamSize : 0;
 }
 
-bool KernelInfo::createKernelAllocation(const Device &device) {
+bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.KernelHeapSize;
-    kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), kernelIsaSize, GraphicsAllocation::AllocationType::KERNEL_ISA, device.getDeviceBitfield()});
+    const auto allocType = internalIsa ? GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL : GraphicsAllocation::AllocationType::KERNEL_ISA;
+    kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), kernelIsaSize, allocType, device.getDeviceBitfield()});
     if (!kernelAllocation) {
         return false;
     }

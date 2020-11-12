@@ -33,7 +33,7 @@ TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenModuleIsCreatedTh
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(deviceL0, moduleBuildLog));
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(deviceL0, moduleBuildLog, ModuleType::User));
     ASSERT_NE(nullptr, module.get());
     module->initialize(&moduleDesc, device);
 
@@ -54,7 +54,7 @@ TEST_F(DeviceWithDebuggerEnabledTest, GivenDebuggeableKernelWhenModuleIsInitiali
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::make_unique<WhiteBox<::L0::Module>>(deviceL0, moduleBuildLog);
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(deviceL0, moduleBuildLog, ModuleType::User);
     ASSERT_NE(nullptr, module.get());
 
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
@@ -86,7 +86,7 @@ TEST_F(DeviceWithDebuggerEnabledTest, GivenNonDebuggeableKernelWhenModuleIsIniti
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::make_unique<WhiteBox<::L0::Module>>(deviceL0, moduleBuildLog);
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(deviceL0, moduleBuildLog, ModuleType::User);
     ASSERT_NE(nullptr, module.get());
 
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;

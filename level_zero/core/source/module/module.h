@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
@@ -21,9 +20,14 @@ struct _ze_module_handle_t {};
 namespace L0 {
 struct Device;
 
+enum class ModuleType {
+    Builtin,
+    User
+};
+
 struct Module : _ze_module_handle_t {
-    static Module *create(Device *device, const ze_module_desc_t *desc,
-                          ModuleBuildLog *moduleBuildLog);
+
+    static Module *create(Device *device, const ze_module_desc_t *desc, ModuleBuildLog *moduleBuildLog, ModuleType type);
 
     virtual ~Module() = default;
 

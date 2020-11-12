@@ -69,7 +69,8 @@ struct Mock<Device> : public Device {
                 createModule,
                 (const ze_module_desc_t *desc,
                  ze_module_handle_t *module,
-                 ze_module_build_log_handle_t *buildLog),
+                 ze_module_build_log_handle_t *buildLog,
+                 ModuleType type),
                 (override));
     MOCK_METHOD(ze_result_t,
                 createSampler,

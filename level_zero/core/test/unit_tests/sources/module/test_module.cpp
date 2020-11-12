@@ -70,6 +70,27 @@ HWTEST_F(ModuleTest, givenNonZeroCountWhenGettingKernelNamesThenNamesAreReturned
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+HWTEST_F(ModuleTest, givenUserModuleTypeWhenCreatingModuleThenCorrectTypeIsSet) {
+    WhiteBox<Module> module(device, nullptr, ModuleType::User);
+    EXPECT_EQ(ModuleType::User, module.type);
+}
+
+HWTEST_F(ModuleTest, givenBuiltinModuleTypeWhenCreatingModuleThenCorrectTypeIsSet) {
+    WhiteBox<Module> module(device, nullptr, ModuleType::Builtin);
+    EXPECT_EQ(ModuleType::Builtin, module.type);
+}
+
+HWTEST_F(ModuleTest, givenUserModuleWhenCreatedThenCorrectAllocationTypeIsUsedForIsa) {
+    createKernel();
+    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, kernel->getIsaAllocation()->getAllocationType());
+}
+
+HWTEST_F(ModuleTest, givenBuiltinModuleWhenCreatedThenCorrectAllocationTypeIsUsedForIsa) {
+    createModuleFromBinary(ModuleType::Builtin);
+    createKernel();
+    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, kernel->getIsaAllocation()->getAllocationType());
+}
+
 using ModuleTestSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, ModuleTestSupport) {
@@ -172,7 +193,7 @@ HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorTh
     specConstants.pConstantValues = specConstantsPointerValues.data();
     moduleDesc.pConstants = &specConstants;
 
-    auto module = new Module(device, nullptr);
+    auto module = new Module(device, nullptr, ModuleType::User);
     module->translationUnit.reset(mockTranslationUnit);
 
     bool success = module->initialize(&moduleDesc, neoDevice);
@@ -211,7 +232,7 @@ HWTEST_F(ModuleLinkingTest, givenFailureDuringLinkingWhenCreatingModuleThenModul
     moduleDesc.pInputModule = &spirvData;
     moduleDesc.inputSize = sizeof(spirvData);
 
-    Module module(device, nullptr);
+    Module module(device, nullptr, ModuleType::User);
     module.translationUnit.reset(mockTranslationUnit);
 
     bool success = module.initialize(&moduleDesc, neoDevice);
@@ -240,7 +261,7 @@ HWTEST_F(ModuleLinkingTest, givenRemainingUnresolvedSymbolsDuringLinkingWhenCrea
     moduleDesc.pInputModule = &spirvData;
     moduleDesc.inputSize = sizeof(spirvData);
 
-    Module module(device, nullptr);
+    Module module(device, nullptr, ModuleType::User);
     module.translationUnit.reset(mockTranslationUnit);
 
     bool success = module.initialize(&moduleDesc, neoDevice);
@@ -248,7 +269,7 @@ HWTEST_F(ModuleLinkingTest, givenRemainingUnresolvedSymbolsDuringLinkingWhenCrea
     EXPECT_FALSE(module.isFullyLinked);
 }
 HWTEST_F(ModuleLinkingTest, givenNotFullyLinkedModuleWhenCreatingKernelThenErrorIsReturned) {
-    Module module(device, nullptr);
+    Module module(device, nullptr, ModuleType::User);
     module.isFullyLinked = false;
 
     auto retVal = module.createKernel(nullptr, nullptr);
@@ -258,8 +279,8 @@ HWTEST_F(ModuleLinkingTest, givenNotFullyLinkedModuleWhenCreatingKernelThenError
 struct ModuleDynamicLinkTests : public Test<ModuleFixture> {
     void SetUp() override {
         Test<ModuleFixture>::SetUp();
-        module0 = std::make_unique<Module>(device, nullptr);
-        module1 = std::make_unique<Module>(device, nullptr);
+        module0 = std::make_unique<Module>(device, nullptr, ModuleType::User);
+        module1 = std::make_unique<Module>(device, nullptr, ModuleType::User);
     }
     std::unique_ptr<Module> module0;
     std::unique_ptr<Module> module1;
@@ -513,7 +534,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
     moduleDesc.inputSize = size;
 
-    Module module(device, nullptr);
+    Module module(device, nullptr, ModuleType::User);
     MockModuleTU *tu = new MockModuleTU(device);
     module.translationUnit.reset(tu);
 
@@ -540,7 +561,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
     moduleDesc.inputSize = size;
 
-    Module module(device, nullptr);
+    Module module(device, nullptr, ModuleType::User);
     MockModuleTU *tu = new MockModuleTU(device);
     module.translationUnit.reset(tu);
 
@@ -608,7 +629,7 @@ TEST(BuildOptions, givenSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenOptionI
 TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPassed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
-    auto module = std::make_unique<ModuleImp>(device, nullptr);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
     ASSERT_NE(nullptr, module);
 
     std::string buildOptions;
@@ -623,7 +644,7 @@ TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPass
 TEST_F(ModuleTest, givenInternalOptionsWhenBindlessDisabledThenBindlesOptionsNotPassed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(0);
-    auto module = std::make_unique<ModuleImp>(device, nullptr);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
     ASSERT_NE(nullptr, module);
 
     std::string buildOptions;

@@ -3971,6 +3971,29 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationTypeShould
         EXPECT_EQ(Drm::ResourceClass::MaxSize, drm.registeredClass);
     }
 }
+
+TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationTypeShouldNotBeRegisteredThenNoBindHandleCreated) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    drm.registeredClass = Drm::ResourceClass::MaxSize;
+
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(Drm::ResourceClass::MaxSize); i++) {
+        drm.classHandles.push_back(i);
+    }
+
+    {
+        MockBufferObject bo(&drm, 0, 0, 1);
+        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, MemoryPool::System4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(0u, bo.bindExtHandles.size());
+    }
+    EXPECT_EQ(Drm::ResourceClass::MaxSize, drm.registeredClass);
+}
+
 TEST(DrmAllocationTest, givenResourceRegistrationNotEnabledWhenRegisteringBindExtHandleThenHandleIsNotAddedToBo) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

@@ -23,7 +23,7 @@ struct ModuleFixture : public DeviceFixture {
         createModuleFromBinary();
     }
 
-    void createModuleFromBinary() {
+    void createModuleFromBinary(ModuleType type = ModuleType::User) {
         std::string testFile;
         retrieveBinaryKernelFilename(testFile, binaryFilename + "_", ".bin");
 
@@ -42,7 +42,7 @@ struct ModuleFixture : public DeviceFixture {
 
         ModuleBuildLog *moduleBuildLog = nullptr;
 
-        module.reset(Module::create(device, &moduleDesc, moduleBuildLog));
+        module.reset(Module::create(device, &moduleDesc, moduleBuildLog, type));
     }
 
     void createKernel() {
@@ -91,7 +91,7 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
         auto device = driverHandle->devices[rootDeviceIndex];
         modules[rootDeviceIndex].reset(Module::create(device,
                                                       &moduleDesc,
-                                                      moduleBuildLog));
+                                                      moduleBuildLog, ModuleType::User));
     }
 
     void TearDown() override {
