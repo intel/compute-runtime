@@ -15,6 +15,7 @@ namespace L0 {
 class OsFirmware {
   public:
     virtual bool isFirmwareSupported(void) = 0;
+    virtual void osGetFwProperties(zes_firmware_properties_t *pProperties) = 0;
 
     static OsFirmware *create(OsSysman *pOsSysman);
     virtual ~OsFirmware() {}

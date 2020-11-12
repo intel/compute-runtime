@@ -17,10 +17,17 @@ namespace L0 {
 class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableOrMovableClass {
   public:
     bool isFirmwareSupported(void) override;
-
+    void osGetFwProperties(zes_firmware_properties_t *pProperties) override;
     LinuxFirmwareImp() = default;
     LinuxFirmwareImp(OsSysman *pOsSysman);
     ~LinuxFirmwareImp() override = default;
+
+  protected:
+    FirmwareUtil *pFwInterface = nullptr;
+    bool isFWInitalized = false;
+
+  private:
+    void getFirmwareVersion(char *);
 };
 
 } // namespace L0

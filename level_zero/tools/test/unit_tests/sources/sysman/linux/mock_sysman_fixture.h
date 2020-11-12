@@ -33,6 +33,7 @@ class PublicLinuxSysmanImp : public L0::LinuxSysmanImp {
   public:
     using LinuxSysmanImp::pDrm;
     using LinuxSysmanImp::pFsAccess;
+    using LinuxSysmanImp::pFwUtilInterface;
     using LinuxSysmanImp::pPmt;
     using LinuxSysmanImp::pPmuInterface;
     using LinuxSysmanImp::pProcfsAccess;

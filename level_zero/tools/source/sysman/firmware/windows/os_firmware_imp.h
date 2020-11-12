@@ -15,6 +15,7 @@ namespace L0 {
 class WddmFirmwareImp : public OsFirmware {
   public:
     bool isFirmwareSupported(void) override;
+    void osGetFwProperties(zes_firmware_properties_t *pProperties) override;
 };
 
 } // namespace L0

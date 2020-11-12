@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/os_interface.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/pmt.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
@@ -29,6 +30,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
 
     XmlParser *getXmlParser();
     PmuInterface *getPmuInterface();
+    FirmwareUtil *getFwUtilInterface();
     FsAccess &getFsAccess();
     ProcfsAccess &getProcfsAccess();
     SysfsAccess &getSysfsAccess();
@@ -46,6 +48,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::Drm *pDrm = nullptr;
     Device *pDevice = nullptr;
     PmuInterface *pPmuInterface = nullptr;
+    FirmwareUtil *pFwUtilInterface = nullptr;
 
   private:
     LinuxSysmanImp() = delete;

@@ -618,7 +618,30 @@ void testSysmanMemory(ze_device_handle_t &device) {
         }
     }
 }
+void testSysmanFirmware(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  firmware tests ---- " << std::endl;
+    uint32_t count = 0;
+    VALIDATECALL(zesDeviceEnumFirmwares(device, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Firmware domains" << std::endl;
+        return;
+    }
+    std::vector<zes_firmware_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumFirmwares(device, &count, handles.data()));
 
+    for (auto handle : handles) {
+        zes_firmware_properties_t fwProperties = {};
+
+        VALIDATECALL(zesFirmwareGetProperties(handle, &fwProperties));
+        if (verbose) {
+            std::cout << "firmware name = " << fwProperties.name << std::endl;
+            std::cout << "On Subdevice = " << fwProperties.onSubdevice << std::endl;
+            std::cout << "Subdevice Id = " << fwProperties.subdeviceId << std::endl;
+            std::cout << "firmware version = " << fwProperties.version << std::endl;
+        }
+    }
+}
 void testSysmanReset(ze_device_handle_t &device, bool force) {
     std::cout << std::endl
               << " ----  Reset test (force = " << (force ? "true" : "false") << ") ---- " << std::endl;
@@ -817,10 +840,11 @@ int main(int argc, char *argv[]) {
         {"event", no_argument, nullptr, 'E'},
         {"reset", required_argument, nullptr, 'r'},
         {"fabricport", no_argument, nullptr, 'F'},
+        {"firmware", no_argument, nullptr, 'i'},
         {0, 0, 0, 0},
     };
     bool force = false;
-    while ((opt = getopt_long(argc, argv, "hpfsectogmrFE:", long_opts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hpfsectogmrFEi:", long_opts, nullptr)) != -1) {
         switch (opt) {
         case 'h':
             usage();
@@ -874,6 +898,11 @@ int main(int argc, char *argv[]) {
         case 'R':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
                 testSysmanRas(device);
+            });
+            break;
+        case 'i':
+            std::for_each(devices.begin(), devices.end(), [&](auto device) {
+                testSysmanFirmware(device);
             });
             break;
         case 'r':

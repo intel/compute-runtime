@@ -13,6 +13,8 @@ bool WddmFirmwareImp::isFirmwareSupported(void) {
     return false;
 }
 
+void WddmFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties){};
+
 OsFirmware *OsFirmware::create(OsSysman *pOsSysman) {
     WddmFirmwareImp *pWddmFirmwareImp = new WddmFirmwareImp();
     return static_cast<OsFirmware *>(pWddmFirmwareImp);

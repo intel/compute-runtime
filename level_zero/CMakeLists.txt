@@ -81,6 +81,19 @@ if(BUILD_WITH_L0)
   endif()
 
   if(UNIX)
+    # Firmware Update Library
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tools/source/sysman/linux/firmware_util")
+    find_package(libigsc)
+    if(libigsc_LIBRARIES)
+      set(libigsc_FOUND TRUE)
+      add_definitions(-DIGSC_PRESENT=$(libigsc_FOUND))
+      message(STATUS "libigsc Library headers directory: ${libigsc_INCLUDE_DIR}")
+    else()
+      message(STATUS "libigsc Library headers not available. Building without")
+    endif()
+  endif()
+
+  if(UNIX)
     # Load GNUInstallDirs to determine install targets for Linux packages
     include(GNUInstallDirs)
   endif()

@@ -16,7 +16,8 @@
 namespace L0 {
 
 ze_result_t FirmwareImp::firmwareGetProperties(zes_firmware_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    pOsFirmware->osGetFwProperties(pProperties);
+    return ZE_RESULT_SUCCESS;
 }
 
 void FirmwareImp::init() {
