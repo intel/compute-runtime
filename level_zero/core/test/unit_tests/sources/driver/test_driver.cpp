@@ -21,6 +21,8 @@
 
 #include <bitset>
 
+using ::testing::Return;
+
 namespace L0 {
 namespace ult {
 
@@ -525,6 +527,117 @@ TEST_F(DriverTestMultipleDeviceWithAffinityMask,
 
     delete driverHandle;
     L0::GlobalDriver = nullptr;
+}
+
+struct DriverHandleTest : public ::testing::Test {
+    void SetUp() override {
+        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+        hwInfo.capabilityTable.levelZeroSupported = true;
+
+        NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+        L0EnvVariables envVariables = {};
+        envVariables.programDebugging = true;
+
+        driverHandle = whitebox_cast(DriverHandle::create(std::move(devices), envVariables));
+        L0::GlobalDriverHandle = driverHandle;
+    }
+    void TearDown() override {
+        delete driverHandle;
+        L0::GlobalDriver = nullptr;
+        L0::GlobalDriverHandle = nullptr;
+    }
+    L0::DriverHandle *driverHandle;
+};
+
+TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenDriverHandleCountIsObtained) {
+    uint32_t count = 0;
+    auto result = zeDriverGet(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1U, count);
+}
+
+TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenDriverHandleIsObtained) {
+    ze_result_t result;
+    uint32_t count = 0;
+    result = zeDriverGet(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1U, count);
+
+    ze_driver_handle_t *phDriverHandles = new ze_driver_handle_t[count];
+
+    result = zeDriverGet(&count, phDriverHandles);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(driverHandle->toHandle(), phDriverHandles[0]);
+    delete[] phDriverHandles;
+}
+
+TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenGlobalDriverHandleIsObtained) {
+    ze_result_t result;
+
+    uint32_t count = 1;
+    ze_driver_handle_t hDriverHandle = reinterpret_cast<ze_driver_handle_t>(&hDriverHandle);
+
+    result = zeDriverGet(&count, &hDriverHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, hDriverHandle);
+    EXPECT_EQ(hDriverHandle, GlobalDriver);
+}
+
+TEST_F(DriverHandleTest, givenInitializedDriverWhenGetDeviceIsCalledThenOneDeviceIsObtained) {
+    ze_result_t result;
+    uint32_t count = 1;
+
+    ze_device_handle_t device;
+    result = driverHandle->getDevice(&count, &device);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, &device);
+}
+
+TEST_F(DriverHandleTest, givenValidDriverHandleWhenGetSvmAllocManagerIsCalledThenSvmAllocsManagerIsObtained) {
+    auto svmAllocsManager = driverHandle->getSvmAllocsManager();
+    EXPECT_NE(nullptr, svmAllocsManager);
+}
+
+TEST(zeDriverHandleGetProperties, whenZeDriverGetPropertiesIsCalledThenGetPropertiesIsCalled) {
+    ze_result_t result;
+    Mock<DriverHandle> driverHandle;
+    ze_driver_properties_t properties;
+
+    EXPECT_CALL(driverHandle, getProperties(&properties))
+        .Times(1)
+        .WillRepeatedly(Return(ZE_RESULT_SUCCESS));
+
+    result = zeDriverGetProperties(driverHandle.toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST(zeDriverHandleGetApiVersion, whenZeDriverGetApiIsCalledThenGetApiVersionIsCalled) {
+    ze_result_t result;
+    Mock<DriverHandle> driverHandle;
+    ze_api_version_t version;
+
+    EXPECT_CALL(driverHandle, getApiVersion(&version))
+        .Times(1)
+        .WillRepeatedly(Return(ZE_RESULT_SUCCESS));
+
+    result = zeDriverGetApiVersion(driverHandle.toHandle(), &version);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST(zeDriverGetIpcProperties, whenZeDriverGetIpcPropertiesIsCalledThenGetIPCPropertiesIsCalled) {
+    ze_result_t result;
+    Mock<DriverHandle> driverHandle;
+    ze_driver_ipc_properties_t ipcProperties;
+
+    EXPECT_CALL(driverHandle, getIPCProperties(&ipcProperties))
+        .Times(1)
+        .WillRepeatedly(Return(ZE_RESULT_SUCCESS));
+
+    result = zeDriverGetIpcProperties(driverHandle.toHandle(), &ipcProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult

@@ -21,6 +21,8 @@
 
 #include <memory>
 
+using ::testing::Return;
+
 namespace L0 {
 namespace ult {
 
@@ -703,6 +705,19 @@ TEST(DevicePropertyFlagDiscreteDeviceTest, givenDiscreteDeviceThenCorrectDeviceP
 
     device->getProperties(&deviceProps);
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
+}
+
+TEST(zeDevice, givenValidImagePropertiesStructGetImageProperties) {
+    Mock<Device> device;
+    ze_result_t result;
+    ze_device_image_properties_t imageProperties;
+
+    EXPECT_CALL(device, getDeviceImageProperties(&imageProperties))
+        .Times(1)
+        .WillRepeatedly(Return(ZE_RESULT_SUCCESS));
+
+    result = zeDeviceGetImageProperties(device.toHandle(), &imageProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult
