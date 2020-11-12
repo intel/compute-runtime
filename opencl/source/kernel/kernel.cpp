@@ -65,46 +65,12 @@ class Surface;
 uint32_t Kernel::dummyPatchLocation = 0xbaddf00d;
 
 Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg, bool schedulerKernel)
-    : globalWorkOffsetX(&Kernel::dummyPatchLocation),
-      globalWorkOffsetY(&Kernel::dummyPatchLocation),
-      globalWorkOffsetZ(&Kernel::dummyPatchLocation),
-      localWorkSizeX(&Kernel::dummyPatchLocation),
-      localWorkSizeY(&Kernel::dummyPatchLocation),
-      localWorkSizeZ(&Kernel::dummyPatchLocation),
-      localWorkSizeX2(&Kernel::dummyPatchLocation),
-      localWorkSizeY2(&Kernel::dummyPatchLocation),
-      localWorkSizeZ2(&Kernel::dummyPatchLocation),
-      globalWorkSizeX(&Kernel::dummyPatchLocation),
-      globalWorkSizeY(&Kernel::dummyPatchLocation),
-      globalWorkSizeZ(&Kernel::dummyPatchLocation),
-      enqueuedLocalWorkSizeX(&Kernel::dummyPatchLocation),
-      enqueuedLocalWorkSizeY(&Kernel::dummyPatchLocation),
-      enqueuedLocalWorkSizeZ(&Kernel::dummyPatchLocation),
-      numWorkGroupsX(&Kernel::dummyPatchLocation),
-      numWorkGroupsY(&Kernel::dummyPatchLocation),
-      numWorkGroupsZ(&Kernel::dummyPatchLocation),
-      maxWorkGroupSizeForCrossThreadData(&Kernel::dummyPatchLocation),
-      workDim(&Kernel::dummyPatchLocation),
-      dataParameterSimdSize(&Kernel::dummyPatchLocation),
-      parentEventOffset(&Kernel::dummyPatchLocation),
-      preferredWkgMultipleOffset(&Kernel::dummyPatchLocation),
-      slmTotalSize(kernelInfoArg.workloadInfo.slmStaticSize),
-      isBuiltIn(false),
+    : slmTotalSize(kernelInfoArg.workloadInfo.slmStaticSize),
       isParentKernel((kernelInfoArg.patchInfo.executionEnvironment != nullptr) ? (kernelInfoArg.patchInfo.executionEnvironment->HasDeviceEnqueue != 0) : false),
       isSchedulerKernel(schedulerKernel),
       program(programArg),
-      context(nullptr),
       device(deviceArg),
-      kernelInfo(kernelInfoArg),
-      numberOfBindingTableStates(0),
-      localBindingTableOffset(0),
-      sshLocalSize(0),
-      crossThreadData(nullptr),
-      crossThreadDataSize(0),
-      privateSurface(nullptr),
-      privateSurfaceSize(0),
-      kernelReflectionSurface(nullptr),
-      usingSharedObjArgs(false) {
+      kernelInfo(kernelInfoArg) {
     program->retain();
     imageTransformer.reset(new ImageTransformer);
 

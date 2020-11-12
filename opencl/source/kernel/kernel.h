@@ -306,36 +306,36 @@ class Kernel : public BaseObject<_cl_kernel> {
                                             size_t argSize,
                                             const void *argValue) const;
 
-    uint32_t *globalWorkOffsetX;
-    uint32_t *globalWorkOffsetY;
-    uint32_t *globalWorkOffsetZ;
+    uint32_t *globalWorkOffsetX = &Kernel::dummyPatchLocation;
+    uint32_t *globalWorkOffsetY = &Kernel::dummyPatchLocation;
+    uint32_t *globalWorkOffsetZ = &Kernel::dummyPatchLocation;
 
-    uint32_t *localWorkSizeX;
-    uint32_t *localWorkSizeY;
-    uint32_t *localWorkSizeZ;
+    uint32_t *localWorkSizeX = &Kernel::dummyPatchLocation;
+    uint32_t *localWorkSizeY = &Kernel::dummyPatchLocation;
+    uint32_t *localWorkSizeZ = &Kernel::dummyPatchLocation;
 
-    uint32_t *localWorkSizeX2;
-    uint32_t *localWorkSizeY2;
-    uint32_t *localWorkSizeZ2;
+    uint32_t *localWorkSizeX2 = &Kernel::dummyPatchLocation;
+    uint32_t *localWorkSizeY2 = &Kernel::dummyPatchLocation;
+    uint32_t *localWorkSizeZ2 = &Kernel::dummyPatchLocation;
 
-    uint32_t *globalWorkSizeX;
-    uint32_t *globalWorkSizeY;
-    uint32_t *globalWorkSizeZ;
+    uint32_t *globalWorkSizeX = &Kernel::dummyPatchLocation;
+    uint32_t *globalWorkSizeY = &Kernel::dummyPatchLocation;
+    uint32_t *globalWorkSizeZ = &Kernel::dummyPatchLocation;
 
-    uint32_t *enqueuedLocalWorkSizeX;
-    uint32_t *enqueuedLocalWorkSizeY;
-    uint32_t *enqueuedLocalWorkSizeZ;
+    uint32_t *enqueuedLocalWorkSizeX = &Kernel::dummyPatchLocation;
+    uint32_t *enqueuedLocalWorkSizeY = &Kernel::dummyPatchLocation;
+    uint32_t *enqueuedLocalWorkSizeZ = &Kernel::dummyPatchLocation;
 
-    uint32_t *numWorkGroupsX;
-    uint32_t *numWorkGroupsY;
-    uint32_t *numWorkGroupsZ;
+    uint32_t *numWorkGroupsX = &Kernel::dummyPatchLocation;
+    uint32_t *numWorkGroupsY = &Kernel::dummyPatchLocation;
+    uint32_t *numWorkGroupsZ = &Kernel::dummyPatchLocation;
 
-    uint32_t *maxWorkGroupSizeForCrossThreadData;
+    uint32_t *maxWorkGroupSizeForCrossThreadData = &Kernel::dummyPatchLocation;
     uint32_t maxKernelWorkGroupSize = 0;
-    uint32_t *workDim;
-    uint32_t *dataParameterSimdSize;
-    uint32_t *parentEventOffset;
-    uint32_t *preferredWkgMultipleOffset;
+    uint32_t *workDim = &Kernel::dummyPatchLocation;
+    uint32_t *dataParameterSimdSize = &Kernel::dummyPatchLocation;
+    uint32_t *parentEventOffset = &Kernel::dummyPatchLocation;
+    uint32_t *preferredWkgMultipleOffset = &Kernel::dummyPatchLocation;
 
     static uint32_t dummyPatchLocation;
 
@@ -344,7 +344,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint32_t allBufferArgsStateful = CL_TRUE;
 
     uint32_t slmTotalSize;
-    bool isBuiltIn;
+    bool isBuiltIn = false;
     const bool isParentKernel;
     const bool isSchedulerKernel;
 
@@ -513,7 +513,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
     Program *program;
-    Context *context;
+    Context *context = nullptr;
     const ClDevice &device;
     const KernelInfo &kernelInfo;
 
@@ -524,20 +524,20 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
 
-    size_t numberOfBindingTableStates;
-    size_t localBindingTableOffset;
+    size_t numberOfBindingTableStates = 0u;
+    size_t localBindingTableOffset = 0u;
     std::unique_ptr<char[]> pSshLocal;
-    uint32_t sshLocalSize;
+    uint32_t sshLocalSize = 0u;
 
-    char *crossThreadData;
-    uint32_t crossThreadDataSize;
+    char *crossThreadData = nullptr;
+    uint32_t crossThreadDataSize = 0u;
 
-    GraphicsAllocation *privateSurface;
-    uint64_t privateSurfaceSize;
+    GraphicsAllocation *privateSurface = nullptr;
+    uint64_t privateSurfaceSize = 0u;
 
-    GraphicsAllocation *kernelReflectionSurface;
+    GraphicsAllocation *kernelReflectionSurface = nullptr;
 
-    bool usingSharedObjArgs;
+    bool usingSharedObjArgs = false;
     bool usingImagesOnly = false;
     bool auxTranslationRequired = false;
     bool containsStatelessWrites = true;
@@ -553,7 +553,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool specialPipelineSelectMode = false;
     bool svmAllocationsRequireCacheFlush = false;
     std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
-    UnifiedMemoryControls unifiedMemoryControls;
+    UnifiedMemoryControls unifiedMemoryControls{};
     bool isUnifiedMemorySyncRequired = true;
     bool debugEnabled = false;
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
