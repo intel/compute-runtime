@@ -15,6 +15,8 @@
 namespace NEO {
 extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;
+extern int closeInputFd;
+extern std::atomic<int> closeCalledCount;
 
 inline void *mmapMock(void *addr, size_t length, int prot, int flags, int fd, off_t offset) noexcept {
     if (addr) {
@@ -38,7 +40,9 @@ inline off_t lseekMock(int fd, off_t offset, int whence) noexcept {
     lseekCalledCount++;
     return lseekReturn;
 }
-inline int closeMock(int) {
+inline int closeMock(int fd) {
+    closeInputFd = fd;
+    closeCalledCount++;
     return 0;
 }
 

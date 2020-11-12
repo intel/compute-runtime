@@ -572,6 +572,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         return nullptr;
     }
 
+    closeFunction(openFd.fd);
+
     auto boHandle = openFd.handle;
     auto bo = findAndReferenceSharedBufferObject(boHandle);
 

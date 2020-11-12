@@ -2193,6 +2193,8 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBi
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
     EXPECT_EQ(1, lseekCalledCount);
+    EXPECT_EQ(1, closeCalledCount);
+    EXPECT_EQ(this->mock->inputFd, closeInputFd);
     EXPECT_EQ(GmmHelper::canonize(memoryManager->getExternalHeapBaseAddress(graphicsAllocation->getRootDeviceIndex(), drmAllocation->isAllocatedInLocalMemoryPool())), drmAllocation->getGpuBaseAddress());
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -2211,6 +2213,8 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleIsCre
 
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
     EXPECT_EQ(1, lseekCalledCount);
+    EXPECT_EQ(1, closeCalledCount);
+    EXPECT_EQ(this->mock->inputFd, closeInputFd);
 
     EXPECT_EQ(0llu, drmAllocation->getGpuBaseAddress());
 
@@ -2232,6 +2236,8 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenBufferFromSharedHandl
 
     EXPECT_EQ(0llu, drmAllocation->getGpuBaseAddress());
     EXPECT_EQ(1, lseekCalledCount);
+    EXPECT_EQ(1, closeCalledCount);
+    EXPECT_EQ(this->mock->inputFd, closeInputFd);
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
@@ -2248,6 +2254,8 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
     EXPECT_EQ(1, lseekCalledCount);
+    EXPECT_EQ(1, closeCalledCount);
+    EXPECT_EQ(this->mock->inputFd, closeInputFd);
     EXPECT_EQ(0llu, drmAllocation->getGpuBaseAddress());
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -2591,6 +2599,8 @@ TEST_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCre
     EXPECT_EQ(1u, bo->getRefCount());
     EXPECT_EQ(realSize, bo->peekSize());
     EXPECT_EQ(1, lseekCalledCount);
+    EXPECT_EQ(1, closeCalledCount);
+    EXPECT_EQ(this->mock->inputFd, closeInputFd);
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 

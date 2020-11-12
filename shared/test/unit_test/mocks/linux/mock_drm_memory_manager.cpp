@@ -19,6 +19,8 @@
 namespace NEO {
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
+int closeInputFd = 0;
+std::atomic<int> closeCalledCount(0);
 
 TestedDrmMemoryManager::TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(gemCloseWorkerMode::gemCloseWorkerInactive,
                                                                                                                  false,
@@ -30,6 +32,8 @@ TestedDrmMemoryManager::TestedDrmMemoryManager(ExecutionEnvironment &executionEn
     this->closeFunction = &closeMock;
     lseekReturn = 4096;
     lseekCalledCount = 0;
+    closeInputFd = 0;
+    closeCalledCount = 0;
     hostPtrManager.reset(new MockHostPtrManager);
 };
 
@@ -47,6 +51,8 @@ TestedDrmMemoryManager::TestedDrmMemoryManager(bool enableLocalMemory,
     this->closeFunction = &closeMock;
     lseekReturn = 4096;
     lseekCalledCount = 0;
+    closeInputFd = 0;
+    closeCalledCount = 0;
 }
 
 void TestedDrmMemoryManager::injectPinBB(BufferObject *newPinBB, uint32_t rootDeviceIndex) {
