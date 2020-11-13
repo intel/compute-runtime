@@ -420,6 +420,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     void setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo);
     uint32_t getAdditionalKernelExecInfo() const;
     MOCKABLE_VIRTUAL bool requiresWaDisableRccRhwoOptimization() const;
+    const ClDeviceVector &getDevices() const {
+        return deviceVector;
+    }
 
   protected:
     struct ObjectCounts {

@@ -92,7 +92,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
 
     size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
     HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
-        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, *kernel, 0, pDevice->getPreemptionMode(), nullptr);
+        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, *kernel, 0, pDevice->getPreemptionMode(), nullptr, pDevice->getHardwareInfo());
 
     auto usedIndirectHeapAfter = indirectHeap.getUsed();
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);
@@ -348,7 +348,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        pDevice->getHardwareInfo());
 
     // It's okay these are EXPECT_GE as they're only going to be used for
     // estimation purposes to avoid OOM.
@@ -402,7 +403,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        pDevice->getHardwareInfo());
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
@@ -449,7 +451,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhen
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        pDevice->getHardwareInfo());
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
@@ -490,7 +493,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        pDevice->getHardwareInfo());
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
@@ -567,7 +571,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        pDevice->getHardwareInfo());
 
     size_t numThreads = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
     numThreads = Math::divideAndRoundUp(numThreads, modifiedKernelInfo.getMaxSimdSize());
@@ -654,7 +659,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        pDevice->getHardwareInfo());
 
     EXPECT_EQ(sshUsed + 0x00000000u, *(&bindingTableStatesPointers[0]));
     EXPECT_EQ(sshUsed + 0x00000040u, *(&bindingTableStatesPointers[1]));
@@ -813,7 +819,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
             pDevice->getPreemptionMode(),
             pWalkerCmd,
             nullptr,
-            true);
+            true,
+            pDevice->getHardwareInfo());
 
         bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getCpuBase()) + localSshOffset + btiOffset);
         for (uint32_t i = 0; i < numSurfaces; ++i) {
@@ -1009,7 +1016,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        pDevice->getHardwareInfo());
 
     bool isMemorySame = memcmp(borderColorPointer, mockDsh, borderColorSize) == 0;
     EXPECT_TRUE(isMemorySame);

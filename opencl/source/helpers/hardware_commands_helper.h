@@ -59,7 +59,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const Kernel &kernel,
         uint32_t bindingTablePrefetchSize,
         PreemptionMode preemptionMode,
-        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
+        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
+        const HardwareInfo &hardwareInfo);
 
     static void sendMediaStateFlush(
         LinearStream &commandStream,
@@ -91,7 +92,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         PreemptionMode preemptionMode,
         WALKER_TYPE<GfxFamily> *walkerCmd,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-        bool localIdsGenerationByRuntime);
+        bool localIdsGenerationByRuntime,
+        const HardwareInfo &hardwareInfo);
 
     static void programPerThreadData(
         size_t &sizePerThreadData,

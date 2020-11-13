@@ -4575,11 +4575,13 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         return retVal;
     }
 
-    const HardwareInfo &hwInfo = pKernel->getDevice().getHardwareInfo();
-    if (!hwInfo.capabilityTable.ftrSvm) {
-        retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
-        return retVal;
+    for (const auto &pDevice : pKernel->getDevices()) {
+        const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
+        if (!hwInfo.capabilityTable.ftrSvm) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+            return retVal;
+        }
     }
 
     if (argIndex >= pKernel->getKernelArgsNumber()) {
@@ -4601,10 +4603,12 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         auto svmManager = pKernel->getContext().getSVMAllocsManager();
         auto svmData = svmManager->getSVMAlloc(argValue);
         if (svmData == nullptr) {
-            if (!pKernel->getDevice().areSharedSystemAllocationsAllowed()) {
-                retVal = CL_INVALID_ARG_VALUE;
-                TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
-                return retVal;
+            for (const auto &pDevice : pKernel->getDevices()) {
+                if (!pDevice->areSharedSystemAllocationsAllowed()) {
+                    retVal = CL_INVALID_ARG_VALUE;
+                    TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+                    return retVal;
+                }
             }
         } else {
             pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pKernel->getDevice().getRootDeviceIndex());
@@ -4634,11 +4638,13 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         return retVal;
     }
 
-    const HardwareInfo &hwInfo = pKernel->getDevice().getHardwareInfo();
-    if (!hwInfo.capabilityTable.ftrSvm) {
-        retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clSetKernelExecInfo, &retVal);
-        return retVal;
+    for (const auto &pDevice : pKernel->getDevices()) {
+        const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
+        if (!hwInfo.capabilityTable.ftrSvm) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clSetKernelExecInfo, &retVal);
+            return retVal;
+        }
     }
 
     switch (paramName) {
@@ -5607,7 +5613,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         return retVal;
     }
 
-    auto &hardwareInfo = pKernel->getDevice().getHardwareInfo();
+    auto &hardwareInfo = pKernel->getDevices()[0]->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     if (!hwHelper.isCooperativeDispatchSupported(pCommandQueue->getGpgpuEngine().getEngineType(), hardwareInfo.platform.eProductFamily)) {
         retVal = CL_INVALID_COMMAND_QUEUE;

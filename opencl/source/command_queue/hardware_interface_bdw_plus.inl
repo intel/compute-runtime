@@ -101,7 +101,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         preemptionMode,
         &walkerCmd,
         nullptr,
-        true);
+        true,
+        commandQueue.getDevice().getHardwareInfo());
 
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, globalOffsets, startWorkGroups,
                                                            numWorkGroups, localWorkSizes, simd, dim,

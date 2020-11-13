@@ -207,7 +207,7 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
         pIDDestination[blockIndex + i].setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
         EncodeDispatchKernel<GfxFamily>::programBarrierEnable(pIDDestination[blockIndex + i],
                                                               pBlockInfo->patchInfo.executionEnvironment->HasBarriers,
-                                                              parentKernel->getDevice().getHardwareInfo());
+                                                              device->getHardwareInfo());
 
         // Set offset to sampler states, block's DHSOffset is added by scheduler
         pIDDestination[blockIndex + i].setSamplerStatePointer(static_cast<uint32_t>(pBlockInfo->getBorderColorStateSize()));

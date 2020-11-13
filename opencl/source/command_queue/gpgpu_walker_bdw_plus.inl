@@ -149,7 +149,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         preemptionMode,
         &cmdWalker,
         nullptr,
-        true);
+        true,
+        devQueueHw.getDevice().getHardwareInfo());
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(&commandStream, scheduler, true);
@@ -203,7 +204,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
     size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS(pKernel) +
-                  sizeof(PIPE_CONTROL) * (MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(pKernel->getDevice().getHardwareInfo()) ? 2 : 1);
+                  sizeof(PIPE_CONTROL) * (MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(commandQueue.getDevice().getHardwareInfo()) ? 2 : 1);
     size += HardwareCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(commandQueue, pKernel, 0U);
     size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(commandQueue.getDevice());
     if (reserveProfilingCmdsSpace) {

@@ -65,8 +65,8 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         auto pKernel = castToObjectOrAbort<Kernel>(kernel);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates();
         // Enlarge local copy of SSH by 1 SS
-        auto &device = pKernel->getDevice();
-        GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
+        auto device = pKernel->getDevices()[0];
+        GFXCORE_FAMILY genFamily = device->getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         if (pKernel->isParentKernel || !gtpinHelper.addSurfaceState(pKernel)) {
             // Kernel with no SSH or Kernel EM, not supported
@@ -78,7 +78,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         }
         // Notify GT-Pin that new kernel was created
         Context *pContext = &(pKernel->getContext());
-        cl_context context = (cl_context)pContext;
+        cl_context context = pContext;
         auto &kernelInfo = pKernel->getKernelInfo();
         instrument_params_in_t paramsIn = {};
 
@@ -132,7 +132,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         if (!resource) {
             return;
         }
-        auto &device = pKernel->getDevice();
+        auto &device = *pKernel->getDevices()[0];
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;

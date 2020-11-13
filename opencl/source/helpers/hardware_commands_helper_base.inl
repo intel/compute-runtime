@@ -154,7 +154,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     const Kernel &kernel,
     uint32_t bindingTablePrefetchSize,
     PreemptionMode preemptionMode,
-    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
+    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
+    const HardwareInfo &hardwareInfo) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
     // Allocate some memory for the interface descriptor
@@ -171,7 +172,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     interfaceDescriptor.setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
 
     setGrfInfo(&interfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData);
-    EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, kernel.getDevice().getHardwareInfo(), threadsPerThreadGroup, kernel.slmTotalSize);
+    EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, hardwareInfo, threadsPerThreadGroup, kernel.slmTotalSize);
 
     interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
 
@@ -189,10 +190,10 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
     EncodeDispatchKernel<GfxFamily>::programBarrierEnable(interfaceDescriptor,
                                                           kernel.getKernelInfo().patchInfo.executionEnvironment->HasBarriers,
-                                                          kernel.getDevice().getHardwareInfo());
+                                                          hardwareInfo);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
-    EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorData(interfaceDescriptor, kernel.getDevice().getHardwareInfo());
+    EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorData(interfaceDescriptor, hardwareInfo);
 
     *pInterfaceDescriptor = interfaceDescriptor;
     return (size_t)offsetInterfaceDescriptor;
@@ -213,7 +214,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     PreemptionMode preemptionMode,
     WALKER_TYPE<GfxFamily> *walkerCmd,
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-    bool localIdsGenerationByRuntime) {
+    bool localIdsGenerationByRuntime,
+    const HardwareInfo &hardwareInfo) {
 
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
@@ -287,7 +289,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         kernel,
         bindingTablePrefetchSize,
         preemptionMode,
-        inlineInterfaceDescriptor);
+        inlineInterfaceDescriptor,
+        hardwareInfo);
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         PatchInfoData patchInfoData(kernelStartOffset, 0, PatchInfoAllocationType::InstructionHeap, dsh.getGraphicsAllocation()->getGpuAddress(), offsetInterfaceDescriptor, PatchInfoAllocationType::DynamicStateHeap);
