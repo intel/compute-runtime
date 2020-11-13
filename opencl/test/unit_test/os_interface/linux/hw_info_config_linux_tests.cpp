@@ -374,6 +374,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenDebugFlagSetWhenConfiguringHwInfoThenPri
 
     }};
 
+    DebugManager.flags.PrintDebugMessages.set(false);
     std::string output = testing::internal::GetCapturedStdout(); // stop capturing
     for (const auto &expectedString : expectedStrings) {
         EXPECT_NE(std::string::npos, output.find(expectedString));

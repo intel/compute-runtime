@@ -492,6 +492,7 @@ TEST_F(DrmMemoryManagerTest, whenPrintBOCreateDestroyResultIsSetAndAllocUserptrI
     BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, 0ul, rootDeviceIndex);
     ASSERT_NE(nullptr, bo);
 
+    DebugManager.flags.PrintBOCreateDestroyResult.set(false);
     std::string output = testing::internal::GetCapturedStdout();
     size_t idx = output.find("Created new BO with GEM_USERPTR, handle: BO-");
     size_t expectedValue = 0;

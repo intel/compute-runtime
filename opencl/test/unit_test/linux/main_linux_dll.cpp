@@ -315,10 +315,12 @@ TEST_F(DrmTests, createUnknownDevice) {
     deviceId = -1;
 
     ::testing::internal::CaptureStderr();
+    ::testing::internal::CaptureStdout();
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
     std::string errStr = ::testing::internal::GetCapturedStderr();
     EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("FATAL: Unknown device: deviceId: ffffffff, revisionId: 0000")));
+    ::testing::internal::GetCapturedStdout();
 }
 
 TEST_F(DrmTests, createNoSoftPin) {
@@ -486,6 +488,7 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
     failOnVirtualMemoryCreate = -1;
 
     ::testing::internal::CaptureStderr();
+    ::testing::internal::CaptureStdout();
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 
@@ -494,6 +497,7 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
 
     std::string errStr = ::testing::internal::GetCapturedStderr();
     EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("INFO: Device doesn't support GEM Virtual Memory")));
+    ::testing::internal::GetCapturedStdout();
 }
 
 int main(int argc, char **argv) {
