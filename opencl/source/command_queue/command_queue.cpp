@@ -704,6 +704,10 @@ void CommandQueue::storeProperties(const cl_queue_properties *properties) {
     }
 }
 
+void CommandQueue::processProperties(const cl_queue_properties *properties) {
+    processPropertiesExtra(properties);
+}
+
 void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo) {
     if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
         auto status = getGpgpuCommandStreamReceiver().checkAndActivateAubSubCapture(multiDispatchInfo);

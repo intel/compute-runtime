@@ -16,7 +16,7 @@ bool verifyExtraTokens(ClDevice *&device, Context &context, const cl_queue_prope
     return true;
 }
 
-void CommandQueue::processProperties(const cl_queue_properties *properties) {
+void CommandQueue::processPropertiesExtra(const cl_queue_properties *properties) {
 }
 
 void getIntelQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, GetInfoHelper &getInfoHelper, cl_int &retVal) {
