@@ -145,13 +145,6 @@ zeKernelGetSourceAttributes(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeKernelSetIntermediateCacheConfig(
-    ze_kernel_handle_t hKernel,
-    ze_cache_config_flags_t cacheConfig) {
-    return L0::Kernel::fromHandle(hKernel)->setIntermediateCacheConfig(cacheConfig);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelGetProperties(
     ze_kernel_handle_t hKernel,
     ze_kernel_properties_t *pKernelProperties) {

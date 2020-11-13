@@ -34,10 +34,6 @@ struct KernelImp : Kernel {
 
     ze_result_t getProperties(ze_kernel_properties_t *pKernelProperties) override;
 
-    ze_result_t setIntermediateCacheConfig(ze_cache_config_flags_t cacheConfig) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     ze_result_t setArgumentValue(uint32_t argIndex, size_t argSize, const void *pArgValue) override;
 
     void setGroupCount(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;

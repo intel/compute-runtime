@@ -108,14 +108,6 @@ struct Mock<Device> : public Device {
                  ze_device_handle_t *phSubdevices),
                 (override));
     MOCK_METHOD(ze_result_t,
-                setIntermediateCacheConfig,
-                (ze_cache_config_flags_t CacheConfig),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                setLastLevelCacheConfig,
-                (ze_cache_config_flags_t CacheConfig),
-                (override));
-    MOCK_METHOD(ze_result_t,
                 getCacheProperties,
                 (uint32_t * pCount,
                  ze_device_cache_properties_t *pCacheProperties),

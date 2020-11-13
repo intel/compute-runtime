@@ -95,13 +95,6 @@ zeDeviceCanAccessPeer(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDeviceSetLastLevelCacheConfig(
-    ze_device_handle_t hDevice,
-    ze_cache_config_flags_t cacheConfig) {
-    return L0::Device::fromHandle(hDevice)->setLastLevelCacheConfig(cacheConfig);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetCommandQueueGroupProperties(
     ze_device_handle_t hDevice,
     uint32_t *pCount,

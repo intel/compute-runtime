@@ -435,14 +435,6 @@ ze_result_t DeviceImp::getSubDevices(uint32_t *pCount, ze_device_handle_t *phSub
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DeviceImp::setIntermediateCacheConfig(ze_cache_config_flags_t cacheConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t DeviceImp::setLastLevelCacheConfig(ze_cache_config_flags_t cacheConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_properties_t *pCacheProperties) {
     if (*pCount == 0) {
         *pCount = 1;
