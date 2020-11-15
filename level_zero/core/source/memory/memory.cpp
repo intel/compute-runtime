@@ -125,7 +125,23 @@ ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, const ze
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, Device::fromHandle(hDevice)->getNEODevice()->getDeviceBitfield());
+
+    if (deviceDesc->pNext) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC) {
+            const ze_external_memory_export_desc_t *externalMemoryExportDesc =
+                reinterpret_cast<const ze_external_memory_export_desc_t *>(extendedDesc);
+            // ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF supported by default for all
+            // device allocations for the purpose of IPC, so just check correct
+            // flag is passed.
+            if (externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+        }
+    }
+
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY,
+                                                                           Device::fromHandle(hDevice)->getNEODevice()->getDeviceBitfield());
     unifiedMemoryProperties.allocationFlags.flags.shareable = 1u;
     unifiedMemoryProperties.device = Device::fromHandle(hDevice)->getNEODevice();
     void *usmPtr =
