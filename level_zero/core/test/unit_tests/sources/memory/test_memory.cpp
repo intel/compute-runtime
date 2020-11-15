@@ -42,7 +42,56 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsDeviceHa
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MemoryTest, givenCallToDeviceAllocWithExtendedDescriptorAndNonSupportedFlagThenUnsuportedEnumerationIsReturned) {
+struct DriverHandleGetFdMock : public DriverHandleImp {
+    ze_result_t allocDeviceMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc, size_t size,
+                               size_t alignment, void **ptr) override {
+        ze_result_t res = DriverHandleImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
+        if (ZE_RESULT_SUCCESS == res) {
+            allocationMap.first = ptr;
+            allocationMap.second = mockFd;
+        }
+
+        return res;
+    }
+
+    ze_result_t getMemAllocProperties(const void *ptr,
+                                      ze_memory_allocation_properties_t *pMemAllocProperties,
+                                      ze_device_handle_t *phDevice) override {
+        ze_result_t res = DriverHandleImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
+        if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext) {
+            ze_external_memory_export_fd_t *extendedMemoryExportProperties =
+                reinterpret_cast<ze_external_memory_export_fd_t *>(pMemAllocProperties->pNext);
+            extendedMemoryExportProperties->fd = mockFd;
+        }
+
+        return res;
+    }
+
+    const int mockFd = 57;
+    std::pair<void *, int> allocationMap;
+};
+
+struct MemoryExportImportTest : public ::testing::Test {
+    void SetUp() override {
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        auto mockBuiltIns = new MockBuiltins();
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<DriverHandleGetFdMock>();
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+    }
+
+    void TearDown() override {
+    }
+    std::unique_ptr<DriverHandleGetFdMock> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+};
+
+TEST_F(MemoryExportImportTest,
+       givenCallToDeviceAllocWithExtendedExportDescriptorAndNonSupportedFlagThenUnsuportedEnumerationIsReturned) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -59,7 +108,8 @@ TEST_F(MemoryTest, givenCallToDeviceAllocWithExtendedDescriptorAndNonSupportedFl
     EXPECT_EQ(nullptr, ptr);
 }
 
-TEST_F(MemoryTest, givenCallToDeviceAllocWithExtendedDescriptorAndSupportedFlagThenAllocationIsMade) {
+TEST_F(MemoryExportImportTest,
+       givenCallToDeviceAllocWithExtendedExportDescriptorAndSupportedFlagThenAllocationIsMade) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -74,6 +124,93 @@ TEST_F(MemoryTest, givenCallToDeviceAllocWithExtendedDescriptorAndSupportedFlagT
                                                       size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
+
+    result = driverHandle->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndUnsupportedFlagThenUnsupportedEnumerationIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = driverHandle->allocDeviceMem(device->toHandle(),
+                                                      &deviceDesc,
+                                                      size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_external_memory_export_fd_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
+    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
+    extendedProperties.fd = std::numeric_limits<int>::max();
+    memoryProperties.pNext = &extendedProperties;
+
+    ze_device_handle_t deviceHandle;
+    result = driverHandle->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, result);
+    EXPECT_EQ(extendedProperties.fd, std::numeric_limits<int>::max());
+
+    result = driverHandle->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesForNonDeviceAllocationThenUnsupportedFeatureIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = driverHandle->allocHostMem(&hostDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_external_memory_export_fd_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
+    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    extendedProperties.fd = std::numeric_limits<int>::max();
+    memoryProperties.pNext = &extendedProperties;
+
+    result = driverHandle->getMemAllocProperties(ptr, &memoryProperties, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(extendedProperties.fd, std::numeric_limits<int>::max());
+
+    result = driverHandle->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndSupportedFlagThenValidFileDescriptorIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = driverHandle->allocDeviceMem(device->toHandle(),
+                                                      &deviceDesc,
+                                                      size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_external_memory_export_fd_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
+    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    extendedProperties.fd = std::numeric_limits<int>::max();
+    memoryProperties.pNext = &extendedProperties;
+
+    ze_device_handle_t deviceHandle;
+    result = driverHandle->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_DEVICE);
+    EXPECT_EQ(deviceHandle, device->toHandle());
+    EXPECT_NE(extendedProperties.fd, std::numeric_limits<int>::max());
+    EXPECT_EQ(extendedProperties.fd, driverHandle->mockFd);
 
     result = driverHandle->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
