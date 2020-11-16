@@ -85,7 +85,7 @@ void MockGmmResourceInfo::computeRowPitch() {
 }
 
 void MockGmmResourceInfo::setSurfaceFormat() {
-    auto iterateL0Formats = [&](const std::array<L0::ImageFormats::FormatTypes, 30> &formats) {
+    auto iterateL0Formats = [&](const std::array<L0::ImageFormats::FormatTypes, L0::ImageFormats::ZE_IMAGE_FORMAT_RENDER_LAYOUT_MAX> &formats) {
         if (!surfaceFormatInfo) {
             for (auto &formatArray : formats) {
                 for (auto &format : formatArray) {

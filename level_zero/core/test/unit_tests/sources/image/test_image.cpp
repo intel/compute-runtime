@@ -125,7 +125,7 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedI
     zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
     zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
 
-    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_Y216};
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_P216};
 
     Image *image_ptr;
     auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
@@ -306,6 +306,8 @@ std::pair<ze_image_format_layout_t, ze_image_format_type_t> validFormats[] = {
     {ZE_IMAGE_FORMAT_LAYOUT_P010, ZE_IMAGE_FORMAT_TYPE_UNORM},
     {ZE_IMAGE_FORMAT_LAYOUT_Y410, ZE_IMAGE_FORMAT_TYPE_UNORM},
     {ZE_IMAGE_FORMAT_LAYOUT_P012, ZE_IMAGE_FORMAT_TYPE_UNORM},
+    {ZE_IMAGE_FORMAT_LAYOUT_Y16, ZE_IMAGE_FORMAT_TYPE_UNORM},
+    {ZE_IMAGE_FORMAT_LAYOUT_Y216, ZE_IMAGE_FORMAT_TYPE_UNORM},
     {ZE_IMAGE_FORMAT_LAYOUT_P016, ZE_IMAGE_FORMAT_TYPE_UNORM}};
 
 INSTANTIATE_TEST_CASE_P(
