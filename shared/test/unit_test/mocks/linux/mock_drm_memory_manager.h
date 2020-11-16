@@ -38,6 +38,9 @@ inline int munmapMock(void *addr, size_t length) noexcept {
 
 inline off_t lseekMock(int fd, off_t offset, int whence) noexcept {
     lseekCalledCount++;
+    if ((fd == closeInputFd) && (closeCalledCount > 0)) {
+        return 0;
+    }
     return lseekReturn;
 }
 inline int closeMock(int fd) {
