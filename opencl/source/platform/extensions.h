@@ -24,6 +24,5 @@ std::string getExtensionsList(const HardwareInfo &hwInfo);
 void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures);
 std::string convertEnabledExtensionsToCompilerInternalOptions(const char *deviceExtensions,
                                                               OpenClCFeaturesContainer &openclCFeatures);
-std::string convertEnabledOclCFeaturesToCompilerInternalOptions(OpenClCFeaturesContainer &openclCFeatures);
 
 } // namespace NEO

@@ -783,19 +783,22 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build_Options_Duplicate) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesOptionIsNotAdded) {
+TEST_P(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAreNotAdded) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
-    auto featuresOption = static_cast<ClDevice *>(devices[0])->peekCompilerFeatures();
+
+    auto extensionsOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensionsWithFeatures();
+    EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsOption)));
+    EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
 
     retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
-    EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(featuresOption)));
+    EXPECT_THAT(cip->buildInternalOptions, testing::HasSubstr(extensionsOption));
+    EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
 }
 
-TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesOptionIsAdded) {
-    auto featuresOption = static_cast<ClDevice *>(devices[0])->peekCompilerFeatures();
-
+TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdded) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -805,13 +808,19 @@ TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesOption
 
     MockProgram::initInternalOptionsCalled = 0;
 
+    auto extensionsOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensionsWithFeatures();
+    EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsOption)));
+    EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
+
     retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0", false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(cip->buildInternalOptions, testing::HasSubstr(featuresOption));
+    EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsOption)));
+    EXPECT_THAT(cip->buildInternalOptions, testing::HasSubstr(extensionsWithFeaturesOption));
     EXPECT_EQ(1, MockProgram::initInternalOptionsCalled);
 }
 
-TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesOptionIsAddedOnlyOnce) {
+TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAddedOnlyOnce) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -824,30 +833,33 @@ TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesOption
     retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0", false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto expectedFeaturesOption = static_cast<ClDevice *>(devices[0])->peekCompilerFeatures();
+    auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
     auto &internalOptions = cip->buildInternalOptions;
-    auto pos = internalOptions.find(expectedFeaturesOption);
+    auto pos = internalOptions.find(extensionsWithFeaturesOption);
     EXPECT_NE(std::string::npos, pos);
 
-    pos = internalOptions.find(expectedFeaturesOption, pos + 1);
+    pos = internalOptions.find(extensionsWithFeaturesOption, pos + 1);
     EXPECT_EQ(std::string::npos, pos);
 }
 
-TEST_P(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesOptionIsNotAdded) {
+TEST_P(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesAreNotAdded) {
     auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = static_cast<ClDevice *>(devices[0]);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
-    auto featuresOption = pClDevice->peekCompilerFeatures();
-    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(featuresOption)));
+    auto extensionsOption = pClDevice->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsOption)));
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
 
     MockProgram::initInternalOptionsCalled = 0;
     retVal = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(featuresOption)));
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::HasSubstr(extensionsOption));
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
     EXPECT_EQ(1, MockProgram::initInternalOptionsCalled);
 }
 
-TEST_P(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesOptionIsAdded) {
+TEST_P(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesAreAdded) {
     auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
@@ -855,12 +867,15 @@ TEST_P(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesOptio
     pProgram->sourceCode = "__kernel mock() {}";
     pProgram->createdFrom = Program::CreatedFrom::SOURCE;
 
-    auto featuresOption = pClDevice->peekCompilerFeatures();
-    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(featuresOption)));
+    auto extensionsOption = pClDevice->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsOption)));
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
 
     retVal = pProgram->compile(pProgram->getDevices(), "-cl-std=CL3.0", 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::HasSubstr(featuresOption));
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsOption)));
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::HasSubstr(extensionsWithFeaturesOption));
 }
 
 class Callback {

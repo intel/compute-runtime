@@ -118,7 +118,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     ClDevice *getDeviceById(uint32_t deviceId);
     const std::string &peekCompilerExtensions() const;
     const std::string &peekCompilerExtensionsWithFeatures() const;
-    const std::string &peekCompilerFeatures() const;
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
     DeviceBitfield getDeviceBitfield() const;
     bool isDeviceEnqueueSupported() const;
@@ -149,7 +148,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     std::vector<unsigned int> simultaneousInterops = {0};
     std::string compilerExtensions;
     std::string compilerExtensionsWithFeatures;
-    std::string compilerFeatures;
 };
 
 } // namespace NEO

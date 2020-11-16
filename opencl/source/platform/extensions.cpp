@@ -163,18 +163,4 @@ std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enable
     return extensionsList;
 }
 
-std::string convertEnabledOclCFeaturesToCompilerInternalOptions(OpenClCFeaturesContainer &openclCFeatures) {
-    UNRECOVERABLE_IF(openclCFeatures.empty());
-    std::string featuresList;
-    featuresList.reserve(500);
-    featuresList = " -cl-feature=";
-    for (auto &feature : openclCFeatures) {
-        featuresList.append("+");
-        featuresList.append(feature.name);
-        featuresList.append(",");
-    }
-    featuresList[featuresList.size() - 1] = ' ';
-    return featuresList;
-}
-
 } // namespace NEO

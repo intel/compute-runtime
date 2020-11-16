@@ -118,7 +118,6 @@ cl_int Program::compile(
         // set parameters for compilation
         if (requiresOpenClCFeatures(options)) {
             CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerExtensionsWithFeatures());
-            CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerFeatures());
         } else {
             CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerExtensions());
         }

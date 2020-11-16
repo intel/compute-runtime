@@ -109,13 +109,9 @@ cl_int Program::build(
             }
 
             if (requiresOpenClCFeatures(options)) {
-                auto compilerExtensionsWithFeaturesOptions = defaultClDevice->peekCompilerExtensionsWithFeatures();
-                CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsWithFeaturesOptions);
-                auto compilerFeaturesOptions = defaultClDevice->peekCompilerFeatures();
-                CompilerOptions::concatenateAppend(internalOptions, compilerFeaturesOptions);
+                CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerExtensionsWithFeatures());
             } else {
-                auto compilerExtensionsOptions = defaultClDevice->peekCompilerExtensions();
-                CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
+                CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerExtensions());
             }
 
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());

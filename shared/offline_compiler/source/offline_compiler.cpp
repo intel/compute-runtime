@@ -593,9 +593,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                     OpenClCFeaturesContainer openclCFeatures;
                     getOpenclCFeaturesList(hwInfo, openclCFeatures);
                     auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);
-                    auto compilerFeatures = convertEnabledOclCFeaturesToCompilerInternalOptions(openclCFeatures);
                     CompilerOptions::concatenateAppend(internalOptions, compilerExtensions);
-                    CompilerOptions::concatenateAppend(internalOptions, compilerFeatures);
                 } else {
                     OpenClCFeaturesContainer emptyOpenClCFeatures;
                     auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), emptyOpenClCFeatures);

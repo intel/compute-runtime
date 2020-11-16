@@ -29,7 +29,6 @@ class MockClDevice : public ClDevice {
     using ClDevice::ClDevice;
     using ClDevice::compilerExtensions;
     using ClDevice::compilerExtensionsWithFeatures;
-    using ClDevice::compilerFeatures;
     using ClDevice::deviceExtensions;
     using ClDevice::deviceInfo;
     using ClDevice::driverInfo;

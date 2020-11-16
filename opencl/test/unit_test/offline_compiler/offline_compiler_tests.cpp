@@ -277,8 +277,7 @@ TEST_F(OfflineCompilerTests, givenClStd30OptionWhenCompilingSourceThenCorrectExt
     OpenClCFeaturesContainer openclCFeatures;
     getOpenclCFeaturesList(DEFAULT_PLATFORM::hwInfo, openclCFeatures);
     for (auto &feature : openclCFeatures) {
-        auto expectedRegex = std::string{feature.name} + ".*" + std::string{feature.name};
-        EXPECT_THAT(internalOptions, ::testing::ContainsRegex(expectedRegex));
+        EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string{feature.name}));
     }
 }
 TEST_F(OfflineCompilerTests, GoodBuildTest) {

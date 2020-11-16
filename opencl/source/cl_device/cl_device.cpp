@@ -32,7 +32,6 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
     OpenClCFeaturesContainer emptyOpenClCFeatures;
     compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, emptyOpenClCFeatures);
     compilerExtensionsWithFeatures = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, deviceInfo.openclCFeatures);
-    compilerFeatures = convertEnabledOclCFeaturesToCompilerInternalOptions(deviceInfo.openclCFeatures);
 
     auto numAvailableDevices = device.getNumAvailableDevices();
     if (numAvailableDevices > 1) {
@@ -183,9 +182,6 @@ const std::string &ClDevice::peekCompilerExtensions() const {
 }
 const std::string &ClDevice::peekCompilerExtensionsWithFeatures() const {
     return compilerExtensionsWithFeatures;
-}
-const std::string &ClDevice::peekCompilerFeatures() const {
-    return compilerFeatures;
 }
 DeviceBitfield ClDevice::getDeviceBitfield() const {
     return device.getDeviceBitfield();

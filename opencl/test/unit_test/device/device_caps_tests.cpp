@@ -1051,19 +1051,6 @@ TEST_F(DeviceGetCapsTest, givenFp64SupportForcedWhenCheckingFp64SupportThenFp64I
     }
 }
 
-TEST(DeviceGetCaps, WhenPeekingCompilerFeaturesThenCompilerFeaturesAreReturned) {
-    UltClDeviceFactory deviceFactory{1, 0};
-    auto pClDevice = deviceFactory.rootDevices[0];
-    EXPECT_EQ(&pClDevice->compilerFeatures, &pClDevice->peekCompilerFeatures());
-}
-
-TEST(DeviceGetCaps, WhenCheckingCompilerFeaturesThenValueIsCorrect) {
-    UltClDeviceFactory deviceFactory{1, 0};
-    auto pClDevice = deviceFactory.rootDevices[0];
-    auto expectedCompilerFeatures = convertEnabledOclCFeaturesToCompilerInternalOptions(pClDevice->deviceInfo.openclCFeatures);
-    EXPECT_STREQ(expectedCompilerFeatures.c_str(), pClDevice->compilerFeatures.c_str());
-}
-
 TEST(DeviceGetCaps, WhenPeekingCompilerExtensionsThenCompilerExtensionsAreReturned) {
     UltClDeviceFactory deviceFactory{1, 0};
     auto pClDevice = deviceFactory.rootDevices[0];
