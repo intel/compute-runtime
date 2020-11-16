@@ -1647,7 +1647,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
 
     STATE_BASE_ADDRESS sba;
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer, sba);
-    if (device->getL0Debugger()) {
+    if (NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger()) {
         NEO::Debugger::SbaAddresses sbaAddresses = {};
         sbaAddresses.BindlessSurfaceStateBaseAddress = sba.getBindlessSurfaceStateBaseAddress();
         sbaAddresses.DynamicStateBaseAddress = sba.getDynamicStateBaseAddress();

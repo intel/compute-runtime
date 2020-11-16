@@ -168,6 +168,9 @@ struct CommandList : _ze_command_list_handle_t {
     void eraseDeallocationContainerEntry(NEO::GraphicsAllocation *allocation);
     void eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocation);
     bool isCopyOnly() const;
+    bool isInternal() const {
+        return internalUsage;
+    }
 
     enum CommandListType : uint32_t {
         TYPE_REGULAR = 0u,
@@ -191,6 +194,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::EngineGroupType engineGroupType;
     UnifiedMemoryControls unifiedMemoryControls;
     bool indirectAllocationsAllowed = false;
+    bool internalUsage = false;
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, size_t *offset);
 };

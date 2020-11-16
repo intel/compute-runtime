@@ -29,7 +29,7 @@ using CommandQueueDebugCommandsTest = Test<ActiveDebuggerFixture>;
 HWTEST_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsExecutedThenKernelDebugCommandsAreAdded) {
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, returnValue));
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
@@ -78,7 +78,7 @@ HWTEST_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsEx
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, returnValue));
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
@@ -154,6 +154,85 @@ HWTEST_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsEx
     }
 
     commandQueue->destroy();
+}
+
+using SLDebuggerInternalUsageTest = Test<ActiveDebuggerFixture>;
+using IsSklOrAbove = IsAtLeastProduct<IGFX_SKYLAKE>;
+
+HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsSklOrAbove) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    ze_command_queue_desc_t queueDesc = {};
+
+    struct Deleter {
+        void operator()(CommandQueueImp *cmdQ) {
+            cmdQ->destroy();
+        }
+    };
+
+    std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc));
+    commandQueue->initialize(false, true);
+    EXPECT_TRUE(commandQueue->internalUsage);
+    ze_result_t returnValue;
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::createImmediate(productFamily, deviceL0, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+    uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    size_t debugModeRegisterCount = 0;
+    size_t tdDebugControlRegisterCount = 0;
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+            cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+        auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+
+        for (size_t i = 0; i < miLoadImm.size(); i++) {
+            MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
+
+            if (miLoad) {
+                if (miLoad->getRegisterOffset() == DebugModeRegisterOffset<FamilyType>::registerOffset) {
+                    debugModeRegisterCount++;
+                }
+                if (miLoad->getRegisterOffset() == TdDebugControlRegisterOffset<FamilyType>::registerOffset) {
+                    tdDebugControlRegisterCount++;
+                }
+            }
+        }
+        EXPECT_EQ(0u, debugModeRegisterCount);
+        EXPECT_EQ(0u, tdDebugControlRegisterCount);
+
+        auto stateSip = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(0u, stateSip.size());
+    }
+
+    auto sipIsa = NEO::SipKernel::getSipKernelAllocation(*device);
+    auto debugSurface = deviceL0->getDebugSurface();
+    bool sipFound = false;
+    bool debugSurfaceFound = false;
+
+    for (auto iter : commandQueue->residencyContainerSnapshot) {
+        if (iter == sipIsa) {
+            sipFound = true;
+        }
+        if (iter == debugSurface) {
+            debugSurfaceFound = true;
+        }
+    }
+    EXPECT_FALSE(sipFound);
+    EXPECT_FALSE(debugSurfaceFound);
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->destroy();
 }
 
 using DeviceWithDebuggerEnabledTest = Test<ActiveDebuggerFixture>;

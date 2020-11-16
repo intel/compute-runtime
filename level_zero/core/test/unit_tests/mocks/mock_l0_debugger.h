@@ -29,7 +29,20 @@ class MockDebuggerL0Hw : public L0::DebuggerL0Hw<GfxFamily> {
         captureStateBaseAddressCount++;
         L0::DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(container, sba);
     }
+
+    size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
+        getSbaTrackingCommandsSizeCount++;
+        return L0::DebuggerL0Hw<GfxFamily>::getSbaTrackingCommandsSize(trackedAddressCount);
+    }
+
+    void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const NEO::Debugger::SbaAddresses &sba) override {
+        programSbaTrackingCommandsCount++;
+        L0::DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(cmdStream, sba);
+    }
+
     uint32_t captureStateBaseAddressCount = 0;
+    uint32_t programSbaTrackingCommandsCount = 0;
+    uint32_t getSbaTrackingCommandsSizeCount = 0;
 };
 
 template <uint32_t productFamily, typename GfxFamily>

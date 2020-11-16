@@ -51,6 +51,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &queueDesc,
                                                           false,
+                                                          false,
                                                           returnValue));
         ASSERT_NE(nullptr, commandQueue->commandStream);
 

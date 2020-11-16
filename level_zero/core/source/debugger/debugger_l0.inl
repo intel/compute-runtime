@@ -16,12 +16,12 @@
 namespace L0 {
 
 template <typename GfxFamily>
-size_t DebuggerL0Hw<GfxFamily>::getSbaTrackingCommandsSize(size_t trackedAddressCount) const {
+size_t DebuggerL0Hw<GfxFamily>::getSbaTrackingCommandsSize(size_t trackedAddressCount) {
     return trackedAddressCount * sizeof(typename GfxFamily::MI_STORE_DATA_IMM);
 }
 
 template <typename GfxFamily>
-void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) const {
+void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) {
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
     auto gpuAddress = NEO::GmmHelper::decanonize(sbaTrackingGpuVa.address);
 

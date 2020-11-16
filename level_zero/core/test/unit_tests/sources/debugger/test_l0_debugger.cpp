@@ -99,7 +99,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValid
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, returnValue));
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
@@ -165,7 +165,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsE
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto cmdQ = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, returnValue);
+    auto cmdQ = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue);
     ASSERT_NE(nullptr, cmdQ);
 
     auto commandQueue = whitebox_cast(cmdQ);
@@ -224,7 +224,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledAndPrintDebugMessagesWhenCommandQu
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, returnValue));
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_command_list_handle_t commandLists[] = {
@@ -260,7 +260,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndPrintDebugMessagesWhenComma
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, returnValue));
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_command_list_handle_t commandLists[] = {
@@ -291,7 +291,7 @@ HWTEST_F(L0DebuggerTest, givenL0DebuggerAndPrintDebugMessagesSetToFalseWhenComma
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, returnValue));
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_command_list_handle_t commandLists[] = {
@@ -383,7 +383,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
     };
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
-    commandQueue->initialize(false);
+    commandQueue->initialize(false, false);
 
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
@@ -402,6 +402,103 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
         }
     }
     EXPECT_TRUE(sbaFound);
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->destroy();
+}
+
+using L0DebuggerInternalUsageTest = L0DebuggerTest;
+HWTEST_F(L0DebuggerInternalUsageTest, givenDebuggingEnabledWhenCommandListIsInititalizedOrResetThenCaptureSbaIsNotCalled) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    size_t usedSpaceBefore = 0;
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, commandList->commandContainer.getCommandStream()->getCpuBase(), usedSpaceAfter));
+
+    auto sbaItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sbaItor);
+
+    EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
+
+    commandList->reset();
+    EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
+
+    commandList->destroy();
+}
+
+HWTEST_F(L0DebuggerInternalUsageTest, givenPrintDebugMessagesSetToTrueWhenCommandListIsSynchronizedThenSbaAddressesAreNotPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.PrintDebugMessages.set(0);
+
+    EXPECT_NE(nullptr, device->getL0Debugger());
+    testing::internal::CaptureStdout();
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue);
+
+    commandList->executeCommandListImmediate(false);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    size_t pos = output.find("Debugger: SBA");
+    EXPECT_EQ(std::string::npos, pos);
+
+    commandList->destroy();
+}
+
+HWTEST2_F(L0DebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsSklOrAbove) {
+    ze_command_queue_desc_t queueDesc = {};
+
+    struct Deleter {
+        void operator()(CommandQueueImp *cmdQ) {
+            cmdQ->destroy();
+        }
+    };
+
+    std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
+    commandQueue->initialize(false, true);
+    EXPECT_TRUE(commandQueue->internalUsage);
+    ze_result_t returnValue;
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+    uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().getContextId());
+    auto sipIsa = NEO::SipKernel::getSipKernelAllocation(*neoDevice);
+    auto debugSurface = device->getDebugSurface();
+    bool sbaFound = false;
+    bool sipFound = false;
+    bool debugSurfaceFound = false;
+
+    for (auto iter : commandQueue->residencyContainerSnapshot) {
+        if (iter == sbaBuffer) {
+            sbaFound = true;
+        }
+        if (iter == sipIsa) {
+            sipFound = true;
+        }
+        if (iter == debugSurface) {
+            debugSurfaceFound = true;
+        }
+    }
+    EXPECT_FALSE(sbaFound);
+    EXPECT_FALSE(sipFound);
+    EXPECT_FALSE(debugSurfaceFound);
+
+    EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
+    EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->programSbaTrackingCommandsCount);
+    EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->getSbaTrackingCommandsSizeCount);
 
     auto commandList = CommandList::fromHandle(commandLists[0]);
     commandList->destroy();

@@ -28,8 +28,9 @@ ze_result_t CommandQueueImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t CommandQueueImp::initialize(bool copyOnly) {
+ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
     ze_result_t returnValue;
+    internalUsage = isInternal;
     returnValue = buffers.initialize(device, totalCmdBufferSize);
     if (returnValue == ZE_RESULT_SUCCESS) {
         NEO::GraphicsAllocation *bufferAllocation = buffers.getCurrentBufferAllocation();
@@ -89,7 +90,7 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
 
     printFunctionsPrintfOutput();
 
-    if (device->getL0Debugger() && NEO::DebugManager.flags.PrintDebugMessages.get()) {
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() && NEO::DebugManager.flags.PrintDebugMessages.get()) {
         device->getL0Debugger()->printTrackedAddresses(csr->getOsContext().getContextId());
     }
 
@@ -105,7 +106,7 @@ void CommandQueueImp::printFunctionsPrintfOutput() {
 }
 
 CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
-                                   const ze_command_queue_desc_t *desc, bool isCopyOnly, ze_result_t &returnValue) {
+                                   const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, ze_result_t &returnValue) {
     CommandQueueAllocatorFn allocator = nullptr;
     if (productFamily < IGFX_MAX_PRODUCT) {
         allocator = commandQueueFactory[productFamily];
@@ -116,7 +117,7 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
 
     if (allocator) {
         commandQueue = static_cast<CommandQueueImp *>((*allocator)(device, csr, desc));
-        returnValue = commandQueue->initialize(isCopyOnly);
+        returnValue = commandQueue->initialize(isCopyOnly, isInternal);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandQueue->destroy();
             commandQueue = nullptr;

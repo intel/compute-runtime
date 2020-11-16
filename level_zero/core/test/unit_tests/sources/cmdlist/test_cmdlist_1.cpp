@@ -213,6 +213,34 @@ TEST_F(CommandListCreate, givenImmediateCommandListThenInternalEngineIsUsedIfReq
     EXPECT_NE(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 }
 
+TEST_F(CommandListCreate, givenInternalUsageCommandListThenIsInternalReturnsTrue) {
+    const ze_command_queue_desc_t desc = {};
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               true,
+                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               returnValue));
+
+    EXPECT_TRUE(commandList0->isInternal());
+}
+
+TEST_F(CommandListCreate, givenNonInternalUsageCommandListThenIsInternalReturnsFalse) {
+    const ze_command_queue_desc_t desc = {};
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               false,
+                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               returnValue));
+
+    EXPECT_FALSE(commandList0->isInternal());
+}
+
 TEST_F(CommandListCreate, givenImmediateCommandListThenCustomNumIddPerBlockUsed) {
     const ze_command_queue_desc_t desc = {};
 

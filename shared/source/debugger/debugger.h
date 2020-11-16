@@ -31,6 +31,10 @@ class Debugger {
 
     void *getDebugSurfaceReservedSurfaceState(IndirectHeap &ssh);
 
+    inline static bool isDebugEnabled(bool internalUsage) {
+        return !internalUsage;
+    }
+
   protected:
     bool isLegacyMode = true;
 };

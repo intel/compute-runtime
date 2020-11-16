@@ -84,6 +84,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
     if (allocator) {
         commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
+        commandList->internalUsage = internalUsage;
         returnValue = commandList->initialize(device, engineGroupType);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
@@ -101,7 +102,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
         UNRECOVERABLE_IF(nullptr == csr);
 
-        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, NEO::EngineGroupType::Copy == engineGroupType, returnValue);
+        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, NEO::EngineGroupType::Copy == engineGroupType, internalUsage, returnValue);
         if (!commandQueue) {
             commandList->destroy();
             commandList = nullptr;

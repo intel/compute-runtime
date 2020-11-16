@@ -94,12 +94,15 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (commandQueuePreemptionMode == NEO::PreemptionMode::Initial) {
         preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(commandQueuePreemptionMode,
                                                                                      devicePreemption) +
-                          NEO::PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*neoDevice) +
-                          NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice);
+                          NEO::PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*neoDevice);
+
+        if (NEO::Debugger::isDebugEnabled(internalUsage)) {
+            preemptionSize += NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice);
+        }
         statePreemption = devicePreemption;
     }
 
-    if (!commandQueueDebugCmdsProgrammed) {
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed) {
         debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(neoDevice->isDebuggerActive());
     }
 
@@ -204,7 +207,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     csr->programHardwareContext(child);
 
-    if (device->getL0Debugger()) {
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
         residencyContainer.push_back(device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
     }
 
@@ -213,7 +216,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             programPipelineSelect(child);
         }
 
-        if (!commandQueueDebugCmdsProgrammed && neoDevice->isDebuggerActive()) {
+        if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed && neoDevice->isDebuggerActive()) {
             NEO::PreambleHelper<GfxFamily>::programKernelDebugging(&child);
             commandQueueDebugCmdsProgrammed = true;
         }
@@ -228,7 +231,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
         if (commandQueuePreemptionMode == NEO::PreemptionMode::Initial) {
             NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(child, *neoDevice, csr->getPreemptionAllocation());
-            NEO::PreemptionHelper::programStateSip<GfxFamily>(child, *neoDevice);
+            if (NEO::Debugger::isDebugEnabled(internalUsage)) {
+                NEO::PreemptionHelper::programStateSip<GfxFamily>(child, *neoDevice);
+            }
             NEO::PreemptionHelper::programCmdStream<GfxFamily>(child,
                                                                devicePreemption,
                                                                commandQueuePreemptionMode,
@@ -238,7 +243,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         const bool sipKernelUsed = devicePreemption == NEO::PreemptionMode::MidThread ||
-                                   neoDevice->getDebugger() != nullptr;
+                                   (neoDevice->getDebugger() != nullptr && NEO::Debugger::isDebugEnabled(internalUsage));
+
         if (devicePreemption == NEO::PreemptionMode::MidThread) {
             residencyContainer.push_back(csr->getPreemptionAllocation());
         }
@@ -248,7 +254,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             residencyContainer.push_back(sipIsa);
         }
 
-        if (neoDevice->getDebugger()) {
+        if (NEO::Debugger::isDebugEnabled(internalUsage) && neoDevice->getDebugger()) {
             UNRECOVERABLE_IF(device->getDebugSurface() == nullptr);
             residencyContainer.push_back(device->getDebugSurface());
         }

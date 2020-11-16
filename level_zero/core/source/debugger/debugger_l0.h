@@ -71,8 +71,8 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     void captureStateBaseAddress(NEO::CommandContainer &container, SbaAddresses sba) override;
     void printTrackedAddresses(uint32_t contextId);
 
-    virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) const = 0;
-    virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) const = 0;
+    virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) = 0;
+    virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) = 0;
 
   protected:
     static bool isAnyTrackedAddressChanged(SbaAddresses sba) {
@@ -98,8 +98,8 @@ class DebuggerL0Hw : public DebuggerL0 {
   public:
     static DebuggerL0 *allocate(NEO::Device *device);
 
-    size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) const override;
-    void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) const override;
+    size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override;
+    void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) override;
 
   protected:
     DebuggerL0Hw(NEO::Device *device) : DebuggerL0(device){};

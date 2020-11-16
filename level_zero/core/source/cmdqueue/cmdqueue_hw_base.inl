@@ -66,7 +66,7 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
     *pSbaCmd = sbaCmd;
     gsbaInit = true;
 
-    if (device->getL0Debugger()) {
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
 
         NEO::Debugger::SbaAddresses sbaAddresses = {};
         sbaAddresses.BindlessSurfaceStateBaseAddress = sbaCmd.getBindlessSurfaceStateBaseAddress();
@@ -90,7 +90,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
 
     size_t size = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + NEO::EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(*device->getNEODevice());
 
-    if (device->getL0Debugger() != nullptr) {
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() != nullptr) {
         size += device->getL0Debugger()->getSbaTrackingCommandsSize(1);
     }
     return size;

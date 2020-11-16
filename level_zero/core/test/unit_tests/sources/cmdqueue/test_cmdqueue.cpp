@@ -40,6 +40,7 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
                                                           csr.get(),
                                                           &desc,
                                                           false,
+                                                          false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -61,6 +62,7 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueWithInvalidProductFamilyThenF
                                                           device,
                                                           csr.get(),
                                                           &desc,
+                                                          false,
                                                           false,
                                                           returnValue);
     ASSERT_EQ(nullptr, commandQueue);
@@ -109,7 +111,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
-    commandQueue->initialize(false);
+    commandQueue->initialize(false, false);
 
     uint32_t alignedSize = 4096u;
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
@@ -163,6 +165,7 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingNonCopyBlitComm
                                                           csr.get(),
                                                           &desc,
                                                           true,
+                                                          false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -185,6 +188,7 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommand
                                                           defaultCsr,
                                                           &desc,
                                                           true,
+                                                          false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -204,7 +208,7 @@ HWTEST2_F(CommandQueueDestroy, whenCommandQueueDestroyIsCalledPrintPrintfOutputI
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
-    commandQueue->initialize(false);
+    commandQueue->initialize(false, false);
 
     Mock<Kernel> kernel;
     commandQueue->printfFunctionContainer.push_back(&kernel);
@@ -228,6 +232,7 @@ HWTEST_F(CommandQueueCommands, givenCommandQueueWhenExecutingCommandListsThenHar
                                                           &csr,
                                                           &desc,
                                                           true,
+                                                          false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -265,6 +270,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandL
                                                           &csr,
                                                           &desc,
                                                           true,
+                                                          false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
@@ -397,7 +403,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     auto commandQueue = new MockCommandQueue<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false);
+    commandQueue->initialize(false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute);
     commandList->commandListPerThreadScratchSize = 100u;
@@ -424,7 +430,7 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     auto commandQueue = new MockCommandQueue<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false);
+    commandQueue->initialize(false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::Compute);
     commandList->commandListPerThreadScratchSize = 100u;
@@ -554,6 +560,7 @@ TEST_F(CommandQueueCreateNegativeTest, whenDeviceAllocationFailsDuringCommandQue
                                                           csr.get(),
                                                           &desc,
                                                           false,
+                                                          false,
                                                           returnValue);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
     ASSERT_EQ(nullptr, commandQueue);
@@ -608,7 +615,7 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
 
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, returnValue);
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, returnValue);
     EXPECT_NE(nullptr, commandQueue);
 
     const uint64_t expectedBitfield = maxNBitValue(numSubDevices);
