@@ -588,7 +588,10 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             if (retVal != 0) {
                 argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
             } else if (false == deviceName.empty()) {
-                std::string extensionsList = deviceName.empty() ? "" : getExtensionsList(hwInfo);
+                auto oclVersion = getOclVersionCompilerInternalOption(hwInfo.capabilityTable.clVersionSupport);
+                CompilerOptions::concatenateAppend(internalOptions, oclVersion);
+
+                std::string extensionsList = getExtensionsList(hwInfo);
                 if (requiresOpenClCFeatures(options)) {
                     OpenClCFeaturesContainer openclCFeatures;
                     getOpenclCFeaturesList(hwInfo, openclCFeatures);

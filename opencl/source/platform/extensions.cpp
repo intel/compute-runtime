@@ -163,4 +163,15 @@ std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enable
     return extensionsList;
 }
 
+std::string getOclVersionCompilerInternalOption(unsigned int oclVersion) {
+    switch (oclVersion) {
+    case 30:
+        return "-ocl-version=300 ";
+    case 21:
+        return "-ocl-version=210 ";
+    default:
+        return "-ocl-version=120 ";
+    }
+}
+
 } // namespace NEO

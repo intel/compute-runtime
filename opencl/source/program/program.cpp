@@ -26,6 +26,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/platform/extensions.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/source/program/kernel_info.h"
@@ -68,14 +69,7 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
 void Program::initInternalOptions(std::string &internalOptions) const {
     auto pClDevice = clDevices[0];
     auto force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;
-    auto enabledClVersion = pClDevice->getEnabledClVersion();
-    if (enabledClVersion == 30) {
-        internalOptions = "-ocl-version=300 ";
-    } else if (enabledClVersion == 21) {
-        internalOptions = "-ocl-version=210 ";
-    } else {
-        internalOptions = "-ocl-version=120 ";
-    }
+    internalOptions = getOclVersionCompilerInternalOption(pClDevice->getEnabledClVersion());
 
     if (force32BitAddressess && !isBuiltIn) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);

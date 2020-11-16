@@ -251,6 +251,9 @@ TEST_F(OfflineCompilerTests, WhenCompilingSourceThenCorrectExtensionsArePassed) 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
 
+    std::string oclVersionOption = getOclVersionCompilerInternalOption(DEFAULT_PLATFORM::hwInfo.capabilityTable.clVersionSupport);
+    EXPECT_THAT(internalOptions, ::testing::HasSubstr(oclVersionOption));
+
     OpenClCFeaturesContainer openclCFeatures;
     getOpenclCFeaturesList(DEFAULT_PLATFORM::hwInfo, openclCFeatures);
     for (auto &feature : openclCFeatures) {
