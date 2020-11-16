@@ -34,17 +34,10 @@ template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib) {
-        populate(device,
-                 EBuiltInOps::CopyBufferToBuffer,
-                 "",
-                 "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
-                 "CopyBufferToBufferMiddle", kernMiddle,
-                 "CopyBufferToBufferRightLeftover", kernRightLeftover);
-    }
+        : BuiltInOp(kernelsLib, device, true) {}
     template <typename OffsetType>
     bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo) const {
-        DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> kernelSplit1DBuilder;
+        DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> kernelSplit1DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         uintptr_t start = reinterpret_cast<uintptr_t>(operationParams.dstPtr) + operationParams.dstOffset.x;
@@ -120,8 +113,15 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
     Kernel *kernLeftLeftover = nullptr;
     Kernel *kernMiddle = nullptr;
     Kernel *kernRightLeftover = nullptr;
-    BuiltInOp(BuiltIns &kernelsLib)
-        : BuiltinDispatchInfoBuilder(kernelsLib) {
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
+        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+        if (populateKernels) {
+            populate(EBuiltInOps::CopyBufferToBuffer,
+                     "",
+                     "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
+                     "CopyBufferToBufferMiddle", kernMiddle,
+                     "CopyBufferToBufferRightLeftover", kernRightLeftover);
+        }
     }
 };
 
@@ -129,9 +129,8 @@ template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToBufferStateless> : public BuiltInOp<EBuiltInOps::CopyBufferToBuffer> {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::CopyBufferToBuffer>(kernelsLib) {
-        populate(device,
-                 EBuiltInOps::CopyBufferToBufferStateless,
+        : BuiltInOp<EBuiltInOps::CopyBufferToBuffer>(kernelsLib, device, false) {
+        populate(EBuiltInOps::CopyBufferToBufferStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
                  "CopyBufferToBufferMiddle", kernMiddle,
@@ -147,18 +146,11 @@ template <>
 class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib), kernelBytes{nullptr} {
-        populate(device,
-                 EBuiltInOps::CopyBufferRect,
-                 "",
-                 "CopyBufferRectBytes2d", kernelBytes[0],
-                 "CopyBufferRectBytes2d", kernelBytes[1],
-                 "CopyBufferRectBytes3d", kernelBytes[2]);
-    }
+        : BuiltInOp(kernelsLib, device, true) {}
 
     template <typename OffsetType>
     bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo) const {
-        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
+        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         size_t hostPtrSize = 0;
@@ -244,17 +236,25 @@ class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder
     }
 
   protected:
-    Kernel *kernelBytes[3];
-    BuiltInOp(BuiltIns &kernelsLib) : BuiltinDispatchInfoBuilder(kernelsLib), kernelBytes{nullptr} {};
+    Kernel *kernelBytes[3]{};
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
+        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+        if (populateKernels) {
+            populate(EBuiltInOps::CopyBufferRect,
+                     "",
+                     "CopyBufferRectBytes2d", kernelBytes[0],
+                     "CopyBufferRectBytes2d", kernelBytes[1],
+                     "CopyBufferRectBytes3d", kernelBytes[2]);
+        }
+    }
 };
 
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferRectStateless> : public BuiltInOp<EBuiltInOps::CopyBufferRect> {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::CopyBufferRect>(kernelsLib) {
-        populate(device,
-                 EBuiltInOps::CopyBufferRectStateless,
+        : BuiltInOp<EBuiltInOps::CopyBufferRect>(kernelsLib, device, false) {
+        populate(EBuiltInOps::CopyBufferRectStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyBufferRectBytes2d", kernelBytes[0],
                  "CopyBufferRectBytes2d", kernelBytes[1],
@@ -269,18 +269,11 @@ template <>
 class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib) {
-        populate(device,
-                 EBuiltInOps::FillBuffer,
-                 "",
-                 "FillBufferLeftLeftover", kernLeftLeftover,
-                 "FillBufferMiddle", kernMiddle,
-                 "FillBufferRightLeftover", kernRightLeftover);
-    }
+        : BuiltInOp(kernelsLib, device, true) {}
 
     template <typename OffsetType>
     bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo) const {
-        DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> kernelSplit1DBuilder;
+        DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> kernelSplit1DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         uintptr_t start = reinterpret_cast<uintptr_t>(operationParams.dstPtr) + operationParams.dstOffset.x;
@@ -347,15 +340,23 @@ class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
     Kernel *kernMiddle = nullptr;
     Kernel *kernRightLeftover = nullptr;
 
-    BuiltInOp(BuiltIns &kernelsLib) : BuiltinDispatchInfoBuilder(kernelsLib) {}
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
+        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+        if (populateKernels) {
+            populate(EBuiltInOps::FillBuffer,
+                     "",
+                     "FillBufferLeftLeftover", kernLeftLeftover,
+                     "FillBufferMiddle", kernMiddle,
+                     "FillBufferRightLeftover", kernRightLeftover);
+        }
+    }
 };
 
 template <>
 class BuiltInOp<EBuiltInOps::FillBufferStateless> : public BuiltInOp<EBuiltInOps::FillBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltInOp<EBuiltInOps::FillBuffer>(kernelsLib) {
-        populate(device,
-                 EBuiltInOps::FillBufferStateless,
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltInOp<EBuiltInOps::FillBuffer>(kernelsLib, device, false) {
+        populate(EBuiltInOps::FillBufferStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "FillBufferLeftLeftover", kernLeftLeftover,
                  "FillBufferMiddle", kernMiddle,
@@ -370,16 +371,7 @@ template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib) {
-        populate(device,
-                 EBuiltInOps::CopyBufferToImage3d,
-                 "",
-                 "CopyBufferToImage3dBytes", kernelBytes[0],
-                 "CopyBufferToImage3d2Bytes", kernelBytes[1],
-                 "CopyBufferToImage3d4Bytes", kernelBytes[2],
-                 "CopyBufferToImage3d8Bytes", kernelBytes[3],
-                 "CopyBufferToImage3d16Bytes", kernelBytes[4]);
-    }
+        : BuiltInOp(kernelsLib, device, true) {}
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
         return buildDispatchInfosTyped<uint32_t>(multiDispatchInfo);
@@ -387,11 +379,22 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
 
   protected:
     Kernel *kernelBytes[5] = {nullptr};
-    BuiltInOp(BuiltIns &kernelsLib) : BuiltinDispatchInfoBuilder(kernelsLib){};
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
+        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+        if (populateKernels) {
+            populate(EBuiltInOps::CopyBufferToImage3d,
+                     "",
+                     "CopyBufferToImage3dBytes", kernelBytes[0],
+                     "CopyBufferToImage3d2Bytes", kernelBytes[1],
+                     "CopyBufferToImage3d4Bytes", kernelBytes[2],
+                     "CopyBufferToImage3d8Bytes", kernelBytes[3],
+                     "CopyBufferToImage3d16Bytes", kernelBytes[4]);
+        }
+    }
 
     template <typename OffsetType>
     bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo) const {
-        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
+        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         DEBUG_BREAK_IF(!(((operationParams.srcPtr != nullptr) || (operationParams.srcMemObj != nullptr)) && (operationParams.dstPtr == nullptr)));
@@ -464,9 +467,8 @@ template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToImage3dStateless> : public BuiltInOp<EBuiltInOps::CopyBufferToImage3d> {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::CopyBufferToImage3d>(kernelsLib) {
-        populate(device,
-                 EBuiltInOps::CopyBufferToImage3dStateless,
+        : BuiltInOp<EBuiltInOps::CopyBufferToImage3d>(kernelsLib, device, false) {
+        populate(EBuiltInOps::CopyBufferToImage3dStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyBufferToImage3dBytes", kernelBytes[0],
                  "CopyBufferToImage3d2Bytes", kernelBytes[1],
@@ -484,16 +486,7 @@ template <>
 class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib) {
-        populate(device,
-                 EBuiltInOps::CopyImage3dToBuffer,
-                 "",
-                 "CopyImage3dToBufferBytes", kernelBytes[0],
-                 "CopyImage3dToBuffer2Bytes", kernelBytes[1],
-                 "CopyImage3dToBuffer4Bytes", kernelBytes[2],
-                 "CopyImage3dToBuffer8Bytes", kernelBytes[3],
-                 "CopyImage3dToBuffer16Bytes", kernelBytes[4]);
-    }
+        : BuiltInOp(kernelsLib, device, true) {}
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
         return buildDispatchInfosTyped<uint32_t>(multiDispatchInfo);
@@ -502,11 +495,22 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBu
   protected:
     Kernel *kernelBytes[5] = {nullptr};
 
-    BuiltInOp(BuiltIns &kernelsLib) : BuiltinDispatchInfoBuilder(kernelsLib) {}
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
+        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+        if (populateKernels) {
+            populate(EBuiltInOps::CopyImage3dToBuffer,
+                     "",
+                     "CopyImage3dToBufferBytes", kernelBytes[0],
+                     "CopyImage3dToBuffer2Bytes", kernelBytes[1],
+                     "CopyImage3dToBuffer4Bytes", kernelBytes[2],
+                     "CopyImage3dToBuffer8Bytes", kernelBytes[3],
+                     "CopyImage3dToBuffer16Bytes", kernelBytes[4]);
+        }
+    }
 
     template <typename OffsetType>
     bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo) const {
-        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
+        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         DEBUG_BREAK_IF(!((operationParams.srcPtr == nullptr) && ((operationParams.dstPtr != nullptr) || (operationParams.dstMemObj != nullptr))));
@@ -579,9 +583,8 @@ template <>
 class BuiltInOp<EBuiltInOps::CopyImage3dToBufferStateless> : public BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltInOp<EBuiltInOps::CopyImage3dToBuffer>(kernelsLib) {
-        populate(device,
-                 EBuiltInOps::CopyImage3dToBufferStateless,
+        : BuiltInOp<EBuiltInOps::CopyImage3dToBuffer>(kernelsLib, device, false) {
+        populate(EBuiltInOps::CopyImage3dToBufferStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyImage3dToBufferBytes", kernelBytes[0],
                  "CopyImage3dToBuffer2Bytes", kernelBytes[1],
@@ -599,15 +602,14 @@ template <>
 class BuiltInOp<EBuiltInOps::CopyImageToImage3d> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib), kernel(nullptr) {
-        populate(device,
-                 EBuiltInOps::CopyImageToImage3d,
+        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+        populate(EBuiltInOps::CopyImageToImage3d,
                  "",
                  "CopyImageToImage3d", kernel);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
-        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
+        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
         DEBUG_BREAK_IF(!((operationParams.srcPtr == nullptr) && (operationParams.dstPtr == nullptr)));
@@ -658,22 +660,21 @@ class BuiltInOp<EBuiltInOps::CopyImageToImage3d> : public BuiltinDispatchInfoBui
     }
 
   protected:
-    Kernel *kernel;
+    Kernel *kernel = nullptr;
 };
 
 template <>
 class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib), kernel(nullptr) {
-        populate(device,
-                 EBuiltInOps::FillImage3d,
+        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+        populate(EBuiltInOps::FillImage3d,
                  "",
                  "FillImage3d", kernel);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
-        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
+        DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
         DEBUG_BREAK_IF(!((operationParams.srcMemObj == nullptr) && (operationParams.srcPtr != nullptr) && (operationParams.dstPtr == nullptr)));
 
@@ -716,7 +717,7 @@ class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
     }
 
   protected:
-    Kernel *kernel;
+    Kernel *kernel = nullptr;
 };
 
 BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {

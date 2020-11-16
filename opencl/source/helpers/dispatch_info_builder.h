@@ -62,7 +62,11 @@ static constexpr uint32_t powConst(uint32_t base, uint32_t currExp) {
 template <SplitDispatch::Dim Dim, SplitDispatch::SplitMode Mode>
 class DispatchInfoBuilder {
   public:
-    DispatchInfoBuilder() = default;
+    DispatchInfoBuilder(ClDevice &clDevice) {
+        for (auto i = 0u; i < numDispatches; i++) {
+            dispatchInfos[i].setClDevice(&clDevice);
+        }
+    };
 
     void setKernel(Kernel *kernel) {
         for (auto &dispatchInfo : dispatchInfos) {
@@ -321,7 +325,7 @@ class DispatchInfoBuilder {
             Vec3<size_t> mainSWGS = {0, 0, 0};
             Vec3<size_t> rightSWGS = {mainNWGS.x, 0, 0};
 
-            DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> builder1D;
+            DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> builder1D(dispatchInfo.getClDevice());
 
             builder1D.setKernel(dispatchInfo.getKernel());
 
@@ -351,7 +355,7 @@ class DispatchInfoBuilder {
             Vec3<size_t> bottomSWGS = {0, mainNWGS.y, 0};
             Vec3<size_t> rightbottomSWGS = {mainNWGS.x, mainNWGS.y, 0};
 
-            DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::KernelSplit> builder2D;
+            DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::KernelSplit> builder2D(dispatchInfo.getClDevice());
 
             builder2D.setKernel(dispatchInfo.getKernel());
 
@@ -399,7 +403,7 @@ class DispatchInfoBuilder {
             Vec3<size_t> bottombackSWGS = {0, mainNWGS.y, mainNWGS.z};
             Vec3<size_t> rightbottombackSWGS = {mainNWGS.x, mainNWGS.y, mainNWGS.z};
 
-            DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::KernelSplit> builder3D;
+            DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::KernelSplit> builder3D(dispatchInfo.getClDevice());
 
             builder3D.setKernel(dispatchInfo.getKernel());
 

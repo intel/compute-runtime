@@ -59,8 +59,8 @@ struct EnqueueSvmMemFillTest : public ClDeviceFixture,
 
 HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilderThenItIsConfiguredWithBuitinOpParamsAndProducesDispatchInfo) {
     struct MockFillBufferBuilder : MockBuiltinDispatchInfoBuilder {
-        MockFillBufferBuilder(BuiltIns &kernelLib, BuiltinDispatchInfoBuilder *origBuilder, const void *pattern, size_t patternSize)
-            : MockBuiltinDispatchInfoBuilder(kernelLib, origBuilder),
+        MockFillBufferBuilder(BuiltIns &kernelLib, ClDevice &clDevice, BuiltinDispatchInfoBuilder *origBuilder, const void *pattern, size_t patternSize)
+            : MockBuiltinDispatchInfoBuilder(kernelLib, clDevice, origBuilder),
               pattern(pattern), patternSize(patternSize) {
         }
         void validateInput(const BuiltinOpParams &conf) const override {
@@ -86,7 +86,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
         EBuiltInOps::FillBuffer,
         pCmdQ->getContext(),
         pCmdQ->getDevice(),
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, &origBuilder, pattern, patternSize)));
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
     // call enqueue on mock builder

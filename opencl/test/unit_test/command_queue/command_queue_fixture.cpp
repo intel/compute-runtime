@@ -37,6 +37,7 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
     if (pDevice == nullptr) {
         if (this->device == nullptr) {
             this->device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+            createdDevice = true;
         }
         pDevice = this->device;
     }
@@ -74,7 +75,7 @@ void CommandQueueHwFixture::TearDown() {
     if (context) {
         context->release();
     }
-    if (device) {
+    if (createdDevice) {
         delete device;
     }
 }

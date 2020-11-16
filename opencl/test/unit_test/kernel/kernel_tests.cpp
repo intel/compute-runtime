@@ -2573,9 +2573,7 @@ TEST(KernelTest, GivenNormalKernelWhenGettingInstructionHeapSizeForExecutionMode
 
 TEST(KernelTest, WhenSettingKernelArgThenBuiltinDispatchInfoBuilderIsUsed) {
     struct MockBuiltinDispatchBuilder : BuiltinDispatchInfoBuilder {
-        MockBuiltinDispatchBuilder(BuiltIns &builtins)
-            : BuiltinDispatchInfoBuilder(builtins) {
-        }
+        using BuiltinDispatchInfoBuilder::BuiltinDispatchInfoBuilder;
 
         bool setExplicitArg(uint32_t argIndex, size_t argSize, const void *argVal, cl_int &err) const override {
             receivedArgs.push_back(std::make_tuple(argIndex, argSize, argVal));
@@ -2593,7 +2591,7 @@ TEST(KernelTest, WhenSettingKernelArgThenBuiltinDispatchInfoBuilderIsUsed) {
     kernel.kernelInfo.resizeKernelArgInfoAndRegisterParameter(1);
     kernel.mockKernel->initialize();
 
-    MockBuiltinDispatchBuilder mockBuilder(*device->getBuiltIns());
+    MockBuiltinDispatchBuilder mockBuilder(*device->getBuiltIns(), *device);
     kernel.kernelInfo.builtinDispatchBuilder = &mockBuilder;
 
     mockBuilder.valueToReturn = false;

@@ -46,6 +46,7 @@ class DeviceQueue : public BaseObject<_device_queue> {
     ~DeviceQueue() override;
 
     Device &getDevice();
+    ClDevice *getClDevice() const;
     Context &getContext() { return *context; }
     cl_uint getQueueSize() { return queueSize; }
     cl_command_queue_properties getCommandQueueProperties() const { return commandQueueProperties; }

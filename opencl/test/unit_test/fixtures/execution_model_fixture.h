@@ -125,6 +125,4 @@ struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
 
         return std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
     }
-
-    MockClDevice *device = nullptr;
 };

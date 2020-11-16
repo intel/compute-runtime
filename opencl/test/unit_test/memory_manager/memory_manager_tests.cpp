@@ -515,7 +515,7 @@ class MockPrintfHandler : public PrintfHandler {
 TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithBaseAddressOffset) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockKernelWithInternals kernel(*device);
-    MockMultiDispatchInfo multiDispatchInfo(kernel.mockKernel);
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
     SPatchAllocateStatelessPrintfSurface printfSurface;
     printfSurface.Token = iOpenCL::PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE;
     printfSurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateStatelessPrintfSurface));
@@ -551,7 +551,7 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
 HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithCpuAddress) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockKernelWithInternals kernel(*device);
-    MockMultiDispatchInfo multiDispatchInfo(kernel.mockKernel);
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
     SPatchAllocateStatelessPrintfSurface printfSurface;
     printfSurface.Token = iOpenCL::PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE;
     printfSurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateStatelessPrintfSurface));
@@ -593,7 +593,7 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
         DebugManager.flags.Force32bitAddressing.set(true);
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         MockKernelWithInternals kernel(*device);
-        MockMultiDispatchInfo multiDispatchInfo(kernel.mockKernel);
+        MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
         SPatchAllocateStatelessPrintfSurface printfSurface;
         printfSurface.Token = iOpenCL::PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE;
         printfSurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateStatelessPrintfSurface));

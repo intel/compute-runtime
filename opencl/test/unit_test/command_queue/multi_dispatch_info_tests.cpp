@@ -21,7 +21,7 @@ struct MultiDispatchInfoTest : public ::testing::Test {
 
 TEST_F(MultiDispatchInfoTest, GivenNullKernelWhenCreatingMultiDispatchInfoThenExpectationsAreMet) {
 
-    MockMultiDispatchInfo multiDispatchInfo(nullptr);
+    MockMultiDispatchInfo multiDispatchInfo(nullptr, nullptr);
 
     EXPECT_FALSE(multiDispatchInfo.begin()->usesSlm());
     EXPECT_FALSE(multiDispatchInfo.begin()->usesStatelessPrintfSurface());

@@ -5493,7 +5493,9 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
                    "globalWorkSize", NEO::FileLoggerInstance().getSizes(globalWorkSize, workDim, true),
                    "suggestedLocalWorkSize", suggestedLocalWorkSize);
 
-    retVal = validateObjects(commandQueue, kernel);
+    Kernel *pKernel = nullptr;
+    CommandQueue *pCommandQueue = nullptr;
+    retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), WithCastToInternal(kernel, &pKernel));
 
     if (CL_SUCCESS != retVal) {
         return retVal;
@@ -5509,7 +5511,6 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
         return retVal;
     }
 
-    auto pKernel = castToObjectOrAbort<Kernel>(kernel);
     if (!pKernel->isPatched()) {
         retVal = CL_INVALID_KERNEL;
         return retVal;
@@ -5520,7 +5521,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
         return retVal;
     }
 
-    pKernel->getSuggestedLocalWorkSize(workDim, globalWorkSize, globalWorkOffset, suggestedLocalWorkSize);
+    pKernel->getSuggestedLocalWorkSize(workDim, globalWorkSize, globalWorkOffset, suggestedLocalWorkSize, pCommandQueue->getClDevice());
 
     return retVal;
 }

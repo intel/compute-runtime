@@ -149,7 +149,7 @@ TEST_F(ThreadGroupPreemptionTests, disallowDefaultDeviceModeForValidKernelsInMdi
 
 TEST_F(ThreadGroupPreemptionTests, disallowDefaultDeviceModeWhenAtLeastOneInvalidKernelInMdi) {
     MockKernel schedulerKernel(program.get(), *kernelInfo, true);
-    DispatchInfo schedulerDispatchInfo(&schedulerKernel, 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
+    DispatchInfo schedulerDispatchInfo(device.get(), &schedulerKernel, 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
 
     PreemptionFlags flags = {};
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), &schedulerKernel);

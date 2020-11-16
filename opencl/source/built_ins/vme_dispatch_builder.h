@@ -22,8 +22,8 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
   public:
     VmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, ClDevice &device, EBuiltInOps::Type builtinOp,
                                   const char *kernelName)
-        : BuiltinDispatchInfoBuilder(kernelsLib) {
-        populate(device, builtinOp,
+        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+        populate(builtinOp,
                  mediaKernelsBuildOptions,
                  kernelName, vmeKernel);
         widthArgNum = vmeKernel->getKernelInfo().getArgNumByName("width");
@@ -70,7 +70,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         Vec3<size_t> gws = {numThreadsX * simdWidth, 1, 1};
         Vec3<size_t> lws = {vmeKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0], 1, 1};
 
-        DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::NoSplit> builder;
+        DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::NoSplit> builder(clDevice);
         builder.setDispatchGeometry(gws, lws, inOffset, gws, lws);
         builder.setKernel(vmeKernel);
         builder.bake(multiDispatchInfo);

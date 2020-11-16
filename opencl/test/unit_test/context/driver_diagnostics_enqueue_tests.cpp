@@ -751,7 +751,7 @@ TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEn
     int badSizeDimension;
     uint32_t workDim = globalWorkGroupSize[1] == 1 ? 1 : globalWorkGroupSize[2] == 1 ? 2 : 3;
 
-    DispatchInfo dispatchInfo(kernel, workDim, Vec3<size_t>(globalWorkGroupSize), Vec3<size_t>(0u, 0u, 0u), Vec3<size_t>(0u, 0u, 0u));
+    DispatchInfo dispatchInfo(&pCmdQ->getClDevice(), kernel, workDim, Vec3<size_t>(globalWorkGroupSize), Vec3<size_t>(0u, 0u, 0u), Vec3<size_t>(0u, 0u, 0u));
 
     auto computedLocalWorkgroupSize = computeWorkgroupSize(dispatchInfo);
 

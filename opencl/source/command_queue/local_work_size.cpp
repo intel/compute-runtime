@@ -414,9 +414,10 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
     auto kernel = dispatchInfo.getKernel();
 
     if (kernel != nullptr) {
-        const auto &hwInfo = kernel->getDevice().getHardwareInfo();
+        auto &device = dispatchInfo.getClDevice();
+        const auto &hwInfo = device.getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        auto isSimulation = kernel->getDevice().isSimulation();
+        auto isSimulation = device.isSimulation();
         if (kernel->requiresLimitedWorkgroupSize() && hwHelper.isSpecialWorkgroupSizeRequired(hwInfo, isSimulation)) {
             setSpecialWorkgroupSize(workGroupSize);
         } else if (DebugManager.flags.EnableComputeWorkSizeND.get()) {

@@ -132,15 +132,16 @@ WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t
     setMinWorkGroupSize();
 }
 WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
+    auto &device = dispatchInfo.getClDevice();
     this->maxWorkGroupSize = dispatchInfo.getKernel()->maxKernelWorkGroupSize;
     auto pExecutionEnvironment = dispatchInfo.getKernel()->getKernelInfo().patchInfo.executionEnvironment;
     this->hasBarriers = (pExecutionEnvironment != nullptr) && (pExecutionEnvironment->HasBarriers);
     this->simdSize = (uint32_t)dispatchInfo.getKernel()->getKernelInfo().getMaxSimdSize();
     this->slmTotalSize = (uint32_t)dispatchInfo.getKernel()->slmTotalSize;
-    this->coreFamily = dispatchInfo.getKernel()->getDevice().getHardwareInfo().platform.eRenderCoreFamily;
-    this->numThreadsPerSubSlice = (uint32_t)dispatchInfo.getKernel()->getDevice().getSharedDeviceInfo().maxNumEUsPerSubSlice *
-                                  dispatchInfo.getKernel()->getDevice().getSharedDeviceInfo().numThreadsPerEU;
-    this->localMemSize = (uint32_t)dispatchInfo.getKernel()->getDevice().getSharedDeviceInfo().localMemSize;
+    this->coreFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
+    this->numThreadsPerSubSlice = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
+                                  device.getSharedDeviceInfo().numThreadsPerEU;
+    this->localMemSize = static_cast<uint32_t>(device.getSharedDeviceInfo().localMemSize);
     setIfUseImg(dispatchInfo.getKernel());
     setMinWorkGroupSize();
 }

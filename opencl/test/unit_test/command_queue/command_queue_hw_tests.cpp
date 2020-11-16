@@ -738,8 +738,7 @@ void CloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src) {
 }
 
 struct MockBuilder : BuiltinDispatchInfoBuilder {
-    MockBuilder(NEO::BuiltIns &builtins) : BuiltinDispatchInfoBuilder(builtins) {
-    }
+    using BuiltinDispatchInfoBuilder::BuiltinDispatchInfoBuilder;
     bool buildDispatchInfos(MultiDispatchInfo &d) const override {
         wasBuildDispatchInfosWithBuiltinOpParamsCalled = true;
         paramsReceived.multiDispatchInfo.setBuiltinOpParams(d.peekBuiltinOpParams());
@@ -753,10 +752,10 @@ struct MockBuilder : BuiltinDispatchInfoBuilder {
         paramsReceived.offset = offset;
         wasBuildDispatchInfosWithKernelParamsCalled = true;
 
-        DispatchInfoBuilder<NEO::SplitDispatch::Dim::d3D, NEO::SplitDispatch::SplitMode::NoSplit> dib;
-        dib.setKernel(paramsToUse.kernel);
-        dib.setDispatchGeometry(dim, paramsToUse.gws, paramsToUse.elws, paramsToUse.offset);
-        dib.bake(d);
+        DispatchInfoBuilder<NEO::SplitDispatch::Dim::d3D, NEO::SplitDispatch::SplitMode::NoSplit> dispatchInfoBuilder(clDevice);
+        dispatchInfoBuilder.setKernel(paramsToUse.kernel);
+        dispatchInfoBuilder.setDispatchGeometry(dim, paramsToUse.gws, paramsToUse.elws, paramsToUse.offset);
+        dispatchInfoBuilder.bake(d);
 
         CloneMdi(paramsReceived.multiDispatchInfo, d);
         return true;
@@ -786,7 +785,7 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
             operation,
             *pContext,
             *pDevice,
-            std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns)));
+            std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
         mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
             operation,
@@ -1001,7 +1000,7 @@ HWTEST_F(CommandQueueHwTest, GivenBuiltinKernelWhenBuiltinDispatchInfoBuilderIsP
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
 
     MockKernelWithInternals mockKernelToUse(*pClDevice);
-    MockBuilder builder(*pDevice->getBuiltIns());
+    MockBuilder builder(*pDevice->getBuiltIns(), *pClDevice);
     builder.paramsToUse.gws.x = 11;
     builder.paramsToUse.elws.x = 13;
     builder.paramsToUse.offset.x = 17;

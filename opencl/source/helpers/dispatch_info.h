@@ -21,6 +21,7 @@
 namespace NEO {
 
 class Kernel;
+class ClDevice;
 struct TimestampPacketDependencies;
 
 class DispatchInfo {
@@ -30,10 +31,13 @@ class DispatchInfo {
     using EstimateCommandsMethodT = size_t(size_t, const HardwareInfo &, bool);
 
     DispatchInfo() = default;
-    DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)
-        : kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset) {}
-    DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset, Vec3<size_t> agws, Vec3<size_t> lws, Vec3<size_t> twgs, Vec3<size_t> nwgs, Vec3<size_t> swgs)
-        : kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset), agws(agws), lws(lws), twgs(twgs), nwgs(nwgs), swgs(swgs) {}
+    DispatchInfo(ClDevice *device, Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)
+        : pClDevice(device), kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset) {}
+    DispatchInfo(ClDevice *device, Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset, Vec3<size_t> agws, Vec3<size_t> lws, Vec3<size_t> twgs, Vec3<size_t> nwgs, Vec3<size_t> swgs)
+        : pClDevice(device), kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset), agws(agws), lws(lws), twgs(twgs), nwgs(nwgs), swgs(swgs) {}
+
+    ClDevice &getClDevice() const { return *pClDevice; }
+    void setClDevice(ClDevice *device) { pClDevice = device; }
     bool usesSlm() const;
     bool usesStatelessPrintfSurface() const;
     uint32_t getRequiredScratchSize() const;
@@ -65,6 +69,7 @@ class DispatchInfo {
     RegisteredMethodDispatcher<DispatchCommandMethodT, EstimateCommandsMethodT> dispatchEpilogueCommands;
 
   protected:
+    ClDevice *pClDevice = nullptr;
     bool canBePartitioned = false;
     Kernel *kernel = nullptr;
     uint32_t dim = 0;

@@ -673,6 +673,7 @@ TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenItHasCorre
     MockClDevice device{new MockDevice};
     MockKernelWithInternals kernel(device);
     DispatchInfo dispatchInfo;
+    dispatchInfo.setClDevice(&device);
     dispatchInfo.setKernel(kernel.mockKernel);
 
     auto threadsPerEu = defaultHwInfo->gtSystemInfo.ThreadCount / defaultHwInfo->gtSystemInfo.EUCount;
@@ -690,6 +691,7 @@ TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenHasBarrier
     MockClDevice device{new MockDevice};
     MockKernelWithInternals kernel(device);
     DispatchInfo dispatchInfo;
+    dispatchInfo.setClDevice(&device);
     dispatchInfo.setKernel(kernel.mockKernel);
 
     kernel.kernelInfo.patchInfo.executionEnvironment = nullptr;

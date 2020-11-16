@@ -96,6 +96,10 @@ Device &DeviceQueue::getDevice() {
     return device->getDevice();
 }
 
+ClDevice *DeviceQueue::getClDevice() const {
+    return device;
+}
+
 cl_int DeviceQueue::getCommandQueueInfo(cl_command_queue_info paramName,
                                         size_t paramValueSize, void *paramValue,
                                         size_t *paramValueSizeRet) {

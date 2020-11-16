@@ -56,11 +56,11 @@ struct BuiltinOpParams {
 
 class BuiltinDispatchInfoBuilder {
   public:
-    BuiltinDispatchInfoBuilder(BuiltIns &kernelLib) : kernelsLib(kernelLib) {}
+    BuiltinDispatchInfoBuilder(BuiltIns &kernelLib, ClDevice &device) : kernelsLib(kernelLib), clDevice(device) {}
     virtual ~BuiltinDispatchInfoBuilder() = default;
 
     template <typename... KernelsDescArgsT>
-    void populate(ClDevice &device, EBuiltInOps::Type operation, ConstStringRef options, KernelsDescArgsT &&... desc);
+    void populate(EBuiltInOps::Type operation, ConstStringRef options, KernelsDescArgsT &&... desc);
 
     virtual bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const {
         return false;
@@ -102,6 +102,7 @@ class BuiltinDispatchInfoBuilder {
     std::unique_ptr<Program> prog;
     std::vector<std::unique_ptr<Kernel>> usedKernels;
     BuiltIns &kernelsLib;
+    ClDevice &clDevice;
 };
 
 class BuiltInDispatchBuilderOp {

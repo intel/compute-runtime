@@ -1895,7 +1895,7 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenPrintfHandlerWhenPatchingRefl
 
     context.setDefaultDeviceQueue(&devQueue);
 
-    MockMultiDispatchInfo multiDispatchInfo(parentKernel);
+    MockMultiDispatchInfo multiDispatchInfo(device, parentKernel);
     PrintfHandler *printfHandler = PrintfHandler::create(multiDispatchInfo, *device);
     printfHandler->prepareDispatch(multiDispatchInfo);
 
@@ -1923,7 +1923,7 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenNoPrintfSurfaceWhenPatchingRe
 
     context.setDefaultDeviceQueue(&devQueue);
 
-    MockMultiDispatchInfo multiDispatchInfo(parentKernel);
+    MockMultiDispatchInfo multiDispatchInfo(device, parentKernel);
     PrintfHandler *printfHandler = PrintfHandler::create(multiDispatchInfo, *device);
 
     parentKernel->patchReflectionSurface<true>(&devQueue, printfHandler);

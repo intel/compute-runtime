@@ -62,7 +62,7 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenVariousInputWhenGettingSugge
     Vec3<size_t> elws{0, 0, 0};
     Vec3<size_t> gws{128, 128, 128};
     Vec3<size_t> offset{0, 0, 0};
-    DispatchInfo dispatchInfo{pKernel, 1, gws, elws, offset};
+    DispatchInfo dispatchInfo{pDevice, pKernel, 1, gws, elws, offset};
     auto expectedLws = computeWorkgroupSize(dispatchInfo);
     EXPECT_GT(expectedLws.x, 1u);
 
@@ -107,7 +107,7 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenKernelWithExecutionEnvironme
     Vec3<size_t> elws{0, 0, 0};
     Vec3<size_t> gws{128, 128, 128};
     Vec3<size_t> offset{0, 0, 0};
-    const DispatchInfo dispatchInfo{kernelWithExecutionEnvironmentPatch.get(), workDim, gws, elws, offset};
+    const DispatchInfo dispatchInfo{pDevice, kernelWithExecutionEnvironmentPatch.get(), workDim, gws, elws, offset};
     auto expectedLws = computeWorkgroupSize(dispatchInfo);
     EXPECT_GT(expectedLws.x * expectedLws.y * expectedLws.z, 1u);
 

@@ -412,7 +412,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
     const size_t globalOffsets[3] = {0, 0, 0};
     const size_t workItems[3] = {1, 1, 1};
 
-    DispatchInfo dispatchInfo(parentKernel.get(), 1, workItems, nullptr, globalOffsets);
+    DispatchInfo dispatchInfo(device, parentKernel.get(), 1, workItems, nullptr, globalOffsets);
     MultiDispatchInfo multiDispatchInfo(parentKernel.get());
     multiDispatchInfo.push(dispatchInfo);
     HardwareInterface<FamilyType>::dispatchWalker(

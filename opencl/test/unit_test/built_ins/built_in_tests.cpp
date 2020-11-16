@@ -937,35 +937,35 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, WhenGetttingSchedulerKernelForSecondTi
 }
 
 TEST_F(BuiltInTests, GivenUnsupportedBuildTypeWhenBuildingDispatchInfoThenFalseIsReturned) {
-    auto &bs = *pDevice->getBuiltIns();
-    BuiltinDispatchInfoBuilder bdib{bs};
+    auto &builtIns = *pDevice->getBuiltIns();
+    BuiltinDispatchInfoBuilder dispatchInfoBuilder{builtIns, *pClDevice};
     BuiltinOpParams params;
 
     MultiDispatchInfo multiDispatchInfo(params);
-    auto ret = bdib.buildDispatchInfos(multiDispatchInfo);
+    auto ret = dispatchInfoBuilder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_FALSE(ret);
     ASSERT_EQ(0U, multiDispatchInfo.size());
 
-    ret = bdib.buildDispatchInfos(multiDispatchInfo, nullptr, 0, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
+    ret = dispatchInfoBuilder.buildDispatchInfos(multiDispatchInfo, nullptr, 0, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
     EXPECT_FALSE(ret);
     EXPECT_EQ(0U, multiDispatchInfo.size());
 }
 
 TEST_F(BuiltInTests, GivenDefaultBuiltinDispatchInfoBuilderWhenValidateDispatchIsCalledThenClSuccessIsReturned) {
-    auto &bs = *pDevice->getBuiltIns();
-    BuiltinDispatchInfoBuilder bdib{bs};
-    auto ret = bdib.validateDispatch(nullptr, 1, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
+    auto &builtIns = *pDevice->getBuiltIns();
+    BuiltinDispatchInfoBuilder dispatchInfoBuilder{builtIns, *pClDevice};
+    auto ret = dispatchInfoBuilder.validateDispatch(nullptr, 1, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
     EXPECT_EQ(CL_SUCCESS, ret);
 }
 
 TEST_F(BuiltInTests, WhenSettingExplictArgThenTrueIsReturned) {
-    auto &bs = *pDevice->getBuiltIns();
-    BuiltinDispatchInfoBuilder bdib{bs};
+    auto &builtIns = *pDevice->getBuiltIns();
+    BuiltinDispatchInfoBuilder dispatchInfoBuilder{builtIns, *pClDevice};
     MultiDispatchInfo multiDispatchInfo;
     BuiltinOpParams params;
 
     cl_int err;
-    auto ret = bdib.setExplicitArg(1, 5, nullptr, err);
+    auto ret = dispatchInfoBuilder.setExplicitArg(1, 5, nullptr, err);
     EXPECT_TRUE(ret);
 }
 

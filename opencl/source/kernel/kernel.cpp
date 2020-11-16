@@ -988,7 +988,7 @@ cl_int Kernel::setKernelExecutionType(cl_execution_info_kernel_type_intel execut
 }
 
 void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *globalWorkSize, const size_t *globalWorkOffset,
-                                       size_t *localWorkSize) {
+                                       size_t *localWorkSize, ClDevice &clDevice) {
     UNRECOVERABLE_IF((workDim == 0) || (workDim > 3));
     UNRECOVERABLE_IF(globalWorkSize == nullptr);
     Vec3<size_t> elws{0, 0, 0};
@@ -1007,7 +1007,7 @@ void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *glob
         }
     }
 
-    const DispatchInfo dispatchInfo{this, workDim, gws, elws, offset};
+    const DispatchInfo dispatchInfo{&clDevice, this, workDim, gws, elws, offset};
     auto suggestedLws = computeWorkgroupSize(dispatchInfo);
 
     localWorkSize[0] = suggestedLws.x;

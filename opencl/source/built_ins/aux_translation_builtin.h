@@ -29,7 +29,7 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
         multiDispatchInfo.setBuiltinOpParams(operationParams);
 
         for (auto &memObj : *multiDispatchInfo.getMemObjsForAuxTranslation()) {
-            DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder;
+            DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder(clDevice);
             size_t allocationSize = alignUp(memObj->getSize(), 512);
 
             UNRECOVERABLE_IF(builder.getMaxNumDispatches() != 1);

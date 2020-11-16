@@ -86,7 +86,7 @@ TEST_F(DispatchInfoTest, GivenUserGeometryWhenDispatchInfoIsCreatedThenValuesAre
     Vec3<size_t> gws({256, 256, 256});
     Vec3<size_t> elws({16, 16, 16});
     Vec3<size_t> offset({1, 2, 3});
-    std::unique_ptr<DispatchInfo> dispatchInfo(new DispatchInfo(pKernel, 3, gws, elws, offset));
+    std::unique_ptr<DispatchInfo> dispatchInfo(new DispatchInfo(pClDevice, pKernel, 3, gws, elws, offset));
 
     EXPECT_NE(nullptr, dispatchInfo->getKernel());
     EXPECT_EQ(1024u, dispatchInfo->getRequiredScratchSize());
@@ -119,7 +119,7 @@ TEST_F(DispatchInfoTest, GivenFullGeometryWhenDispatchInfoIsCreatedThenValuesAre
     Vec3<size_t> twgs({8, 8, 8});
     Vec3<size_t> nwgs({8, 8, 8});
     Vec3<size_t> swgs({0, 0, 0});
-    std::unique_ptr<DispatchInfo> dispatchInfo(new DispatchInfo(pKernel, 3, gws, elws, offset, agws, lws, twgs, nwgs, swgs));
+    std::unique_ptr<DispatchInfo> dispatchInfo(new DispatchInfo(pClDevice, pKernel, 3, gws, elws, offset, agws, lws, twgs, nwgs, swgs));
 
     EXPECT_NE(nullptr, dispatchInfo->getKernel());
     EXPECT_EQ(1024u, dispatchInfo->getRequiredScratchSize());
@@ -187,7 +187,7 @@ TEST_F(DispatchInfoTest, GivenUserGeometryWhenMultiDispatchInfoIsCreatedThenValu
     Vec3<size_t> elws({16, 16, 16});
     Vec3<size_t> offset({1, 2, 3});
 
-    DispatchInfo dispatchInfo(pKernel, 3, gws, elws, offset);
+    DispatchInfo dispatchInfo(pClDevice, pKernel, 3, gws, elws, offset);
 
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
@@ -220,7 +220,7 @@ TEST_F(DispatchInfoTest, GivenFullGeometryWhenMultiDispatchInfoIsCreatedThenValu
     Vec3<size_t> nwgs({8, 8, 8});
     Vec3<size_t> swgs({0, 0, 0});
 
-    DispatchInfo dispatchInfo(pKernel, 3, gws, elws, offset, agws, lws, twgs, nwgs, swgs);
+    DispatchInfo dispatchInfo(pClDevice, pKernel, 3, gws, elws, offset, agws, lws, twgs, nwgs, swgs);
 
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
@@ -277,9 +277,9 @@ TEST_F(DispatchInfoTest, givenKernelWhenMultiDispatchInfoIsCreatedThenQueryParen
     std::unique_ptr<MockKernel> baseKernel(MockKernel::create(*pDevice, pProgram));
     std::unique_ptr<MockKernel> builtInKernel(MockKernel::create(*pDevice, pProgram));
     builtInKernel->isBuiltIn = true;
-    DispatchInfo parentKernelDispatchInfo(parentKernel.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
-    DispatchInfo baseDispatchInfo(baseKernel.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
-    DispatchInfo builtInDispatchInfo(builtInKernel.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+    DispatchInfo parentKernelDispatchInfo(pClDevice, parentKernel.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+    DispatchInfo baseDispatchInfo(pClDevice, baseKernel.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+    DispatchInfo builtInDispatchInfo(pClDevice, builtInKernel.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
 
     {
         MultiDispatchInfo multiDispatchInfo(parentKernel.get());

@@ -34,8 +34,9 @@ struct CommandQueueHwFixture {
     virtual void TearDown();
 
     CommandQueue *pCmdQ = nullptr;
-    ClDevice *device = nullptr;
+    MockClDevice *device = nullptr;
     MockContext *context = nullptr;
+    bool createdDevice = false;
 };
 
 struct OOQueueFixture : public CommandQueueHwFixture {
