@@ -612,7 +612,7 @@ TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithIn
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSystemPointerIsPassedItIsProperlySetInKernel) {
+TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSystemPointerIsPassedThenItIsProperlySetInKernel) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableSharedSystemUsmSupport.set(1u);
 
