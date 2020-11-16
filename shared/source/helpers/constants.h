@@ -71,6 +71,13 @@ enum class BlitDirection : uint32_t {
     HostPtrToImage,
     ImageToHostPtr
 };
+
+enum PostBlitMode : int32_t {
+    Default = -1,
+    MiArbCheck = 0,
+    MiFlush = 1,
+    None = 2
+};
 } // namespace BlitterConstants
 
 namespace CommonConstants {

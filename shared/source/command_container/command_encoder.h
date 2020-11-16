@@ -309,4 +309,12 @@ struct EncodeMemoryPrefetch {
     static void programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, const HardwareInfo &hwInfo);
     static size_t getSizeForMemoryPrefetch();
 };
+
+template <typename GfxFamily>
+struct EncodeMiArbCheck {
+    using MI_ARB_CHECK = typename GfxFamily::MI_ARB_CHECK;
+
+    static void program(LinearStream &commandStream);
+    static size_t getCommandSize();
+};
 } // namespace NEO

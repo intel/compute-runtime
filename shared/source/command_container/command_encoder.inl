@@ -569,4 +569,13 @@ void EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(LinearStream &comman
 template <typename GfxFamily>
 size_t EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch() { return 0; }
 
+template <typename Family>
+void EncodeMiArbCheck<Family>::program(LinearStream &commandStream) {
+    auto miArbCheckStream = commandStream.getSpaceForCmd<MI_ARB_CHECK>();
+    *miArbCheckStream = Family::cmdInitArbCheck;
+}
+
+template <typename Family>
+size_t EncodeMiArbCheck<Family>::getCommandSize() { return sizeof(MI_ARB_CHECK); }
+
 } // namespace NEO

@@ -143,3 +143,9 @@ GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOffThenExpec
     auto itorLRI = find<MI_LOAD_REGISTER_IMM *>(commands.begin(), commands.end());
     EXPECT_EQ(itorLRI, commands.end());
 }
+
+using Gen12lpCommandEncodeTest = testing::Test;
+
+GEN12LPTEST_F(Gen12lpCommandEncodeTest, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue) {
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
+}

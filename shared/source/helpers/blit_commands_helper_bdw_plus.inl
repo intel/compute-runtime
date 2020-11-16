@@ -82,4 +82,9 @@ size_t BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush() {
     return 0u;
 }
 
+template <typename GfxFamily>
+bool BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired() {
+    return false;
+}
+
 } // namespace NEO

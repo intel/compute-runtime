@@ -144,5 +144,6 @@ struct BlitCommandsHelper {
     static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void programGlobalSequencerFlush(LinearStream &commandStream);
     static size_t getSizeForGlobalSequencerFlush();
+    static bool miArbCheckWaRequired();
 };
 } // namespace NEO

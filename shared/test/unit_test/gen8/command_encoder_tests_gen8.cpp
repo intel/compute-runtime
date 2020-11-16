@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 
 #include "test.h"
 
@@ -14,4 +15,8 @@ using namespace NEO;
 using Gen8CommandEncodeTest = testing::Test;
 GEN8TEST_F(Gen8CommandEncodeTest, givenGen8PlatformWhenDoBindingTablePrefetchIsCalledThenReturnsTrue) {
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::doBindingTablePrefetch());
+}
+
+GEN8TEST_F(Gen8CommandEncodeTest, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue) {
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
 }

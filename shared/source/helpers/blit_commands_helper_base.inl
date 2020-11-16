@@ -42,23 +42,44 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(const RootDeviceEnviron
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream) {
-    if (DebugManager.flags.PostBlitCommand.get() == 0) {
-        auto miArbCheckStream = linearStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>();
-        *miArbCheckStream = GfxFamily::cmdInitArbCheck;
-    } else if (DebugManager.flags.PostBlitCommand.get() == 1) {
+    if (DebugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
+        switch (DebugManager.flags.PostBlitCommand.get()) {
+        case BlitterConstants::PostBlitMode::MiArbCheck:
+            EncodeMiArbCheck<GfxFamily>::program(linearStream);
+            return;
+        case BlitterConstants::PostBlitMode::MiFlush:
+            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, false, false);
+            return;
+        default:
+            return;
+        }
+    }
+
+    if (BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired()) {
         EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, false, false);
     }
+
+    EncodeMiArbCheck<GfxFamily>::program(linearStream);
 }
 
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
-    if (DebugManager.flags.PostBlitCommand.get() == 0) {
-        return sizeof(typename GfxFamily::MI_ARB_CHECK);
-    } else if (DebugManager.flags.PostBlitCommand.get() == 1) {
-        return sizeof(typename GfxFamily::MI_FLUSH_DW);
+    if (DebugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
+        switch (DebugManager.flags.PostBlitCommand.get()) {
+        case BlitterConstants::PostBlitMode::MiArbCheck:
+            return EncodeMiArbCheck<GfxFamily>::getCommandSize();
+        case BlitterConstants::PostBlitMode::MiFlush:
+            return EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+        default:
+            return 0;
+        }
     }
 
-    return 0;
+    if (BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired()) {
+        return (EncodeMiArbCheck<GfxFamily>::getCommandSize() + EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
+    }
+
+    return EncodeMiArbCheck<GfxFamily>::getCommandSize();
 }
 
 template <typename GfxFamily>

@@ -63,3 +63,9 @@ GEN9TEST_F(CommandEncoderTest, givenSLMSetCorrectMMIO) {
     EXPECT_EQ(cmd->getRegisterOffset(), 0x7034u);
     EXPECT_EQ(cmd->getDataDword(), 0x60000321u);
 }
+
+using Gen9CommandEncodeTest = testing::Test;
+
+GEN9TEST_F(Gen9CommandEncodeTest, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue) {
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
+}
