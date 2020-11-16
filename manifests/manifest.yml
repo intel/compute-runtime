@@ -42,11 +42,11 @@ components:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: bdce23639f614d7bac6790a74323c0a8f0a3cfe5-1468
+    revision: a7f41ae89e3c0ed35c308e5b8c8bb1c8db1a78bb-1543
   wsl:
     branch: wsl
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-1533
+converter: M-1543
 version: '1'
