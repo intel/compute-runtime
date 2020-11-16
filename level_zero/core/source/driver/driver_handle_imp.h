@@ -44,6 +44,7 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t freeMem(const void *ptr) override;
     NEO::MemoryManager *getMemoryManager() override;
     void setMemoryManager(NEO::MemoryManager *memoryManager) override;
+    MOCKABLE_VIRTUAL void *importFdHandle(ze_device_handle_t hDevice, uint64_t handle);
     ze_result_t closeIpcMemHandle(const void *ptr) override;
     ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override;
     ze_result_t openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc_mem_handle_t handle,

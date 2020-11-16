@@ -27,21 +27,20 @@ ze_result_t DriverHandleImp::getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
-ze_result_t DriverHandleImp::openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc_mem_handle_t pIpcHandle,
-                                              ze_ipc_memory_flag_t flags, void **ptr) {
+void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, uint64_t handle) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
-    uint64_t handle = *(pIpcHandle.data);
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
-                                                      NEO::GraphicsAllocation::AllocationType::BUFFER, neoDevice->getDeviceBitfield()};
+                                                      NEO::GraphicsAllocation::AllocationType::BUFFER,
+                                                      neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     NEO::GraphicsAllocation *alloc =
         this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandle,
                                                                            unifiedMemoryProperties,
                                                                            false);
     if (alloc == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return nullptr;
     }
 
     NEO::SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
@@ -53,7 +52,17 @@ ze_result_t DriverHandleImp::openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc
 
     this->getSvmAllocsManager()->insertSVMAlloc(allocData);
 
-    *ptr = reinterpret_cast<void *>(alloc->getGpuAddress());
+    return reinterpret_cast<void *>(alloc->getGpuAddress());
+}
+
+ze_result_t DriverHandleImp::openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc_mem_handle_t pIpcHandle,
+                                              ze_ipc_memory_flag_t flags, void **ptr) {
+    uint64_t handle = *(pIpcHandle.data);
+
+    *ptr = this->importFdHandle(hDevice, handle);
+    if (nullptr == *ptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     return ZE_RESULT_SUCCESS;
 }
@@ -137,6 +146,17 @@ ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, const ze
             if (externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD) {
+            const ze_external_memory_import_fd_t *externalMemoryImportDesc =
+                reinterpret_cast<const ze_external_memory_import_fd_t *>(extendedDesc);
+            if (externalMemoryImportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+            *ptr = this->importFdHandle(hDevice, externalMemoryImportDesc->fd);
+            if (nullptr == *ptr) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            return ZE_RESULT_SUCCESS;
         }
     }
 
