@@ -30,7 +30,7 @@ struct GetDeviceInfoP : public ApiFixture<>, public ::testing::TestWithParam<uin
 
 typedef GetDeviceInfoP GetDeviceGlInfoStr;
 
-TEST_P(GetDeviceGlInfoStr, StringType) {
+TEST_P(GetDeviceGlInfoStr, WhenGettingDeviceExtensionsThenExtensionsAreReportedCorrectly) {
     char *paramValue = nullptr;
     size_t paramRetSize = 0;
 
