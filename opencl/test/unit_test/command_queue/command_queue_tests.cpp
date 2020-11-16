@@ -26,6 +26,7 @@
 #include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
@@ -35,6 +36,7 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
 
@@ -1272,4 +1274,129 @@ HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingBlockedEnqueu
     auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Concurrent);
     mockCmdQ->isQueueBlocked();
+}
+
+struct CommandQueueOnSpecificEngineTests : ::testing::Test {
+    static void fillProperties(cl_queue_properties *properties, cl_uint queueFamily, cl_uint queueIndex) {
+        properties[0] = CL_QUEUE_FAMILY_INTEL;
+        properties[1] = queueFamily;
+        properties[2] = CL_QUEUE_INDEX_INTEL;
+        properties[3] = queueIndex;
+        properties[4] = 0;
+    }
+
+    template <typename GfxFamily, int ccsCount, int bcsCount>
+    class MockHwHelper : public HwHelperHw<GfxFamily> {
+      public:
+        const HwHelper::EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
+            HwHelper::EngineInstancesContainer result{};
+            for (int i = 0; i < ccsCount; i++) {
+                result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+            }
+            for (int i = 0; i < bcsCount; i++) {
+                result.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
+            }
+            return result;
+        }
+
+        void addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
+                                    EngineControl &engine, const HardwareInfo &hwInfo) const override {
+            switch (engine.getEngineType()) {
+            case aub_stream::ENGINE_CCS:
+                engineGroups[static_cast<int>(EngineGroupType::Compute)].push_back(engine);
+                break;
+            case aub_stream::ENGINE_BCS:
+                engineGroups[static_cast<int>(EngineGroupType::Copy)].push_back(engine);
+                break;
+            default:
+                break;
+            }
+        }
+    };
+
+    template <typename GfxFamily, typename HwHelperType>
+    auto overrideHwHelper() {
+        return RAIIHwHelperFactory<HwHelperType>{::defaultHwInfo->platform.eRenderCoreFamily};
+    }
+};
+
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseCorrectEngine) {
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1>>();
+    MockContext context{};
+    cl_command_queue_properties properties[5] = {};
+
+    fillProperties(properties, 0, 0);
+    EngineControl &engineCcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, false, false);
+    MockCommandQueue queueRcs(&context, context.getDevice(0), properties);
+    EXPECT_EQ(&engineCcs, &queueRcs.getGpgpuEngine());
+    EXPECT_FALSE(queueRcs.isCopyOnly);
+
+    fillProperties(properties, 1, 0);
+    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, false, false);
+    MockCommandQueue queueBcs(&context, context.getDevice(0), properties);
+    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
+    EXPECT_TRUE(queueBcs.isCopyOnly);
+    EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
+}
+
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1>>();
+    UltClDeviceFactory deviceFactory{1, 2};
+    MockContext context{deviceFactory.rootDevices[0]};
+    cl_command_queue_properties properties[5] = {};
+
+    fillProperties(properties, 0, 0);
+    EngineControl &defaultEngine = context.getDevice(0)->getDefaultEngine();
+    MockCommandQueue defaultQueue(&context, context.getDevice(0), properties);
+    EXPECT_EQ(&defaultEngine, &defaultQueue.getGpgpuEngine());
+    EXPECT_FALSE(defaultQueue.isCopyOnly);
+}
+
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1>>();
+    UltClDeviceFactory deviceFactory{1, 2};
+    MockContext context{deviceFactory.subDevices[0]};
+    cl_command_queue_properties properties[5] = {};
+
+    fillProperties(properties, 0, 0);
+    EngineControl &engineCcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, false, false);
+    MockCommandQueue queueRcs(&context, context.getDevice(0), properties);
+    EXPECT_EQ(&engineCcs, &queueRcs.getGpgpuEngine());
+    EXPECT_FALSE(queueRcs.isCopyOnly);
+
+    fillProperties(properties, 1, 0);
+    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, false, false);
+    MockCommandQueue queueBcs(&context, context.getDevice(0), properties);
+    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
+    EXPECT_TRUE(queueBcs.isCopyOnly);
+    EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
+}
+
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1>>();
+    MockContext context{};
+    cl_command_queue_properties properties[5] = {};
+
+    fillProperties(properties, 0, 0);
+    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, false, false);
+    MockCommandQueue queueBcs(&context, context.getDevice(0), properties);
+    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
+    EXPECT_TRUE(queueBcs.isCopyOnly);
+    EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
+}
+
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenBliterDisabledAndBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableBlitterOperationsSupport.set(0);
+
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1>>();
+    MockContext context{};
+    cl_command_queue_properties properties[5] = {};
+
+    fillProperties(properties, 0, 0);
+    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, false, false);
+    MockCommandQueue queueBcs(&context, context.getDevice(0), properties);
+    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
+    EXPECT_TRUE(queueBcs.isCopyOnly);
+    EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
 }

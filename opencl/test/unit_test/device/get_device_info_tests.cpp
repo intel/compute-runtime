@@ -6,10 +6,13 @@
  */
 
 #include "shared/source/helpers/get_info.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
+#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "test.h"
 
@@ -677,6 +680,111 @@ TEST(GetDeviceInfo, WhenQueryingGenericAddressSpaceSupportThenProperValueIsRetur
     EXPECT_EQ(expectedGenericAddressSpaceSupport, genericAddressSpaceSupport);
 }
 
+template <typename GfxFamily, int ccsCount, int bcsCount>
+class MockHwHelper : public HwHelperHw<GfxFamily> {
+  public:
+    const HwHelper::EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
+        HwHelper::EngineInstancesContainer result{};
+        for (int i = 0; i < ccsCount; i++) {
+            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+        }
+        for (int i = 0; i < bcsCount; i++) {
+            result.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
+        }
+        return result;
+    }
+
+    void addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
+                                EngineControl &engine, const HardwareInfo &hwInfo) const override {
+        switch (engine.getEngineType()) {
+        case aub_stream::ENGINE_CCS:
+            engineGroups[static_cast<int>(EngineGroupType::Compute)].push_back(engine);
+            break;
+        case aub_stream::ENGINE_BCS:
+            engineGroups[static_cast<int>(EngineGroupType::Copy)].push_back(engine);
+            break;
+        default:
+            break;
+        }
+    }
+
+    static auto overrideHwHelper() {
+        return RAIIHwHelperFactory<MockHwHelper<GfxFamily, ccsCount, bcsCount>>{::defaultHwInfo->platform.eRenderCoreFamily};
+    }
+};
+
+using GetDeviceInfoQueueFamilyTest = ::testing::Test;
+
+HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThenReturnCorrectFamilies) {
+    auto raiiHwHelper = MockHwHelper<FamilyType, 3, 1>::overrideHwHelper();
+    UltClDeviceFactory deviceFactory{1, 0};
+    ClDevice &clDevice = *deviceFactory.rootDevices[0];
+    size_t paramRetSize{};
+
+    cl_uint numQueueFamilies{};
+    auto retVal = clDevice.getDeviceInfo(CL_DEVICE_NUM_QUEUE_FAMILIES_INTEL, sizeof(numQueueFamilies), &numQueueFamilies, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, numQueueFamilies);
+
+    cl_queue_family_properties_intel families[static_cast<int>(EngineGroupType::MaxEngineGroups)];
+    retVal = clDevice.getDeviceInfo(CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, sizeof(families), families, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, paramRetSize / sizeof(cl_queue_family_properties_intel));
+
+    EXPECT_EQ(CL_QUEUE_CAPABILITY_ALL_INTEL, families[0].capabilities);
+    EXPECT_EQ(3u, families[0].count);
+    EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
+
+    EXPECT_EQ(CL_QUEUE_CAPABILITY_ALL_INTEL, families[1].capabilities);
+    EXPECT_EQ(1u, families[1].count);
+    EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[1].properties);
+}
+
+HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenReturnCorrectFamilies) {
+    auto raiiHwHelper = MockHwHelper<FamilyType, 3, 1>::overrideHwHelper();
+    UltClDeviceFactory deviceFactory{1, 2};
+    ClDevice &clDevice = *deviceFactory.subDevices[1];
+    size_t paramRetSize{};
+
+    cl_uint numQueueFamilies{};
+    auto retVal = clDevice.getDeviceInfo(CL_DEVICE_NUM_QUEUE_FAMILIES_INTEL, sizeof(numQueueFamilies), &numQueueFamilies, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, numQueueFamilies);
+
+    cl_queue_family_properties_intel families[static_cast<int>(EngineGroupType::MaxEngineGroups)];
+    retVal = clDevice.getDeviceInfo(CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, sizeof(families), families, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, paramRetSize / sizeof(cl_queue_family_properties_intel));
+
+    EXPECT_EQ(CL_QUEUE_CAPABILITY_ALL_INTEL, families[0].capabilities);
+    EXPECT_EQ(3u, families[0].count);
+    EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
+
+    EXPECT_EQ(CL_QUEUE_CAPABILITY_ALL_INTEL, families[1].capabilities);
+    EXPECT_EQ(1u, families[1].count);
+    EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[1].properties);
+}
+
+HWTEST_F(GetDeviceInfoQueueFamilyTest, givenDeviceRootDeviceWhenInitializingCapsThenReturnDefaultFamily) {
+    UltClDeviceFactory deviceFactory{1, 2};
+    ClDevice &clDevice = *deviceFactory.rootDevices[0];
+    size_t paramRetSize{};
+
+    cl_uint numQueueFamilies{};
+    auto retVal = clDevice.getDeviceInfo(CL_DEVICE_NUM_QUEUE_FAMILIES_INTEL, sizeof(numQueueFamilies), &numQueueFamilies, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, numQueueFamilies);
+
+    cl_queue_family_properties_intel families[static_cast<int>(EngineGroupType::MaxEngineGroups)];
+    retVal = clDevice.getDeviceInfo(CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, sizeof(families), families, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, paramRetSize / sizeof(cl_queue_family_properties_intel));
+
+    EXPECT_EQ(CL_QUEUE_CAPABILITY_ALL_INTEL, families[0].capabilities);
+    EXPECT_EQ(1u, families[0].count);
+    EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
+}
+
 struct GetDeviceInfo : public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {
         param = GetParam();
@@ -769,6 +877,7 @@ cl_device_info deviceInfoParams[] = {
     CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG,
     CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT,
     CL_DEVICE_NUMERIC_VERSION,
+    CL_DEVICE_NUM_QUEUE_FAMILIES_INTEL,
     CL_DEVICE_OPENCL_C_ALL_VERSIONS,
     CL_DEVICE_OPENCL_C_FEATURES,
     CL_DEVICE_OPENCL_C_VERSION,
@@ -795,6 +904,7 @@ cl_device_info deviceInfoParams[] = {
     CL_DEVICE_PRINTF_BUFFER_SIZE,
     CL_DEVICE_PROFILE,
     CL_DEVICE_PROFILING_TIMER_RESOLUTION,
+    CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL,
     CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE,
     CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE,
     CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES,

@@ -431,3 +431,38 @@ TEST(DeviceGenEngineTest, givenCreatedDeviceWhenRetrievingDefaultEngineThenOsCon
     auto &defaultEngine = device->getDefaultEngine();
     EXPECT_TRUE(defaultEngine.osContext->isDefaultContext());
 }
+
+TEST(DeviceGenEngineTest, givenNoEmptyGroupsWhenGettingNonEmptyGroupsThenReturnCorrectResults) {
+    const auto nonEmptyEngineGroup = std::vector<EngineControl>{EngineControl{nullptr, nullptr}};
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+    auto &engineGroups = device->getEngineGroups();
+    engineGroups.clear();
+    engineGroups.push_back(nonEmptyEngineGroup);
+    engineGroups.push_back(nonEmptyEngineGroup);
+    engineGroups.push_back(nonEmptyEngineGroup);
+    engineGroups.push_back(nonEmptyEngineGroup);
+
+    EXPECT_EQ(&engineGroups[0], device->getNonEmptyEngineGroup(0));
+    EXPECT_EQ(&engineGroups[1], device->getNonEmptyEngineGroup(1));
+    EXPECT_EQ(&engineGroups[2], device->getNonEmptyEngineGroup(2));
+    EXPECT_EQ(&engineGroups[3], device->getNonEmptyEngineGroup(3));
+    EXPECT_EQ(nullptr, device->getNonEmptyEngineGroup(4));
+}
+
+TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupsThenReturnCorrectResults) {
+    const auto emptyEngineGroup = std::vector<EngineControl>{};
+    const auto nonEmptyEngineGroup = std::vector<EngineControl>{EngineControl{nullptr, nullptr}};
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+    auto &engineGroups = device->getEngineGroups();
+    engineGroups.clear();
+    engineGroups.push_back(emptyEngineGroup);
+    engineGroups.push_back(nonEmptyEngineGroup);
+    engineGroups.push_back(emptyEngineGroup);
+    engineGroups.push_back(nonEmptyEngineGroup);
+
+    EXPECT_EQ(&engineGroups[1], device->getNonEmptyEngineGroup(0));
+    EXPECT_EQ(&engineGroups[3], device->getNonEmptyEngineGroup(1));
+    EXPECT_EQ(nullptr, device->getNonEmptyEngineGroup(2));
+}

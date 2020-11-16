@@ -482,6 +482,74 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceQueueCreatedWithVarious
     }
 }
 
+TEST_F(clCreateCommandQueueWithPropertiesApi, givenQueueFamilySelectedAndNotIndexWhenCreatingQueueThenFail) {
+    cl_queue_properties queueProperties[] = {
+        CL_QUEUE_FAMILY_INTEL,
+        0,
+        0,
+    };
+
+    auto queue = clCreateCommandQueueWithProperties(pContext, testedClDevice, queueProperties, &retVal);
+    EXPECT_EQ(nullptr, queue);
+    EXPECT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, givenQueueIndexSelectedAndNotFamilyWhenCreatingQueueThenFail) {
+    cl_queue_properties queueProperties[] = {
+        CL_QUEUE_INDEX_INTEL,
+        0,
+        0,
+    };
+
+    auto queue = clCreateCommandQueueWithProperties(pContext, testedClDevice, queueProperties, &retVal);
+    EXPECT_EQ(nullptr, queue);
+    EXPECT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, givenValidFamilyAndIndexSelectedWhenCreatingQueueThenReturnSuccess) {
+    cl_queue_properties queueProperties[] = {
+        CL_QUEUE_FAMILY_INTEL,
+        0,
+        CL_QUEUE_INDEX_INTEL,
+        0,
+        0,
+    };
+
+    auto queue = clCreateCommandQueueWithProperties(pContext, testedClDevice, queueProperties, &retVal);
+    EXPECT_NE(nullptr, queue);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_SUCCESS, clReleaseCommandQueue(queue));
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, givenInvalidQueueFamilySelectedWhenCreatingQueueThenFail) {
+    const auto &families = castToObject<ClDevice>(testedClDevice)->getDevice().getEngineGroups();
+    cl_queue_properties queueProperties[] = {
+        CL_QUEUE_FAMILY_INTEL,
+        families.size(),
+        CL_QUEUE_INDEX_INTEL,
+        0,
+        0,
+    };
+
+    auto queue = clCreateCommandQueueWithProperties(pContext, testedClDevice, queueProperties, &retVal);
+    EXPECT_EQ(nullptr, queue);
+    EXPECT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, givenInvalidQueueIndexSelectedWhenCreatingQueueThenFail) {
+    cl_queue_properties queueProperties[] = {
+        CL_QUEUE_FAMILY_INTEL,
+        0,
+        CL_QUEUE_INDEX_INTEL,
+        50,
+        0,
+    };
+
+    auto queue = clCreateCommandQueueWithProperties(pContext, testedClDevice, queueProperties, &retVal);
+    EXPECT_EQ(nullptr, queue);
+    EXPECT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
+}
+
 using LowPriorityCommandQueueTest = ::testing::Test;
 HWTEST_F(LowPriorityCommandQueueTest, GivenDeviceWithSubdevicesWhenCreatingLowPriorityCommandQueueThenEngineFromFirstSubdeviceIsTaken) {
     DebugManagerStateRestore restorer;

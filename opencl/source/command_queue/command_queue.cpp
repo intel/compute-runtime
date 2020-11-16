@@ -37,6 +37,7 @@
 
 #include "CL/cl_ext.h"
 
+#include <limits>
 #include <map>
 
 namespace NEO {
@@ -705,7 +706,44 @@ void CommandQueue::storeProperties(const cl_queue_properties *properties) {
 }
 
 void CommandQueue::processProperties(const cl_queue_properties *properties) {
+    if (properties != nullptr) {
+        bool specificEngineSelected = false;
+        cl_uint selectedQueueFamilyIndex = std::numeric_limits<uint32_t>::max();
+        cl_uint selectedQueueIndex = std::numeric_limits<uint32_t>::max();
+
+        for (auto currentProperties = properties; *currentProperties != 0; currentProperties += 2) {
+            switch (*currentProperties) {
+            case CL_QUEUE_FAMILY_INTEL:
+                selectedQueueFamilyIndex = static_cast<cl_uint>(*(currentProperties + 1));
+                specificEngineSelected = true;
+                break;
+            case CL_QUEUE_INDEX_INTEL:
+                selectedQueueIndex = static_cast<cl_uint>(*(currentProperties + 1));
+                specificEngineSelected = true;
+                break;
+            }
+        }
+
+        if (specificEngineSelected) {
+            if (getDevice().getNumAvailableDevices() == 1) {
+                auto queueFamily = getDevice().getNonEmptyEngineGroup(selectedQueueFamilyIndex);
+                auto engine = queueFamily->at(selectedQueueIndex);
+                auto engineType = engine.getEngineType();
+                this->overrideEngine(engineType);
+            }
+        }
+    }
     processPropertiesExtra(properties);
+}
+
+void CommandQueue::overrideEngine(aub_stream::EngineType engineType) {
+    if (engineType == aub_stream::EngineType::ENGINE_BCS) {
+        bcsEngine = &device->getEngine(engineType, false, false);
+        timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+        isCopyOnly = true;
+    } else {
+        gpgpuEngine = &device->getEngine(engineType, false, false);
+    }
 }
 
 void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo) {

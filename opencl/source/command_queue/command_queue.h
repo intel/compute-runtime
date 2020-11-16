@@ -340,6 +340,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void storeProperties(const cl_queue_properties *properties);
     void processProperties(const cl_queue_properties *properties);
     void processPropertiesExtra(const cl_queue_properties *properties);
+    void overrideEngine(aub_stream::EngineType engineType);
     bool bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandType, cl_bool blocking, size_t size, void *ptr,
                               cl_uint numEventsInWaitList, const cl_event *eventWaitList);
     void providePerformanceHint(TransferProperties &transferProperties);

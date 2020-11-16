@@ -188,11 +188,20 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
             src = &param;
         }
         break;
+    case CL_DEVICE_NUM_QUEUE_FAMILIES_INTEL:
+        srcSize = retSize = sizeof(cl_uint);
+        param = static_cast<cl_uint>(deviceInfo.queueFamilyProperties.size());
+        src = &param;
+        break;
     case CL_DEVICE_SIMULTANEOUS_INTEROPS_INTEL:
         if (simultaneousInterops.size() > 1u) {
             srcSize = retSize = sizeof(cl_uint) * simultaneousInterops.size();
             src = &simultaneousInterops[0];
         }
+        break;
+    case CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL:
+        src = deviceInfo.queueFamilyProperties.data();
+        retSize = srcSize = deviceInfo.queueFamilyProperties.size() * sizeof(cl_queue_family_properties_intel);
         break;
     case CL_DEVICE_REFERENCE_COUNT: {
         cl_int ref = this->getReference();

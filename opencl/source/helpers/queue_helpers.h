@@ -136,16 +136,23 @@ void getQueueInfo(cl_command_queue commandQueue,
 
 template <typename returnType>
 returnType getCmdQueueProperties(const cl_queue_properties *properties,
-                                 cl_queue_properties propertyName = CL_QUEUE_PROPERTIES) {
+                                 cl_queue_properties propertyName = CL_QUEUE_PROPERTIES,
+                                 bool *foundValue = nullptr) {
     if (properties != nullptr) {
         while (*properties != 0) {
             if (*properties == propertyName) {
+                if (foundValue) {
+                    *foundValue = true;
+                }
                 return static_cast<returnType>(*(properties + 1));
             }
             properties += 2;
         }
     }
 
+    if (foundValue) {
+        *foundValue = false;
+    }
     return 0;
 }
 bool isExtraToken(const cl_queue_properties *property);

@@ -143,3 +143,36 @@ using cl_unified_shared_memory_capabilities_intel = cl_bitfield;
 
 /* cl_queue_properties */
 #define CL_QUEUE_SLICE_COUNT_INTEL 0x10021
+
+/******************************
+*   QUEUE FAMILY SELECTING    *
+*******************************/
+
+/* cl_device_info */
+#define CL_DEVICE_NUM_QUEUE_FAMILIES_INTEL 0x10030
+#define CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL 0x10031
+
+/* cl_queue_properties */
+#define CL_QUEUE_FAMILY_INTEL 0x10032
+#define CL_QUEUE_INDEX_INTEL 0x10033
+#define CL_QUEUE_CAPABILITY_EVENT_WAIT_LIST_INTEL (1 << 0)
+#define CL_QUEUE_CAPABILITY_EVENTS_INTEL (1 << 1)
+#define CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL (1 << 2)
+#define CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL (1 << 3)
+#define CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL (1 << 4)
+#define CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL (1 << 5)
+#define CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL (1 << 6)
+#define CL_QUEUE_CAPABILITY_MAP_IMAGE_INTEL (1 << 7)
+#define CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL (1 << 8)
+#define CL_QUEUE_CAPABILITY_MARKER_INTEL (1 << 9)
+#define CL_QUEUE_CAPABILITY_BARRIER_INTEL (1 << 10)
+#define CL_QUEUE_CAPABILITY_KERNEL_INTEL (1 << 11)
+#define CL_QUEUE_CAPABILITY_ALL_INTEL 0xFFFFFFFFFFFFFFFFULL
+
+typedef cl_bitfield cl_command_queue_capabilities_intel;
+
+typedef struct _cl_queue_family_properties_intel {
+    cl_command_queue_properties properties;
+    cl_command_queue_capabilities_intel capabilities;
+    cl_uint count;
+} cl_queue_family_properties_intel;

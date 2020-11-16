@@ -360,6 +360,26 @@ void ClDevice::initializeCaps() {
         }
     }
 
+    const std::vector<std::vector<EngineControl>> &queueFamilies = this->getDevice().getEngineGroups();
+    if (queueFamilies.size() > 0) {
+        for (int queueFamilyIndex = 0; queueFamilyIndex < static_cast<int>(EngineGroupType::MaxEngineGroups); queueFamilyIndex++) {
+            const std::vector<EngineControl> &enginesInFamily = queueFamilies.at(queueFamilyIndex);
+            if (enginesInFamily.size() > 0) {
+                cl_queue_family_properties_intel properties;
+                properties.capabilities = CL_QUEUE_CAPABILITY_ALL_INTEL;
+                properties.count = static_cast<cl_uint>(enginesInFamily.size());
+                properties.properties = deviceInfo.queueOnHostProperties;
+                deviceInfo.queueFamilyProperties.push_back(properties);
+            }
+        }
+    } else {
+        cl_queue_family_properties_intel properties;
+        properties.capabilities = CL_QUEUE_CAPABILITY_ALL_INTEL;
+        properties.count = 1;
+        properties.properties = deviceInfo.queueOnHostProperties;
+        deviceInfo.queueFamilyProperties.push_back(properties);
+    }
+
     deviceInfo.preemptionSupported = false;
     deviceInfo.maxGlobalVariableSize = ocl21FeaturesEnabled ? 64 * KB : 0;
     deviceInfo.globalVariablePreferredTotalSize = ocl21FeaturesEnabled ? static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize) : 0;

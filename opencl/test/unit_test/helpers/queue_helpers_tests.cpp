@@ -45,3 +45,25 @@ TEST(QueueHelpersTest, givenPropertyListWithPropertyOfValueZeroWhenGettingProper
         }
     }
 }
+
+TEST(QueueHelpersTest, givenPropertiesWhenGettingPropertyValuesThenReturnCorrectFoundPropertyValue) {
+    cl_queue_properties nonExistantProperty = 0xCC;
+    cl_queue_properties properties[] = {
+        0xAA,
+        3,
+        0xBB,
+        0,
+        0};
+
+    bool foundProperty = false;
+    EXPECT_EQ(properties[1], getCmdQueueProperties<cl_queue_properties>(properties, properties[0], &foundProperty));
+    EXPECT_TRUE(foundProperty);
+
+    foundProperty = false;
+    EXPECT_EQ(properties[3], getCmdQueueProperties<cl_queue_properties>(properties, properties[2], &foundProperty));
+    EXPECT_TRUE(foundProperty);
+
+    foundProperty = false;
+    EXPECT_EQ(0u, getCmdQueueProperties<cl_queue_properties>(properties, nonExistantProperty, &foundProperty));
+    EXPECT_FALSE(foundProperty);
+}

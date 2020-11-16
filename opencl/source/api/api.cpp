@@ -4882,6 +4882,8 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             tokenValue != CL_QUEUE_PRIORITY_KHR &&
             tokenValue != CL_QUEUE_THROTTLE_KHR &&
             tokenValue != CL_QUEUE_SLICE_COUNT_INTEL &&
+            tokenValue != CL_QUEUE_FAMILY_INTEL &&
+            tokenValue != CL_QUEUE_INDEX_INTEL &&
             !isExtraToken(propertiesAddress)) {
             err.set(CL_INVALID_VALUE);
             TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
@@ -4951,6 +4953,23 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
     }
 
     if (getCmdQueueProperties<cl_command_queue_properties>(properties, CL_QUEUE_SLICE_COUNT_INTEL) > pDevice->getDeviceInfo().maxSliceCount) {
+        err.set(CL_INVALID_QUEUE_PROPERTIES);
+        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        return commandQueue;
+    }
+
+    bool queueFamilySelected = false;
+    bool queueSelected = false;
+    const auto queueFamilyIndex = getCmdQueueProperties<cl_uint>(properties, CL_QUEUE_FAMILY_INTEL, &queueFamilySelected);
+    const auto queueIndex = getCmdQueueProperties<cl_uint>(properties, CL_QUEUE_INDEX_INTEL, &queueSelected);
+    if (queueFamilySelected != queueSelected) {
+        err.set(CL_INVALID_QUEUE_PROPERTIES);
+        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        return commandQueue;
+    }
+    if (queueFamilySelected &&
+        (queueFamilyIndex >= pDevice->getDeviceInfo().queueFamilyProperties.size() ||
+         queueIndex >= pDevice->getDeviceInfo().queueFamilyProperties[queueFamilyIndex].count)) {
         err.set(CL_INVALID_QUEUE_PROPERTIES);
         TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;

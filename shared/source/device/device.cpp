@@ -215,6 +215,23 @@ bool Device::isDebuggerActive() const {
     return deviceInfo.debuggerActive;
 }
 
+const std::vector<EngineControl> *Device::getNonEmptyEngineGroup(size_t index) const {
+    auto nonEmptyGroupIndex = 0u;
+    for (auto groupIndex = 0u; groupIndex < engineGroups.size(); groupIndex++) {
+        const std::vector<EngineControl> *currentGroup = &engineGroups[groupIndex];
+        if (currentGroup->empty()) {
+            continue;
+        }
+
+        if (index == nonEmptyGroupIndex) {
+            return currentGroup;
+        }
+
+        nonEmptyGroupIndex++;
+    }
+    return nullptr;
+}
+
 EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPriority, bool internalUsage) {
     for (auto &engine : engines) {
         if (engine.osContext->getEngineType() == engineType &&

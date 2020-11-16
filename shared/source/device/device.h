@@ -49,6 +49,7 @@ class Device : public ReferenceTrackedObject<Device> {
     std::vector<std::vector<EngineControl>> &getEngineGroups() {
         return this->engineGroups;
     }
+    const std::vector<EngineControl> *getNonEmptyEngineGroup(size_t index) const;
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
