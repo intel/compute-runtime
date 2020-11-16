@@ -111,13 +111,13 @@ struct IntelGlTracingTest : public api_tests {
     cl_function_id functionId = CL_FUNCTION_COUNT;
 };
 
-TEST_F(IntelGlTracingTest, GivenAllFunctionsToTraceExpectPass) {
+TEST_F(IntelGlTracingTest, GivenAllFunctionsWhenSettingTracingPointThenTracingOnAllFunctionsIsPerformed) {
     uint16_t count = callFunctions();
     EXPECT_EQ(count, enterCount);
     EXPECT_EQ(count, exitCount);
 }
 
-TEST_F(IntelGlTracingTest, GivenNoFunctionsToTraceExpectPass) {
+TEST_F(IntelGlTracingTest, GivenNoFunctionsWhenSettingTracingPointThenNoTracingIsPerformed) {
     for (uint32_t i = 0; i < CL_FUNCTION_COUNT; ++i) {
         status = clSetTracingPointINTEL(handle, static_cast<cl_function_id>(i), CL_FALSE);
         EXPECT_EQ(CL_SUCCESS, status);
