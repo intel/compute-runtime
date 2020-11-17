@@ -581,6 +581,17 @@ void ModuleImp::verifyDebugCapabilities() {
     debugEnabled = debugCapabilities;
 }
 
+ze_result_t ModuleImp::getProperties(ze_module_properties_t *pModuleProperties) {
+
+    pModuleProperties->flags = 0;
+
+    if (!unresolvedExternalsInfo.empty()) {
+        pModuleProperties->flags |= ZE_MODULE_PROPERTY_FLAG_IMPORTS;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                                           ze_module_handle_t *phModules,
                                           ze_module_build_log_handle_t *phLinkLog) {

@@ -86,6 +86,8 @@ struct ModuleImp : public Module {
 
     ze_result_t getKernelNames(uint32_t *pCount, const char **pNames) override;
 
+    ze_result_t getProperties(ze_module_properties_t *pModuleProperties) override;
+
     ze_result_t performDynamicLink(uint32_t numModules,
                                    ze_module_handle_t *phModules,
                                    ze_module_build_log_handle_t *phLinkLog) override;

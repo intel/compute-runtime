@@ -218,7 +218,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetProperties(
     ze_module_handle_t hModule,
     ze_module_properties_t *pModuleProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Module::fromHandle(hModule)->getProperties(pModuleProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

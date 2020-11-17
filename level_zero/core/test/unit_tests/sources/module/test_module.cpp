@@ -19,6 +19,8 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
+using ::testing::Return;
+
 namespace L0 {
 namespace ult {
 
@@ -276,6 +278,56 @@ HWTEST_F(ModuleLinkingTest, givenNotFullyLinkedModuleWhenCreatingKernelThenError
 
     EXPECT_EQ(ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, retVal);
 }
+
+using ModulePropertyTest = Test<ModuleFixture>;
+
+TEST_F(ModulePropertyTest, whenZeModuleGetPropertiesIsCalledThenGetPropertiesIsCalled) {
+    Mock<Module> module(device, nullptr);
+    ze_module_properties_t moduleProperties;
+    moduleProperties.stype = ZE_STRUCTURE_TYPE_MODULE_PROPERTIES;
+    moduleProperties.pNext = nullptr;
+
+    // returning error code that is unlikely to be returned by the function
+    EXPECT_CALL(module, getProperties(&moduleProperties))
+        .Times(1)
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT));
+
+    ze_result_t res = zeModuleGetProperties(module.toHandle(), &moduleProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT, res);
+}
+
+TEST_F(ModulePropertyTest, givenCallToGetPropertiesWithoutUnresolvedSymbolsThenFlagIsNotSet) {
+    ze_module_properties_t moduleProperties;
+
+    ze_module_property_flags_t expectedFlags = 0;
+
+    ze_result_t res = module->getProperties(&moduleProperties);
+    moduleProperties.stype = ZE_STRUCTURE_TYPE_MODULE_PROPERTIES;
+    moduleProperties.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(expectedFlags, moduleProperties.flags);
+}
+
+TEST_F(ModulePropertyTest, givenCallToGetPropertiesWithUnresolvedSymbolsThenFlagIsSet) {
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+
+    whitebox_cast(module.get())->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+
+    ze_module_property_flags_t expectedFlags = 0;
+    expectedFlags |= ZE_MODULE_PROPERTY_FLAG_IMPORTS;
+
+    ze_module_properties_t moduleProperties;
+    moduleProperties.stype = ZE_STRUCTURE_TYPE_MODULE_PROPERTIES;
+    moduleProperties.pNext = nullptr;
+
+    ze_result_t res = module->getProperties(&moduleProperties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(expectedFlags, moduleProperties.flags);
+}
+
 struct ModuleDynamicLinkTests : public Test<ModuleFixture> {
     void SetUp() override {
         Test<ModuleFixture>::SetUp();
