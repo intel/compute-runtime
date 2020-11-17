@@ -188,10 +188,6 @@ class Kernel : public BaseObject<_cl_kernel> {
         return kernelInfo;
     }
 
-    const ClDevice &getDevice() const {
-        return *deviceVector[0];
-    }
-
     Context &getContext() const {
         return context ? *context : program->getContext();
     }
@@ -513,6 +509,11 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
+
+    const ClDevice &getDevice() const {
+        return *deviceVector[0];
+    }
+
     Program *program;
     Context *context = nullptr;
     const ClDeviceVector &deviceVector;

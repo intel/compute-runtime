@@ -4611,7 +4611,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                 }
             }
         } else {
-            pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pKernel->getDevice().getRootDeviceIndex());
+            pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pKernel->getDevices()[0]->getRootDeviceIndex());
         }
     }
 
@@ -4680,7 +4680,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
                 TRACING_EXIT(clSetKernelExecInfo, &retVal);
                 return retVal;
             }
-            GraphicsAllocation *svmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pKernel->getDevice().getRootDeviceIndex());
+            GraphicsAllocation *svmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pKernel->getDevices()[0]->getRootDeviceIndex());
 
             if (paramName == CL_KERNEL_EXEC_INFO_SVM_PTRS) {
                 pKernel->setSvmKernelExecInfo(svmAlloc);

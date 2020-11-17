@@ -67,7 +67,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         kernel = kernelInternals->mockKernel;
         kernel->executionType = KernelExecutionType::Concurrent;
         commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
-        hwHelper = &HwHelper::get(kernel->getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+        hwHelper = &HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
     }
 
     template <typename FamilyType>
@@ -93,7 +93,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     bool isCooperativeDispatchSupported() {
-        return hwHelper->isCooperativeDispatchSupported(commandQueue->getGpgpuEngine().getEngineType(), kernel->getDevice().getHardwareInfo().platform.eProductFamily);
+        return hwHelper->isCooperativeDispatchSupported(commandQueue->getGpgpuEngine().getEngineType(), commandQueue->getDevice().getHardwareInfo().platform.eProductFamily);
     }
 
     const cl_uint workDim = 1;

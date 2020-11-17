@@ -111,7 +111,7 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();
-        auto &device = kernel->getDevice();
+        auto &device = dispatchInfo.begin()->getClDevice();
         if (!device.areSharedSystemAllocationsAllowed()) {
             EXPECT_FALSE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
             if (device.getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported) {
