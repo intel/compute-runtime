@@ -52,7 +52,7 @@ struct TimestampPacketStorage {
         }
 
         for (uint32_t i = 0; i < packetsUsed; i++) {
-            if ((packets[i].contextEnd & 1) || (packets[i].globalEnd & 1)) {
+            if (packets[i].contextEnd == 1) {
                 return false;
             }
         }
