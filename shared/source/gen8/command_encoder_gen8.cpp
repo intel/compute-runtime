@@ -12,7 +12,7 @@
 using Family = NEO::BDWFamily;
 
 #include "shared/source/command_container/command_encoder.inl"
-#include "shared/source/command_container/command_encoder_base.inl"
+#include "shared/source/command_container/command_encoder_bdw_plus.inl"
 #include "shared/source/command_container/encode_compute_mode_bdw_plus.inl"
 
 namespace NEO {

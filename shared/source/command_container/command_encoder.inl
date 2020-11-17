@@ -363,11 +363,6 @@ size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap
 }
 
 template <typename Family>
-bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
-    return true;
-}
-
-template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
 
     if (container.nextIddInBlock == container.getNumIddPerBlock()) {

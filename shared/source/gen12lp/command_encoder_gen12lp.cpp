@@ -13,7 +13,7 @@
 using Family = NEO::TGLLPFamily;
 
 #include "shared/source/command_container/command_encoder.inl"
-#include "shared/source/command_container/command_encoder_base.inl"
+#include "shared/source/command_container/command_encoder_bdw_plus.inl"
 #include "shared/source/command_container/encode_compute_mode_tgllp_plus.inl"
 #include "shared/source/command_stream/command_stream_receiver.h"
 

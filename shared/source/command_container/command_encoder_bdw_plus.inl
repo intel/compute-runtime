@@ -392,6 +392,11 @@ void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(R_SURFACE_STATE *sur
                                                             bool isReadOnly, uint32_t numAvailableDevices) {
 }
 
+template <typename GfxFamily>
+bool EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch() {
+    return true;
+}
+
 template <typename Family>
 void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      uint64_t compareAddress,
