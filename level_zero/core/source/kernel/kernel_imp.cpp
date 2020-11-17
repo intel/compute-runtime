@@ -475,6 +475,11 @@ ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg, val);
     if (NEO::isValidOffset(arg.bindful) || NEO::isValidOffset(arg.bindless)) {
         setBufferSurfaceState(argIndex, reinterpret_cast<void *>(val), allocation);
+    } else {
+        auto allocData = this->module->getDevice()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(allocation->getGpuAddress()));
+        if (allocData && allocData->allocationFlagsProperty.flags.locallyUncachedResource) {
+            kernelRequiresUncachedMocs = true;
+        }
     }
     residencyContainer[argIndex] = allocation;
 

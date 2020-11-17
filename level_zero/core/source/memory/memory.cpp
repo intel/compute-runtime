@@ -164,6 +164,11 @@ ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, const ze
                                                                            Device::fromHandle(hDevice)->getNEODevice()->getDeviceBitfield());
     unifiedMemoryProperties.allocationFlags.flags.shareable = 1u;
     unifiedMemoryProperties.device = Device::fromHandle(hDevice)->getNEODevice();
+
+    if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
+        unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
+    }
+
     void *usmPtr =
         svmAllocsManager->createUnifiedMemoryAllocation(Device::fromHandle(hDevice)->getRootDeviceIndex(),
                                                         size, unifiedMemoryProperties);
@@ -190,6 +195,10 @@ ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, const ze
     }
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, Device::fromHandle(device)->getNEODevice()->getDeviceBitfield());
     unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
+
+    if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
+        unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
+    }
 
     if (size > this->devices[0]->getDeviceInfo().maxMemAllocSize) {
         *ptr = nullptr;

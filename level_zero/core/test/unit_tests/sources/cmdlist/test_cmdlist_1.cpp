@@ -394,6 +394,20 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenSetBarrierThenMiFlus
     EXPECT_NE(cmdList.end(), itor);
 }
 
+HWTEST_F(CommandListCreate, whenCommandListIsResetThenContainsStatelessUncachedResourceIsSetToFalse) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
+                                                                     device,
+                                                                     NEO::EngineGroupType::Compute,
+                                                                     returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_FALSE(commandList->getContainsStatelessUncachedResource());
+}
+
 HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenResetThenStateBaseAddressNotProgrammed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 

@@ -24,7 +24,7 @@ namespace NEO {
 template <typename Family>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                           const void *pThreadGroupDimensions, bool isIndirect, bool isPredicate, DispatchKernelEncoderI *dispatchInterface,
-                                          uint64_t eventAddress, Device *device, PreemptionMode preemptionMode) {
+                                          uint64_t eventAddress, Device *device, PreemptionMode preemptionMode, bool &requiresUncachedMocs) {
 
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -150,7 +150,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     auto slmSizeNew = dispatchInterface->getSlmTotalSize();
     bool dirtyHeaps = container.isAnyHeapDirty();
-    bool flush = container.slmSize != slmSizeNew || dirtyHeaps;
+    bool flush = container.slmSize != slmSizeNew || dirtyHeaps || requiresUncachedMocs;
 
     if (flush) {
         PipeControlArgs args(true);
@@ -159,10 +159,14 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         }
         MemorySynchronizationCommands<Family>::addPipeControl(*container.getCommandStream(), args);
 
-        if (dirtyHeaps) {
+        if (dirtyHeaps || requiresUncachedMocs) {
             STATE_BASE_ADDRESS sba;
-            EncodeStateBaseAddress<Family>::encode(container, sba);
+            auto gmmHelper = container.getDevice()->getGmmHelper();
+            uint32_t statelessMocsIndex =
+                requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+            EncodeStateBaseAddress<Family>::encode(container, sba, statelessMocsIndex);
             container.setDirtyStateForAllHeaps(false);
+            requiresUncachedMocs = false;
         }
 
         if (container.slmSize != slmSizeNew) {
@@ -326,6 +330,13 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
 
 template <typename Family>
 void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd) {
+    auto gmmHelper = container.getDevice()->getRootDeviceEnvironment().getGmmHelper();
+    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    EncodeStateBaseAddress<Family>::encode(container, sbaCmd, statelessMocsIndex);
+}
+
+template <typename Family>
+void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex) {
     EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), true);
 
     auto gmmHelper = container.getDevice()->getGmmHelper();
@@ -337,7 +348,7 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
         container.isHeapDirty(HeapType::SURFACE_STATE) ? container.getIndirectHeap(HeapType::SURFACE_STATE) : nullptr,
         0,
         false,
-        (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1),
+        statelessMocsIndex,
         container.getIndirectObjectHeapBaseAddress(),
         container.getInstructionHeapBaseAddress(),
         false,

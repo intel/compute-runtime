@@ -29,7 +29,15 @@ struct EncodeDispatchKernel {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
     static void encode(CommandContainer &container,
-                       const void *pThreadGroupDimensions, bool isIndirect, bool isPredicate, DispatchKernelEncoderI *dispatchInterface, uint64_t eventAddress, Device *device, PreemptionMode preemptionMode);
+                       const void *pThreadGroupDimensions,
+                       bool isIndirect,
+                       bool isPredicate,
+                       DispatchKernelEncoderI *dispatchInterface,
+                       uint64_t eventAddress,
+                       Device *device,
+                       PreemptionMode preemptionMode,
+                       bool &requiresUncachedMocs);
+
     static void encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd);
 
     static void appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize);
@@ -182,6 +190,7 @@ template <typename GfxFamily>
 struct EncodeStateBaseAddress {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     static void encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd);
+    static void encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex);
 };
 
 template <typename GfxFamily>

@@ -5,8 +5,11 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/program/kernel_info.h"
@@ -17,6 +20,7 @@
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 using ::testing::Return;
@@ -128,6 +132,86 @@ HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, 
     auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
     EXPECT_EQ(devicePtr, reinterpret_cast<void *>(surfaceStateAddress->getSurfaceBaseAddress()));
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceStateAddress->getCoherencyType());
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+
+    device->getDriverHandle()->freeMem(devicePtr);
+}
+
+using ModuleUncachedBufferTest = Test<ModuleFixture>;
+
+HWTEST2_F(ModuleUncachedBufferTest, givenKernelWithNonUncachedArgumentThenUncachedMocsNotRequired, ModuleTestSupport) {
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = kernelName.c_str();
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
+
+    void *devicePtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
+                                                    &deviceDesc,
+                                                    16384u,
+                                                    0u,
+                                                    &devicePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    EXPECT_NE(nullptr, gpuAlloc);
+
+    uint32_t argIndex = 0u;
+    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
+    EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+
+    device->getDriverHandle()->freeMem(devicePtr);
+}
+
+HWTEST2_F(ModuleUncachedBufferTest, givenKernelWithUncachedArgumentThenCorrectMocsAreSet, ModuleTestSupport) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = kernelName.c_str();
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
+
+    void *devicePtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+    res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
+                                                    &deviceDesc,
+                                                    16384u,
+                                                    0u,
+                                                    &devicePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    EXPECT_NE(nullptr, gpuAlloc);
+
+    uint32_t argIndex = 0u;
+    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
+    EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
+
+    auto argInfo = kernelImp->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+    auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
+    auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+    EXPECT_EQ(devicePtr, reinterpret_cast<void *>(surfaceStateAddress->getSurfaceBaseAddress()));
+
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    uint32_t expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+
+    EXPECT_EQ(expectedMocs, surfaceStateAddress->getMemoryObjectControlStateReserved());
 
     Kernel::fromHandle(kernelHandle)->destroy();
 

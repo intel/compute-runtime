@@ -186,6 +186,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType) = 0;
     virtual ~CommandList();
     NEO::CommandContainer commandContainer;
+    bool getContainsStatelessUncachedResource() { return containsStatelessUncachedResource; }
 
   protected:
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
@@ -197,6 +198,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool internalUsage = false;
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, size_t *offset);
+    bool containsStatelessUncachedResource = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

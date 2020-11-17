@@ -759,6 +759,58 @@ TEST_F(KernelImpPatchBindlessTest, GivenUndefiedBidfulAndBindlesstOffsetWhenSetA
 
     EXPECT_FALSE(mockKernel.setSurfaceStateCalled);
 }
+
+using KernelBindlessUncachedMemoryTests = Test<ModuleFixture>;
+
+TEST_F(KernelBindlessUncachedMemoryTests, givenBindlessKernelAndAllocDataNoTfoundThenKernelRequiresUncachedMocsIsSet) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    MyMockKernel mockKernel;
+
+    mockKernel.module = module.get();
+    mockKernel.initialize(&desc);
+
+    auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
+    arg.bindless = undefined<CrossThreadDataOffset>;
+    arg.bindful = undefined<SurfaceStateHeapOffset>;
+
+    NEO::MockGraphicsAllocation alloc;
+
+    mockKernel.setArgBufferWithAlloc(0, 0x1234, &alloc);
+    EXPECT_FALSE(mockKernel.getKernelRequiresUncachedMocs());
+}
+
+TEST_F(KernelBindlessUncachedMemoryTests, givenDeviceAllocationWithUncachedFlagThenKernelRequiresUncachedMocsIsSet) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    MyMockKernel mockKernel;
+
+    mockKernel.module = module.get();
+    mockKernel.initialize(&desc);
+
+    auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
+    arg.bindless = undefined<CrossThreadDataOffset>;
+    arg.bindful = undefined<SurfaceStateHeapOffset>;
+
+    void *devicePtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+    ze_result_t res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
+                                                                &deviceDesc,
+                                                                16384u,
+                                                                0u,
+                                                                &devicePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    EXPECT_NE(nullptr, alloc);
+
+    mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
+    EXPECT_TRUE(mockKernel.getKernelRequiresUncachedMocs());
+
+    device->getDriverHandle()->freeMem(devicePtr);
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MyMockImage : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
     //MyMockImage() : WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>();

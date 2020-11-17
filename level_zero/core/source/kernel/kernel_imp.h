@@ -103,6 +103,7 @@ struct KernelImp : Kernel {
 
     uint32_t getRequiredWorkgroupOrder() const override { return requiredWorkgroupOrder; }
     bool requiresGenerationOfLocalIdsByRuntime() const override { return kernelRequiresGenerationOfLocalIdsByRuntime; }
+    bool getKernelRequiresUncachedMocs() { return kernelRequiresUncachedMocs; }
 
   protected:
     KernelImp() = default;
@@ -147,6 +148,7 @@ struct KernelImp : Kernel {
     uint32_t requiredWorkgroupOrder = 0u;
 
     bool kernelRequiresGenerationOfLocalIdsByRuntime = true;
+    bool kernelRequiresUncachedMocs = false;
 };
 
 } // namespace L0

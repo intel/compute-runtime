@@ -16,6 +16,8 @@
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
+#include "level_zero/core/source/kernel/kernel_imp.h"
+
 #include "pipe_control_args.h"
 
 #include <algorithm>
@@ -70,6 +72,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         this->indirectAllocationsAllowed = true;
     }
 
+    KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
+    this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
+
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,
                                                  reinterpret_cast<const void *>(pThreadGroupDimensions),
                                                  isIndirect,
@@ -77,7 +82,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                  kernel,
                                                  0,
                                                  device->getNEODevice(),
-                                                 commandListPreemptionMode);
+                                                 commandListPreemptionMode,
+                                                 this->containsStatelessUncachedResource);
 
     if (device->getNEODevice()->getDebugger()) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);

@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
@@ -150,6 +152,28 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     }
 
     commandQueue->programGeneralStateBaseAddress(0u, false, child);
+
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueProgramSBATest,
+          whenProgrammingStateBaseAddressWithcontainsStatelessUncachedResourceThenCorrectMocsAreSet, CommandQueueSBASupport) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
+    commandQueue->initialize(false, false);
+
+    uint32_t alignedSize = 4096u;
+    NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
+
+    commandQueue->programGeneralStateBaseAddress(0u, true, child);
+    auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandQueue->commandStream->getSpace(sizeof(STATE_BASE_ADDRESS)));
+    uint32_t statelessMocsIndex = pSbaCmd->getStatelessDataPortAccessMemoryObjectControlState();
+
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    uint32_t expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    EXPECT_EQ(statelessMocsIndex, expectedMocs);
 
     commandQueue->destroy();
 }

@@ -8,6 +8,8 @@
 #pragma once
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
@@ -56,7 +58,13 @@ struct KernelHw : public KernelImp {
         bufferSizeForSsh += sizeTillEndOfSurface; // take address alignment offset into account
         bufferSizeForSsh = alignUp(bufferSizeForSsh, alignment);
 
-        auto mocs = this->module->getDevice()->getMOCS(true, false);
+        bool l3Enabled = true;
+        auto allocData = this->module->getDevice()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
+        if (allocData && allocData->allocationFlagsProperty.flags.locallyUncachedResource) {
+            l3Enabled = false;
+        }
+        auto mocs = this->module->getDevice()->getMOCS(l3Enabled, false);
+
         NEO::Device *neoDevice = module->getDevice()->getNEODevice();
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(surfaceStateAddress, bufferAddressForSsh, bufferSizeForSsh, mocs,
                                                          false, false, false, neoDevice->getNumAvailableDevices(),

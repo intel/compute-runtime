@@ -66,6 +66,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     removeDeallocationContainerData();
     removeHostPtrAllocations();
     commandContainer.reset();
+    containsStatelessUncachedResource = false;
 
     if (!isCopyOnly()) {
         programStateBaseAddress(commandContainer, true);
