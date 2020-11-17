@@ -30,6 +30,7 @@
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.h"
 #include "opencl/test/unit_test/mocks/mock_host_ptr_manager.h"
@@ -1498,7 +1499,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, makeNonResidentOnMemObjectCalls
     mm->freeGraphicsMemory(allocation1);
 }
 
-class DrmMockBuffer : public Buffer {
+class DrmMockBuffer : public MockBufferStorage, public Buffer {
+    using MockBufferStorage::device;
+
   public:
     static DrmMockBuffer *create() {
         char *data = static_cast<char *>(::alignedMalloc(128, 64));
@@ -1513,7 +1516,8 @@ class DrmMockBuffer : public Buffer {
 
     DrmMockBuffer(char *data, size_t size, DrmAllocation *alloc)
         : Buffer(
-              nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, nullptr), CL_MEM_USE_HOST_PTR, 0, size, data, data,
+              nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
+              CL_MEM_USE_HOST_PTR, 0, size, data, data,
               GraphicsAllocationHelper::toMultiGraphicsAllocation(alloc), true, false, false),
           data(data),
           gfxAllocation(alloc) {

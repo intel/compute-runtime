@@ -5,6 +5,8 @@
  *
  */
 
+#include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/context/context.h"
 #include "opencl/source/helpers/memory_properties_helpers_base.inl"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
@@ -13,13 +15,16 @@ namespace NEO {
 void MemoryPropertiesHelper::addExtraMemoryProperties(MemoryProperties &properties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel,
                                                       const Device *pDevice) {
 }
-DeviceBitfield MemoryPropertiesHelper::adjustDeviceBitfield(const MemoryProperties &memoryProperties, DeviceBitfield deviceBitfield) {
+
+DeviceBitfield MemoryPropertiesHelper::adjustDeviceBitfield(uint32_t rootDeviceIndex, const MemoryProperties &memoryProperties,
+                                                            DeviceBitfield deviceBitfield) {
     return deviceBitfield;
 }
 
 bool MemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
                                                    cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
                                                    cl_mem_alloc_flags_intel &allocflags, ObjType objectType, Context &context) {
+    Device *pDevice = &context.getDevice(0)->getDevice();
 
     if (properties != nullptr) {
         for (int i = 0; properties[i] != 0; i += 2) {
@@ -39,7 +44,7 @@ bool MemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel
         }
     }
 
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags, nullptr);
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags, pDevice);
 
     switch (objectType) {
     case MemoryPropertiesHelper::ObjType::BUFFER:

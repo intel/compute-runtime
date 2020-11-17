@@ -52,10 +52,13 @@ TEST(MemoryManagerTest, givenAllowed32BitAndFroce32BitWhenGraphicsAllocationInDe
 
 TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledThenAllocateFlagIsCorrectlySet) {
     HardwareInfo hwInfo(*defaultHwInfo);
-    auto allocationProperties = MemoryPropertiesHelper::getAllocationProperties(0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+    UltDeviceFactory deviceFactory{1, 0};
+    auto pDevice = deviceFactory.rootDevices[0];
+    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
+    auto allocationProperties = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_TRUE(allocationProperties.flags.allocateMemory);
 
-    auto allocationProperties2 = MemoryPropertiesHelper::getAllocationProperties(0, {}, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+    auto allocationProperties2 = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_FALSE(allocationProperties2.flags.allocateMemory);
 }
 
@@ -87,8 +90,9 @@ TEST(AllocationFlagsTest, givenReadOnlyResourceFlagWhenGetAllocationFlagsIsCalle
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForRead);
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForWrite);
 
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
     auto allocationFlags2 = MemoryPropertiesHelper::getAllocationProperties(
-        0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, pDevice->getHardwareInfo(), {});
+        0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, pDevice->getHardwareInfo(), {});
     EXPECT_TRUE(allocationFlags2.flags.flushL3RequiredForRead);
     EXPECT_TRUE(allocationFlags2.flags.flushL3RequiredForWrite);
 }

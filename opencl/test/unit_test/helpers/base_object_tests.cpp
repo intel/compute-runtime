@@ -287,9 +287,11 @@ TEST(CastToImage, WhenCastingFromMemObjThenBehavesAsExpected) {
 
 extern std::thread::id tempThreadID;
 class MockBuffer : public MockBufferStorage, public Buffer {
+    using MockBufferStorage::device;
+
   public:
     MockBuffer() : MockBufferStorage(),
-                   Buffer(nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, nullptr),
+                   Buffer(nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, MockBufferStorage::device.get()),
                           CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data, GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation), true, false, false) {
     }
 

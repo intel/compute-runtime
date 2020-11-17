@@ -87,9 +87,12 @@ MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags fla
     return memoryProperties;
 }
 
-AllocationProperties MemoryPropertiesHelper::getAllocationProperties(uint32_t rootDeviceIndex, MemoryProperties memoryProperties, bool allocateMemory, size_t size,
-                                                                     GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam) {
-    auto deviceBitfield = adjustDeviceBitfield(memoryProperties, subDevicesBitfieldParam);
+AllocationProperties MemoryPropertiesHelper::getAllocationProperties(
+    uint32_t rootDeviceIndex, MemoryProperties memoryProperties, bool allocateMemory, size_t size,
+    GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo,
+    DeviceBitfield subDevicesBitfieldParam) {
+
+    auto deviceBitfield = adjustDeviceBitfield(rootDeviceIndex, memoryProperties, subDevicesBitfieldParam);
     AllocationProperties allocationProperties(rootDeviceIndex, allocateMemory, size, type, multiStorageResource, deviceBitfield);
     fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo);
     return allocationProperties;
