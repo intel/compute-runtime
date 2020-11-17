@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/print.h"
 
 #include <algorithm>
@@ -47,7 +48,7 @@ class PrintFormatter {
                    bool using32BitPointers, const StringMap &stringLiteralMap);
     void printKernelOutput(const std::function<void(char *)> &print = [](char *str) { printToSTDOUT(str); });
 
-    static const size_t maxPrintfOutputLength = 1024;
+    constexpr static size_t maxSinglePrintStringLength = 16 * MemoryConstants::kiloByte;
 
   protected:
     const char *queryPrintfString(uint32_t index) const;
@@ -111,6 +112,8 @@ class PrintFormatter {
 
         return charactersPrinted;
     }
+
+    std::unique_ptr<char[]> output;
 
     const uint8_t *printfOutputBuffer = nullptr; // buffer extracted from the kernel, contains values to be printed
     uint32_t printfOutputBufferSize = 0;         // size of the data contained in the buffer
