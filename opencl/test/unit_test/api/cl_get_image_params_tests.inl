@@ -61,6 +61,28 @@ TEST_F(clGetImageParamsTest, GivenValidParamsWhenGettingImageParamsThenSuccessIs
     EXPECT_NE(imageSlicePitch, 0u);
 }
 
+TEST_F(clGetImageParamsTest, GivenDefaultAndSpecializedContextsWhenGettingImageParamsThenTheSameValuesAreReturned) {
+    cl_int retVal = CL_INVALID_VALUE;
+    MockDefaultContext defaultContext;
+    size_t defaultContextImageRowPitch = 0;
+    size_t defaultContextImageSlicePitch = 0;
+
+    retVal = clGetImageParamsINTEL(&defaultContext, &imageFormat, &imageDesc,
+                                   &defaultContextImageRowPitch, &defaultContextImageSlicePitch);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(defaultContextImageRowPitch, 0u);
+    EXPECT_NE(defaultContextImageSlicePitch, 0u);
+
+    MockSpecializedContext specializedContext;
+    size_t specializedContextImageRowPitch = 0;
+    size_t specializedContextImageSlicePitch = 0;
+    retVal = clGetImageParamsINTEL(&specializedContext, &imageFormat, &imageDesc,
+                                   &specializedContextImageRowPitch, &specializedContextImageSlicePitch);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(defaultContextImageRowPitch, specializedContextImageRowPitch);
+    EXPECT_EQ(defaultContextImageSlicePitch, specializedContextImageSlicePitch);
+}
+
 TEST_F(clGetImageParamsTest, GivenNullContextWhenGettingImageParamsThenInvalidContextErrorIsReturned) {
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
