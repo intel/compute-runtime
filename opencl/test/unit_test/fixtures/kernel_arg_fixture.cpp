@@ -7,6 +7,8 @@
 
 #include "opencl/test/unit_test/fixtures/kernel_arg_fixture.h"
 
+#include "shared/source/helpers/api_specific_config.h"
+
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -54,6 +56,7 @@ void KernelImageArgTest::SetUp() {
     pKernelInfo->kernelArgInfo[2].isImage = true;
     pKernelInfo->kernelArgInfo[1].isImage = true;
     pKernelInfo->kernelArgInfo[0].isImage = true;
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessConfiguration() ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
 
     ClDeviceFixture::SetUp();
     program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));

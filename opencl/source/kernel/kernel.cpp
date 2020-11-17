@@ -2431,7 +2431,7 @@ uint64_t Kernel::getKernelStartOffset(
 }
 
 void Kernel::patchBindlessSurfaceStateOffsets(const size_t sshOffset) {
-    const bool bindlessUsed = ApiSpecificConfig::getBindlessConfiguration();
+    const bool bindlessUsed = this->kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode == KernelDescriptor::AddressingMode::BindlessAndStateless;
 
     if (bindlessUsed) {
         auto &hardwareInfo = getDevice().getHardwareInfo();

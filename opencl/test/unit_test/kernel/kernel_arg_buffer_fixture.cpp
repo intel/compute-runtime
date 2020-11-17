@@ -7,6 +7,8 @@
 
 #include "kernel_arg_buffer_fixture.h"
 
+#include "shared/source/helpers/api_specific_config.h"
+
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -45,6 +47,8 @@ void KernelArgBufferFixture::SetUp() {
 
     pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
     pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
+
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessConfiguration() ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
 
     pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 

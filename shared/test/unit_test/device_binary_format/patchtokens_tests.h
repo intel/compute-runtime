@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/helpers/api_specific_config.h"
 
 #include "igfxfmid.h"
 
@@ -227,6 +228,7 @@ struct ValidEmptyKernel {
         auto execEnvTokInl = initToken<iOpenCL::SPatchExecutionEnvironment>(iOpenCL::PATCH_TOKEN_EXECUTION_ENVIRONMENT);
         execEnvTokInl.LargestCompiledSIMDSize = 32U;
         execEnvTokInl.CompiledSIMD32 = 1U;
+        execEnvTokInl.UseBindlessMode = NEO::ApiSpecificConfig::getBindlessConfiguration();
         headerTokInl.PatchListSize = sizeof(execEnvTokInl);
         ret.decodeStatus = NEO::DecodeError::Success;
         ret.name = "test_kernel";

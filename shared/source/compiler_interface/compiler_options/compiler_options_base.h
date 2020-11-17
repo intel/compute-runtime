@@ -28,6 +28,7 @@ static constexpr ConstStringRef createLibrary = "-create-library";
 static constexpr ConstStringRef generateDebugInfo = "-g";
 static constexpr ConstStringRef bindlessBuffers = "-cl-intel-use-bindless-buffers";
 static constexpr ConstStringRef bindlessImages = "-cl-intel-use-bindless-images";
+static constexpr ConstStringRef bindlessMode = "-cl-intel-use-bindless-mode";
 static constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
 static constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
 static constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";

@@ -43,6 +43,9 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnviro
 
     if (execEnv.CompiledForGreaterThan4GBBuffers) {
         dst.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+    } else if (execEnv.UseBindlessMode) {
+        dst.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+        dst.kernelAttributes.imageAddressingMode = KernelDescriptor::Bindless;
     } else {
         dst.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindfulAndStateless;
     }
@@ -130,12 +133,19 @@ void populatePointerKernelArg(ArgDescPointer &dst,
         dst.bindless = undefined<CrossThreadDataOffset>;
         dst.pointerSize = pointerSize;
         break;
+
+    case KernelDescriptor::BindlessAndStateless:
+        dst.bindful = undefined<SurfaceStateHeapOffset>;
+        dst.stateless = stateless;
+        dst.bindless = bindless;
+        dst.pointerSize = pointerSize;
+        break;
     }
 }
 
 template <typename TokenT>
 void populatePointerKernelArg(ArgDescPointer &dst, const TokenT &src, KernelDescriptor::AddressingMode addressingMode) {
-    populatePointerKernelArg(dst, src.DataParamOffset, src.DataParamSize, src.SurfaceStateHeapOffset, undefined<CrossThreadDataOffset>, addressingMode);
+    populatePointerKernelArg(dst, src.DataParamOffset, src.DataParamSize, src.SurfaceStateHeapOffset, src.SurfaceStateHeapOffset, addressingMode);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrivateSurface &token) {
@@ -201,8 +211,12 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
     markArgAsPatchable(dst, argNum);
 
     auto &argImage = dst.payloadMappings.explicitArgs[argNum].as<ArgDescImage>(true);
-    UNRECOVERABLE_IF(KernelDescriptor::Bindful != dst.kernelAttributes.imageAddressingMode);
-    argImage.bindful = token.Offset;
+    if (KernelDescriptor::Bindful == dst.kernelAttributes.imageAddressingMode) {
+        argImage.bindful = token.Offset;
+    }
+    if (KernelDescriptor::Bindless == dst.kernelAttributes.imageAddressingMode) {
+        argImage.bindless = token.Offset;
+    }
 
     if (token.Type == iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA) {
         dst.payloadMappings.explicitArgs[argNum].getExtendedTypeInfo().isMediaImage = true;
@@ -242,10 +256,15 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
 
     auto &argPointer = dst.payloadMappings.explicitArgs[argNum].as<ArgDescPointer>(true);
     dst.payloadMappings.explicitArgs[argNum].getTraits().addressQualifier = KernelArgMetadata::AddrGlobal;
+    if (dst.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindlessAndStateless) {
+        argPointer.bindless = token.Offset;
+        argPointer.bindful = undefined<SurfaceStateHeapOffset>;
+    } else {
+        argPointer.bindful = token.Offset;
+        argPointer.bindless = undefined<CrossThreadDataOffset>;
+    }
 
-    argPointer.bindful = token.Offset;
     argPointer.stateless = undefined<CrossThreadDataOffset>;
-    argPointer.bindless = undefined<CrossThreadDataOffset>;
     argPointer.pointerSize = dst.kernelAttributes.gpuPointerSize;
 }
 

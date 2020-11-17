@@ -347,10 +347,20 @@ TEST_F(KernelImageArgTest, givenNoCacheFlushImageWhenSettingAsArgThenExpectAlloc
     EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 }
 
-HWTEST_F(KernelImageArgTest, givenUsedBindlessImagesWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
+class KernelImageArgTestBindless : public KernelImageArgTest {
+  public:
+    void SetUp() override {
+        DebugManager.flags.UseBindlessMode.set(1);
+        KernelImageArgTest::SetUp();
+    }
+    void TearDown() override {
+        KernelImageArgTest::TearDown();
+    }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+};
+
+HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
+    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
 
     pKernelInfo->usesSsh = true;
 

@@ -201,7 +201,21 @@ TEST_F(KernelArgBufferTest, givenNoCacheFlushBufferWhenSettingAsArgThenNotExpect
     EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 }
 
-HWTEST_F(KernelArgBufferTest, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
+class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
+  public:
+    void SetUp() {
+        DebugManager.flags.UseBindlessMode.set(1);
+        KernelArgBufferFixture::SetUp();
+    }
+    void TearDown() {
+        KernelArgBufferFixture::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+typedef Test<KernelArgBufferFixtureBindless> KernelArgBufferTestBindless;
+
+HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
@@ -268,10 +282,8 @@ TEST_F(KernelArgBufferTest, givenNotUsedBindlessBuffersAndBufferArgWhenPatchingS
     EXPECT_EQ(0xdeadu, *patchLocation);
 }
 
-HWTEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndBuiltinKernelWhenPatchingSurfaceStateOffsetsThenOffsetIsPatched) {
+HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersAndBuiltinKernelWhenPatchingSurfaceStateOffsetsThenOffsetIsPatched) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
 
     pKernelInfo->usesSsh = true;
     pKernelInfo->requiresSshForBuffers = true;

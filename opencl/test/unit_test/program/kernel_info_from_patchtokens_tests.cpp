@@ -7,6 +7,7 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/kernel_info_from_patchtokens.h"
@@ -272,6 +273,135 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgThenKernelInfoIsPr
     EXPECT_EQ(0U, kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].sourceOffset);
     EXPECT_EQ(0U, kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].size);
     EXPECT_EQ(globalMemArg.Offset, kernelInfo.kernelArgInfo[1].offsetHeap);
+}
+
+TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgWhenAddressingModeIsBindlessThenBindlessOffsetIsSetProperly) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    std::vector<uint8_t> storage;
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    iOpenCL::SPatchGlobalMemoryObjectKernelArgument globalMemArg = {};
+    globalMemArg.Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    globalMemArg.Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
+    globalMemArg.ArgumentNumber = 0;
+    globalMemArg.Offset = 0x40;
+
+    kernelTokens.tokens.kernelArgs.resize(1);
+    kernelTokens.tokens.kernelArgs[0].objectArg = &globalMemArg;
+    NEO::KernelInfo kernelInfo = {};
+    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
+    auto &argPointer = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>(true);
+    EXPECT_TRUE(NEO::isValidOffset(argPointer.bindless));
+    EXPECT_FALSE(NEO::isValidOffset(argPointer.bindful));
+}
+
+TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgWhenAddressingModeIsBindfulThenBindlessOffsetIsSetProperly) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(0);
+    std::vector<uint8_t> storage;
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    iOpenCL::SPatchGlobalMemoryObjectKernelArgument globalMemArg = {};
+    globalMemArg.Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    globalMemArg.Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
+    globalMemArg.ArgumentNumber = 0;
+    globalMemArg.Offset = 0x40;
+
+    kernelTokens.tokens.kernelArgs.resize(1);
+    kernelTokens.tokens.kernelArgs[0].objectArg = &globalMemArg;
+    NEO::KernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
+    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
+    auto &argPointer = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>(true);
+    EXPECT_FALSE(NEO::isValidOffset(argPointer.bindless));
+    EXPECT_TRUE(NEO::isValidOffset(argPointer.bindful));
+}
+
+TEST(KernelInfoFromPatchTokens, GivenKernelWithImageObjectArgWhenAddressingModeIsBindlessThenBindlessOffsetIsSetProperly) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    std::vector<uint8_t> storage;
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    iOpenCL::SPatchImageMemoryObjectKernelArgument globalMemArg = {};
+    globalMemArg.Token = iOpenCL::PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    globalMemArg.Size = sizeof(iOpenCL::SPatchImageMemoryObjectKernelArgument);
+    globalMemArg.ArgumentNumber = 0;
+    globalMemArg.Offset = 0x40;
+
+    kernelTokens.tokens.kernelArgs.resize(1);
+    kernelTokens.tokens.kernelArgs[0].objectArg = &globalMemArg;
+    NEO::KernelInfo kernelInfo = {};
+    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
+    auto &argPointer = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescImage>(true);
+    EXPECT_TRUE(NEO::isValidOffset(argPointer.bindless));
+    EXPECT_FALSE(NEO::isValidOffset(argPointer.bindful));
+}
+
+TEST(KernelInfoFromPatchTokens, GivenKernelWithImageObjectArgWhenAddressingModeIsBindfulThenBindlessOffsetIsSetProperly) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(0);
+    std::vector<uint8_t> storage;
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    iOpenCL::SPatchImageMemoryObjectKernelArgument globalMemArg = {};
+    globalMemArg.Token = iOpenCL::PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    globalMemArg.Size = sizeof(iOpenCL::SPatchImageMemoryObjectKernelArgument);
+    globalMemArg.ArgumentNumber = 0;
+    globalMemArg.Offset = 0x40;
+
+    kernelTokens.tokens.kernelArgs.resize(1);
+    kernelTokens.tokens.kernelArgs[0].objectArg = &globalMemArg;
+    NEO::KernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
+    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
+    auto &argPointer = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescImage>(true);
+    EXPECT_FALSE(NEO::isValidOffset(argPointer.bindless));
+    EXPECT_TRUE(NEO::isValidOffset(argPointer.bindful));
+}
+
+TEST(KernelInfoFromPatchTokens, GivenKernelWithStatelessObjectArgWhenAddressingModeIsBindlessThenBindlessOffsetIsSetProperly) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    std::vector<uint8_t> storage;
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument globalMemArg = {};
+    globalMemArg.Token = iOpenCL::PATCH_TOKEN_STATELESS_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    globalMemArg.Size = sizeof(iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument);
+    globalMemArg.ArgumentNumber = 0;
+    globalMemArg.SurfaceStateHeapOffset = 0x40;
+
+    kernelTokens.tokens.kernelArgs.resize(1);
+    kernelTokens.tokens.kernelArgs[0].objectArg = &globalMemArg;
+    NEO::KernelInfo kernelInfo = {};
+    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
+    auto &argPointer = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>(true);
+    EXPECT_TRUE(NEO::isValidOffset(argPointer.bindless));
+    EXPECT_FALSE(NEO::isValidOffset(argPointer.bindful));
+}
+
+TEST(KernelInfoFromPatchTokens, GivenKernelWithStatelessObjectArgWhenAddressingModeIsBindfulThenBindlessOffsetIsSetProperly) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(0);
+    std::vector<uint8_t> storage;
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument globalMemArg = {};
+    globalMemArg.Token = iOpenCL::PATCH_TOKEN_STATELESS_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    globalMemArg.Size = sizeof(iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument);
+    globalMemArg.ArgumentNumber = 0;
+    globalMemArg.SurfaceStateHeapOffset = 0x40;
+
+    kernelTokens.tokens.kernelArgs.resize(1);
+    kernelTokens.tokens.kernelArgs[0].objectArg = &globalMemArg;
+    NEO::KernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
+    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
+    auto &argPointer = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>(true);
+    EXPECT_FALSE(NEO::isValidOffset(argPointer.bindless));
+    EXPECT_TRUE(NEO::isValidOffset(argPointer.bindful));
 }
 
 TEST(KernelInfoFromPatchTokens, GivenDefaultModeThenKernelDescriptorIsNotBeingPopulated) {
