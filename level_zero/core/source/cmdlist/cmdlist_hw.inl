@@ -1518,14 +1518,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
 
     size_t alignedSize = alignUp<size_t>(sizeof(uint64_t) * numEvents, MemoryConstants::pageSize64k);
     NEO::GraphicsAllocation::AllocationType allocationType = NEO::GraphicsAllocation::AllocationType::BUFFER;
-    NEO::AllocationProperties alocationProperties{device->getRootDeviceIndex(),
-                                                  true,
-                                                  alignedSize,
-                                                  allocationType,
-                                                  false,
-                                                  device->getNEODevice()->getDeviceBitfield()};
+    NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(),
+                                                   true,
+                                                   alignedSize,
+                                                   allocationType,
+                                                   false,
+                                                   device->getNEODevice()->getDeviceBitfield()};
 
-    NEO::GraphicsAllocation *timestampsGPUAddress = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(alocationProperties);
+    NEO::GraphicsAllocation *timestampsGPUAddress = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
 
     UNRECOVERABLE_IF(timestampsGPUAddress == nullptr);
 
