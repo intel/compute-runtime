@@ -14,6 +14,8 @@
 #include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/kernel/grf_config.h"
 
+#include "opencl/source/kernel/kernel_execution_type.h"
+
 #include "csr_properties_flags.h"
 
 #include <limits>
@@ -50,7 +52,7 @@ struct DispatchFlags {
     DispatchFlags() = delete;
     DispatchFlags(CsrDependencies csrDependencies, TimestampPacketContainer *barrierTimestampPacketNodes, PipelineSelectArgs pipelineSelectArgs,
                   FlushStampTrackingObj *flushStampReference, QueueThrottle throttle, PreemptionMode preemptionMode, uint32_t numGrfRequired,
-                  uint32_t l3CacheSettings, uint32_t threadArbitrationPolicy, uint32_t additionalKernelExecInfo, uint64_t sliceCount, bool blocking, bool dcFlush,
+                  uint32_t l3CacheSettings, uint32_t threadArbitrationPolicy, uint32_t additionalKernelExecInfo, KernelExecutionType kernelExecutionType, uint64_t sliceCount, bool blocking, bool dcFlush,
                   bool useSLM, bool guardCommandBufferWithPipeControl, bool gsba32BitRequired,
                   bool requiresCoherency, bool lowPriority, bool implicitFlush,
                   bool outOfOrderExecutionAllowed, bool epilogueRequired, bool usePerDSSbackedBuffer) : csrDependencies(csrDependencies),
@@ -63,6 +65,7 @@ struct DispatchFlags {
                                                                                                         l3CacheSettings(l3CacheSettings),
                                                                                                         threadArbitrationPolicy(threadArbitrationPolicy),
                                                                                                         additionalKernelExecInfo(additionalKernelExecInfo),
+                                                                                                        kernelExecutionType(kernelExecutionType),
                                                                                                         sliceCount(sliceCount),
                                                                                                         blocking(blocking),
                                                                                                         dcFlush(dcFlush),
@@ -85,6 +88,7 @@ struct DispatchFlags {
     uint32_t l3CacheSettings = L3CachingSettings::l3CacheOn;
     uint32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotApplicable;
+    KernelExecutionType kernelExecutionType = KernelExecutionType::NotApplicable;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     uint64_t engineHints = 0;
     bool blocking = false;

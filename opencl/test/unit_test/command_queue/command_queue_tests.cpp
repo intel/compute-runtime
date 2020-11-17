@@ -16,12 +16,14 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
+#include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
@@ -1211,4 +1213,63 @@ TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenR
 
         EXPECT_EQ(expectedResult, queue.blitEnqueueImageAllowed(origin, region));
     }
+}
+
+using KernelExecutionTypesTests = DispatchFlagsTests;
+HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingNonBlockedEnqueueThenCorrectKernelTypeIsSetInCSR) {
+    using CsrType = MockCsrHw2<FamilyType>;
+    SetUpImpl<CsrType>();
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    MockKernelWithInternals mockKernelWithInternals(*device.get());
+    auto pKernel = mockKernelWithInternals.mockKernel;
+
+    pKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
+    size_t gws[3] = {63, 0, 0};
+
+    mockCmdQ->enqueueKernel(pKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Concurrent);
+}
+
+HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDoingNonBlockedEnqueueThenKernelTypeInCSRIsChanging) {
+    using CsrType = MockCsrHw2<FamilyType>;
+    SetUpImpl<CsrType>();
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    MockKernelWithInternals mockKernelWithInternals(*device.get());
+    auto pKernel = mockKernelWithInternals.mockKernel;
+    size_t gws[3] = {63, 0, 0};
+    auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
+
+    pKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
+    mockCmdQ->enqueueKernel(pKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Concurrent);
+
+    mockCmdQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
+    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Concurrent);
+
+    pKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL);
+    mockCmdQ->enqueueKernel(pKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Default);
+}
+
+HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingBlockedEnqueueThenCorrectKernelTypeIsSetInCSR) {
+    using CsrType = MockCsrHw2<FamilyType>;
+    SetUpImpl<CsrType>();
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    MockKernelWithInternals mockKernelWithInternals(*device.get());
+    auto pKernel = mockKernelWithInternals.mockKernel;
+
+    pKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent};
+    size_t gws[3] = {63, 0, 0};
+
+    mockCmdQ->enqueueKernel(pKernel, 1, nullptr, gws, nullptr, 1, waitlist, nullptr);
+    userEvent.setStatus(CL_COMPLETE);
+
+    auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Concurrent);
+    mockCmdQ->isQueueBlocked();
 }

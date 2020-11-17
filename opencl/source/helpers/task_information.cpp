@@ -61,6 +61,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         L3CachingSettings::NotApplicable,                                            //l3CacheSettings
         ThreadArbitrationPolicy::NotPresent,                                         //threadArbitrationPolicy
         AdditionalKernelExecInfo::NotApplicable,                                     //additionalKernelExecInfo
+        KernelExecutionType::NotApplicable,                                          //kernelExecutionType
         commandQueue.getSliceCount(),                                                //sliceCount
         true,                                                                        //blocking
         true,                                                                        //dcFlush
@@ -219,6 +220,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         L3CachingSettings::l3CacheOn,                                                //l3CacheSettings
         kernel->getThreadArbitrationPolicy(),                                        //threadArbitrationPolicy
         kernel->getAdditionalKernelExecInfo(),                                       //additionalKernelExecInfo
+        kernel->getExecutionType(),                                                  //kernelExecutionType
         commandQueue.getSliceCount(),                                                //sliceCount
         true,                                                                        //blocking
         flushDC,                                                                     //dcFlush
@@ -340,6 +342,7 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         L3CachingSettings::NotApplicable,                     //l3CacheSettings
         ThreadArbitrationPolicy::NotPresent,                  //threadArbitrationPolicy
         AdditionalKernelExecInfo::NotApplicable,              //additionalKernelExecInfo
+        KernelExecutionType::NotApplicable,                   //kernelExecutionType
         commandQueue.getSliceCount(),                         //sliceCount
         true,                                                 //blocking
         false,                                                //dcFlush

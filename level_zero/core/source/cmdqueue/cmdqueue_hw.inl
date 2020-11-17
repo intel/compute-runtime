@@ -369,7 +369,8 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, NEO
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
                                                     csr->getOsContext().getEngineType(),
-                                                    NEO::AdditionalKernelExecInfo::NotApplicable);
+                                                    NEO::AdditionalKernelExecInfo::NotApplicable,
+                                                    NEO::KernelExecutionType::NotApplicable);
     frontEndInit = true;
 }
 

@@ -287,6 +287,7 @@ class CommandStreamReceiver {
     uint32_t requiredScratchSize = 0;
     uint32_t requiredPrivateScratchSize = 0;
     uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    KernelExecutionType lastKernelExecutionType = KernelExecutionType::Default;
 
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;

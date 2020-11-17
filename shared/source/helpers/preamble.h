@@ -8,6 +8,8 @@
 #pragma once
 #include "shared/source/helpers/pipeline_select_helper.h"
 
+#include "opencl/source/kernel/kernel_execution_type.h"
+
 #include "engine_node.h"
 #include "igfxfmid.h"
 
@@ -42,7 +44,8 @@ struct PreambleHelper {
                                     uint64_t scratchAddress,
                                     uint32_t maxFrontEndThreads,
                                     aub_stream::EngineType engineType,
-                                    uint32_t additionalKernelExecInfo);
+                                    uint32_t additionalKernelExecInfo,
+                                    KernelExecutionType kernelExecutionType);
     static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr, GraphicsAllocation *perDssBackedBuffer);

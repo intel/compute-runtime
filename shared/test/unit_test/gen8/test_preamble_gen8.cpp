@@ -95,7 +95,8 @@ BDWTEST_F(PreambleVfeState, WhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef BDWFamily::PIPE_CONTROL PIPE_CONTROL;
 
     LinearStream &cs = linearStream;
-    PreambleHelper<BDWFamily>::programVFEState(&linearStream, *defaultHwInfo, 0u, 0, 168u, aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable);
+    PreambleHelper<BDWFamily>::programVFEState(&linearStream, *defaultHwInfo, 0u, 0, 168u, aub_stream::EngineType::ENGINE_RCS,
+                                               AdditionalKernelExecInfo::NotApplicable, KernelExecutionType::NotApplicable);
 
     parseCommands<BDWFamily>(cs);
 

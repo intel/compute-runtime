@@ -69,6 +69,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::isEnginePrologueSent;
     using BaseClass::CommandStreamReceiver::isPreambleSent;
     using BaseClass::CommandStreamReceiver::isStateSipSent;
+    using BaseClass::CommandStreamReceiver::lastKernelExecutionType;
     using BaseClass::CommandStreamReceiver::lastMediaSamplerConfig;
     using BaseClass::CommandStreamReceiver::lastPreemptionMode;
     using BaseClass::CommandStreamReceiver::lastSentCoherencyRequest;

@@ -25,6 +25,7 @@ struct DispatchFlagsHelper {
             L3CachingSettings::l3CacheOn,            //l3CacheSettings
             ThreadArbitrationPolicy::NotPresent,     //threadArbitrationPolicy
             AdditionalKernelExecInfo::NotApplicable, //additionalKernelExecInfo
+            KernelExecutionType::NotApplicable,      //kernelExecutionType
             QueueSliceCount::defaultSliceCount,      //sliceCount
             false,                                   //blocking
             false,                                   //dcFlush

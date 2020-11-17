@@ -10,6 +10,7 @@
 namespace NEO {
 enum class KernelExecutionType {
     Default = 0x0u,
-    Concurrent = 0x1u
+    Concurrent = 0x1u,
+    NotApplicable = 0x2u
 };
 } // namespace NEO

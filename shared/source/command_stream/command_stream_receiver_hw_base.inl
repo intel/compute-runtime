@@ -311,6 +311,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         setMediaVFEStateDirty(true);
     }
 
+    if (dispatchFlags.kernelExecutionType != KernelExecutionType::NotApplicable && lastKernelExecutionType != dispatchFlags.kernelExecutionType) {
+        setMediaVFEStateDirty(true);
+    }
+
     auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags, device));
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
@@ -872,7 +876,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         if (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotApplicable) {
             lastAdditionalKernelExecInfo = dispatchFlags.additionalKernelExecInfo;
         }
-        auto commandOffset = PreambleHelper<GfxFamily>::programVFEState(&csr, peekHwInfo(), requiredScratchSize, getScratchPatchAddress(), maxFrontEndThreads, getOsContext().getEngineType(), lastAdditionalKernelExecInfo);
+        if (dispatchFlags.kernelExecutionType != KernelExecutionType::NotApplicable) {
+            lastKernelExecutionType = dispatchFlags.kernelExecutionType;
+        }
+        auto commandOffset = PreambleHelper<GfxFamily>::programVFEState(&csr, peekHwInfo(), requiredScratchSize, getScratchPatchAddress(), maxFrontEndThreads, getOsContext().getEngineType(), lastAdditionalKernelExecInfo, lastKernelExecutionType);
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             flatBatchBufferHelper->collectScratchSpacePatchInfo(getScratchPatchAddress(), commandOffset, csr);
         }

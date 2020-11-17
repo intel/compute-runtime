@@ -62,7 +62,9 @@ HWTEST2_F(Gen12LpPreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgramm
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 672u, aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 672u,
+                                                aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable,
+                                                KernelExecutionType::NotApplicable);
 
     parseCommands<FamilyType>(cs);
 
@@ -82,7 +84,9 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCcsEngineWhenWaIsSetThenAppropriatePipeC
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 672u, aub_stream::EngineType::ENGINE_CCS, AdditionalKernelExecInfo::NotApplicable);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 672u,
+                                                aub_stream::EngineType::ENGINE_CCS, AdditionalKernelExecInfo::NotApplicable,
+                                                KernelExecutionType::NotApplicable);
 
     parseCommands<FamilyType>(cs);
 
@@ -101,7 +105,9 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenRcsEngineWhenWaIsSetThenAppropriatePipeC
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 672u, aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 672u,
+                                                aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable,
+                                                KernelExecutionType::NotApplicable);
 
     parseCommands<FamilyType>(cs);
 
