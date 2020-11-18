@@ -76,7 +76,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         Kernel &kernel,
         bool inlineDataProgrammingRequired,
         WALKER_TYPE<GfxFamily> *walkerCmd,
-        uint32_t &sizeCrossThreadData);
+        uint32_t &sizeCrossThreadData,
+        uint32_t rootDeviceIndex);
 
     static size_t sendIndirectState(
         LinearStream &commandStream,
@@ -93,7 +94,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         WALKER_TYPE<GfxFamily> *walkerCmd,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
         bool localIdsGenerationByRuntime,
-        const HardwareInfo &hardwareInfo);
+        const Device &device);
 
     static void programPerThreadData(
         size_t &sizePerThreadData,
@@ -121,6 +122,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     static size_t getSizeRequiredDSH(
         const Kernel &kernel);
     static size_t getSizeRequiredIOH(
+        uint32_t rootDeviceIndex,
         const Kernel &kernel,
         size_t localWorkSize = 256);
     static size_t getSizeRequiredSSH(

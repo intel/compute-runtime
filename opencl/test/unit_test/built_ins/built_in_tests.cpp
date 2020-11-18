@@ -1048,7 +1048,7 @@ TEST_F(VmeBuiltInTests, GivenVmeBuilderWhenGettingDispatchInfoThenParamsAreCorre
         auto &argInfo = outDi->getKernel()->getKernelInfo().kernelArgInfo[vmeImplicitArgsBase + i];
         ASSERT_EQ(1U, argInfo.kernelArgPatchInfoVector.size());
         auto off = argInfo.kernelArgPatchInfoVector[0].crossthreadOffset;
-        EXPECT_EQ(vmeExtraArgsExpectedVals[i], *((uint32_t *)(outDi->getKernel()->getCrossThreadData() + off)));
+        EXPECT_EQ(vmeExtraArgsExpectedVals[i], *((uint32_t *)(outDi->getKernel()->getCrossThreadData(rootDeviceIndex) + off)));
     }
 }
 
@@ -1111,7 +1111,7 @@ TEST_F(VmeBuiltInTests, GivenAdvancedVmeBuilderWhenGettingDispatchInfoThenParams
             auto &argInfo = outDi->getKernel()->getKernelInfo().kernelArgInfo[vmeImplicitArgsBase + i];
             ASSERT_EQ(1U, argInfo.kernelArgPatchInfoVector.size());
             auto off = argInfo.kernelArgPatchInfoVector[0].crossthreadOffset;
-            EXPECT_EQ(vmeExtraArgsExpectedVals[i], *((uint32_t *)(outDi->getKernel()->getCrossThreadData() + off)));
+            EXPECT_EQ(vmeExtraArgsExpectedVals[i], *((uint32_t *)(outDi->getKernel()->getCrossThreadData(rootDeviceIndex) + off)));
         }
     }
 }

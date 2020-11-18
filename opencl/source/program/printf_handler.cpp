@@ -46,8 +46,9 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     if (printfSurfaceSize == 0) {
         return;
     }
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     kernel = multiDispatchInfo.peekMainKernel();
-    printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), printfSurfaceSize, GraphicsAllocation::AllocationType::PRINTF_SURFACE, device.getDeviceBitfield()});
+    printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, GraphicsAllocation::AllocationType::PRINTF_SURFACE, device.getDeviceBitfield()});
 
     auto &hwInfo = device.getHardwareInfo();
     auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -56,7 +57,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
                                                      device.getDevice(), printfSurface, 0, &printfSurfaceInitialDataSize,
                                                      sizeof(printfSurfaceInitialDataSize));
 
-    auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getCrossThreadData()),
+    auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getCrossThreadData(rootDeviceIndex)),
                                         kernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);
 
     patchWithRequiredSize(printfPatchAddress, kernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->DataParamSize, (uintptr_t)printfSurface->getGpuAddressToPatch());

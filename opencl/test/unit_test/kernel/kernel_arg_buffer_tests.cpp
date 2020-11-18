@@ -38,7 +38,7 @@ TEST_F(KernelArgBufferTest, GivenValidBufferWhenSettingKernelArgThenBufferAddres
     auto retVal = this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData() +
+    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData(rootDeviceIndex) +
                                   this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
     EXPECT_EQ(buffer->getCpuAddress(), *pKernelArg);
 
@@ -119,7 +119,7 @@ TEST_F(KernelArgBufferTest, GivenNullPtrWhenSettingKernelArgThenKernelArgIsNull)
     auto pVal = &val;
     this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
 
-    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData() +
+    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData(rootDeviceIndex) +
                                   this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
     EXPECT_EQ(nullptr, *pKernelArg);
@@ -131,7 +131,7 @@ TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPtrPassedIsNullThenOnly4Bytes
 
     this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = 4;
 
-    auto pKernelArg64bit = (uint64_t *)(this->pKernel->getCrossThreadData() +
+    auto pKernelArg64bit = (uint64_t *)(this->pKernel->getCrossThreadData(rootDeviceIndex) +
                                         this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
     uint32_t *pKernelArg32bit = (uint32_t *)pKernelArg64bit;
@@ -148,7 +148,7 @@ TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPtrPassedIsNullThenOnly4Bytes
 TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPassedIsNullThenOnly4BytesAreBeingPatched) {
     auto pVal = nullptr;
     this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = 4;
-    auto pKernelArg64bit = (uint64_t *)(this->pKernel->getCrossThreadData() +
+    auto pKernelArg64bit = (uint64_t *)(this->pKernel->getCrossThreadData(rootDeviceIndex) +
                                         this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
     *pKernelArg64bit = 0xffffffffffffffff;
@@ -227,18 +227,18 @@ HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenPatchingSurfac
     pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
     pKernelInfo->kernelArgInfo[0].isBuffer = true;
 
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
     *patchLocation = 0xdead;
 
     uint32_t sshOffset = 0x1000;
-    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
     DataPortBindlessSurfaceExtendedMessageDescriptor extMessageDesc;
     extMessageDesc.setBindlessSurfaceOffset(sshOffset + pKernelInfo->kernelArgInfo[0].offsetHeap);
     auto expectedOffset = extMessageDesc.getBindlessSurfaceOffsetToPatch();
     EXPECT_EQ(expectedOffset, *patchLocation);
 
     sshOffset = static_cast<uint32_t>(maxNBitValue(20) + 1) - 64;
-    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
     extMessageDesc.setBindlessSurfaceOffset(sshOffset + pKernelInfo->kernelArgInfo[0].offsetHeap);
     expectedOffset = extMessageDesc.getBindlessSurfaceOffsetToPatch();
     EXPECT_EQ(expectedOffset, *patchLocation);
@@ -255,11 +255,11 @@ TEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndNonBufferArgWhenPatchingS
     pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
     pKernelInfo->kernelArgInfo[0].isBuffer = false;
 
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
     *patchLocation = 0xdead;
 
     uint32_t sshOffset = 4000;
-    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
     EXPECT_EQ(0xdeadu, *patchLocation);
 }
 
@@ -274,11 +274,11 @@ TEST_F(KernelArgBufferTest, givenNotUsedBindlessBuffersAndBufferArgWhenPatchingS
     pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
     pKernelInfo->kernelArgInfo[0].isBuffer = true;
 
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
     *patchLocation = 0xdead;
 
     uint32_t sshOffset = 4000;
-    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
     EXPECT_EQ(0xdeadu, *patchLocation);
 }
 
@@ -292,12 +292,12 @@ HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersAndBuiltinKernelWh
     pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
     pKernelInfo->kernelArgInfo[0].isBuffer = true;
 
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
     *patchLocation = 0xdead;
 
     pKernel->isBuiltIn = true;
 
     uint32_t sshOffset = 0x1000;
-    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
     EXPECT_NE(0xdeadu, *patchLocation);
 }

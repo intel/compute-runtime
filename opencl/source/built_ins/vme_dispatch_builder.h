@@ -13,6 +13,7 @@
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/built_ins/built_in_ops_vme.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
@@ -167,7 +168,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         DEBUG_BREAK_IF(kai.kernelArgPatchInfoVector.size() != 1);
         const KernelArgPatchInfo &patchInfo = kai.kernelArgPatchInfoVector[0];
         DEBUG_BREAK_IF(sizeof(RetType) > patchInfo.size);
-        return *(RetType *)(vmeKernel->getCrossThreadData() + patchInfo.crossthreadOffset);
+        return *(RetType *)(vmeKernel->getCrossThreadData(clDevice.getRootDeviceIndex()) + patchInfo.crossthreadOffset);
     }
 
     cl_int validateImages(Vec3<size_t> inputRegion, Vec3<size_t> offset) const {

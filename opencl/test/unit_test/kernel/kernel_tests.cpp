@@ -896,7 +896,7 @@ TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalS
 
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData());
+    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
 
     program.setGlobalSurface(nullptr);
     delete pKernel;
@@ -936,7 +936,7 @@ TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalS
 
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData());
+    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
 
     program.setGlobalSurface(nullptr);
 
@@ -1068,7 +1068,7 @@ TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConst
 
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData());
+    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
 
     program.setConstantSurface(nullptr);
     delete pKernel;
@@ -1108,7 +1108,7 @@ TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConst
 
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData());
+    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
 
     program.setConstantSurface(nullptr);
 
@@ -1329,7 +1329,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenKernelWithNullEvent
 
     pKernel->patchEventPool(pDevQueue);
 
-    EXPECT_EQ(123u, *(uint64_t *)pKernel->getCrossThreadData());
+    EXPECT_EQ(123u, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
 
     delete pKernel;
 }
@@ -1403,7 +1403,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatelessKernelWhen
 
     pKernel->patchEventPool(pDevQueue);
 
-    EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddressToPatch(), *(uint64_t *)pKernel->getCrossThreadData());
+    EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddressToPatch(), *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
 
     delete pKernel;
 }
@@ -1569,7 +1569,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenKernelWith
 
     pKernel->patchDefaultDeviceQueue(pDevQueue);
 
-    EXPECT_EQ(123u, *(uint64_t *)pKernel->getCrossThreadData());
+    EXPECT_EQ(123u, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
 
     delete pKernel;
 }
@@ -1607,7 +1607,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatelessK
 
     pKernel->patchDefaultDeviceQueue(pDevQueue);
 
-    EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddressToPatch(), *(uint64_t *)pKernel->getCrossThreadData());
+    EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddressToPatch(), *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
 
     delete pKernel;
 }
@@ -2403,7 +2403,7 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedMaxWorkGroupSi
 
     EXPECT_NE(nullptr, kernel.maxWorkGroupSizeForCrossThreadData);
     EXPECT_NE(&Kernel::dummyPatchLocation, kernel.maxWorkGroupSizeForCrossThreadData);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->workloadInfo.maxWorkGroupSizeOffset), static_cast<void *>(kernel.maxWorkGroupSizeForCrossThreadData));
+    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData(rootDeviceIndex) + pKernelInfo->workloadInfo.maxWorkGroupSizeOffset), static_cast<void *>(kernel.maxWorkGroupSizeForCrossThreadData));
     EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.maxWorkGroupSizeForCrossThreadData);
     EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.maxKernelWorkGroupSize);
 }
@@ -2419,7 +2419,7 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenDataParameterSimdSizeI
 
     EXPECT_NE(nullptr, kernel.dataParameterSimdSize);
     EXPECT_NE(&Kernel::dummyPatchLocation, kernel.dataParameterSimdSize);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->workloadInfo.simdSizeOffset), static_cast<void *>(kernel.dataParameterSimdSize));
+    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData(rootDeviceIndex) + pKernelInfo->workloadInfo.simdSizeOffset), static_cast<void *>(kernel.dataParameterSimdSize));
     EXPECT_EQ_VAL(pKernelInfo->getMaxSimdSize(), *kernel.dataParameterSimdSize);
 }
 
@@ -2430,7 +2430,7 @@ TEST_F(KernelCrossThreadTests, GivenParentEventOffsetWhenKernelIsInitializedThen
 
     EXPECT_NE(nullptr, kernel.parentEventOffset);
     EXPECT_NE(&Kernel::dummyPatchLocation, kernel.parentEventOffset);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->workloadInfo.parentEventOffset), static_cast<void *>(kernel.parentEventOffset));
+    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData(rootDeviceIndex) + pKernelInfo->workloadInfo.parentEventOffset), static_cast<void *>(kernel.parentEventOffset));
     EXPECT_EQ(WorkloadInfo::invalidParentEvent, *kernel.parentEventOffset);
 }
 
@@ -2470,7 +2470,7 @@ TEST_F(KernelCrossThreadTests, givenKernelWithPrivateMemoryWhenItIsCreatedThenCu
 
     auto privateSurface = kernel->kernelDeviceInfos[pDevice->getRootDeviceIndex()].privateSurface;
 
-    auto constantBuffer = kernel->getCrossThreadData();
+    auto constantBuffer = kernel->getCrossThreadData(rootDeviceIndex);
     auto privateAddress = (uintptr_t)privateSurface->getGpuAddressToPatch();
     auto ptrCurbe = (uint64_t *)constantBuffer;
     auto privateAddressFromCurbe = (uintptr_t)*ptrCurbe;
@@ -2487,7 +2487,7 @@ TEST_F(KernelCrossThreadTests, givenKernelWithPreferredWkgMultipleWhenItIsCreate
 
     kernel->initialize();
 
-    auto *crossThread = kernel->getCrossThreadData();
+    auto *crossThread = kernel->getCrossThreadData(rootDeviceIndex);
 
     uint32_t *preferredWkgMultipleOffset = (uint32_t *)ptrOffset(crossThread, 8);
 
@@ -2512,10 +2512,10 @@ TEST_F(KernelCrossThreadTests, WhenPatchingBlocksSimdSizeThenSimdSizeIsPatchedCo
     kernel->mockProgram->blockKernelManager->addBlockKernelInfo(infoBlock);
 
     // patch block's simd size
-    kernel->mockKernel->patchBlocksSimdSize();
+    kernel->mockKernel->patchBlocksSimdSize(rootDeviceIndex);
 
     // obtain block's simd size from cross thread data
-    void *blockSimdSize = ptrOffset(kernel->mockKernel->getCrossThreadData(), kernel->kernelInfo.childrenKernelsIdOffset[0].second);
+    void *blockSimdSize = ptrOffset(kernel->mockKernel->getCrossThreadData(rootDeviceIndex), kernel->kernelInfo.childrenKernelsIdOffset[0].second);
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     // check of block's simd size has been patched correctly

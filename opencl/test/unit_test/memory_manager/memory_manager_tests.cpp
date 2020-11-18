@@ -514,6 +514,7 @@ class MockPrintfHandler : public PrintfHandler {
 
 TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithBaseAddressOffset) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    auto rootDeviceIndex = device->getRootDeviceIndex();
     MockKernelWithInternals kernel(*device);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
     SPatchAllocateStatelessPrintfSurface printfSurface;
@@ -538,7 +539,7 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
     auto printfAllocation = printfHandler->getSurface();
     auto allocationAddress = printfAllocation->getGpuAddressToPatch();
 
-    auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel.mockKernel->getCrossThreadData()),
+    auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel.mockKernel->getCrossThreadData(rootDeviceIndex)),
                                         kernel.mockKernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);
 
     EXPECT_EQ(allocationAddress, *(uintptr_t *)printfPatchAddress);

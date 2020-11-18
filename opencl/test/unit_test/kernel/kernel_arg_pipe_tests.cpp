@@ -91,7 +91,7 @@ TEST_F(KernelArgPipeTest, GivenValidPipeWhenSettingKernelArgThenPipeAddressIsCor
     auto retVal = this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData() +
+    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData(rootDeviceIndex) +
                                   this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
     EXPECT_EQ(pipe->getCpuAddress(), *pKernelArg);
 

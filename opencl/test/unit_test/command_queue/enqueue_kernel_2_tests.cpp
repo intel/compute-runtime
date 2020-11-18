@@ -660,7 +660,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
         MockKernelWithInternals mockKernel(*pClDevice);
         mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
 
-        auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData());
+        auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData(rootDeviceIndex));
 
         std::string testString = "test";
 

@@ -41,6 +41,8 @@ class MockKernel : public Kernel {
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
     using Kernel::numberOfBindingTableStates;
+    using Kernel::patchBufferOffset;
+    using Kernel::patchWithImplicitSurface;
     using Kernel::sshLocalSize;
     using Kernel::svmAllocationsRequireCacheFlush;
     using Kernel::threadArbitrationPolicy;
@@ -99,8 +101,10 @@ class MockKernel : public Kernel {
 
     ~MockKernel() override {
         // prevent double deletion
-        if (Kernel::crossThreadData == mockCrossThreadData.data()) {
-            Kernel::crossThreadData = nullptr;
+        for (auto &kernelDeviceInfo : kernelDeviceInfos) {
+            if (kernelDeviceInfo.crossThreadData == mockCrossThreadData.data()) {
+                kernelDeviceInfo.crossThreadData = nullptr;
+            }
         }
 
         if (kernelInfoAllocated) {
@@ -139,9 +143,10 @@ class MockKernel : public Kernel {
         info->crossThreadData = new char[crossThreadSize];
 
         auto kernel = new KernelType(program, *info);
-        kernel->crossThreadData = new char[crossThreadSize];
-        memset(kernel->crossThreadData, 0, crossThreadSize);
-        kernel->crossThreadDataSize = crossThreadSize;
+        auto rootDeviceIndex = device.getRootDeviceIndex();
+        kernel->kernelDeviceInfos[rootDeviceIndex].crossThreadData = new char[crossThreadSize];
+        memset(kernel->kernelDeviceInfos[rootDeviceIndex].crossThreadData, 0, crossThreadSize);
+        kernel->kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = crossThreadSize;
 
         kernel->kernelInfoAllocated = info;
 
@@ -156,10 +161,11 @@ class MockKernel : public Kernel {
 
     ////////////////////////////////////////////////////////////////////////////////
     void setCrossThreadData(const void *crossThreadDataPattern, uint32_t newCrossThreadDataSize) {
-        if ((Kernel::crossThreadData != nullptr) && (Kernel::crossThreadData != mockCrossThreadData.data())) {
-            delete[] Kernel::crossThreadData;
-            Kernel::crossThreadData = nullptr;
-            Kernel::crossThreadDataSize = 0;
+        auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+        if ((kernelDeviceInfos[rootDeviceIndex].crossThreadData != nullptr) && (kernelDeviceInfos[rootDeviceIndex].crossThreadData != mockCrossThreadData.data())) {
+            delete[] kernelDeviceInfos[rootDeviceIndex].crossThreadData;
+            kernelDeviceInfos[rootDeviceIndex].crossThreadData = nullptr;
+            kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = 0;
         }
         if (crossThreadDataPattern && (newCrossThreadDataSize > 0)) {
             mockCrossThreadData.clear();
@@ -171,8 +177,8 @@ class MockKernel : public Kernel {
         if (newCrossThreadDataSize == 0) {
             return;
         }
-        Kernel::crossThreadData = mockCrossThreadData.data();
-        Kernel::crossThreadDataSize = static_cast<uint32_t>(mockCrossThreadData.size());
+        kernelDeviceInfos[rootDeviceIndex].crossThreadData = mockCrossThreadData.data();
+        kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = static_cast<uint32_t>(mockCrossThreadData.size());
     }
 
     void setSshLocal(const void *sshPattern, uint32_t newSshSize) {
@@ -206,15 +212,6 @@ class MockKernel : public Kernel {
 
     void setKernelArguments(std::vector<SimpleKernelArgInfo> kernelArguments) {
         this->kernelArguments = kernelArguments;
-    }
-
-    template <typename PatchTokenT>
-    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const PatchTokenT &patch) {
-        Kernel::patchWithImplicitSurface(ptrToPatchInCrossThreadData, allocation, patch);
-    }
-
-    void *patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, GraphicsAllocation *svmAlloc) {
-        return Kernel::patchBufferOffset(argInfo, svmPtr, svmAlloc);
     }
 
     KernelInfo *getAllocatedKernelInfo() {
@@ -368,6 +365,7 @@ class MockParentKernel : public Kernel {
 
     static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
         auto clDevice = context.getDevice(0);
+        auto rootDeviceIndex = clDevice->getRootDeviceIndex();
 
         auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
@@ -432,9 +430,9 @@ class MockParentKernel : public Kernel {
         info->crossThreadData = new char[crossThreadSize];
 
         auto parent = new MockParentKernel(mockProgram, *info);
-        parent->crossThreadData = new char[crossThreadSize];
-        memset(parent->crossThreadData, 0, crossThreadSize);
-        parent->crossThreadDataSize = crossThreadSize;
+        parent->kernelDeviceInfos[rootDeviceIndex].crossThreadData = new char[crossThreadSize];
+        memset(parent->kernelDeviceInfos[rootDeviceIndex].crossThreadData, 0, crossThreadSize);
+        parent->kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = crossThreadSize;
         parent->mockKernelInfo = info;
 
         auto infoBlock = new KernelInfo();

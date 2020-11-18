@@ -90,7 +90,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
     auto usedIndirectHeapBefore = indirectHeap.getUsed();
     indirectHeap.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 
-    size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
+    size_t crossThreadDataSize = kernel->getCrossThreadDataSize(rootDeviceIndex);
     HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
         indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, *kernel, 0, pDevice->getPreemptionMode(), nullptr, pDevice->getHardwareInfo());
 
@@ -160,16 +160,17 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto usedBefore = indirectHeap.getUsed();
-    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize(rootDeviceIndex);
     HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *kernel,
         false,
         nullptr,
-        sizeCrossThreadData);
+        sizeCrossThreadData,
+        rootDeviceIndex);
 
     auto usedAfter = indirectHeap.getUsed();
-    EXPECT_EQ(kernel->getCrossThreadDataSize(), usedAfter - usedBefore);
+    EXPECT_EQ(kernel->getCrossThreadDataSize(rootDeviceIndex), usedAfter - usedBefore);
 }
 
 HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoDataOffsetsAreNotMoved) {
@@ -186,13 +187,14 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
 
     PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
     kernel->getPatchInfoDataList().push_back(patchInfoData);
-    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize(rootDeviceIndex);
     HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *kernel,
         false,
         nullptr,
-        sizeCrossThreadData);
+        sizeCrossThreadData,
+        rootDeviceIndex);
 
     ASSERT_EQ(1u, kernel->getPatchInfoDataList().size());
     EXPECT_EQ(0xaaaaaaaa, kernel->getPatchInfoDataList()[0].sourceAllocation);
@@ -207,13 +209,14 @@ HWTEST_F(HardwareCommandsTest, givenIndirectHeapNotAllocatedFromInternalPoolWhen
     auto nonInternalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap indirectHeap(nonInternalAllocation, false);
 
-    auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize();
+    auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize(rootDeviceIndex);
     auto offset = HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
         nullptr,
-        sizeCrossThreadData);
+        sizeCrossThreadData,
+        rootDeviceIndex);
     EXPECT_EQ(0u, offset);
     pDevice->getMemoryManager()->freeGraphicsMemory(nonInternalAllocation);
 }
@@ -223,13 +226,14 @@ HWTEST_F(HardwareCommandsTest, givenIndirectHeapAllocatedFromInternalPoolWhenSen
     IndirectHeap indirectHeap(internalAllocation, true);
     auto expectedOffset = internalAllocation->getGpuAddressToPatch();
 
-    auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize();
+    auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize(rootDeviceIndex);
     auto offset = HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
         nullptr,
-        sizeCrossThreadData);
+        sizeCrossThreadData,
+        rootDeviceIndex);
     EXPECT_EQ(expectedOffset, offset);
 
     pDevice->getMemoryManager()->freeGraphicsMemory(internalAllocation);
@@ -256,13 +260,14 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
 
     kernel->getPatchInfoDataList().push_back(patchInfoData1);
     kernel->getPatchInfoDataList().push_back(patchInfoData2);
-    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize(rootDeviceIndex);
     auto offsetCrossThreadData = HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *kernel,
         false,
         nullptr,
-        sizeCrossThreadData);
+        sizeCrossThreadData,
+        rootDeviceIndex);
 
     ASSERT_NE(0u, offsetCrossThreadData);
     EXPECT_EQ(128u, offsetCrossThreadData);
@@ -349,7 +354,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
         pWalkerCmd,
         nullptr,
         true,
-        pDevice->getHardwareInfo());
+        *pDevice);
 
     // It's okay these are EXPECT_GE as they're only going to be used for
     // estimation purposes to avoid OOM.
@@ -357,7 +362,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
     auto sizeRequiredDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto sizeRequiredIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel, localWorkSize);
+    auto sizeRequiredIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(rootDeviceIndex, *kernel, localWorkSize);
     auto sizeRequiredSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
     EXPECT_GE(sizeRequiredDSH, usedAfterDSH - usedBeforeDSH);
@@ -404,7 +409,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
         pWalkerCmd,
         nullptr,
         true,
-        pDevice->getHardwareInfo());
+        *pDevice);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
@@ -452,7 +457,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhen
         pWalkerCmd,
         nullptr,
         true,
-        pDevice->getHardwareInfo());
+        *pDevice);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
@@ -494,7 +499,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
         pWalkerCmd,
         nullptr,
         true,
-        pDevice->getHardwareInfo());
+        *pDevice);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
@@ -572,7 +577,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
         pWalkerCmd,
         nullptr,
         true,
-        pDevice->getHardwareInfo());
+        *pDevice);
 
     size_t numThreads = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
     numThreads = Math::divideAndRoundUp(numThreads, modifiedKernelInfo.getMaxSimdSize());
@@ -663,7 +668,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
         pWalkerCmd,
         nullptr,
         true,
-        pDevice->getHardwareInfo());
+        *pDevice);
 
     EXPECT_EQ(sshUsed + 0x00000000u, *(&bindingTableStatesPointers[0]));
     EXPECT_EQ(sshUsed + 0x00000040u, *(&bindingTableStatesPointers[1]));
@@ -823,7 +828,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
             pWalkerCmd,
             nullptr,
             true,
-            pDevice->getHardwareInfo());
+            *pDevice);
 
         bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getCpuBase()) + localSshOffset + btiOffset);
         for (uint32_t i = 0; i < numSurfaces; ++i) {
@@ -1020,7 +1025,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
         pWalkerCmd,
         nullptr,
         true,
-        pDevice->getHardwareInfo());
+        *pDevice);
 
     bool isMemorySame = memcmp(borderColorPointer, mockDsh, borderColorSize) == 0;
     EXPECT_TRUE(isMemorySame);

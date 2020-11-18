@@ -310,7 +310,7 @@ HWTEST_F(SamplerSetArgTest, GivenFilteringNearestAndAddressingClampWhenSettingKe
 
     EXPECT_EQ(samplerObj, pKernel->getKernelArg(0));
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
     auto snapWaCrossThreadData = ptrOffset(crossThreadData, 0x4);
 
     unsigned int snapWaValue = 0xffffffff;
@@ -431,7 +431,7 @@ HWTEST_P(NormalizedTest, WhenSettingKernelArgSamplerThenCoordsAreCorrect) {
 
     EXPECT_EQ(normalizedCoordinates, static_cast<cl_bool>(!samplerState->getNonNormalizedCoordinateEnable()));
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
     auto normalizedCoordsAddress = ptrOffset(crossThreadData, 0x10);
     unsigned int normalizedCoordsValue = GetNormCoordsEnum(normalizedCoordinates);
 
@@ -514,7 +514,7 @@ HWTEST_P(AddressingModeTest, WhenSettingKernelArgSamplerThenModesAreCorrect) {
     EXPECT_EQ(expectedModeY, samplerState->getTcyAddressControlMode());
     EXPECT_EQ(expectedModeZ, samplerState->getTczAddressControlMode());
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
     auto addressingModeAddress = ptrOffset(crossThreadData, 0x8);
 
     unsigned int addresingValue = GetAddrModeEnum(addressingMode);

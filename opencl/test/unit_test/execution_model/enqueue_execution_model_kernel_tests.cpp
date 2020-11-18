@@ -455,14 +455,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
         const auto &patchInfo = parentKernel->getKernelInfo().patchInfo;
 
         if (patchInfo.pAllocateStatelessDefaultDeviceQueueSurface) {
-            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData()),
+            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData(rootDeviceIndex)),
                                            patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset);
 
             EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddressToPatch(), *patchLocation);
         }
 
         if (patchInfo.pAllocateStatelessEventPoolSurface) {
-            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData()),
+            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData(rootDeviceIndex)),
                                            patchInfo.pAllocateStatelessEventPoolSurface->DataParamOffset);
 
             EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddressToPatch(), *patchLocation);

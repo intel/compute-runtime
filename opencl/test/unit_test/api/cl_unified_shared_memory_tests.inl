@@ -617,7 +617,8 @@ TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSyst
     DebugManager.flags.EnableSharedSystemUsmSupport.set(1u);
 
     auto mockContext = std::make_unique<MockContext>();
-    REQUIRE_SVM_OR_SKIP(mockContext->getDevice(0u));
+    auto device = mockContext->getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
 
     MockKernelWithInternals mockKernel(*mockContext->getDevice(0u), mockContext.get(), true);
 
@@ -627,7 +628,7 @@ TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSyst
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     //check if cross thread is updated
-    auto crossThreadLocation = reinterpret_cast<uintptr_t *>(ptrOffset(mockKernel.mockKernel->getCrossThreadData(), mockKernel.kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset));
+    auto crossThreadLocation = reinterpret_cast<uintptr_t *>(ptrOffset(mockKernel.mockKernel->getCrossThreadData(device->getRootDeviceIndex()), mockKernel.kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset));
     auto systemAddress = reinterpret_cast<uintptr_t>(systemPointer);
 
     EXPECT_EQ(*crossThreadLocation, systemAddress);

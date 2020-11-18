@@ -71,7 +71,7 @@ TEST_F(KernelSlmArgTest, WhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
     pKernel->setArg(0, slmSize0, nullptr);
     pKernel->setArg(2, slmSize2, nullptr);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
     auto slmOffset = ptrOffset(crossThreadData, 0x10);
     EXPECT_EQ(0u, *slmOffset);
 
@@ -88,7 +88,7 @@ TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSl
     pKernel->setArg(2, slmSize2, nullptr);
     pKernel->setArg(0, slmSize0, nullptr);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
     auto slmOffset = ptrOffset(crossThreadData, 0x10);
     EXPECT_EQ(0u, *slmOffset);
 

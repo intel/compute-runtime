@@ -38,7 +38,7 @@ TEST_F(KernelImageArgTest, GivenKernelWithImageArgsWhenCheckingDifferentScenario
     pKernel->setArg(3, sizeof(memObj), &memObj);
     pKernel->setArg(4, sizeof(memObj), &memObj);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
     auto imgWidthOffset = ptrOffset(crossThreadData, 0x4);
     EXPECT_EQ(imageWidth, *imgWidthOffset);
 
@@ -63,7 +63,7 @@ TEST_F(KernelImageArgTest, givenKernelWithFlatImageTokensWhenArgIsSetThenPatchAl
     cl_mem memObj = image.get();
 
     pKernel->setArg(0, sizeof(memObj), &memObj);
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
     auto pixelSize = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
 
     auto offsetFlatBaseOffset = ptrOffset(crossThreadData, pKernel->getKernelInfo().kernelArgInfo[0].offsetFlatBaseOffset);
@@ -85,7 +85,7 @@ TEST_F(KernelImageArgTest, givenKernelWithValidOffsetNumMipLevelsWhenImageArgIsS
     cl_mem imageObj = &image;
 
     pKernel->setArg(0, sizeof(imageObj), &imageObj);
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
     auto patchedNumMipLevels = ptrOffset(crossThreadData, offsetNumMipLevelsImage0);
     EXPECT_EQ(7U, *patchedNumMipLevels);
 }
@@ -107,7 +107,7 @@ TEST_F(KernelImageArgTest, givenImageWithNumSamplesWhenSetArgIsCalledThenPatchNu
 
     pKernel->setArg(0, sizeof(memObj), &memObj);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
     auto patchedNumSamples = ptrOffset(crossThreadData, 0x3c);
     EXPECT_EQ(16u, *patchedNumSamples);
 
@@ -367,18 +367,18 @@ HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenPatchingSurfaceS
     for (size_t i = 0; i < pKernelInfo->kernelArgInfo.size(); i++) {
         pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20 + static_cast<uint32_t>(0x20 * i);
         auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset;
-        auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+        auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
         *patchLocation = 0xdead;
     }
 
     pKernelInfo->kernelArgInfo[pKernelInfo->kernelArgInfo.size() - 1].isImage = false;
 
     uint32_t sshOffset = 0x4000;
-    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
 
     for (size_t i = 0; i < pKernelInfo->kernelArgInfo.size(); i++) {
         auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset;
-        auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+        auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
 
         if (pKernelInfo->kernelArgInfo[i].isImage) {
             DataPortBindlessSurfaceExtendedMessageDescriptor extMessageDesc;
@@ -400,7 +400,7 @@ TEST_F(KernelImageArgTest, givenUsedBindlessImagesAndNonImageArgWhenPatchingSurf
     for (size_t i = 0; i < pKernelInfo->kernelArgInfo.size(); i++) {
         pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20 + static_cast<uint32_t>(0x20 * i);
         auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset;
-        auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+        auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
         *patchLocation = 0xdead;
     }
 
@@ -408,10 +408,10 @@ TEST_F(KernelImageArgTest, givenUsedBindlessImagesAndNonImageArgWhenPatchingSurf
     pKernelInfo->kernelArgInfo[nonImageIndex].isImage = false;
 
     uint32_t sshOffset = 0x4000;
-    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
 
     auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[nonImageIndex].kernelArgPatchInfoVector[0].crossthreadOffset;
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
 
     EXPECT_EQ(0xdeadu, *patchLocation);
 }
@@ -425,7 +425,7 @@ TEST_F(KernelImageArgTest, givenNotUsedBindlessImagesAndImageArgWhenPatchingSurf
     for (size_t i = 0; i < pKernelInfo->kernelArgInfo.size(); i++) {
         pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20 + static_cast<uint32_t>(0x20 * i);
         auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset;
-        auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+        auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
         *patchLocation = 0xdead;
     }
 
@@ -433,10 +433,10 @@ TEST_F(KernelImageArgTest, givenNotUsedBindlessImagesAndImageArgWhenPatchingSurf
     pKernelInfo->kernelArgInfo[nonImageIndex].isImage = true;
 
     uint32_t sshOffset = 0x4000;
-    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
 
     auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[nonImageIndex].kernelArgPatchInfoVector[0].crossthreadOffset;
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
 
     EXPECT_EQ(0xdeadu, *patchLocation);
 }

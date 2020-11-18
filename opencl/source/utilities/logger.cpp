@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/timestamp_packet.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
@@ -203,8 +204,9 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
                 }
             } else {
                 type = "immediate";
-                auto crossThreadData = kernel->getCrossThreadData();
-                auto crossThreadDataSize = kernel->getCrossThreadDataSize();
+                auto rootDeviceIndex = kernel->getDevices()[0]->getRootDeviceIndex();
+                auto crossThreadData = kernel->getCrossThreadData(rootDeviceIndex);
+                auto crossThreadDataSize = kernel->getCrossThreadDataSize(rootDeviceIndex);
                 argVal = std::unique_ptr<char[]>(new char[crossThreadDataSize]);
 
                 size_t totalArgSize = 0;

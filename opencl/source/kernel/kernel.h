@@ -112,12 +112,12 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     bool isAuxTranslationRequired() const { return auxTranslationRequired; }
 
-    char *getCrossThreadData() const {
-        return crossThreadData;
+    char *getCrossThreadData(uint32_t rootDeviceIndex) const {
+        return kernelDeviceInfos[rootDeviceIndex].crossThreadData;
     }
 
-    uint32_t getCrossThreadDataSize() const {
-        return crossThreadDataSize;
+    uint32_t getCrossThreadDataSize(uint32_t rootDeviceIndex) const {
+        return kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize;
     }
 
     cl_int initialize();
@@ -208,10 +208,10 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void patchDefaultDeviceQueue(DeviceQueue *devQueue);
     void patchEventPool(DeviceQueue *devQueue);
-    void patchBlocksSimdSize();
+    void patchBlocksSimdSize(uint32_t rootDeviceIndex);
     bool usesSyncBuffer();
     void patchSyncBuffer(Device &device, GraphicsAllocation *gfxAllocation, size_t bufferOffset);
-    void patchBindlessSurfaceStateOffsets(const size_t sshOffset);
+    void patchBindlessSurfaceStateOffsets(const Device &device, const size_t sshOffset);
 
     GraphicsAllocation *getKernelReflectionSurface() const {
         return kernelReflectionSurface;
@@ -487,7 +487,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     void
     makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
 
-    void *patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, GraphicsAllocation *svmAlloc);
+    void *patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, GraphicsAllocation *svmAlloc, uint32_t rootDeviceIndex);
 
     // Sets-up both crossThreadData and ssh for given implicit (private/constant, etc.) allocation
     template <typename PatchTokenT>
@@ -526,9 +526,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::unique_ptr<char[]> pSshLocal;
     uint32_t sshLocalSize = 0u;
 
-    char *crossThreadData = nullptr;
-    uint32_t crossThreadDataSize = 0u;
-
     GraphicsAllocation *kernelReflectionSurface = nullptr;
 
     bool usingSharedObjArgs = false;
@@ -553,6 +550,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
 
     struct KernelDeviceInfo {
+        char *crossThreadData = nullptr;
+        uint32_t crossThreadDataSize = 0u;
+
         GraphicsAllocation *privateSurface = nullptr;
         uint64_t privateSurfaceSize = 0u;
     };

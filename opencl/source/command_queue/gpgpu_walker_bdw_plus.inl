@@ -150,7 +150,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         &cmdWalker,
         nullptr,
         true,
-        devQueueHw.getDevice().getHardwareInfo());
+        devQueueHw.getDevice());
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(&commandStream, scheduler, true);
