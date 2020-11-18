@@ -178,6 +178,8 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
                                  static_cast<uintptr_t>(globalConstBuffer->getGpuAddressToPatch()),
                                  *globalConstBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress, *device);
         this->residencyContainer.push_back(globalConstBuffer);
+    } else if (nullptr != globalConstBuffer) {
+        this->residencyContainer.push_back(globalConstBuffer);
     }
 
     if (NEO::isValidOffset(kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless)) {
@@ -186,6 +188,8 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
         patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,
                                  static_cast<uintptr_t>(globalVarBuffer->getGpuAddressToPatch()),
                                  *globalVarBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress, *device);
+        this->residencyContainer.push_back(globalVarBuffer);
+    } else if (nullptr != globalVarBuffer) {
         this->residencyContainer.push_back(globalVarBuffer);
     }
 }

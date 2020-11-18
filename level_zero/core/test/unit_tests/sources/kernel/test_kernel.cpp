@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/program/kernel_info.h"
 #include "test.h"
@@ -549,6 +550,27 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonIntern
 
     kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, false);
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
+}
+
+TEST_F(KernelIsaTests, givenGlobalBuffersWhenCreatingKernelImmutableDataThenBuffersAreAddedToResidencyContainer) {
+    uint32_t kernelHeap = 0;
+    KernelInfo kernelInfo;
+    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+
+    KernelImmutableData kernelImmutableData(device);
+
+    uint64_t gpuAddress = 0x1200;
+    void *buffer = reinterpret_cast<void *>(gpuAddress);
+    size_t size = 0x1100;
+    NEO::MockGraphicsAllocation globalVarBuffer(buffer, gpuAddress, size);
+    NEO::MockGraphicsAllocation globalConstBuffer(buffer, gpuAddress, size);
+
+    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0,
+                                   &globalConstBuffer, &globalVarBuffer, false);
+    auto &resCont = kernelImmutableData.getResidencyContainer();
+    EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalVarBuffer));
+    EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalConstBuffer));
 }
 
 } // namespace ult
