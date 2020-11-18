@@ -92,6 +92,7 @@ struct FeatureTableBase {
     bool ftrCCSNode = false;
     bool ftrRcsNode = true;
     bool ftrLocalMemory = false;
+    bool ftrLocalMemoryAllows4KB = false;
 };
 
 struct WorkaroundTableBase {

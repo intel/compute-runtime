@@ -45,6 +45,7 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(CCSNode);
         TRANSFER_FTR_TO_GMM(MemTypeMocsDeferPAT);
         TRANSFER_FTR_TO_GMM(LocalMemory);
+        TRANSFER_FTR_TO_GMM(LocalMemoryAllows4KB);
 
 #undef TRANSFER_FTR_TO_GMM
     }

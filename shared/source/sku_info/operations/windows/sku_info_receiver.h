@@ -101,6 +101,8 @@ class SkuInfoReceiver {
         RECEIVE_FTR(CCSNode);
         RECEIVE_FTR(MemTypeMocsDeferPAT);
         RECEIVE_FTR(LocalMemory);
+        RECEIVE_FTR(LocalMemoryAllows4KB);
+
 #undef RECEIVE_FTR
     }
 
