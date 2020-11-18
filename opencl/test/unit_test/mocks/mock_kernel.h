@@ -37,6 +37,7 @@ class MockKernel : public Kernel {
     using Kernel::kernelArgHandlers;
     using Kernel::kernelArgRequiresCacheFlush;
     using Kernel::kernelArguments;
+    using Kernel::kernelDeviceInfos;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
     using Kernel::numberOfBindingTableStates;
@@ -188,12 +189,15 @@ class MockKernel : public Kernel {
     }
 
     void setPrivateSurface(GraphicsAllocation *gfxAllocation, uint32_t size) {
-        privateSurface = gfxAllocation;
-        privateSurfaceSize = size;
-    }
-
-    GraphicsAllocation *getPrivateSurface() const {
-        return privateSurface;
+        if (gfxAllocation) {
+            kernelDeviceInfos[gfxAllocation->getRootDeviceIndex()].privateSurface = gfxAllocation;
+            kernelDeviceInfos[gfxAllocation->getRootDeviceIndex()].privateSurfaceSize = size;
+        } else {
+            for (auto &kernelDeviceInfo : kernelDeviceInfos) {
+                kernelDeviceInfo.privateSurface = gfxAllocation;
+                kernelDeviceInfo.privateSurfaceSize = size;
+            }
+        }
     }
 
     void setTotalSLMSize(uint32_t size) {

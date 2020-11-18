@@ -534,9 +534,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     char *crossThreadData = nullptr;
     uint32_t crossThreadDataSize = 0u;
 
-    GraphicsAllocation *privateSurface = nullptr;
-    uint64_t privateSurfaceSize = 0u;
-
     GraphicsAllocation *kernelReflectionSurface = nullptr;
 
     bool usingSharedObjArgs = false;
@@ -559,5 +556,11 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool isUnifiedMemorySyncRequired = true;
     bool debugEnabled = false;
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+
+    struct KernelDeviceInfo {
+        GraphicsAllocation *privateSurface = nullptr;
+        uint64_t privateSurfaceSize = 0u;
+    };
+    StackVec<KernelDeviceInfo, 1> kernelDeviceInfos;
 };
 } // namespace NEO

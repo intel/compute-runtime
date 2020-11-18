@@ -260,6 +260,7 @@ class Program : public BaseObject<_cl_program> {
 
     static cl_int processInputDevices(ClDeviceVector *&deviceVectorPtr, cl_uint numDevices, const cl_device_id *deviceList, const ClDeviceVector &allAvailableDevices);
     MOCKABLE_VIRTUAL void initInternalOptions(std::string &internalOptions) const;
+    uint32_t getMaxRootDeviceIndex() const { return maxRootDeviceIndex; }
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
@@ -344,6 +345,7 @@ class Program : public BaseObject<_cl_program> {
 
     bool isBuiltIn = false;
     bool kernelDebugEnabled = false;
+    uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
 };
 
 } // namespace NEO

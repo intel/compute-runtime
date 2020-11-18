@@ -71,6 +71,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, bool schedu
       program(programArg),
       deviceVector(programArg->getDevices()),
       kernelInfo(kernelInfoArg) {
+    kernelDeviceInfos.resize(program->getMaxRootDeviceIndex() + 1);
     program->retain();
     imageTransformer.reset(new ImageTransformer);
 
@@ -82,9 +83,11 @@ Kernel::~Kernel() {
     crossThreadData = nullptr;
     crossThreadDataSize = 0;
 
-    if (privateSurface) {
-        program->peekExecutionEnvironment().memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(privateSurface);
-        privateSurface = nullptr;
+    for (auto &kernelDeviceInfo : kernelDeviceInfos) {
+        if (kernelDeviceInfo.privateSurface) {
+            program->peekExecutionEnvironment().memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelDeviceInfo.privateSurface);
+            kernelDeviceInfo.privateSurface = nullptr;
+        }
     }
 
     if (kernelReflectionSurface) {
@@ -242,20 +245,24 @@ cl_int Kernel::initialize() {
 
         auto rootDeviceIndex = getDevice().getRootDeviceIndex();
         if (perHwThreadPrivateMemorySize) {
-            privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, getDevice().getSharedDeviceInfo().computeUnitsUsedForScratch);
+            kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, getDevice().getSharedDeviceInfo().computeUnitsUsedForScratch);
 
-            DEBUG_BREAK_IF(privateSurfaceSize == 0);
-            if (privateSurfaceSize > std::numeric_limits<uint32_t>::max()) {
+            DEBUG_BREAK_IF(kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize == 0);
+            if (kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize > std::numeric_limits<uint32_t>::max()) {
                 retVal = CL_OUT_OF_RESOURCES;
                 break;
             }
-            privateSurface = getDevice().getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, static_cast<size_t>(privateSurfaceSize), GraphicsAllocation::AllocationType::PRIVATE_SURFACE, getDevice().getDeviceBitfield()});
-            if (privateSurface == nullptr) {
+            kernelDeviceInfos[rootDeviceIndex].privateSurface = getDevice().getMemoryManager()->allocateGraphicsMemoryWithProperties(
+                {rootDeviceIndex,
+                 static_cast<size_t>(kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize),
+                 GraphicsAllocation::AllocationType::PRIVATE_SURFACE,
+                 getDevice().getDeviceBitfield()});
+            if (kernelDeviceInfos[rootDeviceIndex].privateSurface == nullptr) {
                 retVal = CL_OUT_OF_RESOURCES;
                 break;
             }
             const auto &patch = patchInfo.pAllocateStatelessPrivateSurface;
-            patchWithImplicitSurface(reinterpret_cast<void *>(privateSurface->getGpuAddressToPatch()), *privateSurface, *patch);
+            patchWithImplicitSurface(reinterpret_cast<void *>(kernelDeviceInfos[rootDeviceIndex].privateSurface->getGpuAddressToPatch()), *kernelDeviceInfos[rootDeviceIndex].privateSurface, *patch);
         }
         if (patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization) {
             DEBUG_BREAK_IF(program->getConstantSurface(rootDeviceIndex) == nullptr);
@@ -1077,8 +1084,8 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
 
 void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-    if (privateSurface) {
-        commandStreamReceiver.makeResident(*privateSurface);
+    if (kernelDeviceInfos[rootDeviceIndex].privateSurface) {
+        commandStreamReceiver.makeResident(*kernelDeviceInfos[rootDeviceIndex].privateSurface);
     }
 
     if (program->getConstantSurface(rootDeviceIndex)) {
@@ -1127,8 +1134,8 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 
 void Kernel::getResidency(std::vector<Surface *> &dst) {
     auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-    if (privateSurface) {
-        GeneralSurface *surface = new GeneralSurface(privateSurface);
+    if (kernelDeviceInfos[rootDeviceIndex].privateSurface) {
+        GeneralSurface *surface = new GeneralSurface(kernelDeviceInfos[rootDeviceIndex].privateSurface);
         dst.push_back(surface);
     }
 
@@ -2195,9 +2202,11 @@ void Kernel::provideInitializationHints() {
     Context *context = program->getContextPtr();
     if (context == nullptr || !context->isProvidingPerformanceHints())
         return;
-    if (privateSurfaceSize) {
-        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, PRIVATE_MEMORY_USAGE_TOO_HIGH,
-                                        kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(), privateSurfaceSize);
+    for (const auto &kernelDeviceInfo : kernelDeviceInfos) {
+        if (kernelDeviceInfo.privateSurfaceSize) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, PRIVATE_MEMORY_USAGE_TOO_HIGH,
+                                            kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(), kernelDeviceInfo.privateSurfaceSize);
+        }
     }
     if (patchInfo.mediavfestate) {
         auto scratchSize = patchInfo.mediavfestate->PerThreadScratchSpace;

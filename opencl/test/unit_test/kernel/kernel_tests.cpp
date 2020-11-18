@@ -605,7 +605,7 @@ TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWh
 
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
 
-    auto privateSurface = pKernel->getPrivateSurface();
+    auto privateSurface = pKernel->kernelDeviceInfos[pDevice->getRootDeviceIndex()].privateSurface;
     auto tagAddress = csr.getTagAddress();
 
     privateSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
@@ -693,7 +693,7 @@ TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateS
 
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-        EXPECT_TRUE(pKernel->getPrivateSurface()->is32BitAllocation());
+        EXPECT_TRUE(pKernel->kernelDeviceInfos[pDevice->getRootDeviceIndex()].privateSurface->is32BitAllocation());
 
         delete pKernel;
     }
@@ -738,7 +738,7 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
 
     EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize());
 
-    auto bufferAddress = pKernel->getPrivateSurface()->getGpuAddress();
+    auto bufferAddress = pKernel->kernelDeviceInfos[pDevice->getRootDeviceIndex()].privateSurface->getGpuAddress();
 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
@@ -2468,7 +2468,7 @@ TEST_F(KernelCrossThreadTests, givenKernelWithPrivateMemoryWhenItIsCreatedThenCu
 
     kernel->initialize();
 
-    auto privateSurface = kernel->getPrivateSurface();
+    auto privateSurface = kernel->kernelDeviceInfos[pDevice->getRootDeviceIndex()].privateSurface;
 
     auto constantBuffer = kernel->getCrossThreadData();
     auto privateAddress = (uintptr_t)privateSurface->getGpuAddressToPatch();
@@ -3228,7 +3228,7 @@ TEST_F(KernelMultiRootDeviceTest, WhenGettingRootDeviceIndexThenCorrectRootDevic
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo));
     kernel->initialize();
 
-    auto privateSurface = kernel->getPrivateSurface();
+    auto privateSurface = kernel->kernelDeviceInfos[device->getRootDeviceIndex()].privateSurface;
     ASSERT_NE(nullptr, privateSurface);
     EXPECT_EQ(expectedRootDeviceIndex, privateSurface->getRootDeviceIndex());
 }

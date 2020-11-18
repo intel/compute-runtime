@@ -46,7 +46,7 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
     }
     blockKernelManager = new BlockKernelManager();
 
-    uint32_t maxRootDeviceIndex = 0;
+    maxRootDeviceIndex = 0;
 
     for (const auto &device : clDevicesIn) {
         if (device->getRootDeviceIndex() > maxRootDeviceIndex) {
