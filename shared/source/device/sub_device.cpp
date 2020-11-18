@@ -46,6 +46,9 @@ Device *SubDevice::getDeviceById(uint32_t deviceId) const {
 Device *SubDevice::getParentDevice() const {
     return &rootDevice;
 }
+BindlessHeapsHelper *SubDevice::getBindlessHeapsHelper() const {
+    return rootDevice.getBindlessHeapsHelper();
+}
 
 uint64_t SubDevice::getGlobalMemorySize(uint32_t deviceBitfield) const {
     auto globalMemorySize = Device::getGlobalMemorySize(static_cast<uint32_t>(maxNBitValue(rootDevice.getNumSubDevices())));

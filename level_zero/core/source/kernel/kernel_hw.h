@@ -8,6 +8,8 @@
 #pragma once
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -42,8 +44,12 @@ struct KernelHw : public KernelImp {
             DEBUG_BREAK_IF(baseAddress != (baseAddress & sshAlignmentMask));
             offset = 0;
         }
-
-        auto surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), argInfo.bindful);
+        void *surfaceStateAddress = nullptr;
+        if (NEO::isValidOffset(argInfo.bindless)) {
+            surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
+        } else {
+            surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), argInfo.bindful);
+        }
         uint64_t bufferAddressForSsh = baseAddress;
         auto alignment = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment();
         size_t bufferSizeForSsh = ptrDiff(alloc->getGpuAddress(), bufferAddressForSsh);

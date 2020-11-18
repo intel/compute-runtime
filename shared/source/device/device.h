@@ -10,6 +10,7 @@
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -93,6 +94,7 @@ class Device : public ReferenceTrackedObject<Device> {
     virtual Device *getDeviceById(uint32_t deviceId) const = 0;
     virtual Device *getParentDevice() const = 0;
     virtual DeviceBitfield getDeviceBitfield() const = 0;
+    virtual BindlessHeapsHelper *getBindlessHeapsHelper() const = 0;
 
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
 

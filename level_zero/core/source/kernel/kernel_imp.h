@@ -112,6 +112,7 @@ struct KernelImp : Kernel {
     void createPrintfBuffer();
     void setDebugSurface();
     virtual void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) = 0;
+    void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
 
     const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;

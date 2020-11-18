@@ -274,3 +274,13 @@ TEST(SubDevicesTest, whenInitializeRootCsrThenDirectSubmissionIsNotInitialized) 
     auto csr = device->getEngine(1u).commandStreamReceiver;
     EXPECT_FALSE(csr->isDirectSubmissionEnabled());
 }
+
+TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenBindlessHeapHelperCreatedThenSubDeviceReturnRootDeviceMember) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    device->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(device->getMemoryManager(), device->getNumAvailableDevices() > 1, device->getRootDeviceIndex()));
+    EXPECT_EQ(device->getBindlessHeapsHelper(), device->subdevices.at(0)->getBindlessHeapsHelper());
+}

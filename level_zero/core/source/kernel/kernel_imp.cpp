@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
@@ -464,7 +465,7 @@ ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal
     const auto val = argVal;
 
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg, val);
-    if (NEO::isValidOffset(arg.bindful)) {
+    if (NEO::isValidOffset(arg.bindful) || NEO::isValidOffset(arg.bindless)) {
         setBufferSurfaceState(argIndex, reinterpret_cast<void *>(val), allocation);
     }
     residencyContainer[argIndex] = allocation;
@@ -525,7 +526,11 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
     }
 
     const auto image = Image::fromHandle(*static_cast<const ze_image_handle_t *>(argVal));
-    image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful);
+    if (kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode == NEO::KernelDescriptor::Bindless) {
+        image->copySurfaceStateToSSH(patchBindlessSurfaceState(image->getAllocation(), arg.bindless), 0u);
+    } else {
+        image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful);
+    }
     residencyContainer[argIndex] = image->getAllocation();
 
     auto imageInfo = image->getImageInfo();
@@ -707,7 +712,17 @@ void KernelImp::setDebugSurface() {
                                  *device->getNEODevice());
     }
 }
-
+void *KernelImp::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
+    auto &hwHelper = NEO::HwHelper::get(this->module->getDevice()->getHwInfo().platform.eRenderCoreFamily);
+    auto surfaceStateSize = hwHelper.getRenderSurfaceStateSize();
+    NEO::BindlessHeapsHelper *bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
+    auto ssInHeap = bindlessHeapsHelper->allocateSSInHeap(surfaceStateSize, alloc, NEO::BindlessHeapsHelper::GLOBAL_SSH);
+    this->residencyContainer.push_back(ssInHeap.heapAllocation);
+    auto patchLocation = ptrOffset(getCrossThreadData(), bindless);
+    auto patchValue = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
+    patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
+    return ssInHeap.ssPtr;
+}
 void KernelImp::patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint32_t z) {
     const NEO::KernelDescriptor &desc = kernelImmData->getDescriptor();
     auto dst = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);

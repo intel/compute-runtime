@@ -11,7 +11,6 @@
 namespace NEO {
 
 class SubDevice;
-class BindlessHeapsHelper;
 
 class RootDevice : public Device {
   public:
@@ -23,7 +22,7 @@ class RootDevice : public Device {
     Device *getDeviceById(uint32_t deviceId) const override;
     Device *getParentDevice() const override;
     uint32_t getNumSubDevices() const;
-    BindlessHeapsHelper *getBindlessHeapsHelper() const;
+    BindlessHeapsHelper *getBindlessHeapsHelper() const override;
 
   protected:
     DeviceBitfield getDeviceBitfield() const override;
