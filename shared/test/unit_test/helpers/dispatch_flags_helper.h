@@ -37,7 +37,8 @@ struct DispatchFlagsHelper {
             false,                                   //implicitFlush
             false,                                   //outOfOrderExecutionAllowed
             false,                                   //epilogueRequired
-            false                                    //usePerDssBackedBuffer
+            false,                                   //usePerDssBackedBuffer
+            false                                    //useSingleSubdevice
         );
     }
 };

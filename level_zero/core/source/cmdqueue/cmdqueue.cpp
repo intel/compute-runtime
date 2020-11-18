@@ -59,7 +59,7 @@ void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &
 
     NEO::BatchBuffer batchBuffer(commandStream->getGraphicsAllocation(), offset, 0u, nullptr, false, false,
                                  NEO::QueueThrottle::HIGH, NEO::QueueSliceCount::defaultSliceCount,
-                                 commandStream->getUsed(), commandStream, endingCmdPtr);
+                                 commandStream->getUsed(), commandStream, endingCmdPtr, false);
 
     csr->submitBatchBuffer(batchBuffer, residencyContainer);
     buffers.setCurrentFlushStamp(csr->obtainCurrentFlushStamp());

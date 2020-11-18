@@ -755,7 +755,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         implicitFlush,                                                                              //implicitFlush
         !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
         false,                                                                                      //epilogueRequired
-        usePerDssBackedBuffer                                                                       //usePerDssBackedBuffer
+        usePerDssBackedBuffer,                                                                      //usePerDssBackedBuffer
+        kernel->isSingleSubdevicePreferred()                                                        //useSingleSubdevice
     );
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
@@ -969,8 +970,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             (enqueueProperties.operation == EnqueueProperties::Operation::Blit), //implicitFlush
             getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
             false,                                                               //epilogueRequired
-            false                                                                //usePerDssBackedBuffer
-        );
+            false,                                                               //usePerDssBackedBuffer
+            false);
 
         if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             eventsRequest.fillCsrDependencies(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);

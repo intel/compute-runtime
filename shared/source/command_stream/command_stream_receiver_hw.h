@@ -146,6 +146,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     CsrSizeRequestFlags csrSizeRequestFlags = {};
 
+    bool wasSubmittedToSingleSubdevice = false;
+
     std::unique_ptr<DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>> directSubmission;
     std::unique_ptr<DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>> blitterDirectSubmission;
 };

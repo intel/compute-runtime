@@ -59,7 +59,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
 
         CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
         CommandStreamReceiverHw<FamilyType>::alignToCacheLine(*pCS);
-        BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr};
+        BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr, false};
         ResidencyContainer allocationsForResidency;
         pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
 
@@ -74,11 +74,11 @@ typedef Test<AUBFixture> AUBcommandstreamTests;
 HWTEST_F(AUBcommandstreamTests, WhenFlushingTwiceThenCompletes) {
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
     CommandStreamReceiverHw<FamilyType>::alignToCacheLine(*pCS);
-    BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr};
+    BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr, false};
     ResidencyContainer allocationsForResidency;
 
     pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
-    BatchBuffer batchBuffer2{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr};
+    BatchBuffer batchBuffer2{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr, false};
     pCommandStreamReceiver->flush(batchBuffer2, allocationsForResidency);
     AUBCommandStreamFixture::getSimulatedCsr<FamilyType>()->pollForCompletion();
 }

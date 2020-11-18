@@ -55,29 +55,31 @@ struct DispatchFlags {
                   uint32_t l3CacheSettings, uint32_t threadArbitrationPolicy, uint32_t additionalKernelExecInfo, KernelExecutionType kernelExecutionType, uint64_t sliceCount, bool blocking, bool dcFlush,
                   bool useSLM, bool guardCommandBufferWithPipeControl, bool gsba32BitRequired,
                   bool requiresCoherency, bool lowPriority, bool implicitFlush,
-                  bool outOfOrderExecutionAllowed, bool epilogueRequired, bool usePerDSSbackedBuffer) : csrDependencies(csrDependencies),
-                                                                                                        barrierTimestampPacketNodes(barrierTimestampPacketNodes),
-                                                                                                        pipelineSelectArgs(pipelineSelectArgs),
-                                                                                                        flushStampReference(flushStampReference),
-                                                                                                        throttle(throttle),
-                                                                                                        preemptionMode(preemptionMode),
-                                                                                                        numGrfRequired(numGrfRequired),
-                                                                                                        l3CacheSettings(l3CacheSettings),
-                                                                                                        threadArbitrationPolicy(threadArbitrationPolicy),
-                                                                                                        additionalKernelExecInfo(additionalKernelExecInfo),
-                                                                                                        kernelExecutionType(kernelExecutionType),
-                                                                                                        sliceCount(sliceCount),
-                                                                                                        blocking(blocking),
-                                                                                                        dcFlush(dcFlush),
-                                                                                                        useSLM(useSLM),
-                                                                                                        guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControl),
-                                                                                                        gsba32BitRequired(gsba32BitRequired),
-                                                                                                        requiresCoherency(requiresCoherency),
-                                                                                                        lowPriority(lowPriority),
-                                                                                                        implicitFlush(implicitFlush),
-                                                                                                        outOfOrderExecutionAllowed(outOfOrderExecutionAllowed),
-                                                                                                        epilogueRequired(epilogueRequired),
-                                                                                                        usePerDssBackedBuffer(usePerDSSbackedBuffer){};
+                  bool outOfOrderExecutionAllowed, bool epilogueRequired, bool usePerDSSbackedBuffer, bool useSingleSubdevice) : csrDependencies(csrDependencies),
+                                                                                                                                 barrierTimestampPacketNodes(barrierTimestampPacketNodes),
+                                                                                                                                 pipelineSelectArgs(pipelineSelectArgs),
+                                                                                                                                 flushStampReference(flushStampReference),
+                                                                                                                                 throttle(throttle),
+                                                                                                                                 preemptionMode(preemptionMode),
+                                                                                                                                 numGrfRequired(numGrfRequired),
+                                                                                                                                 l3CacheSettings(l3CacheSettings),
+                                                                                                                                 threadArbitrationPolicy(threadArbitrationPolicy),
+                                                                                                                                 additionalKernelExecInfo(additionalKernelExecInfo),
+                                                                                                                                 kernelExecutionType(kernelExecutionType),
+                                                                                                                                 sliceCount(sliceCount),
+                                                                                                                                 blocking(blocking),
+                                                                                                                                 dcFlush(dcFlush),
+                                                                                                                                 useSLM(useSLM),
+                                                                                                                                 guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControl),
+                                                                                                                                 gsba32BitRequired(gsba32BitRequired),
+                                                                                                                                 requiresCoherency(requiresCoherency),
+                                                                                                                                 lowPriority(lowPriority),
+                                                                                                                                 implicitFlush(implicitFlush),
+                                                                                                                                 outOfOrderExecutionAllowed(outOfOrderExecutionAllowed),
+                                                                                                                                 epilogueRequired(epilogueRequired),
+                                                                                                                                 usePerDssBackedBuffer(usePerDSSbackedBuffer),
+                                                                                                                                 useSingleSubdevice(useSingleSubdevice){};
+
     CsrDependencies csrDependencies;
     TimestampPacketContainer *barrierTimestampPacketNodes = nullptr;
     PipelineSelectArgs pipelineSelectArgs;
@@ -102,6 +104,7 @@ struct DispatchFlags {
     bool outOfOrderExecutionAllowed = false;
     bool epilogueRequired = false;
     bool usePerDssBackedBuffer = false;
+    bool useSingleSubdevice = false;
 };
 
 struct CsrSizeRequestFlags {

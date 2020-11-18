@@ -197,7 +197,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     void *currentPipeControlForNooping = nullptr;
     void *epiloguePipeControlLocation = nullptr;
 
-    if (DebugManager.flags.ForceCsrFlushing.get()) {
+    bool csrFlush = this->wasSubmittedToSingleSubdevice != dispatchFlags.useSingleSubdevice;
+
+    csrFlush |= DebugManager.flags.ForceCsrFlushing.get();
+
+    if (csrFlush) {
         flushBatchedSubmissions();
     }
 
@@ -544,7 +548,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto &streamToSubmit = submitCommandStreamFromCsr ? commandStreamCSR : commandStreamTask;
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, chainedBatchBuffer,
                             dispatchFlags.requiresCoherency, dispatchFlags.lowPriority, dispatchFlags.throttle, dispatchFlags.sliceCount,
-                            streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation};
+                            streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, dispatchFlags.useSingleSubdevice};
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
@@ -565,6 +569,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     } else {
         this->makeSurfacePackNonResident(this->getResidencyAllocations());
     }
+
+    this->wasSubmittedToSingleSubdevice = dispatchFlags.useSingleSubdevice;
 
     //check if we are not over the budget, if we are do implicit flush
     if (getMemoryManager()->isMemoryBudgetExhausted()) {
@@ -1027,7 +1033,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     }
 
     BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
-                            commandStream.getUsed(), &commandStream, endingCmdPtr};
+                            commandStream.getUsed(), &commandStream, endingCmdPtr, false};
 
     flush(batchBuffer, getResidencyAllocations());
     makeSurfacePackNonResident(getResidencyAllocations());

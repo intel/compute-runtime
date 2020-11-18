@@ -73,8 +73,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         false,                                                                       //implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
         false,                                                                       //epilogueRequired
-        false                                                                        //usePerDssBackedBuffer
-    );
+        false,                                                                       //usePerDssBackedBuffer
+        false);
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
@@ -232,8 +232,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         false,                                                                       //implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
         false,                                                                       //epilogueRequired
-        kernel->requiresPerDssBackedBuffer()                                         //usePerDssBackedBuffer
-    );
+        kernel->requiresPerDssBackedBuffer(),                                        //usePerDssBackedBuffer
+        kernel->isSingleSubdevicePreferred());
 
     if (timestampPacketDependencies) {
         eventsRequest.fillCsrDependencies(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
@@ -354,8 +354,8 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         false,                                                //implicitFlush
         commandStreamReceiver.isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
         false,                                                //epilogueRequired
-        false                                                 //usePerDssBackedBuffer
-    );
+        false,                                                //usePerDssBackedBuffer
+        false);
 
     UNRECOVERABLE_IF(!kernelOperation->blitEnqueue && !commandStreamReceiver.peekTimestampPacketWriteEnabled());
 

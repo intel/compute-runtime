@@ -30,7 +30,8 @@ struct BatchBuffer {
                 uint64_t sliceCount,
                 size_t usedSize,
                 LinearStream *stream,
-                void *endCmdPtr);
+                void *endCmdPtr,
+                bool useSingleSubdevice);
     BatchBuffer() {}
     GraphicsAllocation *commandBufferAllocation = nullptr;
     size_t startOffset = 0u;
@@ -45,6 +46,8 @@ struct BatchBuffer {
     //only used in drm csr in gem close worker active mode
     LinearStream *stream = nullptr;
     void *endCmdPtr = nullptr;
+
+    bool useSingleSubdevice = false;
 };
 
 struct CommandBuffer : public IDNode<CommandBuffer> {

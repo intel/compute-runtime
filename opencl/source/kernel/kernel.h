@@ -281,6 +281,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool isVmeKernel() const { return kernelInfo.isVmeWorkload; }
     bool requiresSpecialPipelineSelectMode() const { return specialPipelineSelectMode; }
 
+    MOCKABLE_VIRTUAL bool isSingleSubdevicePreferred() const { return false; }
+
     //residency for kernel surfaces
     MOCKABLE_VIRTUAL void makeResident(CommandStreamReceiver &commandStreamReceiver);
     MOCKABLE_VIRTUAL void getResidency(std::vector<Surface *> &dst, uint32_t rootDeviceIndex);
