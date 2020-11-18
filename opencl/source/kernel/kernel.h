@@ -189,11 +189,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
 
     Context &getContext() const {
-        return context ? *context : program->getContext();
-    }
-
-    void setContext(Context *context) {
-        this->context = context;
+        return program->getContext();
     }
 
     Program *getProgram() const { return program; }
@@ -515,7 +511,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
 
     Program *program;
-    Context *context = nullptr;
     const ClDeviceVector &deviceVector;
     const KernelInfo &kernelInfo;
 

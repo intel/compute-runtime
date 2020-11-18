@@ -59,7 +59,8 @@ void KernelImageArgTest::SetUp() {
     pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessConfiguration() ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
 
     ClDeviceFixture::SetUp();
-    program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
+    context.reset(new MockContext(pClDevice));
+    program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pClDevice));
     pKernel.reset(new MockKernel(program.get(), *pKernelInfo));
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
@@ -73,9 +74,7 @@ void KernelImageArgTest::SetUp() {
     crossThreadData[0x20 / sizeof(uint32_t)] = 0x12344321;
     pKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 
-    context.reset(new MockContext(pClDevice));
     image.reset(Image2dHelper<>::create(context.get()));
-    pKernel->setContext(context.get());
     ASSERT_NE(nullptr, image);
 }
 

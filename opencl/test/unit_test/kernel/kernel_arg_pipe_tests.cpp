@@ -163,17 +163,13 @@ TEST_F(KernelArgPipeTest, GivenBufferWhenSettingKernelArgThenInvalidArgValueErro
 }
 
 TEST_F(KernelArgPipeTest, GivenPipeFromDifferentContextWhenSettingKernelArgThenInvalidMemObjectErrorIsReturned) {
-    Pipe *pipe = new MockPipe(pContext);
-    Context *oldContext = &pKernel->getContext();
     MockContext newContext;
-    this->pKernel->setContext(&newContext);
+    Pipe *pipe = new MockPipe(&newContext);
 
     auto val = (cl_mem)pipe;
     auto pVal = &val;
     auto retVal = this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
-
-    pKernel->setContext(oldContext);
 
     delete pipe;
 }

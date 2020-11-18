@@ -770,23 +770,21 @@ BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuil
     return *operationBuilder.first;
 }
 
-BuiltInOwnershipWrapper::BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
-    takeOwnership(inputBuilder, context);
+BuiltInOwnershipWrapper::BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder) {
+    takeOwnership(inputBuilder);
 }
 BuiltInOwnershipWrapper::~BuiltInOwnershipWrapper() {
     if (builder) {
         for (auto &kernel : builder->peekUsedKernels()) {
-            kernel->setContext(nullptr);
             kernel->releaseOwnership();
         }
     }
 }
-void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
+void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder) {
     UNRECOVERABLE_IF(builder);
     builder = &inputBuilder;
     for (auto &kernel : builder->peekUsedKernels()) {
         kernel->takeOwnership();
-        kernel->setContext(context);
     }
 }
 

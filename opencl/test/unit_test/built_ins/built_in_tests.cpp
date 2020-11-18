@@ -2066,25 +2066,19 @@ using BuiltInOwnershipWrapperTests = BuiltInTests;
 
 TEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnlockOnDestruction) {
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
-    MockContext mockContext;
-
     {
-        BuiltInOwnershipWrapper lock(mockAuxBuiltInOp, &mockContext);
+        BuiltInOwnershipWrapper lock(mockAuxBuiltInOp);
         EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->hasOwnership());
-        EXPECT_EQ(&mockContext, &mockAuxBuiltInOp.baseKernel->getContext());
     }
     EXPECT_FALSE(mockAuxBuiltInOp.baseKernel->hasOwnership());
 }
 
 TEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingThenLockOnlyWhenRequested) {
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
-    MockContext mockContext;
-
     {
         BuiltInOwnershipWrapper lock;
-        lock.takeOwnership(mockAuxBuiltInOp, &mockContext);
+        lock.takeOwnership(mockAuxBuiltInOp);
         EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->hasOwnership());
-        EXPECT_EQ(&mockContext, &mockAuxBuiltInOp.baseKernel->getContext());
     }
     EXPECT_FALSE(mockAuxBuiltInOp.baseKernel->hasOwnership());
 }
@@ -2093,9 +2087,9 @@ TEST_F(BuiltInOwnershipWrapperTests, givenLockWithAcquiredOwnershipWhenTakeOwner
     MockAuxBuilInOp mockAuxBuiltInOp1(*pBuiltIns, *pClDevice);
     MockAuxBuilInOp mockAuxBuiltInOp2(*pBuiltIns, *pClDevice);
 
-    BuiltInOwnershipWrapper lock(mockAuxBuiltInOp1, pContext);
-    EXPECT_THROW(lock.takeOwnership(mockAuxBuiltInOp1, pContext), std::exception);
-    EXPECT_THROW(lock.takeOwnership(mockAuxBuiltInOp2, pContext), std::exception);
+    BuiltInOwnershipWrapper lock(mockAuxBuiltInOp1);
+    EXPECT_THROW(lock.takeOwnership(mockAuxBuiltInOp1), std::exception);
+    EXPECT_THROW(lock.takeOwnership(mockAuxBuiltInOp2), std::exception);
 }
 
 HWTEST_F(BuiltInOwnershipWrapperTests, givenBuiltInOwnershipWrapperWhenAskedForTypeTraitsThenDisableCopyConstructorAndOperator) {

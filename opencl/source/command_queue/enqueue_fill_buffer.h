@@ -53,7 +53,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
                                                                             this->getClDevice());
 
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
+    BuiltInOwnershipWrapper builtInLock(builder);
 
     BuiltinOpParams dc;
     auto multiGraphicsAllocation = MultiGraphicsAllocation(getDevice().getRootDeviceIndex());
