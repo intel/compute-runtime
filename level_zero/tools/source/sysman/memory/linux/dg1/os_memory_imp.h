@@ -33,5 +33,7 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
   private:
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
+    void init();
+    std::vector<drm_i915_memory_region_info> deviceRegions;
 };
 } // namespace L0

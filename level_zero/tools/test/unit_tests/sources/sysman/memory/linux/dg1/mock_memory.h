@@ -60,26 +60,6 @@ struct Mock<MemoryNeoDrm> : public MemoryNeoDrm {
         return true;
     }
 
-    bool queryMemoryInfoMockReturnFalse() {
-        return false;
-    }
-
-    bool queryMemoryInfoMockWithoutDevice() {
-        drm_i915_memory_region_info regionInfo[3] = {};
-        regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
-        regionInfo[0].probed_size = 8 * GB;
-        regionInfo[0].unallocated_size = 6 * GB;
-        regionInfo[1].region = {I915_MEMORY_CLASS_STOLEN_SYSTEM, 0};
-        regionInfo[1].probed_size = 16 * GB;
-        regionInfo[1].unallocated_size = 12 * GB;
-        regionInfo[2].region = {I915_MEMORY_CLASS_STOLEN_DEVICE, 0};
-        regionInfo[2].probed_size = 32 * GB;
-        regionInfo[2].unallocated_size = 25 * GB;
-
-        this->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 3));
-        return true;
-    }
-
     MOCK_METHOD(bool, queryMemoryInfo, (), (override));
 };
 

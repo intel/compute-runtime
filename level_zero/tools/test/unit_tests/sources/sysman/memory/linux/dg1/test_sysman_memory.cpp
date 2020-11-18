@@ -53,6 +53,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
+        pDrm->queryMemoryInfo();
         pSysmanDeviceImp->pMemoryHandleContext->init(deviceHandles);
     }
 
@@ -215,34 +216,6 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemo
     for (auto handle : handles) {
         zes_mem_bandwidth_t bandwidth;
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetStateAndIfQueryMemoryInfoFailsThenErrorIsReturned) {
-    setLocalSupportedAndReinit(true);
-
-    ON_CALL(*pDrm, queryMemoryInfo())
-        .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockReturnFalse));
-
-    auto handles = get_memory_handles(memoryHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_mem_state_t state;
-        EXPECT_EQ(zesMemoryGetState(handle, &state), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetStateAndIfQueryMemoryDidntProvideDeviceMemoryThenErrorIsReturned) {
-    setLocalSupportedAndReinit(true);
-
-    ON_CALL(*pDrm, queryMemoryInfo())
-        .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockWithoutDevice));
-
-    auto handles = get_memory_handles(memoryHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_mem_state_t state;
-        EXPECT_EQ(zesMemoryGetState(handle, &state), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     }
 }
 
