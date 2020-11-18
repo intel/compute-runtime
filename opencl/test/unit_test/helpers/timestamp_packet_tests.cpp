@@ -908,6 +908,8 @@ HWTEST_F(TimestampPacketTests, givenMultipleDevicesOnCsrWhenIncrementingCpuDepen
 
     MockContext context0(device0.get());
     MockContext context1(device1.get());
+    MockKernelWithInternals kernel0(*device0, &context0);
+    MockKernelWithInternals kernel1(*device1, &context1);
 
     auto cmdQ0 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context0, device0.get(), nullptr);
     auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context1, device1.get(), nullptr);
@@ -923,13 +925,13 @@ HWTEST_F(TimestampPacketTests, givenMultipleDevicesOnCsrWhenIncrementingCpuDepen
 
     cl_event waitlist[] = {&event0, &event1};
 
-    cmdQ0->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
+    cmdQ0->enqueueKernel(kernel0.mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
 
     verifyDependencyCounterValues(event0.getTimestampPacketNodes(), osContext0->getNumSupportedDevices());
 
     verifyDependencyCounterValues(event1.getTimestampPacketNodes(), osContext0->getNumSupportedDevices());
 
-    cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
+    cmdQ1->enqueueKernel(kernel1.mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
 
     verifyDependencyCounterValues(event0.getTimestampPacketNodes(), osContext0->getNumSupportedDevices() + osContext1->getNumSupportedDevices());
 
