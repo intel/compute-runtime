@@ -373,12 +373,21 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
 
     csr.blitBuffer(blitPropertiesContainer, false, false);
 
+    uint32_t residentAllocationsNum = 5u;
     EXPECT_TRUE(csr.isMadeResident(graphicsAllocation1));
     EXPECT_TRUE(csr.isMadeResident(graphicsAllocation2));
     EXPECT_TRUE(csr.isMadeResident(csr.getTagAllocation()));
     EXPECT_EQ(1u, csr.makeSurfacePackNonResidentCalled);
+    if (csr.clearColorAllocation) {
+        EXPECT_TRUE(csr.isMadeResident(csr.clearColorAllocation));
+        residentAllocationsNum++;
+    }
+    if (csr.globalFenceAllocation) {
+        EXPECT_TRUE(csr.isMadeResident(csr.globalFenceAllocation));
+        residentAllocationsNum++;
+    }
 
-    EXPECT_EQ(csr.globalFenceAllocation ? 6u : 5u, csr.makeResidentAllocations.size());
+    EXPECT_EQ(residentAllocationsNum, csr.makeResidentAllocations.size());
 }
 
 HWTEST_F(BcsTests, givenFenceAllocationIsRequiredWhenBlitDispatchedThenMakeAllAllocationsResident) {
@@ -418,13 +427,18 @@ HWTEST_F(BcsTests, givenFenceAllocationIsRequiredWhenBlitDispatchedThenMakeAllAl
 
     bcsCsr->blitBuffer(blitPropertiesContainer, false, false);
 
+    uint32_t residentAllocationsNum = 6u;
     EXPECT_TRUE(bcsCsr->isMadeResident(graphicsAllocation1));
     EXPECT_TRUE(bcsCsr->isMadeResident(graphicsAllocation2));
     EXPECT_TRUE(bcsCsr->isMadeResident(bcsCsr->getTagAllocation()));
     EXPECT_TRUE(bcsCsr->isMadeResident(bcsCsr->globalFenceAllocation));
+    if (bcsCsr->clearColorAllocation) {
+        EXPECT_TRUE(bcsCsr->isMadeResident(bcsCsr->clearColorAllocation));
+        residentAllocationsNum++;
+    }
     EXPECT_EQ(1u, bcsCsr->makeSurfacePackNonResidentCalled);
 
-    EXPECT_EQ(6u, bcsCsr->makeResidentAllocations.size());
+    EXPECT_EQ(residentAllocationsNum, bcsCsr->makeResidentAllocations.size());
 }
 
 HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
@@ -620,7 +634,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
             auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(graphicsAllocation1,
-                                                                                   graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0);
+                                                                                   graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
 
             blitBuffer(&csr, blitProperties, true);
 
@@ -1021,7 +1035,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                 auto offset = csr.commandStream.getUsed();
                 auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(graphicsAllocation1,
                                                                                        graphicsAllocation2,
-                                                                                       {buffer1Offset, 0, 0}, {buffer2Offset, 0, 0}, copySize, 0, 0, 0, 0);
+                                                                                       {buffer1Offset, 0, 0}, {buffer2Offset, 0, 0}, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
 
                 blitBuffer(&csr, blitProperties, true);
 
@@ -1162,7 +1176,7 @@ HWTEST_F(BcsTests, givenAuxTranslationRequestWhenBlitCalledThenProgramCommandCor
 
     for (int i = 0; i < 2; i++) {
         auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(translationDirection[i],
-                                                                                   graphicsAllocation);
+                                                                                   graphicsAllocation, csr.getClearColorAllocation());
 
         auto offset = csr.commandStream.getUsed();
         blitBuffer(&csr, blitProperties, false);
@@ -1497,6 +1511,24 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenBlitBufferIsCalledThenBlitCmdIsCorrect
     auto srcPtr = builtinOpParams.srcMemObj->getGraphicsAllocation(csr.getRootDeviceIndex())->getGpuAddress();
     EXPECT_EQ(srcPtr, bltCmd->getSourceBaseAddress());
     EXPECT_EQ(blitProperties.dstGpuAddress, bltCmd->getDestinationBaseAddress());
+}
+
+HWTEST_F(BcsTests, givenBlitBufferCalledWhenClearColorAllocationIseSetThenItIsMadeResident) {
+    MockGraphicsAllocation graphicsAllocation1;
+    MockGraphicsAllocation graphicsAllocation2;
+    MockGraphicsAllocation clearColorAllocation;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+    Vec3<size_t> copySize = {1, 1, 1};
+
+    auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(&graphicsAllocation1,
+                                                                           &graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0, &clearColorAllocation);
+    blitBuffer(&csr, blitProperties, false);
+    auto iter = csr.makeResidentAllocations.find(&clearColorAllocation);
+    ASSERT_NE(iter, csr.makeResidentAllocations.end());
+    EXPECT_EQ(&clearColorAllocation, iter->first);
+    EXPECT_EQ(1u, iter->second);
 }
 
 struct MockScratchSpaceController : ScratchSpaceControllerBase {

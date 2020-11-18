@@ -221,6 +221,11 @@ void CommandStreamReceiver::cleanupResources() {
         getMemoryManager()->freeGraphicsMemory(perDssBackedBuffer);
         perDssBackedBuffer = nullptr;
     }
+
+    if (clearColorAllocation) {
+        getMemoryManager()->freeGraphicsMemory(clearColorAllocation);
+        clearColorAllocation = nullptr;
+    }
 }
 
 bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {

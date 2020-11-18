@@ -91,6 +91,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return const_cast<volatile uint32_t *>(&mockTagAddress);
     }
 
+    GraphicsAllocation *getClearColorAllocation() override { return nullptr; }
+
     std::vector<char> instructionHeapReserveredData;
     int *flushBatchedSubmissionsCallCounter = nullptr;
     uint32_t waitForCompletionWithTimeoutCalled = 0;
@@ -109,6 +111,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::flushStamp;
     using CommandStreamReceiverHw<GfxFamily>::programL3;
     using CommandStreamReceiverHw<GfxFamily>::programVFEState;
+    using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::globalFenceAllocation;

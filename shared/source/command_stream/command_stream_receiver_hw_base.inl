@@ -999,6 +999,9 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 
         makeResident(*blitProperties.srcAllocation);
         makeResident(*blitProperties.dstAllocation);
+        if (blitProperties.clearColorAllocation) {
+            makeResident(*blitProperties.clearColorAllocation);
+        }
     }
 
     BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(commandStream);

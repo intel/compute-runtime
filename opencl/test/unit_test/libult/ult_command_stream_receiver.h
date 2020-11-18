@@ -53,6 +53,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::checkForNewResources;
     using BaseClass::CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using BaseClass::CommandStreamReceiver::cleanupResources;
+    using BaseClass::CommandStreamReceiver::clearColorAllocation;
     using BaseClass::CommandStreamReceiver::commandStream;
     using BaseClass::CommandStreamReceiver::debugConfirmationFunction;
     using BaseClass::CommandStreamReceiver::debugPauseStateAddress;

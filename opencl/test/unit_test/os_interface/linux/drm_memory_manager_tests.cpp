@@ -1645,6 +1645,12 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreated
         additionalDestroyDeviceIoctls.gemWait++;
     }
 
+    if (device->getDefaultEngine().commandStreamReceiver->getClearColorAllocation() != nullptr) {
+        mock->ioctl_expected.gemUserptr++;
+        additionalDestroyDeviceIoctls.gemClose++;
+        additionalDestroyDeviceIoctls.gemWait++;
+    }
+
     MockContext context(device);
 
     cl_image_format imageFormat;

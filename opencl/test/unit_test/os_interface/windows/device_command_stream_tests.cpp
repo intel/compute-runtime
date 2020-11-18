@@ -89,6 +89,7 @@ class WddmCommandStreamFixture {
 
 template <typename GfxFamily>
 struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
+    using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::getCS;
@@ -852,6 +853,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
 
     csr->flushBatchedSubmissions();
 
+    csrSurfaceCount += csr->clearColorAllocation ? 1 : 0;
     EXPECT_TRUE(cmdBuffers.peekIsEmpty());
 
     EXPECT_EQ(1u, wddm->submitResult.called);

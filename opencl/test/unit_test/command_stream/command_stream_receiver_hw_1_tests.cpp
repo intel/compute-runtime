@@ -820,18 +820,24 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
 
     uint32_t newTaskCount = 19;
     csr.taskCount = newTaskCount - 1;
-    EXPECT_EQ(0u, csr.recursiveLockCounter.load());
+    uint32_t expectedResursiveLockCount = 0u;
+    EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                 csr, buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex()), nullptr, hostPtr,
                                                                                 buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress(), 0,
                                                                                 0, 0, {bltSize, 1, 1}, 0, 0, 0, 0);
+    if (csr.getClearColorAllocation()) {
+        expectedResursiveLockCount++;
+    }
 
+    EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
     blitBuffer(&csr, blitProperties, true);
     EXPECT_EQ(newTaskCount, csr.taskCount);
     EXPECT_EQ(newTaskCount, csr.latestFlushedTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCountValueDuringFlush);
-    EXPECT_EQ(1u, csr.recursiveLockCounter.load());
+    expectedResursiveLockCount++;
+    EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -1216,15 +1222,16 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     size_t buffer2SlicePitch = std::get<0>(GetParam()).srcSlicePitch;
     auto allocation = buffer1->getGraphicsAllocation(pDevice->getRootDeviceIndex());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(allocation,        //dstAllocation
-                                                                           allocation,        //srcAllocation
-                                                                           buffer1Offset,     //dstOffset
-                                                                           buffer2Offset,     //srcOffset
-                                                                           bltSize,           //copySize
-                                                                           buffer1RowPitch,   //srcRowPitch
-                                                                           buffer1SlicePitch, //srcSlicePitch
-                                                                           buffer2RowPitch,   //dstRowPitch
-                                                                           buffer2SlicePitch  //dstSlicePitch
+    auto blitProperties = BlitProperties::constructPropertiesForCopyBuffer(allocation,                   //dstAllocation
+                                                                           allocation,                   //srcAllocation
+                                                                           buffer1Offset,                //dstOffset
+                                                                           buffer2Offset,                //srcOffset
+                                                                           bltSize,                      //copySize
+                                                                           buffer1RowPitch,              //srcRowPitch
+                                                                           buffer1SlicePitch,            //srcSlicePitch
+                                                                           buffer2RowPitch,              //dstRowPitch
+                                                                           buffer2SlicePitch,            //dstSlicePitch
+                                                                           csr.getClearColorAllocation() //clearColorAllocation
     );
     blitBuffer(&csr, blitProperties, true);
 

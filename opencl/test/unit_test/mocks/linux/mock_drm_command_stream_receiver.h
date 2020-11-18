@@ -13,6 +13,7 @@ using namespace NEO;
 template <typename GfxFamily>
 class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily> {
   public:
+    using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::makeResident;

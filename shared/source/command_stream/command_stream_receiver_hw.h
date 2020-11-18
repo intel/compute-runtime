@@ -107,6 +107,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                              aub_stream::EngineType contextEngineType,
                                              bool &startOnInit,
                                              bool &startInContext);
+    GraphicsAllocation *getClearColorAllocation() override;
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);

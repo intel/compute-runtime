@@ -222,6 +222,8 @@ class CommandStreamReceiver {
 
     virtual void initializeDefaultsForInternalEngine(){};
 
+    virtual GraphicsAllocation *getClearColorAllocation() = 0;
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
@@ -262,6 +264,7 @@ class CommandStreamReceiver {
     GraphicsAllocation *preemptionAllocation = nullptr;
     GraphicsAllocation *debugSurface = nullptr;
     GraphicsAllocation *perDssBackedBuffer = nullptr;
+    GraphicsAllocation *clearColorAllocation = nullptr;
 
     IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];
     OsContext *osContext = nullptr;

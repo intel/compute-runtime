@@ -20,10 +20,14 @@ using namespace NEO;
 TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForBufferRegionsThenPropertiesCreatedCorrectly) {
     uint32_t src[] = {1, 2, 3, 4};
     uint32_t dst[] = {4, 3, 2, 1};
+    uint32_t clear[] = {5, 6, 7, 8};
     uint64_t srcGpuAddr = 0x12345;
     uint64_t dstGpuAddr = 0x54321;
+    uint64_t clearGpuAddr = 0x5678;
     std::unique_ptr<MockGraphicsAllocation> srcAlloc(new MockGraphicsAllocation(src, srcGpuAddr, sizeof(src)));
     std::unique_ptr<MockGraphicsAllocation> dstAlloc(new MockGraphicsAllocation(dst, dstGpuAddr, sizeof(dst)));
+    std::unique_ptr<GraphicsAllocation> clearColorAllocation(new MockGraphicsAllocation(clear, clearGpuAddr, sizeof(clear)));
+
     Vec3<size_t> srcOffsets{1, 2, 3};
     Vec3<size_t> dstOffsets{3, 2, 1};
     Vec3<size_t> copySize{2, 2, 2};
@@ -36,11 +40,12 @@ TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForBuffe
 
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstAlloc.get(), srcAlloc.get(),
                                                                                 dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch);
+                                                                                dstRowPitch, dstSlicePitch, clearColorAllocation.get());
 
     EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::BufferToBuffer);
     EXPECT_EQ(blitProperties.dstAllocation, dstAlloc.get());
     EXPECT_EQ(blitProperties.srcAllocation, srcAlloc.get());
+    EXPECT_EQ(blitProperties.clearColorAllocation, clearColorAllocation.get());
     EXPECT_EQ(blitProperties.dstGpuAddress, dstGpuAddr);
     EXPECT_EQ(blitProperties.srcGpuAddress, srcGpuAddr);
     EXPECT_EQ(blitProperties.copySize, copySize);
@@ -55,10 +60,13 @@ TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForBuffe
 TEST(BlitCommandsHelperTest, GivenCopySizeYAndZEqual0WhenConstructingPropertiesForBufferRegionsThenCopyZAndZEqual1) {
     uint32_t src[] = {1, 2, 3, 4};
     uint32_t dst[] = {4, 3, 2, 1};
+    uint32_t clear[] = {5, 6, 7, 8};
     uint64_t srcGpuAddr = 0x12345;
     uint64_t dstGpuAddr = 0x54321;
+    uint64_t clearGpuAddr = 0x5678;
     std::unique_ptr<MockGraphicsAllocation> srcAlloc(new MockGraphicsAllocation(src, srcGpuAddr, sizeof(src)));
     std::unique_ptr<MockGraphicsAllocation> dstAlloc(new MockGraphicsAllocation(dst, dstGpuAddr, sizeof(dst)));
+    std::unique_ptr<GraphicsAllocation> clearColorAllocation(new MockGraphicsAllocation(clear, clearGpuAddr, sizeof(clear)));
     Vec3<size_t> srcOffsets{1, 2, 3};
     Vec3<size_t> dstOffsets{3, 2, 1};
     Vec3<size_t> copySize{2, 0, 0};
@@ -71,7 +79,7 @@ TEST(BlitCommandsHelperTest, GivenCopySizeYAndZEqual0WhenConstructingPropertiesF
 
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstAlloc.get(), srcAlloc.get(),
                                                                                 dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch);
+                                                                                dstRowPitch, dstSlicePitch, clearColorAllocation.get());
     Vec3<size_t> expectedSize{copySize.x, 1, 1};
     EXPECT_EQ(blitProperties.copySize, expectedSize);
 }
@@ -361,6 +369,7 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     MockGraphicsAllocation srcAlloc;
     MockGraphicsAllocation dstAlloc;
+    MockGraphicsAllocation clearColorAllocation;
 
     Vec3<size_t> dstOffsets = {0, 0, 0};
     Vec3<size_t> srcOffsets = {0, 0, 0};
@@ -376,7 +385,7 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
 
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(&dstAlloc, &srcAlloc,
                                                                                 dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch);
+                                                                                dstRowPitch, dstSlicePitch, &clearColorAllocation);
 
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));

@@ -104,4 +104,9 @@ bool CommandStreamReceiverHw<GfxFamily>::checkPlatformSupportsGpuIdleImplicitFlu
     return false;
 }
 
+template <typename GfxFamily>
+GraphicsAllocation *CommandStreamReceiverHw<GfxFamily>::getClearColorAllocation() {
+    return nullptr;
+}
+
 } // namespace NEO

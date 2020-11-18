@@ -47,10 +47,10 @@ struct BlitProperties {
     static BlitProperties constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
                                                            Vec3<size_t> dstOffset, Vec3<size_t> srcOffset, Vec3<size_t> copySize,
                                                            size_t srcRowPitch, size_t srcSlicePitch,
-                                                           size_t dstRowPitch, size_t dstSlicePitch);
+                                                           size_t dstRowPitch, size_t dstSlicePitch, GraphicsAllocation *clearColorAllocation);
 
     static BlitProperties constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
-                                                               GraphicsAllocation *allocation);
+                                                               GraphicsAllocation *allocation, GraphicsAllocation *clearColorAllocation);
 
     static void setupDependenciesForAuxTranslation(BlitPropertiesContainer &blitPropertiesContainer, TimestampPacketDependencies &timestampPacketDependencies,
                                                    TimestampPacketContainer &kernelTimestamps, const CsrDependencies &depsFromEvents,
@@ -63,6 +63,7 @@ struct BlitProperties {
 
     GraphicsAllocation *dstAllocation = nullptr;
     GraphicsAllocation *srcAllocation = nullptr;
+    GraphicsAllocation *clearColorAllocation = nullptr;
     uint64_t dstGpuAddress = 0;
     uint64_t srcGpuAddress = 0;
 
@@ -147,5 +148,6 @@ struct BlitCommandsHelper {
     static void programGlobalSequencerFlush(LinearStream &commandStream);
     static size_t getSizeForGlobalSequencerFlush();
     static bool miArbCheckWaRequired();
+    static void appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd);
 };
 } // namespace NEO

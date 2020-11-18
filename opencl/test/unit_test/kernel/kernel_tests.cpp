@@ -524,6 +524,8 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     size_t getCmdsSizeForHardwareContext() const override {
         return 0;
     }
+    GraphicsAllocation *getClearColorAllocation() override { return nullptr; }
+
     std::map<const void *, size_t> residency;
     bool passResidencyCallToBaseClass = true;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;

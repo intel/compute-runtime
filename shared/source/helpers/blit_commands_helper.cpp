@@ -26,6 +26,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
                                                                      size_t hostRowPitch, size_t hostSlicePitch,
                                                                      size_t gpuRowPitch, size_t gpuSlicePitch) {
     GraphicsAllocation *hostAllocation = nullptr;
+    auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
 
     if (preallocatedHostAllocation) {
         hostAllocation = preallocatedHostAllocation;
@@ -50,6 +51,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
             AuxTranslationDirection::None, // auxTranslationDirection
             memObjAllocation,              // dstAllocation
             hostAllocation,                // srcAllocation
+            clearColorAllocation,          // clearColorAllocation
             memObjGpuVa,                   // dstGpuAddress
             hostAllocGpuVa,                // srcGpuAddress
             copySize,                      // copySize
@@ -68,6 +70,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
             AuxTranslationDirection::None, // auxTranslationDirection
             hostAllocation,                // dstAllocation
             memObjAllocation,              // srcAllocation
+            clearColorAllocation,          // clearColorAllocation
             hostAllocGpuVa,                // dstGpuAddress
             memObjGpuVa,                   // srcGpuAddress
             copySize,                      // copySize
@@ -83,7 +86,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
 BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
                                                                 Vec3<size_t> dstOffset, Vec3<size_t> srcOffset, Vec3<size_t> copySize,
                                                                 size_t srcRowPitch, size_t srcSlicePitch,
-                                                                size_t dstRowPitch, size_t dstSlicePitch) {
+                                                                size_t dstRowPitch, size_t dstSlicePitch, GraphicsAllocation *clearColorAllocation) {
     copySize.y = copySize.y ? copySize.y : 1;
     copySize.z = copySize.z ? copySize.z : 1;
 
@@ -94,6 +97,7 @@ BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocati
         AuxTranslationDirection::None,                   // auxTranslationDirection
         dstAllocation,                                   // dstAllocation
         srcAllocation,                                   // srcAllocation
+        clearColorAllocation,                            // clearColorAllocation
         dstAllocation->getGpuAddress(),                  // dstGpuAddress
         srcAllocation->getGpuAddress(),                  // srcGpuAddress
         copySize,                                        // copySize
@@ -106,7 +110,7 @@ BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocati
 }
 
 BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
-                                                                    GraphicsAllocation *allocation) {
+                                                                    GraphicsAllocation *allocation, GraphicsAllocation *clearColorAllocation) {
 
     auto allocationSize = allocation->getUnderlyingBufferSize();
     return {
@@ -116,6 +120,7 @@ BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslati
         auxTranslationDirection,                         // auxTranslationDirection
         allocation,                                      // dstAllocation
         allocation,                                      // srcAllocation
+        clearColorAllocation,                            // clearColorAllocation
         allocation->getGpuAddress(),                     // dstGpuAddress
         allocation->getGpuAddress(),                     // srcGpuAddress
         {allocationSize, 1, 1},                          // copySize

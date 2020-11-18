@@ -486,7 +486,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(const Multi
         {
             // Aux to NonAux
             blitPropertiesContainer[bufferIndex] = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,
-                                                                                                        buffer->getGraphicsAllocation(rootDeviceIndex));
+                                                                                                        buffer->getGraphicsAllocation(rootDeviceIndex), getGpgpuCommandStreamReceiver().getClearColorAllocation());
             auto auxToNonAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.auxToNonAuxNodes.add(auxToNonAuxNode);
         }
@@ -494,7 +494,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(const Multi
         {
             // NonAux to Aux
             blitPropertiesContainer[bufferIndex + numBuffers] = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::NonAuxToAux,
-                                                                                                                     buffer->getGraphicsAllocation(rootDeviceIndex));
+                                                                                                                     buffer->getGraphicsAllocation(rootDeviceIndex), getGpgpuCommandStreamReceiver().getClearColorAllocation());
             auto nonAuxToAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.nonAuxToAuxNodes.add(nonAuxToAuxNode);
         }

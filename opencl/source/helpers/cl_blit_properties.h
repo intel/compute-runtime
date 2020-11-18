@@ -21,6 +21,8 @@ struct ClBlitProperties {
                                               const BuiltinOpParams &builtinOpParams) {
 
         auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
+        auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
+
         if (BlitterConstants::BlitDirection::BufferToBuffer == blitDirection) {
             auto dstOffset = builtinOpParams.dstOffset.x;
             auto srcOffset = builtinOpParams.srcOffset.x;
@@ -45,7 +47,7 @@ struct ClBlitProperties {
                                                                     {srcOffset, builtinOpParams.srcOffset.y, builtinOpParams.srcOffset.z},
                                                                     builtinOpParams.size,
                                                                     builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
-                                                                    builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch);
+                                                                    builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
         }
 
         BlitProperties blitProperties{};

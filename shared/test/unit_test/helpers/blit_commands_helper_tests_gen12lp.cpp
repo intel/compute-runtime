@@ -15,6 +15,8 @@
 
 #include "gtest/gtest.h"
 
+#include <cstring>
+
 using namespace NEO;
 
 using BlitTests = Test<DeviceFixture>;
@@ -229,4 +231,12 @@ HWTEST2_F(BlitTests, givenLinearSrcAndDestinationImagesWhenAppendImageCommandsTh
     EXPECT_NE(bltCmd.getSourcePitch(), gmm->gmmResourceInfo->getRenderPitch());
     EXPECT_EQ(bltCmd.getDestinationPitch(), static_cast<uint32_t>(properties.dstRowPitch));
     EXPECT_EQ(bltCmd.getSourcePitch(), static_cast<uint32_t>(properties.srcRowPitch));
+}
+
+HWTEST2_F(BlitTests, givenBlitCommandWhenAppendClearColorCalledThenNothingHappens, IsGen12LP) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    auto expectedBlitCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    BlitCommandsHelper<FamilyType>::appendClearColor(properties, bltCmd);
+    EXPECT_EQ(0, std::memcmp(&expectedBlitCmd, &bltCmd, sizeof(bltCmd)));
 }

@@ -40,3 +40,9 @@ GEN11TEST_F(CommandStreamReceiverHwTestGen11, whenProgrammingMiSemaphoreWaitThen
     MI_SEMAPHORE_WAIT miSemaphoreWait = FamilyType::cmdInitMiSemaphoreWait;
     EXPECT_EQ(MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL, miSemaphoreWait.getRegisterPollMode());
 }
+
+GEN11TEST_F(CommandStreamReceiverHwTestGen11, givenCommandStreamReceiverWhenGetClearColorAllocationIsCalledThenNothingHappens) {
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver.getClearColorAllocation();
+    EXPECT_EQ(nullptr, commandStreamReceiver.clearColorAllocation);
+}

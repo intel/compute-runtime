@@ -324,6 +324,15 @@ HWTEST_F(CommandStreamReceiverTest, whenDirectSubmissionDisabledThenExpectNoFeat
     EXPECT_FALSE(csr.isBlitterDirectSubmissionEnabled());
 }
 
+HWTEST_F(CommandStreamReceiverTest, whenClearColorAllocationIsCreatedThenItIsDestroyedInCleanupResources) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto mockClearColorAllocation = std::make_unique<MockGraphicsAllocation>();
+    csr.clearColorAllocation = mockClearColorAllocation.release();
+    EXPECT_NE(nullptr, csr.clearColorAllocation);
+    csr.cleanupResources();
+    EXPECT_EQ(nullptr, csr.clearColorAllocation);
+}
+
 struct InitDirectSubmissionFixture {
     void SetUp() {
         DebugManager.flags.EnableDirectSubmission.set(1);
