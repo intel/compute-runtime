@@ -607,6 +607,27 @@ HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOpti
     EXPECT_STREQ("abcd", mockCompilerInterface.receivedApiOptions.c_str());
 }
 
+HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOptions2) {
+    struct MockCompilerInterface : CompilerInterface {
+        TranslationOutput::ErrorCode build(const NEO::Device &device,
+                                           const TranslationInput &input,
+                                           TranslationOutput &output) override {
+            inputInternalOptions = input.internalOptions.begin();
+            return TranslationOutput::ErrorCode::Success;
+        }
+        std::string inputInternalOptions;
+    } mockCompilerInterface;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DisableStatelessToStatefulOptimization.set(1);
+
+    MockModuleTranslationUnit moduleTu(this->device);
+    this->neoDevice->mockCompilerInterface = &mockCompilerInterface;
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    EXPECT_TRUE(ret);
+    EXPECT_NE(mockCompilerInterface.inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
+}
+
 TEST(BuildOptions, givenNoSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenFalseIsReturned) {
     std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, NEO::CompilerOptions::finiteMathOnly);
     std::string dstNames;

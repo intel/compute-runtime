@@ -82,6 +82,10 @@ bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
     }
 
+    if (NEO::DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
+        internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
+    }
+
     NEO::TranslationInput inputArgs = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
 
     if (pConstants) {
