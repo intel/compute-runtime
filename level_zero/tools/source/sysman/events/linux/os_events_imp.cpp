@@ -64,6 +64,14 @@ bool LinuxEventsImp::checkDeviceAttachEvent(zes_event_type_flags_t &pEvent) {
     return false;
 }
 
+bool LinuxEventsImp::checkIfMemHealthChanged(zes_event_type_flags_t &pEvent) {
+    if (currentMemHealth() != memHealthAtEventRegister) {
+        pEvent = ZES_EVENT_TYPE_FLAG_MEM_HEALTH;
+        return true;
+    }
+    return false;
+}
+
 bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) {
     if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
         if (isResetRequired(pEvent)) {
@@ -80,15 +88,27 @@ bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint32_t timeou
             return true;
         }
     }
+    if (registeredEvents & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
+        if (checkIfMemHealthChanged(pEvent)) {
+            return true;
+        }
+    }
     return false;
 }
 
 ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
     registeredEvents = events;
+    if (registeredEvents & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
+        memHealthAtEventRegister = currentMemHealth();
+    }
     return ZE_RESULT_SUCCESS;
 }
 
-void LinuxEventsImp::init() {
+zes_mem_health_t LinuxEventsImp::currentMemHealth() {
+    return ZES_MEM_HEALTH_UNKNOWN;
+}
+
+void LinuxEventsImp::getPciIdPathTag() {
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink("device", bdfDir);
     if (ZE_RESULT_SUCCESS != result) {
@@ -108,7 +128,7 @@ LinuxEventsImp::LinuxEventsImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
-    init();
+    getPciIdPathTag();
 }
 
 OsEvents *OsEvents::create(OsSysman *pOsSysman) {

@@ -21,11 +21,14 @@ class LinuxEventsImp : public OsEvents, NEO::NonCopyableOrMovableClass {
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
-    void init();
+    void getPciIdPathTag();
+    zes_mem_health_t currentMemHealth();
     bool isResetRequired(zes_event_type_flags_t &pEvent);
     bool checkDeviceDetachEvent(zes_event_type_flags_t &pEvent);
     bool checkDeviceAttachEvent(zes_event_type_flags_t &pEvent);
+    bool checkIfMemHealthChanged(zes_event_type_flags_t &pEvent);
     std::string pciIdPathTag;
+    zes_mem_health_t memHealthAtEventRegister = ZES_MEM_HEALTH_UNKNOWN;
 
   private:
     FsAccess *pFsAccess = nullptr;

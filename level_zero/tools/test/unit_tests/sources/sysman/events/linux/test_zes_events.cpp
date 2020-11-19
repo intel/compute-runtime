@@ -188,5 +188,28 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     delete[] pDeviceEvents;
 }
 
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+    PublicLinuxEventsImp *pLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
+    pLinuxEventsImp->eventRegister(ZES_EVENT_TYPE_FLAG_MEM_HEALTH);
+    pLinuxEventsImp->memHealthAtEventRegister = ZES_MEM_HEALTH_OK;
+    zes_event_type_flags_t events;
+    uint32_t timeout = 100u;
+    EXPECT_TRUE(pLinuxEventsImp->eventListen(events, timeout));
+    EXPECT_EQ(events, ZES_EVENT_TYPE_FLAG_MEM_HEALTH);
+    delete pLinuxEventsImp;
+}
+
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEventsAndMemHealthDidntOccurThenEventListenAPIReturnsWithinTimeout) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 100u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+}
+
 } // namespace ult
 } // namespace L0

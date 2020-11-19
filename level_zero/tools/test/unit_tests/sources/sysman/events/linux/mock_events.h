@@ -83,7 +83,8 @@ struct Mock<EventsSysfsAccess> : public EventsSysfsAccess {
 class PublicLinuxEventsImp : public L0::LinuxEventsImp {
   public:
     PublicLinuxEventsImp(OsSysman *pOsSysman) : LinuxEventsImp(pOsSysman) {}
-    using LinuxEventsImp::init;
+    using LinuxEventsImp::getPciIdPathTag;
+    using LinuxEventsImp::memHealthAtEventRegister;
     using LinuxEventsImp::pciIdPathTag;
 };
 
