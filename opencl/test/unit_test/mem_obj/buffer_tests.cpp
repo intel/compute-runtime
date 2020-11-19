@@ -1882,6 +1882,36 @@ TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedAndEnqueueReadCalledThenBuf
     EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
 }
 
+TEST_F(MultiRootDeviceBufferTest, WhenBuffersAreCreatedAndEnqueueCopyBufferCalledThenBuffersMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
+    cl_int retVal = 0;
+
+    std::unique_ptr<Buffer> buffer1(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
+    std::unique_ptr<Buffer> buffer2(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
+
+    auto cmdQ1 = context->getSpecialQueue(1u);
+    cmdQ1->enqueueCopyBuffer(buffer1.get(), buffer2.get(), CL_FALSE, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+    EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    cmdQ1->enqueueCopyBuffer(buffer1.get(), buffer2.get(), CL_FALSE, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+    EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    auto cmdQ2 = context->getSpecialQueue(2u);
+    cmdQ2->enqueueCopyBuffer(buffer1.get(), buffer2.get(), CL_FALSE, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+    EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+
+    cmdQ1->enqueueCopyBuffer(buffer1.get(), buffer2.get(), CL_FALSE, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+    EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    static_cast<MemoryAllocation *>(buffer1->getMigrateableMultiGraphicsAllocation().getGraphicsAllocation(2u))->overrideMemoryPool(MemoryPool::LocalMemory);
+    cmdQ2->enqueueCopyBuffer(buffer1.get(), buffer2.get(), CL_FALSE, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+    EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+}
+
 TEST_F(MultiRootDeviceBufferTest, givenBufferWhenGetSurfaceSizeCalledWithoutAlignSizeForAuxTranslationThenCorrectValueReturned) {
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
