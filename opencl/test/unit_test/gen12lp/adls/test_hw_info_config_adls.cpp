@@ -61,3 +61,5 @@ ADLSTEST_F(AdlsHwInfo, whenPlatformIsAdlsThenExpectSvmIsSet) {
     const HardwareInfo &hardwareInfo = ADLS::hwInfo;
     EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
 }
+
+HWCMDTEST_EXCLUDE_FAMILY(DeviceFactoryTest, givenValidHwConfigStringPrepareDeviceEnvironmentsForProductFamilyOverrideReturnsTrue, IGFX_ALDERLAKE_S);
