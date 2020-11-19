@@ -4008,6 +4008,27 @@ TEST(DrmAllocationTest, givenResourceRegistrationNotEnabledWhenRegisteringBindEx
     EXPECT_EQ(Drm::ResourceClass::MaxSize, drm.registeredClass);
 }
 
+TEST(DrmMemoryManager, givenTrackedAllocationTypeAndDisabledRegistrationInDrmWhenAllocatingThenRegisterBoBindExtHandleIsNotCalled) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1u);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
+    auto mockDrm = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mockDrm);
+
+    EXPECT_FALSE(mockDrm->resourceRegistrationEnabled());
+
+    mockDrm->registeredDataSize = 0;
+
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
+
+    memoryManager->registerAllocationInOs(&allocation);
+
+    EXPECT_FALSE(allocation.registerBOBindExtHandleCalled);
+    EXPECT_EQ(Drm::ResourceClass::MaxSize, mockDrm->registeredClass);
+}
+
 TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenAllocatingThenAllocationIsRegistered) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1u);

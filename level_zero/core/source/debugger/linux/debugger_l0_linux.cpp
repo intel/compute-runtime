@@ -13,10 +13,9 @@
 #include "level_zero/core/source/debugger/debugger_l0.h"
 
 namespace L0 {
-
-void DebuggerL0::registerResourceClasses() {
-    if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
-        auto drm = device->getRootDeviceEnvironment().osInterface->get()->getDrm();
+void DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
+    if (osInterface != nullptr) {
+        auto drm = osInterface->get()->getDrm();
         drm->registerResourceClasses();
     }
 }

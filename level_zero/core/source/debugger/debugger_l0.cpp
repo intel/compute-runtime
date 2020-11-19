@@ -23,7 +23,10 @@ DebugerL0CreateFn debuggerL0Factory[IGFX_MAX_CORE] = {};
 
 DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
     isLegacyMode = false;
+    initialize();
+}
 
+void DebuggerL0::initialize() {
     auto &engines = device->getEngines();
 
     sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(MemoryConstants::pageSize, device->getRootDeviceIndex());

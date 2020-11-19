@@ -17,6 +17,7 @@ namespace NEO {
 class Device;
 class GraphicsAllocation;
 class LinearStream;
+class OSInterface;
 } // namespace NEO
 
 namespace L0 {
@@ -80,8 +81,9 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
                sba.SurfaceStateBaseAddress != 0 ||
                sba.BindlessSurfaceStateBaseAddress != 0;
     }
+    static void initDebuggingInOs(NEO::OSInterface *osInterface);
 
-    MOCKABLE_VIRTUAL void registerResourceClasses();
+    void initialize();
 
     NEO::Device *device = nullptr;
     NEO::GraphicsAllocation *sbaAllocation = nullptr;
