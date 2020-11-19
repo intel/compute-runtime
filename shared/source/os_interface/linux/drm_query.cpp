@@ -58,4 +58,8 @@ int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObj
     return 0;
 }
 
+bool Drm::isVmBindAvailable() {
+    return this->bindAvailable;
+}
+
 } // namespace NEO

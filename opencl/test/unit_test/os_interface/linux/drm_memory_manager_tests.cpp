@@ -1738,6 +1738,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZer
     auto data = alignedMalloc(64u * 4 * 8, MemoryConstants::pageSize);
 
     auto retVal = CL_SUCCESS;
+    this->mock->createParamsHandle = 0;
+    this->mock->createParamsSize = 0;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
@@ -1784,6 +1786,9 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNon
 
     auto retVal = CL_SUCCESS;
 
+    this->mock->createParamsHandle = 0;
+    this->mock->createParamsSize = 0;
+
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> dstImage(Image::create(
@@ -1828,6 +1833,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreated
     auto data = alignedMalloc(64u * 4 * 8, MemoryConstants::pageSize);
 
     auto retVal = CL_SUCCESS;
+    this->mock->createParamsHandle = 0;
+    this->mock->createParamsSize = 0;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);

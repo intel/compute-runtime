@@ -21,6 +21,7 @@
 #include <cerrno>
 #include <fcntl.h>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -111,6 +112,7 @@ class Drm {
         return requirePerContextVM;
     }
 
+    bool isVmBindAvailable();
     MOCKABLE_VIRTUAL bool registerResourceClasses();
 
     MOCKABLE_VIRTUAL uint32_t registerResource(ResourceClass classType, void *data, size_t size);
@@ -143,13 +145,6 @@ class Drm {
     static Drm *create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     static void overrideBindSupport(bool &useVmBind);
 
-    bool isBindAvailable() {
-        return this->bindAvailable;
-    }
-    void setBindAvailable() {
-        this->bindAvailable = true;
-    }
-
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
     std::string generateUUID();
@@ -159,6 +154,7 @@ class Drm {
     bool nonPersistentContextsSupported = false;
     bool requirePerContextVM = false;
     bool bindAvailable = false;
+    std::once_flag checkBindOnce;
     std::unique_ptr<HwDeviceId> hwDeviceId;
     int deviceId = 0;
     int revisionId = 0;

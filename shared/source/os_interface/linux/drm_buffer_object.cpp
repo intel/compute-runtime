@@ -225,7 +225,7 @@ int bindBOsWithinContext(BufferObject *const boToPin[], size_t numberOfBos, OsCo
 int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
     auto retVal = 0;
 
-    if (this->drm->isBindAvailable()) {
+    if (this->drm->isVmBindAvailable()) {
         retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
     } else {
         StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);

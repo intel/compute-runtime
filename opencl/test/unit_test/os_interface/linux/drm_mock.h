@@ -29,6 +29,7 @@ using namespace NEO;
 // Mock DRM class that responds to DRM_IOCTL_I915_GETPARAMs
 class DrmMock : public Drm {
   public:
+    using Drm::bindAvailable;
     using Drm::checkQueueSliceSupport;
     using Drm::classHandles;
     using Drm::engineInfo;
@@ -86,6 +87,9 @@ class DrmMock : public Drm {
 
     void setDeviceID(int deviceId) { this->deviceId = deviceId; }
     void setDeviceRevID(int revisionId) { this->revisionId = revisionId; }
+    void setBindAvailable() {
+        this->bindAvailable = true;
+    }
 
     static const int mockFd = 33;
 
