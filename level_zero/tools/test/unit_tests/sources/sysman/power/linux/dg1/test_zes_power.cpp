@@ -89,6 +89,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(properties.canControl, true);
+        EXPECT_EQ(properties.isEnergyThresholdSupported, false);
     }
 }
 

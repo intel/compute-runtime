@@ -7,8 +7,8 @@
 if(SUPPORT_DG1)
   set(L0_TESTS_TOOLS_SYSMAN_POWER_LINUX
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/dg1/test_zes_power.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/dg1/mock_sysfs_power.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/dg1${BRANCH_DIR_SUFFIX}/test_zes_power.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/dg1${BRANCH_DIR_SUFFIX}/mock_sysfs_power.h
   )
 else()
   set(L0_TESTS_TOOLS_SYSMAN_POWER_LINUX

@@ -13,6 +13,7 @@
 
 namespace L0 {
 
+const bool LinuxPowerImp::canControl = true;
 const std::string LinuxPowerImp::hwmonDir("device/hwmon");
 const std::string LinuxPowerImp::i915("i915");
 const std::string LinuxPowerImp::sustainedPowerLimitEnabled("power1_max_enable");
@@ -30,6 +31,8 @@ void powerGetTimestamp(uint64_t &timestamp) {
 ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     pProperties->onSubdevice = false;
     pProperties->subdeviceId = 0;
+    pProperties->canControl = canControl;
+    pProperties->isEnergyThresholdSupported = false;
     return ZE_RESULT_SUCCESS;
 }
 

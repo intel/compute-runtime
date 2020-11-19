@@ -42,6 +42,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     static const std::string burstPowerLimitEnabled;
     static const std::string burstPowerLimit;
     static const std::string energyCounterNode;
+    static const bool canControl;
 
     ze_result_t getErrorCode(ze_result_t result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {

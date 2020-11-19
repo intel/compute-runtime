@@ -143,6 +143,15 @@ void testSysmanPower(ze_device_handle_t &device) {
     VALIDATECALL(zesDeviceEnumPowerDomains(device, &count, handles.data()));
 
     for (auto handle : handles) {
+        zes_power_properties_t properties;
+        VALIDATECALL(zesPowerGetProperties(handle, &properties));
+        if (verbose) {
+            std::cout << "properties.canControl = " << properties.canControl << std::endl;
+            std::cout << "properties.isEnergyThresholdSupported= " << properties.isEnergyThresholdSupported << std::endl;
+            std::cout << "properties.defaultLimit= " << properties.defaultLimit << std::endl;
+            std::cout << "properties.maxLimit =" << properties.maxLimit << std::endl;
+            std::cout << "properties.minLimit =" << properties.minLimit << std::endl;
+        }
         zes_power_energy_counter_t energyCounter;
         VALIDATECALL(zesPowerGetEnergyCounter(handle, &energyCounter));
         if (verbose) {
