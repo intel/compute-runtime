@@ -71,3 +71,5 @@ RKLTEST_F(RklHwInfo, givenRklWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFa
     const HardwareInfo &hardwareInfo = RKL::hwInfo;
     EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSupportsInteger64BitAtomics);
 }
+
+HWCMDTEST_EXCLUDE_FAMILY(DeviceFactoryTest, givenValidHwConfigStringPrepareDeviceEnvironmentsForProductFamilyOverrideReturnsTrue, IGFX_ROCKETLAKE);
