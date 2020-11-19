@@ -22,6 +22,8 @@ KernelImageArgTest::~KernelImageArgTest() = default;
 
 void KernelImageArgTest::SetUp() {
     pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
     KernelArgPatchInfo kernelArgPatchInfo;
 
     pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);

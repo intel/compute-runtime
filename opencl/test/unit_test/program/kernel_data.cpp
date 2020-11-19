@@ -303,9 +303,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentNoReqdWorkGroupSizeWhenBuildingT
     executionEnvironment.CompiledSubGroupsNumber = 0xaa;
     executionEnvironment.HasBarriers = false;
     executionEnvironment.DisableMidThreadPreemption = true;
-    executionEnvironment.CompiledSIMD16 = false;
-    executionEnvironment.CompiledSIMD32 = true;
-    executionEnvironment.CompiledSIMD8 = false;
     executionEnvironment.HasDeviceEnqueue = false;
     executionEnvironment.MayAccessUndeclaredResource = false;
     executionEnvironment.UsesFencesForReadWriteImages = false;
@@ -322,7 +319,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentNoReqdWorkGroupSizeWhenBuildingT
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
     EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
     EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
     EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
@@ -340,9 +336,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect
     executionEnvironment.CompiledSubGroupsNumber = 0xaa;
     executionEnvironment.HasBarriers = false;
     executionEnvironment.DisableMidThreadPreemption = true;
-    executionEnvironment.CompiledSIMD16 = false;
-    executionEnvironment.CompiledSIMD32 = true;
-    executionEnvironment.CompiledSIMD8 = false;
     executionEnvironment.HasDeviceEnqueue = false;
     executionEnvironment.MayAccessUndeclaredResource = false;
     executionEnvironment.UsesFencesForReadWriteImages = false;
@@ -359,7 +352,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
     EXPECT_EQ(32u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
     EXPECT_EQ(16u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
     EXPECT_EQ(8u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
@@ -378,9 +370,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentCompiledForGreaterThan4gbBuffers
     executionEnvironment.CompiledSubGroupsNumber = 0xaa;
     executionEnvironment.HasBarriers = false;
     executionEnvironment.DisableMidThreadPreemption = true;
-    executionEnvironment.CompiledSIMD16 = false;
-    executionEnvironment.CompiledSIMD32 = true;
-    executionEnvironment.CompiledSIMD8 = false;
     executionEnvironment.HasDeviceEnqueue = false;
     executionEnvironment.MayAccessUndeclaredResource = false;
     executionEnvironment.UsesFencesForReadWriteImages = false;
@@ -396,7 +385,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentCompiledForGreaterThan4gbBuffers
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
     EXPECT_FALSE(pKernelInfo->requiresSshForBuffers);
 }
 
@@ -411,7 +399,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentDoesntHaveDeviceEnqueueWhenBuild
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
     EXPECT_EQ_VAL(0u, program->getParentKernelInfoArray(rootDeviceIndex).size());
 }
 
@@ -426,7 +413,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentHasDeviceEnqueueWhenBuildingThen
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
     EXPECT_EQ_VAL(1u, program->getParentKernelInfoArray(rootDeviceIndex).size());
 }
 
@@ -441,7 +427,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentDoesntRequireSubgroupIndependent
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
     EXPECT_EQ_VAL(0u, program->getSubgroupKernelInfoArray(rootDeviceIndex).size());
 }
 
@@ -456,7 +441,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentRequiresSubgroupIndependentForwa
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
     EXPECT_EQ_VAL(1u, program->getSubgroupKernelInfoArray(rootDeviceIndex).size());
 }
 

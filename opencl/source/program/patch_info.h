@@ -62,7 +62,6 @@ struct PatchInfo {
         imageMemObjKernelArgs;
     const SPatchDataParameterStream *dataParameterStream = nullptr;
     const SPatchThreadPayload *threadPayload = nullptr;
-    const SPatchExecutionEnvironment *executionEnvironment = nullptr;
     const SPatchKernelAttributesInfo *pKernelAttributesInfo = nullptr;
     const SPatchAllocateStatelessPrivateSurface *pAllocateStatelessPrivateSurface = nullptr;
     const SPatchAllocateSyncBuffer *pAllocateSyncBuffer = nullptr;

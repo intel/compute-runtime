@@ -125,12 +125,10 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingReadWriteImageThenHeapsAndCommandB
 
     EXPECT_NE(nullptr, kernel);
     // This kernel does not operate on OpenCL 2.0 Read and Write images
-    EXPECT_EQ(kernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->UsesFencesForReadWriteImages, (uint32_t) false);
+    EXPECT_FALSE(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages);
     // Simulate that the kernel actually operates on OpenCL 2.0 Read and Write images.
     // Such kernel may require special WA DisableLSQCROPERFforOCL during construction of Command Buffer
-    struct SPatchExecutionEnvironment *pExecEnv = (struct SPatchExecutionEnvironment *)kernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment;
-    pExecEnv->UsesFencesForReadWriteImages = (uint32_t) true;
-    EXPECT_EQ(kernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->UsesFencesForReadWriteImages, (uint32_t) true);
+    const_cast<KernelDescriptor &>(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor).kernelAttributes.flags.usesFencesForReadWriteImages = true;
 
     // Enqueue kernel that may require special WA DisableLSQCROPERFforOCL
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(pCmdQ, kernel.get());
@@ -150,7 +148,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingReadWriteImageThenHeapsAndCommandB
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    pExecEnv->UsesFencesForReadWriteImages = (uint32_t) false;
+    const_cast<KernelDescriptor &>(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor).kernelAttributes.flags.usesFencesForReadWriteImages = false;
 
     EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);

@@ -22,7 +22,7 @@ struct KernelSubGroupInfoFixture : HelloWorldFixture<HelloWorldFixtureFactory> {
         ASSERT_EQ(3u, maxWorkDim);
         maxWorkGroupSize = static_cast<size_t>(pKernel->kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize);
         ASSERT_GE(1024u, maxWorkGroupSize);
-        largestCompiledSIMDSize = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->LargestCompiledSIMDSize);
+        largestCompiledSIMDSize = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize());
         ASSERT_EQ(32u, largestCompiledSIMDSize);
 
         auto requiredWorkGroupSizeX = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
@@ -263,7 +263,7 @@ TEST_F(KernelSubGroupInfoReturnCompileNumberTest, GivenKernelWhenGettingCompileN
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-    EXPECT_EQ(paramValue[0], static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->CompiledSubGroupsNumber));
+    EXPECT_EQ(paramValue[0], static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.compiledSubGroupsNumber));
 }
 
 typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnCompileSizeTest;

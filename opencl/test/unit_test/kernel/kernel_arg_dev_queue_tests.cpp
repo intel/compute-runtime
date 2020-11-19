@@ -23,6 +23,8 @@ struct KernelArgDevQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
         pDeviceQueue = createQueueObject();
 
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
         pKernelInfo->kernelArgInfo.resize(1);
         pKernelInfo->kernelArgInfo[0].isDeviceQueue = true;
 

@@ -28,6 +28,7 @@ class KernelArgImmediateTest : public Test<ClDeviceFixture> {
 
         // define kernel info
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         // setup kernel arg offsets
         KernelArgPatchInfo kernelArgPatchInfo;

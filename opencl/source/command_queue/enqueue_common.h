@@ -686,7 +686,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         kernel->makeResident(getGpgpuCommandStreamReceiver());
         requiresCoherency |= kernel->requiresCoherency();
         mediaSamplerRequired |= kernel->isVmeKernel();
-        auto numGrfRequiredByKernel = kernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->NumGRFRequired;
+        auto numGrfRequiredByKernel = static_cast<uint32_t>(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.numGrfRequired);
         numGrfRequired = std::max(numGrfRequired, numGrfRequiredByKernel);
         specialPipelineSelectMode |= kernel->requiresSpecialPipelineSelectMode();
         if (kernel->hasUncacheableStatelessArgs()) {

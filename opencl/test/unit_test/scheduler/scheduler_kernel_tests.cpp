@@ -35,12 +35,10 @@ class MockSchedulerKernel : public SchedulerKernel {
         dataParametrStream.DataParameterStreamSize = 8;
         dataParametrStream.Size = 8;
 
-        SPatchExecutionEnvironment executionEnvironment = {};
-        executionEnvironment.CompiledSIMD32 = 1;
-        executionEnvironment.HasDeviceEnqueue = 0;
+        info->kernelDescriptor.kernelAttributes.simdSize = 32;
+        info->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = false;
 
         info->patchInfo.dataParameterStream = &dataParametrStream;
-        info->patchInfo.executionEnvironment = &executionEnvironment;
         KernelArgInfo bufferArg;
         bufferArg.isBuffer = true;
 

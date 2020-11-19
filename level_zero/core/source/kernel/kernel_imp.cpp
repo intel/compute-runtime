@@ -327,7 +327,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         uint32_t numThreadsPerSubSlice = (uint32_t)deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU;
         uint32_t localMemSize = (uint32_t)deviceInfo.localMemSize;
 
-        NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelImmData->getDescriptor().kernelAttributes.flags.usesBarriers, simd, this->getSlmTotalSize(),
+        NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelImmData->getDescriptor().kernelAttributes.usesBarriers(), simd, this->getSlmTotalSize(),
                                  coreFamily, numThreadsPerSubSlice, localMemSize,
                                  usesImages, false);
         NEO::computeWorkgroupSizeND(wsInfo, retGroupSize, workItems, dim);
@@ -366,7 +366,7 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
         descriptor.kernelAttributes.numGrfRequired,
         hardwareInfo.gtSystemInfo.EUCount, hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount);
 
-    auto usesBarriers = descriptor.kernelAttributes.flags.usesBarriers;
+    auto barrierCount = descriptor.kernelAttributes.barrierCount;
     const uint32_t workDim = 3;
     const size_t localWorkSize[] = {groupSize[0], groupSize[1], groupSize[2]};
     *totalGroupCount = NEO::KernelHelper::getMaxWorkGroupCount(descriptor.kernelAttributes.simdSize,
@@ -375,7 +375,7 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
                                                                dssCount * KB * hardwareInfo.capabilityTable.slmSize,
                                                                hwHelper.alignSlmSize(slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize),
                                                                static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
-                                                               hwHelper.getBarriersCountFromHasBarriers(usesBarriers),
+                                                               hwHelper.getBarriersCountFromHasBarriers(barrierCount),
                                                                workDim,
                                                                localWorkSize);
     return ZE_RESULT_SUCCESS;

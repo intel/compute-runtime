@@ -20,6 +20,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
 
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         pMockKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex));
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());

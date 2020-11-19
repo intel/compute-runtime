@@ -23,6 +23,8 @@ class KernelTransformableTest : public ::testing::Test {
     void SetUp() override {
         context = std::make_unique<MockContext>(deviceFactory.rootDevices[rootDeviceIndex]);
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
         KernelArgPatchInfo kernelArgPatchInfo;
 
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;

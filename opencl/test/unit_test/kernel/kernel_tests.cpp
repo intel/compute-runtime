@@ -430,7 +430,6 @@ TEST(PatchInfo, WhenPatchInfoIsCreatedThenMembersAreNullptr) {
     EXPECT_EQ(nullptr, patchInfo.bindingTableState);
     EXPECT_EQ(nullptr, patchInfo.dataParameterStream);
     EXPECT_EQ(nullptr, patchInfo.threadPayload);
-    EXPECT_EQ(nullptr, patchInfo.executionEnvironment);
     EXPECT_EQ(nullptr, patchInfo.pKernelAttributesInfo);
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessPrivateSurface);
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization);
@@ -549,11 +548,7 @@ TEST_F(KernelPrivateSurfaceTest, WhenChangingResidencyThenCsrResidencySizeIsUpda
     tokenDPS.DataParameterStreamSize = 64;
     pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
 
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // create kernel
     MockContext context;
@@ -590,9 +585,7 @@ TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWh
     tokenDPS.DataParameterStreamSize = 64;
     pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
 
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     MockContext context;
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
@@ -631,11 +624,7 @@ TEST_F(KernelPrivateSurfaceTest, WhenPrivateSurfaceAllocationFailsThenOutOfResou
     tokenDPS.DataParameterStreamSize = 64;
     pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
 
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // create kernel
     MockContext context;
@@ -676,11 +665,7 @@ TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateS
         tokenDPS.DataParameterStreamSize = 64;
         pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
 
-        SPatchExecutionEnvironment tokenEE = {};
-        tokenEE.CompiledSIMD8 = false;
-        tokenEE.CompiledSIMD16 = false;
-        tokenEE.CompiledSIMD32 = true;
-        pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
         // create kernel
         MockContext context;
@@ -700,11 +685,7 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup constant memory
     SPatchAllocateStatelessPrivateSurface AllocateStatelessPrivateMemorySurface;
@@ -752,11 +733,7 @@ TEST_F(KernelPrivateSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenPriv
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup global memory
     char buffer[16];
@@ -801,12 +778,11 @@ TEST_F(KernelPrivateSurfaceTest, givenNonNullDataParameterStreamWhenGettingConst
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4ThenReturnOutOfResources) {
     auto pAllocateStatelessPrivateSurface = std::unique_ptr<SPatchAllocateStatelessPrivateSurface>(new SPatchAllocateStatelessPrivateSurface());
     pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
-    auto executionEnvironment = std::unique_ptr<SPatchExecutionEnvironment>(new SPatchExecutionEnvironment());
-    *executionEnvironment = {};
-    executionEnvironment->CompiledSIMD32 = 32;
+
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
-    pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+
     MockContext context;
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
     std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex)));
@@ -820,12 +796,11 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4And32BitAllocationsThenReturnOutOfResources) {
     auto pAllocateStatelessPrivateSurface = std::unique_ptr<SPatchAllocateStatelessPrivateSurface>(new SPatchAllocateStatelessPrivateSurface());
     pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
-    auto executionEnvironment = std::unique_ptr<SPatchExecutionEnvironment>(new SPatchExecutionEnvironment());
-    *executionEnvironment = {};
-    executionEnvironment->CompiledSIMD32 = 32;
+
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
-    pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+
     MockContext context;
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
     std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex)));
@@ -839,12 +814,11 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize8And32BitAllocationsThenReturnOutOfResources) {
     auto pAllocateStatelessPrivateSurface = std::unique_ptr<SPatchAllocateStatelessPrivateSurface>(new SPatchAllocateStatelessPrivateSurface());
     pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
-    auto executionEnvironment = std::unique_ptr<SPatchExecutionEnvironment>(new SPatchExecutionEnvironment());
-    *executionEnvironment = {};
-    executionEnvironment->CompiledSIMD32 = 32;
+
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
-    pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+
     MockContext context;
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
     std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex)));
@@ -871,11 +845,7 @@ TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalS
     tempSPatchDataParameterStream.DataParameterStreamSize = 16;
     pKernelInfo->patchInfo.dataParameterStream = &tempSPatchDataParameterStream;
 
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     char buffer[16];
 
@@ -914,11 +884,7 @@ TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalS
     tempSPatchDataParameterStream.DataParameterStreamSize = 16;
     pKernelInfo->patchInfo.dataParameterStream = &tempSPatchDataParameterStream;
 
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     char buffer[16];
 
@@ -944,11 +910,7 @@ HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlob
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup global memory
     SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization AllocateStatelessGlobalMemorySurfaceWithInitialization;
@@ -998,12 +960,7 @@ TEST_F(KernelGlobalSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenGloba
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup global memory
     char buffer[16];
@@ -1044,11 +1001,7 @@ TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConst
     tempSPatchDataParameterStream.DataParameterStreamSize = 16;
     pKernelInfo->patchInfo.dataParameterStream = &tempSPatchDataParameterStream;
 
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     char buffer[16];
 
@@ -1086,11 +1039,7 @@ TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConst
     tempSPatchDataParameterStream.DataParameterStreamSize = 16;
     pKernelInfo->patchInfo.dataParameterStream = &tempSPatchDataParameterStream;
 
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     char buffer[16];
 
@@ -1115,12 +1064,7 @@ HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenCo
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup constant memory
     SPatchAllocateStatelessConstantMemorySurfaceWithInitialization AllocateStatelessConstantMemorySurfaceWithInitialization;
@@ -1170,12 +1114,7 @@ TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenCon
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup global memory
     char buffer[16];
@@ -1204,12 +1143,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatefulKernelWhenK
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup event pool surface
     SPatchAllocateStatelessEventPoolSurface AllocateStatelessEventPoolSurface;
@@ -1253,12 +1187,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatefulKernelWhenE
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup event pool surface
     SPatchAllocateStatelessEventPoolSurface AllocateStatelessEventPoolSurface;
@@ -1302,13 +1231,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenKernelWithNullEvent
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
-
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
     pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface = nullptr;
 
     // create kernel
@@ -1334,12 +1257,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatelessKernelWhen
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup event pool surface
     SPatchAllocateStatelessEventPoolSurface AllocateStatelessEventPoolSurface;
@@ -1370,12 +1288,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatelessKernelWhen
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup event pool surface
     SPatchAllocateStatelessEventPoolSurface AllocateStatelessEventPoolSurface;
@@ -1408,12 +1321,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatefulKe
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup default device queue surface
     SPatchAllocateStatelessDefaultDeviceQueueSurface AllocateStatelessDefaultDeviceQueueSurface;
@@ -1457,12 +1365,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatefulKe
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup default device queue surface
     SPatchAllocateStatelessDefaultDeviceQueueSurface AllocateStatelessDefaultDeviceQueueSurface;
@@ -1508,12 +1411,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatelessK
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup default device queue surface
     SPatchAllocateStatelessDefaultDeviceQueueSurface AllocateStatelessDefaultDeviceQueueSurface;
@@ -1542,13 +1440,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenKernelWith
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
-
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
     pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = nullptr;
 
     // create kernel
@@ -1574,12 +1466,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatelessK
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup default device queue surface
     SPatchAllocateStatelessDefaultDeviceQueueSurface AllocateStatelessDefaultDeviceQueueSurface;
@@ -1616,6 +1503,8 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
@@ -1651,6 +1540,8 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenExportedFunctionsIsaAllocationIsMadeResident) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
@@ -1689,6 +1580,8 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenExportedFun
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBufferIsMadeResident) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
@@ -2030,6 +1923,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasImagesOnlyThenTrueIsReturned) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelArgInfo.resize(3);
     pKernelInfo->kernelArgInfo[2].isImage = true;
     pKernelInfo->kernelArgInfo[1].isMediaBlockImage = true;
@@ -2047,6 +1941,7 @@ TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasIma
 
 TEST(KernelImageDetectionTests, givenKernelWithImagesAndBuffersWhenItIsAskedIfItHasImagesOnlyThenFalseIsReturned) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelArgInfo.resize(3);
     pKernelInfo->kernelArgInfo[2].isImage = true;
     pKernelInfo->kernelArgInfo[1].isBuffer = true;
@@ -2064,6 +1959,7 @@ TEST(KernelImageDetectionTests, givenKernelWithImagesAndBuffersWhenItIsAskedIfIt
 
 TEST(KernelImageDetectionTests, givenKernelWithNoImagesWhenItIsAskedIfItHasImagesOnlyThenFalseIsReturned) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelArgInfo.resize(1);
     pKernelInfo->kernelArgInfo[0].isBuffer = true;
 
@@ -2118,6 +2014,8 @@ HWTEST_F(KernelResidencyTest, WhenMakingArgsResidentThenImageFromImageCheckIsCor
     EXPECT_EQ(imageY->getMediaPlaneType(), 0u);
 
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
     KernelArgInfo kernelArgInfo;
     kernelArgInfo.isImage = true;
 
@@ -2144,8 +2042,7 @@ struct KernelExecutionEnvironmentTest : public Test<ClDeviceFixture> {
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
         pKernelInfo = std::make_unique<KernelInfo>();
-        executionEnvironment.CompiledSIMD32 = 1;
-        pKernelInfo->patchInfo.executionEnvironment = &executionEnvironment;
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
         pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
@@ -2162,65 +2059,6 @@ struct KernelExecutionEnvironmentTest : public Test<ClDeviceFixture> {
     std::unique_ptr<KernelInfo> pKernelInfo;
     SPatchExecutionEnvironment executionEnvironment = {};
 };
-
-TEST_F(KernelExecutionEnvironmentTest, GivenCompiledSimd32TrueWhenGettingMaxSimdSizeThen32IsReturned) {
-
-    executionEnvironment.CompiledSIMD32 = true;
-    executionEnvironment.CompiledSIMD16 = true;
-    executionEnvironment.CompiledSIMD8 = true;
-
-    EXPECT_EQ(32u, this->pKernelInfo->getMaxSimdSize());
-}
-
-TEST_F(KernelExecutionEnvironmentTest, GivenCompiledSimd32FalseAndCompiledSimd16TrueWhenGettingMaxSimdSizeThen16IsReturned) {
-
-    executionEnvironment.CompiledSIMD32 = false;
-    executionEnvironment.CompiledSIMD16 = true;
-    executionEnvironment.CompiledSIMD8 = true;
-
-    EXPECT_EQ(16u, this->pKernelInfo->getMaxSimdSize());
-}
-
-TEST_F(KernelExecutionEnvironmentTest, GivenOnlyCompiledSimd8TrueWhenGettingMaxSimdSizeThen8IsReturned) {
-
-    executionEnvironment.CompiledSIMD32 = false;
-    executionEnvironment.CompiledSIMD16 = false;
-    executionEnvironment.CompiledSIMD8 = true;
-
-    EXPECT_EQ(8u, this->pKernelInfo->getMaxSimdSize());
-}
-
-TEST_F(KernelExecutionEnvironmentTest, GivenAllCompiledSimdFalseWhenGettingMaxSimdSizeThen8IsReturned) {
-
-    executionEnvironment.CompiledSIMD32 = false;
-    executionEnvironment.CompiledSIMD16 = false;
-    executionEnvironment.CompiledSIMD8 = false;
-
-    EXPECT_EQ(8u, this->pKernelInfo->getMaxSimdSize());
-}
-
-TEST_F(KernelExecutionEnvironmentTest, GivenExecutionEnvironmentNotAvailableWhenGettingMaxSimdSizeThen1IsReturned) {
-
-    executionEnvironment.CompiledSIMD32 = false;
-    executionEnvironment.CompiledSIMD16 = false;
-    executionEnvironment.CompiledSIMD8 = false;
-
-    auto oldExcEnv = this->pKernelInfo->patchInfo.executionEnvironment;
-
-    this->pKernelInfo->patchInfo.executionEnvironment = nullptr;
-    EXPECT_EQ(1U, this->pKernelInfo->getMaxSimdSize());
-    this->pKernelInfo->patchInfo.executionEnvironment = oldExcEnv;
-}
-
-TEST_F(KernelExecutionEnvironmentTest, GivenLargestCompiledSimdSizeEqualOneWhenGettingMaxSimdSizeThen1IsReturned) {
-
-    executionEnvironment.LargestCompiledSIMDSize = 1;
-
-    auto oldExcEnv = this->pKernelInfo->patchInfo.executionEnvironment;
-
-    EXPECT_EQ(1U, this->pKernelInfo->getMaxSimdSize());
-    this->pKernelInfo->patchInfo.executionEnvironment = oldExcEnv;
-}
 
 TEST_F(KernelExecutionEnvironmentTest, GivenCompiledWorkGroupSizeIsZeroWhenGettingMaxRequiredWorkGroupSizeThenMaxWorkGroupSizeIsCorrect) {
     auto maxWorkGroupSize = static_cast<size_t>(pDevice->getDeviceInfo().maxWorkGroupSize);
@@ -2285,8 +2123,7 @@ struct KernelCrossThreadTests : Test<ClDeviceFixture> {
         pKernelInfo = std::make_unique<KernelInfo>();
         ASSERT_NE(nullptr, pKernelInfo);
         pKernelInfo->patchInfo.dataParameterStream = &patchDataParameterStream;
-        executionEnvironment.CompiledSIMD32 = 1;
-        pKernelInfo->patchInfo.executionEnvironment = &executionEnvironment;
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
     }
 
     void TearDown() override {
@@ -2394,7 +2231,6 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedLocalWorkSizeI
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedMaxWorkGroupSizeIsCorrect) {
-
     pKernelInfo->workloadInfo.maxWorkGroupSizeOffset = 12;
 
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
@@ -2408,12 +2244,9 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedMaxWorkGroupSi
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenDataParameterSimdSizeIsCorrect) {
-
     pKernelInfo->workloadInfo.simdSizeOffset = 16;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 16;
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
-    executionEnvironment.CompiledSIMD32 = false;
-    executionEnvironment.CompiledSIMD16 = true;
-    executionEnvironment.CompiledSIMD8 = true;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].dataParameterSimdSize);
@@ -2504,10 +2337,7 @@ TEST_F(KernelCrossThreadTests, WhenPatchingBlocksSimdSizeThenSimdSizeIsPatchedCo
 
     // add a new block kernel to program
     auto infoBlock = new KernelInfo();
-    kernel->executionEnvironmentBlock.CompiledSIMD8 = 0;
-    kernel->executionEnvironmentBlock.CompiledSIMD16 = 1;
-    kernel->executionEnvironmentBlock.CompiledSIMD32 = 0;
-    infoBlock->patchInfo.executionEnvironment = &kernel->executionEnvironmentBlock;
+    infoBlock->kernelDescriptor.kernelAttributes.simdSize = 16;
     kernel->mockProgram->blockKernelManager->addBlockKernelInfo(infoBlock);
 
     // patch block's simd size
@@ -2649,15 +2479,18 @@ TEST(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedThenMa
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     MockKernelWithInternals kernel(*device);
-    kernel.executionEnvironment.LargestCompiledSIMDSize = CommonConstants::maximalSimdSize;
 
     size_t maxKernelWkgSize;
+
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
     kernel.mockKernel->getWorkGroupInfo(*device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
     EXPECT_EQ(1024u, maxKernelWkgSize);
-    kernel.executionEnvironment.LargestCompiledSIMDSize = 16;
+
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
     kernel.mockKernel->getWorkGroupInfo(*device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
     EXPECT_EQ(512u, maxKernelWkgSize);
-    kernel.executionEnvironment.LargestCompiledSIMDSize = 8;
+
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 8;
     kernel.mockKernel->getWorkGroupInfo(*device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
     EXPECT_EQ(256u, maxKernelWkgSize);
 }
@@ -2823,9 +2656,7 @@ TEST(KernelTest, givenKernelCompiledWithSimdSizeLowerThanExpectedWhenInitializin
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     auto minSimd = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily).getMinimalSIMDSize();
     MockKernelWithInternals kernel(*device);
-    kernel.executionEnvironment.CompiledSIMD32 = 0;
-    kernel.executionEnvironment.CompiledSIMD16 = 0;
-    kernel.executionEnvironment.CompiledSIMD8 = 1;
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 8;
 
     cl_int retVal = kernel.mockKernel->initialize();
 
@@ -2839,10 +2670,7 @@ TEST(KernelTest, givenKernelCompiledWithSimdSizeLowerThanExpectedWhenInitializin
 TEST(KernelTest, givenKernelCompiledWithSimdOneWhenInitializingThenReturnError) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockKernelWithInternals kernel(*device);
-    kernel.executionEnvironment.CompiledSIMD32 = 0;
-    kernel.executionEnvironment.CompiledSIMD16 = 0;
-    kernel.executionEnvironment.CompiledSIMD8 = 0;
-    kernel.executionEnvironment.LargestCompiledSIMDSize = 1;
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
 
     cl_int retVal = kernel.mockKernel->initialize();
 
@@ -3133,10 +2961,11 @@ TEST(KernelTest, givenKernelWhenForcePerDssBackedBufferProgrammingIsNotSetThenKe
 }
 
 TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaultValue) {
-    SPatchExecutionEnvironment sPatchExecutionEnvironment = {};
-    sPatchExecutionEnvironment.SubgroupIndependentForwardProgressRequired = true;
     UltClDeviceFactory deviceFactory{1, 0};
-    MockKernelWithInternals mockKernelWithInternals{*deviceFactory.rootDevices[0], sPatchExecutionEnvironment};
+
+    SPatchExecutionEnvironment sPatchExecEnv = {};
+    sPatchExecEnv.SubgroupIndependentForwardProgressRequired = true;
+    MockKernelWithInternals mockKernelWithInternals{*deviceFactory.rootDevices[0], sPatchExecEnv};
 
     auto &mockKernel = *mockKernelWithInternals.mockKernel;
     auto &hwHelper = HwHelper::get(deviceFactory.rootDevices[0]->getHardwareInfo().platform.eRenderCoreFamily);
@@ -3144,10 +2973,9 @@ TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaul
 }
 
 TEST(KernelTest, givenKernelWhenSettingAdditinalKernelExecInfoThenCorrectValueIsSet) {
-    SPatchExecutionEnvironment sPatchExecutionEnvironment = {};
-    sPatchExecutionEnvironment.SubgroupIndependentForwardProgressRequired = true;
     UltClDeviceFactory deviceFactory{1, 0};
-    MockKernelWithInternals mockKernelWithInternals{*deviceFactory.rootDevices[0], sPatchExecutionEnvironment};
+    MockKernelWithInternals mockKernelWithInternals{*deviceFactory.rootDevices[0]};
+    mockKernelWithInternals.kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = true;
 
     auto &mockKernel = *mockKernelWithInternals.mockKernel;
 
@@ -3219,6 +3047,7 @@ using KernelMultiRootDeviceTest = MultiRootDeviceFixture;
 
 TEST_F(KernelMultiRootDeviceTest, givenKernelWithPrivateSurfaceWhenInitializeThenPrivateSurfacesHaveCorrectRootDeviceIndex) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
     // setup private memory
     SPatchAllocateStatelessPrivateSurface tokenSPS;

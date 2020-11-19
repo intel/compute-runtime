@@ -32,10 +32,7 @@ class BufferSetArgTest : public ContextFixture,
     using ContextFixture::SetUp;
 
   public:
-    BufferSetArgTest()
-
-    {
-    }
+    BufferSetArgTest() {}
 
   protected:
     void SetUp() override {
@@ -43,7 +40,7 @@ class BufferSetArgTest : public ContextFixture,
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         pKernelInfo = std::make_unique<KernelInfo>();
-        ASSERT_NE(nullptr, pKernelInfo);
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         // define kernel info
         // setup kernel arg offsets

@@ -36,6 +36,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     void SetUp() {
         ClDeviceFixture::SetUp();
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         // define kernel info
         pKernelInfo->heapInfo.pDsh = samplerStateHeap;

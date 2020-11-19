@@ -49,11 +49,6 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
         memset(&dataParameterStream, 0, sizeof(dataParameterStream));
         dataParameterStream.DataParameterStreamSize = sizeof(crossThreadData);
 
-        executionEnvironment = {};
-        memset(&executionEnvironment, 0, sizeof(executionEnvironment));
-        executionEnvironment.CompiledSIMD32 = 1;
-        executionEnvironment.LargestCompiledSIMDSize = 32;
-
         memset(&threadPayload, 0, sizeof(threadPayload));
         threadPayload.LocalIDXPresent = 1;
         threadPayload.LocalIDYPresent = 1;
@@ -68,13 +63,13 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
         kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
-        kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
+        kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
         kernelInfo.patchInfo.threadPayload = &threadPayload;
 
         kernelInfoWithSampler.heapInfo.pKernelHeap = kernelIsa;
         kernelInfoWithSampler.heapInfo.KernelHeapSize = sizeof(kernelIsa);
         kernelInfoWithSampler.patchInfo.dataParameterStream = &dataParameterStream;
-        kernelInfoWithSampler.patchInfo.executionEnvironment = &executionEnvironment;
+        kernelInfoWithSampler.kernelDescriptor.kernelAttributes.simdSize = 32;
         kernelInfoWithSampler.patchInfo.threadPayload = &threadPayload;
         kernelInfoWithSampler.patchInfo.samplerStateArray = &samplerArray;
         kernelInfoWithSampler.heapInfo.pDsh = static_cast<const void *>(dsh);
@@ -100,7 +95,6 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
 
     SKernelBinaryHeaderCommon kernelHeader = {};
     SPatchDataParameterStream dataParameterStream = {};
-    SPatchExecutionEnvironment executionEnvironment = {};
     SPatchThreadPayload threadPayload = {};
     SPatchSamplerStateArray samplerArray = {};
 

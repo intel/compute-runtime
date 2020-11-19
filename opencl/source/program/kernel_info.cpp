@@ -136,8 +136,7 @@ WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     auto rootDeviceIndex = device.getRootDeviceIndex();
     const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo(rootDeviceIndex);
     this->maxWorkGroupSize = dispatchInfo.getKernel()->getMaxKernelWorkGroupSize(rootDeviceIndex);
-    auto pExecutionEnvironment = kernelInfo.patchInfo.executionEnvironment;
-    this->hasBarriers = (pExecutionEnvironment != nullptr) && (pExecutionEnvironment->HasBarriers);
+    this->hasBarriers = kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers();
     this->simdSize = static_cast<uint32_t>(kernelInfo.getMaxSimdSize());
     this->slmTotalSize = static_cast<uint32_t>(dispatchInfo.getKernel()->slmTotalSize);
     this->coreFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
@@ -185,7 +184,6 @@ KernelInfo::~KernelInfo() {
 }
 
 void KernelInfo::storePatchToken(const SPatchExecutionEnvironment *execEnv) {
-    this->patchInfo.executionEnvironment = execEnv;
     if (execEnv->CompiledForGreaterThan4GBBuffers == false) {
         this->requiresSshForBuffers = true;
     }

@@ -17,6 +17,8 @@ set(NEO_CORE_KERNEL
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor_from_patchtokens.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor_from_patchtokens.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/read_extended_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/read_extended_info.cpp
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_KERNEL ${NEO_CORE_KERNEL})

@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/kernel/grf_config.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
@@ -61,6 +63,8 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenVariousInputWhenGetting
     size_t globalWorkOffset[] = {0, 0, 0};
     size_t localWorkSize[] = {8, 8, 8};
     size_t maxConcurrentWorkGroupCount = 0;
+    const_cast<KernelInfo &>(pKernel->getKernelInfo(pDevice->getRootDeviceIndex())).kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+
     retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pKernel, workDim, globalWorkOffset, localWorkSize,
                                                          &maxConcurrentWorkGroupCount);
     EXPECT_EQ(CL_SUCCESS, retVal);

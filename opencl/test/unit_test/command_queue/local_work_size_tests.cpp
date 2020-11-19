@@ -694,14 +694,10 @@ TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenHasBarrier
     dispatchInfo.setClDevice(&device);
     dispatchInfo.setKernel(kernel.mockKernel);
 
-    kernel.kernelInfo.patchInfo.executionEnvironment = nullptr;
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 0;
     EXPECT_FALSE(WorkSizeInfo{dispatchInfo}.hasBarriers);
 
-    kernel.executionEnvironment.HasBarriers = 0;
-    kernel.kernelInfo.patchInfo.executionEnvironment = &kernel.executionEnvironment;
-    EXPECT_FALSE(WorkSizeInfo{dispatchInfo}.hasBarriers);
-
-    kernel.executionEnvironment.HasBarriers = 1;
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
     EXPECT_TRUE(WorkSizeInfo{dispatchInfo}.hasBarriers);
 }
 

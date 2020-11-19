@@ -34,16 +34,14 @@ struct PerThreadDataTests : public ClDeviceFixture,
         threadPayload.UnusedPerThreadConstantPresent =
             !(localIdX || localIdY || localIdZ || flattenedId);
 
-        executionEnvironment = {};
-        executionEnvironment.CompiledSIMD32 = 1;
-        executionEnvironment.LargestCompiledSIMDSize = 32;
+        kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
-        kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
+
         kernelInfo.patchInfo.threadPayload = &threadPayload;
 
-        simd = executionEnvironment.LargestCompiledSIMDSize;
+        simd = kernelInfo.getMaxSimdSize();
         numChannels = threadPayload.LocalIDXPresent +
                       threadPayload.LocalIDYPresent +
                       threadPayload.LocalIDZPresent;
@@ -69,7 +67,6 @@ struct PerThreadDataTests : public ClDeviceFixture,
 
     SKernelBinaryHeaderCommon kernelHeader;
     SPatchThreadPayload threadPayload;
-    SPatchExecutionEnvironment executionEnvironment;
     KernelInfo kernelInfo;
 };
 

@@ -39,10 +39,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
         memset(&dataParameterStream, 0, sizeof(dataParameterStream));
         dataParameterStream.DataParameterStreamSize = sizeof(crossThreadData);
 
-        executionEnvironment = {};
-        memset(&executionEnvironment, 0, sizeof(executionEnvironment));
-        executionEnvironment.CompiledSIMD32 = 1;
-        executionEnvironment.LargestCompiledSIMDSize = 32;
+        kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
 
         memset(&threadPayload, 0, sizeof(threadPayload));
         threadPayload.LocalIDXPresent = 1;
@@ -52,7 +49,6 @@ struct ProfilingTests : public CommandEnqueueFixture,
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
         kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
-        kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
         kernelInfo.patchInfo.threadPayload = &threadPayload;
     }
 
@@ -64,7 +60,6 @@ struct ProfilingTests : public CommandEnqueueFixture,
 
     SKernelBinaryHeaderCommon kernelHeader = {};
     SPatchDataParameterStream dataParameterStream = {};
-    SPatchExecutionEnvironment executionEnvironment = {};
     SPatchThreadPayload threadPayload = {};
     KernelInfo kernelInfo;
     MockContext ctx;

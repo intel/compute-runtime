@@ -45,6 +45,8 @@ class KernelArgAcceleratorFixture : public ContextFixture, public ClDeviceFixtur
         ContextFixture::SetUp(1, &device);
 
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
         KernelArgPatchInfo kernelArgPatchInfo;
 
         pKernelInfo->kernelArgInfo.resize(1);

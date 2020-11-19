@@ -11,6 +11,7 @@
 #include "shared/source/kernel/kernel_arg_descriptor_extended_device_side_enqueue.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/kernel/read_extended_info.h"
 
 #include <sstream>
 #include <string>
@@ -49,17 +50,20 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnviro
     } else {
         dst.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindfulAndStateless;
     }
+
+    dst.kernelAttributes.numGrfRequired = execEnv.NumGRFRequired;
     dst.kernelAttributes.simdSize = execEnv.LargestCompiledSIMDSize;
+    dst.kernelAttributes.barrierCount = execEnv.HasBarriers;
+
     dst.kernelAttributes.flags.usesDeviceSideEnqueue = (0 != execEnv.HasDeviceEnqueue);
-    dst.kernelAttributes.flags.usesBarriers = (0 != execEnv.HasBarriers);
-    dst.kernelAttributes.hasBarriers = execEnv.HasBarriers;
     dst.kernelAttributes.flags.requiresDisabledMidThreadPreemption = (0 != execEnv.DisableMidThreadPreemption);
-    dst.kernelMetadata.compiledSubGroupsNumber = execEnv.CompiledSubGroupsNumber;
     dst.kernelAttributes.flags.usesFencesForReadWriteImages = (0 != execEnv.UsesFencesForReadWriteImages);
     dst.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = (0 != execEnv.SubgroupIndependentForwardProgressRequired);
-    dst.kernelAttributes.numGrfRequired = execEnv.NumGRFRequired;
-    dst.kernelAttributes.flags.useGlobalAtomics = execEnv.HasGlobalAtomics;
-    dst.kernelAttributes.flags.usesStatelessWrites = (execEnv.StatelessWritesCount > 0U);
+    dst.kernelAttributes.flags.useGlobalAtomics = (0 != execEnv.HasGlobalAtomics);
+    dst.kernelAttributes.flags.usesStatelessWrites = (0 != execEnv.StatelessWritesCount);
+
+    dst.kernelMetadata.compiledSubGroupsNumber = execEnv.CompiledSubGroupsNumber;
+    readExtendedInfo(dst.extendedInfo, execEnv);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchSamplerStateArray &token) {

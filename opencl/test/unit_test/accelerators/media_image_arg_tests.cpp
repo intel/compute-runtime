@@ -30,6 +30,8 @@ class MediaImageSetArgTest : public ClDeviceFixture,
         ClDeviceFixture::SetUp();
 
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);

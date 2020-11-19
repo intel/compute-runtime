@@ -798,8 +798,7 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
         }
     }
 
-    kernelDescriptor.kernelAttributes.hasBarriers = execEnv.barrierCount;
-    kernelDescriptor.kernelAttributes.flags.usesBarriers = (kernelDescriptor.kernelAttributes.hasBarriers > 0U);
+    kernelDescriptor.kernelAttributes.barrierCount = execEnv.barrierCount;
     kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = execEnv.disableMidThreadPreemption;
     kernelDescriptor.kernelAttributes.numGrfRequired = execEnv.grfCount;
     if (execEnv.has4GBBuffers) {

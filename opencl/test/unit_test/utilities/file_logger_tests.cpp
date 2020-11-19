@@ -346,6 +346,7 @@ TEST(FileLogger, GivenNullMdiWhenDumpingKernelsThenFileIsNotCreated) {
 
 TEST(FileLogger, GivenDebugFunctionalityWhenDebugFlagIsDisabledThenDoNotDumpKernelArgsForMdi) {
     auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
@@ -381,6 +382,7 @@ TEST(FileLogger, GivenDebugFunctionalityWhenDebugFlagIsDisabledThenDoNotDumpKern
 
 TEST(FileLogger, GivenMdiWhenDumpingKernelArgsThenFileIsCreated) {
     auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
@@ -426,6 +428,7 @@ TEST(FileLogger, GivenNullWhenDumpingKernelArgsThenFileIsNotCreated) {
 
 TEST(FileLogger, GivenEmptyKernelWhenDumpingKernelArgsThenFileIsNotCreated) {
     auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
@@ -442,6 +445,8 @@ TEST(FileLogger, GivenEmptyKernelWhenDumpingKernelArgsThenFileIsNotCreated) {
 
 TEST(FileLogger, GivenImmediateWhenDumpingKernelArgsThenFileIsCreated) {
     auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
@@ -474,8 +479,8 @@ TEST(FileLogger, GivenImmediateWhenDumpingKernelArgsThenFileIsCreated) {
 }
 
 TEST(FileLogger, GivenImmediateZeroSizeWhenDumpingKernelArgsThenFileIsNotCreated) {
-
     auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
@@ -504,8 +509,8 @@ TEST(FileLogger, GivenImmediateZeroSizeWhenDumpingKernelArgsThenFileIsNotCreated
 }
 
 TEST(FileLogger, GivenLocalBufferWhenDumpingKernelArgsThenFileIsNotCreated) {
-
     auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
@@ -528,6 +533,7 @@ TEST(FileLogger, GivenLocalBufferWhenDumpingKernelArgsThenFileIsNotCreated) {
 
 TEST(FileLogger, GivenBufferNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
     auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
@@ -564,6 +570,7 @@ TEST(FileLogger, GivenBufferWhenDumpingKernelArgsThenFileIsCreated) {
     cl_mem clObj = buffer;
 
     auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
     auto kernel = clUniquePtr(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
 
@@ -601,6 +608,7 @@ TEST(FileLogger, GivenBufferWhenDumpingKernelArgsThenFileIsCreated) {
 
 TEST(FileLogger, GivenSamplerWhenDumpingKernelArgsThenFileIsNotCreated) {
     auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
@@ -627,8 +635,8 @@ TEST(FileLogger, GivenSamplerWhenDumpingKernelArgsThenFileIsNotCreated) {
 }
 
 TEST(FileLogger, GivenImageNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
-
     auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));

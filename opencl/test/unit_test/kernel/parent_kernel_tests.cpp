@@ -34,13 +34,10 @@ class MockKernelWithArgumentAccess : public Kernel {
 };
 
 TEST(ParentKernelTest, WhenArgsAddedThenObjectCountsAreIncremented) {
-    KernelInfo info;
     MockClDevice *device = new MockClDevice{new MockDevice};
     MockProgram program(toClDeviceVector(*device));
-    SPatchExecutionEnvironment environment = {};
-    environment.HasDeviceEnqueue = 1;
-
-    info.patchInfo.executionEnvironment = &environment;
+    KernelInfo info;
+    info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
 
     MockKernelWithArgumentAccess kernel(&program, MockKernel::toKernelInfoContainer(info, device->getRootDeviceIndex()));
 
@@ -155,10 +152,7 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenPrivateMemoryForBlocksIsA
 
     infoBlock->patchInfo.threadPayload = threadPayloadBlock;
 
-    SPatchExecutionEnvironment *executionEnvironmentBlock = new SPatchExecutionEnvironment;
-    *executionEnvironmentBlock = {};
-    executionEnvironmentBlock->HasDeviceEnqueue = 1;
-    infoBlock->patchInfo.executionEnvironment = executionEnvironmentBlock;
+    infoBlock->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
 
     SPatchDataParameterStream *streamBlock = new SPatchDataParameterStream;
     streamBlock->DataParameterStreamSize = 0;

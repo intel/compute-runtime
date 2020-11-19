@@ -2777,8 +2777,8 @@ kernels:
     ASSERT_EQ(1U, programInfo.kernelInfos.size());
 
     auto &kernelDescriptor = programInfo.kernelInfos[0]->kernelDescriptor;
-    EXPECT_EQ(7U, kernelDescriptor.kernelAttributes.hasBarriers);
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesBarriers);
+    EXPECT_EQ(7U, kernelDescriptor.kernelAttributes.barrierCount);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.usesBarriers());
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption);
     EXPECT_EQ(13U, kernelDescriptor.kernelAttributes.numGrfRequired);
     EXPECT_EQ(KernelDescriptor::Stateless, kernelDescriptor.kernelAttributes.bufferAddressingMode);

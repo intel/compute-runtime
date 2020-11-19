@@ -31,20 +31,16 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+        pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
 
         pMediaVFEstate = new SPatchMediaVFEState();
         pMediaVFEstate->PerThreadScratchSpace = 1024;
         pMediaVFEstate->ScratchSpaceOffset = 0;
 
-        pExecutionEnvironment = new SPatchExecutionEnvironment();
-        pExecutionEnvironment->CompiledSIMD32 = 1;
-        pExecutionEnvironment->LargestCompiledSIMDSize = 32;
-        pExecutionEnvironment->NumGRFRequired = GrfConfig::DefaultGrfNumber;
-
         pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
 
         pKernelInfo->patchInfo.mediavfestate = pMediaVFEstate;
-        pKernelInfo->patchInfo.executionEnvironment = pExecutionEnvironment;
         pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
 
         KernelArgPatchInfo kernelArg1PatchInfo;
@@ -79,7 +75,6 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
     void TearDown() override {
         delete pKernel;
         delete pPrintfSurface;
-        delete pExecutionEnvironment;
         delete pMediaVFEstate;
         delete pProgram;
 
@@ -89,7 +84,6 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
 
     std::unique_ptr<KernelInfo> pKernelInfo;
     SPatchMediaVFEState *pMediaVFEstate = nullptr;
-    SPatchExecutionEnvironment *pExecutionEnvironment;
     SPatchAllocateStatelessPrintfSurface *pPrintfSurface = nullptr;
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;

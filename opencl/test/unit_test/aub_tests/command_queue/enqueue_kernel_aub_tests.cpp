@@ -503,7 +503,7 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(this->kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].pureStatefulBufferAccess);
-    EXPECT_TRUE(this->kernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
+    EXPECT_TRUE(this->kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
 
     this->pCmdQ->flush();
     expectMemory<FamilyType>(reinterpret_cast<void *>(pBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),

@@ -93,10 +93,10 @@ TEST(KernelDescriptorFromPatchtokens, GivenExecutionEnvironmentThenSetsProperPar
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue);
 
-    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesBarriers);
+    EXPECT_FALSE(kernelDescriptor.kernelAttributes.usesBarriers());
     execEnv.HasBarriers = 1U;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesBarriers);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.usesBarriers());
 
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption);
     execEnv.DisableMidThreadPreemption = 1U;

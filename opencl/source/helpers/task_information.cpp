@@ -210,7 +210,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     auto rootDeviceIndex = commandQueue.getDevice().getRootDeviceIndex();
-    const auto &kernelInfo = kernel->getKernelInfo(rootDeviceIndex);
+    const auto &kernelDescriptor = kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor;
 
     DispatchFlags dispatchFlags(
         {},                                                                          //csrDependencies
@@ -219,7 +219,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         commandQueue.flushStamp->getStampReference(),                                //flushStampReference
         commandQueue.getThrottle(),                                                  //throttle
         preemptionMode,                                                              //preemptionMode
-        kernelInfo.patchInfo.executionEnvironment->NumGRFRequired,                   //numGrfRequired
+        kernelDescriptor.kernelAttributes.numGrfRequired,                            //numGrfRequired
         L3CachingSettings::l3CacheOn,                                                //l3CacheSettings
         kernel->getThreadArbitrationPolicy(),                                        //threadArbitrationPolicy
         kernel->getAdditionalKernelExecInfo(),                                       //additionalKernelExecInfo

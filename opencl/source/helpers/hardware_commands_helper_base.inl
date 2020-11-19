@@ -194,7 +194,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
     EncodeDispatchKernel<GfxFamily>::programBarrierEnable(interfaceDescriptor,
-                                                          kernel.getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->HasBarriers,
+                                                          kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.barrierCount,
                                                           hardwareInfo);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
@@ -279,7 +279,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         rootDeviceIndex);
 
     uint64_t offsetInterfaceDescriptor = offsetInterfaceDescriptorTable + interfaceDescriptorIndex * sizeof(INTERFACE_DESCRIPTOR_DATA);
-    DEBUG_BREAK_IF(patchInfo.executionEnvironment == nullptr);
 
     auto bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates(rootDeviceIndex)));
     if (resetBindingTablePrefetch(kernel)) {

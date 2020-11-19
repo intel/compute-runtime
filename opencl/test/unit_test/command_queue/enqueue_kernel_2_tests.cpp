@@ -713,12 +713,14 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
 
     UltClDeviceFactory clDeviceFactory{1, 0};
     MockContext context{clDeviceFactory.rootDevices[0]};
-    SPatchExecutionEnvironment sPatchExecutionEnvironment = {};
 
-    sPatchExecutionEnvironment.SubgroupIndependentForwardProgressRequired = true;
-    MockKernelWithInternals mockKernelWithInternalsWithIfpRequired{*clDeviceFactory.rootDevices[0], sPatchExecutionEnvironment};
-    sPatchExecutionEnvironment.SubgroupIndependentForwardProgressRequired = false;
-    MockKernelWithInternals mockKernelWithInternalsWithIfpNotRequired{*clDeviceFactory.rootDevices[0], sPatchExecutionEnvironment};
+    SPatchExecutionEnvironment sPatchExecEnv = {};
+
+    sPatchExecEnv.SubgroupIndependentForwardProgressRequired = true;
+    MockKernelWithInternals mockKernelWithInternalsWithIfpRequired{*clDeviceFactory.rootDevices[0], sPatchExecEnv};
+
+    sPatchExecEnv.SubgroupIndependentForwardProgressRequired = false;
+    MockKernelWithInternals mockKernelWithInternalsWithIfpNotRequired{*clDeviceFactory.rootDevices[0], sPatchExecEnv};
 
     cl_int retVal;
     std::unique_ptr<CommandQueue> pCommandQueue{CommandQueue::create(&context, clDeviceFactory.rootDevices[0], nullptr, true, retVal)};

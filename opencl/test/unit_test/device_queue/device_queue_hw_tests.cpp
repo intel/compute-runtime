@@ -326,8 +326,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, WhenBuildingSlbThenCleanupSectionIsC
     // 4 pages padding expected after cleanup section
     EXPECT_LE(4 * MemoryConstants::pageSize, slbMax - slbUsed);
 
-    if (mockParentKernel->getKernelInfo(testedRootDeviceIndex).patchInfo.executionEnvironment->UsesFencesForReadWriteImages) {
-
+    if (mockParentKernel->getKernelInfo(testedRootDeviceIndex).kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
         cleanupSectionOffsetToParse += GpgpuWalkerHelper<FamilyType>::getSizeForWADisableLSQCROPERFforOCL(mockParentKernel) / 2;
     }
 
@@ -402,7 +401,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, GivenProfilingWhenBuildingSlbThenEmC
 
     auto pipeControlItor = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
 
-    if (mockParentKernel->getKernelInfo(testedRootDeviceIndex).patchInfo.executionEnvironment->UsesFencesForReadWriteImages && GpgpuWalkerHelper<FamilyType>::getSizeForWADisableLSQCROPERFforOCL(mockParentKernel) > 0) {
+    if (mockParentKernel->getKernelInfo(testedRootDeviceIndex).kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages && GpgpuWalkerHelper<FamilyType>::getSizeForWADisableLSQCROPERFforOCL(mockParentKernel) > 0) {
         auto loadRegImmItor = find<MI_LOAD_REGISTER_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
         EXPECT_NE(hwParser.cmdList.end(), loadRegImmItor);
 
@@ -628,7 +627,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, GivenHasBarriersSetWhenCall
     auto blockManager = pKernel->getProgram()->getBlockKernelManager();
     auto iddCount = blockManager->getCount();
     for (uint32_t i = 0; i < iddCount; i++) {
-        ((SPatchExecutionEnvironment *)blockManager->getBlockKernelInfo(i)->patchInfo.executionEnvironment)->HasBarriers = 1u;
+        const_cast<KernelDescriptor &>(blockManager->getBlockKernelInfo(i)->kernelDescriptor).kernelAttributes.barrierCount = 1U;
     }
 
     auto surfaceStateHeapSize =

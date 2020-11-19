@@ -26,6 +26,7 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 
+#include <iostream>
 using namespace NEO;
 
 void HardwareCommandsTest::SetUp() {
@@ -560,6 +561,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1] = 1;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2] = 0;
     KernelInfoContainer kernelInfos;
+    modifiedKernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
     kernelInfos.push_back(&modifiedKernelInfo);
     MockKernel mockKernel(kernel->getProgram(), kernelInfos, false);
     uint32_t interfaceDescriptorIndex = 0;
@@ -583,18 +585,21 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
         true,
         *pDevice);
 
-    size_t numThreads = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
-    numThreads = Math::divideAndRoundUp(numThreads, modifiedKernelInfo.getMaxSimdSize());
-    size_t expectedIohSize = ((modifiedKernelInfo.getMaxSimdSize() == 32) ? 32 : 16) * 3 * numThreads * sizeof(uint16_t);
+    constexpr uint32_t grfSize = sizeof(typename FamilyType::GRF);
+    size_t localWorkSize = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
+    ASSERT_NE(nullptr, modifiedKernelInfo.patchInfo.threadPayload);
+    auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*modifiedKernelInfo.patchInfo.threadPayload);
+    size_t expectedIohSize = PerThreadDataHelper::getPerThreadDataSizeTotal(modifiedKernelInfo.getMaxSimdSize(), grfSize, numChannels, localWorkSize);
     ASSERT_LE(expectedIohSize, ioh.getUsed());
+
     auto expectedLocalIds = alignedMalloc(expectedIohSize, 64);
-    uint32_t grfSize = sizeof(typename FamilyType::GRF);
     generateLocalIDs(expectedLocalIds, modifiedKernelInfo.getMaxSimdSize(),
                      std::array<uint16_t, 3>{{localWorkSizeX, localWorkSizeY, localWorkSizeZ}},
                      std::array<uint8_t, 3>{{modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
                                              modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
                                              modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
                      false, grfSize);
+
     EXPECT_EQ(0, memcmp(expectedLocalIds, ioh.getCpuBase(), expectedIohSize));
     alignedFree(expectedLocalIds);
 }
@@ -684,12 +689,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    SPatchExecutionEnvironment tokenEE = {};
-    tokenEE.CompiledSIMD8 = false;
-    tokenEE.CompiledSIMD16 = false;
-    tokenEE.CompiledSIMD32 = true;
-    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // define patch offsets for global, constant, private, event pool and default device queue surfaces
     SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization AllocateStatelessGlobalMemorySurfaceWithInitialization;
@@ -854,6 +854,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
 HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTableStatesForKernelThenSshIsNotUsed) {
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
     // create program with valid context
     MockContext context;
@@ -909,6 +910,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
 HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStatesThenPointerIsZero) {
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
     // create program with valid context
     MockContext context;

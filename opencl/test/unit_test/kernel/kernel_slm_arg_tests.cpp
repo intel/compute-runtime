@@ -24,6 +24,8 @@ class KernelSlmArgTest : public Test<ClDeviceFixture> {
     void SetUp() override {
         ClDeviceFixture::SetUp();
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
         KernelArgPatchInfo kernelArgPatchInfo;
 
         pKernelInfo->kernelArgInfo.resize(3);

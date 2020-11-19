@@ -95,7 +95,6 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
         ASSERT_NE(nullptr, pBlockInfo);
         ASSERT_NE(nullptr, pBlockInfo->patchInfo.dataParameterStream);
-        ASSERT_NE(nullptr, pBlockInfo->patchInfo.executionEnvironment);
         ASSERT_NE(nullptr, pBlockInfo->patchInfo.threadPayload);
 
         auto grfSize = pPlatform->getClDevice(0)->getDeviceInfo().grfSize;
@@ -103,7 +102,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
         const uint32_t sizeCrossThreadData = pBlockInfo->patchInfo.dataParameterStream->DataParameterStreamSize / grfSize;
 
         auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*pBlockInfo->patchInfo.threadPayload);
-        auto sizePerThreadData = getPerThreadSizeLocalIDs(pBlockInfo->patchInfo.executionEnvironment->LargestCompiledSIMDSize, numChannels);
+        auto sizePerThreadData = getPerThreadSizeLocalIDs(pBlockInfo->getMaxSimdSize(), numChannels);
         uint32_t numGrfPerThreadData = static_cast<uint32_t>(sizePerThreadData / grfSize);
         numGrfPerThreadData = std::max(numGrfPerThreadData, 1u);
 
@@ -323,7 +322,6 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
         ASSERT_NE(nullptr, pBlockInfo);
         ASSERT_NE(nullptr, pBlockInfo->patchInfo.dataParameterStream);
-        ASSERT_NE(nullptr, pBlockInfo->patchInfo.executionEnvironment);
         ASSERT_NE(nullptr, pBlockInfo->patchInfo.threadPayload);
 
         Kernel *blockKernel = Kernel::create(pKernel->getProgram(), MockKernel::toKernelInfoContainer(*pBlockInfo, rootDeviceIndex), nullptr);

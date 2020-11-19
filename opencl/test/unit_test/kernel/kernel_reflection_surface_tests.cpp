@@ -654,9 +654,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNoKernelArgsWhenObtainingKernelRefl
     cl_queue_properties properties[1] = {0};
     DeviceQueue devQueue(&context, device.get(), properties[0]);
 
-    SPatchExecutionEnvironment environment = {};
-    environment.HasDeviceEnqueue = 1;
-    info.patchInfo.executionEnvironment = &environment;
+    info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
 
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;
@@ -709,9 +707,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKe
     uint32_t devQueueCurbeOffset = 16;
     uint32_t devQueueCurbeSize = 4;
 
-    SPatchExecutionEnvironment environment = {};
-    environment.HasDeviceEnqueue = 1;
-    info.patchInfo.executionEnvironment = &environment;
+    info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
 
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;
@@ -1245,11 +1241,8 @@ class ReflectionSurfaceHelperSetKernelDataTest : public testing::TestWithParam<s
 
         info.patchInfo.dataParameterStream = &dataParameterStream;
 
-        executionEnvironment = {};
-        executionEnvironment.LargestCompiledSIMDSize = 16;
-        executionEnvironment.HasBarriers = 1;
-
-        info.patchInfo.executionEnvironment = &executionEnvironment;
+        info.kernelDescriptor.kernelAttributes.simdSize = 16;
+        info.kernelDescriptor.kernelAttributes.barrierCount = 1;
 
         info.patchInfo.threadPayload = &threadPayload;
 
@@ -1274,7 +1267,6 @@ class ReflectionSurfaceHelperSetKernelDataTest : public testing::TestWithParam<s
     KernelInfo info;
     SPatchSamplerStateArray samplerStateArray;
     SPatchDataParameterStream dataParameterStream;
-    SPatchExecutionEnvironment executionEnvironment;
     SPatchThreadPayload threadPayload;
     SPatchAllocateStatelessPrivateSurface privateSurface;
 
@@ -1330,8 +1322,8 @@ TEST_P(ReflectionSurfaceHelperSetKernelDataTest, WhenSettingKernelDataThenDataAn
     EXPECT_EQ(dataParameterStream.DataParameterStreamSize, kernelData->m_sizeOfConstantBuffer);
     EXPECT_EQ(tokenMask, kernelData->m_PatchTokensMask);
     EXPECT_EQ(0u, kernelData->m_ScratchSpacePatchValue);
-    EXPECT_EQ(executionEnvironment.LargestCompiledSIMDSize, kernelData->m_SIMDSize);
-    EXPECT_EQ(executionEnvironment.HasBarriers, kernelData->m_HasBarriers);
+    EXPECT_EQ(info.kernelDescriptor.kernelAttributes.simdSize, kernelData->m_SIMDSize);
+    EXPECT_EQ(info.kernelDescriptor.kernelAttributes.barrierCount, kernelData->m_HasBarriers);
     EXPECT_EQ(info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0], kernelData->m_RequiredWkgSizes[0]);
     EXPECT_EQ(info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1], kernelData->m_RequiredWkgSizes[1]);
     EXPECT_EQ(info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2], kernelData->m_RequiredWkgSizes[2]);
@@ -1348,36 +1340,6 @@ TEST_P(ReflectionSurfaceHelperSetKernelDataTest, WhenSettingKernelDataThenDataAn
         EXPECT_EQ(1u, kernelData->m_CanRunConcurently);
     else
         EXPECT_EQ(0u, kernelData->m_CanRunConcurently);
-
-    size_t expectedOffset = offsetInKernelDataMemory;
-    expectedOffset += alignUp(sizeof(IGIL_KernelData) + sizeof(IGIL_KernelCurbeParams) * curbeParams.size(), sizeof(void *));
-    expectedOffset += maxConstantBufferSize + alignUp(samplerHeapSize, sizeof(void *)) + samplerCount * sizeof(IGIL_SamplerParams);
-
-    EXPECT_EQ(expectedOffset, offset);
-}
-
-TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullExecutionEnvironmentWhenSettingKernelDataThenDataAndOffsetsAreCorrect) {
-    info.patchInfo.executionEnvironment = nullptr;
-
-    std::unique_ptr<char> kernelDataMemory(new char[4096]);
-
-    std::vector<IGIL_KernelCurbeParams> curbeParams;
-
-    uint64_t tokenMask = 1 | 2 | 4;
-
-    size_t maxConstantBufferSize = 32;
-    size_t samplerCount = 1;
-    size_t samplerHeapSize = alignUp(info.getSamplerStateArraySize(pPlatform->getClDevice(0)->getHardwareInfo()), Sampler::samplerStateArrayAlignment) + info.getBorderColorStateSize();
-
-    uint32_t offsetInKernelDataMemory = 0;
-    uint32_t offset = MockKernel::ReflectionSurfaceHelperPublic::setKernelData(kernelDataMemory.get(), offsetInKernelDataMemory,
-                                                                               curbeParams, tokenMask, maxConstantBufferSize, samplerCount,
-                                                                               info, pPlatform->getClDevice(0)->getHardwareInfo());
-
-    IGIL_KernelData *kernelData = reinterpret_cast<IGIL_KernelData *>(kernelDataMemory.get() + offsetInKernelDataMemory);
-
-    EXPECT_EQ(0u, kernelData->m_SIMDSize);
-    EXPECT_EQ(0u, kernelData->m_HasBarriers);
 
     size_t expectedOffset = offsetInKernelDataMemory;
     expectedOffset += alignUp(sizeof(IGIL_KernelData) + sizeof(IGIL_KernelCurbeParams) * curbeParams.size(), sizeof(void *));
@@ -2128,9 +2090,7 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelRefl
     cl_queue_properties properties[1] = {0};
     DeviceQueue devQueue(context.get(), device1, properties[0]);
 
-    SPatchExecutionEnvironment environment = {};
-    environment.HasDeviceEnqueue = 1;
-    info.patchInfo.executionEnvironment = &environment;
+    info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
 
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;
@@ -2185,9 +2145,7 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKe
     uint32_t devQueueCurbeOffset = 16;
     uint32_t devQueueCurbeSize = 4;
 
-    SPatchExecutionEnvironment environment = {};
-    environment.HasDeviceEnqueue = 1;
-    info.patchInfo.executionEnvironment = &environment;
+    info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
 
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;

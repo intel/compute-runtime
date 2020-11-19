@@ -64,6 +64,7 @@ class ImageSetArgTest : public ClDeviceFixture,
     void SetUp() override {
         ClDeviceFixture::SetUp();
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         // define kernel info
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
@@ -918,6 +919,7 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
     void SetUp() override {
         ClDeviceFixture::SetUp();
         pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         // define kernel info
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;

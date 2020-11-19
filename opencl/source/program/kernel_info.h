@@ -140,26 +140,13 @@ struct KernelInfo {
     size_t getBorderColorStateSize() const;
     size_t getBorderColorOffset() const;
     unsigned int getMaxSimdSize() const {
-        const auto executionEnvironment = patchInfo.executionEnvironment;
-        if (executionEnvironment == nullptr || executionEnvironment->LargestCompiledSIMDSize == 1) {
-            return 1;
-        }
-
-        if (executionEnvironment->CompiledSIMD32) {
-            return 32;
-        }
-
-        if (executionEnvironment->CompiledSIMD16) {
-            return 16;
-        }
-
-        return 8;
+        return kernelDescriptor.kernelAttributes.simdSize;
     }
     bool hasDeviceEnqueue() const {
-        return patchInfo.executionEnvironment ? !!patchInfo.executionEnvironment->HasDeviceEnqueue : false;
+        return kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue;
     }
     bool requiresSubgroupIndependentForwardProgress() const {
-        return patchInfo.executionEnvironment ? !!patchInfo.executionEnvironment->SubgroupIndependentForwardProgressRequired : false;
+        return kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress;
     }
     size_t getMaxRequiredWorkGroupSize(size_t maxWorkGroupSize) const {
         auto requiredWorkGroupSizeX = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];

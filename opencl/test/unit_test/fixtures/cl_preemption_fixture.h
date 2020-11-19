@@ -16,10 +16,6 @@
 
 #include <memory>
 
-namespace iOpenCL {
-struct SPatchExecutionEnvironment;
-}
-
 namespace NEO {
 class DispatchInfo;
 class MockCommandQueue;
@@ -50,7 +46,6 @@ class DevicePreemptionTests : public ::testing::Test {
     std::unique_ptr<NEO::MockClDevice> device;
     std::unique_ptr<NEO::MockContext> context;
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;
-    std::unique_ptr<iOpenCL::SPatchExecutionEnvironment> executionEnvironment;
     std::unique_ptr<NEO::MockProgram> program;
     std::unique_ptr<NEO::KernelInfo> kernelInfo;
     const uint32_t rootDeviceIndex = 0u;

@@ -6,13 +6,13 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
 
 #include "opencl/test/unit_test/fixtures/cl_preemption_fixture.h"
 
 #include "gmock/gmock.h"
 
 using namespace NEO;
-
 class ThreadGroupPreemptionTests : public DevicePreemptionTests {
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
@@ -50,7 +50,7 @@ TEST_F(ThreadGroupPreemptionTests, disallowByDevice) {
 
 TEST_F(ThreadGroupPreemptionTests, disallowByReadWriteFencesWA) {
     PreemptionFlags flags = {};
-    executionEnvironment->UsesFencesForReadWriteImages = 1u;
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = true;
     waTable->waDisableLSQCROPERFforOCL = 1;
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_FALSE(PreemptionHelper::allowThreadGroupPreemption(flags));
@@ -87,18 +87,9 @@ TEST_F(ThreadGroupPreemptionTests, allowDefaultModeForNonKernelRequest) {
     EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));
 }
 
-TEST_F(ThreadGroupPreemptionTests, givenKernelWithNoEnvironmentPatchSetWhenLSQCWaIsTurnedOnThenThreadGroupPreemptionIsBeingSelected) {
-    PreemptionFlags flags = {};
-    kernelInfo.get()->patchInfo.executionEnvironment = nullptr;
-    waTable->waDisableLSQCROPERFforOCL = 1;
-    PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
-    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));
-    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));
-}
-
 TEST_F(ThreadGroupPreemptionTests, givenKernelWithEnvironmentPatchSetWhenLSQCWaIsTurnedOnThenThreadGroupPreemptionIsBeingSelected) {
     PreemptionFlags flags = {};
-    executionEnvironment.get()->UsesFencesForReadWriteImages = 0;
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = false;
     waTable->waDisableLSQCROPERFforOCL = 1;
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));
@@ -107,7 +98,7 @@ TEST_F(ThreadGroupPreemptionTests, givenKernelWithEnvironmentPatchSetWhenLSQCWaI
 
 TEST_F(ThreadGroupPreemptionTests, givenKernelWithEnvironmentPatchSetWhenLSQCWaIsTurnedOffThenThreadGroupPreemptionIsBeingSelected) {
     PreemptionFlags flags = {};
-    executionEnvironment.get()->UsesFencesForReadWriteImages = 1;
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = true;
     waTable->waDisableLSQCROPERFforOCL = 0;
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));
@@ -167,7 +158,7 @@ TEST_F(ThreadGroupPreemptionTests, disallowDefaultDeviceModeWhenAtLeastOneInvali
 TEST_F(MidThreadPreemptionTests, allowMidThreadPreemption) {
     PreemptionFlags flags = {};
     device->setPreemptionMode(PreemptionMode::MidThread);
-    executionEnvironment->DisableMidThreadPreemption = 0;
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_TRUE(PreemptionHelper::allowMidThreadPreemption(flags));
 }
@@ -192,7 +183,7 @@ TEST_F(MidThreadPreemptionTests, allowMidThreadPreemptionDeviceSupportPreemption
 TEST_F(MidThreadPreemptionTests, disallowMidThreadPreemptionByDevice) {
     PreemptionFlags flags = {};
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
-    executionEnvironment->DisableMidThreadPreemption = 0;
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_TRUE(PreemptionHelper::allowMidThreadPreemption(flags));
     EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));
@@ -201,7 +192,7 @@ TEST_F(MidThreadPreemptionTests, disallowMidThreadPreemptionByDevice) {
 TEST_F(MidThreadPreemptionTests, disallowMidThreadPreemptionByKernel) {
     PreemptionFlags flags = {};
     device->setPreemptionMode(PreemptionMode::MidThread);
-    executionEnvironment->DisableMidThreadPreemption = 1;
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = true;
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_FALSE(PreemptionHelper::allowMidThreadPreemption(flags));
 }
@@ -218,7 +209,7 @@ TEST_F(MidThreadPreemptionTests, disallowMidThreadPreemptionByVmeKernel) {
 
 TEST_F(MidThreadPreemptionTests, taskPreemptionDisallowMidThreadByDevice) {
     PreemptionFlags flags = {};
-    executionEnvironment->DisableMidThreadPreemption = 0;
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);
@@ -227,7 +218,7 @@ TEST_F(MidThreadPreemptionTests, taskPreemptionDisallowMidThreadByDevice) {
 
 TEST_F(MidThreadPreemptionTests, taskPreemptionDisallowMidThreadByKernel) {
     PreemptionFlags flags = {};
-    executionEnvironment->DisableMidThreadPreemption = 1;
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = true;
     device->setPreemptionMode(PreemptionMode::MidThread);
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);
@@ -248,7 +239,7 @@ TEST_F(MidThreadPreemptionTests, taskPreemptionDisallowMidThreadByVmeKernel) {
 
 TEST_F(MidThreadPreemptionTests, taskPreemptionAllow) {
     PreemptionFlags flags = {};
-    executionEnvironment->DisableMidThreadPreemption = 0;
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
     device->setPreemptionMode(PreemptionMode::MidThread);
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);
@@ -257,7 +248,7 @@ TEST_F(MidThreadPreemptionTests, taskPreemptionAllow) {
 
 TEST_F(MidThreadPreemptionTests, taskPreemptionAllowDeviceSupportsPreemptionOnVmeKernel) {
     PreemptionFlags flags = {};
-    executionEnvironment->DisableMidThreadPreemption = 0;
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
     kernelInfo->isVmeWorkload = true;
     kernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex)));
     device->sharedDeviceInfo.vmeAvcSupportsPreemption = true;

@@ -66,9 +66,7 @@ uint32_t Kernel::dummyPatchLocation = 0xbaddf00d;
 
 Kernel::Kernel(Program *programArg, const KernelInfoContainer &kernelInfosArg, bool schedulerKernel)
     : slmTotalSize(kernelInfosArg[programArg->getDevices()[0]->getRootDeviceIndex()]->workloadInfo.slmStaticSize),
-      isParentKernel((kernelInfosArg[programArg->getDevices()[0]->getRootDeviceIndex()]->patchInfo.executionEnvironment != nullptr)
-                         ? (kernelInfosArg[programArg->getDevices()[0]->getRootDeviceIndex()]->patchInfo.executionEnvironment->HasDeviceEnqueue != 0)
-                         : false),
+      isParentKernel(kernelInfosArg[programArg->getDevices()[0]->getRootDeviceIndex()]->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue),
       isSchedulerKernel(schedulerKernel),
       executionEnvironment(programArg->getExecutionEnvironment()),
       program(programArg),
@@ -354,10 +352,8 @@ cl_int Kernel::initialize() {
         }
 
         setThreadArbitrationPolicy(hwHelper.getDefaultThreadArbitrationPolicy());
-        if (kernelInfo.patchInfo.executionEnvironment) {
-            if (!kernelInfo.patchInfo.executionEnvironment->SubgroupIndependentForwardProgressRequired) {
-                setThreadArbitrationPolicy(ThreadArbitrationPolicy::AgeBased);
-            }
+        if (false == kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress) {
+            setThreadArbitrationPolicy(ThreadArbitrationPolicy::AgeBased);
         }
         patchBlocksSimdSize(rootDeviceIndex);
 
@@ -617,6 +613,7 @@ cl_int Kernel::getWorkGroupInfo(ClDevice &device, cl_kernel_work_group_info para
     auto rootDeviceIndex = device.getRootDeviceIndex();
     auto &kernelInfo = *kernelInfos[rootDeviceIndex];
     const auto &patchInfo = kernelInfo.patchInfo;
+    const auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     size_t preferredWorkGroupSizeMultiple = 0;
     cl_ulong scratchSize;
     cl_ulong privateMemSize;
@@ -629,7 +626,7 @@ cl_int Kernel::getWorkGroupInfo(ClDevice &device, cl_kernel_work_group_info para
     case CL_KERNEL_WORK_GROUP_SIZE:
         maxWorkgroupSize = kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize;
         if (DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()) {
-            auto divisionSize = CommonConstants::maximalSimdSize / patchInfo.executionEnvironment->LargestCompiledSIMDSize;
+            auto divisionSize = CommonConstants::maximalSimdSize / kernelInfo.getMaxSimdSize();
             maxWorkgroupSize /= divisionSize;
         }
         srcSize = sizeof(maxWorkgroupSize);
@@ -637,10 +634,9 @@ cl_int Kernel::getWorkGroupInfo(ClDevice &device, cl_kernel_work_group_info para
         break;
 
     case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
-        DEBUG_BREAK_IF(!patchInfo.executionEnvironment);
-        requiredWorkGroupSize.val[0] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
-        requiredWorkGroupSize.val[1] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
-        requiredWorkGroupSize.val[2] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];
+        requiredWorkGroupSize.val[0] = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
+        requiredWorkGroupSize.val[1] = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
+        requiredWorkGroupSize.val[2] = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];
         srcSize = sizeof(requiredWorkGroupSize);
         pSrc = &requiredWorkGroupSize;
         break;
@@ -654,8 +650,7 @@ cl_int Kernel::getWorkGroupInfo(ClDevice &device, cl_kernel_work_group_info para
         break;
 
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
-        DEBUG_BREAK_IF(!patchInfo.executionEnvironment);
-        preferredWorkGroupSizeMultiple = patchInfo.executionEnvironment->LargestCompiledSIMDSize;
+        preferredWorkGroupSizeMultiple = kernelInfo.getMaxSimdSize();
         if (hwHelper.isFusedEuDispatchEnabled(hwInfo)) {
             preferredWorkGroupSizeMultiple *= 2;
         }
@@ -695,7 +690,7 @@ cl_int Kernel::getSubGroupInfo(ClDevice &clDevice, cl_kernel_sub_group_info para
     const auto &kernelInfo = getKernelInfo(rootDeviceIndex);
     auto maxSimdSize = static_cast<size_t>(kernelInfo.getMaxSimdSize());
     auto maxRequiredWorkGroupSize = static_cast<size_t>(kernelInfo.getMaxRequiredWorkGroupSize(getMaxKernelWorkGroupSize(rootDeviceIndex)));
-    auto largestCompiledSIMDSize = static_cast<size_t>(kernelInfo.patchInfo.executionEnvironment->LargestCompiledSIMDSize);
+    auto largestCompiledSIMDSize = static_cast<size_t>(kernelInfo.getMaxSimdSize());
 
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
@@ -781,10 +776,10 @@ cl_int Kernel::getSubGroupInfo(ClDevice &clDevice, cl_kernel_sub_group_info para
         return changeGetInfoStatusToCLResultType(info.set<size_t>(Math::divideAndRoundUp(maxRequiredWorkGroupSize, largestCompiledSIMDSize)));
     }
     case CL_KERNEL_COMPILE_NUM_SUB_GROUPS: {
-        return changeGetInfoStatusToCLResultType(info.set<size_t>(static_cast<size_t>(kernelInfo.patchInfo.executionEnvironment->CompiledSubGroupsNumber)));
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(static_cast<size_t>(kernelInfo.kernelDescriptor.kernelMetadata.compiledSubGroupsNumber)));
     }
     case CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL: {
-        return changeGetInfoStatusToCLResultType(info.set<size_t>(kernelInfo.requiredSubGroupSize));
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(kernelInfo.kernelDescriptor.kernelMetadata.requiredSubGroupSize));
     }
     default:
         return CL_INVALID_VALUE;
@@ -1101,24 +1096,24 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
         return 0;
     }
 
-    auto executionEnvironment = getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment;
+    const auto &kernelDescriptor = getKernelInfo(rootDeviceIndex).kernelDescriptor;
     auto dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
     if (dssCount == 0) {
         dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
     }
     auto availableThreadCount = hwHelper.calculateAvailableThreadCount(
         hardwareInfo.platform.eProductFamily,
-        ((executionEnvironment != nullptr) ? executionEnvironment->NumGRFRequired : GrfConfig::DefaultGrfNumber),
+        kernelDescriptor.kernelAttributes.numGrfRequired,
         hardwareInfo.gtSystemInfo.EUCount, hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount);
 
-    auto hasBarriers = ((executionEnvironment != nullptr) ? executionEnvironment->HasBarriers : 0u);
+    auto barrierCount = kernelDescriptor.kernelAttributes.barrierCount;
     return KernelHelper::getMaxWorkGroupCount(kernelInfos[rootDeviceIndex]->getMaxSimdSize(),
                                               availableThreadCount,
                                               dssCount,
                                               dssCount * KB * hardwareInfo.capabilityTable.slmSize,
                                               hwHelper.alignSlmSize(slmTotalSize),
                                               static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
-                                              hwHelper.getBarriersCountFromHasBarriers(hasBarriers),
+                                              hwHelper.getBarriersCountFromHasBarriers(barrierCount),
                                               workDim,
                                               localWorkSize);
 }
@@ -2084,8 +2079,8 @@ uint32_t Kernel::ReflectionSurfaceHelper::setKernelData(void *reflectionSurface,
     kernelData->m_sizeOfConstantBuffer = kernelInfo.getConstantBufferSize();
     kernelData->m_PatchTokensMask = tokenMaskIn;
     kernelData->m_ScratchSpacePatchValue = 0;
-    kernelData->m_SIMDSize = kernelInfo.patchInfo.executionEnvironment ? kernelInfo.patchInfo.executionEnvironment->LargestCompiledSIMDSize : 0;
-    kernelData->m_HasBarriers = kernelInfo.patchInfo.executionEnvironment ? kernelInfo.patchInfo.executionEnvironment->HasBarriers : 0;
+    kernelData->m_SIMDSize = kernelInfo.getMaxSimdSize();
+    kernelData->m_HasBarriers = kernelInfo.kernelDescriptor.kernelAttributes.barrierCount;
     kernelData->m_RequiredWkgSizes[0] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
     kernelData->m_RequiredWkgSizes[1] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
     kernelData->m_RequiredWkgSizes[2] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];

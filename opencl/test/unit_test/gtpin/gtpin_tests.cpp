@@ -1134,9 +1134,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GTPinTests, givenInitializedGTPinInterfaceWhenKernel
     pPatch1->CompiledSubGroupsNumber = 0;
     pPatch1->HasBarriers = 0;
     pPatch1->DisableMidThreadPreemption = 0;
-    pPatch1->CompiledSIMD8 = 0;
-    pPatch1->CompiledSIMD16 = 0;
-    pPatch1->CompiledSIMD32 = 1;
     pPatch1->HasDeviceEnqueue = 1;
     pPatch1->MayAccessUndeclaredResource = 0;
     pPatch1->UsesFencesForReadWriteImages = 0;

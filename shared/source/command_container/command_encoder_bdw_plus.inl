@@ -69,7 +69,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     idd.setNumberOfThreadsInGpgpuThreadGroup(numThreadsPerThreadGroup);
 
     EncodeDispatchKernel<Family>::programBarrierEnable(idd,
-                                                       kernelDescriptor.kernelAttributes.hasBarriers,
+                                                       kernelDescriptor.kernelAttributes.barrierCount,
                                                        hwInfo);
     auto slmSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
         HwHelperHw<Family>::get().computeSlmValues(hwInfo, dispatchInterface->getSlmTotalSize()));

@@ -240,7 +240,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     EXPECT_EQ(mockCmdQ->flushStamp->getStampReference(), mockCsr->passedDispatchFlags.flushStampReference);
     EXPECT_EQ(mockCmdQ->getThrottle(), mockCsr->passedDispatchFlags.throttle);
     EXPECT_EQ(preemptionMode, mockCsr->passedDispatchFlags.preemptionMode);
-    EXPECT_EQ(kernel.mockKernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->NumGRFRequired, mockCsr->passedDispatchFlags.numGrfRequired);
+    EXPECT_EQ(kernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.numGrfRequired, mockCsr->passedDispatchFlags.numGrfRequired);
     EXPECT_EQ(L3CachingSettings::l3CacheOn, mockCsr->passedDispatchFlags.l3CacheSettings);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
     EXPECT_EQ(flushDC, mockCsr->passedDispatchFlags.dcFlush);
