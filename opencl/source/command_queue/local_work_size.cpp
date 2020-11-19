@@ -342,7 +342,8 @@ void computeWorkgroupSizeND(WorkSizeInfo wsInfo, size_t workGroupSize[3], const 
     //Find biggest power of two which devide each dimension size
     if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers) {
         if (DebugManager.flags.EnableComputeWorkSizeSquared.get() && workDim == 2 && !wsInfo.imgUsed) {
-            return computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize, workDim);
+            computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize, workDim);
+            return;
         }
 
         size_t itemsPowerOfTwoDivisors[3] = {1, 1, 1};
