@@ -207,6 +207,7 @@ if(UNIX)
 endif()
 
 set_target_properties(unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
+set_target_properties(copy_test_files_per_product PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_target_properties(prepare_test_kernels PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 

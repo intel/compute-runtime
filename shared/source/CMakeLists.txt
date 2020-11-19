@@ -4,8 +4,9 @@
 # SPDX-License-Identifier: MIT
 #
 
+set(SHARED_SOURCE_PROJECTS_FOLDER "neo shared")
 if(NOT DEFINED NEO_SHARED_RELEASE_LIB_NAME)
-  MESSAGE(FATAL_ERROR "NEO Core library name undefined!")
+  MESSAGE(FATAL_ERROR "NEO Shared library name undefined!")
 endif()
 
 include(enable_gens.cmake)
@@ -25,6 +26,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
   list(APPEND LIB_FLAGS_DEFINITIONS ${SUPPORTED_GEN_FLAGS_DEFINITONS})
 
   set_property(TARGET ${LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
+  set_target_properties(${LIB_NAME} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}")
   target_compile_definitions(${LIB_NAME} PUBLIC PUBLIC GMM_LIB_DLL ${LIB_FLAGS_DEFINITIONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM} PRIVATE OGL=1)
   target_compile_definitions(${LIB_NAME} PUBLIC ${NEO_CORE_COMPILE_DEFS})
 

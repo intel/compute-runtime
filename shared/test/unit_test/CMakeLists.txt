@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
+set(SHARED_TEST_PROJECTS_FOLDER "neo shared")
 if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
 
   set(TARGET_NAME neo_shared_tests)
@@ -83,6 +84,7 @@ if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
   endif()
 
   set_property(TARGET ${TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
+  set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}")
 
   target_include_directories(${TARGET_NAME} PRIVATE
                              ${CMAKE_CURRENT_SOURCE_DIR}

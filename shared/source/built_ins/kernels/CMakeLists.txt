@@ -5,7 +5,7 @@
 #
 
 add_custom_target(builtins)
-set_target_properties(builtins PROPERTIES FOLDER "built_ins")
+set_target_properties(builtins PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUIILINS_PROJECTS_FOLDER}")
 set(BUILTINS_OUTDIR_WITH_ARCH "${TargetDir}/built_ins/${NEO_ARCH}")
 add_dependencies(${BUILTINS_BINARIES_BINDFUL_LIB_NAME} builtins)
 add_dependencies(${BUILTINS_BINARIES_BINDLESS_LIB_NAME} builtins)
@@ -182,7 +182,7 @@ macro(macro_for_each_gen)
       set(target_name builtins_${family_name_with_type})
       add_custom_target(${target_name} DEPENDS ${BUILTINS_COMMANDS})
       add_dependencies(builtins ${target_name})
-      set_target_properties(${target_name} PROPERTIES FOLDER "built_ins/${family_name_with_type}")
+      set_target_properties(${target_name} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUIILINS_PROJECTS_FOLDER}/${family_name_with_type}")
     endif()
   endforeach()
 endmacro()

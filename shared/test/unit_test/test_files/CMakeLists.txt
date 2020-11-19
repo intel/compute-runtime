@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
+set(SHARED_TEST_PROJECTS_SUB_FOLDER "prepare test files")
 if(NOT DEFINED cloc_cmd_prefix)
   if(WIN32)
     set(cloc_cmd_prefix ocloc)
@@ -62,18 +63,19 @@ function(neo_shared_copy_test_files target product revision_id)
                      DEPENDS ${source_dir}
   )
   add_dependencies(${target} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
+  set_target_properties(${target} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}/${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
 endfunction()
 
 file(GLOB_RECURSE TEST_KERNELS *.cl)
 add_custom_target(prepare_test_kernel_for_shared)
+set_target_properties(prepare_test_kernel_for_shared PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}")
 
 macro(macro_for_each_platform)
   foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
     foreach(REVISION_ID ${${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS})
       if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
-        neo_shared_copy_test_files(copy_test_kernel_${PLATFORM_IT}_${REVISION_ID} ${PLATFORM_IT} ${REVISION_ID})
-        add_dependencies(prepare_test_kernel_for_shared copy_test_kernel_${PLATFORM_IT}_${REVISION_ID})
+        neo_shared_copy_test_files(copy_test_kernel_${PLATFORM_IT_LOWER}_${REVISION_ID} ${PLATFORM_IT} ${REVISION_ID})
+        add_dependencies(prepare_test_kernel_for_shared copy_test_kernel_${PLATFORM_IT_LOWER}_${REVISION_ID})
       endif()
     endforeach()
   endforeach()
@@ -91,7 +93,7 @@ macro(macro_for_each_gen)
         compile_kernels_gen(${family_name_with_type} ${REVISION_ID} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNELS})
 
         add_custom_target(prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID} DEPENDS ${compiled_kernels_${family_name_with_type}_${REVISION_ID}})
-        set_target_properties(prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}/${REVISION_ID}")
+        set_target_properties(prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}/${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}/${REVISION_ID}")
         add_dependencies(prepare_test_kernel_for_shared prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID})
       endforeach()
     endif()
