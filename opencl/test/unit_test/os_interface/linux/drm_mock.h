@@ -149,6 +149,8 @@ class DrmMock : public Drm {
     __u64 gpuMemSize = 3u * MemoryConstants::gigaByte;
     //DRM_IOCTL_I915_GEM_MMAP
     uint64_t lockedPtr[4];
+    //DRM_IOCTL_I915_QUERY
+    drm_i915_query_item storedQueryItem = {};
 
     uint64_t storedGTTSize = 1ull << 47;
     uint64_t storedParamSseu = ULONG_MAX;

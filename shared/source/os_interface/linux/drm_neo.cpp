@@ -22,6 +22,8 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/directory.h"
 
+#include "drm_query_flags.h"
+
 #include <cstdio>
 #include <cstring>
 #include <linux/limits.h>
@@ -383,11 +385,12 @@ bool Drm::isi915Version(int fileDescriptor) {
     return strcmp(name, "i915") == 0;
 }
 
-std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId, int32_t &length) {
+std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId, uint32_t queryItemFlags, int32_t &length) {
     drm_i915_query query{};
     drm_i915_query_item queryItem{};
     queryItem.query_id = queryId;
     queryItem.length = 0; // query length first
+    queryItem.flags = queryItemFlags;
     query.items_ptr = reinterpret_cast<__u64>(&queryItem);
     query.num_items = 1;
     length = 0;
@@ -412,7 +415,7 @@ std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId, int32_t &length) {
 
 bool Drm::queryTopology(int &sliceCount, int &subSliceCount, int &euCount) {
     int32_t length;
-    auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, length);
+    auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, DrmQueryItemFlags::topology, length);
     auto data = reinterpret_cast<drm_i915_query_topology_info *>(dataQuery.get());
 
     if (!data) {

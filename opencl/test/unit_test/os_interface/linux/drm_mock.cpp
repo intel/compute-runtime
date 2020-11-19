@@ -185,6 +185,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     if (request == DRM_IOCTL_I915_QUERY && arg != nullptr) {
         auto queryArg = static_cast<drm_i915_query *>(arg);
         auto queryItemArg = reinterpret_cast<drm_i915_query_item *>(queryArg->items_ptr);
+        storedQueryItem = *queryItemArg;
 
         auto realEuCount = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.EUCount;
         auto dataSize = static_cast<size_t>(std::ceil(realEuCount / 8.0));

@@ -172,7 +172,7 @@ class Drm {
     std::vector<uint32_t> virtualMemoryIds;
 
     std::string getSysFsPciPath();
-    std::unique_ptr<uint8_t[]> query(uint32_t queryId, int32_t &length);
+    std::unique_ptr<uint8_t[]> query(uint32_t queryId, uint32_t queryItemFlags, int32_t &length);
 
     StackVec<uint32_t, size_t(ResourceClass::MaxSize)> classHandles;
 
