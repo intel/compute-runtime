@@ -49,10 +49,6 @@ int HwInfoConfigHw<IGFX_UNKNOWN>::configureHardwareCustom(HardwareInfo *hwInfo, 
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
-}
-
-template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvenContextCountRequired() {
     return false;
 }

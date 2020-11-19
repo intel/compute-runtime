@@ -219,15 +219,6 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfoEdram) {
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
 }
 
-KBLTEST_F(HwInfoConfigTestLinuxKbl, whenCallAdjustPlatformThenDoNothing) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    outHwInfo = pInHwInfo;
-    hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
-
-    int ret = memcmp(&outHwInfo.platform, &pInHwInfo.platform, sizeof(PLATFORM));
-    EXPECT_EQ(0, ret);
-}
-
 template <typename T>
 class KblHwInfoTests : public ::testing::Test {
 };

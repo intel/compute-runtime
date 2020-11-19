@@ -18,12 +18,5 @@ int HwInfoConfigHw<IGFX_ALDERLAKE_S>::configureHardwareCustom(HardwareInfo *hwIn
     return 0;
 }
 
-template <>
-void HwInfoConfigHw<IGFX_ALDERLAKE_S>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
-    PLATFORM *platform = &hwInfo->platform;
-    platform->eRenderCoreFamily = IGFX_GEN12LP_CORE;
-    platform->eDisplayCoreFamily = IGFX_GEN12LP_CORE;
-}
-
 template class HwInfoConfigHw<IGFX_ALDERLAKE_S>;
 } // namespace NEO

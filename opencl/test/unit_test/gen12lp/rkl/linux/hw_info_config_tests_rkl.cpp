@@ -47,15 +47,6 @@ RKLTEST_F(HwInfoConfigTestLinuxRkl, configureHwInfoRkl) {
     EXPECT_FALSE(outHwInfo.featureTable.ftrTileY);
 }
 
-RKLTEST_F(HwInfoConfigTestLinuxRkl, whenCallAdjustPlatformThenDoNothing) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    outHwInfo = pInHwInfo;
-    hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
-
-    int ret = memcmp(&outHwInfo.platform, &pInHwInfo.platform, sizeof(PLATFORM));
-    EXPECT_EQ(0, ret);
-}
-
 RKLTEST_F(HwInfoConfigTestLinuxRkl, negative) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 

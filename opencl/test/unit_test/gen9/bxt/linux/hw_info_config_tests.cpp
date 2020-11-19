@@ -209,15 +209,6 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfoWaFlags) {
     EXPECT_EQ(0, ret);
 }
 
-BXTTEST_F(HwInfoConfigTestLinuxBxt, whenCallAdjustPlatformThenDoNothing) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    outHwInfo = pInHwInfo;
-    hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
-
-    int ret = memcmp(&outHwInfo.platform, &pInHwInfo.platform, sizeof(PLATFORM));
-    EXPECT_EQ(0, ret);
-}
-
 template <typename T>
 class BxtHwInfoTests : public ::testing::Test {
 };

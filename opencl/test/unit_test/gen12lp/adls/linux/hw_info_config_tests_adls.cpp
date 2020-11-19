@@ -47,15 +47,6 @@ ADLSTEST_F(HwInfoConfigTestLinuxAdls, configureHwInfoAdls) {
     EXPECT_FALSE(outHwInfo.featureTable.ftrTileY);
 }
 
-ADLSTEST_F(HwInfoConfigTestLinuxAdls, whenCallAdjustPlatformThenDoNothing) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    outHwInfo = pInHwInfo;
-    hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
-
-    int ret = memcmp(&outHwInfo.platform, &pInHwInfo.platform, sizeof(PLATFORM));
-    EXPECT_EQ(0, ret);
-}
-
 ADLSTEST_F(HwInfoConfigTestLinuxAdls, negative) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 

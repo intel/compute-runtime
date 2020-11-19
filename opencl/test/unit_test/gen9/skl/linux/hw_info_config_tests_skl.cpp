@@ -243,15 +243,6 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfoEdram) {
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
 }
 
-SKLTEST_F(HwInfoConfigTestLinuxSkl, whenCallAdjustPlatformThenDoNothing) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    outHwInfo = pInHwInfo;
-    hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
-
-    int ret = memcmp(&outHwInfo.platform, &pInHwInfo.platform, sizeof(PLATFORM));
-    EXPECT_EQ(0, ret);
-}
-
 template <typename T>
 class SklHwInfoTests : public ::testing::Test {
 };
