@@ -1830,7 +1830,7 @@ TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferGraphicsAllocatio
     EXPECT_EQ(expectedRootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
 }
 
-TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedAndEnqueueWriteCalledThenBufferMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
+TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedAndEnqueueWriteBufferCalledThenBufferMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
@@ -1856,7 +1856,7 @@ TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedAndEnqueueWriteCalledThenBu
     EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
 }
 
-TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedAndEnqueueReadCalledThenBufferMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
+TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedAndEnqueueReadBufferCalledThenBufferMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
@@ -1909,6 +1909,97 @@ TEST_F(MultiRootDeviceBufferTest, WhenBuffersAreCreatedAndEnqueueCopyBufferCalle
 
     static_cast<MemoryAllocation *>(buffer1->getMigrateableMultiGraphicsAllocation().getGraphicsAllocation(2u))->overrideMemoryPool(MemoryPool::LocalMemory);
     cmdQ2->enqueueCopyBuffer(buffer1.get(), buffer2.get(), CL_FALSE, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+    EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+}
+
+TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedAndEnqueueWriteBufferRectCalledThenBufferMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {0, 0, 0};
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, MemoryConstants::pageSize, nullptr, retVal));
+    void *ptr = buffer->getCpuAddressForMemoryTransfer();
+
+    auto cmdQ1 = context->getSpecialQueue(1u);
+    cmdQ1->enqueueWriteBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    cmdQ1->enqueueWriteBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    auto cmdQ2 = context->getSpecialQueue(2u);
+    cmdQ2->enqueueWriteBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+
+    cmdQ1->enqueueWriteBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    static_cast<MemoryAllocation *>(buffer->getMigrateableMultiGraphicsAllocation().getGraphicsAllocation(2u))->overrideMemoryPool(MemoryPool::LocalMemory);
+    cmdQ2->enqueueWriteBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+}
+
+TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedAndEnqueueReadBufferRectCalledThenBufferMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {0, 0, 0};
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, MemoryConstants::pageSize, nullptr, retVal));
+    void *ptr = buffer->getCpuAddressForMemoryTransfer();
+
+    auto cmdQ1 = context->getSpecialQueue(1u);
+    cmdQ1->enqueueReadBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    cmdQ1->enqueueReadBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    auto cmdQ2 = context->getSpecialQueue(2u);
+    cmdQ2->enqueueReadBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+
+    cmdQ1->enqueueReadBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    static_cast<MemoryAllocation *>(buffer->getMigrateableMultiGraphicsAllocation().getGraphicsAllocation(2u))->overrideMemoryPool(MemoryPool::LocalMemory);
+    cmdQ2->enqueueReadBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+}
+
+TEST_F(MultiRootDeviceBufferTest, WhenBuffersAreCreatedAndEnqueueCopyBufferRectCalledThenBuffersMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
+    cl_int retVal = 0;
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {0, 0, 0};
+
+    std::unique_ptr<Buffer> buffer1(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
+    std::unique_ptr<Buffer> buffer2(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
+
+    auto cmdQ1 = context->getSpecialQueue(1u);
+    cmdQ1->enqueueCopyBufferRect(buffer1.get(), buffer2.get(), bufferOrigin, hostOrigin, region, 0, 0, 0, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+    EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    cmdQ1->enqueueCopyBufferRect(buffer1.get(), buffer2.get(), bufferOrigin, hostOrigin, region, 0, 0, 0, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+    EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    auto cmdQ2 = context->getSpecialQueue(2u);
+    cmdQ2->enqueueCopyBufferRect(buffer1.get(), buffer2.get(), bufferOrigin, hostOrigin, region, 0, 0, 0, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+    EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+
+    cmdQ1->enqueueCopyBufferRect(buffer1.get(), buffer2.get(), bufferOrigin, hostOrigin, region, 0, 0, 0, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+    EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    static_cast<MemoryAllocation *>(buffer1->getMigrateableMultiGraphicsAllocation().getGraphicsAllocation(2u))->overrideMemoryPool(MemoryPool::LocalMemory);
+    cmdQ2->enqueueCopyBufferRect(buffer1.get(), buffer2.get(), bufferOrigin, hostOrigin, region, 0, 0, 0, 0, 0, nullptr, nullptr);
     EXPECT_EQ(buffer1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
     EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
 }

@@ -35,6 +35,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     const cl_event *eventWaitList,
     cl_event *event) {
 
+    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+
+    buffer->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
+
     const cl_command_type cmdType = CL_COMMAND_READ_BUFFER_RECT;
     auto isMemTransferNeeded = true;
     if (buffer->isMemObjZeroCopy()) {

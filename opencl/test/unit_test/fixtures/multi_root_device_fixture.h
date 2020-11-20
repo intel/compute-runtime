@@ -35,7 +35,6 @@ class MultiRootDeviceFixture : public ::testing::Test {
     }
 
     const uint32_t expectedRootDeviceIndex = 1;
-    DebugManagerStateRestore restorer;
     std::unique_ptr<UltClDeviceFactory> deviceFactory;
     MockClDevice *device1 = nullptr;
     MockClDevice *device2 = nullptr;

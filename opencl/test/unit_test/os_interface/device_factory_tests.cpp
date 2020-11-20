@@ -273,9 +273,9 @@ TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExist
     EXPECT_FALSE(result);
 }
 
-using UltClDeviceFactoryTest = DeviceFactoryTest;
+using UltDeviceFactoryTest = DeviceFactoryTest;
 
-TEST_F(UltClDeviceFactoryTest, givenUltClDeviceFactoryPrepareDeviceEnvironmentsCallWhenItIsDoneThenMockMemoryManagerIsAllocated) {
+TEST_F(UltDeviceFactoryTest, givenUltDeviceFactoryPrepareDeviceEnvironmentsCallWhenItIsDoneThenMockMemoryManagerIsAllocated) {
     UltDeviceFactory::prepareDeviceEnvironments(*executionEnvironment, 2u);
 
     EXPECT_EQ(2u, executionEnvironment->rootDeviceEnvironments.size());
