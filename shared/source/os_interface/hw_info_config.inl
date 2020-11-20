@@ -14,4 +14,7 @@ bool HwInfoConfigHw<gfxProduct>::isEvenContextCountRequired() {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {}
+
 } // namespace NEO

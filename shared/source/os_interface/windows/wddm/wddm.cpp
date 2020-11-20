@@ -94,6 +94,7 @@ bool Wddm::init() {
 
     HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
 
+    hwConfig->adjustPlatformForProductFamily(hardwareInfo.get());
     if (hwConfig->configureHwInfo(hardwareInfo.get(), hardwareInfo.get(), nullptr)) {
         return false;
     }

@@ -51,6 +51,10 @@ cl_unified_shared_memory_capabilities_intel HwInfoConfigHw<IGFX_UNKNOWN>::getHos
 }
 
 template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
+}
+
+template <>
 cl_unified_shared_memory_capabilities_intel HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemCapabilities() {
     return 0;
 }
@@ -511,4 +515,18 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenFailingGttSizeIoctlWhenInitializingHwInf
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrSvm);
     EXPECT_NE(0u, outHwInfo.capabilityTable.gpuAddressSpace);
     EXPECT_EQ(pInHwInfo.capabilityTable.gpuAddressSpace, outHwInfo.capabilityTable.gpuAddressSpace);
+}
+
+TEST(HwInfoConfigLinuxTest, whenAdjustPlatformForProductFamilyCalledThenDoNothing) {
+    HardwareInfo localHwInfo = *defaultHwInfo;
+
+    auto hwInfoConfig = HwInfoConfig::get(localHwInfo.platform.eProductFamily);
+
+    localHwInfo.platform.eDisplayCoreFamily = GFXCORE_FAMILY::IGFX_UNKNOWN_CORE;
+    localHwInfo.platform.eRenderCoreFamily = GFXCORE_FAMILY::IGFX_UNKNOWN_CORE;
+
+    hwInfoConfig->adjustPlatformForProductFamily(&localHwInfo);
+
+    EXPECT_EQ(GFXCORE_FAMILY::IGFX_UNKNOWN_CORE, localHwInfo.platform.eRenderCoreFamily);
+    EXPECT_EQ(GFXCORE_FAMILY::IGFX_UNKNOWN_CORE, localHwInfo.platform.eDisplayCoreFamily);
 }

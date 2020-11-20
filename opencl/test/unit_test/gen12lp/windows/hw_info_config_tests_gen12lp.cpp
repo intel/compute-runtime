@@ -30,3 +30,15 @@ GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenE2ECSetByKmdWhenConfiguringHw
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 }
+
+GEN12LPTEST_F(HwInfoConfigTestWindows, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+
+    PLATFORM *testPlatform = &outHwInfo.platform;
+    testPlatform->eDisplayCoreFamily = IGFX_GEN11_CORE;
+    testPlatform->eRenderCoreFamily = IGFX_GEN11_CORE;
+    hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
+
+    EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eRenderCoreFamily);
+    EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eDisplayCoreFamily);
+}
