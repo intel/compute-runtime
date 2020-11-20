@@ -1260,6 +1260,32 @@ TEST(OfflineCompilerTest, givenNoRevisionIdWhenCompilerIsInitializedThenHwInfoHa
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, revId);
 }
 
+TEST(OfflineCompilerTest, whenDeviceIsSpecifiedThenDefaultConfigFromTheDeviceIsUsed) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+    EXPECT_EQ(SUCCESS, retVal);
+
+    auto actualHwInfo = mockOfflineCompiler->hwInfo;
+    auto expectedHwInfo = actualHwInfo;
+    auto hwInfoConfig = defaultHardwareInfoConfigTable[expectedHwInfo.platform.eProductFamily];
+
+    setHwInfoValuesFromConfig(hwInfoConfig, expectedHwInfo);
+
+    EXPECT_EQ(actualHwInfo.gtSystemInfo.SliceCount, expectedHwInfo.gtSystemInfo.SliceCount);
+    EXPECT_EQ(actualHwInfo.gtSystemInfo.SubSliceCount, expectedHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(actualHwInfo.gtSystemInfo.EUCount, expectedHwInfo.gtSystemInfo.EUCount);
+}
+
 struct WorkaroundApplicableForDevice {
     const char *deviceName;
     bool applicable;

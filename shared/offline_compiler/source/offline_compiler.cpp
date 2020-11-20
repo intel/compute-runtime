@@ -274,7 +274,9 @@ int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
                 if (revisionId != -1) {
                     hwInfo.platform.usRevId = revisionId;
                 }
-                hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0x0);
+                auto hwInfoConfig = defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
+                setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
+                hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, hwInfoConfig);
                 familyNameWithType.clear();
                 familyNameWithType.append(familyName[hwInfo.platform.eRenderCoreFamily]);
                 familyNameWithType.append(hwInfo.capabilityTable.platformType);
