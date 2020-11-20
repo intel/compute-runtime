@@ -207,7 +207,7 @@ class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
         DebugManager.flags.UseBindlessMode.set(1);
         KernelArgBufferFixture::SetUp();
     }
-    void TearDown() {
+    void TearDown() override {
         KernelArgBufferFixture::TearDown();
     }
     DebugManagerStateRestore restorer;
