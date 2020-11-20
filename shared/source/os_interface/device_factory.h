@@ -23,5 +23,6 @@ class DeviceFactory {
     static bool isHwModeSelected();
 
     static std::unique_ptr<Device> (*createRootDeviceFunc)(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+    static void (*createMemoryManagerFunc)(ExecutionEnvironment &executionEnvironment);
 };
 } // namespace NEO

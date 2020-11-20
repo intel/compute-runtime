@@ -3227,11 +3227,11 @@ TEST_F(KernelMultiRootDeviceTest, WhenGettingRootDeviceIndexThenCorrectRootDevic
     tokenSPS.PerThreadPrivateMemorySize = 112;
     kernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &tokenSPS;
 
-    MockProgram program(context.get(), false, toClDeviceVector(*device));
+    MockProgram program(context.get(), false, toClDeviceVector(*device1));
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo));
     kernel->initialize();
 
-    auto privateSurface = kernel->kernelDeviceInfos[device->getRootDeviceIndex()].privateSurface;
+    auto privateSurface = kernel->kernelDeviceInfos[device1->getRootDeviceIndex()].privateSurface;
     ASSERT_NE(nullptr, privateSurface);
     EXPECT_EQ(expectedRootDeviceIndex, privateSurface->getRootDeviceIndex());
 }

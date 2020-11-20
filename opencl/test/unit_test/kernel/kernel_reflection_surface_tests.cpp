@@ -2107,13 +2107,13 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 using KernelReflectionMultiDeviceTest = MultiRootDeviceFixture;
 
 TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device.get());
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device1);
 
-    MockProgram program(context.get(), false, toClDeviceVector(*device));
+    MockProgram program(context.get(), false, toClDeviceVector(*device1));
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
-    DeviceQueue devQueue(context.get(), device.get(), properties[0]);
+    DeviceQueue devQueue(context.get(), device1, properties[0]);
 
     SPatchExecutionEnvironment environment = {};
     environment.HasDeviceEnqueue = 1;
@@ -2156,14 +2156,14 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelRefl
 }
 
 TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device.get());
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device1);
 
-    MockProgram program(context.get(), false, toClDeviceVector(*device));
+    MockProgram program(context.get(), false, toClDeviceVector(*device1));
 
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
-    DeviceQueue devQueue(context.get(), device.get(), properties[0]);
+    DeviceQueue devQueue(context.get(), device1, properties[0]);
 
     uint32_t devQueueCurbeOffset = 16;
     uint32_t devQueueCurbeSize = 4;

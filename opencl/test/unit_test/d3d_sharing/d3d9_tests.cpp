@@ -1151,9 +1151,9 @@ TEST_F(D3D9MultiRootDeviceTest, givenD3DHandleIsNullWhenCreatingSharedSurfaceAnd
     imgDesc.image_depth = 1;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    auto gmm = MockGmm::queryImgParams(device->getGmmClientContext(), imgInfo).release();
+    auto gmm = MockGmm::queryImgParams(device1->getGmmClientContext(), imgInfo).release();
 
-    auto memoryManager = std::make_unique<MockMM>(*device->executionEnvironment);
+    auto memoryManager = std::make_unique<MockMM>(*device1->executionEnvironment);
     memoryManager->forceGmm = gmm;
 
     auto mockSharingFcns = new NiceMock<MockD3DSharingFunctions<D3DTypesHelper::D3D9>>();
@@ -1166,7 +1166,7 @@ TEST_F(D3D9MultiRootDeviceTest, givenD3DHandleIsNullWhenCreatingSharedSurfaceAnd
 
     ON_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).WillByDefault(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
 
-    MockContext ctx(device.get());
+    MockContext ctx(device1);
     ctx.setSharingFunctions(mockSharingFcns);
     ctx.memoryManager = memoryManager.get();
 
@@ -1184,9 +1184,9 @@ TEST_F(D3D9MultiRootDeviceTest, givenD3DHandleIsNotNullWhenCreatingSharedSurface
     imgDesc.image_depth = 1;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    auto gmm = MockGmm::queryImgParams(device->getGmmClientContext(), imgInfo).release();
+    auto gmm = MockGmm::queryImgParams(device1->getGmmClientContext(), imgInfo).release();
 
-    auto memoryManager = std::make_unique<MockMM>(*device->executionEnvironment);
+    auto memoryManager = std::make_unique<MockMM>(*device1->executionEnvironment);
     memoryManager->forceGmm = gmm;
 
     auto mockSharingFcns = new NiceMock<MockD3DSharingFunctions<D3DTypesHelper::D3D9>>();
@@ -1199,7 +1199,7 @@ TEST_F(D3D9MultiRootDeviceTest, givenD3DHandleIsNotNullWhenCreatingSharedSurface
 
     ON_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).WillByDefault(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
 
-    MockContext ctx(device.get());
+    MockContext ctx(device1);
     ctx.setSharingFunctions(mockSharingFcns);
     ctx.memoryManager = memoryManager.get();
 

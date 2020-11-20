@@ -12,9 +12,11 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/ult_device_factory.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
@@ -269,4 +271,14 @@ TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExist
 
     auto result = DeviceFactory::prepareDeviceEnvironments(executionEnviornment);
     EXPECT_FALSE(result);
+}
+
+using UltClDeviceFactoryTest = DeviceFactoryTest;
+
+TEST_F(UltClDeviceFactoryTest, givenUltClDeviceFactoryPrepareDeviceEnvironmentsCallWhenItIsDoneThenMockMemoryManagerIsAllocated) {
+    UltDeviceFactory::prepareDeviceEnvironments(*executionEnvironment, 2u);
+
+    EXPECT_EQ(2u, executionEnvironment->rootDeviceEnvironments.size());
+    EXPECT_NE(nullptr, executionEnvironment->memoryManager.get());
+    EXPECT_EQ(true, executionEnvironment->memoryManager.get()->isInitialized());
 }

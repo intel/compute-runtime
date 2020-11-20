@@ -269,7 +269,7 @@ TEST_F(KernelInfoMultiRootDeviceTests, kernelAllocationHasCorrectRootDeviceIndex
     kernelInfo.heapInfo.KernelHeapSize = heapSize;
     kernelInfo.heapInfo.pKernelHeap = &heap;
 
-    auto retVal = kernelInfo.createKernelAllocation(device->getDevice(), false);
+    auto retVal = kernelInfo.createKernelAllocation(device1->getDevice(), false);
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
     ASSERT_NE(nullptr, allocation);

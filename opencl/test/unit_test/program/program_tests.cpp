@@ -2880,7 +2880,7 @@ TEST_F(ProgramBinTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsS
 using ProgramMultiRootDeviceTests = MultiRootDeviceFixture;
 
 TEST_F(ProgramMultiRootDeviceTests, WhenPrivateSurfaceIsCreatedThenItHasCorrectRootDeviceIndex) {
-    auto program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*device));
+    auto program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*device1));
 
     auto privateSurfaceBlock = std::make_unique<SPatchAllocateStatelessPrivateSurface>();
     privateSurfaceBlock->DataParamOffset = 0;
@@ -2894,7 +2894,7 @@ TEST_F(ProgramMultiRootDeviceTests, WhenPrivateSurfaceIsCreatedThenItHasCorrectR
     infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock.get();
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock.release());
-    program->allocateBlockPrivateSurfaces(*device);
+    program->allocateBlockPrivateSurfaces(*device1);
 
     auto privateSurface = program->getBlockKernelManager()->getPrivateSurface(0);
     EXPECT_NE(nullptr, privateSurface);
@@ -2904,8 +2904,8 @@ TEST_F(ProgramMultiRootDeviceTests, WhenPrivateSurfaceIsCreatedThenItHasCorrectR
 TEST_F(ProgramMultiRootDeviceTests, WhenProgramIsCreatedThenBuildInfosVectorIsProperlyResized) {
     {
         ClDeviceVector deviceVector;
-        deviceVector.push_back(device.get());
-        deviceVector.push_back(device2.get());
+        deviceVector.push_back(device1);
+        deviceVector.push_back(device2);
 
         EXPECT_EQ(1u, deviceVector[0]->getRootDeviceIndex());
         auto program = std::make_unique<MockProgram>(context.get(), false, deviceVector);
@@ -2914,8 +2914,8 @@ TEST_F(ProgramMultiRootDeviceTests, WhenProgramIsCreatedThenBuildInfosVectorIsPr
     }
     {
         ClDeviceVector deviceVector;
-        deviceVector.push_back(device2.get());
-        deviceVector.push_back(device.get());
+        deviceVector.push_back(device2);
+        deviceVector.push_back(device1);
 
         EXPECT_EQ(2u, deviceVector[0]->getRootDeviceIndex());
         auto program = std::make_unique<MockProgram>(context.get(), false, deviceVector);

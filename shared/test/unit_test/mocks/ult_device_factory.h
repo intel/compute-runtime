@@ -19,6 +19,8 @@ struct UltDeviceFactory {
     UltDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount, ExecutionEnvironment &executionEnvironment);
     ~UltDeviceFactory();
 
+    static void prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, uint32_t rootDevicesCount);
+
     std::vector<MockDevice *> rootDevices;
     std::vector<SubDevice *> subDevices;
 };

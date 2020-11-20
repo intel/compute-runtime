@@ -2400,7 +2400,7 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenEnableHostPtrTrackingFlagIsS
 using MemoryManagerMultiRootDeviceTests = MultiRootDeviceFixture;
 
 TEST_F(MemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHasCorrectRootDeviceIndex) {
-    if (device->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
+    if (device1->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
         delete context->svmAllocsManager;
         context->svmAllocsManager = nullptr;
     }
@@ -2409,13 +2409,13 @@ TEST_F(MemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHasCo
     WhiteBox<NEO::LinkerInput> linkerInput;
     linkerInput.traits.exportsGlobalConstants = true;
     linkerInput.traits.exportsGlobalVariables = true;
-    GraphicsAllocation *allocation = allocateGlobalsSurface(context->svmAllocsManager, device->getDevice(), initData.size(), false, &linkerInput, initData.data());
+    GraphicsAllocation *allocation = allocateGlobalsSurface(context->svmAllocsManager, device1->getDevice(), initData.size(), false, &linkerInput, initData.data());
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(expectedRootDeviceIndex, allocation->getRootDeviceIndex());
 
-    if (device->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
-        device->getMemoryManager()->freeGraphicsMemory(allocation);
+    if (device1->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
+        device1->getMemoryManager()->freeGraphicsMemory(allocation);
     } else {
         context->getSVMAllocsManager()->freeSVMAlloc(allocation->getUnderlyingBuffer());
     }

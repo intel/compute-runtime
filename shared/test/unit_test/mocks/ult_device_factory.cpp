@@ -45,3 +45,17 @@ UltDeviceFactory::~UltDeviceFactory() {
         pDevice->decRefInternal();
     }
 }
+
+void NEO::UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, uint32_t rootDevicesCount) {
+    uint32_t numRootDevices = rootDevicesCount;
+    executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
+    for (auto i = 0u; i < numRootDevices; i++) {
+        if (executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo() == nullptr ||
+            (executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eProductFamily == IGFX_UNKNOWN &&
+             executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE)) {
+            executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        }
+    }
+    executionEnvironment.calculateMaxOsContextCount();
+    DeviceFactory::createMemoryManagerFunc(executionEnvironment);
+}

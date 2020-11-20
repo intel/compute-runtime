@@ -384,7 +384,7 @@ HWTEST_F(ExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhenCom
 using ExperimentalCommandBufferRootDeviceIndexTest = MultiRootDeviceFixture;
 
 TEST_F(ExperimentalCommandBufferRootDeviceIndexTest, GivenExperimentalCommandBufferGraphicsAllocationsThenItHasCorrectRootDeviceIndex) {
-    auto experimentalCommandBuffer = std::make_unique<MockExperimentalCommandBuffer>(&device->getGpgpuCommandStreamReceiver());
+    auto experimentalCommandBuffer = std::make_unique<MockExperimentalCommandBuffer>(&device1->getGpgpuCommandStreamReceiver());
 
     ASSERT_NE(nullptr, experimentalCommandBuffer);
     EXPECT_EQ(expectedRootDeviceIndex, experimentalCommandBuffer->experimentalAllocation->getRootDeviceIndex());

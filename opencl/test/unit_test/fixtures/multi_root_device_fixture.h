@@ -6,7 +6,9 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/variable_backup.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -17,23 +19,28 @@ namespace NEO {
 class MultiRootDeviceFixture : public ::testing::Test {
   public:
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(3 * expectedRootDeviceIndex);
+        createMemoryManagerFuncBackup = [](ExecutionEnvironment &executionEnvironment) -> void {
+            executionEnvironment.memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+        };
 
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, expectedRootDeviceIndex));
-        device2 = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, 2u));
+        deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
+        device1 = deviceFactory->rootDevices[1];
+        device2 = deviceFactory->rootDevices[2];
 
-        cl_device_id devices[] = {
-            device.get(), device2.get()};
+        cl_device_id devices[] = {device1, device2};
 
         context.reset(new MockContext(ClDeviceVector(devices, 2), false));
-        mockMemoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
+        mockMemoryManager = static_cast<MockMemoryManager *>(device1->getMemoryManager());
+        ASSERT_EQ(mockMemoryManager, device1->getMemoryManager());
     }
 
     const uint32_t expectedRootDeviceIndex = 1;
     DebugManagerStateRestore restorer;
-    std::unique_ptr<MockClDevice> device;
-    std::unique_ptr<MockClDevice> device2;
+    std::unique_ptr<UltClDeviceFactory> deviceFactory;
+    MockClDevice *device1 = nullptr;
+    MockClDevice *device2 = nullptr;
     std::unique_ptr<MockContext> context;
     MockMemoryManager *mockMemoryManager;
+    VariableBackup<decltype(DeviceFactory::createMemoryManagerFunc)> createMemoryManagerFuncBackup{&DeviceFactory::createMemoryManagerFunc};
 };
 }; // namespace NEO

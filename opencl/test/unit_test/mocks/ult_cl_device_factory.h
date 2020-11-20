@@ -11,7 +11,10 @@
 #include <vector>
 
 namespace NEO {
+class ExecutionEnvironment;
 class ClDevice;
+class MemoryManager;
+class MockMemoryManager;
 class MockClDevice;
 struct UltDeviceFactory;
 

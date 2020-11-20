@@ -501,17 +501,17 @@ TEST(MemObj, givenMemObjNotUsingHostPtrWhenGettingBasePtrTwiceReturnSameMapPtr) 
 using MemObjMultiRootDeviceTests = MultiRootDeviceFixture;
 
 TEST_F(MemObjMultiRootDeviceTests, WhenMemObjMapIsCreatedThenAllocationHasCorrectRootDeviceIndex) {
-    auto allocation = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto allocation = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device1->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice());
     std::unique_ptr<MemObj> memObj(
         new MemObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
                    1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false));
 
-    void *mapPtr = memObj->getBasePtrForMap(device->getRootDeviceIndex());
+    void *mapPtr = memObj->getBasePtrForMap(device1->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapPtr);
 
-    auto mapAllocation = memObj->getMapAllocation(device->getRootDeviceIndex());
+    auto mapAllocation = memObj->getMapAllocation(device1->getRootDeviceIndex());
     ASSERT_NE(nullptr, mapAllocation);
     EXPECT_EQ(expectedRootDeviceIndex, mapAllocation->getRootDeviceIndex());
 

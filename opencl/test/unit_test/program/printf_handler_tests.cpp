@@ -224,14 +224,14 @@ TEST_F(PrintfHandlerMultiRootDeviceTests, printfSurfaceHasCorrectRootDeviceIndex
     auto kernelInfo = std::make_unique<KernelInfo>();
     kernelInfo->patchInfo.pAllocateStatelessPrintfSurface = printfSurface.get();
 
-    auto program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*device));
+    auto program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*device1));
 
     uint64_t crossThread[10];
     auto kernel = std::make_unique<MockKernel>(program.get(), *kernelInfo);
     kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
-    MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.get());
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
+    MockMultiDispatchInfo multiDispatchInfo(device1, kernel.get());
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device1));
     printfHandler->prepareDispatch(multiDispatchInfo);
     auto surface = printfHandler->getSurface();
 

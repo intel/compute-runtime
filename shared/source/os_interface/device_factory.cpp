@@ -147,4 +147,9 @@ std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvir
 std::unique_ptr<Device> (*DeviceFactory::createRootDeviceFunc)(ExecutionEnvironment &, uint32_t) = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
     return std::unique_ptr<Device>(Device::create<RootDevice>(&executionEnvironment, rootDeviceIndex));
 };
+
+void (*DeviceFactory::createMemoryManagerFunc)(ExecutionEnvironment &) = [](ExecutionEnvironment &executionEnvironment) -> void {
+    executionEnvironment.initializeMemoryManager();
+};
+
 } // namespace NEO
