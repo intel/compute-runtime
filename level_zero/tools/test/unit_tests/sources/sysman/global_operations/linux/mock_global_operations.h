@@ -28,11 +28,15 @@ const std::string clientsDir("clients");
 constexpr uint64_t pid1 = 1711u;
 constexpr uint64_t pid2 = 1722u;
 constexpr uint64_t pid3 = 1723u;
+constexpr uint64_t pid4 = 1733u;
+const std::string bPid4 = "<1733>";
 constexpr uint64_t engineTimeSpent = 123456u;
 const std::string clientId1("4");
 const std::string clientId2("5");
 const std::string clientId3("6");
 const std::string clientId4("7");
+const std::string clientId5("8");
+const std::string clientId6("10");
 const std::string engine0("0");
 const std::string engine1("1");
 const std::string engine2("2");
@@ -66,6 +70,8 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
             val = "0x3ea5";
         } else if (file.compare(vendorFile) == 0) {
             val = "0x8086";
+        } else if (file.compare("clients/8/pid") == 0) {
+            val = bPid4;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -80,21 +86,25 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
         } else if (file.compare("clients/7/pid") == 0) {
             val = pid3;
         } else if ((file.compare("clients/4/busy/0") == 0) || (file.compare("clients/4/busy/3") == 0) ||
-                   (file.compare("clients/5/busy/1") == 0) || (file.compare("clients/6/busy/0") == 0)) {
+                   (file.compare("clients/5/busy/1") == 0) || (file.compare("clients/6/busy/0") == 0) ||
+                   (file.compare("clients/8/busy/1") == 0) || (file.compare("clients/8/busy/0") == 0)) {
             val = engineTimeSpent;
         } else if ((file.compare("clients/4/busy/1") == 0) || (file.compare("clients/4/busy/2") == 0) ||
                    (file.compare("clients/5/busy/0") == 0) || (file.compare("clients/5/busy/2") == 0) ||
                    (file.compare("clients/7/busy/0") == 0) || (file.compare("clients/7/busy/2") == 0) ||
                    (file.compare("clients/5/busy/3") == 0) || (file.compare("clients/6/busy/1") == 0) ||
-                   (file.compare("clients/6/busy/2") == 0) || (file.compare("clients/6/busy/3") == 0)) {
+                   (file.compare("clients/6/busy/2") == 0) || (file.compare("clients/6/busy/3") == 0) ||
+                   (file.compare("clients/8/busy/2") == 0) || (file.compare("clients/8/busy/3") == 0)) {
             val = 0;
         } else if ((file.compare("clients/4/total_device_memory_buffer_objects/created_bytes") == 0) ||
                    (file.compare("clients/5/total_device_memory_buffer_objects/created_bytes") == 0) ||
-                   (file.compare("clients/6/total_device_memory_buffer_objects/created_bytes") == 0)) {
+                   (file.compare("clients/6/total_device_memory_buffer_objects/created_bytes") == 0) ||
+                   (file.compare("clients/8/total_device_memory_buffer_objects/created_bytes") == 0)) {
             val = 1024;
         } else if ((file.compare("clients/4/total_device_memory_buffer_objects/imported_bytes") == 0) ||
                    (file.compare("clients/5/total_device_memory_buffer_objects/imported_bytes") == 0) ||
-                   (file.compare("clients/6/total_device_memory_buffer_objects/imported_bytes") == 0)) {
+                   (file.compare("clients/6/total_device_memory_buffer_objects/imported_bytes") == 0) ||
+                   (file.compare("clients/8/total_device_memory_buffer_objects/imported_bytes") == 0)) {
             val = 512;
         } else if (file.compare("clients/7/total_device_memory_buffer_objects/created_bytes") == 0) {
             return ZE_RESULT_ERROR_UNKNOWN;
@@ -112,8 +122,10 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
             list.push_back(clientId2);
             list.push_back(clientId3);
             list.push_back(clientId4);
+            list.push_back(clientId5);
+            list.push_back(clientId6);
         } else if ((path.compare("clients/4/busy") == 0) || (path.compare("clients/5/busy") == 0) ||
-                   (path.compare("clients/6/busy") == 0) || (path.compare("clients/7/busy") == 0)) {
+                   (path.compare("clients/6/busy") == 0) || (path.compare("clients/7/busy") == 0) || (path.compare("clients/8/busy") == 0)) {
             list.push_back(engine0);
             list.push_back(engine1);
             list.push_back(engine2);
@@ -129,8 +141,9 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
             list.push_back(clientId1);
             list.push_back(clientId2);
             list.push_back(clientId3);
+            list.push_back(clientId5);
         } else if ((path.compare("clients/4/busy") == 0) || (path.compare("clients/5/busy") == 0) ||
-                   (path.compare("clients/6/busy") == 0)) {
+                   (path.compare("clients/6/busy") == 0) || (path.compare("clients/8/busy") == 0)) {
             list.push_back(engine0);
             list.push_back(engine1);
             list.push_back(engine2);

@@ -16,8 +16,10 @@ namespace ult {
 
 constexpr uint64_t memSize1 = 2048;
 constexpr uint64_t memSize2 = 1024;
+constexpr uint64_t memSize4 = 1024;
 constexpr uint64_t sharedMemSize1 = 1024;
 constexpr uint64_t sharedMemSize2 = 512;
+constexpr uint64_t sharedMemSize4 = 512;
 // In mock function getValUnsignedLong, we have set the engines used as 0, 3 and 1.
 // Hence, expecting 28 as engine field because 28 in binary would be 00011100
 // This indicates bit number 2, 3 and 4 are set, thus this indicates, this process
@@ -27,7 +29,8 @@ constexpr int64_t engines1 = 28u;
 // 4 in binary 0100, as 2nd bit is set, hence it indicates, process used ZES_ENGINE_TYPE_FLAG_3D
 // Corresponding i915 mapped value in mocked getValUnsignedLong() is 0.
 constexpr int64_t engines2 = 4u;
-constexpr uint32_t totalProcessStates = 2u; // Two process States for two pids
+constexpr int64_t engines4 = 20u;
+constexpr uint32_t totalProcessStates = 3u; // Three process States for three pids
 const std::string expectedModelName("0x3ea5");
 class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
   protected:
@@ -155,6 +158,10 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInfor
     EXPECT_EQ(processes[1].engines, engines2);
     EXPECT_EQ(processes[1].memSize, memSize2);
     EXPECT_EQ(processes[1].sharedSize, sharedMemSize2);
+    EXPECT_EQ(processes[2].processId, pid4);
+    EXPECT_EQ(processes[2].engines, engines4);
+    EXPECT_EQ(processes[2].memSize, memSize4);
+    EXPECT_EQ(processes[2].sharedSize, sharedMemSize4);
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingFaultyClientFileThenFailureIsReturned) {
