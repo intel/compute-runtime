@@ -9,14 +9,5 @@
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
-
-template <>
-int HwInfoConfigHw<IGFX_ALDERLAKE_S>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    hwInfo->capabilityTable.ftrRenderCompressedImages = hwInfo->featureTable.ftrE2ECompression;
-    hwInfo->capabilityTable.ftrRenderCompressedBuffers = hwInfo->featureTable.ftrE2ECompression;
-
-    return 0;
-}
-
 template class HwInfoConfigHw<IGFX_ALDERLAKE_S>;
 } // namespace NEO

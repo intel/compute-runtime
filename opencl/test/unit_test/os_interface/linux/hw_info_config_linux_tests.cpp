@@ -151,6 +151,19 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfig) {
 GTTYPE GtTypes[] = {
     GTTYPE_GT1, GTTYPE_GT2, GTTYPE_GT1_5, GTTYPE_GT2_5, GTTYPE_GT3, GTTYPE_GT4, GTTYPE_GTA, GTTYPE_GTC, GTTYPE_GTX};
 
+using HwInfoConfigCommonLinuxTest = ::testing::Test;
+
+HWTEST2_F(HwInfoConfigCommonLinuxTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenIgnore, IsAtMostGen11) {
+    DebugManagerStateRestore restore{};
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+
+    auto hwInfoConfig = HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+
+    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+    hwInfoConfig->configureHardwareCustom(&hardwareInfo, nullptr);
+    EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
+}
+
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigGtTypes) {
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);

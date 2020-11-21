@@ -54,7 +54,10 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isEvenContextCountRequired() override;
 
   protected:
-    HwInfoConfigHw() {}
+    HwInfoConfigHw() = default;
+
+    void enableRenderCompression(HardwareInfo *hwInfo);
+    void enableBlitterOperationsSupport(HardwareInfo *hwInfo);
 };
 
 template <PRODUCT_FAMILY gfxProduct>
