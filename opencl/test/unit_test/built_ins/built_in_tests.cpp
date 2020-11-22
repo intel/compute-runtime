@@ -1990,7 +1990,7 @@ TEST_F(VmeBuiltInTests, GivenAdvancedVmeWhenGettingSkipResidualsBuffExpSizeThenD
     EXPECT_EQ(size16x16, sizeDefault);
 }
 
-TEST_F(BuiltInTests, createBuiltInProgramForInvalidBuiltinKernelName) {
+TEST_F(BuiltInTests, GivenInvalidBuiltinKernelNameWhenCreatingBuiltInProgramThenInvalidValueErrorIsReturned) {
     const char *kernelNames = "invalid_kernel";
     cl_int retVal = CL_SUCCESS;
 
