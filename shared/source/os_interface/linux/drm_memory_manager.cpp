@@ -586,8 +586,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         pushSharedBufferObject(bo);
     }
 
-    closeFunction(handle);
-
     lock.unlock();
 
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->gpuAddress), bo->size,
@@ -613,6 +611,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         drmAllocation->setDefaultGmm(gmm);
     }
     return drmAllocation;
+}
+
+void DrmMemoryManager::closeSharedHandle(osHandle handle) {
+    closeFunction(handle);
 }
 
 GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {

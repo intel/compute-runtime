@@ -113,6 +113,8 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false);
 
+    memoryManager->closeSharedHandle(sharedHandle);
+
     imgDesc.image_row_pitch = imgInfo.rowPitch;
     imgDesc.image_slice_pitch = 0u;
     imgInfo.slicePitch = 0u;
