@@ -544,7 +544,7 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
 
     EXPECT_EQ(allocationAddress, *(uintptr_t *)printfPatchAddress);
 
-    EXPECT_EQ(0u, kernel.mockKernel->getSurfaceStateHeapSize());
+    EXPECT_EQ(0u, kernel.mockKernel->getSurfaceStateHeapSize(rootDeviceIndex));
 
     delete printfHandler;
 }
@@ -575,11 +575,11 @@ HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCr
     auto printfAllocation = printfHandler->getSurface();
     auto allocationAddress = printfAllocation->getGpuAddress();
 
-    EXPECT_NE(0u, kernel.mockKernel->getSurfaceStateHeapSize());
+    EXPECT_NE(0u, kernel.mockKernel->getSurfaceStateHeapSize(device->getRootDeviceIndex()));
 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
-        ptrOffset(kernel.mockKernel->getSurfaceStateHeap(),
+        ptrOffset(kernel.mockKernel->getSurfaceStateHeap(device->getRootDeviceIndex()),
                   kernel.mockKernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->SurfaceStateHeapOffset));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 

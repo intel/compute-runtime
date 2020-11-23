@@ -180,7 +180,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSshRequiredWhenPatchingSyncBuffer
 
     pClDevice->allocateSyncBufferHandler();
     auto syncBufferHandler = getSyncBufferHandler();
-    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(kernel->getSurfaceStateHeap(),
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(kernel->getSurfaceStateHeap(rootDeviceIndex),
                                                                            sPatchAllocateSyncBuffer.SurfaceStateHeapOffset));
     auto bufferAddress = syncBufferHandler->graphicsAllocation->getGpuAddress();
     surfaceState->setSurfaceBaseAddress(bufferAddress + 1);

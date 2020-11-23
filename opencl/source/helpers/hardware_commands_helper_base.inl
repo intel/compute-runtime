@@ -75,9 +75,9 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(
 
 template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredSSH(
-    const Kernel &kernel) {
+    const Kernel &kernel, uint32_t rootDeviceIndex) {
     typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
-    auto sizeSSH = kernel.getSurfaceStateHeapSize();
+    auto sizeSSH = kernel.getSurfaceStateHeapSize(rootDeviceIndex);
     sizeSSH += sizeSSH ? BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE : 0;
     return sizeSSH;
 }
@@ -112,11 +112,11 @@ size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(
 template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(
     const MultiDispatchInfo &multiDispatchInfo) {
-    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredSSH(*dispatchInfo.getKernel()); });
+    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredSSH(*dispatchInfo.getKernel(), dispatchInfo.getClDevice().getRootDeviceIndex()); });
 }
 
 template <typename GfxFamily>
-size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kernel &kernel) {
+size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kernel &kernel, uint32_t rootDeviceIndex) {
     typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
 
     size_t totalSize = 0;
@@ -136,7 +136,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kern
 
     SchedulerKernel &scheduler = kernel.getContext().getSchedulerKernel();
 
-    totalSize += getSizeRequiredSSH(scheduler);
+    totalSize += getSizeRequiredSSH(scheduler, rootDeviceIndex);
 
     totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
     totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
@@ -237,7 +237,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     kernel.patchBindlessSurfaceStateOffsets(device, ssh.getUsed());
 
     auto dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh, (kernelInfo.patchInfo.bindingTableState != nullptr) ? kernelInfo.patchInfo.bindingTableState->Count : 0,
-                                                                                                  kernel.getSurfaceStateHeap(), kernel.getSurfaceStateHeapSize(),
+                                                                                                  kernel.getSurfaceStateHeap(rootDeviceIndex), kernel.getSurfaceStateHeapSize(rootDeviceIndex),
                                                                                                   kernel.getNumberOfBindingTableStates(), kernel.getBindingTableOffset());
 
     // Copy our sampler state if it exists

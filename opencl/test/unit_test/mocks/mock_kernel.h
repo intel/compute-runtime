@@ -43,7 +43,6 @@ class MockKernel : public Kernel {
     using Kernel::numberOfBindingTableStates;
     using Kernel::patchBufferOffset;
     using Kernel::patchWithImplicitSurface;
-    using Kernel::sshLocalSize;
     using Kernel::svmAllocationsRequireCacheFlush;
     using Kernel::threadArbitrationPolicy;
     using Kernel::unifiedMemoryControls;
@@ -181,15 +180,15 @@ class MockKernel : public Kernel {
         kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = static_cast<uint32_t>(mockCrossThreadData.size());
     }
 
-    void setSshLocal(const void *sshPattern, uint32_t newSshSize) {
-        sshLocalSize = newSshSize;
+    void setSshLocal(const void *sshPattern, uint32_t newSshSize, uint32_t rootDeviceIndex) {
+        kernelDeviceInfos[rootDeviceIndex].sshLocalSize = newSshSize;
 
         if (newSshSize == 0) {
-            pSshLocal.reset(nullptr);
+            kernelDeviceInfos[rootDeviceIndex].pSshLocal.reset(nullptr);
         } else {
-            pSshLocal = std::make_unique<char[]>(newSshSize);
+            kernelDeviceInfos[rootDeviceIndex].pSshLocal = std::make_unique<char[]>(newSshSize);
             if (sshPattern) {
-                memcpy_s(pSshLocal.get(), newSshSize, sshPattern, newSshSize);
+                memcpy_s(kernelDeviceInfos[rootDeviceIndex].pSshLocal.get(), newSshSize, sshPattern, newSshSize);
             }
         }
     }
@@ -291,7 +290,7 @@ class MockKernelWithInternals {
         mockProgram = new MockProgram(context, false, deviceVector);
         mockKernel = new MockKernel(mockProgram, kernelInfo);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
-        mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal));
+        mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal), deviceArg.getRootDeviceIndex());
 
         if (addDefaultArg) {
             defaultKernelArguments.resize(2);
@@ -358,10 +357,9 @@ class MockKernelWithInternals {
 class MockParentKernel : public Kernel {
   public:
     using Kernel::auxTranslationRequired;
+    using Kernel::kernelDeviceInfos;
     using Kernel::kernelInfo;
     using Kernel::patchBlocksCurbeWithConstantValues;
-    using Kernel::pSshLocal;
-    using Kernel::sshLocalSize;
 
     static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
         auto clDevice = context.getDevice(0);

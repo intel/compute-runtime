@@ -153,18 +153,18 @@ class Kernel : public BaseObject<_cl_kernel> {
                            size_t *paramValueSizeRet) const;
 
     const void *getKernelHeap() const;
-    void *getSurfaceStateHeap() const;
+    void *getSurfaceStateHeap(uint32_t rootDeviceIndex) const;
     const void *getDynamicStateHeap() const;
 
     size_t getKernelHeapSize() const;
-    size_t getSurfaceStateHeapSize() const;
+    size_t getSurfaceStateHeapSize(uint32_t rootDeviceIndex) const;
     size_t getDynamicStateHeapSize() const;
     size_t getNumberOfBindingTableStates() const;
     size_t getBindingTableOffset() const {
         return localBindingTableOffset;
     }
 
-    void resizeSurfaceStateHeap(void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset);
+    void resizeSurfaceStateHeap(uint32_t rootDeviceIndex, void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset);
 
     void substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize);
     bool isKernelHeapSubstituted() const;
@@ -524,8 +524,6 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     size_t numberOfBindingTableStates = 0u;
     size_t localBindingTableOffset = 0u;
-    std::unique_ptr<char[]> pSshLocal;
-    uint32_t sshLocalSize = 0u;
 
     GraphicsAllocation *kernelReflectionSurface = nullptr;
 
@@ -550,13 +548,15 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool debugEnabled = false;
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
 
-    struct KernelDeviceInfo {
+    struct KernelDeviceInfo : public NonCopyableClass {
+        std::unique_ptr<char[]> pSshLocal;
+        uint32_t sshLocalSize = 0u;
         char *crossThreadData = nullptr;
         uint32_t crossThreadDataSize = 0u;
 
         GraphicsAllocation *privateSurface = nullptr;
         uint64_t privateSurfaceSize = 0u;
     };
-    StackVec<KernelDeviceInfo, 1> kernelDeviceInfos;
+    std::vector<KernelDeviceInfo> kernelDeviceInfos;
 };
 } // namespace NEO

@@ -297,7 +297,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
     uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
 
-    size_t parentKernelSSHSize = pKernel->getSurfaceStateHeapSize();
+    size_t parentKernelSSHSize = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
 
@@ -340,7 +340,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
                 EXPECT_EQ(0, memcmp(srcSurfaceState, dstSurfaceState, sizeof(RENDER_SURFACE_STATE)));
             }
 
-            blockSSH = ptrOffset(blockSSH, blockKernel->getSurfaceStateHeapSize());
+            blockSSH = ptrOffset(blockSSH, blockKernel->getSurfaceStateHeapSize(rootDeviceIndex));
         }
 
         delete blockKernel;

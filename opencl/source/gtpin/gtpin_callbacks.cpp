@@ -66,9 +66,10 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates();
         // Enlarge local copy of SSH by 1 SS
         auto device = pKernel->getDevices()[0];
+        auto rootDeviceIndex = device->getRootDeviceIndex();
         GFXCORE_FAMILY genFamily = device->getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
-        if (pKernel->isParentKernel || !gtpinHelper.addSurfaceState(pKernel)) {
+        if (pKernel->isParentKernel || !gtpinHelper.addSurfaceState(pKernel, rootDeviceIndex)) {
             // Kernel with no SSH or Kernel EM, not supported
             return;
         }
@@ -103,8 +104,10 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
 
 void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
     if (isGTPinInitialized) {
+        auto pCmdQ = reinterpret_cast<CommandQueue *>(pCmdQueue);
+        auto &device = pCmdQ->getDevice();
         auto pKernel = castToObjectOrAbort<Kernel>(kernel);
-        if (pKernel->isParentKernel || pKernel->getSurfaceStateHeapSize() == 0) {
+        if (pKernel->isParentKernel || pKernel->getSurfaceStateHeapSize(device.getRootDeviceIndex()) == 0) {
             // Kernel with no SSH, not supported
             return;
         }
@@ -132,14 +135,13 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         if (!resource) {
             return;
         }
-        auto &device = *pKernel->getDevices()[0];
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
-        void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);
+        void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI, device.getRootDeviceIndex());
         cl_mem buffer = (cl_mem)resource;
         auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
-        pBuffer->setArgStateful(pSurfaceState, false, false, false, false, device.getDevice());
+        pBuffer->setArgStateful(pSurfaceState, false, false, false, false, device);
     }
 }
 

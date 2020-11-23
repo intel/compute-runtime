@@ -160,7 +160,8 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         executionEnvironment->memoryManager.reset(memoryManager);
         initPlatform();
         pDevice = pPlatform->getClDevice(0);
-        cl_device_id device = (cl_device_id)pDevice;
+        rootDeviceIndex = pDevice->getRootDeviceIndex();
+        cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
 
         driverServices.bufferAllocate = nullptr;
@@ -193,6 +194,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     driver_services_t driverServices;
     gtpin::ocl::gtpin_events_t gtpinCallbacks;
     MockMemoryManagerWithFailures *memoryManager = nullptr;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
 };
 
 typedef Test<GTPinFixture> GTPinTests;
@@ -1279,7 +1281,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
 
     // Verify that when SSH is removed then during kernel execution
     // GT-Pin Kernel Submit, Command Buffer Create and Command Buffer Complete callbacks are not called.
-    pKernel->resizeSurfaceStateHeap(nullptr, 0, 0, 0);
+    pKernel->resizeSurfaceStateHeap(rootDeviceIndex, nullptr, 0, 0, 0);
 
     int prevCount2 = KernelSubmitCallbackCount;
     int prevCount3 = CommandBufferCreateCallbackCount;
@@ -1392,7 +1394,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
 
     // Verify that when SSH is removed then during kernel execution
     // GT-Pin Kernel Submit, Command Buffer Create and Command Buffer Complete callbacks are not called.
-    pKernel->resizeSurfaceStateHeap(nullptr, 0, 0, 0);
+    pKernel->resizeSurfaceStateHeap(rootDeviceIndex, nullptr, 0, 0, 0);
 
     cl_event userEvent = clCreateUserEvent(context, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -2167,15 +2169,15 @@ TEST_F(GTPinTests, givenParentKernelWhenGtPinAddingSurfaceStateThenItIsNotAddedA
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*pContext));
 
     parentKernel->mockKernelInfo->usesSsh = true;
-    parentKernel->sshLocalSize = 64;
-    parentKernel->pSshLocal.reset(new char[64]);
+    parentKernel->kernelDeviceInfos[rootDeviceIndex].sshLocalSize = 64;
+    parentKernel->kernelDeviceInfos[rootDeviceIndex].pSshLocal.reset(new char[64]);
 
-    size_t sizeSurfaceStates1 = parentKernel->getSurfaceStateHeapSize();
+    size_t sizeSurfaceStates1 = parentKernel->getSurfaceStateHeapSize(rootDeviceIndex);
 
-    bool surfaceAdded = gtpinHelper.addSurfaceState(parentKernel.get());
+    bool surfaceAdded = gtpinHelper.addSurfaceState(parentKernel.get(), rootDeviceIndex);
     EXPECT_FALSE(surfaceAdded);
 
-    size_t sizeSurfaceStates2 = parentKernel->getSurfaceStateHeapSize();
+    size_t sizeSurfaceStates2 = parentKernel->getSurfaceStateHeapSize(rootDeviceIndex);
     EXPECT_EQ(sizeSurfaceStates2, sizeSurfaceStates1);
 }
 
@@ -2225,47 +2227,47 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
 
     size_t numBTS1 = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(2u, numBTS1);
-    size_t sizeSurfaceStates1 = pKernel->getSurfaceStateHeapSize();
+    size_t sizeSurfaceStates1 = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
     EXPECT_NE(0u, sizeSurfaceStates1);
     size_t offsetBTS1 = pKernel->getBindingTableOffset();
     EXPECT_NE(0u, offsetBTS1);
 
     GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
     GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
-    void *pSS1 = gtpinHelper.getSurfaceState(pKernel, 0);
+    void *pSS1 = gtpinHelper.getSurfaceState(pKernel, 0, rootDeviceIndex);
     EXPECT_NE(nullptr, pSS1);
 
     // Enlarge SSH by one SURFACE STATE element
-    bool surfaceAdded = gtpinHelper.addSurfaceState(pKernel);
+    bool surfaceAdded = gtpinHelper.addSurfaceState(pKernel, rootDeviceIndex);
     EXPECT_TRUE(surfaceAdded);
 
     size_t numBTS2 = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(numBTS1 + 1, numBTS2);
-    size_t sizeSurfaceStates2 = pKernel->getSurfaceStateHeapSize();
+    size_t sizeSurfaceStates2 = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
     EXPECT_GT(sizeSurfaceStates2, sizeSurfaceStates1);
     size_t offsetBTS2 = pKernel->getBindingTableOffset();
     EXPECT_GT(offsetBTS2, offsetBTS1);
 
-    void *pSS2 = gtpinHelper.getSurfaceState(pKernel, 0);
+    void *pSS2 = gtpinHelper.getSurfaceState(pKernel, 0, rootDeviceIndex);
     EXPECT_NE(pSS2, pSS1);
 
-    pSS2 = gtpinHelper.getSurfaceState(pKernel, numBTS2);
+    pSS2 = gtpinHelper.getSurfaceState(pKernel, numBTS2, rootDeviceIndex);
     EXPECT_EQ(nullptr, pSS2);
 
     // Remove kernel's SSH
-    pKernel->resizeSurfaceStateHeap(nullptr, 0, 0, 0);
+    pKernel->resizeSurfaceStateHeap(rootDeviceIndex, nullptr, 0, 0, 0);
 
     // Try to enlarge SSH once again, this time the operation must fail
-    surfaceAdded = gtpinHelper.addSurfaceState(pKernel);
+    surfaceAdded = gtpinHelper.addSurfaceState(pKernel, rootDeviceIndex);
     EXPECT_FALSE(surfaceAdded);
 
     size_t numBTS3 = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numBTS3);
-    size_t sizeSurfaceStates3 = pKernel->getSurfaceStateHeapSize();
+    size_t sizeSurfaceStates3 = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
     EXPECT_EQ(0u, sizeSurfaceStates3);
     size_t offsetBTS3 = pKernel->getBindingTableOffset();
     EXPECT_EQ(0u, offsetBTS3);
-    void *pSS3 = gtpinHelper.getSurfaceState(pKernel, 0);
+    void *pSS3 = gtpinHelper.getSurfaceState(pKernel, 0, rootDeviceIndex);
     EXPECT_EQ(nullptr, pSS3);
 
     // Cleanup
@@ -2396,7 +2398,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(context.get(), pDevice, nullptr));
     std::unique_ptr<MockKernel> pKernel(new MockKernel(pProgramm.get(), *pKernelInfo));
 
-    pKernel->setSshLocal(nullptr, sizeof(surfaceStateHeap));
+    pKernel->setSshLocal(nullptr, sizeof(surfaceStateHeap), rootDeviceIndex);
 
     kernelOffset = 0x1234;
     EXPECT_NE(pKernel->getStartOffset(), kernelOffset);

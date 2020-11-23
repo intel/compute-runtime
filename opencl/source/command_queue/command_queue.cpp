@@ -530,7 +530,7 @@ bool CommandQueue::setupDebugSurface(Kernel *kernel) {
 
     DEBUG_BREAK_IF(!kernel->requiresSshForBuffers());
 
-    auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap()),
+    auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap(device->getRootDeviceIndex())),
                                   kernel->getKernelInfo().patchInfo.pAllocateSystemThreadSurface->Offset);
     void *addressToPatch = reinterpret_cast<void *>(debugSurface->getGpuAddress());
     size_t sizeToPatch = debugSurface->getUnderlyingBufferSize();

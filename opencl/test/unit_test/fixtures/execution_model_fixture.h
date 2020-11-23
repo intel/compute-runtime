@@ -109,7 +109,7 @@ struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
                                          testing::Test {
 
     void SetUp() override {
-        device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+        device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex)};
         CommandQueueHwFixture::SetUp(device, 0);
     }
     void TearDown() override {
@@ -125,4 +125,5 @@ struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
 
         return std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
     }
+    const uint32_t rootDeviceIndex = 0u;
 };
