@@ -134,11 +134,11 @@ constexpr FormatTypes layoutY410 = {{{GMM_FORMAT_Y410, NEO::GFX3DSTATE_SURFACEFO
                                      {GMM_FORMAT_Y410, NEO::GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM, 0, 4, 1, 4},
                                      {GMM_FORMAT_Y410, NEO::GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM, 0, 4, 1, 4},
                                      {GMM_FORMAT_Y410, NEO::GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM, 0, 4, 1, 4}}};
-constexpr FormatTypes layoutY16 = {{{GMM_FORMAT_Y16_UNORM, NEO::GFX3DSTATE_SURFACEFORMAT_R16_UNORM, 0, 1, 2, 2},
-                                    {GMM_FORMAT_Y16_UNORM, NEO::GFX3DSTATE_SURFACEFORMAT_R16_UNORM, 0, 1, 2, 2},
-                                    {GMM_FORMAT_Y16_UNORM, NEO::GFX3DSTATE_SURFACEFORMAT_R16_UNORM, 0, 1, 2, 2},
-                                    {GMM_FORMAT_Y16_UNORM, NEO::GFX3DSTATE_SURFACEFORMAT_R16_UNORM, 0, 1, 2, 2},
-                                    {GMM_FORMAT_Y16_UNORM, NEO::GFX3DSTATE_SURFACEFORMAT_R16_UNORM, 0, 1, 2, 2}}};
+constexpr FormatTypes layoutY16 = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                    {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                    {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                    {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1},
+                                    {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
 constexpr FormatTypes layoutP010 = {{{GMM_FORMAT_P010, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_16, 0, 2, 1, 1},
                                      {GMM_FORMAT_P010, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_16, 0, 2, 1, 1},
                                      {GMM_FORMAT_P010, NEO::GFX3DSTATE_SURFACEFORMAT_PLANAR_420_16, 0, 2, 1, 1},
