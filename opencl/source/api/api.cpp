@@ -1511,6 +1511,12 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
 
     retVal = validateObjects(WithCastToInternal(program, &pProgram), Program::isValidCallback(funcNotify, userData));
 
+    if (CL_SUCCESS == retVal) {
+        if (pProgram->isLocked()) {
+            retVal = CL_INVALID_OPERATION;
+        }
+    }
+
     ClDeviceVector deviceVector;
     ClDeviceVector *deviceVectorPtr = &deviceVector;
 
@@ -1543,6 +1549,12 @@ cl_int CL_API_CALL clCompileProgram(cl_program program,
     Program *pProgram = nullptr;
 
     retVal = validateObjects(WithCastToInternal(program, &pProgram), Program::isValidCallback(funcNotify, userData));
+
+    if (CL_SUCCESS == retVal) {
+        if (pProgram->isLocked()) {
+            retVal = CL_INVALID_OPERATION;
+        }
+    }
 
     ClDeviceVector deviceVector;
     ClDeviceVector *deviceVectorPtr = &deviceVector;

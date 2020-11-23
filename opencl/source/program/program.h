@@ -154,7 +154,7 @@ class Program : public BaseObject<_cl_program> {
                         size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
 
     bool isBuilt() const {
-        return std::all_of(this->deviceBuildInfos.begin(), this->deviceBuildInfos.end(), [](auto deviceBuildInfo) { return deviceBuildInfo.second.buildStatus == CL_SUCCESS; });
+        return std::any_of(this->deviceBuildInfos.begin(), this->deviceBuildInfos.end(), [](auto deviceBuildInfo) { return deviceBuildInfo.second.buildStatus == CL_SUCCESS && deviceBuildInfo.second.programBinaryType == CL_PROGRAM_BINARY_TYPE_EXECUTABLE; });
     }
 
     Context &getContext() const {
@@ -261,6 +261,19 @@ class Program : public BaseObject<_cl_program> {
     static cl_int processInputDevices(ClDeviceVector *&deviceVectorPtr, cl_uint numDevices, const cl_device_id *deviceList, const ClDeviceVector &allAvailableDevices);
     MOCKABLE_VIRTUAL void initInternalOptions(std::string &internalOptions) const;
     uint32_t getMaxRootDeviceIndex() const { return maxRootDeviceIndex; }
+    void retainForKernel() {
+        std::unique_lock<std::mutex> lock{lockMutex};
+        exposedKernels++;
+    }
+    void releaseForKernel() {
+        std::unique_lock<std::mutex> lock{lockMutex};
+        UNRECOVERABLE_IF(exposedKernels == 0);
+        exposedKernels--;
+    }
+    bool isLocked() {
+        std::unique_lock<std::mutex> lock{lockMutex};
+        return 0 != exposedKernels;
+    }
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
@@ -346,6 +359,8 @@ class Program : public BaseObject<_cl_program> {
     bool isBuiltIn = false;
     bool kernelDebugEnabled = false;
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
+    std::mutex lockMutex;
+    uint32_t exposedKernels = 0;
 };
 
 } // namespace NEO

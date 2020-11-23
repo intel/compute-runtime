@@ -3062,3 +3062,38 @@ TEST(BuildProgramTest, givenMultiDeviceProgramWhenBuildingThenStoreAndProcessBin
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST(ProgramTest, whenProgramIsBuiltAsAnExecutableForAtLeastOneDeviceThenIsBuiltMethodReturnsTrue) {
+    MockSpecializedContext context;
+    MockProgram program(&context, false, context.getDevices());
+    EXPECT_FALSE(program.isBuilt());
+    program.deviceBuildInfos[context.getDevice(0)].buildStatus = CL_BUILD_SUCCESS;
+    program.deviceBuildInfos[context.getDevice(0)].programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
+    program.deviceBuildInfos[context.getDevice(1)].buildStatus = CL_BUILD_ERROR;
+    EXPECT_FALSE(program.isBuilt());
+    program.deviceBuildInfos[context.getDevice(0)].buildStatus = CL_BUILD_SUCCESS;
+    program.deviceBuildInfos[context.getDevice(0)].programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+    EXPECT_TRUE(program.isBuilt());
+}
+
+TEST(ProgramTest, givenUnlockedProgramWhenRetainForKernelIsCalledThenProgramIsLocked) {
+    MockSpecializedContext context;
+    MockProgram program(&context, false, context.getDevices());
+    EXPECT_FALSE(program.isLocked());
+    program.retainForKernel();
+    EXPECT_TRUE(program.isLocked());
+}
+
+TEST(ProgramTest, givenLockedProgramWhenReleasingForKernelIsCalledForEachRetainThenProgramIsUnlocked) {
+    MockSpecializedContext context;
+    MockProgram program(&context, false, context.getDevices());
+    EXPECT_FALSE(program.isLocked());
+    program.retainForKernel();
+    EXPECT_TRUE(program.isLocked());
+    program.retainForKernel();
+    EXPECT_TRUE(program.isLocked());
+    program.releaseForKernel();
+    EXPECT_TRUE(program.isLocked());
+    program.releaseForKernel();
+    EXPECT_FALSE(program.isLocked());
+}

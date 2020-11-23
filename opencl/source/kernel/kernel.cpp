@@ -73,6 +73,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, bool schedu
       kernelInfo(kernelInfoArg) {
     kernelDeviceInfos.resize(program->getMaxRootDeviceIndex() + 1);
     program->retain();
+    program->retainForKernel();
     imageTransformer.reset(new ImageTransformer);
 
     maxKernelWorkGroupSize = static_cast<uint32_t>(deviceVector[0]->getSharedDeviceInfo().maxWorkGroupSize);
@@ -105,6 +106,7 @@ Kernel::~Kernel() {
     }
 
     kernelArgHandlers.clear();
+    program->releaseForKernel();
     program->release();
 }
 
