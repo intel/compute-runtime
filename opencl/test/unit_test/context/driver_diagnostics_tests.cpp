@@ -297,14 +297,14 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
 }
 
-TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsDefaultWhenProvideLocalWorkGroupSizeIsCalledReturnValue) {
+TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsDefaultWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
 }
-TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsTrueWhenProvideLocalWorkGroupSizeIsCalledReturnValue) {
+TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsTrueWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
@@ -314,7 +314,7 @@ TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeS
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 2, {32, 32, 1}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
 }
-TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsFalseWhenProvideLocalWorkGroupSizeIsCalledReturnValue) {
+TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsFalseWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);

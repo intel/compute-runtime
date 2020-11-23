@@ -99,7 +99,7 @@ TEST_F(ContextGetInfoTest, GivenContextDevicesParamNameWhenGettingInfoThenCorrec
     delete[] devicesReturned;
 }
 
-TEST_F(ContextGetInfoTest, ContextProperties) {
+TEST_F(ContextGetInfoTest, GivenContextPropertiesWhenGettingInfoThenSuccessIsReturned) {
     cl_context_properties props;
     size_t size;
 
