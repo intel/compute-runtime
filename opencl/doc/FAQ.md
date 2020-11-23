@@ -10,10 +10,6 @@ see the [main FAQ](https://github.com/intel/compute-runtime/blob/master/FAQ.md).
 
 See [README.md](https://github.com/intel/compute-runtime/blob/master/README.md).
 
-### How can I enable OpenCL 2.1 on the Apollo Lake / Broxton platform?
-
-You can enable a higher version of OpenCL using the ForceOCLVersion debug flag.
-
 ## Known Issues and Limitations
 
 OpenCL compliance of a driver built from open-source components should not be
