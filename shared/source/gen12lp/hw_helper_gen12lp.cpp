@@ -289,16 +289,6 @@ bool MemorySynchronizationCommands<TGLLPFamily>::isPipeControlPriorToPipelineSel
 }
 
 template <>
-bool HwHelperHw<Family>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
-    return Gen12LPHelpers::obtainBlitterPreference(hwInfo);
-}
-
-template <>
-inline LocalMemoryAccessMode HwHelperHw<Family>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    return Gen12LPHelpers::getDefaultLocalMemoryAccessMode(hwInfo);
-}
-
-template <>
 void HwHelperHw<TGLLPFamily>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
     HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     if (hwHelper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed) {
