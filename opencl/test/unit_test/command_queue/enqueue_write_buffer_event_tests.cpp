@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-TEST_F(EnqueueWriteBufferTypeTest, eventShouldBeReturned) {
+TEST_F(EnqueueWriteBufferTypeTest, WhenWritingBufferThenReturnedEventIsCorrect) {
     cl_bool blockingWrite = CL_TRUE;
     size_t offset = 0;
     size_t size = sizeof(cl_float);
@@ -59,7 +59,7 @@ TEST_F(EnqueueWriteBufferTypeTest, eventShouldBeReturned) {
     delete pEvent;
 }
 
-TEST_F(EnqueueWriteBufferTypeTest, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
+TEST_F(EnqueueWriteBufferTypeTest, WhenWritingBufferThenReturnedEventShouldBeMaxOfInputEventsAndCmdQPlusOne) {
     uint32_t taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 

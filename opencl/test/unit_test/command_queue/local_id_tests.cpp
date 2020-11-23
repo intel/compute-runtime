@@ -76,7 +76,7 @@ TEST(LocalID, GivenSimd1WhenGettingPerThreadSizeLocalIdsThenValueIsEqualGrfSize)
 
     EXPECT_EQ(grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
 }
-TEST(LocalID, givenVariadicGrfSizeWhenLocalSizesAreEmittedTheyUseFullRowSize) {
+TEST(LocalID, givenVariadicGrfSizeWhenLocalSizesAreEmittedThenUseFullRowSize) {
     auto localIdsPtr = allocateAlignedMemory(3 * 64u, MemoryConstants::cacheLineSize);
 
     uint16_t *localIdsView = reinterpret_cast<uint16_t *>(localIdsPtr.get());

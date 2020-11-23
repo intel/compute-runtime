@@ -111,7 +111,7 @@ INSTANTIATE_TYPED_TEST_CASE_P(OOQ, OOQTaskTypedTests, EnqueueParams);
 
 typedef OOQTaskTypedTests<EnqueueKernelHelper<>> OOQTaskTests;
 
-TEST_F(OOQTaskTests, enqueueKernel_changesTaskCount) {
+TEST_F(OOQTaskTests, WhenEnqueuingKernelThenTaskCountIsIncremented) {
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
 
