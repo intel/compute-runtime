@@ -183,7 +183,7 @@ TEST(DriverImpTest, DISABLED_givenMissingMetricApiDependenciesWhenInitializingDr
     EXPECT_EQ(nullptr, L0::GlobalDriver);
 }
 
-TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironmentThenPerContextMemorySpaceIsTrue) {
+TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
@@ -197,14 +197,14 @@ TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironment
 
     ASSERT_NE(nullptr, L0::GlobalDriver);
     ASSERT_NE(0u, L0::GlobalDriver->numDevices);
-    EXPECT_TRUE(L0::GlobalDriver->devices[0]->getNEODevice()->getExecutionEnvironment()->isPerContextMemorySpaceRequired());
+    EXPECT_TRUE(L0::GlobalDriver->devices[0]->getNEODevice()->getExecutionEnvironment()->isDebuggingEnabled());
 
     delete L0::GlobalDriver;
     L0::GlobalDriverHandle = nullptr;
     L0::GlobalDriver = nullptr;
 }
 
-TEST(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmentThenPerContextMemorySpaceIsFalse) {
+TEST(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
@@ -214,7 +214,7 @@ TEST(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmen
 
     ASSERT_NE(nullptr, L0::GlobalDriver);
     ASSERT_NE(0u, L0::GlobalDriver->numDevices);
-    EXPECT_FALSE(L0::GlobalDriver->devices[0]->getNEODevice()->getExecutionEnvironment()->isPerContextMemorySpaceRequired());
+    EXPECT_FALSE(L0::GlobalDriver->devices[0]->getNEODevice()->getExecutionEnvironment()->isDebuggingEnabled());
 
     delete L0::GlobalDriver;
     L0::GlobalDriverHandle = nullptr;

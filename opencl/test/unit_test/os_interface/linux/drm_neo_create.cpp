@@ -36,7 +36,12 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
         return *pDrmToReturnFromCreateFunc;
     }
     auto drm = new DrmMockDefault(rootDeviceEnvironment);
-    if (!rootDeviceEnvironment.executionEnvironment.isPerContextMemorySpaceRequired()) {
+
+    if (drm->isVmBindAvailable() && rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
+        drm->setPerContextVMRequired(true);
+    }
+
+    if (!drm->isPerContextVMRequired()) {
         drm->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
     }
     return drm;

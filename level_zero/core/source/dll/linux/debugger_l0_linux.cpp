@@ -13,9 +13,12 @@
 
 namespace L0 {
 std::unique_ptr<NEO::Debugger> DebuggerL0::create(NEO::Device *device) {
-    initDebuggingInOs(device->getRootDeviceEnvironment().osInterface.get());
-    auto debugger = debuggerL0Factory[device->getHardwareInfo().platform.eRenderCoreFamily](device);
-    return std::unique_ptr<DebuggerL0>(debugger);
+    auto success = initDebuggingInOs(device->getRootDeviceEnvironment().osInterface.get());
+    if (success) {
+        auto debugger = debuggerL0Factory[device->getHardwareInfo().platform.eRenderCoreFamily](device);
+        return std::unique_ptr<DebuggerL0>(debugger);
+    }
+    return std::unique_ptr<DebuggerL0>(nullptr);
 }
 
 } // namespace L0

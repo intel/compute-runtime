@@ -7,6 +7,7 @@
 
 #pragma once
 #include "level_zero/core/source/debugger/debugger_l0.h"
+#include "level_zero/core/test/unit_tests/white_box.h"
 
 namespace L0 {
 namespace ult {
@@ -50,6 +51,12 @@ struct MockDebuggerL0HwPopulateFactory {
     MockDebuggerL0HwPopulateFactory() {
         mockDebuggerL0HwFactory[productFamily] = MockDebuggerL0Hw<GfxFamily>::allocate;
     }
+};
+
+template <>
+struct WhiteBox<::L0::DebuggerL0> : public ::L0::DebuggerL0 {
+    using BaseClass = ::L0::DebuggerL0;
+    using BaseClass::initDebuggingInOs;
 };
 
 } // namespace ult

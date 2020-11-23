@@ -439,7 +439,7 @@ TEST(DrmTest, givenDrmWhenCreatingOsContextThenCreateDrmContextWithVmId) {
 
 TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPerContextIsUsed) {
     auto &rootEnv = *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0];
-    rootEnv.executionEnvironment.setPerContextMemorySpace();
+    rootEnv.executionEnvironment.setDebuggingEnabled();
 
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
@@ -453,7 +453,7 @@ TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicit
 
 TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPerContextIsQueriedAndStored) {
     auto &rootEnv = *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0];
-    rootEnv.executionEnvironment.setPerContextMemorySpace();
+    rootEnv.executionEnvironment.setDebuggingEnabled();
 
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);

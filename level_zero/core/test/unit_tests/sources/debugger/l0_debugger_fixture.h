@@ -49,8 +49,7 @@ struct L0DebuggerFixture {
 struct L0DebuggerHwFixture : public L0DebuggerFixture {
     void SetUp() {
         L0DebuggerFixture::SetUp();
-        debuggerHw = mockDebuggerL0HwFactory[neoDevice->getHardwareInfo().platform.eRenderCoreFamily](neoDevice);
-        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(debuggerHw);
+        debuggerHw = static_cast<DebuggerL0 *>(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get());
         neoDevice->setPreemptionMode(PreemptionMode::Disabled);
     }
 

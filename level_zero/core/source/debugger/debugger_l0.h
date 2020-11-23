@@ -81,7 +81,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
                sba.SurfaceStateBaseAddress != 0 ||
                sba.BindlessSurfaceStateBaseAddress != 0;
     }
-    static void initDebuggingInOs(NEO::OSInterface *osInterface);
+    static bool initDebuggingInOs(NEO::OSInterface *osInterface);
 
     void initialize();
 

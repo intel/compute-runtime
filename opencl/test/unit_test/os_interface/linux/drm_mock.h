@@ -45,7 +45,12 @@ class DrmMock : public Drm {
 
     DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(fd, ""), rootDeviceEnvironment) {
         sliceCountChangeSupported = true;
-        if (!rootDeviceEnvironment.executionEnvironment.isPerContextMemorySpaceRequired()) {
+
+        if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
+            setPerContextVMRequired(true);
+        }
+
+        if (!isPerContextVMRequired()) {
             createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
         }
     }
@@ -222,7 +227,9 @@ class DrmMockEngine : public DrmMock {
 
 class DrmMockResources : public DrmMock {
   public:
-    using DrmMock::DrmMock;
+    DrmMockResources(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {
+        setBindAvailable();
+    }
 
     bool registerResourceClasses() override {
         registerClassesCalled = true;
@@ -243,6 +250,10 @@ class DrmMockResources : public DrmMock {
 
     uint32_t registerIsaCookie(uint32_t isaHanlde) override {
         return currentCookie++;
+    }
+
+    bool isVmBindAvailable() override {
+        return bindAvailable;
     }
 
     static const uint32_t registerResourceReturnHandle;

@@ -52,12 +52,13 @@ bool Device::createDeviceImpl() {
     auto &hwInfo = getHardwareInfo();
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
-    if (!getDebugger()) {
-        this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initDebugger();
-    }
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     hwHelper.setupHardwareCapabilities(&this->hardwareCapabilities, hwInfo);
     executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initGmm();
+
+    if (!getDebugger()) {
+        this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initDebugger();
+    }
 
     if (!createEngines()) {
         return false;

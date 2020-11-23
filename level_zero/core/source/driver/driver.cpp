@@ -46,7 +46,7 @@ void DriverImp::initialize(ze_result_t *result) {
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
 
     if (envVariables.programDebugging) {
-        executionEnvironment->setPerContextMemorySpace();
+        executionEnvironment->setDebuggingEnabled();
     }
 
     executionEnvironment->incRefInternal();

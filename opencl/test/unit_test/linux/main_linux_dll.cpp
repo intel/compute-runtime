@@ -462,21 +462,53 @@ TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtual
     }
 }
 
-TEST_F(DrmTests, givenRequiredPerContextMemorySpaceWhenDrmIsCreatedThenGetVirtualMemoryAddressSpaceReturnsZeroAndVMsAreNotCreated) {
+TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetVirtualMemoryAddressSpaceReturnsZeroAndVMsAreNotCreated) {
     DebugManagerStateRestore restore;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
+    DebugManager.flags.UseVmBind.set(1);
 
-    rootDeviceEnvironment->executionEnvironment.setPerContextMemorySpace();
+    rootDeviceEnvironment->executionEnvironment.setDebuggingEnabled();
+
+    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    ASSERT_NE(drm, nullptr);
+    if (drm->isVmBindAvailable()) {
+        EXPECT_TRUE(drm->isPerContextVMRequired());
+
+        auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+        for (auto id = 0u; id < numSubDevices; id++) {
+            EXPECT_EQ(0u, drm->getVirtualMemoryAddressSpace(id));
+        }
+        EXPECT_EQ(0u, static_cast<DrmWrap *>(drm.get())->virtualMemoryIds.size());
+    }
+}
+
+TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenPerContextVMIsFalseVMsAreCreatedAndDebugMessageIsPrinted) {
+    DebugManagerStateRestore restore;
+
+    ::testing::internal::CaptureStderr();
+    ::testing::internal::CaptureStdout();
+
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    DebugManager.flags.UseVmBind.set(0);
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    rootDeviceEnvironment->executionEnvironment.setDebuggingEnabled();
 
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
-    EXPECT_TRUE(drm->isPerContextVMRequired());
+    EXPECT_FALSE(drm->isPerContextVMRequired());
 
     auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
     for (auto id = 0u; id < numSubDevices; id++) {
-        EXPECT_EQ(0u, drm->getVirtualMemoryAddressSpace(id));
+        EXPECT_NE(0u, drm->getVirtualMemoryAddressSpace(id));
     }
-    EXPECT_EQ(0u, static_cast<DrmWrap *>(drm.get())->virtualMemoryIds.size());
+    EXPECT_NE(0u, static_cast<DrmWrap *>(drm.get())->virtualMemoryIds.size());
+
+    DebugManager.flags.PrintDebugMessages.set(false);
+    ::testing::internal::GetCapturedStdout();
+    std::string errStr = ::testing::internal::GetCapturedStderr();
+
+    EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("WARNING: Debugging not supported\n")));
 }
 
 TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualMemoryIdZeroAndPrintDebugMessage) {

@@ -8,6 +8,7 @@
 #include "level_zero/core/source/debugger/debugger_l0.h"
 
 namespace L0 {
-void DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
+bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
+    return false;
 }
 } // namespace L0

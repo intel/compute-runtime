@@ -23,7 +23,7 @@ struct L0DebuggerLinuxFixture {
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-
+        executionEnvironment->setDebuggingEnabled();
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
@@ -65,6 +65,69 @@ TEST_F(L0DebuggerLinuxTest, whenDebuggerIsCreatedThenItCallsDrmToRegisterResourc
     EXPECT_NE(nullptr, neoDevice->getDebugger());
 
     EXPECT_TRUE(drmMock->registerClassesCalled);
+}
+
+TEST(L0DebuggerLinux, givenVmBindAndPerContextVmEnabledInDrmWhenInitializingDebuggingInOsThenRegisterResourceClassesIsCalled) {
+    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->setDebuggingEnabled();
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+    auto osInterface = new OSInterface();
+    auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock->bindAvailable = true;
+    drmMock->setPerContextVMRequired(true);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(static_cast<Drm *>(drmMock));
+
+    auto result = WhiteBox<::L0::DebuggerL0>::initDebuggingInOs(osInterface);
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(drmMock->registerClassesCalled);
+}
+
+TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsThenRegisterResourceClassesIsNotCalled) {
+    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->setDebuggingEnabled();
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+    auto osInterface = new OSInterface();
+    auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock->bindAvailable = false;
+    drmMock->setPerContextVMRequired(true);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(static_cast<Drm *>(drmMock));
+
+    auto result = WhiteBox<::L0::DebuggerL0>::initDebuggingInOs(osInterface);
+    EXPECT_FALSE(result);
+    EXPECT_FALSE(drmMock->registerClassesCalled);
+}
+
+TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsThenRegisterResourceClassesIsNotCalled) {
+    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->setDebuggingEnabled();
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+    auto osInterface = new OSInterface();
+    auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock->bindAvailable = true;
+    drmMock->setPerContextVMRequired(false);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(static_cast<Drm *>(drmMock));
+
+    auto result = WhiteBox<::L0::DebuggerL0>::initDebuggingInOs(osInterface);
+    EXPECT_FALSE(result);
+    EXPECT_FALSE(drmMock->registerClassesCalled);
 }
 
 } // namespace ult

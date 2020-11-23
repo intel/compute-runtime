@@ -108,7 +108,15 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
         }
     }
 
-    if (!rootDeviceEnvironment.executionEnvironment.isPerContextMemorySpaceRequired()) {
+    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
+        if (drmObject->isVmBindAvailable()) {
+            drmObject->setPerContextVMRequired(true);
+        } else {
+            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Debugging not supported\n");
+        }
+    }
+
+    if (!drmObject->isPerContextVMRequired()) {
         if (!drmObject->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()))) {
             printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
         }

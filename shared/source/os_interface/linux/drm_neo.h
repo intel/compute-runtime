@@ -112,8 +112,11 @@ class Drm {
     bool isPerContextVMRequired() {
         return requirePerContextVM;
     }
+    void setPerContextVMRequired(bool required) {
+        requirePerContextVM = required;
+    }
 
-    bool isVmBindAvailable();
+    MOCKABLE_VIRTUAL bool isVmBindAvailable();
     MOCKABLE_VIRTUAL bool registerResourceClasses();
 
     MOCKABLE_VIRTUAL uint32_t registerResource(ResourceClass classType, void *data, size_t size);
