@@ -591,14 +591,14 @@ HWTEST_F(CommandStreamReceiverTest, whenCsrIsCreatedThenUseTimestampPacketWriteI
     EXPECT_EQ(UnitTestHelper<FamilyType>::isTimestampPacketWriteSupported(), csr.peekTimestampPacketWriteEnabled());
 }
 
-TEST_F(CommandStreamReceiverTest, whenGetEventTsAllocatorIsCalledItReturnsSameTagAllocator) {
+TEST_F(CommandStreamReceiverTest, whenGettingEventTsAllocatorThenSameTagAllocatorIsReturned) {
     TagAllocator<HwTimeStamps> *allocator = commandStreamReceiver->getEventTsAllocator();
     EXPECT_NE(nullptr, allocator);
     TagAllocator<HwTimeStamps> *allocator2 = commandStreamReceiver->getEventTsAllocator();
     EXPECT_EQ(allocator2, allocator);
 }
 
-TEST_F(CommandStreamReceiverTest, whenGetEventPerfCountAllocatorIsCalledItReturnsSameTagAllocator) {
+TEST_F(CommandStreamReceiverTest, whenGettingEventPerfCountAllocatorThenSameTagAllocatorIsReturned) {
     const uint32_t gpuReportSize = 100;
     TagAllocator<HwPerfCounter> *allocator = commandStreamReceiver->getEventPerfCountAllocator(gpuReportSize);
     EXPECT_NE(nullptr, allocator);
