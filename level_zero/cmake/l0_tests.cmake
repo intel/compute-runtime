@@ -136,4 +136,7 @@ if(UNIX)
                         dl
   )
 endif()
-set_target_properties(compute_runtime_mockable_extra PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(compute_runtime_mockable_extra PROPERTIES
+                      POSITION_INDEPENDENT_CODE ON
+                      FOLDER "ze_intel_gpu"
+)

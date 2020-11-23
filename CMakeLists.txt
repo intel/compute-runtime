@@ -980,6 +980,7 @@ if(EXISTS ${NEO_SOURCE_DIR}/../internal)
   add_subdirectory_unique(${NEO_SOURCE_DIR}/../internal ${NEO_BUILD_DIR}/internal)
 endif()
 
+set(NEO_SCRIPT_PROJECTS_FOLDER "neo scripts")
 add_subdirectory_unique(scripts/lint)
 if(EXISTS ${NEO_SOURCE_DIR}/scripts/format)
   add_subdirectory_unique(scripts/format)

@@ -19,4 +19,5 @@ add_custom_target(format_files
 set_target_properties(format_files PROPERTIES
                       EXCLUDE_FROM_DEFAULT_BUILD TRUE
                       EXCLUDE_FROM_ALL TRUE
+                      FOLDER ${NEO_SCRIPT_PROJECTS_FOLDER}
 )

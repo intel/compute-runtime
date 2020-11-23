@@ -12,6 +12,7 @@ if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
   set_target_properties(lint PROPERTIES
                         EXCLUDE_FROM_DEFAULT_BUILD TRUE
                         EXCLUDE_FROM_ALL TRUE
+                        FOLDER ${NEO_SCRIPT_PROJECTS_FOLDER}
   )
   add_custom_target(lint_head
                     ${NEO_SOURCE_DIR}/scripts/lint${BRANCH_DIR_SUFFIX}/set_copyright.sh HEAD
@@ -20,6 +21,7 @@ if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
   set_target_properties(lint_head PROPERTIES
                         EXCLUDE_FROM_DEFAULT_BUILD TRUE
                         EXCLUDE_FROM_ALL TRUE
+                        FOLDER ${NEO_SCRIPT_PROJECTS_FOLDER}
   )
 endif()
 
