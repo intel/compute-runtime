@@ -198,6 +198,8 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
             0,
             *rootDeviceEnvironment.getHardwareInfo(),
             args);
+
+        EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, *rootDeviceEnvironment.getHardwareInfo());
     }
 }
 

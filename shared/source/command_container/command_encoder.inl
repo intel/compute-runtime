@@ -425,6 +425,9 @@ bool EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(const KernelDes
     return false;
 }
 
+template <typename GfxFamily>
+void EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(WALKER_TYPE &walkerCmd, const HardwareInfo &hwInfo) {}
+
 template <typename Family>
 void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress) {
     for (int i = 0; i < 3; ++i) {
