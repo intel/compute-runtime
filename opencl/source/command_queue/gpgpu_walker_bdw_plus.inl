@@ -185,22 +185,19 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     LinearStream *cmdStream,
     WALKER_TYPE<GfxFamily> *walkerCmd,
     TagNode<TimestampPacketStorage> *timestampPacketNode,
-    TimestampPacketStorage::WriteOperationType writeOperationType,
     const RootDeviceEnvironment &rootDeviceEnvironment) {
 
-    if (TimestampPacketStorage::WriteOperationType::AfterWalker == writeOperationType) {
-        uint64_t address = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
-        PipeControlArgs args;
-        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-            *cmdStream,
-            PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-            address,
-            0,
-            *rootDeviceEnvironment.getHardwareInfo(),
-            args);
+    uint64_t address = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
+    PipeControlArgs args;
+    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        *cmdStream,
+        PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        address,
+        0,
+        *rootDeviceEnvironment.getHardwareInfo(),
+        args);
 
-        EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, *rootDeviceEnvironment.getHardwareInfo());
-    }
+    EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, *rootDeviceEnvironment.getHardwareInfo());
 }
 
 template <typename GfxFamily>

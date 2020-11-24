@@ -37,11 +37,6 @@ struct TimestampPacketStorage {
         uint32_t globalEnd = 1u;
     };
 
-    enum class WriteOperationType : uint32_t {
-        BeforeWalker,
-        AfterWalker
-    };
-
     static GraphicsAllocation::AllocationType getAllocationType() {
         return GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
     }

@@ -140,7 +140,6 @@ class GpgpuWalkerHelper {
         LinearStream *cmdStream,
         WALKER_TYPE<GfxFamily> *walkerCmd,
         TagNode<TimestampPacketStorage> *timestampPacketNode,
-        TimestampPacketStorage::WriteOperationType writeOperationType,
         const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void dispatchScheduler(
