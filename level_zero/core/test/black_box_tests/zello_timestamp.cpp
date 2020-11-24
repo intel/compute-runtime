@@ -119,7 +119,7 @@ bool testWriteGlobalTimestamp(ze_context_handle_t &context,
     globalTsStart = nullptr;
     globalTsEnd = nullptr;
 
-    ze_device_mem_alloc_desc_t deviceDesc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     deviceDesc.ordinal = 0;
 
@@ -180,11 +180,11 @@ bool testKernelTimestampHostQuery(ze_context_handle_t &context,
 
     // Create two shared buffers
     constexpr size_t allocSize = 4096;
-    ze_device_mem_alloc_desc_t deviceDesc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     deviceDesc.ordinal = 0;
 
-    ze_host_mem_alloc_desc_t hostDesc;
+    ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
     void *srcBuffer = nullptr;
@@ -281,11 +281,11 @@ bool testKernelTimestampApendQuery(ze_context_handle_t &context,
 
     // Create two shared buffers
     constexpr size_t allocSize = 4096;
-    ze_device_mem_alloc_desc_t deviceDesc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     deviceDesc.ordinal = 0;
 
-    ze_host_mem_alloc_desc_t hostDesc;
+    ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
     void *srcBuffer = nullptr;

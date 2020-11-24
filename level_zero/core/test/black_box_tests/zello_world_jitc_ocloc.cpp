@@ -148,11 +148,11 @@ int main(int argc, char *argv[]) {
 
     // Create two shared buffers
     constexpr size_t allocSize = 4096;
-    ze_device_mem_alloc_desc_t deviceDesc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     deviceDesc.ordinal = 0;
 
-    ze_host_mem_alloc_desc_t hostDesc;
+    ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
     void *srcBuffer = nullptr;

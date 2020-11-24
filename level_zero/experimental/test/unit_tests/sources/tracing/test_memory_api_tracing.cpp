@@ -17,7 +17,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemAllocSharedTracingWrapperWithOneS
     driver_ddiTable.core_ddiTable.Mem.pfnAllocShared =
         [](ze_context_handle_t hContext, const ze_device_mem_alloc_desc_t *deviceDesc, const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment, ze_device_handle_t hDevice, void **pptr) { return ZE_RESULT_SUCCESS; };
 
-    ze_device_mem_alloc_desc_t deviceDesc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc;
     size_t size = 1024;
     size_t alignment = 4096;
