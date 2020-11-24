@@ -224,9 +224,9 @@ ze_result_t DeviceImp::getComputeProperties(ze_device_compute_properties_t *pCom
     pComputeProperties->maxGroupSizeY = static_cast<uint32_t>(deviceInfo.maxWorkItemSizes[1]);
     pComputeProperties->maxGroupSizeZ = static_cast<uint32_t>(deviceInfo.maxWorkItemSizes[2]);
 
-    pComputeProperties->maxGroupCountX = UINT32_MAX;
-    pComputeProperties->maxGroupCountY = UINT32_MAX;
-    pComputeProperties->maxGroupCountZ = UINT32_MAX;
+    pComputeProperties->maxGroupCountX = std::numeric_limits<uint32_t>::max();
+    pComputeProperties->maxGroupCountY = std::numeric_limits<uint32_t>::max();
+    pComputeProperties->maxGroupCountZ = std::numeric_limits<uint32_t>::max();
 
     pComputeProperties->maxSharedLocalMemory = static_cast<uint32_t>(deviceInfo.localMemSize);
 

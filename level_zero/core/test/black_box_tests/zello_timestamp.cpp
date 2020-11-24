@@ -144,7 +144,7 @@ bool testWriteGlobalTimestamp(ze_context_handle_t &context,
                                                        nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, UINT32_MAX));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
 
     ze_device_properties_t devProperties = {};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &devProperties));
@@ -241,7 +241,7 @@ bool testKernelTimestampHostQuery(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, kernelTsEvent, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, UINT32_MAX));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
 
     ze_kernel_timestamp_result_t kernelTsResults;
     SUCCESS_OR_TERMINATE(zeEventQueryKernelTimestamp(kernelTsEvent, &kernelTsResults));
@@ -349,7 +349,7 @@ bool testKernelTimestampApendQuery(ze_context_handle_t &context,
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, UINT32_MAX));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
 
     ze_kernel_timestamp_result_t *kernelTsResults = reinterpret_cast<ze_kernel_timestamp_result_t *>(timestampBuffer);
 
