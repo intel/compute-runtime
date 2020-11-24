@@ -300,6 +300,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL bool setupDebugSurface(Kernel *kernel);
 
+    bool validateCapability(cl_command_queue_capabilities_intel capability) const;
+    bool validateCapabilityForOperation(cl_command_queue_capabilities_intel capability, const cl_event *waitList, const cl_event *outEvent) const;
+
     bool getRequiresCacheFlushAfterWalker() const {
         return requiresCacheFlushAfterWalker;
     }
@@ -357,6 +360,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     cl_command_queue_properties commandQueueProperties = 0;
     std::vector<uint64_t> propertiesVector;
+    cl_command_queue_capabilities_intel queueCapabilities = CL_QUEUE_CAPABILITY_ALL_INTEL;
 
     QueuePriority priority = QueuePriority::MEDIUM;
     QueueThrottle throttle = QueueThrottle::MEDIUM;

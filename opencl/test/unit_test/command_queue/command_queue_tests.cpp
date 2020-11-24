@@ -1217,6 +1217,42 @@ TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenR
     }
 }
 
+TEST(CommandQueue, givenSupportForOperationWhenValidatingSupportThenReturnSuccess) {
+    MockCommandQueue queue{};
+
+    queue.queueCapabilities = CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL;
+    EXPECT_FALSE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, nullptr));
+
+    queue.queueCapabilities |= CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL;
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, nullptr));
+}
+
+TEST(CommandQueue, givenSupportForWaitListAndWaitListPassedWhenValidatingSupportThenReturnSuccess) {
+    MockCommandQueue queue{};
+    cl_event waitList[1] = {};
+
+    queue.queueCapabilities = CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL;
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, nullptr));
+    EXPECT_FALSE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, waitList, nullptr));
+
+    queue.queueCapabilities |= CL_QUEUE_CAPABILITY_EVENT_WAIT_LIST_INTEL;
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, nullptr));
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, waitList, nullptr));
+}
+
+TEST(CommandQueue, givenSupportForOutEventAndOutEventIsPassedWhenValidatingSupportThenReturnSuccess) {
+    MockCommandQueue queue{};
+    cl_event outEvent{};
+
+    queue.queueCapabilities = CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL;
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, nullptr));
+    EXPECT_FALSE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, &outEvent));
+
+    queue.queueCapabilities |= CL_QUEUE_CAPABILITY_EVENTS_INTEL;
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, nullptr));
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, &outEvent));
+}
+
 using KernelExecutionTypesTests = DispatchFlagsTests;
 HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingNonBlockedEnqueueThenCorrectKernelTypeIsSetInCSR) {
     using CsrType = MockCsrHw2<FamilyType>;

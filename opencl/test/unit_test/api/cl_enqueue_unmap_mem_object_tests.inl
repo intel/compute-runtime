@@ -32,6 +32,24 @@ TEST_F(clEnqueueUnmapMemObjTests, givenValidAddressWhenUnmappingThenReturnSucces
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clEnqueueUnmapMemObjTests, GivenQueueIncapableWhenUnmappingBufferThenInvalidOperationIsReturned) {
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
+    cl_int retVal = CL_SUCCESS;
+
+    auto mappedPtr = clEnqueueMapBuffer(pCommandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    disableQueueCapabilities(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL);
+    retVal = clEnqueueUnmapMemObject(
+        pCommandQueue,
+        buffer.get(),
+        mappedPtr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnCpuThenReturnError) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());

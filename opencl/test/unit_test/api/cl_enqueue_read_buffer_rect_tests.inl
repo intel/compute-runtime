@@ -9,6 +9,7 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 
 #include "cl_api_tests.h"
 
@@ -139,6 +140,34 @@ TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRe
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     clReleaseMemObject(buffer);
+}
+
+TEST_F(clEnqueueReadBufferRectTest, GivenQueueIncapableWhenReadingRectangularRegionThenInvalidOperationIsReturned) {
+    MockBuffer buffer{};
+    char ptr[10];
+
+    size_t buffOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {10, 10, 0};
+
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL);
+    auto retVal = clEnqueueReadBufferRect(
+        pCommandQueue,
+        &buffer,
+        CL_FALSE,
+        buffOrigin,
+        hostOrigin,
+        region,
+        10,  //bufferRowPitch
+        0,   //bufferSlicePitch
+        10,  //hostRowPitch
+        0,   //hostSlicePitch
+        ptr, //hostPtr
+        0,   //numEventsInWaitList
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
 TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegionThenInvalidValueErrorIsReturned) {

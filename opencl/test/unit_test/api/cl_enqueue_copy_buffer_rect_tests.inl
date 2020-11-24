@@ -68,4 +68,31 @@ TEST_F(clEnqueueCopyBufferRectTests, GivenNullCommandQueueWhenEnqueingCopyBuffer
 
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
+
+TEST_F(clEnqueueCopyBufferRectTests, GivenQueueIncapableWhenEnqueingCopyBufferRectThenInvalidOperationIsReturned) {
+    MockBuffer srcBuffer;
+    MockBuffer dstBuffer;
+    size_t srcOrigin[] = {0, 0, 0};
+    size_t dstOrigin[] = {0, 0, 0};
+    size_t region[] = {10, 10, 0};
+
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL);
+    auto retVal = clEnqueueCopyBufferRect(
+        pCommandQueue,
+        &srcBuffer, //srcBuffer
+        &dstBuffer, //dstBuffer
+        srcOrigin,
+        dstOrigin,
+        region,
+        10, //srcRowPitch
+        0,  //srcSlicePitch
+        10, //dstRowPitch
+        0,  //dstSlicePitch
+        0,  //numEventsInWaitList
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 } // namespace ULT

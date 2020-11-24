@@ -104,4 +104,60 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenNullHostPtrWhenWritingRectangularRegi
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST_F(clEnqueueWriteBufferRectTests, GivenCorrectParametersWhenWritingRectangularRegionThenSuccessIsReturned) {
+    MockBuffer buffer{};
+    char ptr[10];
+
+    size_t buffOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {10, 10, 0};
+
+    auto retVal = clEnqueueWriteBufferRect(
+        pCommandQueue,
+        &buffer,
+        CL_FALSE,
+        buffOrigin,
+        hostOrigin,
+        region,
+        10,  //bufferRowPitch
+        0,   //bufferSlicePitch
+        10,  //hostRowPitch
+        0,   //hostSlicePitch
+        ptr, //hostPtr
+        0,   //numEventsInWaitList
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clEnqueueWriteBufferRectTests, GivenQueueIncapableWhenWritingRectangularRegionThenInvalidOperationIsReturned) {
+    MockBuffer buffer{};
+    char ptr[10];
+
+    size_t buffOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {10, 10, 0};
+
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL);
+    auto retVal = clEnqueueWriteBufferRect(
+        pCommandQueue,
+        &buffer,
+        CL_FALSE,
+        buffOrigin,
+        hostOrigin,
+        region,
+        10,  //bufferRowPitch
+        0,   //bufferSlicePitch
+        10,  //hostRowPitch
+        0,   //hostSlicePitch
+        ptr, //hostPtr
+        0,   //numEventsInWaitList
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 } // namespace ULT

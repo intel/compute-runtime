@@ -2253,6 +2253,12 @@ cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
             return retVal;
         }
 
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clEnqueueReadBuffer, &retVal);
+            return retVal;
+        }
+
         retVal = pCommandQueue->enqueueReadBuffer(
             pBuffer,
             blockingRead,
@@ -2338,6 +2344,12 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
         return retVal;
     }
 
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, eventWaitList, event)) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueReadBufferRect, &retVal);
+        return retVal;
+    }
+
     retVal = pCommandQueue->enqueueReadBufferRect(
         pBuffer,
         blockingRead,
@@ -2386,6 +2398,12 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
     if (CL_SUCCESS == retVal) {
 
         if (pBuffer->writeMemObjFlagsInvalid()) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clEnqueueWriteBuffer, &retVal);
+            return retVal;
+        }
+
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueWriteBuffer, &retVal);
             return retVal;
@@ -2466,6 +2484,12 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
         return retVal;
     }
 
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, eventWaitList, event)) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueWriteBufferRect, &retVal);
+        return retVal;
+    }
+
     retVal = pCommandQueue->enqueueWriteBufferRect(
         pBuffer,
         blockingWrite,
@@ -2516,6 +2540,12 @@ cl_int CL_API_CALL clEnqueueFillBuffer(cl_command_queue commandQueue,
         EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (CL_SUCCESS == retVal) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clEnqueueFillBuffer, &retVal);
+            return retVal;
+        }
+
         retVal = pCommandQueue->enqueueFillBuffer(
             pBuffer,
             pattern,
@@ -2563,6 +2593,12 @@ cl_int CL_API_CALL clEnqueueCopyBuffer(cl_command_queue commandQueue,
         size_t dstSize = pDstBuffer->getSize();
         if (srcOffset + cb > srcSize || dstOffset + cb > dstSize) {
             retVal = CL_INVALID_VALUE;
+            TRACING_EXIT(clEnqueueCopyBuffer, &retVal);
+            return retVal;
+        }
+
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueCopyBuffer, &retVal);
             return retVal;
         }
@@ -2619,6 +2655,12 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
         WithCastToInternal(dstBuffer, &pDstBuffer));
 
     if (CL_SUCCESS == retVal) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clEnqueueCopyBufferRect, &retVal);
+            return retVal;
+        }
+
         retVal = pCommandQueue->enqueueCopyBufferRect(
             pSrcBuffer,
             pDstBuffer,
@@ -3061,6 +3103,11 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
             break;
         }
 
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
+            break;
+        }
+
         retPtr = pCommandQueue->enqueueMapBuffer(
             pBuffer,
             blockingMap,
@@ -3190,6 +3237,14 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
             retVal = CL_INVALID_MEM_OBJECT;
             TRACING_EXIT(clEnqueueUnmapMemObject, &retVal);
             return retVal;
+        }
+
+        if (pMemObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
+            if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL, eventWaitList, event)) {
+                retVal = CL_INVALID_OPERATION;
+                TRACING_EXIT(clEnqueueUnmapMemObject, &retVal);
+                return retVal;
+            }
         }
 
         retVal = pCommandQueue->enqueueUnmapMemObject(pMemObj, mappedPtr, numEventsInWaitList, eventWaitList, event);

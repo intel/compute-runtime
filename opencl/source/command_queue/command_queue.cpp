@@ -538,6 +538,17 @@ bool CommandQueue::setupDebugSurface(Kernel *kernel) {
     return true;
 }
 
+bool CommandQueue::validateCapability(cl_command_queue_capabilities_intel capability) const {
+    return this->queueCapabilities == CL_QUEUE_CAPABILITY_ALL_INTEL || isValueSet(this->queueCapabilities, capability);
+}
+
+bool CommandQueue::validateCapabilityForOperation(cl_command_queue_capabilities_intel capability, const cl_event *waitList, const cl_event *outEvent) const {
+    const bool operationValid = validateCapability(capability);
+    const bool waitListValid = waitList == nullptr || validateCapability(CL_QUEUE_CAPABILITY_EVENT_WAIT_LIST_INTEL);
+    const bool outEventValid = outEvent == nullptr || validateCapability(CL_QUEUE_CAPABILITY_EVENTS_INTEL);
+    return operationValid && waitListValid && outEventValid;
+}
+
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {
     return getGpgpuCommandStreamReceiver().getIndirectHeap(heapType, minRequiredSize);
 }
@@ -730,6 +741,7 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
                 auto engine = queueFamily->at(selectedQueueIndex);
                 auto engineType = engine.getEngineType();
                 this->overrideEngine(engineType);
+                this->queueCapabilities = getClDevice().getDeviceInfo().queueFamilyProperties[selectedQueueFamilyIndex].capabilities;
             }
         }
     }

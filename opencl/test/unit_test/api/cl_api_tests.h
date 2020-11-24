@@ -63,11 +63,20 @@ struct ApiFixture {
         }
         pDevice->decRefInternal();
     }
+
+    void disableQueueCapabilities(cl_command_queue_capabilities_intel capabilities) {
+        if (pCommandQueue->queueCapabilities == CL_QUEUE_CAPABILITY_ALL_INTEL) {
+            pCommandQueue->queueCapabilities = pDevice->getQueueFamilyCapabilitiesAll();
+        }
+
+        pCommandQueue->queueCapabilities &= ~capabilities;
+    }
+
     DebugManagerStateRestore restorer;
     cl_int retVal = CL_SUCCESS;
     size_t retSize = 0;
 
-    CommandQueue *pCommandQueue = nullptr;
+    MockCommandQueue *pCommandQueue = nullptr;
     Context *pContext = nullptr;
     MockKernel *pKernel = nullptr;
     MockProgram *pProgram = nullptr;
