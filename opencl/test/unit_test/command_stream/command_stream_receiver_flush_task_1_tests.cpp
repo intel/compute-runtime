@@ -361,6 +361,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, WhenForcePipeCo
                 EXPECT_EQ(bool(pipeControl->getVfCacheInvalidationEnable()), false);
                 EXPECT_EQ(bool(pipeControl->getConstantCacheInvalidationEnable()), false);
                 EXPECT_EQ(bool(pipeControl->getStateCacheInvalidationEnable()), false);
+                EXPECT_EQ(bool(pipeControl->getTlbInvalidate()), false);
                 break;
             case 1: // Second pipe control with all flushes
                 EXPECT_EQ(bool(pipeControl->getCommandStreamerStallEnable()), true);
@@ -372,6 +373,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, WhenForcePipeCo
                 EXPECT_EQ(bool(pipeControl->getVfCacheInvalidationEnable()), true);
                 EXPECT_EQ(bool(pipeControl->getConstantCacheInvalidationEnable()), true);
                 EXPECT_EQ(bool(pipeControl->getStateCacheInvalidationEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getTlbInvalidate()), true);
             default:
                 break;
             }

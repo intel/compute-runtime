@@ -244,6 +244,7 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
         pipeControl.setVfCacheInvalidationEnable(true);
         pipeControl.setConstantCacheInvalidationEnable(true);
         pipeControl.setStateCacheInvalidationEnable(true);
+        pipeControl.setTlbInvalidate(true);
     }
     if (DebugManager.flags.DoNotFlushCaches.get()) {
         pipeControl.setDcFlushEnable(false);

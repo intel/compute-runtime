@@ -901,6 +901,7 @@ HWTEST_F(UltCommandStreamReceiverTest, WhenFlushingAllCachesThenPipeControlIsAdd
     EXPECT_TRUE(pipeControl->getVfCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getTlbInvalidate());
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, givenDebugDisablingCacheFlushWhenAddingPipeControlWithCacheFlushThenOverrideRequestAndDisableCacheFlushFlags) {
