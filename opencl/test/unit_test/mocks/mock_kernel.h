@@ -223,7 +223,7 @@ class MockKernel : public Kernel {
     void setUsingSharedArgs(bool usingSharedArgValue) { this->usingSharedObjArgs = usingSharedArgValue; }
 
     void makeResident(CommandStreamReceiver &commandStreamReceiver) override;
-    void getResidency(std::vector<Surface *> &dst) override;
+    void getResidency(std::vector<Surface *> &dst, uint32_t rootDeviceIndex) override;
     void takeOwnership() const override {
         Kernel::takeOwnership();
         takeOwnershipCalls++;

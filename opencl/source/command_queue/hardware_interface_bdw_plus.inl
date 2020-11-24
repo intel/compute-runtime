@@ -93,7 +93,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         ioh,
         ssh,
         kernel,
-        kernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
+        kernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, commandQueue.getDevice().getRootDeviceIndex()),
         simd,
         localWorkSizes,
         offsetInterfaceDescriptorTable,

@@ -21,5 +21,5 @@ GEN11TEST_F(Gen11KernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturn
 
 GEN11TEST_F(Gen11KernelTest, GivenKernelWhenNotRunningOnGen12lpThenWaDisableRccRhwoOptimizationIsNotRequired) {
     MockKernelWithInternals kernel(*pClDevice);
-    EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization());
+    EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization(rootDeviceIndex));
 }

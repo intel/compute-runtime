@@ -64,7 +64,7 @@ void HardwareInterface<TGLLPFamily>::dispatchWorkarounds(
     using MI_LOAD_REGISTER_IMM = typename TGLLPFamily::MI_LOAD_REGISTER_IMM;
     using PIPE_CONTROL = typename TGLLPFamily::PIPE_CONTROL;
 
-    if (kernel.requiresWaDisableRccRhwoOptimization()) {
+    if (kernel.requiresWaDisableRccRhwoOptimization(commandQueue.getDevice().getRootDeviceIndex())) {
 
         PIPE_CONTROL cmdPipeControl = TGLLPFamily::cmdInitPipeControl;
         cmdPipeControl.setCommandStreamerStallEnable(true);
@@ -80,8 +80,8 @@ void HardwareInterface<TGLLPFamily>::dispatchWorkarounds(
 }
 
 template <>
-size_t GpgpuWalkerHelper<TGLLPFamily>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel) {
-    if (pKernel->requiresWaDisableRccRhwoOptimization()) {
+size_t GpgpuWalkerHelper<TGLLPFamily>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel, uint32_t rootDeviceIndex) {
+    if (pKernel->requiresWaDisableRccRhwoOptimization(rootDeviceIndex)) {
         return (2 * (sizeof(TGLLPFamily::PIPE_CONTROL) + sizeof(TGLLPFamily::MI_LOAD_REGISTER_IMM)));
     }
     return 0u;

@@ -345,7 +345,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
         ioh,
         ssh,
         *kernel,
-        kernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
+        kernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
         kernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         IDToffset,
@@ -400,7 +400,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
         ioh,
         ssh,
         *mockKernelWithInternal->mockKernel,
-        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
+        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
         mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         0,
@@ -448,7 +448,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhen
         ioh,
         ssh,
         *mockKernelWithInternal->mockKernel,
-        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
+        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
         mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         0,
@@ -490,7 +490,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
         ioh,
         ssh,
         *mockKernelWithInternal->mockKernel,
-        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
+        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
         mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         0,
@@ -568,7 +568,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
         ioh,
         ssh,
         mockKernel,
-        mockKernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
+        mockKernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
         modifiedKernelInfo.getMaxSimdSize(),
         localWorkSizes,
         IDToffset,
@@ -659,7 +659,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
         ioh,
         ssh,
         *kernel,
-        kernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
+        kernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
         kernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         0,
@@ -819,7 +819,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
             ioh,
             ssh,
             *pKernel,
-            pKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
+            pKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
             pKernel->getKernelInfo().getMaxSimdSize(),
             localWorkSizes,
             0,
@@ -1016,7 +1016,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
         ioh,
         ssh,
         *mockKernelWithInternal->mockKernel,
-        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
+        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
         8,
         localWorkSizes,
         interfaceDescriptorTableOffset,
@@ -1196,7 +1196,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     mockKernelWithInternal->mockProgram->setGlobalSurface(&globalAllocation);
 
     Kernel::CacheFlushAllocationsVec allocs;
-    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs);
+    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs, rootDeviceIndex);
     EXPECT_NE(allocs.end(), std::find(allocs.begin(), allocs.end(), &globalAllocation));
 
     size_t expectedSize = sizeof(PIPE_CONTROL);
@@ -1235,7 +1235,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     mockKernelWithInternal->mockKernel->svmAllocationsRequireCacheFlush = true;
 
     Kernel::CacheFlushAllocationsVec allocs;
-    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs);
+    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs, rootDeviceIndex);
     EXPECT_NE(allocs.end(), std::find(allocs.begin(), allocs.end(), &svmAllocation1));
     EXPECT_EQ(allocs.end(), std::find(allocs.begin(), allocs.end(), &svmAllocation2));
 
@@ -1270,7 +1270,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
 
     Kernel::CacheFlushAllocationsVec allocs;
-    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs);
+    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs, rootDeviceIndex);
     EXPECT_NE(allocs.end(), std::find(allocs.begin(), allocs.end(), &cacheRequiringAllocation));
 
     size_t expectedSize = sizeof(PIPE_CONTROL);
@@ -1306,7 +1306,7 @@ TEST_F(HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenPlatformNotSup
     hardwareInfo.capabilityTable.supportCacheFlushAfterWalker = false;
 
     StackVec<GraphicsAllocation *, 32> allocationsForCacheFlush;
-    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocationsForCacheFlush);
+    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocationsForCacheFlush, rootDeviceIndex);
     EXPECT_EQ(0U, allocationsForCacheFlush.size());
 }
 
@@ -1324,13 +1324,13 @@ HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocations
 
     using CacheFlushAllocationsVec = StackVec<GraphicsAllocation *, 32>;
     CacheFlushAllocationsVec cacheFlushVec;
-    kernel->getAllocationsForCacheFlush(cacheFlushVec);
+    kernel->getAllocationsForCacheFlush(cacheFlushVec, rootDeviceIndex);
     EXPECT_EQ(0u, cacheFlushVec.size());
 
     auto bufferRegular = clCreateBufferWithPropertiesINTEL(context, nullptr, 0, 1, nullptr, nullptr);
     kernel->setArg(1, sizeof(bufferRegular), &bufferRegular);
 
-    kernel->getAllocationsForCacheFlush(cacheFlushVec);
+    kernel->getAllocationsForCacheFlush(cacheFlushVec, rootDeviceIndex);
     size_t expectedCacheFlushVecSize = (hardwareInfo.capabilityTable.supportCacheFlushAfterWalker ? 1u : 0u);
     EXPECT_EQ(expectedCacheFlushVecSize, cacheFlushVec.size());
 

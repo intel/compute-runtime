@@ -22,7 +22,7 @@ GEN12LPTEST_F(Gen12LpKernelTest, givenKernelWhenCanTransformImagesIsCalledThenRe
 
 GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenNotUsingSharedObjArgsThenWaDisableRccRhwoOptimizationIsNotRequired) {
     MockKernelWithInternals kernel(*pClDevice);
-    EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization());
+    EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization(rootDeviceIndex));
 }
 
 GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedThenWaDisableRccRhwoOptimizationIsRequired) {
@@ -56,5 +56,5 @@ GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedTh
     cl_mem clMem2 = &bufferMediaCompressed;
     kernel.mockKernel->setArgBuffer(2, sizeof(cl_mem *), &clMem2);
 
-    EXPECT_TRUE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization());
+    EXPECT_TRUE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization(rootDeviceIndex));
 }

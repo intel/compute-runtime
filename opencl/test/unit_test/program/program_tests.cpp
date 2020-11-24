@@ -1355,7 +1355,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     EXPECT_EQ(0u, pCommandStreamReceiver->residency.size());
 
     std::vector<Surface *> surfaces;
-    pKernel->getResidency(surfaces);
+    pKernel->getResidency(surfaces, rootDeviceIndex);
     EXPECT_EQ(2u, surfaces.size());
 
     for (Surface *surface : surfaces) {

@@ -38,7 +38,7 @@ GEN12LPTEST_F(GpgpuWalkerTests, givenMiStoreRegMemWhenAdjustMiStoreRegMemModeThe
 class MockKernelWithApplicableWa : public MockKernel {
   public:
     MockKernelWithApplicableWa(Program *program, KernelInfo &kernelInfo) : MockKernel(program, kernelInfo) {}
-    bool requiresWaDisableRccRhwoOptimization() const override {
+    bool requiresWaDisableRccRhwoOptimization(uint32_t rootDeviceIndex) const override {
         return waApplicable;
     }
     bool waApplicable = false;
@@ -135,14 +135,14 @@ GEN12LPTEST_F(HardwareInterfaceTests, GivenKernelWithApplicableWaDisableRccRhwoO
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     pKernel->waApplicable = true;
-    auto cmdSize = GpgpuWalkerHelper<FamilyType>::getSizeForWaDisableRccRhwoOptimization(pKernel);
+    auto cmdSize = GpgpuWalkerHelper<FamilyType>::getSizeForWaDisableRccRhwoOptimization(pKernel, rootDeviceIndex);
     size_t expectedSize = 2 * (sizeof(PIPE_CONTROL) + sizeof(MI_LOAD_REGISTER_IMM));
     EXPECT_EQ(expectedSize, cmdSize);
 }
 
 GEN12LPTEST_F(HardwareInterfaceTests, GivenKernelWithoutApplicableWaDisableRccRhwoOptimizationWhenCalculatingCommandsSizeThenZeroIsReturned) {
     pKernel->waApplicable = false;
-    auto cmdSize = GpgpuWalkerHelper<FamilyType>::getSizeForWaDisableRccRhwoOptimization(pKernel);
+    auto cmdSize = GpgpuWalkerHelper<FamilyType>::getSizeForWaDisableRccRhwoOptimization(pKernel, rootDeviceIndex);
     EXPECT_EQ(0u, cmdSize);
 }
 

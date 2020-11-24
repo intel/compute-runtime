@@ -281,7 +281,7 @@ TEST_F(BufferSetArgTest, WhenSettingKernelArgThenAddressToPatchIsSetCorrectlyAnd
     EXPECT_EQ(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddressToPatch()), *pKernelArg);
 
     std::vector<Surface *> surfaces;
-    pKernel->getResidency(surfaces);
+    pKernel->getResidency(surfaces, rootDeviceIndex);
     EXPECT_EQ(1u, surfaces.size());
 
     for (auto &surface : surfaces) {
@@ -311,7 +311,7 @@ TEST_F(BufferSetArgTest, GivenSvmPointerWhenSettingKernelArgThenAddressToPatchIs
     EXPECT_EQ(ptrSVM, *pKernelArg);
 
     std::vector<Surface *> surfaces;
-    pKernel->getResidency(surfaces);
+    pKernel->getResidency(surfaces, rootDeviceIndex);
     EXPECT_EQ(1u, surfaces.size());
     for (auto &surface : surfaces) {
         delete surface;

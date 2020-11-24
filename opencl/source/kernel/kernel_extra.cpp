@@ -33,7 +33,7 @@ bool Kernel::requiresPerDssBackedBuffer() const {
     return DebugManager.flags.ForcePerDssBackedBufferProgramming.get();
 }
 
-bool Kernel::requiresLimitedWorkgroupSize() const {
+bool Kernel::requiresLimitedWorkgroupSize(uint32_t rootDeviceIndex) const {
     return this->isBuiltIn;
 }
 

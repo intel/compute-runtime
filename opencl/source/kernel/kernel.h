@@ -283,7 +283,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     //residency for kernel surfaces
     MOCKABLE_VIRTUAL void makeResident(CommandStreamReceiver &commandStreamReceiver);
-    MOCKABLE_VIRTUAL void getResidency(std::vector<Surface *> &dst);
+    MOCKABLE_VIRTUAL void getResidency(std::vector<Surface *> &dst, uint32_t rootDeviceIndex);
     bool requiresCoherency();
     void resetSharedObjectsPatchAddresses();
     bool isUsingSharedObjArgs() const { return usingSharedObjArgs; }
@@ -379,7 +379,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     MOCKABLE_VIRTUAL bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const;
 
     using CacheFlushAllocationsVec = StackVec<GraphicsAllocation *, 32>;
-    void getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const;
+    void getAllocationsForCacheFlush(CacheFlushAllocationsVec &out, uint32_t rootDeviceIndex) const;
 
     void setAuxTranslationDirection(AuxTranslationDirection auxTranslationDirection) {
         this->auxTranslationDirection = auxTranslationDirection;
@@ -404,17 +404,18 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint64_t getKernelStartOffset(
         const bool localIdsGenerationByRuntime,
         const bool kernelUsesLocalIds,
-        const bool isCssUsed) const;
+        const bool isCssUsed,
+        uint32_t rootDeviceIndex) const;
 
     bool requiresPerDssBackedBuffer() const;
-    bool requiresLimitedWorkgroupSize() const;
+    bool requiresLimitedWorkgroupSize(uint32_t rootDeviceIndex) const;
     bool isKernelDebugEnabled() const { return debugEnabled; }
     int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue);
     void setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo);
     uint32_t getAdditionalKernelExecInfo() const;
-    MOCKABLE_VIRTUAL bool requiresWaDisableRccRhwoOptimization() const;
+    MOCKABLE_VIRTUAL bool requiresWaDisableRccRhwoOptimization(uint32_t rootDeviceIndex) const;
     const ClDeviceVector &getDevices() const {
-        return deviceVector;
+        return program->getDevices();
     }
 
   protected:
@@ -507,9 +508,12 @@ class Kernel : public BaseObject<_cl_kernel> {
     void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
 
+    const HardwareInfo &getHardwareInfo(uint32_t rootDeviceIndex) const;
+
     const ClDevice &getDevice() const {
         return *deviceVector[0];
     }
+
     const ExecutionEnvironment &executionEnvironment;
     Program *program;
     const ClDeviceVector &deviceVector;

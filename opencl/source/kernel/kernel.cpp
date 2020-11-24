@@ -1142,8 +1142,7 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     }
 }
 
-void Kernel::getResidency(std::vector<Surface *> &dst) {
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+void Kernel::getResidency(std::vector<Surface *> &dst, uint32_t rootDeviceIndex) {
     if (kernelDeviceInfos[rootDeviceIndex].privateSurface) {
         GeneralSurface *surface = new GeneralSurface(kernelDeviceInfos[rootDeviceIndex].privateSurface);
         dst.push_back(surface);
@@ -2386,8 +2385,8 @@ void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsF
     }
 }
 
-void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
-    if (false == HwHelper::cacheFlushAfterWalkerSupported(getDevice().getHardwareInfo())) {
+void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out, uint32_t rootDeviceIndex) const {
+    if (false == HwHelper::cacheFlushAfterWalkerSupported(getHardwareInfo(rootDeviceIndex))) {
         return;
     }
     for (GraphicsAllocation *alloc : this->kernelArgRequiresCacheFlush) {
@@ -2398,7 +2397,7 @@ void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
         out.push_back(alloc);
     }
 
-    auto global = getProgram()->getGlobalSurface(getDevice().getRootDeviceIndex());
+    auto global = getProgram()->getGlobalSurface(rootDeviceIndex);
     if (global != nullptr) {
         out.push_back(global);
     }
@@ -2440,7 +2439,8 @@ bool Kernel::checkIfIsParentKernelAndBlocksUsesPrintf() {
 uint64_t Kernel::getKernelStartOffset(
     const bool localIdsGenerationByRuntime,
     const bool kernelUsesLocalIds,
-    const bool isCssUsed) const {
+    const bool isCssUsed,
+    uint32_t rootDeviceIndex) const {
 
     uint64_t kernelStartOffset = 0;
 
@@ -2453,7 +2453,7 @@ uint64_t Kernel::getKernelStartOffset(
 
     kernelStartOffset += getStartOffset();
 
-    auto &hardwareInfo = getDevice().getHardwareInfo();
+    auto &hardwareInfo = getHardwareInfo(rootDeviceIndex);
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     if (isCssUsed && hwHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
@@ -2493,8 +2493,8 @@ uint32_t Kernel::getAdditionalKernelExecInfo() const {
     return this->additionalKernelExecInfo;
 }
 
-bool Kernel::requiresWaDisableRccRhwoOptimization() const {
-    auto &hardwareInfo = getDevice().getHardwareInfo();
+bool Kernel::requiresWaDisableRccRhwoOptimization(uint32_t rootDeviceIndex) const {
+    auto &hardwareInfo = getHardwareInfo(rootDeviceIndex);
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     if (hwHelper.isWaDisableRccRhwoOptimizationRequired() && isUsingSharedObjArgs()) {
@@ -2502,7 +2502,7 @@ bool Kernel::requiresWaDisableRccRhwoOptimization() const {
             auto clMemObj = static_cast<cl_mem>(arg.object);
             auto memObj = castToObject<MemObj>(clMemObj);
             if (memObj && memObj->peekSharingHandler()) {
-                auto allocation = memObj->getGraphicsAllocation(getDevice().getRootDeviceIndex());
+                auto allocation = memObj->getGraphicsAllocation(rootDeviceIndex);
                 for (uint32_t handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
                     if (allocation->getGmm(handleId)->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
                         return true;
@@ -2514,4 +2514,7 @@ bool Kernel::requiresWaDisableRccRhwoOptimization() const {
     return false;
 }
 
+const HardwareInfo &Kernel::getHardwareInfo(uint32_t rootDeviceIndex) const {
+    return *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+}
 } // namespace NEO
