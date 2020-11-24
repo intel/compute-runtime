@@ -34,33 +34,99 @@ namespace ult {
 using CommandQueueCreate = Test<DeviceFixture>;
 
 TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
-    const ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
-
+    const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device,
-                                                          csr.get(),
-                                                          &desc,
-                                                          false,
-                                                          false,
-                                                          returnValue);
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr.get(),
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
 
-    L0::CommandQueueImp *commandQueueImp = reinterpret_cast<L0::CommandQueueImp *>(commandQueue);
+    size_t commandStreamSize = MemoryConstants::kiloByte * 128u;
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+    EXPECT_EQ(commandStreamSize, commandQueue->commandStream->getMaxAvailableSpace());
+    EXPECT_EQ(commandQueue->buffers.getCurrentBufferAllocation(), commandQueue->commandStream->getGraphicsAllocation());
+    EXPECT_LT(0u, commandQueue->commandStream->getAvailableSpace());
 
-    EXPECT_EQ(csr.get(), commandQueueImp->getCsr());
-    EXPECT_EQ(device, commandQueueImp->getDevice());
-    EXPECT_EQ(0u, commandQueueImp->getTaskCount());
+    EXPECT_EQ(csr.get(), commandQueue->getCsr());
+    EXPECT_EQ(device, commandQueue->getDevice());
+    EXPECT_EQ(0u, commandQueue->getTaskCount());
+    EXPECT_NE(nullptr, commandQueue->buffers.getCurrentBufferAllocation());
+
+    size_t expectedCommandBufferAllocationSize = commandStreamSize + MemoryConstants::cacheLineSize + NEO::CSRequirements::csOverfetchSize;
+    expectedCommandBufferAllocationSize = alignUp(expectedCommandBufferAllocationSize, MemoryConstants::pageSize64k);
+
+    size_t actualCommandBufferSize = commandQueue->buffers.getCurrentBufferAllocation()->getUnderlyingBufferSize();
+    EXPECT_EQ(expectedCommandBufferAllocationSize, actualCommandBufferSize);
+
+    returnValue = commandQueue->destroy();
+    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutputOnPrintfFunctionsStoredAndClearsFunctionContainer) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+
+    Mock<Kernel> kernel1, kernel2;
+
+    commandQueue->printfFunctionContainer.push_back(&kernel1);
+    commandQueue->printfFunctionContainer.push_back(&kernel2);
+
+    commandQueue->synchronizeByPollingForTaskCount(0u);
+
+    EXPECT_EQ(0u, commandQueue->printfFunctionContainer.size());
+    EXPECT_EQ(1u, kernel1.printPrintfOutputCalledTimes);
+    EXPECT_EQ(1u, kernel2.printPrintfOutputCalledTimes);
+
+    commandQueue->destroy();
+}
+
+TEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+
+    size_t maxSize = commandQueue->commandStream->getMaxAvailableSpace();
+
+    auto firstAllocation = commandQueue->commandStream->getGraphicsAllocation();
+    EXPECT_EQ(firstAllocation, commandQueue->buffers.getCurrentBufferAllocation());
+
+    commandQueue->commandStream->getSpace(maxSize - 16u);
+    size_t nextSize = 16u + 16u;
+    commandQueue->reserveLinearStreamSize(nextSize);
+
+    auto secondAllocation = commandQueue->commandStream->getGraphicsAllocation();
+    EXPECT_EQ(secondAllocation, commandQueue->buffers.getCurrentBufferAllocation());
+
+    EXPECT_NE(firstAllocation, secondAllocation);
 
     commandQueue->destroy();
 }
 
 TEST_F(CommandQueueCreate, whenCreatingCommandQueueWithInvalidProductFamilyThenFailureIsReturned) {
     const ze_command_queue_desc_t desc = {};
-    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
-
     ze_result_t returnValue;
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     L0::CommandQueue *commandQueue = CommandQueue::create(PRODUCT_FAMILY::IGFX_MAX_PRODUCT,
                                                           device,
                                                           csr.get(),
@@ -68,7 +134,106 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueWithInvalidProductFamilyThenF
                                                           false,
                                                           false,
                                                           returnValue);
+
     ASSERT_EQ(nullptr, commandQueue);
+}
+
+TEST_F(CommandQueueCreate, whenCmdBuffersAllocationsAreCreatedThenSizeIsNotLessThanQueuesLinearStreamSize) {
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+
+    size_t maxSize = commandQueue->commandStream->getMaxAvailableSpace();
+
+    auto sizeFirstBuffer = commandQueue->buffers.getCurrentBufferAllocation()->getUnderlyingBufferSize();
+    EXPECT_LE(maxSize, sizeFirstBuffer);
+
+    commandQueue->commandStream->getSpace(maxSize - 16u);
+    size_t nextSize = 16u + 16u;
+    commandQueue->reserveLinearStreamSize(nextSize);
+
+    auto sizeSecondBuffer = commandQueue->buffers.getCurrentBufferAllocation()->getUnderlyingBufferSize();
+    EXPECT_LE(maxSize, sizeSecondBuffer);
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNotDepleted) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    Mock<Kernel> kernel;
+    kernel.immutableData.device = device;
+
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)));
+    ASSERT_NE(nullptr, commandList);
+
+    ze_group_count_t dispatchFunctionArguments{1, 1, 1};
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr);
+
+    const size_t numHandles = 100;
+    ze_command_list_handle_t cmdListHandles[numHandles];
+    for (size_t i = 0; i < numHandles; i++) {
+        cmdListHandles[i] = commandList->toHandle();
+    }
+
+    auto sizeBefore = commandQueue->commandStream->getUsed();
+    commandQueue->executeCommandLists(numHandles, cmdListHandles, nullptr, false);
+    auto sizeAfter = commandQueue->commandStream->getUsed();
+    EXPECT_LT(sizeBefore, sizeAfter);
+
+    size_t streamSizeMinimum =
+        sizeof(MI_BATCH_BUFFER_END) +
+        numHandles * sizeof(MI_BATCH_BUFFER_START);
+
+    EXPECT_LE(streamSizeMinimum, sizeAfter - sizeBefore);
+
+    size_t maxSize = 2 * streamSizeMinimum;
+    EXPECT_GT(maxSize, sizeAfter - sizeBefore);
+
+    commandQueue->destroy();
+}
+
+TEST_F(CommandQueueCreate, whenCommandQueueCreatedThenExpectLinearStreamInitializedWithExpectedSize) {
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    ASSERT_NE(commandQueue, nullptr);
+
+    size_t commandStreamSize = MemoryConstants::kiloByte * 128u;
+    EXPECT_EQ(commandStreamSize, commandQueue->commandStream->getMaxAvailableSpace());
+
+    size_t expectedCommandBufferAllocationSize = commandStreamSize + MemoryConstants::cacheLineSize + NEO::CSRequirements::csOverfetchSize;
+    expectedCommandBufferAllocationSize = alignUp(expectedCommandBufferAllocationSize, MemoryConstants::pageSize64k);
+    size_t actualCommandBufferSize = commandQueue->buffers.getCurrentBufferAllocation()->getUnderlyingBufferSize();
+    EXPECT_EQ(expectedCommandBufferAllocationSize, actualCommandBufferSize);
+
+    commandQueue->destroy();
 }
 
 using CommandQueueSBASupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
@@ -181,10 +346,8 @@ HWTEST2_F(CommandQueueProgramSBATest,
 
 TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingNonCopyBlitCommandListThenWrongCommandListStatusReturned) {
     const ze_command_queue_desc_t desc = {};
-
-    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
-
     ze_result_t returnValue;
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           csr.get(),
@@ -195,6 +358,8 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingNonCopyBlitComm
     ASSERT_NE(nullptr, commandQueue);
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
     auto commandListHandle = commandList->toHandle();
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
@@ -205,12 +370,10 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingNonCopyBlitComm
 
 TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommandListThenSuccessReturned) {
     const ze_command_queue_desc_t desc = {};
-
-    auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
     ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
-                                                          defaultCsr,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &desc,
                                                           true,
                                                           false,
@@ -218,6 +381,8 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommand
     ASSERT_NE(nullptr, commandQueue);
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
     auto commandListHandle = commandList->toHandle();
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
