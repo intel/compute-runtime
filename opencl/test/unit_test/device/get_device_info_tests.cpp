@@ -735,7 +735,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThen
     EXPECT_EQ(3u, families[0].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
 
-    EXPECT_EQ(CL_QUEUE_CAPABILITY_ALL_INTEL, families[1].capabilities);
+    EXPECT_EQ(clDevice.getQueueFamilyCapabilities(EngineGroupType::Copy), families[1].capabilities);
     EXPECT_EQ(1u, families[1].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[1].properties);
 }
@@ -760,7 +760,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenRet
     EXPECT_EQ(3u, families[0].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
 
-    EXPECT_EQ(CL_QUEUE_CAPABILITY_ALL_INTEL, families[1].capabilities);
+    EXPECT_EQ(clDevice.getQueueFamilyCapabilities(EngineGroupType::Copy), families[1].capabilities);
     EXPECT_EQ(1u, families[1].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[1].properties);
 }

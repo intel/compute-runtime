@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/sync_buffer_handler.h"
@@ -199,6 +200,35 @@ bool ClDevice::arePipesSupported() const {
         return DebugManager.flags.ForcePipeSupport.get();
     }
     return device.getHardwareInfo().capabilityTable.supportsPipes;
+}
+
+cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {
+    return CL_QUEUE_CAPABILITY_EVENT_WAIT_LIST_INTEL |
+           CL_QUEUE_CAPABILITY_EVENTS_INTEL |
+           CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL |
+           CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL |
+           CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL |
+           CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL |
+           CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL |
+           CL_QUEUE_CAPABILITY_MAP_IMAGE_INTEL |
+           CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL |
+           CL_QUEUE_CAPABILITY_MARKER_INTEL |
+           CL_QUEUE_CAPABILITY_BARRIER_INTEL |
+           CL_QUEUE_CAPABILITY_KERNEL_INTEL;
+}
+
+cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineGroupType type) {
+    auto &hwHelper = NEO::HwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
+
+    cl_command_queue_capabilities_intel disabledProperties = 0u;
+    if (hwHelper.isCopyOnlyEngineType(type)) {
+        disabledProperties |= CL_QUEUE_CAPABILITY_KERNEL_INTEL;
+    }
+
+    if (disabledProperties != 0) {
+        return getQueueFamilyCapabilitiesAll() & ~disabledProperties;
+    }
+    return CL_QUEUE_CAPABILITY_ALL_INTEL;
 }
 
 } // namespace NEO

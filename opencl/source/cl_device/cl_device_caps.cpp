@@ -365,8 +365,9 @@ void ClDevice::initializeCaps() {
         for (int queueFamilyIndex = 0; queueFamilyIndex < static_cast<int>(EngineGroupType::MaxEngineGroups); queueFamilyIndex++) {
             const std::vector<EngineControl> &enginesInFamily = queueFamilies.at(queueFamilyIndex);
             if (enginesInFamily.size() > 0) {
+                const auto engineGroupType = static_cast<EngineGroupType>(queueFamilyIndex);
                 cl_queue_family_properties_intel properties;
-                properties.capabilities = CL_QUEUE_CAPABILITY_ALL_INTEL;
+                properties.capabilities = getQueueFamilyCapabilities(engineGroupType);
                 properties.count = static_cast<cl_uint>(enginesInFamily.size());
                 properties.properties = deviceInfo.queueOnHostProperties;
                 deviceInfo.queueFamilyProperties.push_back(properties);

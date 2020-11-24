@@ -1458,3 +1458,25 @@ TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNot
     EXPECT_EQ(nullptr, device->getDebugger());
     EXPECT_FALSE(caps.debuggerActive);
 }
+
+TEST_F(DeviceGetCapsTest, givenClDeviceWhenInitializingCapsThenUseGetQueueFamilyCapabilitiesMethod) {
+    struct ClDeviceWithCustomQueueCaps : MockClDevice {
+        using MockClDevice::MockClDevice;
+        cl_command_queue_capabilities_intel queueCaps{};
+        cl_command_queue_capabilities_intel getQueueFamilyCapabilities(EngineGroupType type) override {
+            return queueCaps;
+        }
+    };
+
+    auto device = std::make_unique<ClDeviceWithCustomQueueCaps>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    device->deviceInfo = {};
+    device->queueCaps = CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL;
+    device->initializeCaps();
+    EXPECT_EQ(device->queueCaps, device->getDeviceInfo().queueFamilyProperties[0].capabilities);
+
+    device->deviceInfo = {};
+    device->queueCaps = CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL | CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL;
+    device->initializeCaps();
+    EXPECT_EQ(device->queueCaps, device->getDeviceInfo().queueFamilyProperties[0].capabilities);
+}

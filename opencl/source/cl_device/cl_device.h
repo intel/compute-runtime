@@ -123,6 +123,9 @@ class ClDevice : public BaseObject<_cl_device_id> {
     bool isDeviceEnqueueSupported() const;
     bool arePipesSupported() const;
 
+    static cl_command_queue_capabilities_intel getQueueFamilyCapabilitiesAll();
+    MOCKABLE_VIRTUAL cl_command_queue_capabilities_intel getQueueFamilyCapabilities(EngineGroupType type);
+
   protected:
     void initializeCaps();
     void initializeExtensionsWithVersion();
