@@ -37,6 +37,7 @@ class DeviceFactory;
 class OsContext;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
+struct SystemInfo;
 
 struct DeviceDescriptor { // NOLINT(clang-analyzer-optin.performance.Padding)
     unsigned short deviceId;
@@ -96,6 +97,7 @@ class Drm {
     bool setQueueSliceCount(uint64_t sliceCount);
     void checkQueueSliceSupport();
     uint64_t getSliceMask(uint64_t sliceCount);
+    MOCKABLE_VIRTUAL bool querySystemInfo();
     MOCKABLE_VIRTUAL bool queryEngineInfo();
     MOCKABLE_VIRTUAL bool queryMemoryInfo();
     bool queryTopology(int &sliceCount, int &subSliceCount, int &euCount);
@@ -105,6 +107,7 @@ class Drm {
     int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     int setupHardwareInfo(DeviceDescriptor *, bool);
+    void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo &sysInfo);
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
     void checkNonPersistentContextsSupport();
@@ -122,6 +125,10 @@ class Drm {
     MOCKABLE_VIRTUAL uint32_t registerResource(ResourceClass classType, void *data, size_t size);
     MOCKABLE_VIRTUAL void unregisterResource(uint32_t handle);
     MOCKABLE_VIRTUAL uint32_t registerIsaCookie(uint32_t isaHandle);
+
+    SystemInfo *getSystemInfo() const {
+        return systemInfo.get();
+    }
 
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();
@@ -167,6 +174,7 @@ class Drm {
     uint64_t uuid = 0;
 
     Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
+    std::unique_ptr<SystemInfo> systemInfo;
     std::unique_ptr<EngineInfo> engineInfo;
     std::unique_ptr<MemoryInfo> memoryInfo;
     std::vector<uint32_t> virtualMemoryIds;

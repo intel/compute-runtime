@@ -57,6 +57,8 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/settings_reader_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/system_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/system_info_impl.h
 )
 
 if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")

@@ -18,6 +18,7 @@
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/directory.h"
@@ -302,8 +303,35 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(sliceTotal);
     hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(subSliceTotal);
     hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(euTotal);
+
+    status = querySystemInfo();
+    if (!status) {
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
+    }
+    if (systemInfo) {
+        setupSystemInfo(hwInfo, *systemInfo);
+    }
+
     device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+
     return 0;
+}
+
+void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo &sysInfo) {
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * sysInfo.getNumThreadsPerEu();
+    gtSysInfo->L3CacheSizeInKb = sysInfo.getL3CacheSizeInKb();
+    gtSysInfo->L3BankCount = sysInfo.getL3BankCount();
+    gtSysInfo->MaxFillRate = sysInfo.getMaxFillRate();
+    gtSysInfo->TotalVsThreads = sysInfo.getTotalVsThreads();
+    gtSysInfo->TotalHsThreads = sysInfo.getTotalHsThreads();
+    gtSysInfo->TotalDsThreads = sysInfo.getTotalDsThreads();
+    gtSysInfo->TotalGsThreads = sysInfo.getTotalGsThreads();
+    gtSysInfo->TotalPsThreadsWindowerRange = sysInfo.getTotalPsThreads();
+    gtSysInfo->MaxEuPerSubSlice = sysInfo.getMaxEuPerDualSubSlice();
+    gtSysInfo->MaxSlicesSupported = sysInfo.getMaxSlicesSupported();
+    gtSysInfo->MaxSubSlicesSupported = sysInfo.getMaxDualSubSlicesSupported();
+    gtSysInfo->MaxDualSubSlicesSupported = sysInfo.getMaxDualSubSlicesSupported();
 }
 
 void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int fileDescriptor, const char *pciPath) {

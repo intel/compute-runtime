@@ -41,6 +41,7 @@ class DrmMock : public Drm {
     using Drm::query;
     using Drm::requirePerContextVM;
     using Drm::sliceCountChangeSupported;
+    using Drm::systemInfo;
     using Drm::virtualMemoryIds;
 
     DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(fd, ""), rootDeviceEnvironment) {

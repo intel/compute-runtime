@@ -31,6 +31,10 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
     return 0;
 }
 
+bool Drm::querySystemInfo() {
+    return true;
+}
+
 bool Drm::queryEngineInfo() {
     auto length = 0;
     auto dataQuery = this->query(DRM_I915_QUERY_ENGINE_INFO, DrmQueryItemFlags::empty, length);
