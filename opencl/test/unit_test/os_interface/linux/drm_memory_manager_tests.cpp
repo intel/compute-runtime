@@ -1001,8 +1001,9 @@ TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
     EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
 }
 
-TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocation64kThenNullPtr) {
+TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenCreatingGraphicsAllocation64kbThenNullPtrIsReturned) {
     allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
     auto allocation = memoryManager->allocateGraphicsMemory64kb(allocationData);
     EXPECT_EQ(nullptr, allocation);
 }
@@ -3057,20 +3058,6 @@ TEST_F(DrmMemoryManagerBasic, givenMemoryManagerWhenCreateAllocationFromHandleIs
     auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(DrmMemoryManagerBasic, DISABLED_givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
-                                                                                                    false,
-                                                                                                    true,
-                                                                                                    executionEnvironment));
-    AllocationData allocationData;
-    allocationData.size = 4096u;
-    allocationData.rootDeviceIndex = rootDeviceIndex;
-    auto allocation = memoryManager->allocateGraphicsMemory64kb(allocationData);
-    ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
