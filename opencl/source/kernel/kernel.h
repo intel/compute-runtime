@@ -17,6 +17,7 @@
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/cl_types.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/properties_helper.h"
@@ -143,10 +144,10 @@ class Kernel : public BaseObject<_cl_kernel> {
     cl_int getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName,
                       size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
 
-    cl_int getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info paramName,
+    cl_int getWorkGroupInfo(ClDevice &clDevice, cl_kernel_work_group_info paramName,
                             size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
 
-    cl_int getSubGroupInfo(cl_kernel_sub_group_info paramName,
+    cl_int getSubGroupInfo(ClDevice &device, cl_kernel_sub_group_info paramName,
                            size_t inputValueSize, const void *inputValue,
                            size_t paramValueSize, void *paramValue,
                            size_t *paramValueSizeRet) const;
@@ -509,7 +510,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     const ClDevice &getDevice() const {
         return *deviceVector[0];
     }
-
+    const ExecutionEnvironment &executionEnvironment;
     Program *program;
     const ClDeviceVector &deviceVector;
     const KernelInfo &kernelInfo;

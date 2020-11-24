@@ -275,6 +275,8 @@ class Program : public BaseObject<_cl_program> {
         return 0 != exposedKernels;
     }
 
+    const ExecutionEnvironment &getExecutionEnvironment() const { return executionEnvironment; }
+
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
 

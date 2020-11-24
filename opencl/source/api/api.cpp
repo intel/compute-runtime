@@ -1918,15 +1918,19 @@ cl_int CL_API_CALL clGetKernelWorkGroupInfo(cl_kernel kernel,
                    "paramValue", NEO::FileLoggerInstance().infoPointerToString(paramValue, paramValueSize),
                    "paramValueSizeRet", paramValueSizeRet);
 
-    auto pKernel = castToObject<Kernel>(kernel);
-    retVal = pKernel
-                 ? pKernel->getWorkGroupInfo(
-                       device,
-                       paramName,
-                       paramValueSize,
-                       paramValue,
-                       paramValueSizeRet)
-                 : CL_INVALID_KERNEL;
+    Kernel *pKernel = nullptr;
+    ClDevice *pClDevice = nullptr;
+    retVal = validateObjects(WithCastToInternal(device, &pClDevice),
+                             WithCastToInternal(kernel, &pKernel));
+
+    if (CL_SUCCESS == retVal) {
+        retVal = pKernel->getWorkGroupInfo(
+            *pClDevice,
+            paramName,
+            paramValueSize,
+            paramValue,
+            paramValueSizeRet);
+    }
     TRACING_EXIT(clGetKernelWorkGroupInfo, &retVal);
     return retVal;
 }
@@ -5067,7 +5071,8 @@ cl_int CL_API_CALL clGetKernelSubGroupInfoKHR(cl_kernel kernel,
                    "paramValueSizeRet", paramValueSizeRet);
 
     Kernel *pKernel = nullptr;
-    retVal = validateObjects(device,
+    ClDevice *pClDevice = nullptr;
+    retVal = validateObjects(WithCastToInternal(device, &pClDevice),
                              WithCastToInternal(kernel, &pKernel));
 
     if (CL_SUCCESS != retVal) {
@@ -5078,7 +5083,7 @@ cl_int CL_API_CALL clGetKernelSubGroupInfoKHR(cl_kernel kernel,
     case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE:
     case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE:
     case CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL:
-        return pKernel->getSubGroupInfo(paramName,
+        return pKernel->getSubGroupInfo(*pClDevice, paramName,
                                         inputValueSize, inputValue,
                                         paramValueSize, paramValue,
                                         paramValueSizeRet);
@@ -5167,7 +5172,8 @@ cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
                    "paramValueSizeRet", paramValueSizeRet);
 
     Kernel *pKernel = nullptr;
-    retVal = validateObjects(device,
+    ClDevice *pClDevice = nullptr;
+    retVal = validateObjects(WithCastToInternal(device, &pClDevice),
                              WithCastToInternal(kernel, &pKernel));
 
     if (CL_SUCCESS != retVal) {
@@ -5175,7 +5181,7 @@ cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
         return retVal;
     }
 
-    retVal = pKernel->getSubGroupInfo(paramName,
+    retVal = pKernel->getSubGroupInfo(*pClDevice, paramName,
                                       inputValueSize, inputValue,
                                       paramValueSize, paramValue,
                                       paramValueSizeRet);

@@ -68,6 +68,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, bool schedu
     : slmTotalSize(kernelInfoArg.workloadInfo.slmStaticSize),
       isParentKernel((kernelInfoArg.patchInfo.executionEnvironment != nullptr) ? (kernelInfoArg.patchInfo.executionEnvironment->HasDeviceEnqueue != 0) : false),
       isSchedulerKernel(schedulerKernel),
+      executionEnvironment(programArg->getExecutionEnvironment()),
       program(programArg),
       deviceVector(programArg->getDevices()),
       kernelInfo(kernelInfoArg) {
@@ -256,7 +257,7 @@ cl_int Kernel::initialize() {
                 retVal = CL_OUT_OF_RESOURCES;
                 break;
             }
-            kernelDeviceInfos[rootDeviceIndex].privateSurface = getDevice().getMemoryManager()->allocateGraphicsMemoryWithProperties(
+            kernelDeviceInfos[rootDeviceIndex].privateSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
                 {rootDeviceIndex,
                  static_cast<size_t>(kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize),
                  GraphicsAllocation::AllocationType::PRIVATE_SURFACE,
@@ -551,7 +552,7 @@ cl_int Kernel::getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName, size_t 
     return retVal;
 }
 
-cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info paramName,
+cl_int Kernel::getWorkGroupInfo(ClDevice &device, cl_kernel_work_group_info paramName,
                                 size_t paramValueSize, void *paramValue,
                                 size_t *paramValueSizeRet) const {
     cl_int retVal = CL_INVALID_VALUE;
@@ -566,7 +567,7 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
     cl_ulong scratchSize;
     cl_ulong privateMemSize;
     size_t maxWorkgroupSize;
-    const auto &hwInfo = getDevice().getHardwareInfo();
+    const auto &hwInfo = device.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
@@ -630,7 +631,7 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
     return retVal;
 }
 
-cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
+cl_int Kernel::getSubGroupInfo(ClDevice &clDevice, cl_kernel_sub_group_info paramName,
                                size_t inputValueSize, const void *inputValue,
                                size_t paramValueSize, void *paramValue,
                                size_t *paramValueSizeRet) const {
@@ -660,7 +661,7 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
         }
         numDimensions = inputValueSize / sizeof(size_t);
         if (numDimensions == 0 ||
-            numDimensions > static_cast<size_t>(getDevice().getDeviceInfo().maxWorkItemDimensions)) {
+            numDimensions > static_cast<size_t>(clDevice.getDeviceInfo().maxWorkItemDimensions)) {
             return CL_INVALID_VALUE;
         }
     }
@@ -674,7 +675,7 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
         }
         numDimensions = paramValueSize / sizeof(size_t);
         if (numDimensions == 0 ||
-            numDimensions > static_cast<size_t>(getDevice().getDeviceInfo().maxWorkItemDimensions)) {
+            numDimensions > static_cast<size_t>(clDevice.getDeviceInfo().maxWorkItemDimensions)) {
             return CL_INVALID_VALUE;
         }
     }
@@ -749,7 +750,7 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
     auto &heapInfo = pKernelInfo->heapInfo;
     heapInfo.KernelHeapSize = static_cast<uint32_t>(newKernelHeapSize);
     pKernelInfo->isKernelHeapSubstituted = true;
-    auto memoryManager = getDevice().getMemoryManager();
+    auto memoryManager = executionEnvironment.memoryManager.get();
 
     auto currentAllocationSize = pKernelInfo->kernelAllocation->getUnderlyingBufferSize();
     bool status = false;
@@ -1068,7 +1069,7 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
         if (kernelArguments[argIndex].object) {
             if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
                 auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
-                auto pageFaultManager = getDevice().getMemoryManager()->getPageFaultManager();
+                auto pageFaultManager = executionEnvironment.memoryManager->getPageFaultManager();
                 if (pageFaultManager &&
                     this->isUnifiedMemorySyncRequired) {
                     pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(pSVMAlloc->getGpuAddress()));
@@ -1703,7 +1704,7 @@ void Kernel::createReflectionSurface() {
         kernelReflectionSize += blockCount * alignUp(maxConstantBufferSize, sizeof(void *));
         kernelReflectionSize += parentImageCount * sizeof(IGIL_ImageParamters);
         kernelReflectionSize += parentSamplerCount * sizeof(IGIL_ParentSamplerParams);
-        kernelReflectionSurface = getDevice().getMemoryManager()->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), kernelReflectionSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER, getDevice().getDeviceBitfield()});
+        kernelReflectionSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), kernelReflectionSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER, getDevice().getDeviceBitfield()});
 
         for (uint32_t i = 0; i < blockCount; i++) {
             const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
@@ -1777,7 +1778,7 @@ void Kernel::createReflectionSurface() {
 
     if (DebugManager.flags.ForceDispatchScheduler.get()) {
         if (this->isSchedulerKernel && kernelReflectionSurface == nullptr) {
-            kernelReflectionSurface = getDevice().getMemoryManager()->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER, getDevice().getDeviceBitfield()});
+            kernelReflectionSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER, getDevice().getDeviceBitfield()});
         }
     }
 }

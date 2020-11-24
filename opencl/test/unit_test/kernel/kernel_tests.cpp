@@ -281,7 +281,7 @@ TEST_P(KernelTest, GivenKernelWorkGroupSizeWhenGettingWorkGroupInfoThenWorkGroup
     pKernel->maxKernelWorkGroupSize = static_cast<uint32_t>(kernelMaxWorkGroupSize);
 
     retVal = pKernel->getWorkGroupInfo(
-        pClDevice,
+        *pClDevice,
         paramName,
         paramValueSize,
         &paramValue,
@@ -299,7 +299,7 @@ TEST_P(KernelTest, GivenKernelCompileWorkGroupSizeWhenGettingWorkGroupInfoThenCo
     size_t paramValueSizeRet = 0;
 
     retVal = pKernel->getWorkGroupInfo(
-        pClDevice,
+        *pClDevice,
         paramName,
         paramValueSize,
         &paramValue,
@@ -313,7 +313,7 @@ TEST_P(KernelTest, GivenInvalidParamNameWhenGettingWorkGroupInfoThenInvalidValue
     size_t paramValueSizeRet = 0x1234u;
 
     retVal = pKernel->getWorkGroupInfo(
-        pClDevice,
+        *pClDevice,
         0,
         0,
         nullptr,
@@ -2653,13 +2653,13 @@ TEST(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedThenMa
     kernel.executionEnvironment.LargestCompiledSIMDSize = CommonConstants::maximalSimdSize;
 
     size_t maxKernelWkgSize;
-    kernel.mockKernel->getWorkGroupInfo(device.get(), CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
+    kernel.mockKernel->getWorkGroupInfo(*device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
     EXPECT_EQ(1024u, maxKernelWkgSize);
     kernel.executionEnvironment.LargestCompiledSIMDSize = 16;
-    kernel.mockKernel->getWorkGroupInfo(device.get(), CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
+    kernel.mockKernel->getWorkGroupInfo(*device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
     EXPECT_EQ(512u, maxKernelWkgSize);
     kernel.executionEnvironment.LargestCompiledSIMDSize = 8;
-    kernel.mockKernel->getWorkGroupInfo(device.get(), CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
+    kernel.mockKernel->getWorkGroupInfo(*device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
     EXPECT_EQ(256u, maxKernelWkgSize);
 }
 
