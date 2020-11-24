@@ -8,9 +8,6 @@
 #pragma once
 namespace NEO {
 struct PipeControlArgsBase {
-    PipeControlArgsBase() = default;
-    PipeControlArgsBase(bool dcFlush) : dcFlushEnable(dcFlush) {}
-
     bool dcFlushEnable = false;
     bool renderTargetCacheFlushEnable = false;
     bool instructionCacheInvalidateEnable = false;
@@ -21,5 +18,9 @@ struct PipeControlArgsBase {
     bool stateCacheInvalidationEnable = false;
     bool genericMediaStateClear = false;
     bool hdcPipelineFlush = false;
+
+  protected:
+    PipeControlArgsBase() = default;
+    PipeControlArgsBase(bool dcFlush) : dcFlushEnable(dcFlush) {}
 };
 } // namespace NEO
