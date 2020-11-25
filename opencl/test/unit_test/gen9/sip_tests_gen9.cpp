@@ -22,26 +22,15 @@ extern std::string getDebugSipKernelNameWithBitnessAndProductSuffix(std::string 
 
 typedef ::testing::Test gen9SipTests;
 
-GEN9TEST_F(gen9SipTests, DISABLED_givenDebugCsrSipKernelWithLocalMemoryWhenAskedForDebugSurfaceBtiAndSizeThenBtiIsZeroAndSizeGreaterThanZero) {
+GEN9TEST_F(gen9SipTests, givenDebugCsrSipKernelWithLocalMemoryWhenAskedForDebugSurfaceBtiAndSizeThenBtiIsZeroAndSizeGreaterThanZero) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
-    MockCompilerDebugVars igcDebugVars;
-
-    std::string name = "sip_dummy_kernel_debug";
-    std::string builtInFileRoot = testFiles + getDebugSipKernelNameWithBitnessAndProductSuffix(name, binaryNameSuffix.c_str());
-    std::string builtInGenFile = builtInFileRoot;
-    builtInGenFile.append(".gen");
-
-    igcDebugVars.fileName = builtInGenFile;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
 
     auto &builtins = *mockDevice->getBuiltIns();
     auto &sipKernel = builtins.getSipKernel(SipKernelType::DbgCsrLocal, *mockDevice);
 
     EXPECT_NE(nullptr, &sipKernel);
     EXPECT_EQ(SipKernelType::DbgCsrLocal, sipKernel.getType());
-
-    gEnvironment->igcPopDebugVars();
 }
 
 GEN9TEST_F(gen9SipTests, givenDebuggingActiveWhenSipTypeIsQueriedThenDbgCsrLocalIsReturned) {

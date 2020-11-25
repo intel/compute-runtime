@@ -510,21 +510,6 @@ macro(macro_for_each_gen)
 
         endforeach()
 
-        set(sip_kernel_file_name)
-        set(sip_kernel_output_file)
-        set(sip_debug_kernel_output_file)
-        set(sip_debug_local_kernel_output_file)
-        list(APPEND sip_kernel_file_name "opencl/test/unit_test/test_files/sip_dummy_kernel_${NEO_BITS}.ll")
-        list(APPEND sip_debug_kernel_output_file "sip_dummy_kernel_debug_${NEO_BITS}")
-        list(APPEND sip_debug_local_kernel_output_file "sip_dummy_kernel_debug_local_${NEO_BITS}")
-
-        # Temporarily disabled sip kernel generation
-        # if("${GEN_TYPE_LOWER}" STREQUAL "gen9" )
-        #   neo_gen_kernel_from_ll(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${sip_kernel_file_name} ${sip_debug_local_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_LOCAL_options})
-        # endif()
-
-        # neo_gen_kernel_from_ll(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${sip_kernel_file_name} ${sip_debug_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_options})
-
         if(PLATFORM_2_0_LOWER)
           foreach(REVISION_ID ${${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS})
             neo_gen_kernels_with_options(${family_name_with_type} ${PLATFORM_2_0_LOWER} ${REVISION_ID} ${family_name_with_type} "${TEST_KERNEL_2_0}" ${TEST_KERNEL_2_0_options})

@@ -881,7 +881,7 @@ TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChang
     EXPECT_FALSE(mockOfflineCompiler->inputFileSpirV);
 }
 
-TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUsed) {
+TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUsed) {
     MockOfflineCompiler mockOfflineCompiler;
     std::vector<std::string> argv = {
         "ocloc",
@@ -890,6 +890,7 @@ TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCo
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
+    testing::internal::CaptureStdout();
     auto retVal = mockOfflineCompiler.initialize(argv.size(), argv);
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
     mockOfflineCompiler.igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
@@ -914,6 +915,8 @@ TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCo
     ASSERT_EQ(1U, mockIgcOclDeviceCtx->requestedTranslationCtxs.size());
     expectedTranslation = {IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
     ASSERT_EQ(expectedTranslation, mockIgcOclDeviceCtx->requestedTranslationCtxs[0]);
+
+    testing::internal::GetCapturedStdout();
 }
 
 TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
@@ -1352,37 +1355,45 @@ TEST(OclocCompile, whenDetectedPotentialInputTypeMismatchThenEmitsWarning) {
         {sourceSpirvInv, true, false, ""},
         {sourceSpirvInv, false, true, notLlvmBcWarning},
     };
+    {
+        MockOfflineCompiler ocloc;
 
-    MockOfflineCompiler ocloc;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-q",
+            "-file",
+            "test_files/copybuffer.cl",
+            "-device",
+            gEnvironment->devicePrefix.c_str()};
 
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-q",
-        "-file",
-        "test_files/copybuffer.cl",
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
+        ocloc.getHardwareInfo(gEnvironment->devicePrefix.c_str());
+        int retVal = ocloc.initialize(argv.size(), argv);
+        ASSERT_EQ(0, retVal);
 
-    ocloc.getHardwareInfo(gEnvironment->devicePrefix.c_str());
-    int retVal = ocloc.initialize(argv.size(), argv);
-    ASSERT_EQ(0, retVal);
+        int caseNum = 0;
+        for (auto &c : cases) {
 
-    int caseNum = 0;
-    for (auto &c : cases) {
-        ocloc.sourceCode = c.input;
-        ocloc.inputFileLlvm = c.isLlvm;
-        ocloc.inputFileSpirV = c.isSpirv;
-        ocloc.build();
-        auto log = ocloc.argHelper->getPrinterRef().getLog().str();
-        ocloc.clearLog();
-        if (c.expectedWarning.empty()) {
-            for (auto &w : allWarnings) {
-                EXPECT_THAT(log.c_str(), testing::Not(testing::HasSubstr(w.c_str()))) << " Case : " << caseNum;
+            testing::internal::CaptureStdout();
+
+            ocloc.sourceCode = c.input;
+            ocloc.inputFileLlvm = c.isLlvm;
+            ocloc.inputFileSpirV = c.isSpirv;
+            ocloc.build();
+            auto log = ocloc.argHelper->getPrinterRef().getLog().str();
+            ocloc.clearLog();
+
+            std::string output = testing::internal::GetCapturedStdout();
+
+            if (c.expectedWarning.empty()) {
+                for (auto &w : allWarnings) {
+                    EXPECT_THAT(log.c_str(), testing::Not(testing::HasSubstr(w.c_str()))) << " Case : " << caseNum;
+                }
+            } else {
+                EXPECT_THAT(log.c_str(), testing::HasSubstr(c.expectedWarning.c_str())) << " Case : " << caseNum;
+                EXPECT_STREQ(log.c_str(), output.c_str());
             }
-        } else {
-            EXPECT_THAT(log.c_str(), testing::HasSubstr(c.expectedWarning.c_str())) << " Case : " << caseNum;
+            caseNum++;
         }
-        caseNum++;
     }
 }
 

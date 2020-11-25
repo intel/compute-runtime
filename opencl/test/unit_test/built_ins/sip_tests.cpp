@@ -121,25 +121,15 @@ TEST(DebugSip, WhenRequestingDbgCsrWithLocalMemorySipKernelThenProperCompilerInt
     EXPECT_STREQ("-cl-include-sip-kernel-local-debug -cl-include-sip-csr -cl-set-bti:0", opt);
 }
 
-TEST(DebugSip, DISABLED_givenBuiltInsWhenDbgCsrSipIsRequestedThanCorrectSipKernelIsReturned) {
+TEST(DebugSip, givenBuiltInsWhenDbgCsrSipIsRequestedThanCorrectSipKernelIsReturned) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
-    MockCompilerDebugVars igcDebugVars;
-
-    std::string name = "sip_dummy_kernel_debug";
-    std::string builtInFileRoot = testFiles + getDebugSipKernelNameWithBitnessAndProductSuffix(name, binaryNameSuffix.c_str());
-    std::string builtInGenFile = builtInFileRoot;
-    builtInGenFile.append(".gen");
-
-    igcDebugVars.fileName = builtInGenFile;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
 
     auto &builtins = *mockDevice->getBuiltIns();
     auto &sipKernel = builtins.getSipKernel(SipKernelType::DbgCsr, *mockDevice);
 
     EXPECT_NE(nullptr, &sipKernel);
     EXPECT_EQ(SipKernelType::DbgCsr, sipKernel.getType());
-    gEnvironment->igcPopDebugVars();
 }
 
 } // namespace SipKernelTests
