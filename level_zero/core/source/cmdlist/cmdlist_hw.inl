@@ -326,19 +326,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     default:
         UNRECOVERABLE_IF(true);
     case 1u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyBufferToImage3dBytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3dBytes);
         break;
     case 2u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyBufferToImage3d2Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3d2Bytes);
         break;
     case 4u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyBufferToImage3d4Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3d4Bytes);
         break;
     case 8u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyBufferToImage3d8Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3d8Bytes);
         break;
     case 16u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyBufferToImage3d16Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3d16Bytes);
         break;
     }
 

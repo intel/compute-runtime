@@ -8,6 +8,7 @@
 #include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
@@ -15,7 +16,11 @@
 
 using namespace NEO;
 
-bool NEO::TestChecks::supportsBlitter(const HardwareInfo *pHardwareInfo) {
+bool TestChecks::is64Bit() {
+    return ::is64bit;
+}
+
+bool TestChecks::supportsBlitter(const HardwareInfo *pHardwareInfo) {
     auto engines = HwHelper::get(::renderCoreFamily).getGpgpuEngineInstances(*pHardwareInfo);
     for (const auto &engine : engines) {
         if (engine.first == aub_stream::EngineType::ENGINE_BCS) {
@@ -23,6 +28,14 @@ bool NEO::TestChecks::supportsBlitter(const HardwareInfo *pHardwareInfo) {
         }
     }
     return false;
+}
+
+bool TestChecks::supportsImages(const HardwareInfo &hardwareInfo) {
+    return hardwareInfo.capabilityTable.supportsImages;
+}
+
+bool TestChecks::supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo) {
+    return supportsImages(*pHardwareInfo);
 }
 
 bool TestChecks::supportsSvm(const HardwareInfo *pHardwareInfo) {
@@ -38,7 +51,7 @@ bool TestChecks::supportsSvm(const Device *pDevice) {
 class TestMacrosIfNotMatchTearDownCall : public ::testing::Test {
   public:
     void expectCorrectPlatform() {
-        EXPECT_EQ(IGFX_SKYLAKE, NEO::defaultHwInfo->platform.eProductFamily);
+        EXPECT_EQ(IGFX_SKYLAKE, defaultHwInfo->platform.eProductFamily);
     }
     void SetUp() override {
         expectCorrectPlatform();

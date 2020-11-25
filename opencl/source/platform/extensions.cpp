@@ -152,7 +152,6 @@ std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enable
         extensionsList.append(extension);
         extensionsList.append(",");
     }
-    extensionsList.append("+cl_khr_3d_image_writes,");
     for (auto &feature : openclCFeatures) {
         extensionsList.append("+");
         extensionsList.append(feature.name);

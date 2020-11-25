@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
+
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/enqueue_copy_buffer_to_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
@@ -280,9 +282,8 @@ INSTANTIATE_TEST_CASE_P(MipMapCopyBufferToImageTest_GivenImageWithMipLevelNonZer
 struct EnqueueCopyBufferToImageHw : public ::testing::Test {
 
     void SetUp() override {
-        if (is32bit) {
-            GTEST_SKIP();
-        }
+        REQUIRE_64BIT_OR_SKIP();
+        REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context = std::make_unique<MockContext>(device.get());
         dstImage = std::unique_ptr<Image>(Image2dHelper<>::create(context.get()));

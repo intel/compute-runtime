@@ -209,19 +209,19 @@ TEST(PlatformTestSimple, WhenConvertingCustomOclCFeaturesToCompilerInternalOptio
     strcpy_s(feature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "custom_feature");
     customOpenclCFeatures.push_back(feature);
     auto compilerOption = convertEnabledExtensionsToCompilerInternalOptions("", customOpenclCFeatures);
-    EXPECT_STREQ(" -cl-ext=-all,+cl_khr_3d_image_writes,+custom_feature ", compilerOption.c_str());
+    EXPECT_STREQ(" -cl-ext=-all,+custom_feature ", compilerOption.c_str());
 
     strcpy_s(feature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "other_extra_feature");
     customOpenclCFeatures.push_back(feature);
     compilerOption = convertEnabledExtensionsToCompilerInternalOptions("", customOpenclCFeatures);
-    EXPECT_STREQ(" -cl-ext=-all,+cl_khr_3d_image_writes,+custom_feature,+other_extra_feature ", compilerOption.c_str());
+    EXPECT_STREQ(" -cl-ext=-all,+custom_feature,+other_extra_feature ", compilerOption.c_str());
 }
 
 TEST(PlatformTestSimple, WhenConvertingOclCFeaturesToCompilerInternalOptionsThenResultIsCorrect) {
     UltClDeviceFactory deviceFactory{1, 0};
     auto pClDevice = deviceFactory.rootDevices[0];
 
-    std::string expectedCompilerOption = " -cl-ext=-all,+cl_khr_3d_image_writes,";
+    std::string expectedCompilerOption = " -cl-ext=-all,";
     for (auto &openclCFeature : pClDevice->deviceInfo.openclCFeatures) {
         expectedCompilerOption += "+";
         expectedCompilerOption += openclCFeature.name;

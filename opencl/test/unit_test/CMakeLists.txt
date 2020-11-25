@@ -434,6 +434,9 @@ set(TEST_KERNEL_BINDLESS_internal_options
 
 set(TEST_KERNEL_BINDLESS
     test_files/stateful_copy_buffer.cl
+)
+
+set(TEST_KERNEL_BINDLESS_IMAGES
     test_files/copy_buffer_to_image.cl
 )
 
@@ -463,6 +466,12 @@ macro(macro_for_each_gen)
       set(PLATFORM_VME_LOWER ${DEFAULT_SUPPORTED_VME_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
 
       set(PLATFORM_TEST_KERNELS ${TEST_KERNELS})
+      set(IMAGE_SUPPORT FALSE)
+      GEN_CONTAINS_PLATFORMS("SUPPORTED_IMAGES" ${GEN_TYPE} IMAGE_SUPPORT)
+      if(NOT IMAGE_SUPPORT)
+        list(REMOVE_ITEM PLATFORM_TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/copy_buffer_to_image.cl")
+      endif()
+
       foreach(KERNEL_TO_REMOVE ${${GEN_TYPE}_TEST_KERNELS_BLACKLIST})
         set(KERNEL_TO_REMOVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/test_files/${KERNEL_TO_REMOVE}")
         list(REMOVE_ITEM PLATFORM_TEST_KERNELS ${KERNEL_TO_REMOVE_PATH})
@@ -502,12 +511,15 @@ macro(macro_for_each_gen)
           endforeach()
         endif()
 
-        foreach(file ${TEST_KERNEL_BINDLESS})
+        set(BINDLESS_KERNELS_IMAGES "")
+        if(IMAGE_SUPPORT)
+          set(BINDLESS_KERNELS_IMAGES ${TEST_KERNEL_BINDLESS_IMAGES})
+        endif()
 
+        foreach(file ${TEST_KERNEL_BINDLESS} ${BINDLESS_KERNELS_IMAGES})
           foreach(REVISION_ID ${${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS})
             neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${file} "bindless" ${TEST_KERNEL_BINDLESS_internal_options})
           endforeach()
-
         endforeach()
 
         if(PLATFORM_2_0_LOWER)

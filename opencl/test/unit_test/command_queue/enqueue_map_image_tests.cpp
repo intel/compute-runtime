@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/memory_properties_helpers.h"
@@ -33,6 +34,8 @@ struct EnqueueMapImageTest : public ClDeviceFixture,
     }
 
     void SetUp() override {
+        REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
         ClDeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pClDevice, 0);
         context = new MockContext(pClDevice);
@@ -40,6 +43,9 @@ struct EnqueueMapImageTest : public ClDeviceFixture,
     }
 
     void TearDown() override {
+        if (IsSkipped()) {
+            return;
+        }
         delete image;
         context->release();
         CommandQueueFixture::TearDown();

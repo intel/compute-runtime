@@ -174,6 +174,7 @@ TEST_F(clGetProgramInfoTests, GivenIlWhenBuildingProgramThenGetProgramInfoReturn
 }
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDevicesThenCorrectDevicesAreReturned) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     MockUnrestrictiveContextMultiGPU context;
 
     auto numDevicesForProgram = 2u;
@@ -229,6 +230,7 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDe
 }
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingBinariesThenCorrectBinariesAreReturned) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     MockUnrestrictiveContextMultiGPU context;
 
     auto numDevicesForProgram = 2u;

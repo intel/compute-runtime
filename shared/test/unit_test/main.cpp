@@ -15,6 +15,7 @@
 #include "shared/test/unit_test/helpers/memory_leak_listener.h"
 #include "shared/test/unit_test/helpers/test_files.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.inl"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
@@ -380,8 +381,14 @@ int main(int argc, char **argv) {
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".gen");
+    std::string builtInsFileName;
+    if (TestChecks::supportsImages(defaultHwInfo)) {
+        builtInsFileName = KernelBinaryHelper::BUILT_INS_WITH_IMAGES;
+    } else {
+        builtInsFileName = KernelBinaryHelper::BUILT_INS;
+    }
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".bc");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".gen");
 
     gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);

@@ -361,6 +361,26 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         }
     }
 
+    retVal = deviceName.empty() ? 0 : getHardwareInfo(deviceName.c_str());
+    if (retVal != 0) {
+        argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
+        return retVal;
+    }
+    if (deviceName.empty()) {
+        CompilerOptions::concatenateAppend(internalOptions, "-cl-ext=-all,+cl_khr_3d_image_writes");
+    } else {
+        auto oclVersion = getOclVersionCompilerInternalOption(hwInfo.capabilityTable.clVersionSupport);
+        CompilerOptions::concatenateAppend(internalOptions, oclVersion);
+
+        std::string extensionsList = getExtensionsList(hwInfo);
+        OpenClCFeaturesContainer openclCFeatures;
+        if (requiresOpenClCFeatures(options)) {
+            getOpenclCFeaturesList(hwInfo, openclCFeatures);
+        }
+        auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);
+        CompilerOptions::concatenateAppend(internalOptions, compilerExtensions);
+    }
+
     parseDebugSettings();
 
     // set up the device inside the program
@@ -585,28 +605,6 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (!argHelper->fileExists(inputFile)) {
             argHelper->printf("Error: Input file %s missing.\n", inputFile.c_str());
             retVal = INVALID_FILE;
-        } else {
-            retVal = deviceName.empty() ? 0 : getHardwareInfo(deviceName.c_str());
-            if (retVal != 0) {
-                argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
-            } else if (false == deviceName.empty()) {
-                auto oclVersion = getOclVersionCompilerInternalOption(hwInfo.capabilityTable.clVersionSupport);
-                CompilerOptions::concatenateAppend(internalOptions, oclVersion);
-
-                std::string extensionsList = getExtensionsList(hwInfo);
-                if (requiresOpenClCFeatures(options)) {
-                    OpenClCFeaturesContainer openclCFeatures;
-                    getOpenclCFeaturesList(hwInfo, openclCFeatures);
-                    auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);
-                    CompilerOptions::concatenateAppend(internalOptions, compilerExtensions);
-                } else {
-                    OpenClCFeaturesContainer emptyOpenClCFeatures;
-                    auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), emptyOpenClCFeatures);
-                    CompilerOptions::concatenateAppend(internalOptions, compilerExtensions);
-                }
-            } else {
-                this->internalOptions = CompilerOptions::concatenate("-cl-ext=-all,+cl_khr_3d_image_writes", this->internalOptions);
-            }
         }
     }
 

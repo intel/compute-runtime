@@ -11,6 +11,7 @@
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/image.h"
@@ -552,7 +553,7 @@ TEST(TestCreateImage, GivenSharedContextWhenImageIsCreatedThenRowAndSliceAreCorr
 }
 
 TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemoryALignmentThenCorrectValueIsReturned) {
-    KernelBinaryHelper kbHelper(KernelBinaryHelper::BUILT_INS);
+    KernelBinaryHelper kbHelper(KernelBinaryHelper::BUILT_INS_WITH_IMAGES);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -1396,6 +1397,7 @@ TEST(ImageTest, givenClMemForceLinearStorageSetWhenCreateImageThenDisallowTiling
 }
 
 TEST(ImageTest, givenClMemCopyHostPointerPassedToImageCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteImage) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);

@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
@@ -20,9 +21,20 @@ struct OOQFixtureFactory : public HelloWorldFixtureFactory {
 template <typename TypeParam>
 struct OOQTaskTypedTests : public HelloWorldTest<OOQFixtureFactory> {
     void SetUp() override {
+        if (std::is_same<TypeParam, EnqueueCopyImageHelper<>>::value ||
+            std::is_same<TypeParam, EnqueueFillImageHelper<>>::value ||
+            std::is_same<TypeParam, EnqueueReadImageHelper<>>::value ||
+            std::is_same<TypeParam, EnqueueWriteImageHelper<>>::value) {
+            REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+        }
         DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
         DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
         HelloWorldTest<OOQFixtureFactory>::SetUp();
+    }
+    void TearDown() override {
+        if (!IsSkipped()) {
+            HelloWorldTest<OOQFixtureFactory>::TearDown();
+        }
     }
     DebugManagerStateRestore stateRestore;
 };

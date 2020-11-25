@@ -34,6 +34,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
 #include "compiler_options.h"
@@ -121,39 +122,41 @@ struct VmeBuiltInTests : BuiltInTests {
 };
 
 TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
-    size_t size = 0;
+    for (auto supportsImages : ::testing::Bool()) {
+        allBuiltIns.clear();
+        size_t size = 0;
 
-    for (auto &fileName : getBuiltInFileNames()) {
-        AppendBuiltInStringFromFile(
-            fileName, size);
-        ASSERT_NE(0u, size);
-    }
+        for (auto &fileName : getBuiltInFileNames(supportsImages)) {
+            AppendBuiltInStringFromFile(fileName, size);
+            ASSERT_NE(0u, size);
+        }
 
-    // convert /r/n to /n
-    size_t start_pos = 0;
-    while ((start_pos = allBuiltIns.find("\r\n", start_pos)) != std::string::npos) {
-        allBuiltIns.replace(start_pos, 2, "\n");
-    }
+        // convert /r/n to /n
+        size_t start_pos = 0;
+        while ((start_pos = allBuiltIns.find("\r\n", start_pos)) != std::string::npos) {
+            allBuiltIns.replace(start_pos, 2, "\n");
+        }
 
-    // convert /r to /n
-    start_pos = 0;
-    while ((start_pos = allBuiltIns.find("\r", start_pos)) != std::string::npos) {
-        allBuiltIns.replace(start_pos, 1, "\n");
-    }
+        // convert /r to /n
+        start_pos = 0;
+        while ((start_pos = allBuiltIns.find("\r", start_pos)) != std::string::npos) {
+            allBuiltIns.replace(start_pos, 1, "\n");
+        }
 
-    uint64_t hash = Hash::hash(allBuiltIns.c_str(), allBuiltIns.length());
-    auto hashName = getBuiltInHashFileName(hash);
+        uint64_t hash = Hash::hash(allBuiltIns.c_str(), allBuiltIns.length());
+        auto hashName = getBuiltInHashFileName(hash, supportsImages);
 
-    //First fail, if we are inconsistent
-    EXPECT_EQ(true, fileExists(hashName)) << "**********\nBuilt in kernels need to be regenerated for the mock compilers!\n**********";
+        //First fail, if we are inconsistent
+        EXPECT_EQ(true, fileExists(hashName)) << "**********\nBuilt in kernels need to be regenerated for the mock compilers!\n**********";
 
-    //then write to file if needed
+        //then write to file if needed
 #define GENERATE_NEW_HASH_FOR_BUILT_INS 0
 #if GENERATE_NEW_HASH_FOR_BUILT_INS
-    std::cout << "writing builtins to file: " << hashName << std::endl;
-    const char *pData = allBuiltIns.c_str();
-    writeDataToFile(hashName.c_str(), pData, allBuiltIns.length());
+        std::cout << "writing builtins to file: " << hashName << std::endl;
+        const char *pData = allBuiltIns.c_str();
+        writeDataToFile(hashName.c_str(), pData, allBuiltIns.length());
 #endif
+    }
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
@@ -731,10 +734,8 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillBufferStatelessIsUsedTh
 }
 
 HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessIsUsedThenParamsAreCorrect) {
-
-    if (is32bit) {
-        GTEST_SKIP();
-    }
+    REQUIRE_64BIT_OR_SKIP();
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -913,27 +914,26 @@ TEST_F(BuiltInTests, GivenUnknownBuiltInOpWhenGettingBuilderInfoThenExceptionThr
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, WhenGettingSchedulerKernelThenCorrectKernelReturned) {
-    if (pClDevice->areOcl21FeaturesSupported()) {
-        SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
-        std::string name = SchedulerKernel::schedulerName;
-        EXPECT_EQ(name, schedulerKernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
-    }
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
+    SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
+    std::string name = SchedulerKernel::schedulerName;
+    EXPECT_EQ(name, schedulerKernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, WhenGetttingSchedulerKernelForSecondTimeThenReuseKernel) {
-    if (pClDevice->areOcl21FeaturesSupported()) {
-        SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        Program *program = schedulerKernel.getProgram();
-        EXPECT_NE(nullptr, program);
+    SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
 
-        SchedulerKernel &schedulerKernelSecond = pContext->getSchedulerKernel();
+    Program *program = schedulerKernel.getProgram();
+    EXPECT_NE(nullptr, program);
 
-        Program *program2 = schedulerKernelSecond.getProgram();
+    SchedulerKernel &schedulerKernelSecond = pContext->getSchedulerKernel();
 
-        EXPECT_EQ(&schedulerKernel, &schedulerKernelSecond);
-        EXPECT_EQ(program, program2);
-    }
+    Program *program2 = schedulerKernelSecond.getProgram();
+
+    EXPECT_EQ(&schedulerKernel, &schedulerKernelSecond);
+    EXPECT_EQ(program, program2);
 }
 
 TEST_F(BuiltInTests, GivenUnsupportedBuildTypeWhenBuildingDispatchInfoThenFalseIsReturned) {

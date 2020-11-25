@@ -8,6 +8,7 @@
 #pragma once
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 namespace NEO {
 static const char programFile[] = "simple_block_kernel";
@@ -20,9 +21,7 @@ class AUBParentKernelFixture : public CommandEnqueueAUBFixture,
     using HelloWorldKernelFixture::SetUp;
 
     void SetUp() override {
-        if (defaultHwInfo->capabilityTable.supportsOcl21Features == false) {
-            GTEST_SKIP();
-        }
+        REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
         CommandEnqueueAUBFixture::SetUp();
         ASSERT_NE(nullptr, pClDevice);
         HelloWorldKernelFixture::SetUp(pClDevice, programFile, kernelName, "-cl-std=CL2.0");

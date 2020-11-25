@@ -35,6 +35,7 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
     }
 
     void SetUp() override {
+        REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
         CommandEnqueueFixture::SetUp();
 
         srcImage = Image2dHelper<>::create(context);
@@ -44,6 +45,9 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
     }
 
     void TearDown() override {
+        if (IsSkipped()) {
+            return;
+        }
         delete dstImage;
         delete srcImage;
 

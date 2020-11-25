@@ -120,11 +120,13 @@ struct MyEvent : public Event {
 class MockEventTests : public HelloWorldTest<HelloWorldFixtureFactory> {
   public:
     void TearDown() override {
-        uEvent->setStatus(-1);
-        uEvent.reset();
+        if (uEvent) {
+            uEvent->setStatus(-1);
+            uEvent.reset();
+        }
         HelloWorldFixture::TearDown();
     }
 
   protected:
-    ReleaseableObjectPtr<UserEvent> uEvent;
+    ReleaseableObjectPtr<UserEvent> uEvent = nullptr;
 };

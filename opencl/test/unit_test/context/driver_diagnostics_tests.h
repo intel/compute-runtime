@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/context/context.h"
@@ -172,6 +173,8 @@ struct PerformanceHintEnqueueReadBufferTest : public PerformanceHintEnqueueBuffe
 struct PerformanceHintEnqueueImageTest : public PerformanceHintEnqueueTest {
 
     void SetUp() override {
+        REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
         PerformanceHintEnqueueTest::SetUp();
         address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
         image = ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context);
@@ -179,6 +182,9 @@ struct PerformanceHintEnqueueImageTest : public PerformanceHintEnqueueTest {
     }
 
     void TearDown() override {
+        if (IsSkipped()) {
+            return;
+        }
         delete image;
         zeroCopyImage.reset(nullptr);
         alignedFree(address);

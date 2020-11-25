@@ -133,6 +133,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenMediaStateFlushIsCreatedTh
 }
 
 HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));

@@ -345,6 +345,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndSharedMemWhenEn
 }
 
 TEST_P(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadImageIsCallingThenContextProvidesHintsAboutAlignments) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     size_t hostOrigin[] = {0, 0, 0};
     void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);

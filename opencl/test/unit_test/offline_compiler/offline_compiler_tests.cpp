@@ -246,11 +246,9 @@ TEST_F(OfflineCompilerTests, WhenCompilingSourceThenCorrectExtensionsArePassed) 
 
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
-    mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    mockOfflineCompiler->initialize(argv.size(), argv);
 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
-    EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
-
     std::string oclVersionOption = getOclVersionCompilerInternalOption(DEFAULT_PLATFORM::hwInfo.capabilityTable.clVersionSupport);
     EXPECT_THAT(internalOptions, ::testing::HasSubstr(oclVersionOption));
 
@@ -272,11 +270,9 @@ TEST_F(OfflineCompilerTests, givenClStd30OptionWhenCompilingSourceThenCorrectExt
 
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
-    mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    mockOfflineCompiler->initialize(argv.size(), argv);
 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
-    EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
-
     OpenClCFeaturesContainer openclCFeatures;
     getOpenclCFeaturesList(DEFAULT_PLATFORM::hwInfo, openclCFeatures);
     for (auto &feature : openclCFeatures) {

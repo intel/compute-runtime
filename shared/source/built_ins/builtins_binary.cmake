@@ -19,28 +19,28 @@ set(GENERATED_BUILTINS
     "aux_translation"
     "copy_buffer_rect"
     "copy_buffer_to_buffer"
-    "copy_buffer_to_image3d"
     "copy_kernel_timestamps"
     "fill_buffer"
+)
+
+set(GENERATED_BUILTINS_IMAGES
+    "copy_buffer_to_image3d"
+    "copy_image3d_to_buffer"
+    "copy_image_to_image1d"
+    "copy_image_to_image2d"
+    "copy_image_to_image3d"
     "fill_image1d"
     "fill_image2d"
     "fill_image3d"
 )
 
-set(GENERATED_BUILTINS_IMAGES
-    "copy_image3d_to_buffer"
-    "copy_image_to_image1d"
-    "copy_image_to_image2d"
-    "copy_image_to_image3d"
-)
-
 set(GENERATED_BUILTINS_IMAGES_STATELESS
+    "copy_buffer_to_image3d_stateless"
     "copy_image3d_to_buffer_stateless"
 )
 
 set(GENERATED_BUILTINS_STATELESS
     "copy_buffer_to_buffer_stateless"
-    "copy_buffer_to_image3d_stateless"
     "copy_buffer_rect_stateless"
     "fill_buffer_stateless"
 )

@@ -67,6 +67,7 @@ function(neo_shared_copy_test_files target product revision_id)
 endfunction()
 
 file(GLOB_RECURSE TEST_KERNELS *.cl)
+file(GLOB_RECURSE TEST_KERNELS_IMAGES *.images.cl)
 add_custom_target(prepare_test_kernel_for_shared)
 set_target_properties(prepare_test_kernel_for_shared PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}")
 
@@ -87,10 +88,17 @@ macro(macro_for_each_gen)
 
     if(${GEN_TYPE}_HAS_${PLATFORM_TYPE})
 
+      set(KERNELS_TO_COMPILE ${TEST_KERNELS})
+      set(IMAGE_SUPPORT FALSE)
+      GEN_CONTAINS_PLATFORMS("SUPPORTED_IMAGES" ${GEN_TYPE} IMAGE_SUPPORT)
+      if(NOT IMAGE_SUPPORT)
+        list(REMOVE_ITEM KERNELS_TO_COMPILE ${TEST_KERNELS_IMAGES})
+      endif()
+
       get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
       set(PLATFORM_LOWER ${DEFAULT_SUPPORTED_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
       foreach(REVISION_ID ${${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS})
-        compile_kernels_gen(${family_name_with_type} ${REVISION_ID} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNELS})
+        compile_kernels_gen(${family_name_with_type} ${REVISION_ID} ${PLATFORM_LOWER} ${family_name_with_type} ${KERNELS_TO_COMPILE})
 
         add_custom_target(prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID} DEPENDS ${compiled_kernels_${family_name_with_type}_${REVISION_ID}})
         set_target_properties(prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}/${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}/${REVISION_ID}")

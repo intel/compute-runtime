@@ -158,6 +158,90 @@ __kernel void FillBufferSSHOffset(
     pDst[dstIndex] = pSrc[srcIndex];
 }
 
+//////////////////////////////////////////////////////////////////////////////
+__kernel void CopyBufferRectBytes2d(
+    __global const char* src,
+    __global char* dst,
+    uint4 SrcOrigin,
+    uint4 DstOrigin,
+    uint2 SrcPitch,
+    uint2 DstPitch )
+
+{
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+
+    uint LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x );
+    uint LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x );
+
+    *( dst + LDstOffset )  = *( src + LSrcOffset ); 
+
+}
+//////////////////////////////////////////////////////////////////////////////
+__kernel void CopyBufferRectBytes3d(
+    __global const char* src, 
+    __global char* dst, 
+    uint4 SrcOrigin, 
+    uint4 DstOrigin, 
+    uint2 SrcPitch, 
+    uint2 DstPitch ) 
+ 
+{ 
+    int x = get_global_id(0); 
+    int y = get_global_id(1); 
+    int z = get_global_id(2); 
+ 
+    uint LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
+    uint LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
+ 
+    *( dst + LDstOffset )  = *( src + LSrcOffset );  
+ 
+}
+
+__kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* dst, uint useOnlyGlobalTimestamps) {
+    uint gid = get_global_id(0);
+    const ulong tsMask = (1ull << 32) - 1;
+    uint currentOffset = gid * 4;
+    dst[currentOffset] = 0;
+    dst[currentOffset + 1] = 0;
+    dst[currentOffset + 2] = 0;
+    dst[currentOffset + 3] = 0;
+
+    ulong srcPtr = srcEvents[gid];
+    __global uint *src = (__global uint *) srcPtr;
+    dst[currentOffset] = src[1] & tsMask;
+    dst[currentOffset + 1] = src[3] & tsMask;
+    if (useOnlyGlobalTimestamps != 0) {
+        dst[currentOffset + 2] = src[1] & tsMask;
+        dst[currentOffset + 3] = src[3] & tsMask;
+    } else {
+        dst[currentOffset + 2] = src[0] & tsMask;
+        dst[currentOffset + 3] = src[2] & tsMask;
+    }
+}
+
+__kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __global ulong* dst, __global ulong *offsets, uint useOnlyGlobalTimestamps) {
+    uint gid = get_global_id(0);
+    const ulong tsMask = (1ull << 32) - 1;
+    uint currentOffset = offsets[gid] / 8;
+    dst[currentOffset] = 0;
+    dst[currentOffset + 1] = 0;
+    dst[currentOffset + 2] = 0;
+    dst[currentOffset + 3] = 0;
+
+    ulong srcPtr = srcEvents[gid];
+    __global uint *src = (__global uint *) srcPtr;
+    dst[currentOffset] = src[1] & tsMask;
+    dst[currentOffset + 1] = src[3] & tsMask;
+    if (useOnlyGlobalTimestamps != 0) {
+        dst[currentOffset + 2] = src[1] & tsMask;
+        dst[currentOffset + 3] = src[3] & tsMask;
+    } else {
+        dst[currentOffset + 2] = src[0] & tsMask;
+        dst[currentOffset + 3] = src[2] & tsMask;
+    }
+}
+
 __kernel void FillImage1d(
     __write_only image1d_t output,
     uint4 color,
@@ -235,46 +319,6 @@ __kernel void CopyImageToImage3d(
     const int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     const uint4 c = read_imageui(input, srcCoord);
     write_imageui(output, dstCoord, c);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-__kernel void CopyBufferRectBytes2d(
-    __global const char* src,
-    __global char* dst,
-    uint4 SrcOrigin,
-    uint4 DstOrigin,
-    uint2 SrcPitch,
-    uint2 DstPitch )
-
-{
-    int x = get_global_id(0);
-    int y = get_global_id(1);
-
-    uint LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x );
-    uint LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x );
-
-    *( dst + LDstOffset )  = *( src + LSrcOffset ); 
-
-}
-//////////////////////////////////////////////////////////////////////////////
-__kernel void CopyBufferRectBytes3d(
-    __global const char* src, 
-    __global char* dst, 
-    uint4 SrcOrigin, 
-    uint4 DstOrigin, 
-    uint2 SrcPitch, 
-    uint2 DstPitch ) 
- 
-{ 
-    int x = get_global_id(0); 
-    int y = get_global_id(1); 
-    int z = get_global_id(2); 
- 
-    uint LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
-    uint LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
- 
-    *( dst + LDstOffset )  = *( src + LSrcOffset );  
- 
 }
 
 #pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
@@ -558,49 +602,5 @@ __kernel void CopyImage3dToBuffer16Bytes(__read_only image3d_t input,
     }
     else{
         *(__global uint4*)(dst + DstOffset + x * 16) = c;
-    }
-}
-
-__kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* dst, uint useOnlyGlobalTimestamps) {
-    uint gid = get_global_id(0);
-    const ulong tsMask = (1ull << 32) - 1;
-    uint currentOffset = gid * 4;
-    dst[currentOffset] = 0;
-    dst[currentOffset + 1] = 0;
-    dst[currentOffset + 2] = 0;
-    dst[currentOffset + 3] = 0;
-
-    ulong srcPtr = srcEvents[gid];
-    __global uint *src = (__global uint *) srcPtr;
-    dst[currentOffset] = src[1] & tsMask;
-    dst[currentOffset + 1] = src[3] & tsMask;
-    if (useOnlyGlobalTimestamps != 0) {
-        dst[currentOffset + 2] = src[1] & tsMask;
-        dst[currentOffset + 3] = src[3] & tsMask;
-    } else {
-        dst[currentOffset + 2] = src[0] & tsMask;
-        dst[currentOffset + 3] = src[2] & tsMask;
-    }
-}
-
-__kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __global ulong* dst, __global ulong *offsets, uint useOnlyGlobalTimestamps) {
-    uint gid = get_global_id(0);
-    const ulong tsMask = (1ull << 32) - 1;
-    uint currentOffset = offsets[gid] / 8;
-    dst[currentOffset] = 0;
-    dst[currentOffset + 1] = 0;
-    dst[currentOffset + 2] = 0;
-    dst[currentOffset + 3] = 0;
-
-    ulong srcPtr = srcEvents[gid];
-    __global uint *src = (__global uint *) srcPtr;
-    dst[currentOffset] = src[1] & tsMask;
-    dst[currentOffset + 1] = src[3] & tsMask;
-    if (useOnlyGlobalTimestamps != 0) {
-        dst[currentOffset + 2] = src[1] & tsMask;
-        dst[currentOffset + 3] = src[3] & tsMask;
-    } else {
-        dst[currentOffset + 2] = src[0] & tsMask;
-        dst[currentOffset + 3] = src[2] & tsMask;
     }
 }

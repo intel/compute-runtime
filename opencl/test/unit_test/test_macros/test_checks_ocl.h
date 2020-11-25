@@ -30,11 +30,6 @@ bool supportsAuxResolves();
 
 #include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
-#define REQUIRE_IMAGES_OR_SKIP(param)                      \
-    if (NEO::TestChecks::supportsImages(param) == false) { \
-        GTEST_SKIP();                                      \
-    }
-
 #define REQUIRE_IMAGE_SUPPORT_OR_SKIP(param)                                     \
     auto hwInfo = castToObject<Context>(param)->getDevice(0)->getHardwareInfo(); \
     if (!hwInfo.capabilityTable.supportsImages) {                                \

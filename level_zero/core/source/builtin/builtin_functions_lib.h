@@ -24,11 +24,6 @@ enum class Builtin : uint32_t {
     CopyBufferRectBytes3d,
     CopyBufferToBufferMiddle,
     CopyBufferToBufferSide,
-    CopyBufferToImage3d16Bytes,
-    CopyBufferToImage3d2Bytes,
-    CopyBufferToImage3d4Bytes,
-    CopyBufferToImage3d8Bytes,
-    CopyBufferToImage3dBytes,
     FillBufferImmediate,
     FillBufferSSHOffset,
     QueryKernelTimestamps,
@@ -37,7 +32,12 @@ enum class Builtin : uint32_t {
 };
 
 enum class ImageBuiltin : uint32_t {
-    CopyImage3dToBuffer16Bytes = 0u,
+    CopyBufferToImage3d16Bytes = 0u,
+    CopyBufferToImage3d2Bytes,
+    CopyBufferToImage3d4Bytes,
+    CopyBufferToImage3d8Bytes,
+    CopyBufferToImage3dBytes,
+    CopyImage3dToBuffer16Bytes,
     CopyImage3dToBuffer2Bytes,
     CopyImage3dToBuffer4Bytes,
     CopyImage3dToBuffer8Bytes,

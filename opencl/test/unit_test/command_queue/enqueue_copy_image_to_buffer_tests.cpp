@@ -280,9 +280,8 @@ INSTANTIATE_TEST_CASE_P(MipMapCopyImageToBufferTest_GivenImageWithMipLevelNonZer
 struct EnqueueCopyImageToBufferHw : public ::testing::Test {
 
     void SetUp() override {
-        if (is32bit) {
-            GTEST_SKIP();
-        }
+        REQUIRE_64BIT_OR_SKIP();
+        REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context = std::make_unique<MockContext>(device.get());
         srcImage = std::unique_ptr<Image>(Image2dHelper<>::create(context.get()));

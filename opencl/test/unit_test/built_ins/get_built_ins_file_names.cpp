@@ -9,14 +9,23 @@
 
 namespace NEO {
 
-extern std::vector<std::string> buintInFileNames;
+extern std::vector<std::string> builtInFileNames;
+extern std::vector<std::string> imageBuiltInFileNames;
 
-std::vector<std::string> getBuiltInFileNames() {
-    return buintInFileNames;
+std::vector<std::string> getBuiltInFileNames(bool imagesSupport) {
+    auto vec = builtInFileNames;
+    if (imagesSupport) {
+        vec.insert(vec.end(), imageBuiltInFileNames.begin(), imageBuiltInFileNames.end());
+    }
+    return vec;
 }
 
-std::string getBuiltInHashFileName(uint64_t hash) {
-    std::string hashName = "test_files/" + std::to_string(hash) + ".cl";
+std::string getBuiltInHashFileName(uint64_t hash, bool imagesSupport) {
+    std::string hashName = "test_files/" + std::to_string(hash);
+    if (imagesSupport) {
+        hashName.append(".images");
+    }
+    hashName.append(".cl");
     return hashName;
 }
 } // namespace NEO

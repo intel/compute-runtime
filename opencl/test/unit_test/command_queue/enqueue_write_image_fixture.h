@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
@@ -21,6 +22,7 @@ struct EnqueueWriteImageTest : public CommandEnqueueFixture,
                                public ::testing::Test {
 
     void SetUp(void) override {
+        REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
         CommandEnqueueFixture::SetUp();
 
         context = new MockContext(pClDevice);
@@ -32,6 +34,9 @@ struct EnqueueWriteImageTest : public CommandEnqueueFixture,
     }
 
     void TearDown(void) override {
+        if (IsSkipped()) {
+            return;
+        }
         delete dstImage;
         delete[] srcPtr;
         delete context;

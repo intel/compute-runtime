@@ -51,7 +51,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         if (options) {
             std::string optionsToProgram(options);
             if (optionsToProgram.find("-cl-std=CL2.0") != std::string::npos) {
-                ASSERT_TRUE(pDevice->areOcl21FeaturesEnabled());
+                ASSERT_TRUE(pDevice->isOcl21Conformant());
             }
 
             CreateProgramFromBinary(

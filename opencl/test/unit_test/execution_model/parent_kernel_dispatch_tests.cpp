@@ -188,39 +188,38 @@ INSTANTIATE_TEST_CASE_P(ParentKernelDispatchTest,
 typedef ParentKernelCommandQueueFixture ParentKernelCommandStreamFixture;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandStreamFixture, GivenDispatchInfoWithParentKernelWhenCommandStreamIsAcquiredThenSizeAccountsForSchedulerDispatch) {
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    if (device->areOcl21FeaturesSupported()) {
-        MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
+    MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
-        DispatchInfo dispatchInfo(device, mockParentKernel, 1, Vec3<size_t>{24, 1, 1}, Vec3<size_t>{24, 1, 1}, Vec3<size_t>{0, 0, 0});
-        MultiDispatchInfo multiDispatchInfo(mockParentKernel);
+    DispatchInfo dispatchInfo(device, mockParentKernel, 1, Vec3<size_t>{24, 1, 1}, Vec3<size_t>{24, 1, 1}, Vec3<size_t>{0, 0, 0});
+    MultiDispatchInfo multiDispatchInfo(mockParentKernel);
 
-        size_t size = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, mockParentKernel);
-        size_t numOfKernels = MemoryConstants::pageSize / size;
+    size_t size = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, mockParentKernel);
+    size_t numOfKernels = MemoryConstants::pageSize / size;
 
-        size_t rest = MemoryConstants::pageSize - (numOfKernels * size);
+    size_t rest = MemoryConstants::pageSize - (numOfKernels * size);
 
-        SchedulerKernel &scheduler = pCmdQ->getContext().getSchedulerKernel();
-        size_t schedulerSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, &scheduler);
+    SchedulerKernel &scheduler = pCmdQ->getContext().getSchedulerKernel();
+    size_t schedulerSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, &scheduler);
 
-        while (rest >= schedulerSize) {
-            numOfKernels++;
-            rest = alignUp(numOfKernels * size, MemoryConstants::pageSize) - numOfKernels * size;
-        }
-
-        for (size_t i = 0; i < numOfKernels; i++) {
-            multiDispatchInfo.push(dispatchInfo);
-        }
-
-        size_t totalKernelSize = alignUp(numOfKernels * size, MemoryConstants::pageSize);
-
-        LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(), false, false,
-                                                                                              false, multiDispatchInfo, nullptr, 0);
-
-        EXPECT_LT(totalKernelSize, commandStream.getMaxAvailableSpace());
-
-        delete mockParentKernel;
+    while (rest >= schedulerSize) {
+        numOfKernels++;
+        rest = alignUp(numOfKernels * size, MemoryConstants::pageSize) - numOfKernels * size;
     }
+
+    for (size_t i = 0; i < numOfKernels; i++) {
+        multiDispatchInfo.push(dispatchInfo);
+    }
+
+    size_t totalKernelSize = alignUp(numOfKernels * size, MemoryConstants::pageSize);
+
+    LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(), false, false,
+                                                                                          false, multiDispatchInfo, nullptr, 0);
+
+    EXPECT_LT(totalKernelSize, commandStream.getMaxAvailableSpace());
+
+    delete mockParentKernel;
 }
 
 class MockParentKernelDispatch : public ExecutionModelSchedulerTest,

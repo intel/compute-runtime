@@ -19,6 +19,7 @@
 #include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
 using namespace NEO;
@@ -370,9 +371,7 @@ INSTANTIATE_TEST_CASE_P(
 
 struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUniformKernelFixture> {
     void SetUp() override {
-        if (NEO::defaultHwInfo->capabilityTable.supportsOcl21Features == false) {
-            GTEST_SKIP();
-        }
+        REQUIRE_OCL_21_OR_SKIP(NEO::defaultHwInfo);
         KernelAUBFixture<SimpleArgNonUniformKernelFixture>::SetUp();
 
         sizeUserMemory = alignUp(typeItems * typeSize, 64);

@@ -389,7 +389,7 @@ TEST_F(Nv12ImageTest, GivenOffsetOfUVPlaneWhenCreatingUVPlaneImageThenDimensions
 }
 
 HWTEST_F(Nv12ImageTest, WhenCreatingParentImageThenPlanesAreWritten) {
-    KernelBinaryHelper kbHelper(KernelBinaryHelper::BUILT_INS);
+    KernelBinaryHelper kbHelper(KernelBinaryHelper::BUILT_INS_WITH_IMAGES);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 

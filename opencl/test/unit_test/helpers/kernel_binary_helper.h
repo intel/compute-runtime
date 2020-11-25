@@ -14,4 +14,5 @@ class KernelBinaryHelper {
     ~KernelBinaryHelper();
 
     static const std::string BUILT_INS;
+    static const std::string BUILT_INS_WITH_IMAGES;
 };
