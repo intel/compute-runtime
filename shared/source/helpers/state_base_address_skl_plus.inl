@@ -24,6 +24,8 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         uint32_t size = uint32_t(ssh->getMaxAvailableSpace() / 64) - 1;
         stateBaseAddress->setBindlessSurfaceStateSize(size);
     }
+
+    appendExtraCacheSettings(stateBaseAddress, gmmHelper);
 }
 
 } // namespace NEO

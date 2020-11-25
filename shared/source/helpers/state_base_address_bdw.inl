@@ -17,6 +17,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     uint64_t indirectObjectHeapBaseAddress,
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable) {
+    appendExtraCacheSettings(stateBaseAddress, gmmHelper);
 }
 
 } // namespace NEO

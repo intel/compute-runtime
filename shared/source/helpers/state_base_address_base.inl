@@ -77,4 +77,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper, isMultiOsContextCapable);
 }
 
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, GmmHelper *gmmHelper) {}
+
 } // namespace NEO

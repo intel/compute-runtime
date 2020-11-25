@@ -42,6 +42,8 @@ struct StateBaseAddressHelper {
         GmmHelper *gmmHelper,
         bool isMultiOsContextCapable);
 
+    static void appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, GmmHelper *gmmHelper);
+
     static void programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper);
 };
 } // namespace NEO
