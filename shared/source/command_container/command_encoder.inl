@@ -208,6 +208,14 @@ void EncodeMathMMIO<Family>::encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAl
     encodeAlu(pAluParam, regA, regB, AluRegisters::OPCODE_SUB, finalResultRegister, AluRegisters::R_CF);
 }
 
+template <typename Family>
+void EncodeMathMMIO<Family>::encodeAluAnd(MI_MATH_ALU_INST_INLINE *pAluParam,
+                                          AluRegisters firstOperandRegister,
+                                          AluRegisters secondOperandRegister,
+                                          AluRegisters finalResultRegister) {
+    encodeAlu(pAluParam, firstOperandRegister, secondOperandRegister, AluRegisters::OPCODE_AND, finalResultRegister, AluRegisters::R_ACCU);
+}
+
 /*
  * greaterThan() tests if firstOperandRegister is greater than
  * secondOperandRegister.

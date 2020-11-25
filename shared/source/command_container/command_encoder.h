@@ -136,6 +136,11 @@ struct EncodeMathMMIO {
                              AluRegisters firstOperandRegister,
                              AluRegisters secondOperandRegister,
                              AluRegisters finalResultRegister);
+
+    static void encodeAluAnd(MI_MATH_ALU_INST_INLINE *pAluParam,
+                             AluRegisters firstOperandRegister,
+                             AluRegisters secondOperandRegister,
+                             AluRegisters finalResultRegister);
 };
 
 template <typename GfxFamily>
