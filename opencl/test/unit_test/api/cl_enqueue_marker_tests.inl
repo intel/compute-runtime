@@ -28,6 +28,14 @@ TEST_F(clEnqueueMarkerTests, GivenValidCommandQueueWhenEnqueingMarkerThenSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clEnqueueMarkerTests, GivenQueueIncapableWhenEnqueingMarkerThenInvalidOperationReturned) {
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_MARKER_INTEL);
+    auto retVal = clEnqueueMarker(
+        pCommandQueue,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 class CommandWithoutKernelTypesTests : public testing::TestWithParam<unsigned int /*commandTypes*/> {
 };
 

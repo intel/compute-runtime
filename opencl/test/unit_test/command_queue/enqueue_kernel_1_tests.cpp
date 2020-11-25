@@ -12,6 +12,7 @@
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
@@ -205,6 +206,34 @@ TEST_F(EnqueueKernelTest, GivenNullKernelWhenEnqueuingNDCountKernelINTELThenInva
         nullptr);
 
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+}
+
+using clEnqueueNDCountKernelTests = api_tests;
+
+TEST_F(clEnqueueNDCountKernelTests, GivenQueueIncapableWhenEnqueuingNDCountKernelINTELThenInvalidOperationIsReturned) {
+    auto &hwHelper = HwHelper::get(::defaultHwInfo->platform.eRenderCoreFamily);
+    if (!hwHelper.isCooperativeDispatchSupported(pCommandQueue->getGpgpuEngine().getEngineType(), ::defaultHwInfo->platform.eProductFamily)) {
+        GTEST_SKIP();
+    }
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t workgroupCount[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_KERNEL_INTEL);
+    retVal = clEnqueueNDCountKernelINTEL(
+        pCommandQueue,
+        pKernel,
+        workDim,
+        globalWorkOffset,
+        workgroupCount,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
 TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernelINTELReturnsSuccess) {

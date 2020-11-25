@@ -3398,6 +3398,12 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return retVal;
     }
 
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_KERNEL_INTEL, eventWaitList, event)) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
+        return retVal;
+    }
+
     TakeOwnershipWrapper<Kernel> kernelOwnership(*pKernel, gtpinIsGTPinInitialized());
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyKernelSubmit(kernel, pCommandQueue);
@@ -3481,6 +3487,12 @@ cl_int CL_API_CALL clEnqueueMarker(cl_command_queue commandQueue,
 
     auto pCommandQueue = castToObject<CommandQueue>(commandQueue);
     if (pCommandQueue) {
+        if (!pCommandQueue->validateCapability(CL_QUEUE_CAPABILITY_MARKER_INTEL)) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clEnqueueMarker, &retVal);
+            return retVal;
+        }
+
         retVal = pCommandQueue->enqueueMarkerWithWaitList(
             0,
             nullptr,
@@ -3531,6 +3543,12 @@ cl_int CL_API_CALL clEnqueueBarrier(cl_command_queue commandQueue) {
     DBG_LOG_INPUTS("commandQueue", commandQueue);
     auto pCommandQueue = castToObject<CommandQueue>(commandQueue);
     if (pCommandQueue) {
+        if (!pCommandQueue->validateCapability(CL_QUEUE_CAPABILITY_BARRIER_INTEL)) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clEnqueueBarrier, &retVal);
+            return retVal;
+        }
+
         retVal = pCommandQueue->enqueueBarrierWithWaitList(
             0,
             nullptr,
@@ -3565,6 +3583,12 @@ cl_int CL_API_CALL clEnqueueMarkerWithWaitList(cl_command_queue commandQueue,
         return retVal;
     }
 
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MARKER_INTEL, eventWaitList, event)) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueMarkerWithWaitList, &retVal);
+        return retVal;
+    }
+
     retVal = pCommandQueue->enqueueMarkerWithWaitList(
         numEventsInWaitList,
         eventWaitList,
@@ -3595,6 +3619,13 @@ cl_int CL_API_CALL clEnqueueBarrierWithWaitList(cl_command_queue commandQueue,
         TRACING_EXIT(clEnqueueBarrierWithWaitList, &retVal);
         return retVal;
     }
+
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_BARRIER_INTEL, eventWaitList, event)) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueBarrierWithWaitList, &retVal);
+        return retVal;
+    }
+
     retVal = pCommandQueue->enqueueBarrierWithWaitList(
         numEventsInWaitList,
         eventWaitList,
@@ -5798,6 +5829,11 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         }
 
         pCommandQueue->getDevice().getSpecializedDevice<ClDevice>()->allocateSyncBufferHandler();
+    }
+
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_KERNEL_INTEL, eventWaitList, event)) {
+        retVal = CL_INVALID_OPERATION;
+        return retVal;
     }
 
     TakeOwnershipWrapper<Kernel> kernelOwnership(*pKernel, gtpinIsGTPinInitialized());

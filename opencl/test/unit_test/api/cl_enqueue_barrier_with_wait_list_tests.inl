@@ -30,3 +30,13 @@ TEST_F(clEnqueueBarrierWithWaitListTests, GivenValidCommandQueueWhenEnqueuingBar
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST_F(clEnqueueBarrierWithWaitListTests, GivenQueueIncapableWhenEnqueuingBarrierWithWaitListThenInvalidOperationIsReturned) {
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_BARRIER_INTEL);
+    auto retVal = clEnqueueBarrierWithWaitList(
+        pCommandQueue,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}

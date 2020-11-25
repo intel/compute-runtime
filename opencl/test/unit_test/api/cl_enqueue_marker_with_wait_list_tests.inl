@@ -30,3 +30,13 @@ TEST_F(clEnqueueMarkerWithWaitListTests, GivenValidCommandQueueWhenEnqueingMarke
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST_F(clEnqueueMarkerWithWaitListTests, GivenQueueIncapableWhenEnqueingMarkerWithWaitListThenInvalidOperationIsReturned) {
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_MARKER_INTEL);
+    auto retVal = clEnqueueMarkerWithWaitList(
+        pCommandQueue,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
