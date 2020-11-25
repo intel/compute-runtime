@@ -5,15 +5,10 @@
  *
  */
 
-#include <level_zero/ze_api.h>
+#include "zello_common.h"
 
-#include <chrono>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <limits>
-#include <memory>
-#include <vector>
+extern bool verbose;
+bool verbose = false;
 
 inline std::vector<uint8_t> loadBinaryFile(const std::string &filePath) {
     std::ifstream stream(filePath, std::ios::in);
@@ -30,22 +25,6 @@ inline std::vector<uint8_t> loadBinaryFile(const std::string &filePath) {
     stream.read(reinterpret_cast<char *>(binary_file.data()), length);
     return binary_file;
 }
-
-template <bool TerminateOnFailure, typename ResulT>
-inline void validate(ResulT result, const char *message) {
-    if (result == 0) { // assumption 0 is success
-        std::cerr << "SUCCESS : " << message << std::endl;
-        return;
-    }
-    std::cerr << (TerminateOnFailure ? "ERROR : " : "WARNING : ") << message << " : " << result
-              << std::endl;
-
-    if (TerminateOnFailure) {
-        std::terminate();
-    }
-}
-
-#define SUCCESS_OR_TERMINATE(CALL) validate<true>(CALL, #CALL)
 
 void createCmdQueueAndCmdList(ze_context_handle_t &context,
                               ze_device_handle_t &device,
@@ -270,7 +249,6 @@ bool testKernelTimestampHostQuery(ze_context_handle_t &context,
 }
 
 bool testKernelTimestampApendQuery(ze_context_handle_t &context,
-                                   ze_driver_handle_t &driver,
                                    ze_device_handle_t &device) {
 
     ze_command_queue_handle_t cmdQueue;
@@ -385,42 +363,26 @@ void printResult(bool result, std::string &currentTest) {
 }
 
 int main(int argc, char *argv[]) {
+    verbose = isVerbose(argc, argv);
+    ze_context_handle_t context = nullptr;
+    auto device = zelloInitContextAndGetDevices(context);
+
+    if (verbose) {
+        ze_device_properties_t deviceProperties = {};
+        SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
+        std::cout << deviceProperties.name << std::endl;
+        std::cout << "Device : \n"
+                  << " * name : " << deviceProperties.name << "\n"
+                  << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    }
+
     bool result;
-
-    SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
-
-    uint32_t driverCount = 0;
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, nullptr));
-    if (driverCount == 0)
-        std::terminate();
-
-    ze_driver_handle_t driverHandle;
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
-
-    ze_context_desc_t contextDesc = {};
-    ze_context_handle_t context;
-    SUCCESS_OR_TERMINATE(zeContextCreate(driverHandle, &contextDesc, &context));
-
-    uint32_t deviceCount = 0;
-    SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, nullptr));
-    if (deviceCount == 0)
-        std::terminate();
-
-    ze_device_handle_t device;
-    SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, &device));
-
-    ze_device_properties_t deviceProperties = {};
-    SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * type : " << ((deviceProperties.type == ZE_DEVICE_TYPE_GPU) ? "GPU" : "FPGA") << "\n"
-              << " * vendorId : " << deviceProperties.vendorId << "\n";
-
     std::string currentTest;
 
     currentTest = "Test Append Write of Global Timestamp";
-    result = testKernelTimestampApendQuery(context, driverHandle, device);
+    result = testKernelTimestampApendQuery(context, device);
     printResult(result, currentTest);
+
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     return result ? 0 : 1;

@@ -12,7 +12,10 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       zello_world_jitc_ocloc
       zello_ipc_copy_dma_buf
       zello_ipc_copy_dma_buf_p2p
+      zello_copy
   )
+
+  include_directories(common)
 
   foreach(TEST_NAME ${TEST_TARGETS})
     if(MSVC)

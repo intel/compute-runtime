@@ -5,36 +5,15 @@
  *
  */
 
-#include <level_zero/ze_api.h>
+#include "zello_common.h"
 
-#include <fstream>
-#include <iostream>
-#include <limits>
-#include <memory>
-#include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <vector>
 
-template <bool TerminateOnFailure, typename ResulT>
-inline void validate(ResulT result, const char *message) {
-    if (result == ZE_RESULT_SUCCESS) {
-        return;
-    }
-
-    if (TerminateOnFailure) {
-        std::cerr << (TerminateOnFailure ? "ERROR : " : "WARNING : ") << message << " : " << result
-                  << std::endl;
-        std::terminate();
-    }
-}
-
-#define SUCCESS_OR_TERMINATE(CALL) validate<true>(CALL, #CALL)
-#define SUCCESS_OR_TERMINATE_BOOL(FLAG) validate<true>(!(FLAG), #FLAG)
-#define SUCCESS_OR_WARNING(CALL) validate<false>(CALL, #CALL)
-#define SUCCESS_OR_WARNING_BOOL(FLAG) validate<false>(!(FLAG), #FLAG)
+extern bool verbose;
+bool verbose = false;
 
 uint8_t uinitializedPattern = 1;
 uint8_t expectedPattern = 7;
@@ -298,6 +277,7 @@ void run_server(int commSocket, bool &validRet) {
 }
 
 int main(int argc, char *argv[]) {
+    verbose = isVerbose(argc, argv);
     bool outputValidationSuccessful;
 
     int sv[2];
