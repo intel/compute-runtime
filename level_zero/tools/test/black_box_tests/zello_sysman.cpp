@@ -89,6 +89,7 @@ void usage() {
                  "\n  -o,   --power                 selectively run power black box test"
                  "\n  -m,   --memory                selectively run memory black box test"
                  "\n  -g,   --global                selectively run device/global operations black box test"
+                 "\n  -R,   --ras                   selectively run ras black box test"
                  "\n  -E,   --event                 set and listen to events black box test"
                  "\n  -r,   --reset force|noforce   selectively run device reset test"
                  "\n  -h,   --help                  display help message"
@@ -120,7 +121,7 @@ void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_ha
     VALIDATECALL(zeDeviceGet(driverHandle, &deviceCount, devices.data()));
 
     ze_device_properties_t deviceProperties = {};
-    for (auto device : devices) {
+    for (const auto &device : devices) {
         VALIDATECALL(zeDeviceGetProperties(device, &deviceProperties));
 
         if (verbose) {
@@ -142,7 +143,7 @@ void testSysmanPower(ze_device_handle_t &device) {
     std::vector<zes_pwr_handle_t> handles(count, nullptr);
     VALIDATECALL(zesDeviceEnumPowerDomains(device, &count, handles.data()));
 
-    for (auto handle : handles) {
+    for (const auto &handle : handles) {
         zes_power_properties_t properties;
         VALIDATECALL(zesPowerGetProperties(handle, &properties));
         if (verbose) {
@@ -202,7 +203,7 @@ void testSysmanTemperature(ze_device_handle_t &device) {
     std::vector<zes_temp_handle_t> handles(count, nullptr);
     VALIDATECALL(zesDeviceEnumTemperatureSensors(device, &count, handles.data()));
 
-    for (auto handle : handles) {
+    for (const auto &handle : handles) {
         double temperature;
         VALIDATECALL(zesTemperatureGetState(handle, &temperature));
         if (verbose) {
@@ -256,7 +257,7 @@ void testSysmanFrequency(ze_device_handle_t &device) {
     std::vector<zes_freq_handle_t> handles(count, nullptr);
     VALIDATECALL(zesDeviceEnumFrequencyDomains(device, &count, handles.data()));
 
-    for (auto handle : handles) {
+    for (const auto &handle : handles) {
         zes_freq_properties_t freqProperties = {};
         zes_freq_range_t freqRange = {};
         zes_freq_range_t testFreqRange = {};
@@ -329,6 +330,42 @@ void testSysmanFrequency(ze_device_handle_t &device) {
         }
     }
 }
+
+void testSysmanRas(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  Ras tests ---- " << std::endl;
+    uint32_t count = 0;
+    VALIDATECALL(zesDeviceEnumRasErrorSets(device, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Ras Error Sets" << std::endl;
+        return;
+    }
+    std::vector<zes_ras_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumRasErrorSets(device, &count, handles.data()));
+
+    for (const auto &handle : handles) {
+        zes_ras_properties_t rasProperties = {};
+        zes_ras_state_t rasState = {};
+
+        VALIDATECALL(zesRasGetProperties(handle, &rasProperties));
+        if (verbose) {
+            std::cout << "rasProperties.type = " << rasProperties.type << std::endl;
+            if (rasProperties.onSubdevice) {
+                std::cout << "rasProperties.subdeviceId = " << rasProperties.subdeviceId << std::endl;
+            }
+        }
+        ze_bool_t clear = 0;
+        VALIDATECALL(zesRasGetState(handle, clear, &rasState));
+        if (verbose) {
+            if (rasProperties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
+                std::cout << "Number of fatal accelerator engine resets attempted by the driver = " << rasState.category[ZES_RAS_ERROR_CAT_RESET] << std::endl;
+                std::cout << "Number of fatal errors that have occurred in caches = " << rasState.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS] << std::endl;
+            } else {
+                std::cout << "Number of correctable errors that have occurred in caches = " << rasState.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS] << std::endl;
+            }
+        }
+    }
+}
 std::string getStandbyType(zes_standby_type_t standbyType) {
     if (standbyType == ZES_STANDBY_TYPE_GLOBAL)
         return "ZES_STANDBY_TYPE_GLOBAL";
@@ -356,7 +393,7 @@ void testSysmanStandby(ze_device_handle_t &device) {
     }
     std::vector<zes_standby_handle_t> handles(count, nullptr);
     VALIDATECALL(zesDeviceEnumStandbyDomains(device, &count, handles.data()));
-    for (auto handle : handles) {
+    for (const auto &handle : handles) {
         zes_standby_properties_t standbyProperties = {};
         zes_standby_promo_mode_t standbyMode = ZES_STANDBY_PROMO_MODE_FORCE_UINT32;
 
@@ -411,7 +448,7 @@ void testSysmanEngine(ze_device_handle_t &device) {
     }
     std::vector<zes_engine_handle_t> handles(count, nullptr);
     VALIDATECALL(zesDeviceEnumEngineGroups(device, &count, handles.data()));
-    for (auto handle : handles) {
+    for (const auto &handle : handles) {
         zes_engine_properties_t engineProperties = {};
         zes_engine_stats_t engineStats = {};
 
@@ -458,7 +495,7 @@ void testSysmanScheduler(ze_device_handle_t &device) {
     std::vector<zes_sched_handle_t> handles(count, nullptr);
     VALIDATECALL(zesDeviceEnumSchedulers(device, &count, handles.data()));
 
-    for (auto handle : handles) {
+    for (const auto &handle : handles) {
         zes_sched_mode_t currentMode = {};
         VALIDATECALL(zesSchedulerGetCurrentMode(handle, &currentMode));
         if (verbose) {
@@ -552,7 +589,7 @@ void testSysmanMemory(ze_device_handle_t &device) {
     std::vector<zes_mem_handle_t> handles(count, nullptr);
     VALIDATECALL(zesDeviceEnumMemoryModules(device, &count, handles.data()));
 
-    for (auto handle : handles) {
+    for (const auto &handle : handles) {
         zes_mem_properties_t memoryProperties = {};
         zes_mem_state_t memoryState = {};
         zes_mem_bandwidth_t memoryBandwidth = {};
@@ -741,7 +778,7 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
     std::vector<zes_process_state_t> processes(count);
     VALIDATECALL(zesDeviceProcessesGetState(device, &count, processes.data()));
     if (verbose) {
-        for (auto process : processes) {
+        for (const auto &process : processes) {
             std::cout << "processes.processId = " << process.processId << std::endl;
             std::cout << "processes.memSize = " << process.memSize << std::endl;
             std::cout << "processes.sharedSize = " << process.sharedSize << std::endl;
@@ -775,6 +812,7 @@ int main(int argc, char *argv[]) {
         {"temperature", no_argument, nullptr, 't'},
         {"power", no_argument, nullptr, 'o'},
         {"global", no_argument, nullptr, 'g'},
+        {"ras", no_argument, nullptr, 'R'},
         {"memory", no_argument, nullptr, 'm'},
         {"event", no_argument, nullptr, 'E'},
         {"reset", required_argument, nullptr, 'r'},
@@ -831,6 +869,11 @@ int main(int argc, char *argv[]) {
         case 'm':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
                 testSysmanMemory(device);
+            });
+            break;
+        case 'R':
+            std::for_each(devices.begin(), devices.end(), [&](auto device) {
+                testSysmanRas(device);
             });
             break;
         case 'r':
