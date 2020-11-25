@@ -5,7 +5,7 @@
  *
  */
 
-#include "mock_module.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 using ::testing::Return;
 

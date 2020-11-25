@@ -5,7 +5,7 @@
  *
  */
 
-#include "mock_event.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 #include <vector>
 

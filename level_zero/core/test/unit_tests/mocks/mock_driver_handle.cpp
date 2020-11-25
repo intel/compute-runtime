@@ -5,9 +5,11 @@
  *
  */
 
-#include "mock_driver_handle.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 #include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
+
+#include "level_zero/core/source/driver/host_pointer_manager.h"
 
 namespace L0 {
 namespace ult {

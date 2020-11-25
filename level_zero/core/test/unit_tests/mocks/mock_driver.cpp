@@ -5,7 +5,7 @@
  *
  */
 
-#include "mock_driver.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 
 namespace L0 {
 namespace ult {

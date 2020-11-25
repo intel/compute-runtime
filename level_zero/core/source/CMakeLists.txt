@@ -42,6 +42,8 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/driver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/driver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/driver_imp.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/host_pointer_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/driver/host_pointer_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/event/event.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/event/event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/fence/fence.cpp

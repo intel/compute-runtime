@@ -5,7 +5,7 @@
  *
  */
 
-#include "mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 
 #include "shared/source/device/device.h"
 

@@ -654,6 +654,5 @@ TEST(zeDriverGetIpcProperties, whenZeDriverGetIpcPropertiesIsCalledThenGetIPCPro
     result = zeDriverGetIpcProperties(driverHandle.toHandle(), &ipcProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
-
 } // namespace ult
 } // namespace L0

@@ -17,6 +17,7 @@
 #include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
+#include "level_zero/core/source/driver/host_pointer_manager.h"
 
 #include "driver_version_l0.h"
 
@@ -275,6 +276,10 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
 
+    if (NEO::DebugManager.flags.EnableHostPointerImport.get() == 1) {
+        createHostPointerManager();
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -294,7 +299,7 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
 
     GlobalDriver = driverHandle;
 
-    driverHandle->memoryManager->setForceNonSvmForExternalHostPtr(true);
+    driverHandle->getMemoryManager()->setForceNonSvmForExternalHostPtr(true);
 
     return driverHandle;
 }
@@ -390,6 +395,69 @@ ze_result_t DriverHandleImp::createEventPool(const ze_event_pool_desc_t *desc,
 ze_result_t DriverHandleImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
                                                     ze_event_pool_handle_t *phEventPool) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+void DriverHandleImp::createHostPointerManager() {
+    hostPointerManager = std::make_unique<HostPointerManager>(getMemoryManager());
+}
+
+ze_result_t DriverHandleImp::importExternalPointer(void *ptr, size_t size) {
+    if (hostPointerManager.get() != nullptr) {
+        auto ret = hostPointerManager->createHostPointerMultiAllocation(this->devices,
+                                                                        ptr,
+                                                                        size);
+        return ret;
+    }
+
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t DriverHandleImp::releaseImportedPointer(void *ptr) {
+    if (hostPointerManager.get() != nullptr) {
+        bool ret = hostPointerManager->freeHostPointerAllocation(ptr);
+        return ret ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t DriverHandleImp::getHostPointerBaseAddress(void *ptr, void **baseAddress) {
+    if (hostPointerManager.get() != nullptr) {
+        auto hostPointerData = hostPointerManager->getHostPointerAllocation(ptr);
+        if (hostPointerData != nullptr) {
+            if (baseAddress != nullptr) {
+                *baseAddress = hostPointerData->basePtr;
+            }
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+NEO::GraphicsAllocation *DriverHandleImp::findHostPointerAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) {
+    if (hostPointerManager.get() != nullptr) {
+        HostPointerData *hostData = hostPointerManager->getHostPointerAllocation(ptr);
+        if (hostData != nullptr) {
+            size_t foundEndSize = reinterpret_cast<size_t>(hostData->basePtr) + hostData->size;
+            size_t inputEndSize = reinterpret_cast<size_t>(ptr) + size;
+            if (foundEndSize >= inputEndSize) {
+                return hostData->hostPtrAllocations.getGraphicsAllocation(rootDeviceIndex);
+            }
+            return nullptr;
+        }
+        return nullptr;
+    }
+
+    return nullptr;
+}
+
+NEO::GraphicsAllocation *DriverHandleImp::getDriverSystemMemoryAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) {
+    NEO::SvmAllocationData *allocData = nullptr;
+    bool allocFound = findAllocationDataForRange(ptr, size, &allocData);
+    if (allocFound) {
+        return allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    }
+    return findHostPointerAllocation(ptr, size, rootDeviceIndex);
 }
 
 } // namespace L0

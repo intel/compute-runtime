@@ -14,6 +14,7 @@
 #include "level_zero/extensions/public/ze_exp_ext.h"
 
 namespace L0 {
+class HostPointerManager;
 
 struct DriverHandleImp : public DriverHandle {
     ~DriverHandleImp() override;
@@ -68,25 +69,35 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                    uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
 
+    ze_result_t importExternalPointer(void *ptr, size_t size) override;
+    ze_result_t releaseImportedPointer(void *ptr) override;
+    ze_result_t getHostPointerBaseAddress(void *ptr, void **baseAddress) override;
+
+    virtual NEO::GraphicsAllocation *findHostPointerAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override;
+    virtual NEO::GraphicsAllocation *getDriverSystemMemoryAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override;
     uint32_t parseAffinityMask(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
+    void createHostPointerManager();
 
-    uint32_t numDevices = 0;
-    std::vector<Device *> devices;
-    NEO::MemoryManager *memoryManager = nullptr;
-    NEO::SVMAllocsManager *svmAllocsManager = nullptr;
-    uint64_t uuidTimestamp = 0u;
+    std::unique_ptr<HostPointerManager> hostPointerManager;
+    // Experimental functions
+    std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
 
-    // Environment Variables
     std::string affinityMaskString = "";
-    bool enableProgramDebugging = false;
-    bool enableSysman = false;
-
+    std::vector<Device *> devices;
     // Spec extensions
     const std::vector<std::pair<std::string, uint32_t>> extensionsSupported = {
         {ZE_MODULE_PROGRAM_EXP_NAME, ZE_MODULE_PROGRAM_EXP_VERSION_CURRENT}};
 
-    // Experimental functions
-    std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
+    uint64_t uuidTimestamp = 0u;
+
+    NEO::MemoryManager *memoryManager = nullptr;
+    NEO::SVMAllocsManager *svmAllocsManager = nullptr;
+
+    uint32_t numDevices = 0;
+
+    // Environment Variables
+    bool enableProgramDebugging = false;
+    bool enableSysman = false;
 };
 
 extern struct DriverHandleImp *GlobalDriver;

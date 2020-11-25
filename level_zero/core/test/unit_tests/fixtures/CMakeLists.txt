@@ -11,6 +11,7 @@ set(L0_FIXTURES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_fixture.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/module_fixture.h
 )
 

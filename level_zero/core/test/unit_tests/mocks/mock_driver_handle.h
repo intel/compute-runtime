@@ -148,6 +148,29 @@ struct Mock<DriverHandle> : public DriverHandleImp {
                                  size_t size,
                                  size_t alignment,
                                  void **ptr);
+
+    ze_result_t importExternalPointer(void *ptr, size_t size) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    ze_result_t releaseImportedPointer(void *ptr) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    ze_result_t getHostPointerBaseAddress(void *ptr, void **baseAddress) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    NEO::GraphicsAllocation *findHostPointerAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override {
+        return nullptr;
+    }
+    NEO::GraphicsAllocation *getDriverSystemMemoryAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override {
+        auto svmData = svmAllocsManager->getSVMAlloc(ptr);
+        if (svmData != nullptr) {
+            return svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+        }
+        return nullptr;
+    }
 };
 
 } // namespace ult
