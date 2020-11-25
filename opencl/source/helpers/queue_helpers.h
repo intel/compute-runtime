@@ -37,8 +37,6 @@ void retainQueue(cl_command_queue commandQueue, cl_int &retVal) {
     }
 }
 
-void getIntelQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, GetInfoHelper &getInfoHelper, cl_int &retVal);
-
 template <typename QueueType>
 void releaseQueue(cl_command_queue commandQueue, cl_int &retVal) {
     using BaseType = typename QueueType::BaseType;
@@ -59,6 +57,30 @@ inline void releaseQueue<CommandQueue>(cl_command_queue commandQueue, cl_int &re
         releaseVirtualEvent(*queue);
         queue->release();
         retVal = CL_SUCCESS;
+    }
+}
+
+void getIntelQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, GetInfoHelper &getInfoHelper, cl_int &retVal);
+
+inline void getHostQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, GetInfoHelper &getInfoHelper, cl_int &retVal) {
+    switch (paramName) {
+    case CL_QUEUE_FAMILY_INTEL:
+        if (queue->isQueueFamilySelected()) {
+            retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(queue->getQueueFamilyIndex()));
+        } else {
+            retVal = CL_INVALID_VALUE;
+        }
+        break;
+    case CL_QUEUE_INDEX_INTEL:
+        if (queue->isQueueFamilySelected()) {
+            retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(queue->getQueueIndexWithinFamily()));
+        } else {
+            retVal = CL_INVALID_VALUE;
+        }
+        break;
+    default:
+        getIntelQueueInfo(queue, paramName, getInfoHelper, retVal);
+        break;
     }
 }
 
@@ -110,7 +132,7 @@ cl_int getQueueInfo(QueueType *queue,
     default:
         if (std::is_same<QueueType, class CommandQueue>::value) {
             auto cmdQ = reinterpret_cast<CommandQueue *>(queue);
-            getIntelQueueInfo(cmdQ, paramName, getInfoHelper, retVal);
+            getHostQueueInfo(cmdQ, paramName, getInfoHelper, retVal);
             break;
         }
         retVal = CL_INVALID_VALUE;

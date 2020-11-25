@@ -736,12 +736,15 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
         }
 
         if (specificEngineSelected) {
+            this->queueFamilySelected = true;
             if (getDevice().getNumAvailableDevices() == 1) {
                 auto queueFamily = getDevice().getNonEmptyEngineGroup(selectedQueueFamilyIndex);
                 auto engine = queueFamily->at(selectedQueueIndex);
                 auto engineType = engine.getEngineType();
                 this->overrideEngine(engineType);
                 this->queueCapabilities = getClDevice().getDeviceInfo().queueFamilyProperties[selectedQueueFamilyIndex].capabilities;
+                this->queueFamilyIndex = selectedQueueFamilyIndex;
+                this->queueIndexWithinFamily = selectedQueueIndex;
             }
         }
     }

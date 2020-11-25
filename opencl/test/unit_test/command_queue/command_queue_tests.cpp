@@ -124,6 +124,11 @@ TEST(CommandQueue, WhenConstructingCommandQueueThenTaskLevelAndTaskCountAreZero)
     EXPECT_EQ(0u, cmdQ.taskCount);
 }
 
+TEST(CommandQueue, WhenConstructingCommandQueueThenQueueFamilyIsNotSelected) {
+    MockCommandQueue cmdQ(nullptr, nullptr, 0);
+    EXPECT_FALSE(cmdQ.isQueueFamilySelected());
+}
+
 struct GetTagTest : public ClDeviceFixture,
                     public CommandQueueFixture,
                     public CommandStreamFixture,
@@ -1366,12 +1371,18 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
     MockCommandQueue queueRcs(&context, context.getDevice(0), properties);
     EXPECT_EQ(&engineCcs, &queueRcs.getGpgpuEngine());
     EXPECT_FALSE(queueRcs.isCopyOnly);
+    EXPECT_TRUE(queueRcs.isQueueFamilySelected());
+    EXPECT_EQ(properties[1], queueRcs.getQueueFamilyIndex());
+    EXPECT_EQ(properties[3], queueRcs.getQueueIndexWithinFamily());
 
     fillProperties(properties, 1, 0);
     EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, false, false);
     MockCommandQueue queueBcs(&context, context.getDevice(0), properties);
     EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
     EXPECT_TRUE(queueBcs.isCopyOnly);
+    EXPECT_TRUE(queueBcs.isQueueFamilySelected());
+    EXPECT_EQ(properties[1], queueBcs.getQueueFamilyIndex());
+    EXPECT_EQ(properties[3], queueBcs.getQueueIndexWithinFamily());
     EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
 }
 
@@ -1386,6 +1397,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWh
     MockCommandQueue defaultQueue(&context, context.getDevice(0), properties);
     EXPECT_EQ(&defaultEngine, &defaultQueue.getGpgpuEngine());
     EXPECT_FALSE(defaultQueue.isCopyOnly);
+    EXPECT_TRUE(defaultQueue.isQueueFamilySelected());
+    EXPECT_EQ(properties[1], defaultQueue.getQueueFamilyIndex());
+    EXPECT_EQ(properties[3], defaultQueue.getQueueIndexWithinFamily());
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
@@ -1399,6 +1413,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
     MockCommandQueue queueRcs(&context, context.getDevice(0), properties);
     EXPECT_EQ(&engineCcs, &queueRcs.getGpgpuEngine());
     EXPECT_FALSE(queueRcs.isCopyOnly);
+    EXPECT_TRUE(queueRcs.isQueueFamilySelected());
+    EXPECT_EQ(properties[1], queueRcs.getQueueFamilyIndex());
+    EXPECT_EQ(properties[3], queueRcs.getQueueIndexWithinFamily());
 
     fillProperties(properties, 1, 0);
     EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, false, false);
@@ -1406,6 +1423,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
     EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
     EXPECT_TRUE(queueBcs.isCopyOnly);
     EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
+    EXPECT_TRUE(queueBcs.isQueueFamilySelected());
+    EXPECT_EQ(properties[1], queueBcs.getQueueFamilyIndex());
+    EXPECT_EQ(properties[3], queueBcs.getQueueIndexWithinFamily());
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
@@ -1419,6 +1439,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQu
     EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
     EXPECT_TRUE(queueBcs.isCopyOnly);
     EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
+    EXPECT_TRUE(queueBcs.isQueueFamilySelected());
+    EXPECT_EQ(properties[1], queueBcs.getQueueFamilyIndex());
+    EXPECT_EQ(properties[3], queueBcs.getQueueIndexWithinFamily());
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenBliterDisabledAndBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
@@ -1435,4 +1458,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenBliterDisabledAndBcsFamilySelec
     EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
     EXPECT_TRUE(queueBcs.isCopyOnly);
     EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
+    EXPECT_TRUE(queueBcs.isQueueFamilySelected());
+    EXPECT_EQ(properties[1], queueBcs.getQueueFamilyIndex());
+    EXPECT_EQ(properties[3], queueBcs.getQueueIndexWithinFamily());
 }

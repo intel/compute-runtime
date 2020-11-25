@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "gtest/gtest.h"
 
@@ -120,3 +121,51 @@ INSTANTIATE_TEST_CASE_P(
     GetCommandQueueInfoTest,
     GetCommandQueueInfoTest,
     ::testing::ValuesIn(DefaultCommandQueueProperties));
+
+TEST(GetCommandQueueFamilyInfoTest, givenQueueFamilyNotSelectedWhenGettingFamilyAndQueueIndexThenInvalidValueueIsReturned) {
+    MockCommandQueue queue;
+    queue.queueFamilySelected = false;
+    cl_int retVal{};
+
+    cl_uint familyIndex{};
+    retVal = queue.getCommandQueueInfo(
+        CL_QUEUE_FAMILY_INTEL,
+        sizeof(cl_uint),
+        &familyIndex,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    cl_uint queueIndex{};
+    retVal = queue.getCommandQueueInfo(
+        CL_QUEUE_INDEX_INTEL,
+        sizeof(cl_uint),
+        &queueIndex,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(GetCommandQueueFamilyInfoTest, givenQueueFamilySelectedWhenGettingFamilyAndQueueIndexThenValuesAreReturned) {
+    MockCommandQueue queue;
+    queue.queueFamilySelected = true;
+    queue.queueFamilyIndex = 12u;
+    queue.queueIndexWithinFamily = 1432u;
+    cl_int retVal{};
+
+    cl_uint familyIndex{};
+    retVal = queue.getCommandQueueInfo(
+        CL_QUEUE_FAMILY_INTEL,
+        sizeof(cl_uint),
+        &familyIndex,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(queue.queueFamilyIndex, familyIndex);
+
+    cl_uint queueIndex{};
+    retVal = queue.getCommandQueueInfo(
+        CL_QUEUE_INDEX_INTEL,
+        sizeof(cl_uint),
+        &queueIndex,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(queue.queueIndexWithinFamily, queueIndex);
+}

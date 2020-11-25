@@ -26,6 +26,9 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::isCopyOnly;
     using CommandQueue::obtainNewTimestampPacketNodes;
     using CommandQueue::queueCapabilities;
+    using CommandQueue::queueFamilyIndex;
+    using CommandQueue::queueFamilySelected;
+    using CommandQueue::queueIndexWithinFamily;
     using CommandQueue::requiresCacheFlushAfterWalker;
     using CommandQueue::throttle;
     using CommandQueue::timestampPacketContainer;

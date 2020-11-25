@@ -302,6 +302,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool validateCapability(cl_command_queue_capabilities_intel capability) const;
     bool validateCapabilityForOperation(cl_command_queue_capabilities_intel capability, const cl_event *waitList, const cl_event *outEvent) const;
+    cl_uint getQueueFamilyIndex() const { return queueFamilyIndex; }
+    cl_uint getQueueIndexWithinFamily() const { return queueIndexWithinFamily; }
+    bool isQueueFamilySelected() const { return queueFamilySelected; }
 
     bool getRequiresCacheFlushAfterWalker() const {
         return requiresCacheFlushAfterWalker;
@@ -360,7 +363,11 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     cl_command_queue_properties commandQueueProperties = 0;
     std::vector<uint64_t> propertiesVector;
+
     cl_command_queue_capabilities_intel queueCapabilities = CL_QUEUE_CAPABILITY_ALL_INTEL;
+    cl_uint queueFamilyIndex = 0;
+    cl_uint queueIndexWithinFamily = 0;
+    bool queueFamilySelected = false;
 
     QueuePriority priority = QueuePriority::MEDIUM;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
