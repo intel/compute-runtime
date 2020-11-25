@@ -74,6 +74,34 @@ TEST_F(clEnqueueMapImageTests, GivenValidParametersWhenMappingImageThenSuccessIs
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clEnqueueMapImageTests, GivenQueueIncapableWhenMappingImageThenInvalidOperationIsReturned) {
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+
+    const size_t origin[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
+    size_t imageRowPitch = 0;
+    size_t imageSlicePitch = 0;
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_MAP_IMAGE_INTEL);
+    clEnqueueMapImage(
+        pCommandQueue,
+        image,
+        CL_TRUE,
+        CL_MAP_READ,
+        origin,
+        region,
+        &imageRowPitch,
+        &imageSlicePitch,
+        0,
+        nullptr,
+        nullptr,
+        &retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 struct clEnqueueMapImageYUVTests : public ApiFixture<>,
                                    public ::testing::Test {
 
@@ -179,4 +207,5 @@ TEST_F(clEnqueueMapImageYUVTests, GivenInvalidRegionWhenMappingYuvImageThenInval
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
 } // namespace ULT

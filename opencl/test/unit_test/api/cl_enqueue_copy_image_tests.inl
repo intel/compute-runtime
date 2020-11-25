@@ -152,6 +152,31 @@ TEST_F(clEnqueueCopyImageTests, GivenValidParametersWhenCopyingImageThenSuccessI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clEnqueueCopyImageTests, GivenQueueIncapableWhenCopyingImageThenInvalidOperationIsReturned) {
+    imageFormat.image_channel_order = CL_RGBA;
+    auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
+    auto dstImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
+    const size_t origin[] = {2, 2, 0};
+    const size_t region[] = {2, 2, 1};
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL);
+    auto retVal = clEnqueueCopyImage(
+        pCommandQueue,
+        srcImage,
+        dstImage,
+        origin,
+        origin,
+        region,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    retVal = clReleaseMemObject(srcImage);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseMemObject(dstImage);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 typedef clEnqueueCopyImageTests clEnqueueCopyImageYUVTests;
 
 TEST_F(clEnqueueCopyImageYUVTests, GivenValidParametersWhenCopyingYuvImageThenSuccessIsReturned) {

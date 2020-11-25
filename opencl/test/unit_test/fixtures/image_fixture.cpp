@@ -36,6 +36,18 @@ const cl_image_desc Image1dDefaults::imageDesc = {
     0,
     {nullptr}};
 
+const cl_image_desc Image1dBufferDefaults::imageDesc = {
+    CL_MEM_OBJECT_IMAGE1D_BUFFER,
+    imageWidth,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    {nullptr}};
+
 const cl_image_desc Image2dDefaults::imageDesc = {
     CL_MEM_OBJECT_IMAGE2D,
     imageWidth,

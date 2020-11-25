@@ -107,6 +107,31 @@ TEST_F(clEnqueueWriteImageTests, GivenValidParametersWhenWritingImageThenSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clEnqueueReadImageTests, GivenQueueIncapableParametersWhenWritingImageThenInvalidOperationIsReturned) {
+    imageFormat.image_channel_order = CL_RGBA;
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
+    const size_t origin[] = {2, 2, 0};
+    const size_t region[] = {2, 2, 1};
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL);
+    auto mockAddress = reinterpret_cast<void *>(0x1234);
+    auto retVal = clEnqueueWriteImage(
+        pCommandQueue,
+        image,
+        false,
+        origin,
+        region,
+        0,
+        0,
+        mockAddress,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 typedef clEnqueueWriteImageTests clEnqueueWriteImageYUV;
 
 TEST_F(clEnqueueWriteImageYUV, GivenValidParametersWhenWritingYuvImageThenSuccessIsReturned) {

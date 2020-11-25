@@ -36,6 +36,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     using Buffer::offset;
     using Buffer::size;
     using MemObj::isZeroCopy;
+    using MemObj::memObjectType;
     using MockBufferStorage::device;
     MockBuffer(GraphicsAllocation &alloc)
         : MockBufferStorage(), Buffer(

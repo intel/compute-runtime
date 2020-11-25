@@ -2737,6 +2737,12 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
             return retVal;
         }
 
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clEnqueueReadImage, &retVal);
+            return retVal;
+        }
+
         retVal = pCommandQueue->enqueueReadImage(
             pImage,
             blockingRead,
@@ -2804,6 +2810,12 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
             return retVal;
         }
 
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clEnqueueWriteImage, &retVal);
+            return retVal;
+        }
+
         retVal = pCommandQueue->enqueueWriteImage(
             pImage,
             blockingWrite,
@@ -2853,6 +2865,12 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
     if (CL_SUCCESS == retVal) {
         retVal = Image::validateRegionAndOrigin(origin, region, dstImage->getImageDesc());
         if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(clEnqueueFillImage, &retVal);
+            return retVal;
+        }
+
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueFillImage, &retVal);
             return retVal;
         }
@@ -2933,6 +2951,12 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
         }
         retVal = Image::validateRegionAndOrigin(dstOrigin, region, pDstImage->getImageDesc());
         if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(clEnqueueCopyImage, &retVal);
+            return retVal;
+        }
+
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueCopyImage, &retVal);
             return retVal;
         }
@@ -3193,6 +3217,11 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
             break;
         }
 
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_IMAGE_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
+            break;
+        }
+
         retPtr = pCommandQueue->enqueueMapImage(
             pImage,
             blockingMap,
@@ -3240,18 +3269,29 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
                    "event", NEO::FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal == CL_SUCCESS) {
-        if (pMemObj->peekClMemObjType() == CL_MEM_OBJECT_PIPE) {
+        cl_command_queue_capabilities_intel requiredCapability = 0u;
+        switch (pMemObj->peekClMemObjType()) {
+        case CL_MEM_OBJECT_BUFFER:
+            requiredCapability = CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL;
+            break;
+        case CL_MEM_OBJECT_IMAGE2D:
+        case CL_MEM_OBJECT_IMAGE3D:
+        case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+        case CL_MEM_OBJECT_IMAGE1D:
+        case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+        case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+            requiredCapability = CL_QUEUE_CAPABILITY_MAP_IMAGE_INTEL;
+            break;
+        default:
             retVal = CL_INVALID_MEM_OBJECT;
             TRACING_EXIT(clEnqueueUnmapMemObject, &retVal);
             return retVal;
         }
 
-        if (pMemObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
-            if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL, eventWaitList, event)) {
-                retVal = CL_INVALID_OPERATION;
-                TRACING_EXIT(clEnqueueUnmapMemObject, &retVal);
-                return retVal;
-            }
+        if (!pCommandQueue->validateCapabilityForOperation(requiredCapability, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clEnqueueUnmapMemObject, &retVal);
+            return retVal;
         }
 
         retVal = pCommandQueue->enqueueUnmapMemObject(pMemObj, mappedPtr, numEventsInWaitList, eventWaitList, event);

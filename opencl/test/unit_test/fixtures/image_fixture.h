@@ -31,6 +31,10 @@ struct Image1dDefaults {
     static NEO::Context *context;
 };
 
+struct Image1dBufferDefaults : public Image1dDefaults {
+    static const cl_image_desc imageDesc;
+};
+
 struct Image2dDefaults : public Image1dDefaults {
     static const cl_image_desc imageDesc;
 };
@@ -93,6 +97,10 @@ struct ImageHelper {
 
 template <typename Traits = Image1dDefaults>
 struct Image1dHelper : public ImageHelper<Traits> {
+};
+
+template <typename Traits = Image1dBufferDefaults>
+struct Image1dBufferHelper : public ImageHelper<Traits> {
 };
 
 template <typename Traits = Image2dDefaults>

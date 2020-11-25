@@ -72,4 +72,43 @@ TEST_F(clEnqueueFillImageTests, GivenNullFillColorWhenFillingImageThenInvalidVal
 
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
+
+TEST_F(clEnqueueFillImageTests, GivenCorrectArgumentsWhenFillingImageThenSuccessIsReturned) {
+    auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
+    uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {2, 2, 1};
+
+    retVal = clEnqueueFillImage(
+        pCommandQueue,
+        image.get(),
+        fillColor,
+        origin,
+        region,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clEnqueueFillImageTests, GiveQueueIncapableWhenFillingImageThenInvalidOperationReturned) {
+    auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
+    uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {2, 2, 1};
+
+    this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL);
+    retVal = clEnqueueFillImage(
+        pCommandQueue,
+        image.get(),
+        fillColor,
+        origin,
+        region,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
 } // namespace ULT
