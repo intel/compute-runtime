@@ -19,6 +19,7 @@
 namespace NEO {
 
 class GmmHelper;
+struct HardwareInfo;
 class IndirectHeap;
 
 template <typename GfxFamily>
@@ -206,6 +207,7 @@ struct EncodeSurfaceState {
                              GraphicsAllocation *allocation, GmmHelper *gmmHelper);
     static void encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
                                         bool isReadOnly, uint32_t numAvailableDevices);
+    static void encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo);
 
     static constexpr uintptr_t getSurfaceBaseAddressAlignmentMask() {
         return ~(getSurfaceBaseAddressAlignment() - 1);
