@@ -173,8 +173,9 @@ cl_int Kernel::initialize() {
         const auto &patchInfo = kernelInfo.patchInfo;
 
         reconfigureKernel();
-        auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-        auto &hwInfo = getDevice().getHardwareInfo();
+        auto pClDevice = &getDevice();
+        auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+        auto &hwInfo = pClDevice->getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto maxSimdSize = getKernelInfo().getMaxSimdSize();
 
@@ -251,7 +252,7 @@ cl_int Kernel::initialize() {
         auto perHwThreadPrivateMemorySize = PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(patchInfo.pAllocateStatelessPrivateSurface, getKernelInfo().getMaxSimdSize());
 
         if (perHwThreadPrivateMemorySize) {
-            kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, getDevice().getSharedDeviceInfo().computeUnitsUsedForScratch);
+            kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch);
 
             DEBUG_BREAK_IF(kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize == 0);
             if (kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize > std::numeric_limits<uint32_t>::max()) {
@@ -262,7 +263,7 @@ cl_int Kernel::initialize() {
                 {rootDeviceIndex,
                  static_cast<size_t>(kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize),
                  GraphicsAllocation::AllocationType::PRIVATE_SURFACE,
-                 getDevice().getDeviceBitfield()});
+                 pClDevice->getDeviceBitfield()});
             if (kernelDeviceInfos[rootDeviceIndex].privateSurface == nullptr) {
                 retVal = CL_OUT_OF_RESOURCES;
                 break;
@@ -290,7 +291,7 @@ cl_int Kernel::initialize() {
             if (requiresSshForBuffers()) {
                 auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)),
                                               patchInfo.pAllocateStatelessEventPoolSurface->SurfaceStateHeapOffset);
-                Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, 0, nullptr, 0, nullptr, 0, 0);
+                Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, 0, nullptr, 0, nullptr, 0, 0);
             }
         }
 
@@ -299,7 +300,7 @@ cl_int Kernel::initialize() {
             if (requiresSshForBuffers()) {
                 auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)),
                                               patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->SurfaceStateHeapOffset);
-                Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, 0, nullptr, 0, nullptr, 0, 0);
+                Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, 0, nullptr, 0, nullptr, 0, 0);
             }
         }
 
@@ -370,7 +371,7 @@ cl_int Kernel::initialize() {
         }
 
         if (isParentKernel) {
-            program->allocateBlockPrivateSurfaces(getDevice());
+            program->allocateBlockPrivateSurfaces(*pClDevice);
         }
 
         if (program->isKernelDebugEnabled() && getKernelInfo().patchInfo.pAllocateSystemThreadSurface) {
@@ -647,7 +648,7 @@ cl_int Kernel::getSubGroupInfo(ClDevice &clDevice, cl_kernel_sub_group_info para
     if ((paramName == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ||
         (paramName == CL_KERNEL_MAX_NUM_SUB_GROUPS) ||
         (paramName == CL_KERNEL_COMPILE_NUM_SUB_GROUPS)) {
-        if (getDevice().areOcl21FeaturesEnabled() == false) {
+        if (clDevice.areOcl21FeaturesEnabled() == false) {
             return CL_INVALID_OPERATION;
         }
     }
@@ -1035,7 +1036,7 @@ void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *glob
 }
 
 uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue) const {
-    auto &hardwareInfo = getDevice().getHardwareInfo();
+    auto &hardwareInfo = getHardwareInfo(commandQueue->getDevice().getRootDeviceIndex());
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     if (!hwHelper.isCooperativeDispatchSupported(commandQueue->getGpgpuEngine().getEngineType(), hardwareInfo.platform.eProductFamily)) {
@@ -1093,7 +1094,7 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
 }
 
 void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+    auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
     if (kernelDeviceInfos[rootDeviceIndex].privateSurface) {
         commandStreamReceiver.makeResident(*kernelDeviceInfos[rootDeviceIndex].privateSurface);
     }
@@ -1388,7 +1389,7 @@ cl_int Kernel::setArgPipe(uint32_t argIndex,
 
         pipe->setPipeArg(patchLocation, patchSize, rootDeviceIndex);
 
-        auto graphicsAllocation = pipe->getGraphicsAllocation(getDevice().getRootDeviceIndex());
+        auto graphicsAllocation = pipe->getGraphicsAllocation(rootDeviceIndex);
 
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(rootDeviceIndex), kernelArgInfo.offsetHeap);
@@ -1657,8 +1658,9 @@ void Kernel::unsetArg(uint32_t argIndex) {
 }
 
 void Kernel::createReflectionSurface() {
+    auto pClDevice = program->getDevices()[0];
     if (this->isParentKernel && kernelReflectionSurface == nullptr) {
-        auto &hwInfo = getDevice().getHardwareInfo();
+        auto &hwInfo = pClDevice->getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         BlockKernelManager *blockManager = program->getBlockKernelManager();
         uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
@@ -1704,7 +1706,10 @@ void Kernel::createReflectionSurface() {
         kernelReflectionSize += blockCount * alignUp(maxConstantBufferSize, sizeof(void *));
         kernelReflectionSize += parentImageCount * sizeof(IGIL_ImageParamters);
         kernelReflectionSize += parentSamplerCount * sizeof(IGIL_ParentSamplerParams);
-        kernelReflectionSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), kernelReflectionSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER, getDevice().getDeviceBitfield()});
+        kernelReflectionSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
+            {pClDevice->getRootDeviceIndex(), kernelReflectionSize,
+             GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER,
+             pClDevice->getDeviceBitfield()});
 
         for (uint32_t i = 0; i < blockCount; i++) {
             const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
@@ -1715,12 +1720,12 @@ void Kernel::createReflectionSurface() {
                                                                                   maxConstantBufferSize,
                                                                                   parentSamplerCount,
                                                                                   *pBlockInfo,
-                                                                                  getDevice().getHardwareInfo());
+                                                                                  hwInfo);
 
             uint32_t offset = static_cast<uint32_t>(offsetof(IGIL_KernelDataHeader, m_data) + sizeof(IGIL_KernelAddressData) * i);
 
             uint32_t samplerHeapOffset = static_cast<uint32_t>(alignUp(kernelDataOffset + sizeof(IGIL_KernelData) + curbeParamsForBlocks[i].size() * sizeof(IGIL_KernelCurbeParams), sizeof(void *)));
-            uint32_t samplerHeapSize = static_cast<uint32_t>(alignUp(pBlockInfo->getSamplerStateArraySize(getDevice().getHardwareInfo()), Sampler::samplerStateArrayAlignment) + pBlockInfo->getBorderColorStateSize());
+            uint32_t samplerHeapSize = static_cast<uint32_t>(alignUp(pBlockInfo->getSamplerStateArraySize(hwInfo), Sampler::samplerStateArrayAlignment) + pBlockInfo->getBorderColorStateSize());
             uint32_t constantBufferOffset = alignUp(samplerHeapOffset + samplerHeapSize, sizeof(void *));
 
             uint32_t samplerParamsOffset = 0;
@@ -1747,7 +1752,7 @@ void Kernel::createReflectionSurface() {
                                                           sshTokenOffsetsFromKernelData[i] + kernelDataOffset,
                                                           btOffset,
                                                           *pBlockInfo,
-                                                          getDevice().getHardwareInfo());
+                                                          hwInfo);
 
             if (samplerHeapSize > 0) {
                 void *pDst = ptrOffset(kernelReflectionSurface->getUnderlyingBuffer(), samplerHeapOffset);
@@ -1778,7 +1783,10 @@ void Kernel::createReflectionSurface() {
 
     if (DebugManager.flags.ForceDispatchScheduler.get()) {
         if (this->isSchedulerKernel && kernelReflectionSurface == nullptr) {
-            kernelReflectionSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER, getDevice().getDeviceBitfield()});
+            kernelReflectionSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
+                {pClDevice->getRootDeviceIndex(), MemoryConstants::pageSize,
+                 GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER,
+                 pClDevice->getDeviceBitfield()});
         }
     }
 }
@@ -1818,7 +1826,7 @@ size_t Kernel::getInstructionHeapSizeForExecutionModel() const {
 }
 
 void Kernel::patchBlocksCurbeWithConstantValues() {
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+    auto rootDeviceIndex = program->getDevices()[0]->getRootDeviceIndex();
     BlockKernelManager *blockManager = program->getBlockKernelManager();
     uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
 
@@ -2252,7 +2260,7 @@ void Kernel::patchDefaultDeviceQueue(DeviceQueue *devQueue) {
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)),
                                           patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->SurfaceStateHeapOffset);
-            Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, devQueue->getQueueBuffer()->getUnderlyingBufferSize(),
+            Buffer::setSurfaceState(&devQueue->getDevice(), surfaceState, devQueue->getQueueBuffer()->getUnderlyingBufferSize(),
                                     (void *)devQueue->getQueueBuffer()->getGpuAddress(), 0, devQueue->getQueueBuffer(), 0, 0);
         }
     }
@@ -2274,7 +2282,7 @@ void Kernel::patchEventPool(DeviceQueue *devQueue) {
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)),
                                           patchInfo.pAllocateStatelessEventPoolSurface->SurfaceStateHeapOffset);
-            Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, devQueue->getEventPoolBuffer()->getUnderlyingBufferSize(),
+            Buffer::setSurfaceState(&devQueue->getDevice(), surfaceState, devQueue->getEventPoolBuffer()->getUnderlyingBufferSize(),
                                     (void *)devQueue->getEventPoolBuffer()->getGpuAddress(), 0, devQueue->getEventPoolBuffer(), 0, 0);
         }
     }
@@ -2363,8 +2371,8 @@ void Kernel::resolveArgs() {
 }
 
 bool Kernel::canTransformImages() const {
-    return getDevice().getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE &&
-           getDevice().getHardwareInfo().platform.eRenderCoreFamily <= IGFX_GEN11LP_CORE;
+    auto renderCoreFamily = program->getDevices()[0]->getHardwareInfo().platform.eRenderCoreFamily;
+    return renderCoreFamily >= IGFX_GEN9_CORE && renderCoreFamily <= IGFX_GEN11LP_CORE;
 }
 
 void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsForAuxTranslation) {

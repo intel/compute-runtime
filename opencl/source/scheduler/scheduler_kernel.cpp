@@ -43,8 +43,9 @@ void SchedulerKernel::setArgs(GraphicsAllocation *queue,
             " \nkrs=", reflectionSurface->getUnderlyingBuffer(), " \nstorage=", queueStorageBuffer->getUnderlyingBuffer(), "\nssh=", ssh->getUnderlyingBuffer());
 }
 void SchedulerKernel::computeGws() {
-    auto &devInfo = getDevice().getDeviceInfo();
-    auto &hwInfo = getDevice().getHardwareInfo();
+    auto pClDevice = program->getDevices()[0];
+    auto &devInfo = pClDevice->getDeviceInfo();
+    auto &hwInfo = pClDevice->getHardwareInfo();
     auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     size_t hWThreadsPerSubSlice = devInfo.maxComputUnits / hwInfo.gtSystemInfo.SubSliceCount;
@@ -53,7 +54,7 @@ void SchedulerKernel::computeGws() {
     wkgsPerSubSlice = std::min(wkgsPerSubSlice, helper.getMaxBarrierRegisterPerSlice());
     gws = wkgsPerSubSlice * hwInfo.gtSystemInfo.SubSliceCount * PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20 * PARALLEL_SCHEDULER_COMPILATION_SIZE_20;
 
-    if (getDevice().isSimulation()) {
+    if (pClDevice->isSimulation()) {
         gws = PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20 * PARALLEL_SCHEDULER_COMPILATION_SIZE_20;
     }
     if (DebugManager.flags.SchedulerGWS.get() != 0) {
