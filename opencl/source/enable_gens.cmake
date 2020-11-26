@@ -26,7 +26,6 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
     hw_info
     image
     sampler
-    state_base_address
     tbx_command_stream_receiver
 )
 

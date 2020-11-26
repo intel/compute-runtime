@@ -17,6 +17,7 @@ set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
     hw_helper
     preamble
     preemption
+    state_base_address
 )
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_WINDOWS
