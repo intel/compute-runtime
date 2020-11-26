@@ -12,6 +12,8 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/preamble.h"
@@ -30,22 +32,44 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
                                                 uint32_t samplerStateOffset,
                                                 uint32_t samplerCount,
                                                 uint32_t borderColorOffset,
-                                                const void *fnDynamicStateHeap) {
+                                                const void *fnDynamicStateHeap,
+                                                BindlessHeapsHelper *bindlessHeapHelper) {
     auto sizeSamplerState = sizeof(SAMPLER_STATE) * samplerCount;
     auto borderColorSize = samplerStateOffset - borderColorOffset;
 
+    SAMPLER_STATE *dstSamplerState = nullptr;
+    uint32_t samplerStateOffsetInDsh = 0;
+
     dsh->align(EncodeStates<Family>::alignIndirectStatePointer);
-    auto borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
+    uint32_t borderColorOffsetInDsh = 0;
+    if (!ApiSpecificConfig::getBindlessConfiguration()) {
+        borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
+        auto borderColor = dsh->getSpace(borderColorSize);
 
-    auto borderColor = dsh->getSpace(borderColorSize);
+        memcpy_s(borderColor, borderColorSize, ptrOffset(fnDynamicStateHeap, borderColorOffset),
+                 borderColorSize);
 
-    memcpy_s(borderColor, borderColorSize, ptrOffset(fnDynamicStateHeap, borderColorOffset),
-             borderColorSize);
+        dsh->align(INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+        samplerStateOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
 
-    dsh->align(INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
-    auto samplerStateOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
-
-    auto dstSamplerState = reinterpret_cast<SAMPLER_STATE *>(dsh->getSpace(sizeSamplerState));
+        dstSamplerState = reinterpret_cast<SAMPLER_STATE *>(dsh->getSpace(sizeSamplerState));
+    } else {
+        auto borderColor = reinterpret_cast<const SAMPLER_BORDER_COLOR_STATE *>(ptrOffset(fnDynamicStateHeap, borderColorOffset));
+        if (borderColor->getBorderColorRed() != 0.0f ||
+            borderColor->getBorderColorGreen() != 0.0f ||
+            borderColor->getBorderColorBlue() != 0.0f ||
+            (borderColor->getBorderColorAlpha() != 0.0f && borderColor->getBorderColorAlpha() != 1.0f)) {
+            UNRECOVERABLE_IF(true);
+        } else if (borderColor->getBorderColorAlpha() == 0.0f) {
+            borderColorOffsetInDsh = bindlessHeapHelper->getDefaultBorderColorOffset();
+        } else {
+            borderColorOffsetInDsh = bindlessHeapHelper->getAlphaBorderColorOffset();
+        }
+        dsh->align(INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+        auto samplerStateInDsh = bindlessHeapHelper->allocateSSInHeap(sizeSamplerState, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+        dstSamplerState = reinterpret_cast<SAMPLER_STATE *>(samplerStateInDsh.ssPtr);
+        samplerStateOffsetInDsh = static_cast<uint32_t>(samplerStateInDsh.surfaceStateOffset);
+    }
 
     auto srcSamplerState = reinterpret_cast<const SAMPLER_STATE *>(ptrOffset(fnDynamicStateHeap, samplerStateOffset));
     SAMPLER_STATE state = {};
@@ -56,7 +80,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
     }
 
     return samplerStateOffsetInDsh;
-}
+} // namespace NEO
 
 template <typename Family>
 size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
@@ -380,40 +404,6 @@ void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &con
     iddOffset = container.nextIddInBlock;
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(container.getIddBlock());
     return &interfaceDescriptorData[container.nextIddInBlock++];
-}
-
-template <typename Family>
-void EncodeDispatchKernel<Family>::patchBindlessSurfaceStateOffsets(const size_t sshOffset, const KernelDescriptor &kernelDesc, uint8_t *crossThread) {
-    auto &hwHelper = HwHelperHw<Family>::get();
-
-    for (const auto &argT : kernelDesc.payloadMappings.explicitArgs) {
-        CrossThreadDataOffset bindless = undefined<CrossThreadDataOffset>;
-        SurfaceStateHeapOffset bindful = undefined<SurfaceStateHeapOffset>;
-
-        switch (argT.type) {
-        case ArgDescriptor::ArgTPointer: {
-            auto &arg = argT.as<NEO::ArgDescPointer>();
-            bindless = arg.bindless;
-            bindful = arg.bindful;
-        } break;
-
-        case ArgDescriptor::ArgTImage: {
-            auto &arg = argT.as<NEO::ArgDescImage>();
-            bindless = arg.bindless;
-            bindful = arg.bindful;
-        } break;
-
-        default:
-            break;
-        }
-
-        if (NEO::isValidOffset(bindless)) {
-            auto patchLocation = ptrOffset(crossThread, bindless);
-            auto bindlessOffset = static_cast<uint32_t>(sshOffset) + bindful;
-            auto patchValue = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(bindlessOffset);
-            patchWithRequiredSize(patchLocation, sizeof(patchValue), patchValue);
-        }
-    }
 }
 
 template <typename Family>

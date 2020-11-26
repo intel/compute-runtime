@@ -45,6 +45,7 @@ class BindlessHeapsHelper {
     void *getSpaceInHeap(size_t ssSize, BindlesHeapType heapType);
     uint32_t getDefaultBorderColorOffset();
     uint32_t getAlphaBorderColorOffset();
+    IndirectHeap *getHeap(BindlesHeapType heapType);
 
   protected:
     void growHeap(BindlesHeapType heapType);

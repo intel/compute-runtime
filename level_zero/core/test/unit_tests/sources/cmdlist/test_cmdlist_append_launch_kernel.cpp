@@ -178,7 +178,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDe
     auto sshHeapSize = ssh->getMaxAvailableSpace();
     auto initialAllocation = ssh->getGraphicsAllocation();
     EXPECT_NE(nullptr, initialAllocation);
-
+    const_cast<KernelDescriptor::AddressingMode &>(kernel->getKernelDescriptor().kernelAttributes.bufferAddressingMode) = KernelDescriptor::BindfulAndStateless;
     for (size_t i = 0; i < sshHeapSize / kernelSshSize + 1; i++) {
         auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);

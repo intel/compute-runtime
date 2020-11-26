@@ -140,8 +140,9 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenGetDefaultBorderColo
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenGetAlphaBorderColorOffsetCalledThenCorrectOffsetReturned) {
+    auto borderColorSize = 0x40;
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
-    auto expectedOffset = bindlessHeapHelper->borderColorStates->getGpuAddress() - bindlessHeapHelper->borderColorStates->getGpuBaseAddress() + 4 * sizeof(float);
+    auto expectedOffset = bindlessHeapHelper->borderColorStates->getGpuAddress() - bindlessHeapHelper->borderColorStates->getGpuBaseAddress() + borderColorSize;
     EXPECT_EQ(bindlessHeapHelper->getAlphaBorderColorOffset(), expectedOffset);
 }
 

@@ -14,6 +14,7 @@
 namespace NEO {
 
 constexpr size_t globalSshAllocationSize = 4 * MemoryConstants::pageSize64k;
+constexpr size_t borderColorAlphaOffset = alignUp(4 * sizeof(float), MemoryConstants::cacheLineSize);
 using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
 
 BindlessHeapsHelper::BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex) : memManager(memManager), isMultiOsContextCapable(isMultiOsContextCapable), rootDeviceIndex(rootDeviceIndex) {
@@ -30,7 +31,7 @@ BindlessHeapsHelper::BindlessHeapsHelper(MemoryManager *memManager, bool isMulti
     float borderColorDefault[4] = {0, 0, 0, 0};
     memcpy_s(borderColorStates->getUnderlyingBuffer(), sizeof(borderColorDefault), borderColorDefault, sizeof(borderColorDefault));
     float borderColorAlpha[4] = {0, 0, 0, 1.0};
-    memcpy_s(ptrOffset(borderColorStates->getUnderlyingBuffer(), sizeof(borderColorDefault)), sizeof(borderColorAlpha), borderColorAlpha, sizeof(borderColorAlpha));
+    memcpy_s(ptrOffset(borderColorStates->getUnderlyingBuffer(), borderColorAlphaOffset), sizeof(borderColorAlpha), borderColorAlpha, sizeof(borderColorDefault));
 }
 
 BindlessHeapsHelper::~BindlessHeapsHelper() {
@@ -87,7 +88,11 @@ uint32_t BindlessHeapsHelper::getDefaultBorderColorOffset() {
     return static_cast<uint32_t>(borderColorStates->getGpuAddress() - borderColorStates->getGpuBaseAddress());
 }
 uint32_t BindlessHeapsHelper::getAlphaBorderColorOffset() {
-    return getDefaultBorderColorOffset() + 4 * sizeof(float);
+    return getDefaultBorderColorOffset() + borderColorAlphaOffset;
+}
+
+IndirectHeap *BindlessHeapsHelper::getHeap(BindlesHeapType heapType) {
+    return surfaceStateHeaps[heapType].get();
 }
 
 void BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {

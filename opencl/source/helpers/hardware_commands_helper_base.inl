@@ -241,7 +241,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     uint32_t samplerCount = 0;
     if (patchInfo.samplerStateArray) {
         samplerCount = patchInfo.samplerStateArray->Count;
-        samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, patchInfo.samplerStateArray->Offset, samplerCount, patchInfo.samplerStateArray->BorderColorOffset, kernel.getDynamicStateHeap());
+        samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, patchInfo.samplerStateArray->Offset, samplerCount, patchInfo.samplerStateArray->BorderColorOffset, kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper());
     }
 
     auto threadPayload = kernel.getKernelInfo().patchInfo.threadPayload;

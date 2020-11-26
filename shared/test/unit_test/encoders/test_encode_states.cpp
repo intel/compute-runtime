@@ -7,24 +7,131 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
+#include "shared/test/unit_test/fixtures/front_window_fixture.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 using namespace NEO;
 
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
-HWTEST_F(CommandEncodeStatesTest, encodeCopySamplerState) {
+HWTEST_F(CommandEncodeStatesTest, GivenCommandStreamWhenEncodeCopySamplerStateThenIndirectStatePointerIsCorrect) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     SAMPLER_STATE samplerState;
 
     auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
     auto usedBefore = dsh->getUsed();
-    auto samplerStateOffset = EncodeStates<FamilyType>::copySamplerState(dsh, 0, numSamplers, 0, &samplerState);
+    auto samplerStateOffset = EncodeStates<FamilyType>::copySamplerState(dsh, 0, numSamplers, 0, &samplerState, nullptr);
 
     auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(ptrOffset(dsh->getCpuBase(), samplerStateOffset));
     EXPECT_EQ(pSmplr->getIndirectStatePointer(), usedBefore);
+}
+using BindlessCommandEncodeStatesTest = Test<MemManagerFixture>;
+
+HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWithoutAlphaThenBorderColorPtrReturned) {
+    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    uint32_t numSamplers = 1;
+    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+
+    uint32_t borderColorSize = 0x40;
+    SAMPLER_BORDER_COLOR_STATE samplerState;
+    samplerState.init();
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper());
+    auto expectedValue = pDevice->getBindlessHeapsHelper()->getDefaultBorderColorOffset();
+
+    auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(dsh->getGraphicsAllocation()->getUnderlyingBuffer());
+    EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+}
+
+HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWithAlphaThenBorderColorPtrOffseted) {
+    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    uint32_t numSamplers = 1;
+    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+
+    uint32_t borderColorSize = 0x40;
+    SAMPLER_BORDER_COLOR_STATE samplerState;
+    samplerState.init();
+    samplerState.setBorderColorAlpha(1.0);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper());
+    auto expectedValue = pDevice->getBindlessHeapsHelper()->getAlphaBorderColorOffset();
+
+    auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(dsh->getGraphicsAllocation()->getUnderlyingBuffer());
+    EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+}
+
+HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsRedChanelIsNotZeroThenExceptionThrown) {
+    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    uint32_t numSamplers = 1;
+    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+
+    uint32_t borderColorSize = 0x40;
+    SAMPLER_BORDER_COLOR_STATE samplerState;
+    samplerState.init();
+    samplerState.setBorderColorRed(0.5);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper()), std::exception);
+}
+
+HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsGreenChanelIsNotZeroThenExceptionThrown) {
+    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    uint32_t numSamplers = 1;
+    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+
+    uint32_t borderColorSize = 0x40;
+    SAMPLER_BORDER_COLOR_STATE samplerState;
+    samplerState.init();
+    samplerState.setBorderColorGreen(0.5);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper()), std::exception);
+}
+
+HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsBlueChanelIsNotZeroThenExceptionThrown) {
+    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    uint32_t numSamplers = 1;
+    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+
+    uint32_t borderColorSize = 0x40;
+    SAMPLER_BORDER_COLOR_STATE samplerState;
+    samplerState.init();
+    samplerState.setBorderColorBlue(0.5);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper()), std::exception);
+}
+
+HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsAlphaChanelIsNotZeroOrOneThenExceptionThrown) {
+    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    uint32_t numSamplers = 1;
+    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+
+    uint32_t borderColorSize = 0x40;
+    SAMPLER_BORDER_COLOR_STATE samplerState;
+    samplerState.init();
+    samplerState.setBorderColorAlpha(0.5);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper()), std::exception);
 }
 
 HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenUseAllocationAsInput) {

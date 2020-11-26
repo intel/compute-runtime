@@ -14,6 +14,7 @@
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
+#include "shared/test/unit_test/fixtures/front_window_fixture.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
@@ -691,123 +692,60 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeorWhenD
 
 using EncodeDispatchKernelTest = Test<CommandEncodeStatesFixture>;
 
-HWTEST_F(EncodeDispatchKernelTest, givenBindlessBufferArgWhenDispatchingKernelThenSurfaceStateOffsetInCrossThreadDataIsProgrammed) {
+using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
+
+HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenSshFromContainerIsUsed, Platforms) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WALKER = typename FamilyType::WALKER_TYPE;
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState;
     bindingTableState.sInit();
 
-    auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
-    auto ioh = cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT);
-
-    size_t sizeUsed = 0x20;
-    ssh->getSpace(sizeUsed);
-    sizeUsed = ssh->getUsed();
-
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
-    std::vector<uint8_t> storage;
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
-    kernelTokens.tokens.kernelArgs.resize(1);
-    kernelTokens.tokens.kernelArgs[0].objectType = NEO::PatchTokenBinary::ArgObjectType::Buffer;
-
-    const uint32_t iohOffset = dispatchInterface->getCrossThreadDataSize() + 4;
-    const uint32_t surfaceStateOffset = 128;
-    iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument globalMemArg = {};
-    globalMemArg.Token = iOpenCL::PATCH_TOKEN_STATELESS_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
-    globalMemArg.ArgumentNumber = 0;
-    globalMemArg.DataParamOffset = iohOffset;
-    globalMemArg.DataParamSize = 4;
-    globalMemArg.SurfaceStateHeapOffset = surfaceStateOffset;
-
-    auto surfaceStateOffsetOnHeap = static_cast<uint32_t>(alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE)) + surfaceStateOffset;
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(ioh->getCpuBase(), iohOffset));
-    *patchLocation = 0xdead;
-
-    kernelTokens.tokens.kernelArgs[0].objectArg = &globalMemArg;
-
-    NEO::populateKernelDescriptor(dispatchInterface->kernelDescriptor, kernelTokens, sizeof(void *));
-
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
-
-    auto &arg = dispatchInterface->kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
-    arg.bindless = iohOffset;
-    arg.bindful = surfaceStateOffset;
+    dispatchInterface->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindfulAndStateless;
 
     const uint8_t *sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
     EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapData()).WillRepeatedly(::testing::Return(sshData));
     EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapDataSize()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
 
+    auto usedBefore = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
     bool requiresUncachedMocs = false;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    auto usedAfter = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
 
-    DataPortBindlessSurfaceExtendedMessageDescriptor extMessageDesc;
-    extMessageDesc.setBindlessSurfaceOffset(surfaceStateOffsetOnHeap);
-
-    auto expectedOffset = extMessageDesc.getBindlessSurfaceOffsetToPatch();
-    EXPECT_EQ(expectedOffset, *patchLocation);
+    EXPECT_NE(usedAfter, usedBefore);
 }
 
-HWTEST_F(EncodeDispatchKernelTest, givenBindlessImageArgWhenDispatchingKernelThenSurfaceStateOffsetInCrossThreadDataIsProgrammed) {
+HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThenThenSshFromContainerIsNotUsed, Platforms) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WALKER = typename FamilyType::WALKER_TYPE;
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState;
     bindingTableState.sInit();
 
-    auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
-    auto ioh = cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT);
-
-    size_t sizeUsed = 0x20;
-    ssh->getSpace(sizeUsed);
-    sizeUsed = ssh->getUsed();
-
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
-    std::vector<uint8_t> storage;
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
-    kernelTokens.tokens.kernelArgs.resize(1);
-    kernelTokens.tokens.kernelArgs[0].objectType = NEO::PatchTokenBinary::ArgObjectType::Image;
-
-    const uint32_t iohOffset = dispatchInterface->getCrossThreadDataSize() + 4;
-    const uint32_t surfaceStateOffset = 128;
-
-    iOpenCL::SPatchImageMemoryObjectKernelArgument imageArg = {};
-    imageArg.Token = iOpenCL::PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT;
-    imageArg.ArgumentNumber = 0;
-    imageArg.Offset = surfaceStateOffset;
-
-    auto surfaceStateOffsetOnHeap = static_cast<uint32_t>(alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE)) + surfaceStateOffset;
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(ioh->getCpuBase(), iohOffset));
-    *patchLocation = 0xdead;
-
-    kernelTokens.tokens.kernelArgs[0].objectArg = &imageArg;
-
-    NEO::populateKernelDescriptor(dispatchInterface->kernelDescriptor, kernelTokens, sizeof(void *));
-
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
-
-    auto &arg = dispatchInterface->kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescImage>();
-    arg.bindless = iohOffset;
-    arg.bindful = surfaceStateOffset;
+    dispatchInterface->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
 
     const uint8_t *sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
     EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapData()).WillRepeatedly(::testing::Return(sshData));
     EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapDataSize()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
 
     bool requiresUncachedMocs = false;
+    auto usedBefore = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    auto usedAfter = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
 
-    DataPortBindlessSurfaceExtendedMessageDescriptor extMessageDesc;
-    extMessageDesc.setBindlessSurfaceOffset(surfaceStateOffsetOnHeap);
-
-    auto expectedOffset = extMessageDesc.getBindlessSurfaceOffsetToPatch();
-    EXPECT_EQ(expectedOffset, *patchLocation);
+    EXPECT_EQ(usedAfter, usedBefore);
 }
 
 HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatchingKernelThenSurfaceStateOffsetInCrossThreadDataIsNotPatched) {
@@ -1081,4 +1019,58 @@ HWCMDTEST_F(IGFX_GEN8_CORE, InterfaceDescriptorDataTests, givenVariousValuesWhen
 
     EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, 2, hwInfo);
     EXPECT_TRUE(idd.getBarrierEnable());
+}
+
+using BindlessCommandEncodeStatesTest = Test<MemManagerFixture>;
+
+HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchingKernelWithSamplerThenGlobalDshInResidnecyContainer) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    cmdContainer->initialize(pDevice);
+    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    uint32_t numSamplers = 1;
+    SAMPLER_BORDER_COLOR_STATE samplerState;
+    samplerState.init();
+    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0U;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0U;
+    const uint8_t *dshData = reinterpret_cast<uint8_t *>(&samplerState);
+    EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(dshData));
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    EXPECT_NE(std::find(cmdContainer->getResidencyContainer().begin(), cmdContainer->getResidencyContainer().end(), pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()), cmdContainer->getResidencyContainer().end());
+}
+
+HWTEST_F(BindlessCommandEncodeStatesTest, givenBindlessModeDisabledelWithSamplerThenGlobalDshIsNotResidnecyContainer) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(0);
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    cmdContainer->initialize(pDevice);
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    uint32_t numSamplers = 1;
+    SAMPLER_STATE samplerState;
+    memset(&samplerState, 2, sizeof(SAMPLER_STATE));
+    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0U;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0U;
+    const uint8_t *dshData = reinterpret_cast<uint8_t *>(&samplerState);
+    EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(dshData));
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    EXPECT_EQ(std::find(cmdContainer->getResidencyContainer().begin(), cmdContainer->getResidencyContainer().end(), pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()), cmdContainer->getResidencyContainer().end());
 }

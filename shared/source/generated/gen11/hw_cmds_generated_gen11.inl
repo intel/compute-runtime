@@ -5344,4 +5344,61 @@ typedef struct tagASYNC_SLICE_COUNT_SELECT_REGISTER {
 } ASYNC_SLICE_COUNT_SELECT_REGISTER;
 STATIC_ASSERT(4 == sizeof(ASYNC_SLICE_COUNT_SELECT_REGISTER));
 
+typedef struct tagSAMPLER_BORDER_COLOR_STATE {
+    union tagTheStructure {
+        struct tagCommon {
+            // DWORD 0
+            float BorderColorRed;
+            // DWORD 1
+            float BorderColorGreen;
+            // DWORD 2
+            float BorderColorBlue;
+            // DWORD 3
+            float BorderColorAlpha;
+        } Common;
+        uint32_t RawData[4];
+    } TheStructure;
+    inline void init(void) {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.BorderColorRed = 0.0;
+        TheStructure.Common.BorderColorGreen = 0.0;
+        TheStructure.Common.BorderColorBlue = 0.0;
+        TheStructure.Common.BorderColorAlpha = 0.0;
+    }
+    static tagSAMPLER_BORDER_COLOR_STATE sInit(void) {
+        SAMPLER_BORDER_COLOR_STATE state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 4);
+        return TheStructure.RawData[index];
+    }
+    inline void setBorderColorRed(const float value) {
+        TheStructure.Common.BorderColorRed = value;
+    }
+    inline float getBorderColorRed(void) const {
+        return TheStructure.Common.BorderColorRed;
+    }
+    inline void setBorderColorGreen(const float value) {
+        TheStructure.Common.BorderColorGreen = value;
+    }
+    inline float getBorderColorGreen(void) const {
+        return TheStructure.Common.BorderColorGreen;
+    }
+    inline void setBorderColorBlue(const float value) {
+        TheStructure.Common.BorderColorBlue = value;
+    }
+    inline float getBorderColorBlue(void) const {
+        return TheStructure.Common.BorderColorBlue;
+    }
+    inline void setBorderColorAlpha(const float value) {
+        TheStructure.Common.BorderColorAlpha = value;
+    }
+    inline float getBorderColorAlpha(void) const {
+        return TheStructure.Common.BorderColorAlpha;
+    }
+} SAMPLER_BORDER_COLOR_STATE;
+STATIC_ASSERT(16 == sizeof(SAMPLER_BORDER_COLOR_STATE));
+
 #pragma pack()

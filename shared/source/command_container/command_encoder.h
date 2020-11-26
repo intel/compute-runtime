@@ -21,6 +21,7 @@ namespace NEO {
 class GmmHelper;
 struct HardwareInfo;
 class IndirectHeap;
+class BindlessHeapsHelper;
 
 template <typename GfxFamily>
 struct EncodeDispatchKernel {
@@ -45,8 +46,6 @@ struct EncodeDispatchKernel {
     static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 
     static size_t estimateEncodeDispatchKernelCmdsSize(Device *device);
-
-    static void patchBindlessSurfaceStateOffsets(const size_t sshOffset, const KernelDescriptor &kernelDesc, uint8_t *crossThread);
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                     size_t *lws,
@@ -84,6 +83,7 @@ struct EncodeStates {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
+    using SAMPLER_BORDER_COLOR_STATE = typename GfxFamily::SAMPLER_BORDER_COLOR_STATE;
 
     static const uint32_t alignIndirectStatePointer = MemoryConstants::cacheLineSize;
     static const size_t alignInterfaceDescriptorData = MemoryConstants::cacheLineSize;
@@ -92,7 +92,8 @@ struct EncodeStates {
                                      uint32_t samplerStateOffset,
                                      uint32_t samplerCount,
                                      uint32_t borderColorOffset,
-                                     const void *fnDynamicStateHeap);
+                                     const void *fnDynamicStateHeap,
+                                     BindlessHeapsHelper *bindlessHeapHelper);
 
     static void adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable, bool requiresCoherency);
 

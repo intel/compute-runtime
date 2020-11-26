@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/state_base_address.h"
@@ -79,22 +80,25 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
     uint32_t bindingTablePointer = 0u;
+    bool isBindlessKernel = kernelDescriptor.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindlessAndStateless;
+    if (!isBindlessKernel) {
 
-    if (bindingTableStateCount > 0u) {
-        auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-        sshOffset = ssh->getUsed();
-        bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
-            *ssh, bindingTableStateCount,
-            dispatchInterface->getSurfaceStateHeapData(),
-            dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
-            kernelDescriptor.payloadMappings.bindingTable.tableOffset));
+        if (bindingTableStateCount > 0u) {
+            auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+            sshOffset = ssh->getUsed();
+            bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
+                *ssh, bindingTableStateCount,
+                dispatchInterface->getSurfaceStateHeapData(),
+                dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
+                kernelDescriptor.payloadMappings.bindingTable.tableOffset));
+        }
+
+        idd.setBindingTablePointer(bindingTablePointer);
     }
-
-    idd.setBindingTablePointer(bindingTablePointer);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<Family>(&idd, preemptionMode);
 
-    auto heap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto heap = ApiSpecificConfig::getBindlessConfiguration() ? device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
     UNRECOVERABLE_IF(!heap);
 
     uint32_t samplerStateOffset = 0;
@@ -105,7 +109,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         samplerStateOffset = EncodeStates<Family>::copySamplerState(heap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
                                                                     kernelDescriptor.payloadMappings.samplerTable.numSamplers,
                                                                     kernelDescriptor.payloadMappings.samplerTable.borderColor,
-                                                                    dispatchInterface->getDynamicStateHeapData());
+                                                                    dispatchInterface->getDynamicStateHeapData(),
+                                                                    device->getBindlessHeapsHelper());
+        if (ApiSpecificConfig::getBindlessConfiguration()) {
+            container.getResidencyContainer().push_back(device->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->getGraphicsAllocation());
+        }
     }
 
     idd.setSamplerStatePointer(samplerStateOffset);
@@ -137,10 +145,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
             void *gpuPtr = reinterpret_cast<void *>(heapIndirect->getHeapGpuBase() + heapIndirect->getUsed() - sizeThreadData);
             EncodeIndirectParams<Family>::setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, gpuPtr);
             EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, gpuPtr, dispatchInterface->getGroupSize());
-        }
-
-        if (kernelDescriptor.payloadMappings.bindingTable.numEntries > 0) {
-            patchBindlessSurfaceStateOffsets(sshOffset, dispatchInterface->getKernelDescriptor(), reinterpret_cast<uint8_t *>(ptr));
         }
 
         ptr = ptrOffset(ptr, sizeCrossThreadData);
