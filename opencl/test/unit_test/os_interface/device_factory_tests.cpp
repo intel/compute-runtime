@@ -164,6 +164,26 @@ TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsForProdu
     EXPECT_EQ(3u, executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.usRevId);
 }
 
+TEST_F(DeviceFactoryTest, givenDebugFlagWithoutZeroXWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideDeviceIdToHexValue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceDeviceId.set("1234");
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(*executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(0x1234u, executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
+}
+
+TEST_F(DeviceFactoryTest, givenDebugFlagWithZeroXWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideDeviceIdToHexValue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceDeviceId.set("0x1234");
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(*executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(0x1234u, executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
+}
+
 TEST_F(DeviceFactoryTest, whenPrepareDeviceEnvironmentsIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;

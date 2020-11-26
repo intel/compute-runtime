@@ -56,8 +56,11 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         }
 
         if (DebugManager.flags.OverrideRevision.get() != -1) {
-            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->platform.usRevId =
-                static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+            hardwareInfo->platform.usRevId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+        }
+
+        if (DebugManager.flags.ForceDeviceId.get() != "unk") {
+            hardwareInfo->platform.usDeviceID = static_cast<unsigned short>(std::stoi(DebugManager.flags.ForceDeviceId.get(), nullptr, 16));
         }
 
         auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();
