@@ -222,7 +222,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
 
     cl_command_queue_capabilities_intel disabledProperties = 0u;
     if (hwHelper.isCopyOnlyEngineType(type)) {
-        disabledProperties |= CL_QUEUE_CAPABILITY_KERNEL_INTEL;
+        disabledProperties |= static_cast<cl_command_queue_capabilities_intel>(CL_QUEUE_CAPABILITY_KERNEL_INTEL);
     }
 
     if (disabledProperties != 0) {
