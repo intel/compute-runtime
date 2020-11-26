@@ -28,12 +28,12 @@ struct MemoryFlags {
     uint32_t forceHostMemory : 1;
     uint32_t shareable : 1;
     uint32_t resource48Bit : 1;
-    uint32_t usmInitialPlacementCpu : 1;
-    uint32_t usmInitialPlacementGpu : 1;
 };
 
 struct MemoryAllocFlags {
     uint32_t allocWriteCombined : 1;
+    uint32_t usmInitialPlacementCpu : 1;
+    uint32_t usmInitialPlacementGpu : 1;
 };
 
 } // namespace NEO

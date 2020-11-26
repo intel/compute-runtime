@@ -103,6 +103,8 @@ using cl_unified_shared_memory_capabilities_intel = cl_bitfield;
 /* cl_mem_alloc_flags_intel - bitfield */
 #define CL_MEM_ALLOC_DEFAULT_INTEL 0
 #define CL_MEM_ALLOC_WRITE_COMBINED_INTEL (1 << 0)
+#define CL_MEM_ALLOC_INITIAL_PLACEMENT_DEVICE_INTEL (1 << 1)
+#define CL_MEM_ALLOC_INITIAL_PLACEMENT_HOST_INTEL (1 << 2)
 
 /* cl_mem_alloc_info_intel */
 #define CL_MEM_ALLOC_TYPE_INTEL 0x419A

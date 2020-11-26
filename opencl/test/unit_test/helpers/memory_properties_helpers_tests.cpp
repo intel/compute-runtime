@@ -71,6 +71,12 @@ TEST(MemoryProperties, givenValidPropertiesWhenCreateMemoryPropertiesThenTrueIsR
     properties = MemoryPropertiesHelper::createMemoryProperties(0, 0, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, pDevice);
     EXPECT_TRUE(properties.allocFlags.allocWriteCombined);
 
+    properties = MemoryPropertiesHelper::createMemoryProperties(0, 0, CL_MEM_ALLOC_INITIAL_PLACEMENT_DEVICE_INTEL, pDevice);
+    EXPECT_TRUE(properties.allocFlags.usmInitialPlacementGpu);
+
+    properties = MemoryPropertiesHelper::createMemoryProperties(0, 0, CL_MEM_ALLOC_INITIAL_PLACEMENT_HOST_INTEL, pDevice);
+    EXPECT_TRUE(properties.allocFlags.usmInitialPlacementCpu);
+
     properties = MemoryPropertiesHelper::createMemoryProperties(0, CL_MEM_48BIT_RESOURCE_INTEL, 0, pDevice);
     EXPECT_TRUE(properties.flags.resource48Bit);
 }

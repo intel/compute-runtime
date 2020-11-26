@@ -15,7 +15,7 @@
 
 namespace NEO {
 void PageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsManager *unifiedMemoryManager, void *cmdQ, const MemoryProperties &memoryProperties) {
-    const bool initialPlacementCpu = !memoryProperties.flags.usmInitialPlacementGpu;
+    const bool initialPlacementCpu = !memoryProperties.allocFlags.usmInitialPlacementGpu;
     const auto domain = initialPlacementCpu ? AllocationDomain::Cpu : AllocationDomain::None;
 
     std::unique_lock<SpinLock> lock{mtx};

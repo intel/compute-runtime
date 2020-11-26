@@ -65,19 +65,21 @@ MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags fla
     if (isValueSet(flagsIntel, CL_MEM_LOCALLY_UNCACHED_RESOURCE)) {
         memoryProperties.flags.locallyUncachedResource = true;
     }
-
     if (isValueSet(flagsIntel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE)) {
         memoryProperties.flags.locallyUncachedInSurfaceState = true;
     }
-
     if (isValueSet(flags, CL_MEM_FORCE_HOST_MEMORY_INTEL)) {
         memoryProperties.flags.forceHostMemory = true;
     }
-
     if (isValueSet(allocflags, CL_MEM_ALLOC_WRITE_COMBINED_INTEL)) {
         memoryProperties.allocFlags.allocWriteCombined = true;
     }
-
+    if (isValueSet(allocflags, CL_MEM_ALLOC_INITIAL_PLACEMENT_DEVICE_INTEL)) {
+        memoryProperties.allocFlags.usmInitialPlacementGpu = true;
+    }
+    if (isValueSet(allocflags, CL_MEM_ALLOC_INITIAL_PLACEMENT_HOST_INTEL)) {
+        memoryProperties.allocFlags.usmInitialPlacementCpu = true;
+    }
     if (isValueSet(flagsIntel, CL_MEM_48BIT_RESOURCE_INTEL)) {
         memoryProperties.flags.resource48Bit = true;
     }

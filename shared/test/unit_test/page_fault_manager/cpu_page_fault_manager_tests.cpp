@@ -232,7 +232,7 @@ TEST_F(PageFaultManagerTest, givenInitialPlacementCpuWhenVerifyingPagefaultThenF
     void *alloc = reinterpret_cast<void *>(0x1);
 
     MemoryProperties memoryProperties{};
-    memoryProperties.flags.usmInitialPlacementCpu = 1;
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 1;
     pageFaultManager->insertAllocation(alloc, 10, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), nullptr, memoryProperties);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
@@ -252,7 +252,7 @@ TEST_F(PageFaultManagerTest, givenInitialPlacementGpuWhenVerifyingPagefaultThenF
     void *alloc = reinterpret_cast<void *>(0x1);
 
     MemoryProperties memoryProperties{};
-    memoryProperties.flags.usmInitialPlacementGpu = 1;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
     pageFaultManager->insertAllocation(alloc, 10, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), nullptr, memoryProperties);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
@@ -277,7 +277,7 @@ TEST_F(PageFaultManagerTest, givenInitialPlacementCpuWhenMovingToGpuDomainThenFi
     void *alloc = reinterpret_cast<void *>(0x1);
 
     MemoryProperties memoryProperties{};
-    memoryProperties.flags.usmInitialPlacementCpu = 1;
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 1;
     pageFaultManager->insertAllocation(alloc, 10, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), cmdQ, memoryProperties);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
@@ -301,7 +301,7 @@ TEST_F(PageFaultManagerTest, givenInitialPlacementGpuWhenMovingToGpuDomainThenFi
     void *alloc = reinterpret_cast<void *>(0x1);
 
     MemoryProperties memoryProperties{};
-    memoryProperties.flags.usmInitialPlacementGpu = 1;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
     pageFaultManager->insertAllocation(alloc, 10, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), cmdQ, memoryProperties);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
@@ -324,7 +324,7 @@ TEST_F(PageFaultManagerTest, givenAllocationMovedToGpuDomainWhenVerifyingPagefau
     void *alloc = reinterpret_cast<void *>(0x1);
 
     MemoryProperties memoryProperties{};
-    memoryProperties.flags.usmInitialPlacementGpu = 1;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
     pageFaultManager->insertAllocation(alloc, 10, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), cmdQ, memoryProperties);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
