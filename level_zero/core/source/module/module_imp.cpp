@@ -65,9 +65,9 @@ ModuleTranslationUnit::~ModuleTranslationUnit() {
 
 bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
                                            const ze_module_constants_t *pConstants) {
+    UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
     auto compilerInterface = device->getNEODevice()->getCompilerInterface();
     UNRECOVERABLE_IF(nullptr == compilerInterface);
-    UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
 
     if (nullptr != buildOptions) {
         options = buildOptions;
