@@ -208,7 +208,7 @@ TEST_F(TimestampPacketTests, givenTagNodeWhatAskingForGpuAddressesThenReturnCorr
     EXPECT_EQ(expectedCounterAddress, TimestampPacketHelper::getGpuDependenciesCountGpuAddress(mockNode));
 }
 
-TEST_F(TimestampPacketSimpleTests, whenContextEndTagIsNotOneThenMarkAsCompleted) {
+TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenMarkAsCompleted) {
     TimestampPacketStorage timestampPacketStorage;
     auto &packet = timestampPacketStorage.packets[0];
     timestampPacketStorage.initialize();
@@ -223,10 +223,10 @@ TEST_F(TimestampPacketSimpleTests, whenContextEndTagIsNotOneThenMarkAsCompleted)
 
     packet.contextEnd = 0;
     packet.globalEnd = 1;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
+    EXPECT_FALSE(timestampPacketStorage.isCompleted());
 
-    packet.contextEnd = 100;
-    packet.globalEnd = 100;
+    packet.contextEnd = 0;
+    packet.globalEnd = 0;
     EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
@@ -272,12 +272,8 @@ TEST_F(TimestampPacketSimpleTests, whenIsCompletedIsCalledThenItReturnsProperTim
 
     EXPECT_FALSE(timestampPacketStorage.isCompleted());
     packet.contextEnd = 0;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
-    packet.contextEnd = 100;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
+    EXPECT_FALSE(timestampPacketStorage.isCompleted());
     packet.globalEnd = 0;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
-    packet.globalEnd = 100;
     EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
@@ -295,15 +291,9 @@ TEST_F(TimestampPacketSimpleTests, givenMultiplePacketsInUseWhenCompletionIsChec
     }
 
     packets[timestampPacketStorage.packetsUsed - 1].contextEnd = 0;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
-
-    packets[timestampPacketStorage.packetsUsed - 1].contextEnd = 100;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
+    EXPECT_FALSE(timestampPacketStorage.isCompleted());
 
     packets[timestampPacketStorage.packetsUsed - 1].globalEnd = 0;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
-
-    packets[timestampPacketStorage.packetsUsed - 1].globalEnd = 100;
     EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
