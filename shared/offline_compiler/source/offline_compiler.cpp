@@ -992,10 +992,11 @@ bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::strin
     if (optionsSize > 0) {
         // Remove comment containing copyright header
         options = optionsFromFile.get();
-        size_t commentBegin = options.find_first_of("/*");
-        size_t commentEnd = options.find_last_of("*/");
+        size_t commentBegin = options.find("/*");
+        size_t commentEnd = options.rfind("*/");
         if (commentBegin != std::string::npos && commentEnd != std::string::npos) {
-            options = options.replace(commentBegin, commentEnd - commentBegin + 1, "");
+            auto sizeToReplace = commentEnd - commentBegin + 2;
+            options = options.replace(commentBegin, sizeToReplace, "");
             size_t optionsBegin = options.find_first_not_of(" \t\n\r");
             if (optionsBegin != std::string::npos) {
                 options = options.substr(optionsBegin, options.length());

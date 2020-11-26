@@ -232,7 +232,7 @@ TEST_F(ProcessElfBinaryTests, GivenNonEmptyBuildOptionsWhenCreatingProgramFromBi
     EXPECT_EQ(CL_SUCCESS, retVal);
     const auto &options = program->getOptions();
     std::string buildOptionsNotEmpty = CompilerOptions::concatenate(CompilerOptions::optDisable, "-DDEF_WAS_SPECIFIED=1");
-    EXPECT_STREQ(buildOptionsNotEmpty.c_str(), options.c_str());
+    EXPECT_THAT(options.c_str(), ::testing::HasSubstr(buildOptionsNotEmpty.c_str()));
 }
 
 TEST_F(ProcessElfBinaryTests, GivenBinaryWhenIncompatiblePatchtokenVerionThenProramCreationFails) {
