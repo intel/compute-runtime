@@ -8,6 +8,8 @@
 #include "opencl/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 
@@ -28,6 +30,18 @@ void HwInfoConfigTest::SetUp() {
 
 void HwInfoConfigTest::TearDown() {
     PlatformFixture::TearDown();
+}
+
+HWTEST_F(HwInfoConfigTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    DebugManager.flags.EnableHostUsmSupport.set(0);
+    EXPECT_EQ(0u, hwInfoConfig->getHostMemCapabilities(&pInHwInfo));
+
+    DebugManager.flags.EnableHostUsmSupport.set(1);
+    EXPECT_NE(0u, hwInfoConfig->getHostMemCapabilities(&pInHwInfo));
 }
 
 TEST_F(HwInfoConfigTest, givenHwInfoConfigSetHwInfoValuesFromConfigStringReturnsSetsProperValues) {

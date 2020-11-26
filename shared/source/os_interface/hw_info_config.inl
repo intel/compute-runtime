@@ -56,4 +56,25 @@ template <PRODUCT_FAMILY gfxProduct>
 uint64_t HwInfoConfigHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() {
     return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilitiesValue() {
+    return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *hwInfo) {
+    bool supported = getHostMemCapabilitiesSupported(hwInfo);
+
+    if (DebugManager.flags.EnableHostUsmSupport.get() != -1) {
+        supported = !!DebugManager.flags.EnableHostUsmSupport.get();
+    }
+
+    return (supported ? getHostMemCapabilitiesValue() : 0);
+}
 } // namespace NEO

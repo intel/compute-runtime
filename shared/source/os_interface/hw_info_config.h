@@ -58,6 +58,8 @@ class HwInfoConfigHw : public HwInfoConfig {
 
     void enableRenderCompression(HardwareInfo *hwInfo);
     void enableBlitterOperationsSupport(HardwareInfo *hwInfo);
+    uint64_t getHostMemCapabilitiesValue();
+    bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo);
 };
 
 template <PRODUCT_FAMILY gfxProduct>
