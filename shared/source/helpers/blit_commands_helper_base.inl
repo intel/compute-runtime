@@ -313,7 +313,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(const BlitProperties &b
 
     if (blitProperties.blitDirection == BlitterConstants::BlitDirection::HostPtrToImage ||
         blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr) {
-        return dispatchBlitCommandsRegion(blitProperties, linearStream, rootDeviceEnvironment);
+        dispatchBlitCommandsRegion(blitProperties, linearStream, rootDeviceEnvironment);
+        return;
     }
 
     bool preferCopyBufferRegion = isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment);
