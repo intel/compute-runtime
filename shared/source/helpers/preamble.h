@@ -49,9 +49,8 @@ struct PreambleHelper {
                                     KernelExecutionType kernelExecutionType);
     static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr, GraphicsAllocation *perDssBackedBuffer);
+                                uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr);
     static void programKernelDebugging(LinearStream *pCommandStream);
-    static void programPerDssBackedBuffer(LinearStream *pCommandStream, const HardwareInfo &hwInfo, GraphicsAllocation *perDssBackBufferOffset);
     static void programSemaphoreDelay(LinearStream *pCommandStream);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
     static bool isL3Configurable(const HardwareInfo &hwInfo);
@@ -61,7 +60,6 @@ struct PreambleHelper {
     static size_t getKernelDebuggingCommandsSize(bool debuggingActive);
     static void programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo);
     static uint32_t getUrbEntryAllocationSize();
-    static size_t getPerDssBackedBufferCommandsSize(const HardwareInfo &hwInfo);
     static size_t getCmdSizeForPipelineSelect(const HardwareInfo &hwInfo);
     static size_t getSemaphoreDelayCommandSize();
     static uint32_t getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize);

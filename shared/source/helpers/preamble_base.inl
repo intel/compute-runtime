@@ -34,15 +34,6 @@ void PreambleHelper<GfxFamily>::programGenSpecificPreambleWorkArounds(LinearStre
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programPerDssBackedBuffer(LinearStream *pCommandStream, const HardwareInfo &hwInfo, GraphicsAllocation *perDssBackBufferOffset) {
-}
-
-template <typename GfxFamily>
-size_t PreambleHelper<GfxFamily>::getPerDssBackedBufferCommandsSize(const HardwareInfo &hwInfo) {
-    return 0;
-}
-
-template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programSemaphoreDelay(LinearStream *pCommandStream) {
     if (DebugManager.flags.ForceSemaphoreDelayBetweenWaits.get() > -1) {
         uint32_t valueOfNewSemaphoreDelay = DebugManager.flags.ForceSemaphoreDelayBetweenWaits.get();
@@ -79,7 +70,7 @@ size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const HardwareInfo
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                                uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr, GraphicsAllocation *perDssBackedBuffer) {
+                                                uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr) {
     programL3(pCommandStream, l3Config);
     programThreadArbitration(pCommandStream, requiredThreadArbitrationPolicy);
     programPreemption(pCommandStream, device, preemptionCsr);
@@ -87,9 +78,6 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, De
         programKernelDebugging(pCommandStream);
     }
     programGenSpecificPreambleWorkArounds(pCommandStream, device.getHardwareInfo());
-    if (perDssBackedBuffer != nullptr) {
-        programPerDssBackedBuffer(pCommandStream, device.getHardwareInfo(), perDssBackedBuffer);
-    }
     programSemaphoreDelay(pCommandStream);
 }
 

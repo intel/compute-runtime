@@ -74,7 +74,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidThreadPreemptionWhenPreambleIs
         MockGraphicsAllocation csrSurface(reinterpret_cast<void *>(minCsrAlignment), 1024);
 
         PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
-                                                    ThreadArbitrationPolicy::RoundRobin, &csrSurface, nullptr);
+                                                    ThreadArbitrationPolicy::RoundRobin, &csrSurface);
 
         PreemptionHelper::programStateSip<FamilyType>(preemptionStream, *mockDevice);
 
@@ -144,7 +144,7 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenPro
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
     PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
-                                                ThreadArbitrationPolicy::RoundRobin, nullptr, nullptr);
+                                                ThreadArbitrationPolicy::RoundRobin, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(preambleStream);
@@ -158,7 +158,7 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenPro
     StackVec<char, 8192> preambleBuffer2(8192);
     preambleStream.replaceBuffer(&*preambleBuffer2.begin(), preambleBuffer2.size());
     PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
-                                                ThreadArbitrationPolicy::RoundRobin, preemptionAllocation, nullptr);
+                                                ThreadArbitrationPolicy::RoundRobin, preemptionAllocation);
     HardwareParse hwParser2;
     hwParser2.parseCommands<FamilyType>(preambleStream);
     cmdList = hwParser2.getCommandsList<MI_LOAD_REGISTER_IMM>();

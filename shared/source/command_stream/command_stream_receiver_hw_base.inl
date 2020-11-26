@@ -140,12 +140,6 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(
     if (!this->isPreambleSent || this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
         size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
     }
-
-    if (DebugManager.flags.ForcePerDssBackedBufferProgramming.get()) {
-        if (!this->isPreambleSent) {
-            size += PreambleHelper<GfxFamily>::getPerDssBackedBufferCommandsSize(device.getHardwareInfo());
-        }
-    }
     if (!this->isPreambleSent) {
         if (DebugManager.flags.ForceSemaphoreDelayBetweenWaits.get() > -1) {
             size += PreambleHelper<GfxFamily>::getSemaphoreDelayCommandSize();
@@ -339,6 +333,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPreamble(commandStreamCSR, device, dispatchFlags, newL3Config);
     programMediaSampler(commandStreamCSR, dispatchFlags);
+    programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
 
     if (this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
         PreambleHelper<GfxFamily>::programThreadArbitration(&commandStreamCSR, this->requiredThreadArbitrationPolicy);
@@ -761,6 +756,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForMediaSampler(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
+    size += getCmdSizeForPerDssBackedBuffer(device.getHardwareInfo());
     size += getCmdSizeForEpilogue(dispatchFlags);
     size += getCmdsSizeForHardwareContext();
 
@@ -868,8 +864,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cm
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        GraphicsAllocation *perDssBackedBufferToUse = dispatchFlags.usePerDssBackedBuffer ? this->perDssBackedBuffer : nullptr;
-        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionAllocation, perDssBackedBufferToUse);
+        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionAllocation);
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
         this->lastSentThreadArbitrationPolicy = this->requiredThreadArbitrationPolicy;
@@ -895,6 +890,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programMediaSampler(LinearStream &commandStream, DispatchFlags &dispatchFlags) {
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programPerDssBackedBuffer(LinearStream &commandStream, Device &device, DispatchFlags &dispatchFlags) {
 }
 
 template <typename GfxFamily>
@@ -1186,6 +1185,11 @@ inline bool CommandStreamReceiverHw<GfxFamily>::checkDirectSubmissionSupportsEng
     }
 
     return supported;
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
+    return 0;
 }
 
 } // namespace NEO

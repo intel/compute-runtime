@@ -24,7 +24,7 @@ HWTEST2_F(TglLpSlm, givenTglLpWhenPreambleIsBeingProgrammedThenThreadArbitration
     MockDevice mockDevice;
     PreambleHelper<TGLLPFamily>::programPreamble(&linearStream, mockDevice, l3Config,
                                                  ThreadArbitrationPolicy::RoundRobin,
-                                                 nullptr, nullptr);
+                                                 nullptr);
 
     parseCommands<TGLLPFamily>(cs);
 
