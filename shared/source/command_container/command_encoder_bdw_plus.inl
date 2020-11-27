@@ -77,28 +77,21 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
             ? slmSize
             : INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K);
 
-    {
-        uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
-        uint32_t bindingTablePointer = 0u;
+    uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
+    uint32_t bindingTablePointer = 0u;
 
-        if (bindingTableStateCount > 0u) {
-            auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-            sshOffset = ssh->getUsed();
-            bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
-                *ssh, bindingTableStateCount,
-                dispatchInterface->getSurfaceStateHeapData(),
-                dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
-                kernelDescriptor.payloadMappings.bindingTable.tableOffset));
-        }
-
-        idd.setBindingTablePointer(bindingTablePointer);
-
-        uint32_t bindingTableStatePrefetchCount = 0;
-        if (EncodeSurfaceState<Family>::doBindingTablePrefetch()) {
-            bindingTableStatePrefetchCount = std::min(31u, bindingTableStateCount);
-        }
-        idd.setBindingTableEntryCount(bindingTableStatePrefetchCount);
+    if (bindingTableStateCount > 0u) {
+        auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+        sshOffset = ssh->getUsed();
+        bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
+            *ssh, bindingTableStateCount,
+            dispatchInterface->getSurfaceStateHeapData(),
+            dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
+            kernelDescriptor.payloadMappings.bindingTable.tableOffset));
     }
+
+    idd.setBindingTablePointer(bindingTablePointer);
+
     PreemptionHelper::programInterfaceDescriptorDataPreemption<Family>(&idd, preemptionMode);
 
     auto heap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
@@ -116,9 +109,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     }
 
     idd.setSamplerStatePointer(samplerStateOffset);
-    auto samplerCountState =
-        static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>((samplerCount + 3) / 4);
-    idd.setSamplerCount(samplerCountState);
+
+    EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(idd, samplerCount, bindingTableStateCount);
 
     auto numGrfCrossThreadData = static_cast<uint32_t>(sizeCrossThreadData / sizeof(float[8]));
     idd.setCrossThreadConstantDataReadLength(numGrfCrossThreadData);
@@ -309,9 +301,6 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareIn
 
 template <typename Family>
 void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize) {}
-
-template <typename Family>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device) {

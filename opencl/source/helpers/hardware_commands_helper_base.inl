@@ -182,11 +182,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
 
-    DEBUG_BREAK_IF(numSamplers > 16);
-    auto samplerCountState = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>((numSamplers + 3) / 4);
-    interfaceDescriptor.setSamplerCount(samplerCountState);
-
-    interfaceDescriptor.setBindingTableEntryCount(bindingTablePrefetchSize);
+    EncodeDispatchKernel<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);
 
     auto programmableIDSLMSize =
         static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(HwHelperHw<GfxFamily>::get().computeSlmValues(kernel.slmTotalSize));

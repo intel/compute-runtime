@@ -74,7 +74,11 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 0, nullptr, nullptr);
 
     if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
-        EXPECT_NE(0u, idData[0].getSamplerCount());
+        if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
+            EXPECT_NE(0u, idData[0].getSamplerCount());
+        } else {
+            EXPECT_EQ(0u, idData[0].getSamplerCount());
+        }
         EXPECT_NE(0u, idData[0].getSamplerStatePointer());
     }
 

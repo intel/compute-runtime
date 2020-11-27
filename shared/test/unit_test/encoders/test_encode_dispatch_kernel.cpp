@@ -258,6 +258,105 @@ HWTEST_F(CommandEncodeStatesTest, givenIndarectOffsetsSizeWhenDispatchingKernelT
     ASSERT_NE(itor, commands.end());
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDebugFlagWhenDispatchingKernelThenValuesAreSetUpCorrectly) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
+
+    DebugManagerStateRestore restorer;
+    uint32_t dims[] = {2, 1, 1};
+    uint32_t numBindingTable = 1;
+    uint32_t numSamplers = 1;
+    SAMPLER_STATE samplerState;
+    BINDING_TABLE_STATE bindingTable;
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
+    unsigned char *samplerStateRaw = reinterpret_cast<unsigned char *>(&samplerState);
+    EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(samplerStateRaw));
+    unsigned char *bindingTableRaw = reinterpret_cast<unsigned char *>(&bindingTable);
+    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapData()).WillRepeatedly(::testing::Return(bindingTableRaw));
+
+    {
+        DebugManager.flags.ForceBtpPrefetchMode.set(-1);
+        cmdContainer.reset(new MyMockCommandContainer());
+        cmdContainer->initialize(pDevice);
+        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);
+
+        auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+
+        GenCmdList commands;
+        CmdParse<FamilyType>::parseCommandBuffer(commands, cmdContainer->getCommandStream()->getCpuBase(), cmdContainer->getCommandStream()->getUsed());
+
+        auto itorMIDL = find<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(commands.begin(), commands.end());
+        EXPECT_NE(itorMIDL, commands.end());
+
+        auto cmd = genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(*itorMIDL);
+        EXPECT_NE(cmd, nullptr);
+
+        auto idd = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), cmd->getInterfaceDescriptorDataStartAddress()));
+
+        if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
+            EXPECT_EQ(numBindingTable, idd->getBindingTableEntryCount());
+            EXPECT_EQ(static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>((numSamplers + 3) / 4), idd->getSamplerCount());
+        } else {
+            EXPECT_EQ(0u, idd->getBindingTableEntryCount());
+            EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_NO_SAMPLERS_USED, idd->getSamplerCount());
+        }
+    }
+
+    {
+        DebugManager.flags.ForceBtpPrefetchMode.set(0);
+        cmdContainer.reset(new MyMockCommandContainer());
+        cmdContainer->initialize(pDevice);
+        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);
+
+        auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+
+        GenCmdList commands;
+        CmdParse<FamilyType>::parseCommandBuffer(commands, cmdContainer->getCommandStream()->getCpuBase(), cmdContainer->getCommandStream()->getUsed());
+
+        auto itorMIDL = find<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(commands.begin(), commands.end());
+        EXPECT_NE(itorMIDL, commands.end());
+
+        auto cmd = genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(*itorMIDL);
+        EXPECT_NE(cmd, nullptr);
+
+        auto idd = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), cmd->getInterfaceDescriptorDataStartAddress()));
+
+        EXPECT_EQ(0u, idd->getBindingTableEntryCount());
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_NO_SAMPLERS_USED, idd->getSamplerCount());
+    }
+
+    {
+        DebugManager.flags.ForceBtpPrefetchMode.set(1);
+        cmdContainer.reset(new MyMockCommandContainer());
+        cmdContainer->initialize(pDevice);
+        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);
+
+        auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+
+        GenCmdList commands;
+        CmdParse<FamilyType>::parseCommandBuffer(commands, cmdContainer->getCommandStream()->getCpuBase(), cmdContainer->getCommandStream()->getUsed());
+
+        auto itorMIDL = find<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(commands.begin(), commands.end());
+        EXPECT_NE(itorMIDL, commands.end());
+
+        auto cmd = genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(*itorMIDL);
+        EXPECT_NE(cmd, nullptr);
+
+        auto idd = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), cmd->getInterfaceDescriptorDataStartAddress()));
+
+        EXPECT_EQ(numBindingTable, idd->getBindingTableEntryCount());
+        EXPECT_EQ(static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>((numSamplers + 3) / 4), idd->getSamplerCount());
+    }
+}
+
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotChangedWhenDispatchKernelThenFlushNotAdded) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     uint32_t dims[] = {2, 1, 1};

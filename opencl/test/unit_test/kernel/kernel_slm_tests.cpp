@@ -137,7 +137,12 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     EXPECT_EQ(ExpectedSLMSize, pSrcIDData->getSharedLocalMemorySize());
     EXPECT_EQ(!!executionEnvironment.HasBarriers, pSrcIDData->getBarrierEnable());
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL, pSrcIDData->getDenormMode());
-    EXPECT_EQ(4u, pSrcIDData->getBindingTableEntryCount());
+
+    if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
+        EXPECT_EQ(4u, pSrcIDData->getBindingTableEntryCount());
+    } else {
+        EXPECT_EQ(0u, pSrcIDData->getBindingTableEntryCount());
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(

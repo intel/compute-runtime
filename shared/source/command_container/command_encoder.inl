@@ -442,6 +442,25 @@ void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &conta
 }
 
 template <typename Family>
+void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
+    auto enablePrefetch = EncodeSurfaceState<Family>::doBindingTablePrefetch();
+    if (DebugManager.flags.ForceBtpPrefetchMode.get() != -1) {
+        enablePrefetch = static_cast<bool>(DebugManager.flags.ForceBtpPrefetchMode.get());
+    }
+
+    if (enablePrefetch) {
+        interfaceDescriptor.setSamplerCount(static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>((samplerCount + 3) / 4));
+        interfaceDescriptor.setBindingTableEntryCount(std::min(bindingTableEntryCount, 31u));
+    } else {
+        interfaceDescriptor.setSamplerCount(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT::SAMPLER_COUNT_NO_SAMPLERS_USED);
+        interfaceDescriptor.setBindingTableEntryCount(0u);
+    }
+}
+
+template <typename Family>
+void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const HardwareInfo &hwInfo) {}
+
+template <typename Family>
 void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, const uint32_t *lws) {
     for (int i = 0; i < 3; ++i) {
         if (NEO::isUndefinedOffset(offsets[i])) {

@@ -935,7 +935,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatch
             auto samplerPointer = pID[index].getSamplerStatePointer();
             auto samplerCount = pID[index].getSamplerCount();
             EXPECT_NE(0u, samplerPointer);
-            EXPECT_EQ(1u, samplerCount);
+            if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
+                EXPECT_EQ(1u, samplerCount);
+            } else {
+                EXPECT_EQ(0u, samplerCount);
+            }
             EXPECT_EQ(fullAddress, gpuAddress2);
         }
     }
