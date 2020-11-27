@@ -96,7 +96,7 @@ void DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osCo
     residencyContainer.clear();
 }
 
-std::unique_lock<std::mutex> DrmMemoryOperationsHandlerBind::lockHandlerForExecWA() {
+std::unique_lock<std::mutex> DrmMemoryOperationsHandlerBind::lockHandlerIfUsed() {
     return std::unique_lock<std::mutex>();
 }
 

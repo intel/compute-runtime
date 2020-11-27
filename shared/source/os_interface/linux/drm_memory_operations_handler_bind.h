@@ -23,7 +23,7 @@ class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
 
     void mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) override;
-    std::unique_lock<std::mutex> lockHandlerForExecWA() override;
+    std::unique_lock<std::mutex> lockHandlerIfUsed() override;
 
     MOCKABLE_VIRTUAL void evictUnusedAllocations();
 

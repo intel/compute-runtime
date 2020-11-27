@@ -73,7 +73,11 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
 
     auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
 
-    auto lock = memoryOperationsInterface->lockHandlerForExecWA();
+    std::unique_lock<std::mutex> lock;
+    if (!this->directSubmission.get() && !this->blitterDirectSubmission.get()) {
+        lock = memoryOperationsInterface->lockHandlerIfUsed();
+    }
+
     memoryOperationsInterface->mergeWithResidencyContainer(this->osContext, allocationsForResidency);
 
     if (this->directSubmission.get()) {
