@@ -1051,6 +1051,14 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForIsaSystemMemoryPlacementThenRet
     EXPECT_NE(localMemoryEnabled, hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
 }
 
+HWTEST_F(HwHelperTest, givenHwHelperWhenAdjustAddressWidthForCanonizeThenAddressWidthDoesntChange) {
+    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    uint32_t addressWidth = 48;
+
+    hwHelper.adjustAddressWidthForCanonize(addressWidth);
+    EXPECT_EQ(48u, addressWidth);
+}
+
 HWTEST2_F(HwInfoConfigCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag, IsAtLeastGen12lp) {
     DebugManagerStateRestore restore{};
     HardwareInfo hardwareInfo = *defaultHwInfo;

@@ -510,4 +510,8 @@ bool HwHelperHw<GfxFamily>::isCopyOnlyEngineType(EngineGroupType type) const {
     return NEO::EngineGroupType::Copy == type;
 }
 
+template <typename GfxFamily>
+void HwHelperHw<GfxFamily>::adjustAddressWidthForCanonize(uint32_t &addressWidth) const {
+}
+
 } // namespace NEO
