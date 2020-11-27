@@ -25,7 +25,7 @@ set(BUILTIN_OPTIONS_STATELESS
 )
 
 set(bindless_OPTIONS
-    -internal_options "-cl-intel-use-bindless-buffers -cl-intel-use-bindless-images"
+    -internal_options "-cl-intel-use-bindless-mode"
 )
 
 set(bindful_OPTIONS

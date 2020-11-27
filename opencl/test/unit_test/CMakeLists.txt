@@ -429,7 +429,7 @@ set(TEST_KERNEL_SIP_DEBUG_LOCAL_options
 )
 
 set(TEST_KERNEL_BINDLESS_internal_options
-    "-cl-intel-use-bindless-buffers -cl-intel-use-bindless-images"
+    "-cl-intel-use-bindless-mode"
 )
 
 set(TEST_KERNEL_BINDLESS

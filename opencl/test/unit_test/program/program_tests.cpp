@@ -1666,16 +1666,14 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
         DebugManager.flags.UseBindlessMode.set(0);
         MockProgram programNoBindless(pContext, false, toClDeviceVector(*pClDevice));
         auto internalOptionsNoBindless = programNoBindless.getInitInternalOptions();
-        EXPECT_FALSE(CompilerOptions::contains(internalOptionsNoBindless, CompilerOptions::bindlessBuffers)) << internalOptionsNoBindless;
-        EXPECT_FALSE(CompilerOptions::contains(internalOptionsNoBindless, CompilerOptions::bindlessImages)) << internalOptionsNoBindless;
+        EXPECT_FALSE(CompilerOptions::contains(internalOptionsNoBindless, CompilerOptions::bindlessMode)) << internalOptionsNoBindless;
     }
     {
 
         DebugManager.flags.UseBindlessMode.set(1);
         MockProgram programBindless(pContext, false, toClDeviceVector(*pClDevice));
         auto internalOptionsBindless = programBindless.getInitInternalOptions();
-        EXPECT_TRUE(CompilerOptions::contains(internalOptionsBindless, CompilerOptions::bindlessBuffers)) << internalOptionsBindless;
-        EXPECT_TRUE(CompilerOptions::contains(internalOptionsBindless, CompilerOptions::bindlessImages)) << internalOptionsBindless;
+        EXPECT_TRUE(CompilerOptions::contains(internalOptionsBindless, CompilerOptions::bindlessMode)) << internalOptionsBindless;
     }
 }
 

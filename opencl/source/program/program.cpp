@@ -81,8 +81,6 @@ void Program::initInternalOptions(std::string &internalOptions) const {
     }
 
     if (ApiSpecificConfig::getBindlessConfiguration()) {
-        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessBuffers);
-        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
     }
 
