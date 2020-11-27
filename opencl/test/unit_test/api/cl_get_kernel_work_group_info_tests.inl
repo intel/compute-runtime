@@ -17,8 +17,8 @@
 
 using namespace NEO;
 
-struct clGetKernelWorkGroupInfoTests : public ApiFixture<>,
-                                       public ::testing::TestWithParam<uint32_t /*cl_kernel_work_group_info*/> {
+struct clGetKernelWorkGroupInfoTest : public ApiFixture<>,
+                                      public ::testing::Test {
     typedef ApiFixture BaseClass;
 
     void SetUp() override {
@@ -80,12 +80,16 @@ struct clGetKernelWorkGroupInfoTests : public ApiFixture<>,
     KernelBinaryHelper *kbHelper;
 };
 
+struct clGetKernelWorkGroupInfoTests : public clGetKernelWorkGroupInfoTest,
+                                       public ::testing::WithParamInterface<uint32_t /*cl_kernel_work_group_info*/> {
+};
+
 namespace ULT {
 
 TEST_P(clGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkGroupInfoThenSuccessIsReturned) {
 
     size_t paramValueSizeRet;
-    retVal = clGetKernelWorkGroupInfo(
+    auto retVal = clGetKernelWorkGroupInfo(
         kernel,
         testedClDevice,
         GetParam(),
@@ -97,6 +101,51 @@ TEST_P(clGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkG
     EXPECT_NE(0u, paramValueSizeRet);
 }
 
+TEST_F(clGetKernelWorkGroupInfoTest, GivenInvalidDeviceWhenGettingWorkGroupInfoFromSingleDeviceKernelThenInvalidDeviceErrorIsReturned) {
+
+    size_t paramValueSizeRet;
+    auto retVal = clGetKernelWorkGroupInfo(
+        pKernel,
+        reinterpret_cast<cl_device_id>(pKernel),
+        CL_KERNEL_WORK_GROUP_SIZE,
+        0,
+        nullptr,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFromSingleDeviceKernelThenSuccessIsReturned) {
+
+    size_t paramValueSizeRet;
+    auto retVal = clGetKernelWorkGroupInfo(
+        pKernel,
+        nullptr,
+        CL_KERNEL_WORK_GROUP_SIZE,
+        0,
+        nullptr,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFromMultiDeviceKernelThenInvalidDeviceErrorIsReturned) {
+
+    size_t paramValueSizeRet;
+    MockUnrestrictiveContext context;
+    auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
+    auto mockKernel = std::make_unique<MockKernel>(mockProgram.get(), pKernel->getKernelInfo());
+
+    retVal = clGetKernelWorkGroupInfo(
+        mockKernel.get(),
+        nullptr,
+        CL_KERNEL_WORK_GROUP_SIZE,
+        0,
+        nullptr,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
 TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;

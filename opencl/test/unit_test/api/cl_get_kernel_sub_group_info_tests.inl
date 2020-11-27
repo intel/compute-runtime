@@ -311,19 +311,54 @@ TEST_F(KernelSubGroupInfoTest, GivenNullKernelWhenGettingSubGroupInfoThenInvalid
 
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
+TEST_F(KernelSubGroupInfoTest, GivenInvalidDeviceWhenGettingSubGroupInfoFromSingleDeviceKernelThenInvalidDeviceErrorIsReturned) {
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-TEST_F(KernelSubGroupInfoTest, GivenNullDeviceWhenGettingSubGroupInfoThenInvalidDeviceErrorIsReturned) {
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        reinterpret_cast<cl_device_id>(pKernel),
+        CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
+        0,
+        nullptr,
+        sizeof(size_t),
+        paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(KernelSubGroupInfoTest, GivenNullDeviceWhenGettingSubGroupInfoFromSingleDeviceKernelThenSuccessIsReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
     retVal = clGetKernelSubGroupInfo(
         pKernel,
         nullptr,
-        0,
-        0,
-        nullptr,
+        CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
         0,
         nullptr,
-        nullptr);
+        sizeof(size_t),
+        paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(KernelSubGroupInfoTest, GivenNullDeviceWhenGettingSubGroupInfoFromMultiDeviceKernelThenInvalidDeviceErrorIsReturned) {
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
+
+    MockUnrestrictiveContext context;
+    auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
+    auto mockKernel = std::make_unique<MockKernel>(mockProgram.get(), pKernel->getKernelInfo());
+
+    retVal = clGetKernelSubGroupInfo(
+        mockKernel.get(),
+        nullptr,
+        CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
+        0,
+        nullptr,
+        sizeof(size_t),
+        paramValue,
+        &paramValueSizeRet);
 
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }

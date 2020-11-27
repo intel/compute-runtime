@@ -1919,9 +1919,16 @@ cl_int CL_API_CALL clGetKernelWorkGroupInfo(cl_kernel kernel,
                    "paramValueSizeRet", paramValueSizeRet);
 
     Kernel *pKernel = nullptr;
+    retVal = validateObjects(WithCastToInternal(kernel, &pKernel));
+
     ClDevice *pClDevice = nullptr;
-    retVal = validateObjects(WithCastToInternal(device, &pClDevice),
-                             WithCastToInternal(kernel, &pKernel));
+    if (CL_SUCCESS == retVal) {
+        if (pKernel->getDevices().size() == 1u && !device) {
+            pClDevice = pKernel->getDevices()[0];
+        } else {
+            retVal = validateObjects(WithCastToInternal(device, &pClDevice));
+        }
+    }
 
     if (CL_SUCCESS == retVal) {
         retVal = pKernel->getWorkGroupInfo(
@@ -5126,9 +5133,16 @@ cl_int CL_API_CALL clGetKernelSubGroupInfoKHR(cl_kernel kernel,
                    "paramValueSizeRet", paramValueSizeRet);
 
     Kernel *pKernel = nullptr;
+    retVal = validateObjects(WithCastToInternal(kernel, &pKernel));
+
     ClDevice *pClDevice = nullptr;
-    retVal = validateObjects(WithCastToInternal(device, &pClDevice),
-                             WithCastToInternal(kernel, &pKernel));
+    if (CL_SUCCESS == retVal) {
+        if (pKernel->getDevices().size() == 1u && !device) {
+            pClDevice = pKernel->getDevices()[0];
+        } else {
+            retVal = validateObjects(WithCastToInternal(device, &pClDevice));
+        }
+    }
 
     if (CL_SUCCESS != retVal) {
         return retVal;
@@ -5227,9 +5241,16 @@ cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
                    "paramValueSizeRet", paramValueSizeRet);
 
     Kernel *pKernel = nullptr;
+    retVal = validateObjects(WithCastToInternal(kernel, &pKernel));
+
     ClDevice *pClDevice = nullptr;
-    retVal = validateObjects(WithCastToInternal(device, &pClDevice),
-                             WithCastToInternal(kernel, &pKernel));
+    if (CL_SUCCESS == retVal) {
+        if (pKernel->getDevices().size() == 1u && !device) {
+            pClDevice = pKernel->getDevices()[0];
+        } else {
+            retVal = validateObjects(WithCastToInternal(device, &pClDevice));
+        }
+    }
 
     if (CL_SUCCESS != retVal) {
         TRACING_EXIT(clGetKernelSubGroupInfo, &retVal);
