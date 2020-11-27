@@ -53,6 +53,7 @@ uint64_t PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream
     cmd.setScratchSpaceBasePointerHigh(highAddress);
 
     programAdditionalFieldsInVfeState(&cmd, hwInfo);
+    appendProgramVFEState(hwInfo, kernelExecutionType, &cmd);
     *pMediaVfeState = cmd;
 
     return scratchSpaceAddressOffset;

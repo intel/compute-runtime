@@ -38,6 +38,7 @@ struct PreambleHelper {
     static void programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy);
     static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr);
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType);
+    static void appendProgramVFEState(const HardwareInfo &hwInfo, KernelExecutionType kernelExecutionType, void *cmd);
     static uint64_t programVFEState(LinearStream *pCommandStream,
                                     const HardwareInfo &hwInfo,
                                     uint32_t scratchSize,

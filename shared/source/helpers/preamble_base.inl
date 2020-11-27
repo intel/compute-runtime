@@ -129,6 +129,9 @@ void PreambleHelper<GfxFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE
 }
 
 template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::appendProgramVFEState(const HardwareInfo &hwInfo, KernelExecutionType kernelExecutionType, void *cmd) {}
+
+template <typename GfxFamily>
 uint32_t PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize) {
     scratchSize >>= static_cast<uint32_t>(MemoryConstants::kiloByteShiftSize);
     uint32_t valueToProgram = 0;
