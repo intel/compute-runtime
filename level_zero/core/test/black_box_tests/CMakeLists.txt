@@ -11,11 +11,15 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       zello_world_gpu
       zello_world_jitc_ocloc
       zello_ipc_copy_dma_buf
+      zello_ipc_copy_dma_buf_p2p
   )
 
   foreach(TEST_NAME ${TEST_TARGETS})
     if(MSVC)
       if(${TEST_NAME} STREQUAL "zello_ipc_copy_dma_buf")
+        continue()
+      endif()
+      if(${TEST_NAME} STREQUAL "zello_ipc_copy_dma_buf_p2p")
         continue()
       endif()
     endif()
