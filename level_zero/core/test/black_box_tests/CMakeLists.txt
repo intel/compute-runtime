@@ -10,9 +10,16 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       zello_timestamp
       zello_world_gpu
       zello_world_jitc_ocloc
+      zello_ipc_copy_dma_buf
   )
 
   foreach(TEST_NAME ${TEST_TARGETS})
+    if(MSVC)
+      if(${TEST_NAME} STREQUAL "zello_ipc_copy_dma_buf")
+        continue()
+      endif()
+    endif()
+
     add_executable(${TEST_NAME} ${TEST_NAME}.cpp)
 
     set_target_properties(${TEST_NAME}
