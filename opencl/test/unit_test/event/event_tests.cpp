@@ -753,7 +753,7 @@ TEST_F(InternalsEventTest, GivenUnMapOperationWhenSubmittingCommandsThenTaskLeve
     buffer->decRefInternal();
 }
 
-TEST_F(InternalsEventTest, givenBlockedMapCommandWhenSubmitIsCalledItReleasesMemObjectReference) {
+TEST_F(InternalsEventTest, givenBlockedMapCommandWhenSubmitIsCalledThenItReleasesMemObjectReference) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     auto pCmdQ = std::make_unique<MockCommandQueue>(mockContext, pClDevice, props);
     MockEvent<Event> event(pCmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0);
@@ -1256,7 +1256,7 @@ TEST_F(EventTest, givenCmdQueueWithProfilingWhenIsCpuProfilingIsCalledThenTrueIs
     EXPECT_TRUE(cpuProfiling);
 }
 
-TEST(EventCallback, GivenEventWithCallbacksOnPeekHasCallbacksReturnsTrue) {
+TEST(EventCallback, GivenEventWithCallbacksOnWhenPeekingHasCallbacksThenReturnTrue) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     struct ClbFuncTempStruct {
