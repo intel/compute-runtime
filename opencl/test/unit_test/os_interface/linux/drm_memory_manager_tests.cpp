@@ -32,7 +32,6 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
-#include "opencl/source/sharings/va/va_surface.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/linux/mock_drm_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
@@ -41,7 +40,6 @@
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
-#include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
 #include "test.h"
 
 #include "drm/i915_drm.h"
@@ -4133,25 +4131,5 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenIsaIsRegisteredThenC
 
     allocation.freeRegisteredBOBindExtHandles(&drm);
     EXPECT_EQ(2u, drm.unregisterCalledCount);
-}
-
-TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedVaSurfaceIsImportedWithDrmPrimeFdToHandleThenDrmPrimeFdCanBeClosed) {
-    mock->ioctl_expected.total = -1;
-
-    MockContext context(device);
-    MockVaSharing vaSharing;
-    VASurfaceID vaSurfaceId = 0u;
-
-    vaSharing.updateAcquiredHandle(1);
-    std::unique_ptr<Image> sharedImage1(VASurface::createSharedVaSurface(&context, &vaSharing.sharingFunctions,
-                                                                         CL_MEM_READ_WRITE, 0, &vaSurfaceId, 0, nullptr));
-    EXPECT_EQ(1, closeCalledCount);
-    EXPECT_EQ(1, closeInputFd);
-
-    vaSharing.updateAcquiredHandle(2);
-    std::unique_ptr<Image> sharedImage2(VASurface::createSharedVaSurface(&context, &vaSharing.sharingFunctions,
-                                                                         CL_MEM_READ_WRITE, 0, &vaSurfaceId, 0, nullptr));
-    EXPECT_EQ(2, closeCalledCount);
-    EXPECT_EQ(2, closeInputFd);
 }
 } // namespace NEO

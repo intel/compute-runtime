@@ -51,6 +51,11 @@ else()
        ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_manager_allocate_in_device_pool_tests.cpp
   )
 endif()
+if(NEO__LIBVA_FOUND)
+  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_va_sharing_tests.cpp
+  )
+endif()
 if(UNIX)
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_os_interface_linux})
 endif()
