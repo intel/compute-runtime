@@ -1407,7 +1407,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
     if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         itorPipeCtrl++;
     }
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         itorPipeCtrl++;
     }
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
@@ -1422,7 +1422,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
     if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         itorPipeCtrl++;
     }
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         itorPipeCtrl++;
     }
     ASSERT_NE(cmdList.end(), itorPipeCtrl);

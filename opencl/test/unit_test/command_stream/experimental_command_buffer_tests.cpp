@@ -102,7 +102,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
         it++;
     }
 
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         it++;
     }
 
@@ -118,7 +118,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(expectedTsAddress, pipeControl->getAddress());
     EXPECT_EQ(expectedTsAddressHigh, pipeControl->getAddressHigh());
 
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         it++;
     }
 
@@ -140,7 +140,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
         EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
     }
 
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         it++;
     }
 
@@ -157,7 +157,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(expectedTsAddress, pipeControl->getAddress());
     EXPECT_EQ(expectedTsAddressHigh, pipeControl->getAddressHigh());
 
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         it++;
     }
 
@@ -240,7 +240,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         it++;
     }
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         it++;
     }
     //2nd PIPE_CONTROL
@@ -258,7 +258,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         it++;
     }
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         it++;
     }
     it++;
@@ -267,7 +267,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     expectedTsAddress = static_cast<uint32_t>(timeStampAddress & 0x0000FFFFFFFFULL);
     expectedTsAddressHigh = static_cast<uint32_t>(timeStampAddress >> 32);
     it++;
-    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
         it++;
     }
     ASSERT_NE(end, it);
