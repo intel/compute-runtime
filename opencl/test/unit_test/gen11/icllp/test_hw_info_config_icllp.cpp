@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-TEST(IcllpHwInfoConfig, givenHwInfoErrorneousConfigString) {
+TEST(IcllpHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     if (IGFX_ICELAKE_LP != productFamily) {
         return;
     }

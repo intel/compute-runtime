@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-TEST(GlkHwInfoConfig, givenHwInfoErrorneousConfigString) {
+TEST(GlkHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
     if (IGFX_GEMINILAKE != productFamily) {
         return;
     }

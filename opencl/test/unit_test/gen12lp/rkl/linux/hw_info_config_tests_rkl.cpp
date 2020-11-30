@@ -25,7 +25,7 @@ struct HwInfoConfigTestLinuxRkl : HwInfoConfigTestLinux {
     }
 };
 
-RKLTEST_F(HwInfoConfigTestLinuxRkl, configureHwInfoRkl) {
+RKLTEST_F(HwInfoConfigTestLinuxRkl, WhenConfiguringHwInfoThenConfigIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -47,7 +47,7 @@ RKLTEST_F(HwInfoConfigTestLinuxRkl, configureHwInfoRkl) {
     EXPECT_FALSE(outHwInfo.featureTable.ftrTileY);
 }
 
-RKLTEST_F(HwInfoConfigTestLinuxRkl, negative) {
+RKLTEST_F(HwInfoConfigTestLinuxRkl, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     drm->StoredRetValForDeviceID = -1;
@@ -71,7 +71,7 @@ RKLTEST_F(HwInfoConfigTestLinuxRkl, negative) {
     EXPECT_EQ(-1, ret);
 }
 
-TEST(RklHwInfoTests, gtSetupIsCorrect) {
+TEST(RklHwInfoTests, WhenSettingUpHwInfoThenConfigIsCorrect) {
     HardwareInfo hwInfo{};
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

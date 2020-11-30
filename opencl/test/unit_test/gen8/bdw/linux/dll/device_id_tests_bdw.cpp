@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-TEST(BdwDeviceIdTest, supportedDeviceId) {
+TEST(BdwDeviceIdTest, GivenSupportedDeviceIdThenHardwareInfoIsCorrect) {
     std::array<DeviceDescriptor, 19> expectedDescriptors = {{
         {0x0BD1, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},
         {0x1602, &BDW_1x2x6::hwInfo, &BDW_1x2x6::setupHardwareInfo, GTTYPE_GT1},

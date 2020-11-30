@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-TEST(CflHwInfoConfig, givenHwInfoErrorneousConfigString) {
+TEST(CflHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
     if (IGFX_COFFEELAKE != productFamily) {
         return;
     }

@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-TEST(GlkDeviceIdTest, supportedDeviceId) {
+TEST(GlkDeviceIdTest, GivenSupportedDeviceIdThenHardwareInfoIsCorrect) {
     std::array<DeviceDescriptor, 2> expectedDescriptors = {{
         {0x3184, &GLK_1x3x6::hwInfo, &GLK_1x3x6::setupHardwareInfo, GTTYPE_GTA},
         {0x3185, &GLK_1x2x6::hwInfo, &GLK_1x2x6::setupHardwareInfo, GTTYPE_GTA},

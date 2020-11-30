@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-TEST(SklHwInfoConfig, givenHwInfoErrorneousConfigString) {
+TEST(SklHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
     if (IGFX_SKYLAKE != productFamily) {
         return;
     }

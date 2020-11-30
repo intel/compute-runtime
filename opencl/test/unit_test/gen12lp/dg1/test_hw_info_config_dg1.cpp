@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-TEST(Dg1HwInfoConfig, givenHwInfoErrorneousConfigString) {
+TEST(Dg1HwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     if (IGFX_DG1 != productFamily) {
         return;
     }

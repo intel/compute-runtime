@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-TEST(LkfHwInfoConfig, givenHwInfoErrorneousConfigString) {
+TEST(LkfHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     if (IGFX_LAKEFIELD != productFamily) {
         return;
     }

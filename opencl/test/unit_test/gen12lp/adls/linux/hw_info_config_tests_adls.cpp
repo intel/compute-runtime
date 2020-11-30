@@ -25,7 +25,7 @@ struct HwInfoConfigTestLinuxAdls : HwInfoConfigTestLinux {
     }
 };
 
-ADLSTEST_F(HwInfoConfigTestLinuxAdls, configureHwInfoAdls) {
+ADLSTEST_F(HwInfoConfigTestLinuxAdls, WhenConfiguringHwInfoThenConfigIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -47,7 +47,7 @@ ADLSTEST_F(HwInfoConfigTestLinuxAdls, configureHwInfoAdls) {
     EXPECT_FALSE(outHwInfo.featureTable.ftrTileY);
 }
 
-ADLSTEST_F(HwInfoConfigTestLinuxAdls, negative) {
+ADLSTEST_F(HwInfoConfigTestLinuxAdls, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     drm->StoredRetValForDeviceID = -1;
@@ -71,7 +71,7 @@ ADLSTEST_F(HwInfoConfigTestLinuxAdls, negative) {
     EXPECT_EQ(-1, ret);
 }
 
-TEST(AdlsHwInfoTests, gtSetupIsCorrect) {
+TEST(AdlsHwInfoTests, WhenSettingUpHwInfoThenConfigIsCorrect) {
     HardwareInfo hwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

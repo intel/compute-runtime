@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-TEST(BdwHwInfoConfig, givenHwInfoErrorneousConfigString) {
+TEST(BdwHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     if (IGFX_BROADWELL != productFamily) {
         return;
     }

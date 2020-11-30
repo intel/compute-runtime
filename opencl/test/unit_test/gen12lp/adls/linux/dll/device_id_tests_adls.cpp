@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-TEST(AdlsDeviceIdTest, supportedDeviceId) {
+TEST(AdlsDeviceIdTest, GivenSupportedDeviceIdThenHardwareInfoIsCorrect) {
     std::array<DeviceDescriptor, 3> expectedDescriptors = {{
         {0x4680, &ADLS_HW_CONFIG::hwInfo, &ADLS_HW_CONFIG::setupHardwareInfo, GTTYPE_GT1},
         {0x46FF, &ADLS_HW_CONFIG::hwInfo, &ADLS_HW_CONFIG::setupHardwareInfo, GTTYPE_GT1},

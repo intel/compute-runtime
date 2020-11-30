@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-TEST(KblHwInfoConfig, givenHwInfoErrorneousConfigString) {
+TEST(KblHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
     if (IGFX_KABYLAKE != productFamily) {
         return;
     }
