@@ -30,8 +30,10 @@
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_svm_manager.h"
 #include "test.h"
 
 #include "third_party/aub_stream/headers/aubstream.h"
@@ -1185,6 +1187,35 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
     EXPECT_TRUE(mockHardwareContext->pollForCompletionCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenUsmAllocationWhenDumpAllocationIsCalledAndDumpFormatIsSpecifiedThenUsmAllocationIsDumped) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AUBDumpBufferFormat.set("BIN");
+
+    MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    aubCsr.setupContext(osContext);
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
+
+    auto memoryManager = std::make_unique<MockMemoryManager>(false, true, *pDevice->executionEnvironment);
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, 0b1);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+
+    auto gfxAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(0);
+    ASSERT_NE(nullptr, gfxAllocation);
+
+    EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    aubCsr.dumpAllocation(*gfxAllocation);
+
+    EXPECT_TRUE(mockHardwareContext->dumpSurfaceCalled);
+
+    svmManager->freeSVMAlloc(ptr);
 }
 
 using SimulatedCsrTest = ::testing::Test;

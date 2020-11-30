@@ -194,6 +194,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(uint32_t rootDeviceIndex,
     if (!unifiedMemoryAllocation) {
         return nullptr;
     }
+    setUnifiedAllocationProperties(unifiedMemoryAllocation, {});
 
     SvmAllocationData allocData(rootDeviceIndex);
     allocData.gpuAllocations.addAllocation(unifiedMemoryAllocation);
