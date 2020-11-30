@@ -157,14 +157,6 @@ TEST_F(PageTableTests48, WhenPageTableIsCreatedThenItIsEmpty) {
     EXPECT_TRUE(pageTable->isEmpty());
 }
 
-TEST_F(PageTableTests48, DISABLED_mapSizeZero) {
-    std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
-    EXPECT_TRUE(pageTable->isEmpty());
-
-    auto phys1 = pageTable->map(0x0, 0x0, 0, MemoryBanks::MainBank);
-    std::cerr << phys1 << std::endl;
-}
-
 TEST_F(PageTableTests48, WhenAssigningWalkerThenWalkIsExecutedCorrectly) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t addr1 = refAddr + (510 * pageSize) + 0x10;
