@@ -2354,7 +2354,7 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(GTPinTests, checkWhetherGTPinHwHelperGetterWorksWell) {
+TEST_F(GTPinTests, WhenGettingGtPinHwHelperThenValidPointerIsReturned) {
     GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
     GTPinHwHelper *pGTPinHelper = &GTPinHwHelper::get(genFamily);
     EXPECT_NE(nullptr, pGTPinHelper);
