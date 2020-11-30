@@ -26,7 +26,7 @@ namespace NEO {
 MockSipKernel::MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) : SipKernel(type, sipAlloc) {
     this->mockSipMemoryAllocation =
         std::make_unique<MemoryAllocation>(0u,
-                                           GraphicsAllocation::AllocationType::KERNEL_ISA,
+                                           GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL,
                                            nullptr,
                                            MemoryConstants::pageSize * 10u,
                                            0u,
@@ -37,7 +37,7 @@ MockSipKernel::MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) :
 MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr) {
     this->mockSipMemoryAllocation =
         std::make_unique<MemoryAllocation>(0u,
-                                           GraphicsAllocation::AllocationType::KERNEL_ISA,
+                                           GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL,
                                            nullptr,
                                            MemoryConstants::pageSize * 10u,
                                            0u,
@@ -47,31 +47,10 @@ MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr) {
 
 MockSipKernel::~MockSipKernel() = default;
 
-std::vector<char> MockSipKernel::dummyBinaryForSip;
+const char *MockSipKernel::dummyBinaryForSip = "12345678";
+
 std::vector<char> MockSipKernel::getDummyGenBinary() {
-    if (dummyBinaryForSip.empty()) {
-        dummyBinaryForSip = getBinary();
-    }
-    return dummyBinaryForSip;
-}
-std::vector<char> MockSipKernel::getBinary() {
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".gen");
-
-    size_t binarySize = 0;
-    auto binary = loadDataFromFile(testFile.c_str(), binarySize);
-    UNRECOVERABLE_IF(binary == nullptr);
-
-    std::vector<char> ret{binary.get(), binary.get() + binarySize};
-
-    return ret;
-}
-void MockSipKernel::initDummyBinary() {
-    dummyBinaryForSip = getBinary();
-}
-void MockSipKernel::shutDown() {
-    MockSipKernel::dummyBinaryForSip.clear();
-    std::vector<char>().swap(MockSipKernel::dummyBinaryForSip);
+    return std::vector<char>(dummyBinaryForSip, dummyBinaryForSip + sizeof(MockSipKernel::dummyBinaryForSip));
 }
 
 GraphicsAllocation *MockSipKernel::getSipAllocation() const {

@@ -17,10 +17,6 @@ namespace NEO {
 class Device;
 class GraphicsAllocation;
 
-const char *getSipKernelCompilerInternalOptions(SipKernelType kernel);
-
-const char *getSipLlSrc(const Device &device);
-
 class SipKernel {
   public:
     SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc);

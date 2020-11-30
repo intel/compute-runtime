@@ -18,8 +18,6 @@
 using namespace NEO;
 
 namespace SipKernelTests {
-extern std::string getDebugSipKernelNameWithBitnessAndProductSuffix(std::string &base, const char *product);
-
 typedef ::testing::Test gen9SipTests;
 
 GEN9TEST_F(gen9SipTests, givenDebugCsrSipKernelWithLocalMemoryWhenAskedForDebugSurfaceBtiAndSizeThenBtiIsZeroAndSizeGreaterThanZero) {

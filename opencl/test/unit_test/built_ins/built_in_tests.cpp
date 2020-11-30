@@ -34,6 +34,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
@@ -2009,24 +2010,12 @@ TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquired
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->builtins.reset(builtins);
     mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
 
-    cl_int errCode = CL_BUILD_PROGRAM_FAILURE;
-    auto p = Program::createBuiltInFromGenBinary(pContext, pContext->getDevices(), mockCompilerInterface->sipKernelBinaryOverride.data(), mockCompilerInterface->sipKernelBinaryOverride.size(), &errCode);
-    ASSERT_EQ(CL_SUCCESS, errCode);
-    errCode = p->processGenBinary(*pClDevice);
-    ASSERT_EQ(CL_SUCCESS, errCode);
-
-    const auto &sipKernelInfo = p->getKernelInfo(static_cast<size_t>(0), rootDeviceIndex);
-
-    auto compbinedKernelHeapSize = sipKernelInfo->heapInfo.KernelHeapSize;
-    auto sipOffset = sipKernelInfo->systemKernelOffset;
-    ASSERT_GT(compbinedKernelHeapSize, sipOffset);
-
     const SipKernel &sipKernel = builtins->getSipKernel(SipKernelType::Csr, *pDevice);
 
-    auto expectedMem = reinterpret_cast<const char *>(sipKernelInfo->heapInfo.pKernelHeap) + sipOffset;
-    EXPECT_EQ(0, memcmp(expectedMem, sipKernel.getSipAllocation()->getUnderlyingBuffer(), compbinedKernelHeapSize - sipOffset));
+    auto expectedMem = mockCompilerInterface->sipKernelBinaryOverride.data();
+    EXPECT_EQ(0, memcmp(expectedMem, sipKernel.getSipAllocation()->getUnderlyingBuffer(), mockCompilerInterface->sipKernelBinaryOverride.size()));
     EXPECT_EQ(SipKernelType::Csr, mockCompilerInterface->requestedSipKernel);
-    p->release();
+
     mockCompilerInterface->releaseDummyGenBinary();
 }
 
@@ -2034,6 +2023,22 @@ TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationFor
     const SipKernel &sipKern = pDevice->getBuiltIns()->getSipKernel(SipKernelType::Csr, pContext->getDevice(0)->getDevice());
     auto sipAllocation = sipKern.getSipAllocation();
     EXPECT_NE(nullptr, sipAllocation);
+}
+
+TEST_F(BuiltInTests, givenSipKernelWhenAllocationFailsThenItHasNullptrGraphicsAllocation) {
+    auto executionEnvironment = new MockExecutionEnvironment;
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto memoryManager = new MockMemoryManager(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto device = std::unique_ptr<RootDevice>(Device::create<RootDevice>(executionEnvironment, 0u));
+    EXPECT_NE(nullptr, device);
+
+    memoryManager->failAllocate32Bit = true;
+
+    auto builtins = std::make_unique<BuiltIns>();
+    const SipKernel &sipKern = builtins->getSipKernel(SipKernelType::Csr, *device);
+    auto sipAllocation = sipKern.getSipAllocation();
+    EXPECT_EQ(nullptr, sipAllocation);
 }
 
 TEST_F(BuiltInTests, givenSameDeviceIsUsedWhenUsingStaticGetterThenExpectRetrieveSameAllocation) {
