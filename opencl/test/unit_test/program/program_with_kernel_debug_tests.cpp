@@ -232,7 +232,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBui
     auto retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::debugKernelEnable.data(), false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto kernelInfo = pProgram->getKernelInfo("CopyBuffer");
+    auto kernelInfo = pProgram->getKernelInfo("CopyBuffer", pDevice->getRootDeviceIndex());
     EXPECT_NE(0u, kernelInfo->patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize);
 }
 
@@ -249,9 +249,9 @@ TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenPro
     auto retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    pProgram->processDebugData();
+    pProgram->processDebugData(pDevice->getRootDeviceIndex());
 
-    auto kernelInfo = pProgram->getKernelInfo("CopyBuffer");
+    auto kernelInfo = pProgram->getKernelInfo("CopyBuffer", pDevice->getRootDeviceIndex());
 
     EXPECT_NE(0u, kernelInfo->debugData.vIsaSize);
     EXPECT_NE(nullptr, kernelInfo->debugData.vIsa);

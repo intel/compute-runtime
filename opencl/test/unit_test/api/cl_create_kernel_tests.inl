@@ -142,7 +142,7 @@ TEST_F(clCreateKernelTests, GivenNullKernelNameWhenCreatingNewKernelThenInvalidV
     KernelInfo *pKernelInfo = new KernelInfo();
 
     std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(pContext, false, toClDeviceVector(*pDevice));
-    pMockProg->addKernelInfo(pKernelInfo);
+    pMockProg->addKernelInfo(pKernelInfo, testedRootDeviceIndex);
 
     kernel = clCreateKernel(
         pMockProg.get(),

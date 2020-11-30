@@ -76,7 +76,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
         // create the VME kernel
         pVmeKernel = Kernel::create<MockKernel>(
             pProgram,
-            *pProgram->getKernelInfo("device_side_block_motion_estimate_intel"),
+            *pProgram->getKernelInfo("device_side_block_motion_estimate_intel", pProgram->getDevices()[0]->getRootDeviceIndex()),
             &retVal);
 
         ASSERT_NE(nullptr, pVmeKernel);

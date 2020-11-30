@@ -48,7 +48,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
         false);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    const KernelInfo *pKernelInfo0 = pProgram->getKernelInfo("simple_kernel_0");
+    const KernelInfo *pKernelInfo0 = pProgram->getKernelInfo("simple_kernel_0", rootDeviceIndex);
     ASSERT_NE(nullptr, pKernelInfo0);
 
     Kernel *pKernel0 = Kernel::create<MockKernel>(
@@ -57,7 +57,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
         &retVal);
     ASSERT_NE(nullptr, pKernel0);
 
-    const KernelInfo *pKernelInfo1 = pProgram->getKernelInfo("simple_kernel_1");
+    const KernelInfo *pKernelInfo1 = pProgram->getKernelInfo("simple_kernel_1", rootDeviceIndex);
     ASSERT_NE(nullptr, pKernelInfo1);
 
     Kernel *pKernel1 = Kernel::create<MockKernel>(
@@ -66,7 +66,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
         &retVal);
     ASSERT_NE(nullptr, pKernel1);
 
-    const KernelInfo *pKernelInfo2 = pProgram->getKernelInfo("simple_kernel_2");
+    const KernelInfo *pKernelInfo2 = pProgram->getKernelInfo("simple_kernel_2", rootDeviceIndex);
     ASSERT_NE(nullptr, pKernelInfo2);
 
     Kernel *pKernel2 = Kernel::create<MockKernel>(
@@ -271,7 +271,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
         false);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    const KernelInfo *pKernelInfo = pProgram->getKernelInfo("device_side_block_motion_estimate_intel");
+    const KernelInfo *pKernelInfo = pProgram->getKernelInfo("device_side_block_motion_estimate_intel", rootDeviceIndex);
     EXPECT_NE(nullptr, pKernelInfo);
 
     Kernel *pKernel = Kernel::create<MockKernel>(

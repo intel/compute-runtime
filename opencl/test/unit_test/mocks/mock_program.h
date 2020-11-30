@@ -91,17 +91,17 @@ class MockProgram : public Program {
             }
         }
     }
-    std::vector<KernelInfo *> &getKernelInfoArray() {
-        return kernelInfoArray;
+    std::vector<KernelInfo *> &getKernelInfoArray(uint32_t rootDeviceIndex) {
+        return buildInfos[rootDeviceIndex].kernelInfoArray;
     }
-    void addKernelInfo(KernelInfo *inInfo) {
-        kernelInfoArray.push_back(inInfo);
+    void addKernelInfo(KernelInfo *inInfo, uint32_t rootDeviceIndex) {
+        buildInfos[rootDeviceIndex].kernelInfoArray.push_back(inInfo);
     }
-    std::vector<KernelInfo *> &getParentKernelInfoArray() {
-        return parentKernelInfoArray;
+    std::vector<KernelInfo *> &getParentKernelInfoArray(uint32_t rootDeviceIndex) {
+        return buildInfos[rootDeviceIndex].parentKernelInfoArray;
     }
-    std::vector<KernelInfo *> &getSubgroupKernelInfoArray() {
-        return subgroupKernelInfoArray;
+    std::vector<KernelInfo *> &getSubgroupKernelInfoArray(uint32_t rootDeviceIndex) {
+        return buildInfos[rootDeviceIndex].subgroupKernelInfoArray;
     }
     void setContext(Context *context) {
         this->context = context;

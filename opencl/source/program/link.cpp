@@ -146,6 +146,7 @@ cl_int Program::link(
 
         if (!isCreateLibrary) {
             for (const auto &device : deviceVector) {
+                auto rootDeviceIndex = device->getRootDeviceIndex();
                 inputArgs.outType = IGC::CodeType::oclGenBin;
                 NEO::TranslationOutput compilerOuput = {};
                 auto compilerErr = pCompilerInterface->link(device->getDevice(), inputArgs, compilerOuput);
@@ -156,7 +157,7 @@ cl_int Program::link(
                     break;
                 }
 
-                this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size, device->getRootDeviceIndex());
+                this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size, rootDeviceIndex);
                 this->debugData = std::move(compilerOuput.debugData.mem);
                 this->debugDataSize = compilerOuput.debugData.size;
 
@@ -167,11 +168,11 @@ cl_int Program::link(
                 binaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
 
                 if (isKernelDebugEnabled()) {
-                    if (kernelDebugDataNotified[device->getRootDeviceIndex()]) {
+                    if (kernelDebugDataNotified[rootDeviceIndex]) {
                         continue;
                     }
-                    processDebugData();
-                    for (auto kernelInfo : kernelInfoArray) {
+                    processDebugData(rootDeviceIndex);
+                    for (auto kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray) {
                         device->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
                                                                                 kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
                                                                                 kernelInfo->heapInfo.pKernelHeap,
@@ -204,7 +205,9 @@ cl_int Program::link(
             break;
         }
         updateNonUniformFlag(&*inputProgramsInternal.begin(), inputProgramsInternal.size());
-        separateBlockKernels();
+        for (const auto &device : deviceVector) {
+            separateBlockKernels(device->getRootDeviceIndex());
+        }
     } while (false);
 
     if (retVal != CL_SUCCESS) {

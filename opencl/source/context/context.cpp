@@ -399,7 +399,7 @@ SchedulerKernel &Context::getSchedulerKernel() {
 
         schedulerBuiltIn->pProgram = program;
 
-        auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName);
+        auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName, clDevice->getRootDeviceIndex());
         DEBUG_BREAK_IF(!kernelInfo);
 
         schedulerBuiltIn->pKernel = Kernel::create<SchedulerKernel>(

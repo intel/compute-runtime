@@ -95,7 +95,7 @@ void KernelDataTest::buildAndDecode() {
     EXPECT_EQ(CL_SUCCESS, error);
 
     // extract the kernel info
-    pKernelInfo = program->Program::getKernelInfo(kernelName.c_str());
+    pKernelInfo = program->Program::getKernelInfo(kernelName.c_str(), rootDeviceIndex);
 
     // validate name
     EXPECT_STREQ(pKernelInfo->kernelDescriptor.kernelMetadata.kernelName.c_str(), kernelName.c_str());

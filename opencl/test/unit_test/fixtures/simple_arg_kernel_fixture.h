@@ -110,7 +110,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
         // create a kernel
         pKernel = Kernel::create<MockKernel>(
             pProgram,
-            *pProgram->getKernelInfo("SimpleArg"),
+            *pProgram->getKernelInfo("SimpleArg", pDevice->getRootDeviceIndex()),
             &retVal);
 
         ASSERT_NE(nullptr, pKernel);
@@ -156,7 +156,7 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
 
         kernel = Kernel::create<MockKernel>(
             pProgram,
-            *pProgram->getKernelInfo("simpleNonUniform"),
+            *pProgram->getKernelInfo("simpleNonUniform", device->getRootDeviceIndex()),
             &retVal);
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -202,7 +202,7 @@ class SimpleKernelFixture : public ProgramFixture {
                 kernelName.append(std::to_string(i));
                 kernels[i].reset(Kernel::create<MockKernel>(
                     pProgram,
-                    *pProgram->getKernelInfo(kernelName.c_str()),
+                    *pProgram->getKernelInfo(kernelName.c_str(), device->getRootDeviceIndex()),
                     &retVal));
                 ASSERT_NE(nullptr, kernels[i]);
                 ASSERT_EQ(CL_SUCCESS, retVal);
@@ -251,7 +251,7 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
 
         kernel.reset(Kernel::create<MockKernel>(
             pProgram,
-            *pProgram->getKernelInfo("statelessKernel"),
+            *pProgram->getKernelInfo("statelessKernel", device->getRootDeviceIndex()),
             &retVal));
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -294,7 +294,7 @@ class BindlessKernelFixture : public ProgramFixture {
 
         kernel.reset(Kernel::create<MockKernel>(
             pProgram,
-            *pProgram->getKernelInfo(kernelName.c_str()),
+            *pProgram->getKernelInfo(kernelName.c_str(), deviceCl->getRootDeviceIndex()),
             &retVal));
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);

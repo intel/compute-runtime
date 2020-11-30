@@ -40,7 +40,7 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
         // create a kernel
         pKernel = Kernel::create<MockKernel>(
             pProgram,
-            *pProgram->getKernelInfo(KernelName),
+            *pProgram->getKernelInfo(kernelName, rootDeviceIndex),
             &retVal);
 
         ASSERT_EQ(CL_SUCCESS, retVal);

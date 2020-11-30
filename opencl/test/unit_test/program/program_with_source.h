@@ -31,11 +31,12 @@ class ProgramFromSourceTest : public ContextFixture,
 
   protected:
     void SetUp() override {
-        std::tie(SourceFileName, BinaryFileName, KernelName) = GetParam();
+        std::tie(SourceFileName, BinaryFileName, kernelName) = GetParam();
         kbHelper = new KernelBinaryHelper(BinaryFileName);
 
         PlatformFixture::SetUp();
         cl_device_id device = pPlatform->getClDevice(0);
+        rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();
 
@@ -55,7 +56,8 @@ class ProgramFromSourceTest : public ContextFixture,
     KernelBinaryHelper *kbHelper = nullptr;
     const char *SourceFileName = nullptr;
     const char *BinaryFileName = nullptr;
-    const char *KernelName = nullptr;
+    const char *kernelName = nullptr;
     cl_int retVal = CL_SUCCESS;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
 };
 } // namespace NEO

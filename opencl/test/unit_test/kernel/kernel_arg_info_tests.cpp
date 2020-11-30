@@ -40,7 +40,7 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
         // create a kernel
         pKernel = Kernel::create(
             pProgram,
-            *pProgram->getKernelInfo(KernelName),
+            *pProgram->getKernelInfo(kernelName, rootDeviceIndex),
             &retVal);
 
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -87,7 +87,7 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
 };
 
 TEST_P(KernelArgInfoTest, GivenNullWhenGettingKernelInfoThenNullIsReturned) {
-    auto kernelInfo = this->pProgram->getKernelInfo(nullptr);
+    auto kernelInfo = this->pProgram->getKernelInfo(nullptr, 0);
     EXPECT_EQ(nullptr, kernelInfo);
 }
 

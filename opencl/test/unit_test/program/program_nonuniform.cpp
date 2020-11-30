@@ -166,6 +166,7 @@ class ProgramNonUniformTest : public ContextFixture,
     void SetUp() override {
         PlatformFixture::SetUp();
         device = pPlatform->getClDevice(0);
+        rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();
         CommandQueueHwFixture::SetUp(pPlatform->getClDevice(0), 0);
@@ -178,6 +179,7 @@ class ProgramNonUniformTest : public ContextFixture,
         PlatformFixture::TearDown();
     }
     cl_device_id device;
+    uint32_t rootDeviceIndex;
     cl_int retVal = CL_SUCCESS;
 };
 
@@ -195,7 +197,7 @@ TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqu
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size");
+    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size", rootDeviceIndex);
     EXPECT_NE(nullptr, pKernelInfo);
 
     // create a kernel
@@ -234,7 +236,7 @@ TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqu
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size");
+    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size", rootDeviceIndex);
     EXPECT_NE(nullptr, pKernelInfo);
 
     // create a kernel
@@ -271,7 +273,7 @@ TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInva
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size");
+    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size", rootDeviceIndex);
     EXPECT_NE(nullptr, pKernelInfo);
 
     // create a kernel

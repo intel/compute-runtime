@@ -1713,7 +1713,8 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
             break;
         }
 
-        const KernelInfo *pKernelInfo = pProgram->getKernelInfo(kernelName);
+        auto rootDeviceIndex = pProgram->getDevices()[0]->getRootDeviceIndex();
+        const KernelInfo *pKernelInfo = pProgram->getKernelInfo(kernelName, rootDeviceIndex);
         if (!pKernelInfo) {
             retVal = CL_INVALID_KERNEL_NAME;
             break;
@@ -1746,9 +1747,9 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                    "numKernels", numKernels,
                    "kernels", kernels,
                    "numKernelsRet", numKernelsRet);
-    auto program = castToObject<Program>(clProgram);
-    if (program) {
-        auto numKernelsInProgram = program->getNumKernels();
+    auto pProgram = castToObject<Program>(clProgram);
+    if (pProgram) {
+        auto numKernelsInProgram = pProgram->getNumKernels();
 
         if (kernels) {
             if (numKernels < numKernelsInProgram) {
@@ -1757,11 +1758,12 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                 return retVal;
             }
 
+            auto rootDeviceIndex = pProgram->getDevices()[0]->getRootDeviceIndex();
             for (unsigned int i = 0; i < numKernelsInProgram; ++i) {
-                const auto kernelInfo = program->getKernelInfo(i);
+                const auto kernelInfo = pProgram->getKernelInfo(i, rootDeviceIndex);
                 DEBUG_BREAK_IF(kernelInfo == nullptr);
                 kernels[i] = Kernel::create(
-                    program,
+                    pProgram,
                     *kernelInfo,
                     nullptr);
                 gtpinNotifyKernelCreate(kernels[i]);

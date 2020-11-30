@@ -294,26 +294,26 @@ const char *Program::getBuildLog(uint32_t rootDeviceIndex) const {
     return currentLog.c_str();
 }
 
-void Program::separateBlockKernels() {
-    if ((0 == parentKernelInfoArray.size()) && (0 == subgroupKernelInfoArray.size())) {
+void Program::separateBlockKernels(uint32_t rootDeviceIndex) {
+    if ((0 == buildInfos[rootDeviceIndex].parentKernelInfoArray.size()) && (0 == buildInfos[rootDeviceIndex].subgroupKernelInfoArray.size())) {
         return;
     }
 
-    auto allKernelInfos(kernelInfoArray);
-    kernelInfoArray.clear();
+    auto allKernelInfos(buildInfos[rootDeviceIndex].kernelInfoArray);
+    buildInfos[rootDeviceIndex].kernelInfoArray.clear();
     for (auto &i : allKernelInfos) {
         auto end = i->kernelDescriptor.kernelMetadata.kernelName.rfind("_dispatch_");
         if (end != std::string::npos) {
             bool baseKernelFound = false;
             std::string baseKernelName(i->kernelDescriptor.kernelMetadata.kernelName, 0, end);
-            for (auto &j : parentKernelInfoArray) {
+            for (auto &j : buildInfos[rootDeviceIndex].parentKernelInfoArray) {
                 if (j->kernelDescriptor.kernelMetadata.kernelName.compare(baseKernelName) == 0) {
                     baseKernelFound = true;
                     break;
                 }
             }
             if (!baseKernelFound) {
-                for (auto &j : subgroupKernelInfoArray) {
+                for (auto &j : buildInfos[rootDeviceIndex].subgroupKernelInfoArray) {
                     if (j->kernelDescriptor.kernelMetadata.kernelName.compare(baseKernelName) == 0) {
                         baseKernelFound = true;
                         break;
@@ -324,11 +324,11 @@ void Program::separateBlockKernels() {
                 //Parent or subgroup kernel found -> child kernel
                 blockKernelManager->addBlockKernelInfo(i);
             } else {
-                kernelInfoArray.push_back(i);
+                buildInfos[rootDeviceIndex].kernelInfoArray.push_back(i);
             }
         } else {
             //Regular kernel found
-            kernelInfoArray.push_back(i);
+            buildInfos[rootDeviceIndex].kernelInfoArray.push_back(i);
         }
     }
     allKernelInfos.clear();
@@ -375,21 +375,23 @@ void Program::freeBlockResources() {
 }
 
 void Program::cleanCurrentKernelInfo() {
-    for (auto &kernelInfo : kernelInfoArray) {
-        if (kernelInfo->kernelAllocation) {
-            //register cache flush in all csrs where kernel allocation was used
-            for (auto &engine : this->executionEnvironment.memoryManager->getRegisteredEngines()) {
-                auto contextId = engine.osContext->getContextId();
-                if (kernelInfo->kernelAllocation->isUsedByOsContext(contextId)) {
-                    engine.commandStreamReceiver->registerInstructionCacheFlush();
+    for (auto &buildInfo : buildInfos) {
+        for (auto &kernelInfo : buildInfo.kernelInfoArray) {
+            if (kernelInfo->kernelAllocation) {
+                //register cache flush in all csrs where kernel allocation was used
+                for (auto &engine : this->executionEnvironment.memoryManager->getRegisteredEngines()) {
+                    auto contextId = engine.osContext->getContextId();
+                    if (kernelInfo->kernelAllocation->isUsedByOsContext(contextId)) {
+                        engine.commandStreamReceiver->registerInstructionCacheFlush();
+                    }
                 }
-            }
 
-            this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
+                this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
+            }
+            delete kernelInfo;
         }
-        delete kernelInfo;
+        buildInfo.kernelInfoArray.clear();
     }
-    kernelInfoArray.clear();
 }
 
 void Program::updateNonUniformFlag() {

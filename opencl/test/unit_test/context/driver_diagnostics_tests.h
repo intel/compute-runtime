@@ -230,7 +230,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
         CreateProgramFromBinary(context, context->getDevices(), "CopyBuffer_simd32");
         retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        kernel = Kernel::create<MockKernel>(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal);
+        kernel = Kernel::create<MockKernel>(pProgram, *pProgram->getKernelInfo("CopyBuffer", context->getDevice(0)->getRootDeviceIndex()), &retVal);
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;
     }
@@ -265,7 +265,7 @@ struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTes
         CreateProgramFromBinary(context, context->getDevices(), "printf");
         retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        kernel = Kernel::create(pProgram, *pProgram->getKernelInfo("test"), &retVal);
+        kernel = Kernel::create(pProgram, *pProgram->getKernelInfo("test", context->getDevice(0)->getRootDeviceIndex()), &retVal);
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;
     }

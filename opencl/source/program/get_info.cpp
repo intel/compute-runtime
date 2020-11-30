@@ -77,7 +77,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_KERNEL_NAMES:
-        kernelNamesString = concatenateKernelNames(kernelInfoArray);
+        kernelNamesString = concatenateKernelNames(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray);
         pSrc = kernelNamesString.c_str();
         retSize = srcSize = kernelNamesString.length() + 1;
 
@@ -87,7 +87,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_NUM_KERNELS:
-        numKernels = kernelInfoArray.size();
+        numKernels = getNumKernels();
         pSrc = &numKernels;
         retSize = srcSize = sizeof(numKernels);
 

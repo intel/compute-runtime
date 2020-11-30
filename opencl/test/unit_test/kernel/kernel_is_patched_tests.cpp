@@ -18,18 +18,19 @@ using namespace NEO;
 class PatchedKernelTest : public ::testing::Test {
   public:
     void SetUp() override {
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), rootDeviceIndex));
         context.reset(new MockContext(device.get()));
         program.reset(Program::createBuiltInFromSource("FillBufferBytes", context.get(), context->getDevices(), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
         program->build(program->getDevices(), nullptr, false);
-        kernel.reset(Kernel::create(program.get(), *program->getKernelInfo("FillBufferBytes"), &retVal));
+        kernel.reset(Kernel::create(program.get(), *program->getKernelInfo("FillBufferBytes", rootDeviceIndex), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
     void TearDown() override {
         context.reset();
     }
 
+    const uint32_t rootDeviceIndex = 0u;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<Program> program;

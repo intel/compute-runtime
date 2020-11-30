@@ -2017,7 +2017,7 @@ TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquired
 
     const SipKernel &sipKern = mockBuiltins.getSipKernel(SipKernelType::Csr, pContext->getDevice(0)->getDevice());
 
-    const auto &sipKernelInfo = p->getKernelInfo(static_cast<size_t>(0));
+    const auto &sipKernelInfo = p->getKernelInfo(static_cast<size_t>(0), rootDeviceIndex);
 
     auto compbinedKernelHeapSize = sipKernelInfo->heapInfo.KernelHeapSize;
     auto sipOffset = sipKernelInfo->systemKernelOffset;

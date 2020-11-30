@@ -53,6 +53,7 @@ class ProgramWithBlockKernelsTest : public ContextFixture,
 
 TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuildingThenKernelInfosHaveCorrectNames) {
     CreateProgramFromBinary(pContext, pContext->getDevices(), "simple_block_kernel", "-cl-std=CL2.0");
+    auto rootDeviceIndex = pContext->getDevice(0)->getRootDeviceIndex();
     auto mockProgram = pProgram;
     ASSERT_NE(nullptr, mockProgram);
 
@@ -62,10 +63,10 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuil
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto kernelInfo = mockProgram->Program::getKernelInfo("simple_block_kernel");
+    auto kernelInfo = mockProgram->Program::getKernelInfo("simple_block_kernel", rootDeviceIndex);
     EXPECT_NE(nullptr, kernelInfo);
 
-    auto blockKernelInfo = mockProgram->Program::getKernelInfo("simple_block_kernel_dispatch_0");
+    auto blockKernelInfo = mockProgram->Program::getKernelInfo("simple_block_kernel_dispatch_0", rootDeviceIndex);
     EXPECT_EQ(nullptr, blockKernelInfo);
 
     std::vector<const KernelInfo *> blockKernelInfos(mockProgram->blockKernelManager->getCount());

@@ -172,25 +172,28 @@ cl_int Program::build(
         }
 
         if (isKernelDebugEnabled()) {
-            processDebugData();
 
             for (auto &clDevice : deviceVector) {
-                if (BuildPhase::DebugDataNotification == phaseReached[clDevice->getRootDeviceIndex()]) {
+                auto rootDeviceIndex = clDevice->getRootDeviceIndex();
+                if (BuildPhase::DebugDataNotification == phaseReached[rootDeviceIndex]) {
                     continue;
                 }
+                processDebugData(rootDeviceIndex);
                 if (clDevice->getSourceLevelDebugger()) {
-                    for (auto kernelInfo : kernelInfoArray) {
+                    for (auto kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray) {
                         clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
                                                                                   kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
                                                                                   kernelInfo->heapInfo.pKernelHeap,
                                                                                   kernelInfo->heapInfo.KernelHeapSize);
                     }
                 }
-                phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::DebugDataNotification;
+                phaseReached[rootDeviceIndex] = BuildPhase::DebugDataNotification;
             }
         }
 
-        separateBlockKernels();
+        for (const auto &device : deviceVector) {
+            separateBlockKernels(device->getRootDeviceIndex());
+        }
     } while (false);
 
     if (retVal != CL_SUCCESS) {
@@ -229,7 +232,7 @@ cl_int Program::build(const ClDeviceVector &deviceVector, const char *buildOptio
         return ret;
     }
 
-    for (auto &ki : this->kernelInfoArray) {
+    for (auto &ki : buildInfos[deviceVector[0]->getRootDeviceIndex()].kernelInfoArray) {
         auto fit = builtinsMap.find(ki->kernelDescriptor.kernelMetadata.kernelName);
         if (fit == builtinsMap.end()) {
             continue;

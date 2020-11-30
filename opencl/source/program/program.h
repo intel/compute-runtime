@@ -144,8 +144,8 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL cl_int updateSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
 
     size_t getNumKernels() const;
-    const KernelInfo *getKernelInfo(const char *kernelName) const;
-    const KernelInfo *getKernelInfo(size_t ordinal) const;
+    const KernelInfo *getKernelInfo(const char *kernelName, uint32_t rootDeviceIndex) const;
+    const KernelInfo *getKernelInfo(size_t ordinal, uint32_t rootDeviceIndex) const;
 
     cl_int getInfo(cl_program_info paramName, size_t paramValueSize,
                    void *paramValue, size_t *paramValueSizeRet);
@@ -173,7 +173,7 @@ class Program : public BaseObject<_cl_program> {
 
     cl_int getSource(std::string &binary) const;
 
-    void processDebugData();
+    void processDebugData(uint32_t rootDeviceIndex);
 
     void updateBuildLog(uint32_t rootDeviceIndex, const char *pErrorString, const size_t errorStringSize);
 
@@ -284,7 +284,7 @@ class Program : public BaseObject<_cl_program> {
 
     MOCKABLE_VIRTUAL cl_int linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData);
 
-    void separateBlockKernels();
+    void separateBlockKernels(uint32_t rootDeviceIndex);
 
     void updateNonUniformFlag();
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
@@ -310,10 +310,6 @@ class Program : public BaseObject<_cl_program> {
 
     CreatedFrom createdFrom = CreatedFrom::UNKNOWN;
 
-    std::vector<KernelInfo *> kernelInfoArray;
-    std::vector<KernelInfo *> parentKernelInfoArray;
-    std::vector<KernelInfo *> subgroupKernelInfoArray;
-
     struct DeviceBuildInfo {
         StackVec<ClDevice *, 2> associatedSubDevices;
         cl_build_status buildStatus = CL_BUILD_NONE;
@@ -331,6 +327,9 @@ class Program : public BaseObject<_cl_program> {
     bool allowNonUniform = false;
 
     struct BuildInfo : public NonCopyableClass {
+        std::vector<KernelInfo *> kernelInfoArray;
+        std::vector<KernelInfo *> parentKernelInfoArray;
+        std::vector<KernelInfo *> subgroupKernelInfoArray;
         GraphicsAllocation *constantSurface = nullptr;
         GraphicsAllocation *globalSurface = nullptr;
         GraphicsAllocation *exportedFunctionsSurface = nullptr;

@@ -30,7 +30,7 @@ class ProgramFromBinaryTest : public ClDeviceFixture,
 
   protected:
     void SetUp() override {
-        std::tie(BinaryFileName, KernelName) = GetParam();
+        std::tie(BinaryFileName, kernelName) = GetParam();
 
         ClDeviceFixture::SetUp();
 
@@ -56,7 +56,7 @@ class ProgramFromBinaryTest : public ClDeviceFixture,
     }
 
     const char *BinaryFileName = nullptr;
-    const char *KernelName = nullptr;
+    const char *kernelName = nullptr;
     cl_int retVal = CL_SUCCESS;
     std::string options;
 };

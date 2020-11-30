@@ -51,6 +51,7 @@ class ProgramDataTestBase : public testing::Test,
     void SetUp() override {
         PlatformFixture::SetUp();
         pClDevice = pPlatform->getClDevice(0);
+        rootDeviceIndex = pClDevice->getRootDeviceIndex();
         cl_device_id device = pClDevice;
 
         ContextFixture::SetUp(1, &device);
@@ -128,6 +129,7 @@ class ProgramDataTestBase : public testing::Test,
     cl_int patchlistDecodeErrorCode = 0;
     bool allowDecodeFailure = false;
     ClDevice *pClDevice = nullptr;
+    uint32_t rootDeviceIndex;
 };
 
 void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
@@ -555,6 +557,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     linkerInput->relocations.push_back(NEO::LinkerInput::Relocations{relocation});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    auto rootDeviceIndex = device->getRootDeviceIndex();
     MockProgram program{nullptr, false, toClDeviceVector(*device)};
     KernelInfo kernelInfo = {};
     kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "onlyKernel";
@@ -562,15 +565,15 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     kernelHeap.resize(32, 7);
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
     kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
-    program.getKernelInfoArray().push_back(&kernelInfo);
-    program.setLinkerInput(device->getRootDeviceIndex(), std::move(linkerInput));
+    program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
+    program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
 
     std::string buildLog = program.getBuildLog(device->getRootDeviceIndex());
     EXPECT_TRUE(buildLog.empty());
     auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr);
     EXPECT_NE(CL_SUCCESS, ret);
-    program.getKernelInfoArray().clear();
-    buildLog = program.getBuildLog(device->getRootDeviceIndex());
+    program.getKernelInfoArray(rootDeviceIndex).clear();
+    buildLog = program.getBuildLog(rootDeviceIndex);
     EXPECT_FALSE(buildLog.empty());
     Linker::UnresolvedExternals expectedUnresolvedExternals;
     expectedUnresolvedExternals.push_back(Linker::UnresolvedExternal{relocation, 0, false});
@@ -601,7 +604,7 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
     MockGraphicsAllocation kernelIsa(kernelHeap.data(), kernelHeap.size());
     kernelInfo.kernelAllocation = &kernelIsa;
-    program.getKernelInfoArray().push_back(&kernelInfo);
+    program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
     program.setLinkerInput(device->getRootDeviceIndex(), std::move(linkerInput));
 
     buildInfo.exportedFunctionsSurface = kernelInfo.kernelAllocation;
@@ -626,7 +629,7 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
         EXPECT_EQ(static_cast<uintptr_t>(expectedPatch), *reinterpret_cast<uintptr_t *>(relocationAddress)) << i;
     }
 
-    program.getKernelInfoArray().clear();
+    program.getKernelInfoArray(rootDeviceIndex).clear();
     delete buildInfo.globalSurface;
     buildInfo.globalSurface = nullptr;
     delete buildInfo.constantSurface;
@@ -650,8 +653,8 @@ TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
     MockGraphicsAllocation kernelIsa(kernelHeap.data(), kernelHeap.size());
     kernelInfo.kernelAllocation = &kernelIsa;
-    program.getKernelInfoArray().push_back(&kernelInfo);
-    program.setLinkerInput(device->getRootDeviceIndex(), std::move(linkerInput));
+    program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
+    program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
 
     std::vector<char> globalVariablesBuffer;
     globalVariablesBuffer.resize(32, 7);
@@ -666,7 +669,7 @@ TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     EXPECT_EQ(CL_SUCCESS, ret);
     EXPECT_EQ(kernelHeapData, kernelHeap);
 
-    program.getKernelInfoArray().clear();
+    program.getKernelInfoArray(rootDeviceIndex).clear();
     delete buildInfo.globalSurface;
     buildInfo.globalSurface = nullptr;
     delete buildInfo.constantSurface;

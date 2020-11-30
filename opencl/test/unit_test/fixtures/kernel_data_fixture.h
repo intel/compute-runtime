@@ -53,6 +53,7 @@ class KernelDataTest : public testing::Test {
     void SetUp() override {
         kernelBinaryHeader.KernelNameSize = kernelNameSize;
         pContext = new MockContext;
+        rootDeviceIndex = pContext->getDevice(0)->getRootDeviceIndex();
         program = std::make_unique<MockProgram>(pContext, false, toClDeviceVector(*pContext->getDevice(0)));
     }
 
@@ -91,4 +92,5 @@ class KernelDataTest : public testing::Test {
     std::unique_ptr<MockProgram> program;
     MockContext *pContext;
     const KernelInfo *pKernelInfo;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
 };

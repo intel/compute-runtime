@@ -67,7 +67,7 @@ class KernelTest : public ProgramFromBinaryTest {
         // create a kernel
         pKernel = Kernel::create(
             pProgram,
-            *pProgram->getKernelInfo(KernelName),
+            *pProgram->getKernelInfo(kernelName, rootDeviceIndex),
             &retVal);
 
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -156,7 +156,7 @@ TEST_P(KernelTest, GivenKernelFunctionNameWhenGettingInfoThenKernelFunctionNameI
         nullptr);
 
     EXPECT_NE(nullptr, paramValue);
-    EXPECT_EQ(0, strcmp(paramValue, KernelName));
+    EXPECT_EQ(0, strcmp(paramValue, kernelName));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     delete[] paramValue;
@@ -351,7 +351,7 @@ TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKerne
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelInfo = pProgram->getKernelInfo("test");
+    auto pKernelInfo = pProgram->getKernelInfo("test", rootDeviceIndex);
 
     // create a kernel
     auto pKernel = Kernel::create(
@@ -389,7 +389,7 @@ TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelInfo = pProgram->getKernelInfo("simple_kernel_0");
+    auto pKernelInfo = pProgram->getKernelInfo("simple_kernel_0", rootDeviceIndex);
 
     // create a kernel
     auto pKernel = Kernel::create(
@@ -419,9 +419,9 @@ TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreated
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelInfo = pProgram->getKernelInfo("simple_kernel_6");
+    auto pKernelInfo = pProgram->getKernelInfo("simple_kernel_6", rootDeviceIndex);
     EXPECT_TRUE(pKernelInfo->kernelArgInfo[1].isReadOnly);
-    pKernelInfo = pProgram->getKernelInfo("simple_kernel_1");
+    pKernelInfo = pProgram->getKernelInfo("simple_kernel_1", rootDeviceIndex);
     EXPECT_TRUE(pKernelInfo->kernelArgInfo[0].isReadOnly);
 }
 

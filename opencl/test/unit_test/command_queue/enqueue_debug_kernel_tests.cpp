@@ -53,7 +53,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
             // create a kernel
             debugKernel = Kernel::create(
                 pProgram,
-                *pProgram->getKernelInfo("CopyBuffer"),
+                *pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex),
                 &retVal);
 
             ASSERT_EQ(CL_SUCCESS, retVal);
