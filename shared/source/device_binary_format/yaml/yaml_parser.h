@@ -310,7 +310,14 @@ inline const Node *getLastChild(const Node &parent, const NodesCache &allNodes) 
     return &allNodes[childId];
 }
 
-struct ConstSiblingsFwdIterator : std::iterator<std::forward_iterator_tag, Node> {
+struct ConstSiblingsFwdIterator {
+    // iterator traits
+    using difference_type = long;
+    using value_type = long;
+    using pointer = const long *;
+    using reference = const long &;
+    using iterator_category = std::forward_iterator_tag;
+
     ConstSiblingsFwdIterator(NodeId currId, const NodesCache *allNodes)
         : allNodes(allNodes), currId(currId) {
     }

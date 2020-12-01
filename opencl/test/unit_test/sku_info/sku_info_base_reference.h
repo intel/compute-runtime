@@ -33,8 +33,8 @@ struct SkuInfoBaseReference {
 
         refFtrTable.FtrTranslationTable = 1;
         refFtrTable.FtrUserModeTranslationTable = 1;
-        refFtrTable.FtrLLCBypass = 1;
         refFtrTable.FtrWddm2Svm = 1;
+        refFtrTable.FtrLLCBypass = 1;
 
         refFtrTable.FtrE2ECompression = 1;
         refFtrTable.FtrLinearCCS = 1;

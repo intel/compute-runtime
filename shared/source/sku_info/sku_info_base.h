@@ -7,92 +7,103 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace NEO {
 struct FeatureTableBase {
-    bool ftrDesktop = false;
-    bool ftrChannelSwizzlingXOREnabled = false;
+  public:
+    FeatureTableBase() : packed{} {
+        ftrRcsNode = 1;
+    }
+    union {
+        struct {
+            bool ftrDesktop : 1;
+            bool ftrChannelSwizzlingXOREnabled : 1;
 
-    bool ftrGtBigDie = false;
-    bool ftrGtMediumDie = false;
-    bool ftrGtSmallDie = false;
+            bool ftrGtBigDie : 1;
+            bool ftrGtMediumDie : 1;
+            bool ftrGtSmallDie : 1;
 
-    bool ftrGT1 = false;
-    bool ftrGT1_5 = false;
-    bool ftrGT2 = false;
-    bool ftrGT2_5 = false;
-    bool ftrGT3 = false;
-    bool ftrGT4 = false;
+            bool ftrGT1 : 1;
+            bool ftrGT1_5 : 1;
+            bool ftrGT2 : 1;
+            bool ftrGT2_5 : 1;
+            bool ftrGT3 : 1;
+            bool ftrGT4 : 1;
 
-    bool ftrIVBM0M1Platform = false;
-    bool ftrSGTPVSKUStrapPresent = false;
-    bool ftrGTA = false;
-    bool ftrGTC = false;
-    bool ftrGTX = false;
-    bool ftr5Slice = false;
+            bool ftrIVBM0M1Platform : 1;
+            bool ftrSGTPVSKUStrapPresent : 1;
+            bool ftrGTA : 1;
+            bool ftrGTC : 1;
+            bool ftrGTX : 1;
+            bool ftr5Slice : 1;
 
-    bool ftrGpGpuMidBatchPreempt = false;
-    bool ftrGpGpuThreadGroupLevelPreempt = false;
-    bool ftrGpGpuMidThreadLevelPreempt = false;
+            bool ftrGpGpuMidBatchPreempt : 1;
+            bool ftrGpGpuThreadGroupLevelPreempt : 1;
+            bool ftrGpGpuMidThreadLevelPreempt : 1;
 
-    bool ftrIoMmuPageFaulting = false;
-    bool ftrWddm2Svm = false;
-    bool ftrPooledEuEnabled = false;
+            bool ftrIoMmuPageFaulting : 1;
+            bool ftrWddm2Svm : 1;
+            bool ftrPooledEuEnabled : 1;
 
-    bool ftrResourceStreamer = false;
+            bool ftrResourceStreamer : 1;
 
-    bool ftrPPGTT = false;
-    bool ftrSVM = false;
-    bool ftrEDram = false;
-    bool ftrL3IACoherency = false;
-    bool ftrIA32eGfxPTEs = false;
+            bool ftrPPGTT : 1;
+            bool ftrSVM : 1;
+            bool ftrEDram : 1;
+            bool ftrL3IACoherency : 1;
+            bool ftrIA32eGfxPTEs : 1;
 
-    bool ftr3dMidBatchPreempt = false;
-    bool ftr3dObjectLevelPreempt = false;
-    bool ftrPerCtxtPreemptionGranularityControl = false;
+            bool ftr3dMidBatchPreempt : 1;
+            bool ftr3dObjectLevelPreempt : 1;
+            bool ftrPerCtxtPreemptionGranularityControl : 1;
 
-    bool ftrTileY = false;
-    bool ftrDisplayYTiling = false;
-    bool ftrTranslationTable = false;
-    bool ftrUserModeTranslationTable = false;
+            bool ftrTileY : 1;
+            bool ftrDisplayYTiling : 1;
+            bool ftrTranslationTable : 1;
+            bool ftrUserModeTranslationTable : 1;
 
-    bool ftrEnableGuC = false;
+            bool ftrEnableGuC : 1;
 
-    bool ftrFbc = false;
-    bool ftrFbc2AddressTranslation = false;
-    bool ftrFbcBlitterTracking = false;
-    bool ftrFbcCpuTracking = false;
+            bool ftrFbc : 1;
+            bool ftrFbc2AddressTranslation : 1;
+            bool ftrFbcBlitterTracking : 1;
+            bool ftrFbcCpuTracking : 1;
 
-    bool ftrVcs2 = false;
-    bool ftrVEBOX = false;
-    bool ftrSingleVeboxSlice = false;
-    bool ftrULT = false;
-    bool ftrLCIA = false;
-    bool ftrGttCacheInvalidation = false;
-    bool ftrTileMappedResource = false;
-    bool ftrAstcHdr2D = false;
-    bool ftrAstcLdr2D = false;
+            bool ftrVcs2 : 1;
+            bool ftrVEBOX : 1;
+            bool ftrSingleVeboxSlice : 1;
+            bool ftrULT : 1;
+            bool ftrLCIA : 1;
+            bool ftrGttCacheInvalidation : 1;
+            bool ftrTileMappedResource : 1;
+            bool ftrAstcHdr2D : 1;
+            bool ftrAstcLdr2D : 1;
 
-    bool ftrStandardMipTailFormat = false;
-    bool ftrFrameBufferLLC = false;
-    bool ftrCrystalwell = false;
-    bool ftrLLCBypass = false;
-    bool ftrDisplayEngineS3d = false;
-    bool ftrVERing = false;
-    bool ftrWddm2GpuMmu = false;
-    bool ftrWddm2_1_64kbPages = false;
-    bool ftrWddmHwQueues = false;
-    bool ftrMemTypeMocsDeferPAT = false;
+            bool ftrStandardMipTailFormat : 1;
+            bool ftrFrameBufferLLC : 1;
+            bool ftrCrystalwell : 1;
+            bool ftrLLCBypass : 1;
+            bool ftrDisplayEngineS3d : 1;
+            bool ftrVERing : 1;
+            bool ftrWddm2GpuMmu : 1;
+            bool ftrWddm2_1_64kbPages : 1;
+            bool ftrWddmHwQueues : 1;
+            bool ftrMemTypeMocsDeferPAT : 1;
 
-    bool ftrKmdDaf = false;
-    bool ftrSimulationMode = false;
+            bool ftrKmdDaf : 1;
+            bool ftrSimulationMode : 1;
 
-    bool ftrE2ECompression = false;
-    bool ftrLinearCCS = false;
-    bool ftrCCSRing = false;
-    bool ftrCCSNode = false;
-    bool ftrRcsNode = true;
-    bool ftrLocalMemory = false;
-    bool ftrLocalMemoryAllows4KB = false;
+            bool ftrE2ECompression : 1;
+            bool ftrLinearCCS : 1;
+            bool ftrCCSRing : 1;
+            bool ftrCCSNode : 1;
+            bool ftrRcsNode : 1;
+            bool ftrLocalMemory : 1;
+            bool ftrLocalMemoryAllows4KB : 1;
+        };
+        uint64_t packed[2];
+    };
 };
 
 struct WorkaroundTableBase {

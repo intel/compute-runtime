@@ -17,7 +17,9 @@ TEST(SkuInfoTransferTest, givenFeatureTableWhenFillingStructureForGmmThenCopyOnl
     _SKU_FEATURE_TABLE requestedFtrTable = {};
     _SKU_FEATURE_TABLE refFtrTable = {};
     FeatureTable featureTable;
-    memset(reinterpret_cast<void *>(&featureTable), 1, sizeof(FeatureTable));
+
+    featureTable.packed[0] = 0xFFFFFFFFFFFFFFFF;
+    featureTable.packed[1] = 0xFFFFFFFFFFFFFFFF;
     SkuInfoTransfer::transferFtrTableForGmm(&requestedFtrTable, &featureTable);
 
     SkuInfoBaseReference::fillReferenceFtrForTransfer(refFtrTable);

@@ -52,7 +52,7 @@ void populateKernelInfoArgMetadata(KernelInfo &dstKernelInfoArg, const SPatchKer
     if (nullptr == argTypeDelim) {
         argTypeDelim = argTypeFull.data() + argTypeFull.size();
     }
-    metadataExtended->type = std::string(argTypeFull.data(), argTypeDelim).c_str();
+    metadataExtended->type = std::string(static_cast<const char *>(argTypeFull.data()), argTypeDelim).c_str();
     metadataExtended->typeQualifiers = parseLimitedString(inlineData.typeQualifiers.begin(), inlineData.typeQualifiers.size());
 
     ArgTypeTraits metadata = {};

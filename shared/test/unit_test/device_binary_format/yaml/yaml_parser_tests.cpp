@@ -25,7 +25,14 @@ TEST(YamlIsWhitespace, GivenCharThenReturnsTrueOnlyWhenCharIsWhitespace) {
 }
 
 template <typename T>
-struct IteratorAsValue : std::iterator<std::forward_iterator_tag, T> {
+struct IteratorAsValue {
+    // iterator traits
+    using difference_type = long;
+    using value_type = long;
+    using pointer = const long *;
+    using reference = const long &;
+    using iterator_category = std::forward_iterator_tag;
+
     IteratorAsValue(const T &v) : value(v) {}
     T operator*() const { return value; }
     IteratorAsValue<T> &operator++() {

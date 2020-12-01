@@ -11,6 +11,7 @@
 #include <bitset>
 
 namespace NEO {
+
 using BcsInfoMask = std::bitset<1>;
 
 struct FeatureTable : FeatureTableBase {
