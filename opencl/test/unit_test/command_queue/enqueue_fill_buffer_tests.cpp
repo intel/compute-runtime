@@ -309,42 +309,6 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
-// This test case should be re-enabled once getStatelessArgumentPointer gets support for SVM pointers.
-// This could happen if KernelInfo.kernelArgInfo was accessible given a Kernel.  Just need an offset
-// into CrossThreadData.
-HWTEST_F(EnqueueFillBufferCmdTests, DISABLED_WhenFillingBufferThenArgumentOneShouldMatchOffset) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
-
-    enqueueFillBuffer<FamilyType>();
-
-    // Extract the kernel used
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                                            pCmdQ->getClDevice());
-    ASSERT_NE(nullptr, &builder);
-
-    BuiltinOpParams dc;
-    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
-    dc.srcMemObj = &patternMemObj;
-    dc.dstMemObj = buffer;
-    dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
-    dc.size = {EnqueueFillBufferTraits::size, 0, 0};
-
-    MultiDispatchInfo multiDispatchInfo(dc);
-    builder.buildDispatchInfos(multiDispatchInfo);
-    EXPECT_NE(0u, multiDispatchInfo.size());
-
-    auto kernel = multiDispatchInfo.begin()->getKernel();
-    ASSERT_NE(nullptr, kernel);
-
-    // Determine where the argument is
-    auto pArgument = (uint32_t *)getStatelessArgumentPointer<FamilyType>(*kernel, 1u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0));
-    ASSERT_NE(nullptr, pArgument);
-    EXPECT_EQ(0u, *pArgument);
-
-    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
-}
-
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchPatternPtr) {
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
