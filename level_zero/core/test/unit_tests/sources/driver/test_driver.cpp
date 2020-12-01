@@ -182,7 +182,7 @@ TEST(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
     L0::GlobalDriver = nullptr;
 }
 
-TEST(DriverImpTest, DISABLED_givenMissingMetricApiDependenciesWhenInitializingDriverImpThenGlobalDriverHandleIsNull) {
+TEST(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImpThenGlobalDriverHandleIsNull) {
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
