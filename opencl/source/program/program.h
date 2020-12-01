@@ -205,7 +205,7 @@ class Program : public BaseObject<_cl_program> {
 
     void allocateBlockPrivateSurfaces(const ClDevice &clDevice);
     void freeBlockResources();
-    void cleanCurrentKernelInfo();
+    void cleanCurrentKernelInfo(uint32_t rootDeviceIndex);
 
     const std::string &getOptions() const { return options; }
 

@@ -102,7 +102,9 @@ void Program::initInternalOptions(std::string &internalOptions) const {
 }
 
 Program::~Program() {
-    cleanCurrentKernelInfo();
+    for (auto i = 0u; i < buildInfos.size(); i++) {
+        cleanCurrentKernelInfo(i);
+    }
 
     freeBlockResources();
 
@@ -374,24 +376,23 @@ void Program::freeBlockResources() {
     }
 }
 
-void Program::cleanCurrentKernelInfo() {
-    for (auto &buildInfo : buildInfos) {
-        for (auto &kernelInfo : buildInfo.kernelInfoArray) {
-            if (kernelInfo->kernelAllocation) {
-                //register cache flush in all csrs where kernel allocation was used
-                for (auto &engine : this->executionEnvironment.memoryManager->getRegisteredEngines()) {
-                    auto contextId = engine.osContext->getContextId();
-                    if (kernelInfo->kernelAllocation->isUsedByOsContext(contextId)) {
-                        engine.commandStreamReceiver->registerInstructionCacheFlush();
-                    }
+void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
+    auto &buildInfo = buildInfos[rootDeviceIndex];
+    for (auto &kernelInfo : buildInfo.kernelInfoArray) {
+        if (kernelInfo->kernelAllocation) {
+            //register cache flush in all csrs where kernel allocation was used
+            for (auto &engine : this->executionEnvironment.memoryManager->getRegisteredEngines()) {
+                auto contextId = engine.osContext->getContextId();
+                if (kernelInfo->kernelAllocation->isUsedByOsContext(contextId)) {
+                    engine.commandStreamReceiver->registerInstructionCacheFlush();
                 }
-
-                this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
             }
-            delete kernelInfo;
+
+            this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
         }
-        buildInfo.kernelInfoArray.clear();
+        delete kernelInfo;
     }
+    buildInfo.kernelInfoArray.clear();
 }
 
 void Program::updateNonUniformFlag() {

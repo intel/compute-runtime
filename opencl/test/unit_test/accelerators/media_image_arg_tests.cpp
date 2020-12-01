@@ -63,7 +63,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
     void TearDown() override {
         delete srcImage;
         delete pKernel;
-
+        program.reset();
         delete context;
         ClDeviceFixture::TearDown();
     }

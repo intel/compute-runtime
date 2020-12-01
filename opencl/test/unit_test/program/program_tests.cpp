@@ -621,7 +621,9 @@ TEST_P(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffers
 TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {
     pProgram->build(pProgram->getDevices(), nullptr, true);
     EXPECT_EQ(1u, pProgram->getNumKernels());
-    pProgram->cleanCurrentKernelInfo();
+    for (auto i = 0u; i < pProgram->buildInfos.size(); i++) {
+        pProgram->cleanCurrentKernelInfo(i);
+    }
     EXPECT_EQ(0u, pProgram->getNumKernels());
 }
 
@@ -632,7 +634,7 @@ HWTEST_P(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledBu
     auto kernelAllocation = pProgram->getKernelInfo(static_cast<size_t>(0u), rootDeviceIndex)->getGraphicsAllocation();
     kernelAllocation->updateTaskCount(100, csr.getOsContext().getContextId());
     *csr.getTagAddress() = 0;
-    pProgram->cleanCurrentKernelInfo();
+    pProgram->cleanCurrentKernelInfo(rootDeviceIndex);
     EXPECT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
     EXPECT_EQ(csr.getTemporaryAllocations().peekHead(), kernelAllocation);
     EXPECT_TRUE(this->pDevice->getUltCommandStreamReceiver<FamilyType>().requiresInstructionCacheFlush);
@@ -658,7 +660,7 @@ HWTEST_P(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
     EXPECT_FALSE(csr0.requiresInstructionCacheFlush);
     EXPECT_FALSE(csr1.requiresInstructionCacheFlush);
 
-    pProgram->cleanCurrentKernelInfo();
+    pProgram->cleanCurrentKernelInfo(rootDeviceIndex);
     EXPECT_TRUE(csr0.requiresInstructionCacheFlush);
     EXPECT_TRUE(csr1.requiresInstructionCacheFlush);
 }
@@ -3058,6 +3060,66 @@ TEST(BuildProgramTest, givenMultiDeviceProgramWhenBuildingThenStoreAndProcessBin
         EXPECT_EQ(1, pProgram->processGenBinaryCalledPerRootDevice[rootDeviceIndex]);
     }
     ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(BuildProgramTest, givenMultiDeviceProgramWhenBuildingThenStoreKernelInfoPerEachRootDevice) {
+    MockProgram *pProgram = nullptr;
+    std::unique_ptr<char[]> pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
+
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+
+    pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+
+    MockUnrestrictiveContextMultiGPU context;
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    pProgram = Program::create<MockProgram>(
+        &context,
+        1,
+        sources,
+        &sourceSize,
+        retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_build_status buildStatus;
+    for (const auto &device : context.getDevices()) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+    }
+
+    retVal = clBuildProgram(
+        pProgram,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    for (auto &rootDeviceIndex : context.getRootDeviceIndices()) {
+        EXPECT_LT(0u, pProgram->getNumKernels());
+        for (auto i = 0u; i < pProgram->getNumKernels(); i++) {
+            EXPECT_NE(nullptr, pProgram->getKernelInfo(i, rootDeviceIndex));
+        }
+    }
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);

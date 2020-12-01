@@ -130,7 +130,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
         return CL_INVALID_BINARY;
     }
 
-    cleanCurrentKernelInfo();
+    cleanCurrentKernelInfo(rootDeviceIndex);
     for (auto &buildInfo : buildInfos) {
         if (buildInfo.constantSurface || buildInfo.globalSurface) {
             clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface);
