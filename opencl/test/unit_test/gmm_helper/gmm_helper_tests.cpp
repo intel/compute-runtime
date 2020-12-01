@@ -98,7 +98,7 @@ TEST_F(GmmTests, GivenUncacheableWhenGmmIsCreatedThenAllResourceAreCreated) {
     mm->freeSystemMemory(pSysMem);
 }
 
-TEST_F(GmmTests, givenHostPointerWithHighestBitSetWhenGmmIsCreatedItHasTheSameAddress) {
+TEST_F(GmmTests, givenHostPointerWithHighestBitSetWhenGmmIsCreatedThenItHasTheSameAddress) {
     uintptr_t addressWithHighestBitSet = 0xffff0000;
     auto address = reinterpret_cast<void *>(addressWithHighestBitSet);
     auto expectedAddress = castToUint64(address);
@@ -441,28 +441,28 @@ struct GmmMediaCompressedTests : public GmmTests {
     GMM_RESOURCE_FLAG *flags;
 };
 
-TEST_F(GmmMediaCompressedTests, givenMediaCompressedGmmUnifiedAuxTranslationCapableReturnsTrue) {
+TEST_F(GmmMediaCompressedTests, givenMediaCompressedThenUnifiedAuxTranslationCapableIsTrue) {
     flags->Info.MediaCompressed = true;
     flags->Info.RenderCompressed = false;
 
     EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
 }
 
-TEST_F(GmmMediaCompressedTests, givenRenderCompressedGmmUnifiedAuxTranslationCapableReturnsTrue) {
+TEST_F(GmmMediaCompressedTests, givenRenderCompressedThenUnifiedAuxTranslationCapableIsTrue) {
     flags->Info.MediaCompressed = false;
     flags->Info.RenderCompressed = true;
 
     EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
 }
 
-TEST_F(GmmMediaCompressedTests, givenMediaAndRenderCompressedGmmUnifiedAuxTranslationCapableThrowsException) {
+TEST_F(GmmMediaCompressedTests, givenMediaAndRenderCompressedThenUnifiedAuxTranslationCapableThrowsException) {
     flags->Info.MediaCompressed = true;
     flags->Info.RenderCompressed = true;
 
     EXPECT_THROW(gmm->unifiedAuxTranslationCapable(), std::exception);
 }
 
-TEST_F(GmmMediaCompressedTests, givenNotMediaAndNotRenderCompressedGmmUnifiedAuxTranslationCapableReturnsFalse) {
+TEST_F(GmmMediaCompressedTests, givenNotMediaAndNotRenderCompressedThenUnifiedAuxTranslationCapableIsFalse) {
     flags->Info.MediaCompressed = false;
     flags->Info.RenderCompressed = false;
 
@@ -479,7 +479,7 @@ static const cl_mem_object_type imgTypes[6] = {
     CL_MEM_OBJECT_IMAGE3D};
 } // namespace GmmTestConst
 
-TEST_F(GmmTests, converNeoPlaneToGmmPlane) {
+TEST_F(GmmTests, WhenConvertingPlanesThenCorrectPlaneIsReturned) {
     std::vector<std::pair<ImagePlane, GMM_YUV_PLANE>> v = {{ImagePlane::NO_PLANE, GMM_YUV_PLANE::GMM_NO_PLANE},
                                                            {ImagePlane::PLANE_Y, GMM_YUV_PLANE::GMM_PLANE_Y},
                                                            {ImagePlane::PLANE_U, GMM_YUV_PLANE::GMM_PLANE_U},
@@ -499,7 +499,7 @@ INSTANTIATE_TEST_CASE_P(
     GmmImgTest,
     testing::ValuesIn(GmmTestConst::imgTypes));
 
-TEST_P(GmmImgTest, updateImgInfoAndDesc) {
+TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     struct MyMockGmmResourceInfo : MockGmmResourceInfo {
         MyMockGmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams) : MockGmmResourceInfo(resourceCreateParams) {}
         GMM_STATUS getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) override {
@@ -573,7 +573,7 @@ TEST_P(GmmImgTest, updateImgInfoAndDesc) {
     }
 }
 
-TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsCallGmmToGetOffsets) {
+TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
     struct GmmGetOffsetOutput {
         uint32_t Offset;
         uint32_t XOffset;
@@ -627,7 +627,7 @@ TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsCallGmmToGetOffsets) {
     EXPECT_EQ(mockGmmResourceInfo->gmmGetOffsetOutput.YOffset, imgInfo.yOffset);
 }
 
-TEST_F(GmmTests, copyResourceBlt) {
+TEST_F(GmmTests, GivenPlaneWhenCopyingResourceBltThenResourceIsCopiedCorrectly) {
     cl_image_desc imgDesc{};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
     imgDesc.image_width = 17;
@@ -725,7 +725,7 @@ TEST_F(GmmTests, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapability
     EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // RenderCompressed == 0
 }
 
-TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedTheSetThisHwInfoToGmmHelper) {
+TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedThenSetThisHwInfoToGmmHelper) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_EQ(&device->getHardwareInfo(), device->getGmmHelper()->getHardwareInfo());
 }
