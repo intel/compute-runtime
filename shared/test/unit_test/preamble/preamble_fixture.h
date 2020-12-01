@@ -12,6 +12,7 @@
 #include "opencl/test/unit_test/command_stream/linear_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "test.h"
 
 using namespace NEO;
 
