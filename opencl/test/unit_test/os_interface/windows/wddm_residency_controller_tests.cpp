@@ -47,10 +47,15 @@ class MockWddmResidencyController : public WddmResidencyController {
     using WddmResidencyController::WddmResidencyController;
 
     uint32_t acquireLockCallCount = 0u;
+    bool forceTrimCandidateListCompaction = false;
 
     std::unique_lock<SpinLock> acquireLock() override {
         acquireLockCallCount++;
         return WddmResidencyController::acquireLock();
+    }
+
+    bool checkTrimCandidateListCompaction() override {
+        return forceTrimCandidateListCompaction || WddmResidencyController::checkTrimCandidateListCompaction();
     }
 };
 
@@ -376,19 +381,20 @@ TEST_F(WddmResidencyControllerTest, WhenAddingToTrimCandidateListThenSuccessiveP
     EXPECT_NE(allocation2.getTrimCandidateListPosition(osContextId), allocation3.getTrimCandidateListPosition(osContextId));
 }
 
-TEST_F(WddmResidencyControllerTest, DISABLED_removingNotLastAllocationFromTrimCandidateListSubstituesLastPositionAllocation) {
+TEST_F(WddmResidencyControllerTest, GivenAllocationThatIsNotLastWhenRemovingFromTrimCandidateListAndCompactingThenRemoveEntry) {
     MockWddmAllocation allocation1, allocation2, allocation3;
 
     residencyController->addToTrimCandidateList(&allocation1);
     residencyController->addToTrimCandidateList(&allocation2);
     residencyController->addToTrimCandidateList(&allocation3);
 
-    residencyController->removeFromTrimCandidateList(&allocation2, false);
+    residencyController->forceTrimCandidateListCompaction = true;
+    residencyController->removeFromTrimCandidateList(&allocation2, true);
 
     EXPECT_EQ(2u, residencyController->trimCandidateList.size());
 
-    EXPECT_EQ(2u, allocation3.getTrimCandidateListPosition(osContextId));
-    EXPECT_NE(allocation2.getTrimCandidateListPosition(osContextId), allocation3.getTrimCandidateListPosition(osContextId));
+    EXPECT_EQ(1u, allocation3.getTrimCandidateListPosition(osContextId));
+    EXPECT_EQ(trimListUnusedPosition, allocation2.getTrimCandidateListPosition(osContextId));
 }
 
 TEST_F(WddmResidencyControllerTest, GivenAllocationThatIsNotLastWhenRemovingFromTrimCandidateListThenReplaceWithNullEntry) {

@@ -37,7 +37,7 @@ class WddmResidencyController {
     void removeFromTrimCandidateListIfUsed(WddmAllocation *allocation, bool compactList);
     void checkTrimCandidateCount();
 
-    bool checkTrimCandidateListCompaction();
+    MOCKABLE_VIRTUAL bool checkTrimCandidateListCompaction();
     void compactTrimCandidateList();
 
     bool wasAllocationUsedSinceLastTrim(uint64_t fenceValue) { return fenceValue > lastTrimFenceValue; }
