@@ -188,6 +188,9 @@ void KernelInfo::storePatchToken(const SPatchExecutionEnvironment *execEnv) {
     if (execEnv->CompiledForGreaterThan4GBBuffers == false) {
         this->requiresSshForBuffers = true;
     }
+    if (execEnv->IndirectStatelessCount > 0) {
+        this->hasStatelessAccessToHostMemory = true;
+    }
 }
 
 void KernelInfo::storeArgInfo(uint32_t argNum, ArgTypeTraits metadata, std::unique_ptr<ArgTypeMetadataExtended> metadataExtended) {

@@ -315,6 +315,7 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentNoReqdWorkGroupSizeWhenBuildingT
     executionEnvironment.IsFinalizer = false;
     executionEnvironment.SubgroupIndependentForwardProgressRequired = false;
     executionEnvironment.CompiledForGreaterThan4GBBuffers = false;
+    executionEnvironment.IndirectStatelessCount = 0;
 
     pPatchList = &executionEnvironment;
     patchListSize = executionEnvironment.Size;
@@ -325,6 +326,7 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentNoReqdWorkGroupSizeWhenBuildingT
     EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
     EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
     EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
+    EXPECT_FALSE(pKernelInfo->hasStatelessAccessToHostMemory);
 }
 
 TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect) {
@@ -350,6 +352,7 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect
     executionEnvironment.IsFinalizer = false;
     executionEnvironment.SubgroupIndependentForwardProgressRequired = false;
     executionEnvironment.CompiledForGreaterThan4GBBuffers = false;
+    executionEnvironment.IndirectStatelessCount = 1;
 
     pPatchList = &executionEnvironment;
     patchListSize = executionEnvironment.Size;
@@ -361,6 +364,7 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect
     EXPECT_EQ(16u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
     EXPECT_EQ(8u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
     EXPECT_TRUE(pKernelInfo->requiresSshForBuffers);
+    EXPECT_TRUE(pKernelInfo->hasStatelessAccessToHostMemory);
 }
 
 TEST_F(KernelDataTest, GivenExecutionEnvironmentCompiledForGreaterThan4gbBuffersWhenBuildingThenProgramIsCorrect) {
