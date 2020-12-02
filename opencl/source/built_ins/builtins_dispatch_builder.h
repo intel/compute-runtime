@@ -88,10 +88,14 @@ class BuiltinDispatchInfoBuilder {
   protected:
     template <typename KernelNameT, typename... KernelsDescArgsT>
     void grabKernels(KernelNameT &&kernelName, Kernel *&kernelDst, KernelsDescArgsT &&... kernelsDesc) {
-        const KernelInfo *kernelInfo = prog->getKernelInfo(kernelName, prog->getDevices()[0]->getRootDeviceIndex());
+        auto rootDeviceIndex = clDevice.getRootDeviceIndex();
+        const KernelInfo *kernelInfo = prog->getKernelInfo(kernelName, rootDeviceIndex);
         UNRECOVERABLE_IF(nullptr == kernelInfo);
         cl_int err = 0;
-        kernelDst = Kernel::create(prog.get(), *kernelInfo, &err);
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(rootDeviceIndex + 1);
+        kernelInfos[rootDeviceIndex] = kernelInfo;
+        kernelDst = Kernel::create(prog.get(), kernelInfos, &err);
         kernelDst->isBuiltIn = true;
         usedKernels.push_back(std::unique_ptr<Kernel>(kernelDst));
         grabKernels(std::forward<KernelsDescArgsT>(kernelsDesc)...);

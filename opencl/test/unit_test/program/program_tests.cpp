@@ -1349,7 +1349,8 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     EXPECT_EQ(expected_values[0], constBuff[0]);
     EXPECT_EQ(expected_values[1], constBuff[1]);
 
-    std::unique_ptr<Kernel> pKernel(Kernel::create(pProgram, *pKernelInfo, &retVal));
+    std::unique_ptr<Kernel> pKernel(Kernel::create(pProgram,
+                                                   MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal));
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
@@ -1458,7 +1459,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
 
     auto pKernel = Kernel::create(
         pProgram,
-        *pKernelInfo,
+        MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex),
         &retVal);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -1498,7 +1499,7 @@ TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
 
     auto pKernel = Kernel::create(
         pProgram,
-        *pKernelInfo,
+        MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex),
         &retVal);
 
     ASSERT_NE(nullptr, pKernel);

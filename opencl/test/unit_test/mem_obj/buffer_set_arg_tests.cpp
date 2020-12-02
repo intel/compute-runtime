@@ -70,7 +70,7 @@ class BufferSetArgTest : public ContextFixture,
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
-        pKernel = new MockKernel(pProgram, *pKernelInfo);
+        pKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));

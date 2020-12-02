@@ -33,7 +33,7 @@ struct KernelArgDevQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pDevice));
-        pKernel = new MockKernel(program.get(), *pKernelInfo);
+        pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex));
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         uint8_t pCrossThreadData[crossThreadDataSize];

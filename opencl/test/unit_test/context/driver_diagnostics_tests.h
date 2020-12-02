@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 #include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
@@ -73,9 +74,8 @@ struct PerformanceHintTest : public DriverDiagnosticsTest,
 
     void SetUp() override {
         DriverDiagnosticsTest::SetUp();
-        cl_device_id deviceID = devices[0];
         cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-        context = Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
+        context = Context::create<NEO::MockContext>(validProperties, ClDeviceVector(devices, num_devices), callbackFunction, (void *)userData, retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 
@@ -230,7 +230,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
         CreateProgramFromBinary(context, context->getDevices(), "CopyBuffer_simd32");
         retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        kernel = Kernel::create<MockKernel>(pProgram, *pProgram->getKernelInfo("CopyBuffer", context->getDevice(0)->getRootDeviceIndex()), &retVal);
+        kernel = Kernel::create<MockKernel>(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;
     }
@@ -265,7 +265,7 @@ struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTes
         CreateProgramFromBinary(context, context->getDevices(), "printf");
         retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        kernel = Kernel::create(pProgram, *pProgram->getKernelInfo("test", context->getDevice(0)->getRootDeviceIndex()), &retVal);
+        kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("test"), &retVal);
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;
     }
@@ -283,6 +283,8 @@ struct PerformanceHintKernelTest : public PerformanceHintTest,
                                    public ::testing::WithParamInterface<bool /*zero-sized*/> {
 
     void SetUp() override {
+        DebugManager.flags.CreateMultipleRootDevices.set(2);
+        DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
         PerformanceHintTest::SetUp();
         zeroSized = GetParam();
     }
@@ -290,5 +292,6 @@ struct PerformanceHintKernelTest : public PerformanceHintTest,
     void TearDown() override {
         PerformanceHintTest::TearDown();
     }
+    DebugManagerStateRestore restorer;
     bool zeroSized = false;
 };

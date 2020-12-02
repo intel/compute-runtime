@@ -59,7 +59,8 @@ TEST_F(ThreadGroupPreemptionTests, disallowByReadWriteFencesWA) {
 
 TEST_F(ThreadGroupPreemptionTests, disallowBySchedulerKernel) {
     PreemptionFlags flags = {};
-    kernel.reset(new MockKernel(program.get(), *kernelInfo, true));
+    kernel.reset(new MockKernel(program.get(),
+                                MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex), true));
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_FALSE(PreemptionHelper::allowThreadGroupPreemption(flags));
     EXPECT_EQ(PreemptionMode::MidBatch, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));
@@ -68,7 +69,7 @@ TEST_F(ThreadGroupPreemptionTests, disallowBySchedulerKernel) {
 TEST_F(ThreadGroupPreemptionTests, disallowByVmeKernel) {
     PreemptionFlags flags = {};
     kernelInfo->isVmeWorkload = true;
-    kernel.reset(new MockKernel(program.get(), *kernelInfo));
+    kernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex)));
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_FALSE(PreemptionHelper::allowThreadGroupPreemption(flags));
     EXPECT_EQ(PreemptionMode::MidBatch, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));
@@ -148,7 +149,7 @@ TEST_F(ThreadGroupPreemptionTests, disallowDefaultDeviceModeForValidKernelsInMdi
 }
 
 TEST_F(ThreadGroupPreemptionTests, disallowDefaultDeviceModeWhenAtLeastOneInvalidKernelInMdi) {
-    MockKernel schedulerKernel(program.get(), *kernelInfo, true);
+    MockKernel schedulerKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex), true);
     DispatchInfo schedulerDispatchInfo(device.get(), &schedulerKernel, 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
 
     PreemptionFlags flags = {};
@@ -183,7 +184,7 @@ TEST_F(MidThreadPreemptionTests, allowMidThreadPreemptionDeviceSupportPreemption
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->sharedDeviceInfo.vmeAvcSupportsPreemption = true;
     kernelInfo->isVmeWorkload = true;
-    kernel.reset(new MockKernel(program.get(), *kernelInfo));
+    kernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex)));
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_TRUE(PreemptionHelper::allowMidThreadPreemption(flags));
 }
@@ -210,7 +211,7 @@ TEST_F(MidThreadPreemptionTests, disallowMidThreadPreemptionByVmeKernel) {
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->sharedDeviceInfo.vmeAvcSupportsPreemption = false;
     kernelInfo->isVmeWorkload = true;
-    kernel.reset(new MockKernel(program.get(), *kernelInfo));
+    kernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex)));
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_FALSE(PreemptionHelper::allowMidThreadPreemption(flags));
 }
@@ -237,7 +238,7 @@ TEST_F(MidThreadPreemptionTests, taskPreemptionDisallowMidThreadByVmeKernel) {
     PreemptionFlags flags = {};
     kernelInfo->isVmeWorkload = true;
     device->sharedDeviceInfo.vmeAvcSupportsPreemption = false;
-    kernel.reset(new MockKernel(program.get(), *kernelInfo));
+    kernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex)));
     device->setPreemptionMode(PreemptionMode::MidThread);
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);
@@ -258,7 +259,7 @@ TEST_F(MidThreadPreemptionTests, taskPreemptionAllowDeviceSupportsPreemptionOnVm
     PreemptionFlags flags = {};
     executionEnvironment->DisableMidThreadPreemption = 0;
     kernelInfo->isVmeWorkload = true;
-    kernel.reset(new MockKernel(program.get(), *kernelInfo));
+    kernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex)));
     device->sharedDeviceInfo.vmeAvcSupportsPreemption = true;
     device->setPreemptionMode(PreemptionMode::MidThread);
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
@@ -272,7 +273,7 @@ TEST_F(ThreadGroupPreemptionTests, GivenDebugKernelPreemptionWhenDeviceSupportsT
     EXPECT_EQ(PreemptionMode::ThreadGroup, device->getPreemptionMode());
 
     PreemptionFlags flags = {};
-    kernel.reset(new MockKernel(program.get(), *kernelInfo));
+    kernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex)));
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);
     EXPECT_EQ(PreemptionMode::MidThread, outMode);
@@ -284,7 +285,7 @@ TEST_F(MidThreadPreemptionTests, GivenDebugKernelPreemptionWhenDeviceSupportsMid
     EXPECT_EQ(PreemptionMode::MidThread, device->getPreemptionMode());
 
     PreemptionFlags flags = {};
-    kernel.reset(new MockKernel(program.get(), *kernelInfo));
+    kernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex)));
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);
     EXPECT_EQ(PreemptionMode::MidBatch, outMode);

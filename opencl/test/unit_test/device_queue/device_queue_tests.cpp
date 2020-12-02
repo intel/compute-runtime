@@ -287,11 +287,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, WhenDeviceQueueIsCreatedThenDshBuff
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, WhenDispatchingSchedulerThenNoAssertsOccur) {
     DeviceQueue devQueue;
-    MockContext context;
     MockProgram program(toClDeviceVector(*device));
     MockCommandQueue cmdQ(nullptr, nullptr, 0);
     KernelInfo info;
-    MockSchedulerKernel *kernel = new MockSchedulerKernel(&program, info);
+    KernelInfoContainer kernelInfos;
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+    kernelInfos.resize(rootDeviceIndex + 1);
+    kernelInfos[rootDeviceIndex] = &info;
+    MockSchedulerKernel *kernel = new MockSchedulerKernel(&program, kernelInfos);
     LinearStream cmdStream;
 
     devQueue.dispatchScheduler(cmdStream, *kernel, device->getPreemptionMode(), nullptr, nullptr, false);

@@ -53,7 +53,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
 
     Kernel *pKernel0 = Kernel::create<MockKernel>(
         pProgram,
-        *pKernelInfo0,
+        MockKernel::toKernelInfoContainer(*pKernelInfo0, rootDeviceIndex),
         &retVal);
     ASSERT_NE(nullptr, pKernel0);
 
@@ -62,7 +62,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
 
     Kernel *pKernel1 = Kernel::create<MockKernel>(
         pProgram,
-        *pKernelInfo1,
+        MockKernel::toKernelInfoContainer(*pKernelInfo1, rootDeviceIndex),
         &retVal);
     ASSERT_NE(nullptr, pKernel1);
 
@@ -71,7 +71,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
 
     Kernel *pKernel2 = Kernel::create<MockKernel>(
         pProgram,
-        *pKernelInfo2,
+        MockKernel::toKernelInfoContainer(*pKernelInfo2, rootDeviceIndex),
         &retVal);
     ASSERT_NE(nullptr, pKernel2);
 
@@ -276,7 +276,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
 
     Kernel *pKernel = Kernel::create<MockKernel>(
         pProgram,
-        *pKernelInfo,
+        MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex),
         &retVal);
     ASSERT_NE(pKernel, nullptr);
 

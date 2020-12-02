@@ -47,7 +47,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex), &retVal));
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -86,7 +86,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex), &retVal));
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -125,7 +125,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex), &retVal));
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -248,7 +248,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernel
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, true, false).osContext;
     }
 
-    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex), &retVal));
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -292,7 +292,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, true, false).osContext;
     }
 
-    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex), &retVal));
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -336,7 +336,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, true, false).osContext;
     }
 
-    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex), &retVal));
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -1263,7 +1263,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreNotAndEventExistSetThenClEnqu
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex), &retVal));
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(kernel->isPatched());

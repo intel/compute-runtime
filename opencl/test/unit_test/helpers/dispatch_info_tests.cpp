@@ -39,7 +39,7 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
         pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
-        pKernel = new MockKernel(pProgram, *pKernelInfo);
+        pKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         pKernel->slmTotalSize = 128;
     }
     void TearDown() override {

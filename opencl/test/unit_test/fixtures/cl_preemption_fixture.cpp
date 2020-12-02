@@ -36,14 +36,14 @@ void DevicePreemptionTests::SetUp() {
     }
     const cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     kernelInfo = std::make_unique<KernelInfo>();
-    device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex));
     context.reset(new MockContext(device.get()));
     cmdQ.reset(new MockCommandQueue(context.get(), device.get(), properties));
     executionEnvironment.reset(new SPatchExecutionEnvironment);
     memset(executionEnvironment.get(), 0, sizeof(SPatchExecutionEnvironment));
     kernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
     program = std::make_unique<MockProgram>(toClDeviceVector(*device));
-    kernel.reset(new MockKernel(program.get(), *kernelInfo));
+    kernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex)));
     dispatchInfo.reset(new DispatchInfo(device.get(), kernel.get(), 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0)));
 
     ASSERT_NE(nullptr, device);

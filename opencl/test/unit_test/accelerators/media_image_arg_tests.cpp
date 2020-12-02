@@ -47,7 +47,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
         pKernelInfo->kernelArgInfo[1].isImage = true;
         pKernelInfo->kernelArgInfo[0].isImage = true;
 
-        pKernel = new MockKernel(program.get(), *pKernelInfo);
+        pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 

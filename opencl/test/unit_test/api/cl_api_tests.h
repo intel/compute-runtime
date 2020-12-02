@@ -49,7 +49,7 @@ struct ApiFixture {
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pDevice));
 
-        pKernel = new MockKernel(pProgram, pProgram->mockKernelInfo);
+        pKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(pProgram->mockKernelInfo, testedRootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
     }
 

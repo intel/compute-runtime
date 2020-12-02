@@ -55,7 +55,7 @@ class KernelArgSvmFixture_ : public ContextFixture, public ClDeviceFixture {
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
-        pKernel = new MockKernel(pProgram, *pKernelInfo);
+        pKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
     }

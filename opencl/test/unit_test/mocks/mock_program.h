@@ -11,6 +11,7 @@
 #include "shared/source/helpers/string.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
 
@@ -169,6 +170,15 @@ class MockProgram : public Program {
         initInternalOptionsCalled++;
         Program::initInternalOptions(internalOptions);
     };
+
+    const KernelInfoContainer getKernelInfosForKernel(const char *kernelName) const {
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(getMaxRootDeviceIndex() + 1);
+        for (auto i = 0u; i < kernelInfos.size(); i++) {
+            kernelInfos[i] = getKernelInfo(kernelName, i);
+        }
+        return kernelInfos;
+    }
 
     std::map<uint32_t, int> processGenBinaryCalledPerRootDevice;
     std::map<uint32_t, int> replaceDeviceBinaryCalledPerRootDevice;

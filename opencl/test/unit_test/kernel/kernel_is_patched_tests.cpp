@@ -20,10 +20,10 @@ class PatchedKernelTest : public ::testing::Test {
     void SetUp() override {
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), rootDeviceIndex));
         context.reset(new MockContext(device.get()));
-        program.reset(Program::createBuiltInFromSource("FillBufferBytes", context.get(), context->getDevices(), &retVal));
+        program.reset(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
         program->build(program->getDevices(), nullptr, false);
-        kernel.reset(Kernel::create(program.get(), *program->getKernelInfo("FillBufferBytes", rootDeviceIndex), &retVal));
+        kernel.reset(Kernel::create(program.get(), program->getKernelInfosForKernel("FillBufferBytes"), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
     void TearDown() override {
@@ -33,7 +33,7 @@ class PatchedKernelTest : public ::testing::Test {
     const uint32_t rootDeviceIndex = 0u;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<MockClDevice> device;
-    std::unique_ptr<Program> program;
+    std::unique_ptr<MockProgram> program;
     std::unique_ptr<Kernel> kernel;
     cl_int retVal = CL_SUCCESS;
 };

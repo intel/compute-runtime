@@ -106,12 +106,12 @@ TEST(KernelNonUniform, WhenSettingAllowNonUniformThenGettingAllowNonUniformRetur
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));
     struct KernelMock : Kernel {
-        KernelMock(Program *p, KernelInfo &ki)
-            : Kernel(p, ki, false) {
+        KernelMock(Program *program, KernelInfoContainer &kernelInfos)
+            : Kernel(program, kernelInfos, false) {
         }
     };
-
-    KernelMock k{&program, kernelInfo};
+    auto kernelInfos = MockKernel::toKernelInfoContainer(kernelInfo, device.getRootDeviceIndex());
+    KernelMock k{&program, kernelInfos};
     program.setAllowNonUniform(false);
     EXPECT_FALSE(k.getAllowNonUniform());
     program.setAllowNonUniform(true);
@@ -201,7 +201,8 @@ TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqu
     EXPECT_NE(nullptr, pKernelInfo);
 
     // create a kernel
-    auto pKernel = Kernel::create<MockKernel>(mockProgram, *pKernelInfo, &retVal);
+    auto pKernel = Kernel::create<MockKernel>(mockProgram,
+                                              MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 
@@ -240,7 +241,8 @@ TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqu
     EXPECT_NE(nullptr, pKernelInfo);
 
     // create a kernel
-    auto pKernel = Kernel::create<MockKernel>(mockProgram, *pKernelInfo, &retVal);
+    auto pKernel = Kernel::create<MockKernel>(mockProgram,
+                                              MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 
@@ -277,7 +279,8 @@ TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInva
     EXPECT_NE(nullptr, pKernelInfo);
 
     // create a kernel
-    auto pKernel = Kernel::create<MockKernel>(mockProgram, *pKernelInfo, &retVal);
+    auto pKernel = Kernel::create<MockKernel>(mockProgram,
+                                              MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 

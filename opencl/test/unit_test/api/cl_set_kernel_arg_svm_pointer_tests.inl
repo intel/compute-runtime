@@ -39,7 +39,7 @@ class KernelArgSvmFixture : public ApiFixture<> {
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
         pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrGlobal;
 
-        pMockKernel = new MockKernel(pProgram, *pKernelInfo);
+        pMockKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex));
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
         pMockKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
     }
@@ -85,7 +85,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKern
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrSvm = false;
 
-    auto pMockKernel = std::make_unique<MockKernel>(pProgram, *pKernelInfo);
+    auto pMockKernel = std::make_unique<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex));
     auto retVal = clSetKernelArgSVMPointer(
         pMockKernel.get(), // cl_kernel kernel
         (cl_uint)-1,       // cl_uint arg_index

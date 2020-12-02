@@ -326,7 +326,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
         ASSERT_NE(nullptr, pBlockInfo->patchInfo.executionEnvironment);
         ASSERT_NE(nullptr, pBlockInfo->patchInfo.threadPayload);
 
-        Kernel *blockKernel = Kernel::create(pKernel->getProgram(), *pBlockInfo, nullptr);
+        Kernel *blockKernel = Kernel::create(pKernel->getProgram(), MockKernel::toKernelInfoContainer(*pBlockInfo, rootDeviceIndex), nullptr);
         blockSSH = alignUp(blockSSH, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
         if (blockKernel->getNumberOfBindingTableStates() > 0) {
             ASSERT_NE(nullptr, pBlockInfo->patchInfo.bindingTableState);

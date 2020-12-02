@@ -2396,7 +2396,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
 
     auto pProgramm = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pDevice));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(context.get(), pDevice, nullptr));
-    std::unique_ptr<MockKernel> pKernel(new MockKernel(pProgramm.get(), *pKernelInfo));
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(pProgramm.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex)));
 
     pKernel->setSshLocal(nullptr, sizeof(surfaceStateHeap), rootDeviceIndex);
 

@@ -399,12 +399,17 @@ SchedulerKernel &Context::getSchedulerKernel() {
 
         schedulerBuiltIn->pProgram = program;
 
-        auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName, clDevice->getRootDeviceIndex());
-        DEBUG_BREAK_IF(!kernelInfo);
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(getMaxRootDeviceIndex() + 1);
+        for (auto rootDeviceIndex : rootDeviceIndices) {
+            auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName, rootDeviceIndex);
+            DEBUG_BREAK_IF(!kernelInfo);
+            kernelInfos[rootDeviceIndex] = kernelInfo;
+        }
 
         schedulerBuiltIn->pKernel = Kernel::create<SchedulerKernel>(
             schedulerBuiltIn->pProgram,
-            *kernelInfo,
+            kernelInfos,
             &retVal);
 
         UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize() != 0);

@@ -78,7 +78,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingAndFor
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
-    MockKernel kernel(program.get(), kernelInfo);
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
 
     uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
 
@@ -123,7 +123,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingAndFor
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
-    MockKernel kernel(program.get(), kernelInfo);
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
 
     uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
     requiredSize += 2 * sizeof(GPGPU_WALKER);
@@ -149,7 +149,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfolingWhenWa
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
-    MockKernel kernel(program.get(), kernelInfo);
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -196,7 +196,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfolingWhenWa
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingWhenNonBlockedEnqueueIsExecutedThenSubmittedTimestampDoesntHaveGPUTime) {
-    MockKernel kernel(program.get(), kernelInfo);
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -232,7 +232,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProflingWhenWal
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
-    MockKernel kernel(program.get(), kernelInfo);
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -286,7 +286,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueBlockedWithProfilin
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
-    MockKernel kernel(program.get(), kernelInfo);
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -343,7 +343,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueBlockedWithProfilin
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
-    MockKernel kernel(program.get(), kernelInfo);
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};

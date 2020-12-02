@@ -61,7 +61,7 @@ void KernelImageArgTest::SetUp() {
     ClDeviceFixture::SetUp();
     context.reset(new MockContext(pClDevice));
     program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pClDevice));
-    pKernel.reset(new MockKernel(program.get(), *pKernelInfo));
+    pKernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex)));
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
     pKernel->setKernelArgHandler(0, &Kernel::setArgImage);

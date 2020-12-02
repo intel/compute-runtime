@@ -1713,16 +1713,27 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
             break;
         }
 
-        auto rootDeviceIndex = pProgram->getDevices()[0]->getRootDeviceIndex();
-        const KernelInfo *pKernelInfo = pProgram->getKernelInfo(kernelName, rootDeviceIndex);
-        if (!pKernelInfo) {
+        bool kernelFound = false;
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(pProgram->getMaxRootDeviceIndex() + 1);
+
+        for (const auto &pClDevice : pProgram->getDevices()) {
+            auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+            auto pKernelInfo = pProgram->getKernelInfo(kernelName, rootDeviceIndex);
+            if (pKernelInfo) {
+                kernelFound = true;
+                kernelInfos[rootDeviceIndex] = pKernelInfo;
+            }
+        }
+
+        if (!kernelFound) {
             retVal = CL_INVALID_KERNEL_NAME;
             break;
         }
 
         kernel = Kernel::create(
             pProgram,
-            *pKernelInfo,
+            kernelInfos,
             &retVal);
 
         DBG_LOG_INPUTS("kernel", kernel);
@@ -1758,13 +1769,18 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                 return retVal;
             }
 
-            auto rootDeviceIndex = pProgram->getDevices()[0]->getRootDeviceIndex();
             for (unsigned int i = 0; i < numKernelsInProgram; ++i) {
-                const auto kernelInfo = pProgram->getKernelInfo(i, rootDeviceIndex);
-                DEBUG_BREAK_IF(kernelInfo == nullptr);
+                KernelInfoContainer kernelInfos;
+                kernelInfos.resize(pProgram->getMaxRootDeviceIndex() + 1);
+                for (const auto &pClDevice : pProgram->getDevices()) {
+                    auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+                    auto kernelInfo = pProgram->getKernelInfo(i, rootDeviceIndex);
+                    DEBUG_BREAK_IF(kernelInfo == nullptr);
+                    kernelInfos[rootDeviceIndex] = kernelInfo;
+                }
                 kernels[i] = Kernel::create(
                     pProgram,
-                    *kernelInfo,
+                    kernelInfos,
                     nullptr);
                 gtpinNotifyKernelCreate(kernels[i]);
             }
@@ -5490,7 +5506,7 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
 
     if (CL_SUCCESS == retVal) {
         pClonedKernel = Kernel::create(pSourceKernel->getProgram(),
-                                       pSourceKernel->getKernelInfo(),
+                                       pSourceKernel->getKernelInfos(),
                                        &retVal);
         UNRECOVERABLE_IF((pClonedKernel == nullptr) || (retVal != CL_SUCCESS));
 

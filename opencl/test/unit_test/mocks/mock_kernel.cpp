@@ -36,6 +36,13 @@ void Kernel::ReflectionSurfaceHelper::patchBlocksCurbe<true>(void *reflectionSur
 
 template void Kernel::patchReflectionSurface<true>(DeviceQueue *, PrintfHandler *);
 
+const KernelInfoContainer MockKernel::toKernelInfoContainer(const KernelInfo &kernelInfo, uint32_t rootDeviceIndex) {
+    KernelInfoContainer kernelInfos;
+    kernelInfos.resize(rootDeviceIndex + 1);
+    kernelInfos[rootDeviceIndex] = &kernelInfo;
+    return kernelInfos;
+}
+
 bool MockKernel::isPatched() const {
     return isPatchedOverride;
 }

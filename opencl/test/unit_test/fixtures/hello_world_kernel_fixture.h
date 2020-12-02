@@ -77,7 +77,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         // create a kernel
         pKernel = Kernel::create<MockKernel>(
             pProgram,
-            *pProgram->getKernelInfo(pKernelName->c_str(), pDevice->getRootDeviceIndex()),
+            pProgram->getKernelInfosForKernel(pKernelName->c_str()),
             &retVal);
 
         EXPECT_NE(nullptr, pKernel);

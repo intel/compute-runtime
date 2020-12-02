@@ -43,6 +43,8 @@ struct OpenCLObjectMapper<_cl_kernel> {
     typedef class Kernel DerivedType;
 };
 
+using KernelInfoContainer = StackVec<const KernelInfo *, 1>;
+
 class Kernel : public BaseObject<_cl_kernel> {
   public:
     static const cl_ulong objectMagic = 0x3284ADC8EA0AFE25LL;
@@ -77,11 +79,11 @@ class Kernel : public BaseObject<_cl_kernel> {
                                                 const void *argVal);
 
     template <typename kernel_t = Kernel, typename program_t = Program>
-    static kernel_t *create(program_t *program, const KernelInfo &kernelInfo, cl_int *errcodeRet) {
+    static kernel_t *create(program_t *program, const KernelInfoContainer &kernelInfos, cl_int *errcodeRet) {
         cl_int retVal;
         kernel_t *pKernel = nullptr;
 
-        pKernel = new kernel_t(program, kernelInfo);
+        pKernel = new kernel_t(program, kernelInfos);
         retVal = pKernel->initialize();
 
         if (retVal != CL_SUCCESS) {
@@ -96,7 +98,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         if (FileLoggerInstance().enabled()) {
             std::string source;
             program->getSource(source);
-            FileLoggerInstance().dumpKernel(kernelInfo.kernelDescriptor.kernelMetadata.kernelName, source);
+            FileLoggerInstance().dumpKernel(kernelInfos[program->getDevices()[0]->getRootDeviceIndex()]->kernelDescriptor.kernelMetadata.kernelName, source);
         }
 
         return pKernel;
@@ -178,15 +180,18 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
 
     size_t getKernelArgsNumber() const {
-        return kernelInfo.kernelArgInfo.size();
+        return getDefaultKernelInfo().kernelArgInfo.size();
     }
 
     bool requiresSshForBuffers() const {
-        return kernelInfo.requiresSshForBuffers;
+        return getDefaultKernelInfo().requiresSshForBuffers;
     }
 
     const KernelInfo &getKernelInfo() const {
-        return kernelInfo;
+        return getDefaultKernelInfo();
+    }
+    const KernelInfoContainer &getKernelInfos() const {
+        return kernelInfos;
     }
 
     Context &getContext() const {
@@ -196,11 +201,11 @@ class Kernel : public BaseObject<_cl_kernel> {
     Program *getProgram() const { return program; }
 
     uint32_t getScratchSize() {
-        return kernelInfo.patchInfo.mediavfestate ? kernelInfo.patchInfo.mediavfestate->PerThreadScratchSpace : 0;
+        return getDefaultKernelInfo().patchInfo.mediavfestate ? getDefaultKernelInfo().patchInfo.mediavfestate->PerThreadScratchSpace : 0;
     }
 
     uint32_t getPrivateScratchSize() {
-        return kernelInfo.patchInfo.mediaVfeStateSlot1 ? kernelInfo.patchInfo.mediaVfeStateSlot1->PerThreadScratchSpace : 0;
+        return getDefaultKernelInfo().patchInfo.mediaVfeStateSlot1 ? getDefaultKernelInfo().patchInfo.mediaVfeStateSlot1->PerThreadScratchSpace : 0;
     }
 
     void createReflectionSurface();
@@ -278,7 +283,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     const SimpleKernelArgInfo &getKernelArgInfo(uint32_t argIndex) const;
 
     bool getAllowNonUniform() const { return program->getAllowNonUniform(); }
-    bool isVmeKernel() const { return kernelInfo.isVmeWorkload; }
+    bool isVmeKernel() const { return getDefaultKernelInfo().isVmeWorkload; }
     bool requiresSpecialPipelineSelectMode() const { return specialPipelineSelectMode; }
 
     MOCKABLE_VIRTUAL bool isSingleSubdevicePreferred() const { return false; }
@@ -348,25 +353,25 @@ class Kernel : public BaseObject<_cl_kernel> {
         return executionType;
     }
     bool isUsingSyncBuffer() const {
-        return (kernelInfo.patchInfo.pAllocateSyncBuffer != nullptr);
+        return (getDefaultKernelInfo().patchInfo.pAllocateSyncBuffer != nullptr);
     }
 
     bool checkIfIsParentKernelAndBlocksUsesPrintf();
 
     bool is32Bit() const {
-        return kernelInfo.gpuPointerSize == 4;
+        return getDefaultKernelInfo().gpuPointerSize == 4;
     }
 
     int32_t getDebugSurfaceBti() const {
-        if (kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
-            return kernelInfo.patchInfo.pAllocateSystemThreadSurface->BTI;
+        if (getDefaultKernelInfo().patchInfo.pAllocateSystemThreadSurface) {
+            return getDefaultKernelInfo().patchInfo.pAllocateSystemThreadSurface->BTI;
         }
         return -1;
     }
 
     size_t getPerThreadSystemThreadSurfaceSize() const {
-        if (kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
-            return kernelInfo.patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize;
+        if (getDefaultKernelInfo().patchInfo.pAllocateSystemThreadSurface) {
+            return getDefaultKernelInfo().patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize;
         }
         return 0;
     }
@@ -421,6 +426,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
 
   protected:
+    const KernelInfo &getDefaultKernelInfo() const;
     struct ObjectCounts {
         uint32_t imageCount;
         uint32_t samplerCount;
@@ -498,7 +504,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const PatchTokenT &patch);
 
     void getParentObjectCounts(ObjectCounts &objectCount);
-    Kernel(Program *programArg, const KernelInfo &kernelInfoArg, bool schedulerKernel = false);
+    Kernel(Program *programArg, const KernelInfoContainer &kernelInfsoArg, bool schedulerKernel = false);
     void provideInitializationHints();
 
     void patchBlocksCurbeWithConstantValues();
@@ -519,7 +525,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     const ExecutionEnvironment &executionEnvironment;
     Program *program;
     const ClDeviceVector &deviceVector;
-    const KernelInfo &kernelInfo;
+    const KernelInfoContainer kernelInfos;
 
     std::vector<SimpleKernelArgInfo> kernelArguments;
     std::vector<KernelArgHandler> kernelArgHandlers;

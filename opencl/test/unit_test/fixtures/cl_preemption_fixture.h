@@ -53,6 +53,7 @@ class DevicePreemptionTests : public ::testing::Test {
     std::unique_ptr<iOpenCL::SPatchExecutionEnvironment> executionEnvironment;
     std::unique_ptr<NEO::MockProgram> program;
     std::unique_ptr<NEO::KernelInfo> kernelInfo;
+    const uint32_t rootDeviceIndex = 0u;
 };
 
 struct ThreadGroupPreemptionEnqueueKernelTest : NEO::PreemptionEnqueueKernelTest {

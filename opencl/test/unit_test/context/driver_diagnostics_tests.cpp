@@ -724,7 +724,7 @@ TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenConte
 }
 
 TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThenContextProvidesProperHint) {
-    auto pDevice = castToObject<ClDevice>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[1]);
     static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager())->turnOnFakingBigAllocations();
 
     for (auto isSmitThread : {false, true}) {

@@ -736,9 +736,9 @@ TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned
     GraphicsAllocation *pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, ptrSVM);
 
-    std::unique_ptr<Program> program(Program::createBuiltInFromSource("FillBufferBytes", context, context->getDevices(), &retVal));
+    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context, context->getDevices(), &retVal));
     program->build(program->getDevices(), nullptr, false);
-    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), *program->getKernelInfo("FillBufferBytes", rootDeviceIndex), &retVal));
+    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfosForKernel("FillBufferBytes"), &retVal));
 
     kernel->setSvmKernelExecInfo(pSvmAlloc);
 
@@ -764,9 +764,9 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
     GraphicsAllocation *pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, ptrSVM);
 
-    auto program = clUniquePtr(Program::createBuiltInFromSource("FillBufferBytes", context, context->getDevices(), &retVal));
+    auto program = clUniquePtr(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context, context->getDevices(), &retVal));
     program->build(program->getDevices(), nullptr, false);
-    auto kernel = clUniquePtr(Kernel::create<MockKernel>(program.get(), *program->getKernelInfo("FillBufferBytes", rootDeviceIndex), &retVal));
+    auto kernel = clUniquePtr(Kernel::create<MockKernel>(program.get(), program->getKernelInfosForKernel("FillBufferBytes"), &retVal));
 
     std::vector<Surface *> allSurfaces;
     kernel->getResidency(allSurfaces, rootDeviceIndex);

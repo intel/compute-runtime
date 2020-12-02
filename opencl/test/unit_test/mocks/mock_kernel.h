@@ -94,7 +94,7 @@ class MockKernel : public Kernel {
         }
     };
 
-    MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, bool scheduler = false)
+    MockKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg, bool scheduler = false)
         : Kernel(programArg, kernelInfoArg, scheduler) {
     }
 
@@ -141,8 +141,11 @@ class MockKernel : public Kernel {
 
         info->crossThreadData = new char[crossThreadSize];
 
-        auto kernel = new KernelType(program, *info);
         auto rootDeviceIndex = device.getRootDeviceIndex();
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(rootDeviceIndex + 1);
+        kernelInfos[rootDeviceIndex] = info;
+        auto kernel = new KernelType(program, kernelInfos);
         kernel->kernelDeviceInfos[rootDeviceIndex].crossThreadData = new char[crossThreadSize];
         memset(kernel->kernelDeviceInfos[rootDeviceIndex].crossThreadData, 0, crossThreadSize);
         kernel->kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = crossThreadSize;
@@ -151,6 +154,8 @@ class MockKernel : public Kernel {
 
         return kernel;
     }
+
+    static const KernelInfoContainer toKernelInfoContainer(const KernelInfo &kernelInfo, uint32_t rootDeviceIndex);
 
     uint32_t getPatchedArgumentsNum() const { return patchedArgumentsNum; }
 
@@ -286,9 +291,11 @@ class MockKernelWithInternals {
         }
         ClDeviceVector deviceVector;
         deviceVector.push_back(&deviceArg);
+        kernelInfos.resize(deviceArg.getRootDeviceIndex() + 1);
+        kernelInfos[deviceArg.getRootDeviceIndex()] = &kernelInfo;
 
         mockProgram = new MockProgram(context, false, deviceVector);
-        mockKernel = new MockKernel(mockProgram, kernelInfo);
+        mockKernel = new MockKernel(mockProgram, kernelInfos);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
         mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal), deviceArg.getRootDeviceIndex());
 
@@ -339,6 +346,7 @@ class MockKernelWithInternals {
     MockKernel *mockKernel;
     MockProgram *mockProgram;
     Context *mockContext;
+    KernelInfoContainer kernelInfos;
     KernelInfo kernelInfo;
     SKernelBinaryHeaderCommon kernelHeader = {};
     SPatchThreadPayload threadPayload = {};
@@ -358,14 +366,17 @@ class MockParentKernel : public Kernel {
   public:
     using Kernel::auxTranslationRequired;
     using Kernel::kernelDeviceInfos;
-    using Kernel::kernelInfo;
+    using Kernel::kernelInfos;
     using Kernel::patchBlocksCurbeWithConstantValues;
 
     static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
         auto clDevice = context.getDevice(0);
         auto rootDeviceIndex = clDevice->getRootDeviceIndex();
 
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(rootDeviceIndex + 1);
         auto info = new KernelInfo();
+        kernelInfos[rootDeviceIndex] = info;
         const size_t crossThreadSize = 160;
         uint32_t crossThreadOffset = 0;
         uint32_t crossThreadOffsetBlock = 0;
@@ -427,7 +438,7 @@ class MockParentKernel : public Kernel {
         UNRECOVERABLE_IF(crossThreadSize < crossThreadOffset + 8);
         info->crossThreadData = new char[crossThreadSize];
 
-        auto parent = new MockParentKernel(mockProgram, *info);
+        auto parent = new MockParentKernel(mockProgram, kernelInfos);
         parent->kernelDeviceInfos[rootDeviceIndex].crossThreadData = new char[crossThreadSize];
         memset(parent->kernelDeviceInfos[rootDeviceIndex].crossThreadData, 0, crossThreadSize);
         parent->kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = crossThreadSize;
@@ -533,31 +544,37 @@ class MockParentKernel : public Kernel {
         return parent;
     }
 
-    MockParentKernel(Program *programArg, const KernelInfo &kernelInfoArg) : Kernel(programArg, kernelInfoArg, false) {
+    MockParentKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg) : Kernel(programArg, kernelInfoArg, false) {
     }
 
     ~MockParentKernel() override {
-        delete kernelInfo.patchInfo.executionEnvironment;
-        delete kernelInfo.patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
-        delete kernelInfo.patchInfo.pAllocateStatelessEventPoolSurface;
-        delete kernelInfo.patchInfo.pAllocateStatelessPrintfSurface;
-        delete kernelInfo.patchInfo.threadPayload;
-        delete &kernelInfo;
-        BlockKernelManager *blockManager = program->getBlockKernelManager();
+        for (auto &pKernelInfo : kernelInfos) {
+            if (!pKernelInfo) {
+                continue;
+            }
+            auto &kernelInfo = *pKernelInfo;
+            delete kernelInfo.patchInfo.executionEnvironment;
+            delete kernelInfo.patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
+            delete kernelInfo.patchInfo.pAllocateStatelessEventPoolSurface;
+            delete kernelInfo.patchInfo.pAllocateStatelessPrintfSurface;
+            delete kernelInfo.patchInfo.threadPayload;
+            delete &kernelInfo;
+            BlockKernelManager *blockManager = program->getBlockKernelManager();
 
-        for (uint32_t i = 0; i < blockManager->getCount(); i++) {
-            const KernelInfo *blockInfo = blockManager->getBlockKernelInfo(i);
-            delete blockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
-            delete blockInfo->patchInfo.pAllocateStatelessEventPoolSurface;
-            delete blockInfo->patchInfo.pAllocateStatelessPrintfSurface;
-            delete blockInfo->patchInfo.threadPayload;
-            delete blockInfo->patchInfo.executionEnvironment;
-            delete blockInfo->patchInfo.dataParameterStream;
-            delete blockInfo->patchInfo.bindingTableState;
-            delete blockInfo->patchInfo.interfaceDescriptorData;
-            delete blockInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization;
-            delete blockInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization;
-            delete[](uint64_t *) blockInfo->heapInfo.pDsh;
+            for (uint32_t i = 0; i < blockManager->getCount(); i++) {
+                const KernelInfo *blockInfo = blockManager->getBlockKernelInfo(i);
+                delete blockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
+                delete blockInfo->patchInfo.pAllocateStatelessEventPoolSurface;
+                delete blockInfo->patchInfo.pAllocateStatelessPrintfSurface;
+                delete blockInfo->patchInfo.threadPayload;
+                delete blockInfo->patchInfo.executionEnvironment;
+                delete blockInfo->patchInfo.dataParameterStream;
+                delete blockInfo->patchInfo.bindingTableState;
+                delete blockInfo->patchInfo.interfaceDescriptorData;
+                delete blockInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization;
+                delete blockInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization;
+                delete[](uint64_t *) blockInfo->heapInfo.pDsh;
+            }
         }
         if (mockProgram) {
             mockProgram->decRefInternal();
@@ -578,13 +595,13 @@ class MockParentKernel : public Kernel {
 
 class MockSchedulerKernel : public SchedulerKernel {
   public:
-    MockSchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg) : SchedulerKernel(programArg, kernelInfoArg){};
+    MockSchedulerKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg) : SchedulerKernel(programArg, kernelInfoArg){};
 };
 
 class MockDebugKernel : public MockKernel {
   public:
-    MockDebugKernel(Program *program, KernelInfo &kernelInfo) : MockKernel(program, kernelInfo) {
-        if (!kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
+    MockDebugKernel(Program *program, KernelInfoContainer &kernelInfos) : MockKernel(program, kernelInfos) {
+        if (!kernelInfos[0]->patchInfo.pAllocateSystemThreadSurface) {
             SPatchAllocateSystemThreadSurface *patchToken = new SPatchAllocateSystemThreadSurface;
 
             patchToken->BTI = 0;
@@ -593,7 +610,7 @@ class MockDebugKernel : public MockKernel {
             patchToken->Size = sizeof(SPatchAllocateSystemThreadSurface);
             patchToken->Token = iOpenCL::PATCH_TOKEN_ALLOCATE_SIP_SURFACE;
 
-            kernelInfo.patchInfo.pAllocateSystemThreadSurface = patchToken;
+            const_cast<KernelInfo *>(kernelInfos[0])->patchInfo.pAllocateSystemThreadSurface = patchToken;
 
             systemThreadSurfaceAllocated = true;
         }
@@ -601,7 +618,7 @@ class MockDebugKernel : public MockKernel {
 
     ~MockDebugKernel() override {
         if (systemThreadSurfaceAllocated) {
-            delete kernelInfo.patchInfo.pAllocateSystemThreadSurface;
+            delete kernelInfos[0]->patchInfo.pAllocateSystemThreadSurface;
         }
     }
     static const uint32_t perThreadSystemThreadSurfaceSize;

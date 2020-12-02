@@ -54,7 +54,7 @@ class KernelArgImmediateTest : public Test<ClDeviceFixture> {
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(T);
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
-        pKernel = new MockKernel(program.get(), *pKernelInfo);
+        pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
 

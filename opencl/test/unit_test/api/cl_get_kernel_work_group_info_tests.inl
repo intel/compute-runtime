@@ -134,7 +134,7 @@ TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
     size_t paramValueSizeRet;
     MockUnrestrictiveContext context;
     auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
-    auto mockKernel = std::make_unique<MockKernel>(mockProgram.get(), pKernel->getKernelInfo());
+    auto mockKernel = std::make_unique<MockKernel>(mockProgram.get(), MockKernel::toKernelInfoContainer(pKernel->getKernelInfo(), context.getDevice(0)->getRootDeviceIndex()));
 
     retVal = clGetKernelWorkGroupInfo(
         mockKernel.get(),

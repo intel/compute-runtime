@@ -34,8 +34,8 @@ class SchedulerKernel : public Kernel {
     }
 
     size_t getCurbeSize() {
-        size_t crossTrheadDataSize = kernelInfo.patchInfo.dataParameterStream ? kernelInfo.patchInfo.dataParameterStream->DataParameterStreamSize : 0;
-        size_t dshSize = kernelInfo.heapInfo.DynamicStateHeapSize;
+        size_t crossTrheadDataSize = getDefaultKernelInfo().patchInfo.dataParameterStream ? getDefaultKernelInfo().patchInfo.dataParameterStream->DataParameterStreamSize : 0;
+        size_t dshSize = getDefaultKernelInfo().heapInfo.DynamicStateHeapSize;
 
         crossTrheadDataSize = alignUp(crossTrheadDataSize, 64);
         dshSize = alignUp(dshSize, 64);
@@ -55,7 +55,7 @@ class SchedulerKernel : public Kernel {
     static BuiltinCode loadSchedulerKernel(Device *device);
 
   protected:
-    SchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg) : Kernel(programArg, kernelInfoArg, true) {
+    SchedulerKernel(Program *programArg, const KernelInfoContainer &kernelInfosArg) : Kernel(programArg, kernelInfosArg, true) {
         computeGws();
     };
 

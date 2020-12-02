@@ -18,6 +18,8 @@ void Kernel::patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printf
 
     BlockKernelManager *blockManager = program->getBlockKernelManager();
     uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
+    auto rootDeviceIndex = devQueue->getDevice().getRootDeviceIndex();
+    auto &kernelInfo = *kernelInfos[rootDeviceIndex];
 
     for (uint32_t i = 0; i < blockCount; i++) {
         const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
@@ -79,7 +81,7 @@ void Kernel::patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printf
                                                             privateSurfaceOffset, privateSurfacePatchSize, privateSurfaceGpuAddress);
     }
 
-    ReflectionSurfaceHelper::setParentImageParams(reflectionSurface, this->kernelArguments, this->kernelInfo);
-    ReflectionSurfaceHelper::setParentSamplerParams(reflectionSurface, this->kernelArguments, this->kernelInfo);
+    ReflectionSurfaceHelper::setParentImageParams(reflectionSurface, this->kernelArguments, kernelInfo);
+    ReflectionSurfaceHelper::setParentSamplerParams(reflectionSurface, this->kernelArguments, kernelInfo);
 }
 } // namespace NEO
