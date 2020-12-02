@@ -1101,18 +1101,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     NEO::SvmAllocationData *allocData = nullptr;
     bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, &allocData);
-    if (dstAllocFound == false) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    } else {
+    if (dstAllocFound) {
         if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
             allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
             hostPointerNeedsFlush = true;
         }
+    } else {
+        if (device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        } else {
+            hostPointerNeedsFlush = true;
+        }
     }
 
-    uintptr_t dstPtr = reinterpret_cast<uintptr_t>(ptr);
-
-    auto dstAllocation = this->getAlignedAllocation(this->device, reinterpret_cast<void *>(dstPtr), size);
+    auto dstAllocation = this->getAlignedAllocation(this->device, ptr, size);
 
     uintptr_t srcPtr = reinterpret_cast<uintptr_t>(const_cast<void *>(pattern));
     size_t srcOffset = 0;
@@ -1212,12 +1214,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         return ZE_RESULT_ERROR_INVALID_SIZE;
     } else {
         appendEventForProfiling(hEvent, true);
-        NEO::SvmAllocationData *allocData = nullptr;
-        bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, &allocData);
-        if (dstAllocFound == false) {
+        NEO::GraphicsAllocation *gpuAllocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr,
+                                                                                                            size,
+                                                                                                            neoDevice->getRootDeviceIndex());
+        if (gpuAllocation == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         commandContainer.addToResidencyContainer(gpuAllocation);
         uint32_t patternToCommand[4] = {};
         memcpy_s(&patternToCommand, sizeof(patternToCommand), pattern, patternSize);
@@ -1286,25 +1288,30 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
                                                                                         uint64_t bufferSize) {
 
     NEO::SvmAllocationData *allocData = nullptr;
-    bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(buffer),
+    void *ptr = const_cast<void *>(buffer);
+    bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr,
                                                                                bufferSize, &allocData);
     NEO::GraphicsAllocation *alloc = nullptr;
 
-    uintptr_t sourcePtr = reinterpret_cast<uintptr_t>(const_cast<void *>(buffer));
+    uintptr_t sourcePtr = reinterpret_cast<uintptr_t>(ptr);
     size_t offset = 0;
     NEO::EncodeSurfaceState<GfxFamily>::getSshAlignedPointer(sourcePtr, offset);
     uintptr_t alignedPtr = 0u;
     bool hostPointerNeedsFlush = false;
 
     if (srcAllocFound == false) {
-        alloc = getHostPtrAlloc(buffer, bufferSize, &offset);
-
+        alloc = device->getDriverHandle()->findHostPointerAllocation(ptr, static_cast<size_t>(bufferSize), device->getRootDeviceIndex());
+        if (alloc != nullptr) {
+            offset += ptrDiff(buffer, alloc->getUnderlyingBuffer());
+        } else {
+            alloc = getHostPtrAlloc(buffer, bufferSize, &offset);
+        }
         alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
+
         hostPointerNeedsFlush = true;
     } else {
         alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-
-        alignedPtr = reinterpret_cast<uintptr_t>(buffer) - offset;
+        alignedPtr = sourcePtr - offset;
 
         if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
             allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {

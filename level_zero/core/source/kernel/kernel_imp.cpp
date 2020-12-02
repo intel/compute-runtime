@@ -521,13 +521,14 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     }
 
     auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
-    auto svmAllocsManager = module->getDevice()->getDriverHandle()->getSvmAllocsManager();
-    if (nullptr == svmAllocsManager->getSVMAlloc(requestedAddress)) {
+    uintptr_t gpuAddress = 0u;
+    NEO::GraphicsAllocation *alloc = module->getDevice()->getDriverHandle()->getDriverSystemMemoryAllocation(requestedAddress,
+                                                                                                             1u,
+                                                                                                             module->getDevice()->getRootDeviceIndex());
+    if (nullptr == alloc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    uint32_t rootDeviceIndex = module->getDevice()->getRootDeviceIndex();
-    NEO::GraphicsAllocation *alloc = svmAllocsManager->getSVMAlloc(requestedAddress)->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
-    auto gpuAddress = reinterpret_cast<uintptr_t>(requestedAddress);
+    gpuAddress = static_cast<uintptr_t>(alloc->getGpuAddress());
     return setArgBufferWithAlloc(argIndex, gpuAddress, alloc);
 }
 

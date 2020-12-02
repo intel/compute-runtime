@@ -17,6 +17,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
@@ -1102,5 +1103,41 @@ HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenLeftMiddleAndRig
     itor = find<XY_COPY_BLT *>(++itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
 }
+
+using HostPointerManagerCommandListTest = Test<HostPointerManagerFixure>;
+HWTEST2_F(HostPointerManagerCommandListTest,
+          givenImportedHostPointerWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,
+          Platforms) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+
+    auto ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    int pattern = 1;
+    ret = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&pattern), sizeof(pattern), 64u, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ret = hostDriverHandle->releaseImportedPointer(heapPointer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+HWTEST2_F(HostPointerManagerCommandListTest,
+          givenImportedHostPointerAndCopyEngineWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,
+          Platforms) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::Copy);
+
+    auto ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    int pattern = 1;
+    ret = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&pattern), sizeof(pattern), 64u, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ret = hostDriverHandle->releaseImportedPointer(heapPointer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
 } // namespace ult
 } // namespace L0

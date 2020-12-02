@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/test_files.h"
 
 #include "level_zero/core/source/module/module.h"
@@ -102,6 +103,23 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::vector<std::unique_ptr<L0::Module>> modules;
+};
+
+struct ImportHostPointerModuleFixture : public ModuleFixture {
+    void SetUp() override {
+        DebugManager.flags.EnableHostPointerImport.set(1);
+        ModuleFixture::SetUp();
+
+        hostPointer = driverHandle->getMemoryManager()->allocateSystemMemory(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    }
+
+    void TearDown() override {
+        driverHandle->getMemoryManager()->freeSystemMemory(hostPointer);
+        ModuleFixture::TearDown();
+    }
+
+    DebugManagerStateRestore debugRestore;
+    void *hostPointer = nullptr;
 };
 
 } // namespace ult

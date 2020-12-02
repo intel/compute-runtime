@@ -84,27 +84,28 @@ ze_result_t ContextImp::freeMem(const void *ptr) {
 }
 
 ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, size_t size) {
-    auto alloc = getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    if (alloc == nullptr) {
+    Device *device = L0::Device::fromHandle(hDevice);
+    NEO::Device *neoDevice = device->getNEODevice();
+    auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr, size, neoDevice->getRootDeviceIndex());
+    if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    NEO::Device *neoDevice = L0::Device::fromHandle(hDevice)->getNEODevice();
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto gpuAllocation = alloc->gpuAllocations.getGraphicsAllocation(neoDevice->getRootDeviceIndex());
-    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&gpuAllocation, 1));
+    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));
     return changeMemoryOperationStatusToL0ResultType(success);
 }
 
 ze_result_t ContextImp::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t size) {
-    auto alloc = getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    if (alloc == nullptr) {
+    Device *device = L0::Device::fromHandle(hDevice);
+    NEO::Device *neoDevice = device->getNEODevice();
+    auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr, size, neoDevice->getRootDeviceIndex());
+    if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    NEO::Device *neoDevice = L0::Device::fromHandle(hDevice)->getNEODevice();
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->evict(neoDevice, *alloc->gpuAllocations.getGraphicsAllocation(neoDevice->getRootDeviceIndex()));
+    auto success = memoryOperationsIface->evict(neoDevice, *allocation);
     return changeMemoryOperationStatusToL0ResultType(success);
 }
 

@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
@@ -14,6 +12,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_host_pointer_manager.h"
 
+using ::testing::_;
 using ::testing::Return;
 
 namespace L0 {
@@ -311,6 +310,35 @@ TEST_F(HostPointerManagerTest, givenNoPointerRegisteredWhenAllocationCreationFai
 
     auto result = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+}
+
+TEST_F(HostPointerManagerTest, givenHostAllocationImportedWhenMakingResidentAddressThenAllocationMadeResident) {
+    void *testPtr = heapPointer;
+
+    EXPECT_CALL(*mockMemoryInterface, makeResident(_, _))
+        .Times(1)
+        .WillRepeatedly(::testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    EXPECT_CALL(*mockMemoryInterface, evict(_, _))
+        .Times(1)
+        .WillRepeatedly(::testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+
+    auto result = context->makeMemoryResident(device, testPtr, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->makeMemoryResident(device, testPtr, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->evictMemory(device, testPtr, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = hostDriverHandle->releaseImportedPointer(testPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->evictMemory(device, testPtr, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 } // namespace ult

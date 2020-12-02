@@ -869,5 +869,19 @@ HWTEST2_F(SetKernelArg, givenImageAndBindfulKernelWhenSetArgImageThenCopySurface
     EXPECT_EQ(imageHW->passedSurfaceStateOffset, imageArg.bindful);
 }
 
+using ImportHostPointerSetKernelArg = Test<ImportHostPointerModuleFixture>;
+HWTEST_F(ImportHostPointerSetKernelArg, givenHostPointerImportedWhenSettingKernelArgThenUseHostPointerAllocation) {
+    createKernel();
+
+    auto ret = driverHandle->importExternalPointer(hostPointer, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ret = kernel->setArgBuffer(0, sizeof(hostPointer), &hostPointer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ret = driverHandle->releaseImportedPointer(hostPointer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
 } // namespace ult
 } // namespace L0
