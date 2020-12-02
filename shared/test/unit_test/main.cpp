@@ -440,12 +440,10 @@ int main(int argc, char **argv) {
         GmmInterface::initialize(nullptr, nullptr);
     }
 
-    GlobalMockSipProgram::initSipProgramInfo();
     NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());
 
     retVal = RUN_ALL_TESTS();
 
-    GlobalMockSipProgram::shutDownSipProgramInfo();
     delete platformsImpl;
 
     return retVal;

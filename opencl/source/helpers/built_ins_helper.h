@@ -12,6 +12,6 @@
 namespace NEO {
 class Device;
 
-const SipKernel &initSipKernel(SipKernelType type, Device &device);
-ProgramInfo createProgramInfoForSip(std::vector<char> &binary, size_t size, const Device &device);
+void initSipKernel(SipKernelType type, Device &device);
+
 } // namespace NEO

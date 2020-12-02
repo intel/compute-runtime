@@ -2005,28 +2005,31 @@ TEST_F(BuiltInTests, GivenInvalidBuiltinKernelNameWhenCreatingBuiltInProgramThen
 }
 
 TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquiredThroughCompilerInterface) {
-    MockBuiltins mockBuiltins;
     auto mockCompilerInterface = new MockCompilerInterface();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
+    auto builtins = new BuiltIns;
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->builtins.reset(builtins);
     mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
+
     cl_int errCode = CL_BUILD_PROGRAM_FAILURE;
     auto p = Program::createBuiltInFromGenBinary(pContext, pContext->getDevices(), mockCompilerInterface->sipKernelBinaryOverride.data(), mockCompilerInterface->sipKernelBinaryOverride.size(), &errCode);
     ASSERT_EQ(CL_SUCCESS, errCode);
     errCode = p->processGenBinary(*pClDevice);
     ASSERT_EQ(CL_SUCCESS, errCode);
 
-    const SipKernel &sipKern = mockBuiltins.getSipKernel(SipKernelType::Csr, pContext->getDevice(0)->getDevice());
-
     const auto &sipKernelInfo = p->getKernelInfo(static_cast<size_t>(0), rootDeviceIndex);
 
     auto compbinedKernelHeapSize = sipKernelInfo->heapInfo.KernelHeapSize;
     auto sipOffset = sipKernelInfo->systemKernelOffset;
     ASSERT_GT(compbinedKernelHeapSize, sipOffset);
+
+    const SipKernel &sipKernel = builtins->getSipKernel(SipKernelType::Csr, *pDevice);
+
     auto expectedMem = reinterpret_cast<const char *>(sipKernelInfo->heapInfo.pKernelHeap) + sipOffset;
-    ASSERT_EQ(compbinedKernelHeapSize - sipOffset, sipKern.getBinarySize());
-    EXPECT_EQ(0, memcmp(expectedMem, sipKern.getBinary(), sipKern.getBinarySize()));
+    EXPECT_EQ(0, memcmp(expectedMem, sipKernel.getSipAllocation()->getUnderlyingBuffer(), compbinedKernelHeapSize - sipOffset));
     EXPECT_EQ(SipKernelType::Csr, mockCompilerInterface->requestedSipKernel);
     p->release();
+    mockCompilerInterface->releaseDummyGenBinary();
 }
 
 TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationForKernel) {

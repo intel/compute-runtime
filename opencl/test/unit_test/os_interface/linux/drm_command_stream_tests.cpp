@@ -659,25 +659,16 @@ class DrmCommandStreamBatchingTests : public DrmCommandStreamEnhancedTest {
   public:
     DrmAllocation *tagAllocation;
     DrmAllocation *preemptionAllocation;
-    GraphicsAllocation *tmpAllocation;
 
     template <typename GfxFamily>
     void SetUpT() {
         DrmCommandStreamEnhancedTest::SetUpT<GfxFamily>();
-        if (PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo) == PreemptionMode::MidThread) {
-            tmpAllocation = GlobalMockSipProgram::getAllocation();
-            GlobalMockSipProgram::resetAllocation(device->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
-        }
         tagAllocation = static_cast<DrmAllocation *>(device->getDefaultEngine().commandStreamReceiver->getTagAllocation());
         preemptionAllocation = static_cast<DrmAllocation *>(device->getDefaultEngine().commandStreamReceiver->getPreemptionAllocation());
     }
 
     template <typename GfxFamily>
     void TearDownT() {
-        if (PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo) == PreemptionMode::MidThread) {
-            device->getMemoryManager()->freeGraphicsMemory(GlobalMockSipProgram::getAllocation());
-            GlobalMockSipProgram::resetAllocation(tmpAllocation);
-        }
         DrmCommandStreamEnhancedTest::TearDownT<GfxFamily>();
     }
 };
@@ -789,7 +780,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
 
     EXPECT_EQ(testedCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
 
-    int ioctlUserPtrCnt = 3;
+    int ioctlUserPtrCnt = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 4 : 3;
 
     EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.total);
     EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.gemUserptr);
@@ -864,7 +855,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     }
 
     int ioctlExecCnt = 1;
-    int ioctlUserPtrCnt = 2;
+    int ioctlUserPtrCnt = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 3 : 2;
     EXPECT_EQ(ioctlExecCnt, this->mock->ioctl_cnt.execbuffer2);
     EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.gemUserptr);
     EXPECT_EQ(ioctlExecCnt + ioctlUserPtrCnt, this->mock->ioctl_cnt.total);

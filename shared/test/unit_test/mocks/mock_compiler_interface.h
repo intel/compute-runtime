@@ -124,6 +124,7 @@ class MockCompilerInterface : public CompilerInterface {
     }
 
     static std::vector<char> getDummyGenBinary();
+    static void releaseDummyGenBinary();
 
     void (*lockListener)(MockCompilerInterface &compInt) = nullptr;
     void *lockListenerData = nullptr;

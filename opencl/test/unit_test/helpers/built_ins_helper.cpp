@@ -23,13 +23,9 @@ SipKernelType calledType = SipKernelType::COUNT;
 bool called = false;
 } // namespace MockSipData
 
-const SipKernel &initSipKernel(SipKernelType type, Device &device) {
+void initSipKernel(SipKernelType type, Device &device) {
     MockSipData::calledType = type;
-    MockSipData::mockSipKernel->type = type;
     MockSipData::called = true;
-    return *MockSipData::mockSipKernel;
 }
-ProgramInfo createProgramInfoForSip(std::vector<char> &binary, size_t size, const Device &device) {
-    return GlobalMockSipProgram::getSipProgramInfo();
-}
+
 } // namespace NEO

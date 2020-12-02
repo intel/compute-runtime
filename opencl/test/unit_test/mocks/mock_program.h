@@ -178,18 +178,6 @@ class MockProgram : public Program {
     int isOptionValueValidOverride = -1;
 };
 
-namespace GlobalMockSipProgram {
-void resetAllocationState();
-void resetAllocation(GraphicsAllocation *allocation);
-void deleteAllocation();
-GraphicsAllocation *getAllocation();
-void initSipProgramInfo();
-void shutDownSipProgramInfo();
-ProgramInfo getSipProgramInfoWithCustomBinary();
-extern ProgramInfo *globalSipProgramInfo;
-ProgramInfo getSipProgramInfo();
-}; // namespace GlobalMockSipProgram
-
 class GMockProgram : public Program {
   public:
     using Program::Program;

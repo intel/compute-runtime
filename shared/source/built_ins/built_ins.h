@@ -33,6 +33,7 @@ struct KernelInfo;
 struct MultiDispatchInfo;
 class Program;
 class SipKernel;
+class MemoryManager;
 
 static constexpr ConstStringRef mediaKernelsBuildOptionsList[] = {
     "-D cl_intel_device_side_advanced_vme_enable",
@@ -156,6 +157,7 @@ class BuiltIns {
     virtual ~BuiltIns();
 
     MOCKABLE_VIRTUAL const SipKernel &getSipKernel(SipKernelType type, Device &device);
+    MOCKABLE_VIRTUAL void freeSipKernels(MemoryManager *memoryManager);
 
     BuiltinsLib &getBuiltinsLib() {
         DEBUG_BREAK_IF(!builtinsLib.get());

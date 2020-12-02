@@ -33,6 +33,7 @@ struct MockCompilerDebugVars {
     bool failCreatePlatformInterface = false;
     bool failCreateGtSystemInfoInterface = false;
     bool failCreateIgcFeWaInterface = false;
+    IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine = IGC::SystemRoutineType::undefined;
     std::string *receivedInternalOptionsOutput = nullptr;
     std::string *receivedInput = nullptr;
 

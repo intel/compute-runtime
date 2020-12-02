@@ -11,7 +11,7 @@
 #include "shared/source/program/program_info.h"
 
 #include <memory>
-
+#include <vector>
 namespace NEO {
 
 class Device;
@@ -23,16 +23,12 @@ const char *getSipLlSrc(const Device &device);
 
 class SipKernel {
   public:
-    SipKernel(SipKernelType type, ProgramInfo &&sipProgramInfo);
+    SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc);
     SipKernel(const SipKernel &) = delete;
     SipKernel &operator=(const SipKernel &) = delete;
     SipKernel(SipKernel &&) = delete;
     SipKernel &operator=(SipKernel &&) = delete;
     virtual ~SipKernel();
-
-    const char *getBinary() const;
-
-    size_t getBinarySize() const;
 
     SipKernelType getType() const {
         return type;
@@ -46,6 +42,6 @@ class SipKernel {
 
   protected:
     SipKernelType type = SipKernelType::COUNT;
-    const ProgramInfo programInfo;
+    GraphicsAllocation *sipAllocation = nullptr;
 };
 } // namespace NEO

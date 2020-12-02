@@ -14,9 +14,9 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-
-#include "opencl/source/program/kernel_info.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 
@@ -67,21 +67,13 @@ const char *getSipLlSrc(const Device &device) {
     return (ptrSize == 8) ? llDummySrc64 : llDummySrc32;
 }
 
-SipKernel::SipKernel(SipKernelType type, ProgramInfo &&sipProgram)
-    : type(type), programInfo(std::move(sipProgram)) {}
 SipKernel::~SipKernel() = default;
 
-GraphicsAllocation *SipKernel::getSipAllocation() const {
-    return programInfo.kernelInfos[0]->getGraphicsAllocation();
+SipKernel::SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) : type(type), sipAllocation(sipAlloc) {
 }
 
-const char *SipKernel::getBinary() const {
-    auto kernelInfo = programInfo.kernelInfos[0];
-    return reinterpret_cast<const char *>(ptrOffset(kernelInfo->heapInfo.pKernelHeap, kernelInfo->systemKernelOffset));
-}
-size_t SipKernel::getBinarySize() const {
-    auto kernelInfo = programInfo.kernelInfos[0];
-    return kernelInfo->heapInfo.KernelHeapSize - kernelInfo->systemKernelOffset;
+GraphicsAllocation *SipKernel::getSipAllocation() const {
+    return sipAllocation;
 }
 
 SipKernelType SipKernel::getSipKernelType(GFXCORE_FAMILY family, bool debuggingActive) {
@@ -94,5 +86,4 @@ GraphicsAllocation *SipKernel::getSipKernelAllocation(Device &device) {
     auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().platform.eRenderCoreFamily, debuggingEnabled);
     return device.getBuiltIns()->getSipKernel(sipType, device).getSipAllocation();
 }
-
 } // namespace NEO

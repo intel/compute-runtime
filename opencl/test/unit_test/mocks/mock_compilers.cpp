@@ -628,4 +628,8 @@ IGC::FclOclTranslationCtxBase *MockFclOclDeviceCtx::CreateTranslationCtxImpl(CIF
 std::vector<char> MockCompilerInterface::getDummyGenBinary() {
     return MockSipKernel::getDummyGenBinary();
 }
+void MockCompilerInterface::releaseDummyGenBinary() {
+    MockSipKernel::shutDown();
+}
+
 } // namespace NEO

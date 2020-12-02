@@ -810,11 +810,11 @@ TEST_F(WddmCommandStreamMockGdiTest, WhenMakingResidentThenResidencyAllocationsL
 HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
     //preemption allocation + sip allocation
     size_t csrSurfaceCount = 0;
-    GraphicsAllocation *tmpAllocation = nullptr;
+    //GraphicsAllocation *tmpAllocation = nullptr;
     if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         csrSurfaceCount = 2;
-        tmpAllocation = GlobalMockSipProgram::getAllocation();
-        GlobalMockSipProgram::resetAllocation(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
+        //tmpAllocation = GlobalMockSipProgram::getAllocation();
+        //GlobalMockSipProgram::resetAllocation(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     }
     csrSurfaceCount += csr->globalFenceAllocation ? 1 : 0;
 
@@ -891,8 +891,8 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     memoryManager->freeGraphicsMemory(sshAlloc);
     memoryManager->freeGraphicsMemory(commandBuffer);
     if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-        memoryManager->freeGraphicsMemory(GlobalMockSipProgram::getAllocation());
-        GlobalMockSipProgram::resetAllocation(tmpAllocation);
+        // memoryManager->freeGraphicsMemory(GlobalMockSipProgram::getAllocation());
+        // GlobalMockSipProgram::resetAllocation(tmpAllocation);
     }
 }
 

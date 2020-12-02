@@ -113,6 +113,11 @@ void applyWorkarounds() {
     });
     tempThreadID = t.get_id();
     t.join();
+
+    //Create FileLogger to prevent false memory leaks
+    {
+        NEO::FileLoggerInstance();
+    }
 }
 #ifdef __linux__
 void handle_SIGALRM(int signal) {
@@ -148,12 +153,10 @@ LONG WINAPI UltExceptionFilter(
 #endif
 
 void initializeTestHelpers() {
-    GlobalMockSipProgram::initSipProgramInfo();
     MockSipData::mockSipKernel.reset(new MockSipKernel());
 }
 
 void cleanTestHelpers() {
-    GlobalMockSipProgram::shutDownSipProgramInfo();
     delete platformsImpl;
 }
 
