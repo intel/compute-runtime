@@ -13,11 +13,6 @@
 
 #include <vector>
 
-extern std::vector<const char *> BinaryFileNames;
-extern std::vector<const char *> SourceFileNames;
-extern std::vector<const char *> BinaryForSourceFileNames;
-extern std::vector<const char *> KernelNames;
-
 class ProgramTests : public NEO::ClDeviceFixture,
                      public ::testing::Test,
                      public NEO::ContextFixture {

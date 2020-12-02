@@ -69,22 +69,6 @@ void ProgramTests::TearDown() {
     ClDeviceFixture::TearDown();
 }
 
-std::vector<const char *> BinaryFileNames{
-    "CopyBuffer_simd32",
-};
-
-std::vector<const char *> SourceFileNames{
-    "CopyBuffer_simd16.cl",
-};
-
-std::vector<const char *> BinaryForSourceFileNames{
-    "CopyBuffer_simd16",
-};
-
-std::vector<const char *> KernelNames{
-    "CopyBuffer",
-};
-
 class NoCompilerInterfaceRootDeviceEnvironment : public RootDeviceEnvironment {
   public:
     NoCompilerInterfaceRootDeviceEnvironment(ExecutionEnvironment &executionEnvironment) : RootDeviceEnvironment(executionEnvironment) {
@@ -108,7 +92,9 @@ class SucceedingGenBinaryProgram : public MockProgram {
     cl_int processGenBinary(const ClDevice &clDevice) override { return CL_SUCCESS; }
 };
 
-TEST_P(ProgramFromBinaryTest, WhenBuildingProgramThenSuccessIsReturned) {
+using ProgramFromBinaryTest = ProgramFromBinaryFixture;
+
+TEST_F(ProgramFromBinaryTest, WhenBuildingProgramThenSuccessIsReturned) {
     retVal = pProgram->build(
         pProgram->getDevices(),
         nullptr,
@@ -117,7 +103,7 @@ TEST_P(ProgramFromBinaryTest, WhenBuildingProgramThenSuccessIsReturned) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(ProgramFromBinaryTest, WhenGettingProgramContextInfoThenCorrectContextIsReturned) {
+TEST_F(ProgramFromBinaryTest, WhenGettingProgramContextInfoThenCorrectContextIsReturned) {
     cl_context contextRet = reinterpret_cast<cl_context>(static_cast<uintptr_t>(0xdeaddead));
     size_t paramValueSizeRet = 0;
 
@@ -132,7 +118,7 @@ TEST_P(ProgramFromBinaryTest, WhenGettingProgramContextInfoThenCorrectContextIsR
     EXPECT_EQ(sizeof(cl_context), paramValueSizeRet);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenNonNullParamValueWhenGettingProgramBinaryInfoThenCorrectBinaryIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenNonNullParamValueWhenGettingProgramBinaryInfoThenCorrectBinaryIsReturned) {
     size_t paramValueSize = sizeof(unsigned char **);
     size_t paramValueSizeRet = 0;
     auto testBinary = std::make_unique<char[]>(knownSourceSize);
@@ -148,7 +134,7 @@ TEST_P(ProgramFromBinaryTest, GivenNonNullParamValueWhenGettingProgramBinaryInfo
     EXPECT_STREQ((const char *)knownSource.get(), (const char *)testBinary.get());
 }
 
-TEST_P(ProgramFromBinaryTest, GivenNullParamValueWhenGettingProgramBinaryInfoThenSuccessIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenNullParamValueWhenGettingProgramBinaryInfoThenSuccessIsReturned) {
     size_t paramValueSize = sizeof(unsigned char **);
     size_t paramValueSizeRet = 0;
 
@@ -161,7 +147,7 @@ TEST_P(ProgramFromBinaryTest, GivenNullParamValueWhenGettingProgramBinaryInfoThe
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenNonNullParamValueAndParamValueSizeZeroWhenGettingProgramBinaryInfoThenInvalidValueErrorIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenNonNullParamValueAndParamValueSizeZeroWhenGettingProgramBinaryInfoThenInvalidValueErrorIsReturned) {
     size_t paramValueSizeRet = 0;
     auto testBinary = std::make_unique<char[]>(knownSourceSize);
 
@@ -173,7 +159,7 @@ TEST_P(ProgramFromBinaryTest, GivenNonNullParamValueAndParamValueSizeZeroWhenGet
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenInvalidParametersWhenGettingProgramInfoThenValueSizeRetIsNotUpdated) {
+TEST_F(ProgramFromBinaryTest, GivenInvalidParametersWhenGettingProgramInfoThenValueSizeRetIsNotUpdated) {
     size_t paramValueSizeRet = 0x1234;
     auto testBinary = std::make_unique<char[]>(knownSourceSize);
 
@@ -186,7 +172,7 @@ TEST_P(ProgramFromBinaryTest, GivenInvalidParametersWhenGettingProgramInfoThenVa
     EXPECT_EQ(0x1234u, paramValueSizeRet);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenInvalidParamWhenGettingProgramBinaryInfoThenInvalidValueErrorIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenInvalidParamWhenGettingProgramBinaryInfoThenInvalidValueErrorIsReturned) {
     size_t paramValueSizeRet = 0;
     auto testBinary = std::make_unique<char[]>(knownSourceSize);
 
@@ -198,7 +184,7 @@ TEST_P(ProgramFromBinaryTest, GivenInvalidParamWhenGettingProgramBinaryInfoThenI
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_P(ProgramFromBinaryTest, WhenGettingBinarySizesThenCorrectSizesAreReturned) {
+TEST_F(ProgramFromBinaryTest, WhenGettingBinarySizesThenCorrectSizesAreReturned) {
     size_t paramValueSize = sizeof(size_t *);
     size_t paramValue[1];
     size_t paramValueSizeRet = 0;
@@ -214,7 +200,7 @@ TEST_P(ProgramFromBinaryTest, WhenGettingBinarySizesThenCorrectSizesAreReturned)
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenProgramWithOneKernelWhenGettingNumKernelsThenOneIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenProgramWithOneKernelWhenGettingNumKernelsThenOneIsReturned) {
     size_t paramValue = 0;
     size_t paramValueSize = sizeof(paramValue);
     size_t paramValueSizeRet = 0;
@@ -236,12 +222,12 @@ TEST_P(ProgramFromBinaryTest, GivenProgramWithOneKernelWhenGettingNumKernelsThen
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingNumKernelsThenInvalidProgramExecutableErrorIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingNumKernelsThenInvalidProgramExecutableErrorIsReturned) {
     size_t paramValue = 0;
     size_t paramValueSize = sizeof(paramValue);
     size_t paramValueSizeRet = 0;
 
-    CreateProgramFromBinary(pContext, pContext->getDevices(), BinaryFileName);
+    CreateProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
     MockProgram *p = pProgram;
     p->setBuildStatus(CL_BUILD_NONE);
 
@@ -253,7 +239,7 @@ TEST_P(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingNumKern
     EXPECT_EQ(CL_INVALID_PROGRAM_EXECUTABLE, retVal);
 }
 
-TEST_P(ProgramFromBinaryTest, WhenGettingKernelNamesThenCorrectNameIsReturned) {
+TEST_F(ProgramFromBinaryTest, WhenGettingKernelNamesThenCorrectNameIsReturned) {
     size_t paramValueSize = sizeof(size_t *);
     size_t paramValueSizeRet = 0;
 
@@ -289,11 +275,11 @@ TEST_P(ProgramFromBinaryTest, WhenGettingKernelNamesThenCorrectNameIsReturned) {
     EXPECT_EQ(expectedKernelsStringSize, paramValueSizeRet);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingKernelNamesThenInvalidProgramExecutableErrorIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingKernelNamesThenInvalidProgramExecutableErrorIsReturned) {
     size_t paramValueSize = sizeof(size_t *);
     size_t paramValueSizeRet = 0;
 
-    CreateProgramFromBinary(pContext, pContext->getDevices(), BinaryFileName);
+    CreateProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
     MockProgram *p = pProgram;
     p->setBuildStatus(CL_BUILD_NONE);
 
@@ -305,7 +291,7 @@ TEST_P(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingKernelN
     EXPECT_EQ(CL_INVALID_PROGRAM_EXECUTABLE, retVal);
 }
 
-TEST_P(ProgramFromBinaryTest, WhenGettingProgramScopeGlobalCtorsAndDtorsPresentInfoThenCorrectValueIsReturned) {
+TEST_F(ProgramFromBinaryTest, WhenGettingProgramScopeGlobalCtorsAndDtorsPresentInfoThenCorrectValueIsReturned) {
     cl_uint paramRet = 0;
     cl_uint expectedParam = CL_FALSE;
     size_t paramSizeRet = 0;
@@ -331,7 +317,7 @@ TEST_P(ProgramFromBinaryTest, WhenGettingProgramScopeGlobalCtorsAndDtorsPresentI
     EXPECT_EQ(expectedParam, paramRet);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenNullDeviceWhenGettingBuildStatusThenBuildNoneIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenNullDeviceWhenGettingBuildStatusThenBuildNoneIsReturned) {
     cl_device_id device = pClDevice;
     cl_build_status buildStatus = 0;
     size_t paramValueSize = sizeof(buildStatus);
@@ -349,7 +335,7 @@ TEST_P(ProgramFromBinaryTest, GivenNullDeviceWhenGettingBuildStatusThenBuildNone
     EXPECT_EQ(CL_BUILD_NONE, buildStatus);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenInvalidParametersWhenGettingBuildInfoThenValueSizeRetIsNotUpdated) {
+TEST_F(ProgramFromBinaryTest, GivenInvalidParametersWhenGettingBuildInfoThenValueSizeRetIsNotUpdated) {
     cl_device_id device = pClDevice;
     cl_build_status buildStatus = 0;
     size_t paramValueSize = sizeof(buildStatus);
@@ -366,7 +352,7 @@ TEST_P(ProgramFromBinaryTest, GivenInvalidParametersWhenGettingBuildInfoThenValu
     EXPECT_EQ(0x1234u, paramValueSizeRet);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenDefaultDeviceWhenGettingBuildOptionsThenBuildOptionsAreEmpty) {
+TEST_F(ProgramFromBinaryTest, GivenDefaultDeviceWhenGettingBuildOptionsThenBuildOptionsAreEmpty) {
     cl_device_id device = pClDevice;
     size_t paramValueSizeRet = 0u;
     size_t paramValueSize = 0u;
@@ -395,7 +381,7 @@ TEST_P(ProgramFromBinaryTest, GivenDefaultDeviceWhenGettingBuildOptionsThenBuild
     EXPECT_STREQ("", (char *)paramValue.get());
 }
 
-TEST_P(ProgramFromBinaryTest, GivenDefaultDeviceWhenGettingLogThenLogEmpty) {
+TEST_F(ProgramFromBinaryTest, GivenDefaultDeviceWhenGettingLogThenLogEmpty) {
     cl_device_id device = pClDevice;
     size_t paramValueSizeRet = 0u;
     size_t paramValueSize = 0u;
@@ -424,7 +410,7 @@ TEST_P(ProgramFromBinaryTest, GivenDefaultDeviceWhenGettingLogThenLogEmpty) {
     EXPECT_STREQ("", (char *)paramValue.get());
 }
 
-TEST_P(ProgramFromBinaryTest, GivenLogEntriesWhenGetBuildLogThenLogIsApended) {
+TEST_F(ProgramFromBinaryTest, GivenLogEntriesWhenGetBuildLogThenLogIsApended) {
     cl_device_id device = pClDevice;
     size_t paramValueSizeRet = 0u;
     size_t paramValueSize = 0u;
@@ -484,7 +470,7 @@ TEST_P(ProgramFromBinaryTest, GivenLogEntriesWhenGetBuildLogThenLogIsApended) {
     ASSERT_NE(nullptr, strstr(paramValueContinued, "several"));
 }
 
-TEST_P(ProgramFromBinaryTest, GivenNullParamValueWhenGettingProgramBinaryTypeThenParamValueSizeIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenNullParamValueWhenGettingProgramBinaryTypeThenParamValueSizeIsReturned) {
     cl_device_id device = pClDevice;
     size_t paramValueSizeRet = 0u;
     size_t paramValueSize = 0u;
@@ -500,7 +486,7 @@ TEST_P(ProgramFromBinaryTest, GivenNullParamValueWhenGettingProgramBinaryTypeThe
     EXPECT_NE(paramValueSizeRet, 0u);
 }
 
-TEST_P(ProgramFromBinaryTest, WhenGettingProgramBinaryTypeThenCorrectProgramTypeIsReturned) {
+TEST_F(ProgramFromBinaryTest, WhenGettingProgramBinaryTypeThenCorrectProgramTypeIsReturned) {
     cl_device_id device = pClDevice;
     cl_program_binary_type programType = 0;
     char *paramValue = (char *)&programType;
@@ -528,7 +514,7 @@ TEST_P(ProgramFromBinaryTest, WhenGettingProgramBinaryTypeThenCorrectProgramType
     EXPECT_EQ((cl_program_binary_type)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, programType);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenInvalidParamWhenGettingBuildInfoThenInvalidValueErrorIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenInvalidParamWhenGettingBuildInfoThenInvalidValueErrorIsReturned) {
     cl_device_id device = pClDevice;
     size_t paramValueSizeRet = 0u;
 
@@ -541,7 +527,7 @@ TEST_P(ProgramFromBinaryTest, GivenInvalidParamWhenGettingBuildInfoThenInvalidVa
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_P(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlobalVariableTotalSizeThenCorrectSizeIsReturned) {
+TEST_F(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlobalVariableTotalSizeThenCorrectSizeIsReturned) {
     cl_device_id device = pClDevice;
     size_t globalVarSize = 22;
     size_t paramValueSize = sizeof(globalVarSize);
@@ -561,7 +547,7 @@ TEST_P(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlo
     EXPECT_EQ(globalVarSize, 0u);
 
     // Set GlobalVariableTotalSize as 1024
-    CreateProgramFromBinary(pContext, pContext->getDevices(), BinaryFileName);
+    CreateProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
     MockProgram *p = pProgram;
     ProgramInfo programInfo;
 
@@ -586,7 +572,7 @@ TEST_P(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlo
     }
 }
 
-TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphicsAllocationInKernelInfo) {
+TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphicsAllocationInKernelInfo) {
     pProgram->build(pProgram->getDevices(), nullptr, true);
     auto kernelInfo = pProgram->getKernelInfo(size_t(0), rootDeviceIndex);
 
@@ -602,7 +588,7 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     EXPECT_EQ(GmmHelper::decanonize(graphicsAllocation->getGpuBaseAddress()), pDevice->getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, graphicsAllocation->isAllocatedInLocalMemoryPool()));
 }
 
-TEST_P(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreed) {
+TEST_F(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreed) {
     pProgram->build(pProgram->getDevices(), nullptr, true);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
@@ -618,7 +604,7 @@ TEST_P(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffers
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
 }
 
-TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {
+TEST_F(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {
     pProgram->build(pProgram->getDevices(), nullptr, true);
     EXPECT_EQ(1u, pProgram->getNumKernels());
     for (auto i = 0u; i < pProgram->buildInfos.size(); i++) {
@@ -627,7 +613,7 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelA
     EXPECT_EQ(0u, pProgram->getNumKernels());
 }
 
-HWTEST_P(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButGpuIsNotYetDoneThenKernelAllocationIsPutOnDeferredFreeListAndCsrRegistersCacheFlush) {
+HWTEST_F(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButGpuIsNotYetDoneThenKernelAllocationIsPutOnDeferredFreeListAndCsrRegistersCacheFlush) {
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     pProgram->build(pProgram->getDevices(), nullptr, true);
@@ -640,7 +626,7 @@ HWTEST_P(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledBu
     EXPECT_TRUE(this->pDevice->getUltCommandStreamReceiver<FamilyType>().requiresInstructionCacheFlush);
 }
 
-HWTEST_P(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDeletedItRegistersCacheFlushInEveryCsrThatUsedIt) {
+HWTEST_F(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDeletedItRegistersCacheFlushInEveryCsrThatUsedIt) {
     auto &csr0 = this->pDevice->getUltCommandStreamReceiverFromIndex<FamilyType>(0u);
     auto &csr1 = this->pDevice->getUltCommandStreamReceiverFromIndex<FamilyType>(1u);
 
@@ -665,13 +651,13 @@ HWTEST_P(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
     EXPECT_TRUE(csr1.requiresInstructionCacheFlush);
 }
 
-TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
-    KernelBinaryHelper kbHelper(BinaryFileName, true);
+TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
+    KernelBinaryHelper kbHelper(binaryFileName, true);
     auto device = pPlatform->getClDevice(0);
 
     CreateProgramWithSource(
         pContext,
-        SourceFileName);
+        sourceFileName);
 
     // Order of following microtests is important - do not change.
     // Add new microtests at end.
@@ -766,8 +752,8 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
-TEST_P(ProgramFromSourceTest, CreateWithSource_Build_Options_Duplicate) {
-    KernelBinaryHelper kbHelper(BinaryFileName, false);
+TEST_F(ProgramFromSourceTest, CreateWithSource_Build_Options_Duplicate) {
+    KernelBinaryHelper kbHelper(binaryFileName, false);
 
     retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -785,7 +771,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build_Options_Duplicate) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAreNotAdded) {
+TEST_F(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAreNotAdded) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -800,7 +786,7 @@ TEST_P(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAreNotAdded) {
     EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
 }
 
-TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdded) {
+TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdded) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -822,7 +808,7 @@ TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     EXPECT_EQ(1, MockProgram::initInternalOptionsCalled);
 }
 
-TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAddedOnlyOnce) {
+TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAddedOnlyOnce) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -844,7 +830,7 @@ TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     EXPECT_EQ(std::string::npos, pos);
 }
 
-TEST_P(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesAreNotAdded) {
+TEST_F(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesAreNotAdded) {
     auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = static_cast<ClDevice *>(devices[0]);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
@@ -861,7 +847,7 @@ TEST_P(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesAreNotAdded) {
     EXPECT_EQ(1, MockProgram::initInternalOptionsCalled);
 }
 
-TEST_P(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesAreAdded) {
+TEST_F(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesAreAdded) {
     auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
@@ -908,14 +894,14 @@ class Callback {
 
 std::map<const void *, uint32_t> Callback::watchList;
 
-TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramThenKernelHashesAreDifferent) {
-    KernelBinaryHelper kbHelper(BinaryFileName, true);
+TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramThenKernelHashesAreDifferent) {
+    KernelBinaryHelper kbHelper(binaryFileName, true);
 
     auto rootDeviceIndex = pContext->getDevice(0)->getRootDeviceIndex();
 
     CreateProgramWithSource(
         pContext,
-        SourceFileName);
+        sourceFileName);
 
     Callback callback;
 
@@ -967,17 +953,17 @@ TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::unwatch(kernel4);
 }
 
-TEST_P(ProgramFromSourceTest, GivenEmptyProgramWhenCreatingProgramThenInvalidValueErrorIsReturned) {
+TEST_F(ProgramFromSourceTest, GivenEmptyProgramWhenCreatingProgramThenInvalidValueErrorIsReturned) {
     auto p = Program::create(pContext, 0, nullptr, nullptr, retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
     EXPECT_EQ(nullptr, p);
     delete p;
 }
 
-TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
+TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
     CreateProgramWithSource(
         pContext,
-        SourceFileName);
+        sourceFileName);
 
     cl_program inputHeaders;
     const char *headerIncludeNames = "";
@@ -1058,7 +1044,7 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHaveBeenApplied) {
+TEST_F(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHaveBeenApplied) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pDevice = pContext->getDevice(0);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -1123,7 +1109,7 @@ TEST_F(ProgramTests, GivenFlagsWhenLinkingProgramThenBuildOptionsHaveBeenApplied
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << cip->buildInternalOptions;
 }
 
-TEST_P(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccessIsReturned) {
+TEST_F(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccessIsReturned) {
     std::string testFile;
     size_t sourceSize = 0;
 
@@ -1175,10 +1161,10 @@ TEST_P(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccess
         delete[] ptr;
 }
 
-TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
+TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
     CreateProgramWithSource(
         pContext,
-        SourceFileName);
+        sourceFileName);
 
     cl_program program = pProgram;
     cl_program nullprogram = nullptr;
@@ -1243,7 +1229,7 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectErrorIsReturned) {
+TEST_F(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectErrorIsReturned) {
     cl_program program = pProgram;
 
     // Order of following microtests is important - do not change.
@@ -1551,19 +1537,6 @@ TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     retVal = pProgram->processGenBinary(*device);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
-
-INSTANTIATE_TEST_CASE_P(ProgramFromBinaryTests,
-                        ProgramFromBinaryTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(BinaryFileNames),
-                            ::testing::ValuesIn(KernelNames)));
-
-INSTANTIATE_TEST_CASE_P(ProgramFromSourceTests,
-                        ProgramFromSourceTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(SourceFileNames),
-                            ::testing::ValuesIn(BinaryForSourceFileNames),
-                            ::testing::ValuesIn(KernelNames)));
 
 using ProgramWithDebugSymbolsTests = Test<ProgramSimpleFixture>;
 

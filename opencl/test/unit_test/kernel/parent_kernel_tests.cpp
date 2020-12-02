@@ -16,8 +16,6 @@
 
 using namespace NEO;
 
-typedef ExecutionModelKernelFixture ParentKernelFromBinaryTest;
-
 class MockKernelWithArgumentAccess : public Kernel {
   public:
     std::vector<SimpleKernelArgInfo> &getKernelArguments() {
@@ -194,16 +192,14 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenPrivateMemoryForBlocksIsA
     EXPECT_NE(nullptr, program->getBlockKernelManager()->getPrivateSurface(program->getBlockKernelManager()->getCount() - 1));
 }
 
-TEST_P(ParentKernelFromBinaryTest, GivenParentKernelWhenGettingInstructionHeapSizeForExecutionModelThenSizeIsGreaterThanZero) {
+struct ParentKernelFromBinaryTest : public ExecutionModelKernelFixture {
+
+    void SetUp() override {
+        ExecutionModelKernelFixture::SetUp("simple_block_kernel", "simple_block_kernel");
+    }
+};
+
+TEST_F(ParentKernelFromBinaryTest, GivenParentKernelWhenGettingInstructionHeapSizeForExecutionModelThenSizeIsGreaterThanZero) {
     EXPECT_TRUE(pKernel->isParentKernel);
     EXPECT_LT(0u, pKernel->getInstructionHeapSizeForExecutionModel());
 }
-
-static const char *binaryFile = "simple_block_kernel";
-static const char *KernelNames[] = {"simple_block_kernel"};
-
-INSTANTIATE_TEST_CASE_P(ParentKernelFromBinaryTest,
-                        ParentKernelFromBinaryTest,
-                        ::testing::Combine(
-                            ::testing::Values(binaryFile),
-                            ::testing::ValuesIn(KernelNames)));

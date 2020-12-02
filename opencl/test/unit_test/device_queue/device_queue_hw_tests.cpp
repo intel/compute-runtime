@@ -480,12 +480,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, WhenCreatingDeviceQueueThenDshOff
     delete deviceQueue;
 }
 
-class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture {
+class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture,
+                                public ::testing::WithParamInterface<std::tuple<const char *, const char *>> {
   public:
     void SetUp() override {
         REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
 
-        ExecutionModelKernelFixture::SetUp();
+        ExecutionModelKernelFixture::SetUp(std::get<0>(GetParam()), std::get<1>(GetParam()));
         cl_queue_properties properties[5] = {
             CL_QUEUE_PROPERTIES,
             CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,

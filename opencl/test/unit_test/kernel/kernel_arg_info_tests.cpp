@@ -86,12 +86,12 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
     KernelBinaryHelper *kbHelper = nullptr;
 };
 
-TEST_P(KernelArgInfoTest, GivenNullWhenGettingKernelInfoThenNullIsReturned) {
+TEST_F(KernelArgInfoTest, GivenNullWhenGettingKernelInfoThenNullIsReturned) {
     auto kernelInfo = this->pProgram->getKernelInfo(nullptr, 0);
     EXPECT_EQ(nullptr, kernelInfo);
 }
 
-TEST_P(KernelArgInfoTest, GivenInvalidParametersWhenGettingKernelArgInfoThenValueSizeRetIsNotUpdated) {
+TEST_F(KernelArgInfoTest, GivenInvalidParametersWhenGettingKernelArgInfoThenValueSizeRetIsNotUpdated) {
     size_t paramValueSizeRet = 0x1234;
 
     retVal = pKernel->getArgInfo(
@@ -104,25 +104,25 @@ TEST_P(KernelArgInfoTest, GivenInvalidParametersWhenGettingKernelArgInfoThenValu
     EXPECT_EQ(0x1234u, paramValueSizeRet);
 }
 
-TEST_P(KernelArgInfoTest, GivenKernelArgAccessQualifierWhenQueryingArgInfoThenKernelArgAcessNoneIsReturned) {
+TEST_F(KernelArgInfoTest, GivenKernelArgAccessQualifierWhenQueryingArgInfoThenKernelArgAcessNoneIsReturned) {
     cl_kernel_arg_access_qualifier param_value = 0;
     queryArgInfo<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_QUALIFIER, param_value);
     EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_NONE), param_value);
 }
 
-TEST_P(KernelArgInfoTest, GivenKernelArgAddressQualifierWhenQueryingArgInfoThenKernelArgAddressGlobalIsReturned) {
+TEST_F(KernelArgInfoTest, GivenKernelArgAddressQualifierWhenQueryingArgInfoThenKernelArgAddressGlobalIsReturned) {
     cl_kernel_arg_address_qualifier param_value = 0;
     queryArgInfo<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_QUALIFIER, param_value);
     EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_GLOBAL), param_value);
 }
 
-TEST_P(KernelArgInfoTest, GivenKernelArgTypeQualifierWhenQueryingArgInfoThenKernelArgTypeNoneIsReturned) {
+TEST_F(KernelArgInfoTest, GivenKernelArgTypeQualifierWhenQueryingArgInfoThenKernelArgTypeNoneIsReturned) {
     cl_kernel_arg_type_qualifier param_value = 0;
     queryArgInfo<cl_kernel_arg_type_qualifier>(CL_KERNEL_ARG_TYPE_QUALIFIER, param_value);
     EXPECT_EQ(static_cast<cl_kernel_arg_type_qualifier>(CL_KERNEL_ARG_TYPE_NONE), param_value);
 }
 
-TEST_P(KernelArgInfoTest, GivenParamWhenGettingKernelTypeNameThenCorrectValueIsReturned) {
+TEST_F(KernelArgInfoTest, GivenParamWhenGettingKernelTypeNameThenCorrectValueIsReturned) {
     cl_kernel_arg_info paramName = CL_KERNEL_ARG_TYPE_NAME;
     char *paramValue = nullptr;
     size_t paramValueSize = 0;
@@ -157,7 +157,7 @@ TEST_P(KernelArgInfoTest, GivenParamWhenGettingKernelTypeNameThenCorrectValueIsR
     delete[] paramValue;
 }
 
-TEST_P(KernelArgInfoTest, GivenParamWhenGettingKernelArgNameThenCorrectValueIsReturned) {
+TEST_F(KernelArgInfoTest, GivenParamWhenGettingKernelArgNameThenCorrectValueIsReturned) {
     cl_kernel_arg_info paramName = CL_KERNEL_ARG_NAME;
     char *paramValue = nullptr;
     size_t paramValueSize = 0;
@@ -189,10 +189,3 @@ TEST_P(KernelArgInfoTest, GivenParamWhenGettingKernelArgNameThenCorrectValueIsRe
     EXPECT_EQ(0, strcmp(paramValue, "src"));
     delete[] paramValue;
 }
-
-INSTANTIATE_TEST_CASE_P(KernelArgInfoTests,
-                        KernelArgInfoTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(SourceFileNames),
-                            ::testing::ValuesIn(BinaryForSourceFileNames),
-                            ::testing::ValuesIn(KernelNames)));

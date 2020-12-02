@@ -1068,8 +1068,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     delete[] mockDsh;
 }
 
-typedef ExecutionModelKernelFixture ParentKernelCommandsFromBinaryTest;
+struct ParentKernelCommandsFromBinaryTest : public ExecutionModelKernelFixture,
+                                            public ::testing::WithParamInterface<std::tuple<const char *, const char *>> {
 
+    void SetUp() override {
+
+        ExecutionModelKernelFixture::SetUp(std::get<0>(GetParam()), std::get<1>(GetParam()));
+    }
+};
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, WhenGettingSizeRequiredForExecutionModelForSurfaceStatesThenReturnSizeOfBlocksPlusMaxBindingTableSizeForAllIdtEntriesAndSchedulerSshSize) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
 

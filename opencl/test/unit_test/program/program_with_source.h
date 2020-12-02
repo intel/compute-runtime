@@ -31,8 +31,10 @@ class ProgramFromSourceTest : public ContextFixture,
 
   protected:
     void SetUp() override {
-        std::tie(SourceFileName, BinaryFileName, kernelName) = GetParam();
-        kbHelper = new KernelBinaryHelper(BinaryFileName);
+        sourceFileName = "CopyBuffer_simd16.cl";
+        binaryFileName = "CopyBuffer_simd16";
+        kernelName = "CopyBuffer";
+        kbHelper = new KernelBinaryHelper(binaryFileName);
 
         PlatformFixture::SetUp();
         cl_device_id device = pPlatform->getClDevice(0);
@@ -42,7 +44,7 @@ class ProgramFromSourceTest : public ContextFixture,
 
         CreateProgramWithSource(
             pContext,
-            SourceFileName);
+            sourceFileName);
     }
 
     void TearDown() override {
@@ -54,8 +56,8 @@ class ProgramFromSourceTest : public ContextFixture,
     }
 
     KernelBinaryHelper *kbHelper = nullptr;
-    const char *SourceFileName = nullptr;
-    const char *BinaryFileName = nullptr;
+    const char *sourceFileName = nullptr;
+    const char *binaryFileName = nullptr;
     const char *kernelName = nullptr;
     cl_int retVal = CL_SUCCESS;
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();

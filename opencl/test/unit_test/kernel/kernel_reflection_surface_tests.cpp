@@ -33,7 +33,14 @@
 
 using namespace NEO;
 
-typedef ExecutionModelKernelFixture KernelReflectionSurfaceTest;
+struct KernelReflectionSurfaceTest : public ExecutionModelKernelFixture,
+                                     public ::testing::WithParamInterface<std::tuple<const char *, const char *>> {
+
+    void SetUp() override {
+
+        ExecutionModelKernelFixture::SetUp(std::get<0>(GetParam()), std::get<1>(GetParam()));
+    }
+};
 typedef ExecutionModelKernelTest KernelReflectionSurfaceWithQueueTest;
 
 TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelThenKernelReflectionSurfaceIsNull) {

@@ -16,17 +16,17 @@
 
 using namespace NEO;
 
-class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
-                                    public PlatformFixture {
-  protected:
-    void SetUp() override {
+struct ExecutionModelKernelFixture : public ProgramFromBinaryFixture,
+                                     public PlatformFixture {
+    using ProgramFromBinaryFixture::SetUp;
+    void SetUp(const char *binaryFileName, const char *kernelName) {
         REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
 
         PlatformFixture::SetUp();
 
         std::string options("-cl-std=CL2.0");
         this->setOptions(options);
-        ProgramFromBinaryTest::SetUp();
+        ProgramFromBinaryFixture::SetUp(binaryFileName, kernelName);
 
         ASSERT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -55,7 +55,7 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
             pKernel->release();
         }
 
-        ProgramFromBinaryTest::TearDown();
+        ProgramFromBinaryFixture::TearDown();
         PlatformFixture::TearDown();
 
         if (pDevice != nullptr) {

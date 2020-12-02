@@ -50,13 +50,14 @@ class DeviceQueueFixture {
 
 class ExecutionModelKernelTest : public ExecutionModelKernelFixture,
                                  public CommandQueueHwFixture,
-                                 public DeviceQueueFixture {
+                                 public DeviceQueueFixture,
+                                 public ::testing::WithParamInterface<std::tuple<const char *, const char *>> {
   public:
     void SetUp() override {
         REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
 
         DebugManager.flags.EnableTimestampPacket.set(0);
-        ExecutionModelKernelFixture::SetUp();
+        ExecutionModelKernelFixture::SetUp(std::get<0>(GetParam()), std::get<1>(GetParam()));
         CommandQueueHwFixture::SetUp(pClDevice, 0);
         DeviceQueueFixture::SetUp(context, pClDevice);
     }

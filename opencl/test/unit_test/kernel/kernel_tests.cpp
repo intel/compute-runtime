@@ -48,13 +48,13 @@
 using namespace NEO;
 using namespace DeviceHostQueue;
 
-class KernelTest : public ProgramFromBinaryTest {
+class KernelTests : public ProgramFromBinaryFixture {
   public:
-    ~KernelTest() override = default;
+    ~KernelTests() override = default;
 
   protected:
     void SetUp() override {
-        ProgramFromBinaryTest::SetUp();
+        ProgramFromBinaryFixture::SetUp("CopyBuffer_simd32", "CopyBuffer");
         ASSERT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -78,7 +78,7 @@ class KernelTest : public ProgramFromBinaryTest {
         delete pKernel;
         pKernel = nullptr;
         knownSource.reset();
-        ProgramFromBinaryTest::TearDown();
+        ProgramFromBinaryFixture::TearDown();
     }
 
     Kernel *pKernel = nullptr;
@@ -96,12 +96,12 @@ TEST(KernelTest, WhenKernelIsCreatedThenCorrectMembersAreMemObjects) {
     EXPECT_FALSE(Kernel::isMemObj(Kernel::SVM_ALLOC_OBJ));
 }
 
-TEST_P(KernelTest, WhenKernelIsCreatedThenKernelHeapIsCorrect) {
+TEST_F(KernelTests, WhenKernelIsCreatedThenKernelHeapIsCorrect) {
     EXPECT_EQ(pKernel->getKernelInfo().heapInfo.pKernelHeap, pKernel->getKernelHeap());
     EXPECT_EQ(pKernel->getKernelInfo().heapInfo.KernelHeapSize, pKernel->getKernelHeapSize());
 }
 
-TEST_P(KernelTest, GivenInvalidParamNameWhenGettingInfoThenInvalidValueErrorIsReturned) {
+TEST_F(KernelTests, GivenInvalidParamNameWhenGettingInfoThenInvalidValueErrorIsReturned) {
     size_t paramValueSizeRet = 0;
 
     // get size
@@ -114,7 +114,7 @@ TEST_P(KernelTest, GivenInvalidParamNameWhenGettingInfoThenInvalidValueErrorIsRe
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_P(KernelTest, GivenInvalidParametersWhenGettingInfoThenValueSizeRetIsNotUpdated) {
+TEST_F(KernelTests, GivenInvalidParametersWhenGettingInfoThenValueSizeRetIsNotUpdated) {
     size_t paramValueSizeRet = 0x1234;
 
     // get size
@@ -128,7 +128,7 @@ TEST_P(KernelTest, GivenInvalidParametersWhenGettingInfoThenValueSizeRetIsNotUpd
     EXPECT_EQ(0x1234u, paramValueSizeRet);
 }
 
-TEST_P(KernelTest, GivenKernelFunctionNameWhenGettingInfoThenKernelFunctionNameIsReturned) {
+TEST_F(KernelTests, GivenKernelFunctionNameWhenGettingInfoThenKernelFunctionNameIsReturned) {
     cl_kernel_info paramName = CL_KERNEL_FUNCTION_NAME;
     size_t paramValueSize = 0;
     char *paramValue = nullptr;
@@ -162,7 +162,7 @@ TEST_P(KernelTest, GivenKernelFunctionNameWhenGettingInfoThenKernelFunctionNameI
     delete[] paramValue;
 }
 
-TEST_P(KernelTest, GivenKernelBinaryProgramIntelWhenGettingInfoThenKernelBinaryIsReturned) {
+TEST_F(KernelTests, GivenKernelBinaryProgramIntelWhenGettingInfoThenKernelBinaryIsReturned) {
     cl_kernel_info paramName = CL_KERNEL_BINARY_PROGRAM_INTEL;
     size_t paramValueSize = 0;
     char *paramValue = nullptr;
@@ -197,7 +197,7 @@ TEST_P(KernelTest, GivenKernelBinaryProgramIntelWhenGettingInfoThenKernelBinaryI
     delete[] paramValue;
 }
 
-TEST_P(KernelTest, givenBinaryWhenItIsQueriedForGpuAddressThenAbsoluteAddressIsReturned) {
+TEST_F(KernelTests, givenBinaryWhenItIsQueriedForGpuAddressThenAbsoluteAddressIsReturned) {
     cl_kernel_info paramName = CL_KERNEL_BINARY_GPU_ADDRESS_INTEL;
     uint64_t paramValue = 0llu;
     size_t paramValueSize = sizeof(paramValue);
@@ -215,7 +215,7 @@ TEST_P(KernelTest, givenBinaryWhenItIsQueriedForGpuAddressThenAbsoluteAddressIsR
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
 
-TEST_P(KernelTest, GivenKernelNumArgsWhenGettingInfoThenNumberOfKernelArgsIsReturned) {
+TEST_F(KernelTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKernelArgsIsReturned) {
     cl_kernel_info paramName = CL_KERNEL_NUM_ARGS;
     size_t paramValueSize = sizeof(cl_uint);
     cl_uint paramValue = 0;
@@ -233,7 +233,7 @@ TEST_P(KernelTest, GivenKernelNumArgsWhenGettingInfoThenNumberOfKernelArgsIsRetu
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(KernelTest, GivenKernelProgramWhenGettingInfoThenProgramIsReturned) {
+TEST_F(KernelTests, GivenKernelProgramWhenGettingInfoThenProgramIsReturned) {
     cl_kernel_info paramName = CL_KERNEL_PROGRAM;
     size_t paramValueSize = sizeof(cl_program);
     cl_program paramValue = 0;
@@ -252,7 +252,7 @@ TEST_P(KernelTest, GivenKernelProgramWhenGettingInfoThenProgramIsReturned) {
     EXPECT_EQ(prog, paramValue);
 }
 
-TEST_P(KernelTest, GivenKernelContextWhenGettingInfoThenKernelContextIsReturned) {
+TEST_F(KernelTests, GivenKernelContextWhenGettingInfoThenKernelContextIsReturned) {
     cl_kernel_info paramName = CL_KERNEL_CONTEXT;
     cl_context paramValue = 0;
     size_t paramValueSize = sizeof(paramValue);
@@ -271,7 +271,7 @@ TEST_P(KernelTest, GivenKernelContextWhenGettingInfoThenKernelContextIsReturned)
     EXPECT_EQ(context, paramValue);
 }
 
-TEST_P(KernelTest, GivenKernelWorkGroupSizeWhenGettingWorkGroupInfoThenWorkGroupSizeIsReturned) {
+TEST_F(KernelTests, GivenKernelWorkGroupSizeWhenGettingWorkGroupInfoThenWorkGroupSizeIsReturned) {
     cl_kernel_info paramName = CL_KERNEL_WORK_GROUP_SIZE;
     size_t paramValue = 0;
     size_t paramValueSize = sizeof(paramValue);
@@ -292,7 +292,7 @@ TEST_P(KernelTest, GivenKernelWorkGroupSizeWhenGettingWorkGroupInfoThenWorkGroup
     EXPECT_EQ(kernelMaxWorkGroupSize, paramValue);
 }
 
-TEST_P(KernelTest, GivenKernelCompileWorkGroupSizeWhenGettingWorkGroupInfoThenCompileWorkGroupSizeIsReturned) {
+TEST_F(KernelTests, GivenKernelCompileWorkGroupSizeWhenGettingWorkGroupInfoThenCompileWorkGroupSizeIsReturned) {
     cl_kernel_info paramName = CL_KERNEL_COMPILE_WORK_GROUP_SIZE;
     size_t paramValue[3];
     size_t paramValueSize = sizeof(paramValue);
@@ -309,7 +309,7 @@ TEST_P(KernelTest, GivenKernelCompileWorkGroupSizeWhenGettingWorkGroupInfoThenCo
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
 
-TEST_P(KernelTest, GivenInvalidParamNameWhenGettingWorkGroupInfoThenInvalidValueErrorIsReturned) {
+TEST_F(KernelTests, GivenInvalidParamNameWhenGettingWorkGroupInfoThenInvalidValueErrorIsReturned) {
     size_t paramValueSizeRet = 0x1234u;
 
     retVal = pKernel->getWorkGroupInfo(
@@ -322,12 +322,6 @@ TEST_P(KernelTest, GivenInvalidParamNameWhenGettingWorkGroupInfoThenInvalidValue
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
     EXPECT_EQ(0x1234u, paramValueSizeRet);
 }
-
-INSTANTIATE_TEST_CASE_P(KernelTests,
-                        KernelTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(BinaryFileNames),
-                            ::testing::ValuesIn(KernelNames)));
 
 class KernelFromBinaryTest : public ProgramSimpleFixture {
   public:
