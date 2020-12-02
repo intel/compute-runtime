@@ -367,14 +367,11 @@ int main(int argc, char *argv[]) {
     ze_context_handle_t context = nullptr;
     auto device = zelloInitContextAndGetDevices(context);
 
-    if (verbose) {
-        ze_device_properties_t deviceProperties = {};
-        SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-        std::cout << deviceProperties.name << std::endl;
-        std::cout << "Device : \n"
-                  << " * name : " << deviceProperties.name << "\n"
-                  << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
-    }
+    ze_device_properties_t deviceProperties = {};
+    SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
+    std::cout << "Device : \n"
+              << " * name : " << deviceProperties.name << "\n"
+              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
 
     bool result;
     std::string currentTest;

@@ -202,14 +202,11 @@ int main(int argc, char *argv[]) {
     auto device = zelloInitContextAndGetDevices(context);
     bool outputValidationSuccessful;
 
-    if (verbose) {
-        ze_device_properties_t deviceProperties = {};
-        SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-        std::cout << deviceProperties.name << std::endl;
-        std::cout << "Device : \n"
-                  << " * name : " << deviceProperties.name << "\n"
-                  << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
-    }
+    ze_device_properties_t deviceProperties = {};
+    SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
+    std::cout << "Device : \n"
+              << " * name : " << deviceProperties.name << "\n"
+              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
 
     executeKernelAndValidate(context, device, outputValidationSuccessful);
 

@@ -61,7 +61,7 @@ void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t context, ze
 }
 
 void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
-    const size_t allocSize = 4096 + 7; // +7 to brake alignment and make it harder
+    const size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
     char *hostBuffer;
     void *zeBuffer = nullptr;
     char stackBuffer[allocSize];
@@ -453,11 +453,12 @@ int main(int argc, char *argv[]) {
     auto device = zelloInitContextAndGetDevices(context);
     bool outputValidationSuccessful = false;
 
-    if (verbose) {
-        ze_device_properties_t deviceProperties = {};
-        SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-        std::cout << deviceProperties.name << std::endl;
-    }
+    ze_device_properties_t deviceProperties = {};
+    SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
+    std::cout << "Device : \n"
+              << " * name : " << deviceProperties.name << "\n"
+              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+
     testAppendMemoryCopyFromHeapToDeviceToStack(context, device, outputValidationSuccessful);
     if (outputValidationSuccessful)
         testAppendMemoryCopyFromHostToDeviceToStack(context, device, outputValidationSuccessful);
