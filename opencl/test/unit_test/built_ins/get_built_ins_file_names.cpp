@@ -23,7 +23,7 @@ std::vector<std::string> getBuiltInFileNames(bool imagesSupport) {
 std::string getBuiltInHashFileName(uint64_t hash, bool imagesSupport) {
     std::string hashName = "test_files/" + std::to_string(hash);
     if (imagesSupport) {
-        hashName.append(".images");
+        hashName.append("_images");
     }
     hashName.append(".cl");
     return hashName;

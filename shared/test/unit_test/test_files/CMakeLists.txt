@@ -67,7 +67,7 @@ function(neo_shared_copy_test_files target product revision_id)
 endfunction()
 
 file(GLOB_RECURSE TEST_KERNELS *.cl)
-file(GLOB_RECURSE TEST_KERNELS_IMAGES *.images.cl)
+file(GLOB_RECURSE TEST_KERNELS_IMAGES *_images.cl)
 add_custom_target(prepare_test_kernel_for_shared)
 set_target_properties(prepare_test_kernel_for_shared PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}")
 
