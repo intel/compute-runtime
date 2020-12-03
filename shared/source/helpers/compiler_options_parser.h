@@ -14,5 +14,6 @@ namespace NEO {
 extern const std::string clStdOptionName;
 
 bool requiresOpenClCFeatures(const std::string &compileOptions);
+bool requiresAdditionalExtensions(const std::string &compileOptions);
 
 } // namespace NEO

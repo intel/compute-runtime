@@ -236,49 +236,51 @@ TEST_F(OfflineCompilerTests, GoodArgTest) {
 
     delete pOfflineCompiler;
 }
-TEST_F(OfflineCompilerTests, WhenCompilingSourceThenCorrectExtensionsArePassed) {
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        "test_files/copybuffer.cl",
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
 
-    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
-    ASSERT_NE(nullptr, mockOfflineCompiler);
-    mockOfflineCompiler->initialize(argv.size(), argv);
+TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorrectExtensionsArePassed) {
+    std::string clStdOptionValues[] = {"", "-cl-std=CL1.2", "-cl-std=CL2.0", "-cl-std=CL3.0"};
 
-    std::string internalOptions = mockOfflineCompiler->internalOptions;
-    std::string oclVersionOption = getOclVersionCompilerInternalOption(DEFAULT_PLATFORM::hwInfo.capabilityTable.clVersionSupport);
-    EXPECT_THAT(internalOptions, ::testing::HasSubstr(oclVersionOption));
+    for (auto &clStdOptionValue : clStdOptionValues) {
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            "test_files/copybuffer.cl",
+            "-device",
+            gEnvironment->devicePrefix.c_str()};
 
-    OpenClCFeaturesContainer openclCFeatures;
-    getOpenclCFeaturesList(DEFAULT_PLATFORM::hwInfo, openclCFeatures);
-    for (auto &feature : openclCFeatures) {
-        EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr(std::string{feature.name})));
+        if (!clStdOptionValue.empty()) {
+            argv.push_back("-options");
+            argv.push_back(clStdOptionValue);
+        }
+
+        auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+        ASSERT_NE(nullptr, mockOfflineCompiler);
+        mockOfflineCompiler->initialize(argv.size(), argv);
+
+        std::string internalOptions = mockOfflineCompiler->internalOptions;
+        std::string oclVersionOption = getOclVersionCompilerInternalOption(DEFAULT_PLATFORM::hwInfo.capabilityTable.clVersionSupport);
+        EXPECT_THAT(internalOptions, ::testing::HasSubstr(oclVersionOption));
+
+        if (clStdOptionValue == "-cl-std=CL2.0") {
+            auto expectedRegex = std::string{"cl_khr_3d_image_writes"};
+            if (DEFAULT_PLATFORM::hwInfo.capabilityTable.supportsImages) {
+                expectedRegex += ".+" + std::string{"cl_khr_3d_image_writes"};
+            }
+            EXPECT_THAT(internalOptions, ::testing::ContainsRegex(expectedRegex));
+        }
+
+        OpenClCFeaturesContainer openclCFeatures;
+        getOpenclCFeaturesList(DEFAULT_PLATFORM::hwInfo, openclCFeatures);
+        for (auto &feature : openclCFeatures) {
+            if (clStdOptionValue == "-cl-std=CL3.0") {
+                EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string{feature.name}));
+            } else {
+                EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr(std::string{feature.name})));
+            }
+        }
     }
 }
-TEST_F(OfflineCompilerTests, givenClStd30OptionWhenCompilingSourceThenCorrectExtensionsArePassed) {
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        "test_files/copybuffer.cl",
-        "-device",
-        gEnvironment->devicePrefix.c_str(),
-        "-options",
-        "-cl-std=CL3.0"};
 
-    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
-    ASSERT_NE(nullptr, mockOfflineCompiler);
-    mockOfflineCompiler->initialize(argv.size(), argv);
-
-    std::string internalOptions = mockOfflineCompiler->internalOptions;
-    OpenClCFeaturesContainer openclCFeatures;
-    getOpenclCFeaturesList(DEFAULT_PLATFORM::hwInfo, openclCFeatures);
-    for (auto &feature : openclCFeatures) {
-        EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string{feature.name}));
-    }
-}
 TEST_F(OfflineCompilerTests, GoodBuildTest) {
     std::vector<std::string> argv = {
         "ocloc",

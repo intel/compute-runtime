@@ -361,8 +361,8 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         }
     }
 
-    retVal = deviceName.empty() ? 0 : getHardwareInfo(deviceName.c_str());
-    if (retVal != 0) {
+    retVal = deviceName.empty() ? SUCCESS : getHardwareInfo(deviceName.c_str());
+    if (retVal != SUCCESS) {
         argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
         return retVal;
     }
@@ -373,6 +373,9 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         CompilerOptions::concatenateAppend(internalOptions, oclVersion);
 
         std::string extensionsList = getExtensionsList(hwInfo);
+        if (requiresAdditionalExtensions(options)) {
+            extensionsList += "cl_khr_3d_image_writes ";
+        }
         OpenClCFeaturesContainer openclCFeatures;
         if (requiresOpenClCFeatures(options)) {
             getOpenclCFeaturesList(hwInfo, openclCFeatures);

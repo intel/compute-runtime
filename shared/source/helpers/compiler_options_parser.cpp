@@ -14,15 +14,23 @@ namespace NEO {
 
 const std::string clStdOptionName = "-cl-std=CL";
 
-bool requiresOpenClCFeatures(const std::string &compileOptions) {
+uint32_t getMajorVersion(const std::string &compileOptions) {
     auto clStdValuePosition = compileOptions.find(clStdOptionName);
     if (clStdValuePosition == std::string::npos) {
-        return false;
+        return 0;
     }
     std::stringstream ss{compileOptions.c_str() + clStdValuePosition + clStdOptionName.size()};
     uint32_t majorVersion;
     ss >> majorVersion;
-    return (majorVersion >= 3);
+    return majorVersion;
+}
+
+bool requiresOpenClCFeatures(const std::string &compileOptions) {
+    return (getMajorVersion(compileOptions) >= 3);
+}
+
+bool requiresAdditionalExtensions(const std::string &compileOptions) {
+    return (getMajorVersion(compileOptions) == 2);
 }
 
 } // namespace NEO
