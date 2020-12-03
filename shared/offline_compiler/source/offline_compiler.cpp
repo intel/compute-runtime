@@ -367,7 +367,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         return retVal;
     }
     if (deviceName.empty()) {
-        CompilerOptions::concatenateAppend(internalOptions, "-cl-ext=-all,+cl_khr_3d_image_writes");
+        CompilerOptions::concatenateAppend(internalOptions, "-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes");
     } else {
         auto oclVersion = getOclVersionCompilerInternalOption(hwInfo.capabilityTable.clVersionSupport);
         CompilerOptions::concatenateAppend(internalOptions, oclVersion);
