@@ -771,7 +771,7 @@ TEST_F(ProgramFromSourceTest, CreateWithSource_Build_Options_Duplicate) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAreNotAdded) {
+TEST_F(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAndExtraExtensionsAreNotAdded) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -780,10 +780,32 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAreNotAdded) {
     auto extensionsWithFeaturesOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensionsWithFeatures();
     EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsOption)));
     EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
+    EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(std::string{"+cl_khr_3d_image_writes "})));
 
     retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
     EXPECT_THAT(cip->buildInternalOptions, testing::HasSubstr(extensionsOption));
     EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
+    EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(std::string{"+cl_khr_3d_image_writes "})));
+}
+
+TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC20ThenExtraExtensionsAreAdded) {
+    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pClDevice = pContext->getDevice(0);
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
+    pProgram->sourceCode = "__kernel mock() {}";
+    pProgram->createdFrom = Program::CreatedFrom::SOURCE;
+
+    MockProgram::initInternalOptionsCalled = 0;
+
+    auto extensionsOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = static_cast<ClDevice *>(devices[0])->peekCompilerExtensionsWithFeatures();
+    EXPECT_THAT(cip->buildInternalOptions, testing::Not(testing::HasSubstr(std::string{"+cl_khr_3d_image_writes "})));
+
+    retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL2.0", false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_THAT(cip->buildInternalOptions, testing::HasSubstr(std::string{"+cl_khr_3d_image_writes "}));
+    EXPECT_EQ(1, MockProgram::initInternalOptionsCalled);
 }
 
 TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdded) {
@@ -830,7 +852,7 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     EXPECT_EQ(std::string::npos, pos);
 }
 
-TEST_F(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesAreNotAdded) {
+TEST_F(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesAndExtraExtensionsAreNotAdded) {
     auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = static_cast<ClDevice *>(devices[0]);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
@@ -838,12 +860,29 @@ TEST_F(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesAreNotAdded) {
     auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
     EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsOption)));
     EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(std::string{"+cl_khr_3d_image_writes "})));
 
     MockProgram::initInternalOptionsCalled = 0;
     retVal = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::HasSubstr(extensionsOption));
     EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(extensionsWithFeaturesOption)));
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(std::string{"+cl_khr_3d_image_writes "})));
+    EXPECT_EQ(1, MockProgram::initInternalOptionsCalled);
+}
+
+TEST_F(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC20ThenExtraExtensionsAreAdded) {
+    auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pClDevice = static_cast<ClDevice *>(devices[0]);
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
+    auto extensionsOption = pClDevice->peekCompilerExtensions();
+    auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(std::string{"+cl_khr_3d_image_writes "})));
+
+    MockProgram::initInternalOptionsCalled = 0;
+    retVal = pProgram->compile(pProgram->getDevices(), "-cl-std=CL2.0", 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::HasSubstr(std::string{"+cl_khr_3d_image_writes "}));
     EXPECT_EQ(1, MockProgram::initInternalOptionsCalled);
 }
 

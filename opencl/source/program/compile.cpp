@@ -116,11 +116,13 @@ cl_int Program::compile(
         TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
 
         // set parameters for compilation
-        if (requiresOpenClCFeatures(options)) {
-            CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerExtensionsWithFeatures());
-        } else {
-            CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerExtensions());
+        std::string extensions = requiresOpenClCFeatures(options) ? defaultClDevice->peekCompilerExtensionsWithFeatures()
+                                                                  : defaultClDevice->peekCompilerExtensions();
+        if (requiresAdditionalExtensions(options)) {
+            extensions.erase(extensions.length() - 1);
+            extensions += ",+cl_khr_3d_image_writes ";
         }
+        CompilerOptions::concatenateAppend(internalOptions, extensions);
 
         if (isKernelDebugEnabled()) {
             for (const auto &device : deviceVector) {

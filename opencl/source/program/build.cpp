@@ -108,11 +108,13 @@ cl_int Program::build(
                 }
             }
 
-            if (requiresOpenClCFeatures(options)) {
-                CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerExtensionsWithFeatures());
-            } else {
-                CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerExtensions());
+            std::string extensions = requiresOpenClCFeatures(options) ? defaultClDevice->peekCompilerExtensionsWithFeatures()
+                                                                      : defaultClDevice->peekCompilerExtensions();
+            if (requiresAdditionalExtensions(options)) {
+                extensions.erase(extensions.length() - 1);
+                extensions += ",+cl_khr_3d_image_writes ";
             }
+            CompilerOptions::concatenateAppend(internalOptions, extensions);
 
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
             inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
