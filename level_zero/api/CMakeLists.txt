@@ -9,6 +9,7 @@ add_subdirectory(experimental${BRANCH_DIR_SUFFIX}/)
 add_subdirectory(experimental/tracing)
 add_subdirectory(tools)
 add_subdirectory(sysman)
+add_subdirectory(extensions)
 
 set(L0_API "")
 append_sources_from_properties(L0_API
@@ -17,5 +18,6 @@ append_sources_from_properties(L0_API
                                L0_EXPERIMENTAL_TRACING_API
                                L0_SYSMAN_API
                                L0_TOOLS_API
+                               L0_EXTENSIONS_SRCS_API
 )
 set_property(GLOBAL PROPERTY L0_API ${L0_API})

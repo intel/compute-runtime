@@ -746,6 +746,22 @@ void KernelImp::patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.enqueuedLocalWorkSize, workgroupSize);
 }
 
+ze_result_t KernelImp::setGlobalOffsetExp(uint32_t offsetX,
+                                          uint32_t offsetY,
+                                          uint32_t offsetZ) {
+    this->globalOffsets[0] = offsetX;
+    this->globalOffsets[1] = offsetY;
+    this->globalOffsets[2] = offsetZ;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+uint32_t KernelImp::patchGlobalOffset() {
+    const NEO::KernelDescriptor &desc = kernelImmData->getDescriptor();
+    auto dst = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);
+    return NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.globalWorkOffset, this->globalOffsets);
+}
+
 Kernel *Kernel::create(uint32_t productFamily, Module *module,
                        const ze_kernel_desc_t *desc, ze_result_t *res) {
     UNRECOVERABLE_IF(productFamily >= IGFX_MAX_PRODUCT);

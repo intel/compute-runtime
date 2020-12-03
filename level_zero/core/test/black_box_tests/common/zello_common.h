@@ -110,7 +110,7 @@ ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &
     return zeCommandListCreate(context, device, &descriptor, &cmdList);
 }
 
-ze_device_handle_t zelloInitContextAndGetDevices(ze_context_handle_t &context) {
+ze_device_handle_t zelloInitContextAndGetDevices(ze_context_handle_t &context, ze_driver_handle_t &driverHandle) {
     SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
 
     uint32_t driverCount = 0;
@@ -119,7 +119,7 @@ ze_device_handle_t zelloInitContextAndGetDevices(ze_context_handle_t &context) {
         std::cout << "No driver handle found!\n";
         std::terminate();
     }
-    ze_driver_handle_t driverHandle;
+
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
     ze_context_desc_t context_desc = {};
     context_desc.stype = ZE_STRUCTURE_TYPE_CONTEXT_DESC;
@@ -134,4 +134,9 @@ ze_device_handle_t zelloInitContextAndGetDevices(ze_context_handle_t &context) {
     std::vector<ze_device_handle_t> devices(deviceCount, nullptr);
     SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, devices.data()));
     return devices[0];
+}
+
+ze_device_handle_t zelloInitContextAndGetDevices(ze_context_handle_t &context) {
+    ze_driver_handle_t driverHandle;
+    return zelloInitContextAndGetDevices(context, driverHandle);
 }

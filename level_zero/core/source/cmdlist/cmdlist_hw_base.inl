@@ -46,6 +46,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     auto kernelPreemptionMode = obtainFunctionPreemptionMode(kernel);
     commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);
 
+    kernel->patchGlobalOffset();
+
     if (!isIndirect) {
         kernel->setGroupCount(pThreadGroupDimensions->groupCountX,
                               pThreadGroupDimensions->groupCountY,

@@ -105,6 +105,12 @@ struct KernelImp : Kernel {
     bool requiresGenerationOfLocalIdsByRuntime() const override { return kernelRequiresGenerationOfLocalIdsByRuntime; }
     bool getKernelRequiresUncachedMocs() { return kernelRequiresUncachedMocs; }
 
+    uint32_t *getGlobalOffsets() override {
+        return this->globalOffsets;
+    }
+    ze_result_t setGlobalOffsetExp(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) override;
+    uint32_t patchGlobalOffset() override;
+
   protected:
     KernelImp() = default;
 
@@ -149,6 +155,8 @@ struct KernelImp : Kernel {
 
     bool kernelRequiresGenerationOfLocalIdsByRuntime = true;
     bool kernelRequiresUncachedMocs = false;
+
+    uint32_t globalOffsets[3] = {};
 };
 
 } // namespace L0

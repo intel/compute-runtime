@@ -109,6 +109,10 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
                                          uint32_t *groupSizeY, uint32_t *groupSizeZ) = 0;
     virtual ze_result_t getKernelName(size_t *pSize, char *pName) = 0;
 
+    virtual uint32_t *getGlobalOffsets() = 0;
+    virtual ze_result_t setGlobalOffsetExp(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) = 0;
+    virtual uint32_t patchGlobalOffset() = 0;
+
     virtual ze_result_t suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount) = 0;
 
     virtual const KernelImmutableData *getImmutableData() const = 0;

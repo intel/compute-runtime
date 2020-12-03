@@ -9,9 +9,9 @@
 
 #include "shared/source/os_interface/os_library.h"
 
+#include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
-#include "level_zero/extensions/public/ze_exp_ext.h"
 
 namespace L0 {
 class HostPointerManager;
@@ -86,7 +86,8 @@ struct DriverHandleImp : public DriverHandle {
     std::vector<Device *> devices;
     // Spec extensions
     const std::vector<std::pair<std::string, uint32_t>> extensionsSupported = {
-        {ZE_MODULE_PROGRAM_EXP_NAME, ZE_MODULE_PROGRAM_EXP_VERSION_CURRENT}};
+        {ZE_MODULE_PROGRAM_EXP_NAME, ZE_MODULE_PROGRAM_EXP_VERSION_CURRENT},
+        {ZE_GLOBAL_OFFSET_EXP_NAME, ZE_GLOBAL_OFFSET_EXP_VERSION_CURRENT}};
 
     uint64_t uuidTimestamp = 0u;
 

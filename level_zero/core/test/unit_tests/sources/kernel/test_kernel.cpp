@@ -910,5 +910,61 @@ HWTEST_F(ImportHostPointerSetKernelArg, givenHostPointerImportedWhenSettingKerne
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
+class KernelGlobalWorkOffsetTests : public ModuleFixture, public ::testing::Test {
+  public:
+    void SetUp() override {
+        ModuleFixture::SetUp();
+
+        ze_kernel_desc_t kernelDesc = {};
+        kernelDesc.pKernelName = kernelName.c_str();
+
+        ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        kernel = L0::Kernel::fromHandle(kernelHandle);
+    }
+
+    void TearDown() override {
+        Kernel::fromHandle(kernelHandle)->destroy();
+        ModuleFixture::TearDown();
+    }
+
+    ze_kernel_handle_t kernelHandle;
+    L0::Kernel *kernel = nullptr;
+};
+
+HWTEST_F(KernelGlobalWorkOffsetTests, givenCallToSetGlobalWorkOffsetThenOffsetsAreSet) {
+    uint32_t globalOffsetx = 10;
+    uint32_t globalOffsety = 20;
+    uint32_t globalOffsetz = 30;
+
+    ze_result_t res = kernel->setGlobalOffsetExp(globalOffsetx, globalOffsety, globalOffsetz);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
+    EXPECT_EQ(globalOffsetx, kernelImp->getGlobalOffsets()[0]);
+    EXPECT_EQ(globalOffsety, kernelImp->getGlobalOffsets()[1]);
+    EXPECT_EQ(globalOffsetz, kernelImp->getGlobalOffsets()[2]);
+}
+
+HWTEST_F(KernelGlobalWorkOffsetTests, whenSettingGlobalOffsetThenCrossThreadDataIsPatched) {
+    uint32_t globalOffsetx = 10;
+    uint32_t globalOffsety = 20;
+    uint32_t globalOffsetz = 30;
+
+    ze_result_t res = kernel->setGlobalOffsetExp(globalOffsetx, globalOffsety, globalOffsetz);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
+    uint32_t patchedCount = kernelImp->patchGlobalOffset();
+    EXPECT_EQ(patchedCount, 3u);
+
+    const NEO::KernelDescriptor &desc = kernelImp->getImmutableData()->getDescriptor();
+    auto dst = ArrayRef<const uint8_t>(kernelImp->getCrossThreadData(), kernelImp->getCrossThreadDataSize());
+    EXPECT_EQ(*(dst.begin() + desc.payloadMappings.dispatchTraits.globalWorkOffset[0]), globalOffsetx);
+    EXPECT_EQ(*(dst.begin() + desc.payloadMappings.dispatchTraits.globalWorkOffset[1]), globalOffsety);
+    EXPECT_EQ(*(dst.begin() + desc.payloadMappings.dispatchTraits.globalWorkOffset[2]), globalOffsetz);
+}
+
 } // namespace ult
 } // namespace L0

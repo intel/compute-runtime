@@ -13,6 +13,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       zello_ipc_copy_dma_buf
       zello_ipc_copy_dma_buf_p2p
       zello_copy
+      zello_world_global_work_offset
   )
 
   include_directories(common)
@@ -23,6 +24,9 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
         continue()
       endif()
       if(${TEST_NAME} STREQUAL "zello_ipc_copy_dma_buf_p2p")
+        continue()
+      endif()
+      if(${TEST_NAME} STREQUAL "zello_world_global_work_offset")
         continue()
       endif()
     endif()
@@ -43,4 +47,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   endforeach()
 
   target_link_libraries(zello_world_jitc_ocloc PUBLIC ocloc_lib)
+  if(UNIX)
+    target_link_libraries(zello_world_global_work_offset PUBLIC ocloc_lib)
+  endif()
 endif()

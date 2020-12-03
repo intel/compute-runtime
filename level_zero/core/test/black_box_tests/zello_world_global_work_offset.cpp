@@ -7,15 +7,19 @@
 
 #include "shared/offline_compiler/source/ocloc_api.h"
 
+#include "level_zero/api/extensions/public/ze_exp_ext.h"
+
 #include "zello_common.h"
 
+#include <dlfcn.h>
 #include <sstream>
+#include <string.h>
 
 extern bool verbose;
 bool verbose = false;
 
 const char *module = R"===(
-__kernel void kernel_copy(__global int *dst, __global char *src){
+__kernel void kernel_copy(__global char *dst, __global char *src){
     uint gid = get_global_id(0);
     dst[gid] = src[gid];
 }
@@ -47,7 +51,8 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
         std::string spvExtension = ".spv";
         std::string logFileName = "stdout.log";
         auto nameLen = strlen(outputNames[i]);
-        if ((nameLen > spvExtension.size()) && (strstr(&outputNames[i][nameLen - spvExtension.size()], spvExtension.c_str()) != nullptr)) {
+        if ((nameLen > spvExtension.size()) && (strstr(&outputNames[i][nameLen - spvExtension.size()],
+                                                       spvExtension.c_str()) != nullptr)) {
             spirV = outputs[i];
             spirVlen = ouputLengths[i];
         } else if ((nameLen >= logFileName.size()) && (strstr(outputNames[i], logFileName.c_str()) != nullptr)) {
@@ -71,7 +76,33 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
     return ret;
 }
 
-void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
+typedef ze_result_t (*setGlobalWorkOffsetFunctionType)(ze_kernel_handle_t, uint32_t, uint32_t, uint32_t);
+
+setGlobalWorkOffsetFunctionType findSymbolForSetGlobalWorkOffsetFunction(char *userPath) {
+    char libPath[256];
+    sprintf(libPath, "%s/libze_intel_gpu.so.1", userPath);
+    void *libHandle = dlopen(libPath, RTLD_LAZY | RTLD_LOCAL);
+    if (!libHandle) {
+        std::cout << "libze_intel_gpu.so not found\n";
+        std::terminate();
+    }
+
+    ze_result_t (*pfnSetGlobalWorkOffset)(ze_kernel_handle_t, uint32_t, uint32_t, uint32_t);
+    *(void **)(&pfnSetGlobalWorkOffset) = dlsym(libHandle, "zeKernelSetGlobalOffsetExp");
+
+    char *error;
+    if ((error = dlerror()) != NULL) {
+        std::cout << "Error while opening symbol: " << error << "\n";
+        std::terminate();
+    }
+
+    return pfnSetGlobalWorkOffset;
+}
+
+void executeKernelAndValidate(ze_context_handle_t context,
+                              ze_device_handle_t &device,
+                              setGlobalWorkOffsetFunctionType pfnSetGlobalWorkOffset,
+                              bool &outputValidationSuccessful) {
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t cmdQueueDesc = {};
     ze_command_list_handle_t cmdList;
@@ -97,9 +128,16 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
     SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc, allocSize, 1, device, &dstBuffer));
 
     // Initialize memory
-    constexpr uint8_t val = 55;
-    memset(srcBuffer, val, allocSize);
+    constexpr uint32_t bufferOffset = 8;
+    constexpr uint8_t srcVal = 55;
+    constexpr uint8_t dstVal = 77;
+    memset(srcBuffer, srcVal, allocSize);
     memset(dstBuffer, 0, allocSize);
+
+    uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
+    for (uint32_t i = 0; i < bufferOffset; i++) {
+        dstCharBuffer[i] = dstVal;
+    }
 
     std::string buildLog;
     auto spirV = compileToSpirV(module, "", buildLog);
@@ -160,6 +198,11 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
 
+    uint32_t offsetx = bufferOffset;
+    uint32_t offsety = 0;
+    uint32_t offsetz = 0;
+    SUCCESS_OR_TERMINATE(pfnSetGlobalWorkOffset(kernel, offsetx, offsety, offsetz));
+
     ze_group_count_t dispatchTraits;
     dispatchTraits.groupCountX = allocSize / groupSizeX;
     dispatchTraits.groupCountY = 1u;
@@ -176,14 +219,23 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
 
     // Validate
     outputValidationSuccessful = true;
-    if (memcmp(dstBuffer, srcBuffer, allocSize)) {
-        outputValidationSuccessful = false;
-        uint8_t *srcCharBuffer = static_cast<uint8_t *>(srcBuffer);
-        uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
-        for (size_t i = 0; i < allocSize; i++) {
-            if (srcCharBuffer[i] != dstCharBuffer[i]) {
-                std::cout << "srcBuffer[" << i << "] = " << std::dec << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
-                          << "dstBuffer[" << i << "] = " << std::dec << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
+    uint8_t *srcCharBuffer = static_cast<uint8_t *>(srcBuffer);
+    for (size_t i = 0; i < allocSize; i++) {
+        if (i < bufferOffset) {
+            if (dstCharBuffer[i] != dstVal) {
+                std::cout << "dstBuffer[" << i << "] = "
+                          << std::dec << static_cast<unsigned int>(dstCharBuffer[i]) << " not equal to "
+                          << dstVal << "\n";
+                outputValidationSuccessful = false;
+                break;
+            }
+        } else {
+            if (dstCharBuffer[i] != srcCharBuffer[i]) {
+                std::cout << "dstBuffer[" << i << "] = "
+                          << std::dec << static_cast<unsigned int>(dstCharBuffer[i]) << " not equal to "
+                          << "srcBuffer[" << i << "] = "
+                          << std::dec << static_cast<unsigned int>(srcCharBuffer[i]) << "\n";
+                outputValidationSuccessful = false;
                 break;
             }
         }
@@ -198,9 +250,44 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
 
 int main(int argc, char *argv[]) {
     verbose = isVerbose(argc, argv);
+    ze_driver_handle_t driverHandle;
     ze_context_handle_t context = nullptr;
-    auto device = zelloInitContextAndGetDevices(context);
+    auto device = zelloInitContextAndGetDevices(context, driverHandle);
     bool outputValidationSuccessful;
+
+    const char *defaultPath = "/usr/local/lib/";
+    char userPath[256];
+    if (argc == 2) {
+        strncpy(userPath, argv[1], 256);
+    } else {
+        strncpy(userPath, defaultPath, 256);
+    }
+
+    uint32_t extensionsCount = 0;
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, nullptr));
+    if (extensionsCount == 0) {
+        std::cout << "No extensions supported on this driver\n";
+        std::terminate();
+    }
+
+    std::vector<ze_driver_extension_properties_t> extensionsSupported(extensionsCount);
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, extensionsSupported.data()));
+    bool globalOffsetExtensionFound = false;
+    std::string globalOffsetName = "ZE_experimental_global_offset";
+    for (uint32_t i = 0; i < extensionsSupported.size(); i++) {
+        if (strncmp(extensionsSupported[i].name, globalOffsetName.c_str(), globalOffsetName.size()) == 0) {
+            if (extensionsSupported[i].version == ZE_GLOBAL_OFFSET_EXP_VERSION_1_0) {
+                globalOffsetExtensionFound = true;
+                break;
+            }
+        }
+    }
+    if (globalOffsetExtensionFound == false) {
+        std::cout << "No global offset extension found on this driver\n";
+        std::terminate();
+    }
+
+    setGlobalWorkOffsetFunctionType pfnSetGlobalWorkOffset = findSymbolForSetGlobalWorkOffsetFunction(userPath);
 
     ze_device_properties_t deviceProperties = {};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
@@ -208,11 +295,11 @@ int main(int argc, char *argv[]) {
               << " * name : " << deviceProperties.name << "\n"
               << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
 
-    executeKernelAndValidate(context, device, outputValidationSuccessful);
+    executeKernelAndValidate(context, device, pfnSetGlobalWorkOffset, outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    std::cout << "\nZello World JIT Results validation "
+    std::cout << "\nZello World Global Work Offset Results validation "
               << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
 
     return 0;

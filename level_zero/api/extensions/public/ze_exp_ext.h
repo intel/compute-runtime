@@ -9,6 +9,7 @@
 
 #include <level_zero/ze_api.h>
 
+///////////////////////////////////////////////////////////////////////////////
 // Intel 'oneAPI' Level-Zero Extension for supporting module programs.
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef ZE_MODULE_PROGRAM_EXP_NAME
@@ -48,3 +49,20 @@ typedef struct _ze_module_program_exp_desc_t {
                                               ///< nullptr if no specialization constants are provided.
 
 } ze_module_program_exp_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+// Intel 'oneAPI' Level-Zero Extension for supporting global work offset
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZE_GLOBAL_OFFSET_EXP_NAME
+/// @brief Global Offset Extension Name
+#define ZE_GLOBAL_OFFSET_EXP_NAME "ZE_experimental_global_offset"
+#endif // ZE_GLOBAL_OFFSET_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Global work offset Extension Version(s)
+typedef enum _ze_global_offset_exp_version_t {
+    ZE_GLOBAL_OFFSET_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_GLOBAL_OFFSET_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_GLOBAL_OFFSET_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+
+} ze_global_offset_exp_version_t;
