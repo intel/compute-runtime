@@ -86,58 +86,6 @@ struct MockTbxCsrToTestDumpTbxNonWritable : public TbxCommandStreamReceiverHw<Gf
     }
 };
 
-TEST_F(TbxCommandStreamTests, DISABLED_makeResident) {
-    uint8_t buffer[0x10000];
-    size_t size = sizeof(buffer);
-
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pCommandStreamReceiver->getRootDeviceIndex(), false, size}, buffer);
-    pCommandStreamReceiver->makeResident(*graphicsAllocation);
-    pCommandStreamReceiver->makeNonResident(*graphicsAllocation);
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
-}
-
-TEST_F(TbxCommandStreamTests, DISABLED_makeResidentOnZeroSizedBufferShouldDoNothing) {
-    MockGraphicsAllocation graphicsAllocation(nullptr, 0);
-
-    pCommandStreamReceiver->makeResident(graphicsAllocation);
-    pCommandStreamReceiver->makeNonResident(graphicsAllocation);
-}
-
-TEST_F(TbxCommandStreamTests, DISABLED_flush) {
-    char buffer[4096];
-    memset(buffer, 0, 4096);
-    LinearStream cs(buffer, 4096);
-    size_t startOffset = 0;
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), startOffset, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
-    pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
-}
-
-HWTEST_F(TbxCommandStreamTests, DISABLED_flushUntilTailRingBufferLargerThanSizeRingBuffer) {
-    char buffer[4096];
-    memset(buffer, 0, 4096);
-    LinearStream cs(buffer, 4096);
-    size_t startOffset = 0;
-    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
-
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), startOffset, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
-    pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
-    auto size = tbxCsr->engineInfo.sizeRingBuffer;
-    tbxCsr->engineInfo.sizeRingBuffer = 64;
-
-    pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
-    pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
-    pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
-    tbxCsr->engineInfo.sizeRingBuffer = size;
-}
-
-HWTEST_F(TbxCommandStreamTests, DISABLED_getCsTraits) {
-    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
-    tbxCsr->getCsTraits(aub_stream::ENGINE_RCS);
-    tbxCsr->getCsTraits(aub_stream::ENGINE_BCS);
-    tbxCsr->getCsTraits(aub_stream::ENGINE_VCS);
-    tbxCsr->getCsTraits(aub_stream::ENGINE_VECS);
-}
-
 TEST(TbxCommandStreamReceiverTest, givenNullFactoryEntryWhenTbxCsrIsCreatedThenNullptrIsReturned) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     GFXCORE_FAMILY family = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily;
