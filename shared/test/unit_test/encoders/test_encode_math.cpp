@@ -169,6 +169,54 @@ HWTEST_F(CommandEncoderMathTest, commandReserve) {
               static_cast<uint32_t>(NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1));
 }
 
+HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCalledThenContainerHasCorrectMathCommands) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH = typename FamilyType::MI_MATH;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    GenCmdList commands;
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice);
+    constexpr uint32_t regOffset = 0x2000u;
+    constexpr uint32_t immVal = 0xbaau;
+    constexpr uint64_t dstAddress = 0xDEADCAF0u;
+    EncodeMathMMIO<FamilyType>::encodeBitwiseAndVal(cmdContainer, regOffset, immVal, dstAddress);
+
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0),
+                                             cmdContainer.getCommandStream()->getUsed());
+
+    auto itor = find<MI_LOAD_REGISTER_REG *>(commands.begin(), commands.end());
+
+    // load regOffset to R0
+    EXPECT_NE(commands.end(), itor);
+    auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(cmdLoadReg->getSourceRegisterAddress(), regOffset);
+    EXPECT_EQ(cmdLoadReg->getDestinationRegisterAddress(), CS_GPR_R0);
+
+    // load immVal to R1
+    itor++;
+    EXPECT_NE(commands.end(), itor);
+    auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+    EXPECT_EQ(cmdLoadImm->getRegisterOffset(), CS_GPR_R1);
+    EXPECT_EQ(cmdLoadImm->getDataDword(), immVal);
+
+    // encodeAluAnd should have its own unit tests, so we only check
+    // that the MI_MATH exists and length is set to 3u
+    itor++;
+    EXPECT_NE(commands.end(), itor);
+    auto cmdMath = genCmdCast<MI_MATH *>(*itor);
+    EXPECT_EQ(cmdMath->DW0.BitField.DwordLength, 3u);
+
+    // store R2 to address
+    itor++;
+    EXPECT_NE(commands.end(), itor);
+    auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(cmdMem->getRegisterAddress(), CS_GPR_R2);
+    EXPECT_EQ(cmdMem->getMemoryAddress(), dstAddress);
+}
+
 HWTEST_F(CommandEncoderMathTest, setGroupSizeIndirect) {
     using MI_MATH = typename FamilyType::MI_MATH;
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;

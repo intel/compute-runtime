@@ -114,6 +114,10 @@ struct EncodeMath {
                          AluRegisters firstOperandRegister,
                          AluRegisters secondOperandRegister,
                          AluRegisters finalResultRegister);
+    static void bitwiseAnd(CommandContainer &container,
+                           AluRegisters firstOperandRegister,
+                           AluRegisters secondOperandRegister,
+                           AluRegisters finalResultRegister);
 };
 
 template <typename GfxFamily>
@@ -127,6 +131,11 @@ struct EncodeMathMMIO {
     static void encodeMulRegVal(CommandContainer &container, uint32_t offset, uint32_t val, uint64_t dstAddress);
 
     static void encodeGreaterThanPredicate(CommandContainer &container, uint64_t lhsVal, uint32_t rhsVal);
+
+    static void encodeBitwiseAndVal(CommandContainer &container,
+                                    uint32_t regOffset,
+                                    uint32_t immVal,
+                                    uint64_t dstAddress);
 
     static void encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, AluRegisters srcA, AluRegisters srcB, AluRegisters op, AluRegisters dest, AluRegisters result);
 

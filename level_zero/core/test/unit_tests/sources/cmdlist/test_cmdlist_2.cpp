@@ -461,7 +461,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendMemoryFillCalledThenAppen
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, Platforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     MockAppendMemoryCopy<gfxCoreFamily> commandList;
@@ -487,26 +487,30 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThen
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList.commandContainer.getCommandStream()->getUsed()));
-    auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+
     itor++;
+    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
 
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
 
-    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+
     itor++;
+    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventsThenSemaphoreWaitAndPipeControlAreFound, Platforms) {

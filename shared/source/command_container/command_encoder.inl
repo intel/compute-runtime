@@ -134,6 +134,21 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
 }
 
 /*
+ * Compute bitwise AND between a register value from regOffset and immVal
+ * and store it into dstAddress.
+ */
+template <typename Family>
+void EncodeMathMMIO<Family>::encodeBitwiseAndVal(CommandContainer &container, uint32_t regOffset, uint32_t immVal, uint64_t dstAddress) {
+    EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, regOffset);
+    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, immVal, true);
+    EncodeMath<Family>::bitwiseAnd(container, AluRegisters::R_0,
+                                   AluRegisters::R_1,
+                                   AluRegisters::R_2);
+    EncodeStoreMMIO<Family>::encode(*container.getCommandStream(),
+                                    CS_GPR_R2, dstAddress);
+}
+
+/*
  * encodeAlu() performs operations that leave a state including the result of
  * an operation such as the carry flag, and the accu flag with subtraction and
  * addition result.
@@ -242,6 +257,19 @@ void EncodeMath<Family>::addition(CommandContainer &container,
     uint32_t *cmd = EncodeMath<Family>::commandReserve(container);
 
     EncodeMathMMIO<Family>::encodeAluAdd(reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd),
+                                         firstOperandRegister,
+                                         secondOperandRegister,
+                                         finalResultRegister);
+}
+
+template <typename Family>
+void EncodeMath<Family>::bitwiseAnd(CommandContainer &container,
+                                    AluRegisters firstOperandRegister,
+                                    AluRegisters secondOperandRegister,
+                                    AluRegisters finalResultRegister) {
+    uint32_t *cmd = EncodeMath<Family>::commandReserve(container);
+
+    EncodeMathMMIO<Family>::encodeAluAnd(reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd),
                                          firstOperandRegister,
                                          secondOperandRegister,
                                          finalResultRegister);

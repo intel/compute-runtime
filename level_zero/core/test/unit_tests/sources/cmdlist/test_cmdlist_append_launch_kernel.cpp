@@ -284,7 +284,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
 
     Mock<::L0::Kernel> kernel;
     ze_result_t returnValue;
@@ -312,19 +312,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
-    auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
     {
-        auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(REG_GLOBAL_TIMESTAMP_LDW, cmd->getRegisterAddress());
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(REG_GLOBAL_TIMESTAMP_LDW, cmd->getSourceRegisterAddress());
     }
     itor++;
 
-    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
     {
-        auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmd->getRegisterAddress());
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmd->getSourceRegisterAddress());
     }
     itor++;
 
@@ -341,19 +341,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     }
     itor++;
 
-    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
     {
-        auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(REG_GLOBAL_TIMESTAMP_LDW, cmd->getRegisterAddress());
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(REG_GLOBAL_TIMESTAMP_LDW, cmd->getSourceRegisterAddress());
     }
     itor++;
 
-    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     {
-        auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmd->getRegisterAddress());
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmd->getSourceRegisterAddress());
     }
 
     {

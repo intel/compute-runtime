@@ -1295,7 +1295,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(ze
     if (!beforeWalker) {
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
     }
-    appendWriteKernelTimestamp(hEvent, beforeWalker);
+    appendWriteKernelTimestamp(hEvent, beforeWalker, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1441,15 +1441,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(ze_event_handle_t hEvent, bool beforeWalker) {
+void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(ze_event_handle_t hEvent, bool beforeWalker, bool maskLsb) {
+    constexpr uint32_t mask = 0xfffffffe;
     auto event = Event::fromHandle(hEvent);
 
     auto baseAddr = event->getGpuAddress();
     auto contextOffset = beforeWalker ? offsetof(TimestampPacketStorage::Packet, contextStart) : offsetof(TimestampPacketStorage::Packet, contextEnd);
     auto globalOffset = beforeWalker ? offsetof(TimestampPacketStorage::Packet, globalStart) : offsetof(TimestampPacketStorage::Packet, globalEnd);
-
-    NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, ptrOffset(baseAddr, globalOffset));
-    NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, ptrOffset(baseAddr, contextOffset));
+    if (maskLsb) {
+        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, REG_GLOBAL_TIMESTAMP_LDW, mask, ptrOffset(baseAddr, globalOffset));
+        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, mask, ptrOffset(baseAddr, contextOffset));
+    } else {
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, ptrOffset(baseAddr, globalOffset));
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, ptrOffset(baseAddr, contextOffset));
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1469,14 +1474,14 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
         commandContainer.addToResidencyContainer(&event->getAllocation());
 
         if (beforeWalker) {
-            appendWriteKernelTimestamp(hEvent, beforeWalker);
+            appendWriteKernelTimestamp(hEvent, beforeWalker, true);
         } else {
 
             NEO::PipeControlArgs args;
             args.dcFlushEnable = true;
 
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
-            appendWriteKernelTimestamp(hEvent, beforeWalker);
+            appendWriteKernelTimestamp(hEvent, beforeWalker, true);
 
             args.dcFlushEnable = (!event->signalScope) ? false : true;
             if (args.dcFlushEnable) {
