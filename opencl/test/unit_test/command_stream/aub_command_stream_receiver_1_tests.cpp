@@ -1176,6 +1176,114 @@ HWTEST_F(AubCommandStreamReceiverTests, givenDebugOverwritesForImplicitFlushesWh
     EXPECT_FALSE(aubCsr->useNewResourceImplicitFlush);
 }
 
+using AubCsrTest = ::testing::Test;
+
+HWTEST_F(AubCsrTest, givenLocalMemoryEnabledWhenGettingAddressSpaceForRingDataTypeThenTraceLocalIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.ftrLocalMemory = true;
+
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    DeviceBitfield deviceBitfield(1);
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    uint32_t rootDeviceIndex = 0u;
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(new AubCenter());
+
+    executionEnvironment->initializeMemoryManager();
+
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", false, *executionEnvironment, rootDeviceIndex, deviceBitfield));
+
+    int types[] = {AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs,
+                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextCcs,
+                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextBcs,
+                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextVcs,
+                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextVecs,
+                   AubMemDump::DataTypeHintValues::TraceCommandBuffer};
+
+    for (uint32_t i = 0; i < 6; i++) {
+        auto addressSpace = aubCsr->getAddressSpace(types[i]);
+        EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
+    }
+
+    auto addressSpace = aubCsr->getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype);
+    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, addressSpace);
+}
+
+HWTEST_F(AubCsrTest, givenAUBDumpForceAllToLocalMemoryWhenGettingAddressSpaceForAnyDataTypeThenTraceLocalIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(1);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    DeviceBitfield deviceBitfield(1);
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    uint32_t rootDeviceIndex = 0u;
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(new AubCenter());
+
+    executionEnvironment->initializeMemoryManager();
+
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", false, *executionEnvironment, rootDeviceIndex, deviceBitfield));
+
+    int types[] = {AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs,
+                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextCcs,
+                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextBcs,
+                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextVcs,
+                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextVecs,
+                   AubMemDump::DataTypeHintValues::TraceCommandBuffer};
+
+    for (uint32_t i = 0; i < 6; i++) {
+        auto addressSpace = aubCsr->getAddressSpace(types[i]);
+        EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
+    }
+
+    auto addressSpace = aubCsr->getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype);
+    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
+}
+
+HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithCorrectHint) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    DeviceBitfield deviceBitfield(1);
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    uint32_t rootDeviceIndex = 0u;
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(new AubCenter());
+
+    executionEnvironment->initializeMemoryManager();
+    auto allocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+
+    MockAubManager aubManager;
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", false, *executionEnvironment, rootDeviceIndex, deviceBitfield));
+    aubCsr->aubManager = &aubManager;
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(aubCsr.get(),
+                                                                                     getChosenEngineType(hwInfo), deviceBitfield,
+                                                                                     PreemptionHelper::getDefaultPreemptionMode(hwInfo),
+                                                                                     false, false, false);
+    aubCsr->setupContext(*osContext);
+
+    aubCsr->writeMemoryWithAubManager(*allocation);
+    EXPECT_TRUE(aubManager.writeMemoryCalled);
+    EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceBatchBuffer, aubManager.hintToWriteMemory);
+
+    aubManager.writeMemoryCalled = false;
+
+    auto allocation2 = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
+
+    aubCsr->writeMemoryWithAubManager(*allocation2);
+    EXPECT_TRUE(aubManager.writeMemoryCalled);
+    EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceNotype, aubManager.hintToWriteMemory);
+
+    executionEnvironment->memoryManager->freeGraphicsMemory(allocation);
+    executionEnvironment->memoryManager->freeGraphicsMemory(allocation2);
+}
+
 using HardwareContextContainerTests = ::testing::Test;
 
 TEST_F(HardwareContextContainerTests, givenOsContextWithMultipleDevicesSupportedThenInitialzeHwContextsWithValidIndexes) {
