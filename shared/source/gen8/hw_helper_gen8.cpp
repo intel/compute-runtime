@@ -28,7 +28,7 @@ uint32_t HwHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::computeSlmValues(uint32_t slmSize) {
+uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
     slmSize += (4 * KB - 1);
     slmSize = slmSize >> 12;
     slmSize = std::min(slmSize, 15u);

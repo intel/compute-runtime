@@ -326,7 +326,7 @@ uint32_t HwHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::computeSlmValues(uint32_t slmSize) {
+uint32_t HwHelperHw<GfxFamily>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
     auto value = std::max(slmSize, 1024u);
     value = Math::nextPowerOfTwo(value);
     value = Math::getMinLsbSet(value);

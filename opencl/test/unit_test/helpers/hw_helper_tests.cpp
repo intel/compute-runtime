@@ -1115,41 +1115,51 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, GivenVariousValuesWhenAlignSlmSizeIsCa
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+
     if (::renderCoreFamily == IGFX_GEN8_CORE) {
-        EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().computeSlmValues(0));
-        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(1));
-        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(1024));
-        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(1025));
-        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(2048));
-        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(2049));
-        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(4096));
-        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(4097));
-        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(8192));
-        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(8193));
-        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(12288));
-        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(16384));
-        EXPECT_EQ(8u, HwHelperHw<FamilyType>::get().computeSlmValues(16385));
-        EXPECT_EQ(8u, HwHelperHw<FamilyType>::get().computeSlmValues(24576));
-        EXPECT_EQ(8u, HwHelperHw<FamilyType>::get().computeSlmValues(32768));
-        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(32769));
-        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(49152));
-        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(65535));
-        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(65536));
+        EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 0));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1024));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1025));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 2048));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 2049));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 4096));
+        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 4097));
+        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 8192));
+        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 8193));
+        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 12288));
+        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 16384));
+        EXPECT_EQ(8u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 16385));
+        EXPECT_EQ(8u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 24576));
+        EXPECT_EQ(8u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 32768));
+        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 32769));
+        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 49152));
+        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 65535));
+        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 65536));
     } else {
-        EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().computeSlmValues(0));
-        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(1));
-        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(1024));
-        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(1025));
-        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(2048));
-        EXPECT_EQ(3u, HwHelperHw<FamilyType>::get().computeSlmValues(2049));
-        EXPECT_EQ(3u, HwHelperHw<FamilyType>::get().computeSlmValues(4096));
-        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(4097));
-        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(8192));
-        EXPECT_EQ(5u, HwHelperHw<FamilyType>::get().computeSlmValues(8193));
-        EXPECT_EQ(5u, HwHelperHw<FamilyType>::get().computeSlmValues(16384));
-        EXPECT_EQ(6u, HwHelperHw<FamilyType>::get().computeSlmValues(16385));
-        EXPECT_EQ(6u, HwHelperHw<FamilyType>::get().computeSlmValues(32768));
-        EXPECT_EQ(7u, HwHelperHw<FamilyType>::get().computeSlmValues(32769));
-        EXPECT_EQ(7u, HwHelperHw<FamilyType>::get().computeSlmValues(65536));
+        EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 0));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1024));
+        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 1025));
+        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 2048));
+        EXPECT_EQ(3u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 2049));
+        EXPECT_EQ(3u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 4096));
+        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 4097));
+        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 8192));
+        EXPECT_EQ(5u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 8193));
+        EXPECT_EQ(5u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 16384));
+        EXPECT_EQ(6u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 16385));
+        EXPECT_EQ(6u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 32768));
+        EXPECT_EQ(7u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 32769));
+        EXPECT_EQ(7u, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 65536));
     }
+}
+
+HWTEST_F(HwHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
+    using SHARED_LOCAL_MEMORY_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
+    auto hwInfo = *defaultHwInfo;
+
+    auto receivedSlmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, 0));
+    EXPECT_EQ(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K, receivedSlmSize);
 }

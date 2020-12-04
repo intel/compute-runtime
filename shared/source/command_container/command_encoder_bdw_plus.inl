@@ -72,11 +72,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                        kernelDescriptor.kernelAttributes.hasBarriers,
                                                        hwInfo);
     auto slmSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
-        HwHelperHw<Family>::get().computeSlmValues(dispatchInterface->getSlmTotalSize()));
-    idd.setSharedLocalMemorySize(
-        dispatchInterface->getSlmTotalSize() > 0
-            ? slmSize
-            : INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K);
+        HwHelperHw<Family>::get().computeSlmValues(hwInfo, dispatchInterface->getSlmTotalSize()));
+    idd.setSharedLocalMemorySize(slmSize);
 
     uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
     uint32_t bindingTablePointer = 0u;

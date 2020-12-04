@@ -161,6 +161,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
     const HardwareInfo &hardwareInfo) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
+    using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     // Allocate some memory for the interface descriptor
     auto pInterfaceDescriptor = getInterfaceDescriptor(indirectHeap, offsetInterfaceDescriptor, inlineInterfaceDescriptor);
@@ -185,7 +186,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     EncodeDispatchKernel<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);
 
     auto programmableIDSLMSize =
-        static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(HwHelperHw<GfxFamily>::get().computeSlmValues(kernel.slmTotalSize));
+        static_cast<SHARED_LOCAL_MEMORY_SIZE>(HwHelperHw<GfxFamily>::get().computeSlmValues(hardwareInfo, kernel.slmTotalSize));
 
     interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
     EncodeDispatchKernel<GfxFamily>::programBarrierEnable(interfaceDescriptor,
