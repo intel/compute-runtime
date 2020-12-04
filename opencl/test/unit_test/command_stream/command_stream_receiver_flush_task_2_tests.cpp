@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1206,7 +1206,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrWhenGen
                                                                 0,
                                                                 0,
                                                                 generalStateBaseAddress,
+                                                                0,
                                                                 true,
+                                                                false,
                                                                 pDevice->getGmmHelper(),
                                                                 false,
                                                                 MemoryCompressionState::NotApplicable);
@@ -1228,7 +1230,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroGeneralStateBaseAddres
                                                                 0,
                                                                 0,
                                                                 generalStateBaseAddress,
+                                                                0,
                                                                 true,
+                                                                false,
                                                                 pDevice->getGmmHelper(),
                                                                 false,
                                                                 MemoryCompressionState::NotApplicable);
@@ -1252,6 +1256,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroInternalHeapBaseAddres
                                                                 0,
                                                                 internalHeapBaseAddress,
                                                                 0,
+                                                                0,
+                                                                false,
                                                                 false,
                                                                 pDevice->getGmmHelper(),
                                                                 false,
@@ -1281,7 +1287,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenSbaProgram
                                                                 0,
                                                                 internalHeapBase,
                                                                 instructionHeapBase,
+                                                                0,
                                                                 true,
+                                                                false,
                                                                 pDevice->getGmmHelper(),
                                                                 false,
                                                                 MemoryCompressionState::NotApplicable);

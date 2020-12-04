@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/interlocked_max.h"
 #include "shared/source/helpers/preamble.h"
@@ -28,7 +29,7 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream) {
+void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
@@ -51,6 +52,12 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
     auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
     STATE_BASE_ADDRESS sbaCmd;
 
+    bool useGlobalSshAndDsh = NEO::ApiSpecificConfig::getBindlessConfiguration();
+    uint64_t globalHeapsBase = 0;
+    if (useGlobalSshAndDsh) {
+        globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
+    }
+
     NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(&sbaCmd,
                                                                     nullptr,
                                                                     nullptr,
@@ -60,7 +67,9 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
                                                                     (device->getMOCS(true, false) >> 1),
                                                                     neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), useLocalMemoryForIndirectHeap),
                                                                     neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), !hwHelper.useSystemMemoryPlacementForISA(hwInfo)),
+                                                                    globalHeapsBase,
                                                                     true,
+                                                                    useGlobalSshAndDsh,
                                                                     neoDevice->getGmmHelper(),
                                                                     false,
                                                                     NEO::MemoryCompressionState::NotApplicable);

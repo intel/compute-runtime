@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,8 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
         0,
         0,
         0,
+        0,
+        false,
         false,
         pDevice->getGmmHelper(),
         true,
@@ -65,4 +67,69 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
     EXPECT_EQ(ssh.getMaxAvailableSpace() / 64 - 1, cmd->getBindlessSurfaceStateSize());
     EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getBindlessSurfaceStateBaseAddress());
     EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+}
+
+using SbaForBindlessTests = Test<DeviceFixture>;
+
+HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, IsSklOrAbove) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
+
+    uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
+
+    StackVec<char, 4096> buffer(4096);
+    NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(
+        cmd,
+        nullptr,
+        nullptr,
+        nullptr,
+        0,
+        false,
+        0,
+        0,
+        0,
+        globalBindlessHeapsBaseAddress,
+        false,
+        true,
+        pDevice->getGmmHelper(),
+        true,
+        MemoryCompressionState::NotApplicable);
+    EXPECT_TRUE(cmd->getBindlessSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(cmd->getBindlessSurfaceStateBaseAddress(), globalBindlessHeapsBaseAddress);
+    EXPECT_EQ(cmd->getBindlessSurfaceStateSize(), MemoryConstants::sizeOf4GBinPageEntities);
+}
+HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirectBaseAddressThenIndirectBaseAddressIsSet, IsSklOrAbove) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
+
+    uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
+    uint64_t indirectObjectBaseAddress = 0x12340000;
+
+    StackVec<char, 4096> buffer(4096);
+    NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(
+        cmd,
+        nullptr,
+        nullptr,
+        nullptr,
+        0,
+        false,
+        0,
+        indirectObjectBaseAddress,
+        0,
+        globalBindlessHeapsBaseAddress,
+        false,
+        true,
+        pDevice->getGmmHelper(),
+        true,
+        MemoryCompressionState::NotApplicable);
+
+    EXPECT_EQ(cmd->getIndirectObjectBaseAddress(), indirectObjectBaseAddress);
 }

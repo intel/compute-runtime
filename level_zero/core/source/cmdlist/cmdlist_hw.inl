@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/heap_helper.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -70,7 +71,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     containsStatelessUncachedResource = false;
 
     if (!isCopyOnly()) {
-        programStateBaseAddress(commandContainer, true);
+        if (!NEO::ApiSpecificConfig::getBindlessConfiguration()) {
+            programStateBaseAddress(commandContainer, false);
+        }
+        commandContainer.setDirtyStateForAllHeaps(false);
         programThreadArbitrationPolicy(device);
     }
 
@@ -89,7 +93,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     ze_result_t returnType = parseErrorCode(returnValue);
     if (returnType == ZE_RESULT_SUCCESS) {
         if (!isCopyOnly()) {
-            programStateBaseAddress(commandContainer, false);
+            if (!NEO::ApiSpecificConfig::getBindlessConfiguration()) {
+                programStateBaseAddress(commandContainer, false);
+            }
+            commandContainer.setDirtyStateForAllHeaps(false);
             programThreadArbitrationPolicy(device);
         }
     }
@@ -1701,7 +1708,6 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
 
         device->getL0Debugger()->captureStateBaseAddress(commandContainer, sbaAddresses);
     }
-    commandContainer.setDirtyStateForAllHeaps(false);
 }
 
 } // namespace L0

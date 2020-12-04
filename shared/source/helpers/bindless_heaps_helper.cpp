@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ BindlessHeapsHelper::BindlessHeapsHelper(MemoryManager *memManager, bool isMulti
         auto heapAllocation = getHeapAllocation(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, allocInFrontWindow);
         UNRECOVERABLE_IF(heapAllocation == nullptr);
         ssHeapsAllocations.push_back(heapAllocation);
-        surfaceStateHeaps[heapType] = std::make_unique<IndirectHeap>(heapAllocation, false);
+        surfaceStateHeaps[heapType] = std::make_unique<IndirectHeap>(heapAllocation, true);
     }
 
     borderColorStates = getHeapAllocation(MemoryConstants::pageSize, MemoryConstants::pageSize, true);
@@ -60,6 +60,7 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
         }
     }
     void *ptrInHeap = getSpaceInHeap(ssSize, heapType);
+    memset(ptrInHeap, 0, ssSize);
     auto bindlessOffset = heap->getGraphicsAllocation()->getGpuAddress() - heap->getGraphicsAllocation()->getGpuBaseAddress() + heap->getUsed() - ssSize;
     SurfaceStateInHeapInfo bindlesInfo;
     if (heapType == BindlesHeapType::GLOBAL_SSH) {

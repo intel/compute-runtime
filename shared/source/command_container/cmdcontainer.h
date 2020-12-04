@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void *getHeapSpaceAllowGrow(HeapType heapType, size_t size);
 
     ErrorCode initialize(Device *device);
+
+    void prepareBindfulSsh();
 
     virtual ~CommandContainer();
 

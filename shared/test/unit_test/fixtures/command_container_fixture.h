@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ class CommandEncodeStatesFixture : public DeviceFixture {
         DeviceFixture::SetUp();
         cmdContainer = std::make_unique<MyMockCommandContainer>();
         cmdContainer->initialize(pDevice);
+        cmdContainer->setDirtyStateForAllHeaps(false);
     }
     void TearDown() {
         cmdContainer.reset();

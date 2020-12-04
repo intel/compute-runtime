@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/test/unit_test/fixtures/front_window_fixture.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 #include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/mocks/ult_device_factory.h"
@@ -15,30 +16,6 @@
 #include "test.h"
 
 using namespace NEO;
-
-class MockBindlesHeapsHelper : public BindlessHeapsHelper {
-  public:
-    using BaseClass = BindlessHeapsHelper;
-    MockBindlesHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex) : BaseClass(memManager, isMultiOsContextCapable, rootDeviceIndex) {
-        globalSsh = surfaceStateHeaps[BindlesHeapType::GLOBAL_SSH].get();
-        specialSsh = surfaceStateHeaps[BindlesHeapType::SPECIAL_SSH].get();
-        scratchSsh = surfaceStateHeaps[BindlesHeapType::SPECIAL_SSH].get();
-        globalDsh = surfaceStateHeaps[BindlesHeapType::SPECIAL_SSH].get();
-    }
-    using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
-    using BaseClass::borderColorStates;
-    using BaseClass::growHeap;
-    using BaseClass::isMultiOsContextCapable;
-    using BaseClass::memManager;
-    using BaseClass::rootDeviceIndex;
-    using BaseClass::ssHeapsAllocations;
-    using BaseClass::surfaceStateInHeapAllocationMap;
-
-    IndirectHeap *specialSsh;
-    IndirectHeap *globalSsh;
-    IndirectHeap *scratchSsh;
-    IndirectHeap *globalDsh;
-};
 
 TEST(BindlessHeapsHelper, givenBindlessModeFlagEnabledWhenCreatingRootDevicesThenBindlesHeapHelperCreated) {
     DebugManagerStateRestore dbgRestorer;

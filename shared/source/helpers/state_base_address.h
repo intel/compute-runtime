@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,9 @@ struct StateBaseAddressHelper {
         uint32_t statelessMocsIndex,
         uint64_t indirectObjectHeapBaseAddress,
         uint64_t instructionHeapBaseAddress,
+        uint64_t globalHeapsBaseAddress,
         bool setInstructionStateBaseAddress,
+        bool useGlobalHeapsBaseAddress,
         GmmHelper *gmmHelper,
         bool isMultiOsContextCapable,
         MemoryCompressionState memoryCompressionState);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,13 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/unit_test/mocks/mock_command_stream_receiver.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
@@ -301,7 +304,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
             .Times(1); // instruction heap
     }
 
-    commandQueue->programGeneralStateBaseAddress(0u, true, child);
+    commandQueue->programStateBaseAddress(0u, true, child);
 
     if (isaInLocalMemory) {
         EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
@@ -317,7 +320,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
             .Times(2);
     }
 
-    commandQueue->programGeneralStateBaseAddress(0u, false, child);
+    commandQueue->programStateBaseAddress(0u, false, child);
 
     commandQueue->destroy();
 }
@@ -333,13 +336,89 @@ HWTEST2_F(CommandQueueProgramSBATest,
     uint32_t alignedSize = 4096u;
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
 
-    commandQueue->programGeneralStateBaseAddress(0u, true, child);
+    commandQueue->programStateBaseAddress(0u, true, child);
     auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandQueue->commandStream->getSpace(sizeof(STATE_BASE_ADDRESS)));
     uint32_t statelessMocsIndex = pSbaCmd->getStatelessDataPortAccessMemoryObjectControlState();
 
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     uint32_t expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
     EXPECT_EQ(statelessMocsIndex, expectedMocs);
+
+    commandQueue->destroy();
+}
+
+using BindlessCommandQueueSBASupport = IsAtLeastProduct<IGFX_SKYLAKE>;
+
+HWTEST2_F(CommandQueueProgramSBATest,
+          givenBindlessModeEnabledWhenProgrammingStateBaseAddressThenBindlessBaseAddressIsPassed, BindlessCommandQueueSBASupport) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumAvailableDevices() > 1, neoDevice->getRootDeviceIndex());
+    MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
+    neoDevice->bindlessHeapHelper.reset(bindlessHeapsHelper.release());
+    NEO::MockGraphicsAllocation baseAllocation;
+    bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::GLOBAL_SSH].reset(new IndirectHeap(&baseAllocation, true));
+    baseAllocation.setGpuBaseAddress(0x123000);
+    ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
+    commandQueue->initialize(false, false);
+
+    uint32_t alignedSize = 4096u;
+    NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
+
+    commandQueue->programStateBaseAddress(0u, true, child);
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+    auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+
+    auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
+    EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddressModifyEnable(), true);
+    EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddress(), neoDevice->bindlessHeapHelper->getGlobalHeapsBase());
+    EXPECT_EQ(cmdSba->getBindlessSurfaceStateSize(), MemoryConstants::sizeOf4GBinPageEntities);
+
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueProgramSBATest,
+          givenBindlessModeDisabledWhenProgrammingStateBaseAddressThenBindlessBaseAddressNotPassed, CommandQueueSBASupport) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.UseBindlessMode.set(0);
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumAvailableDevices() > 1, neoDevice->getRootDeviceIndex());
+    MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
+    neoDevice->bindlessHeapHelper.reset(bindlessHeapsHelper.release());
+    NEO::MockGraphicsAllocation baseAllocation;
+    bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::GLOBAL_SSH].reset(new IndirectHeap(&baseAllocation, true));
+    baseAllocation.setGpuBaseAddress(0x123000);
+    ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
+    commandQueue->initialize(false, false);
+
+    uint32_t alignedSize = 4096u;
+    NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
+
+    commandQueue->programStateBaseAddress(0u, true, child);
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+    auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+
+    auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
+    EXPECT_NE(cmdSba->getBindlessSurfaceStateBaseAddress(), neoDevice->bindlessHeapHelper->getGlobalHeapsBase());
 
     commandQueue->destroy();
 }

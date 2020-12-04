@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -429,9 +429,14 @@ template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
 
     if (container.nextIddInBlock == container.getNumIddPerBlock()) {
-        container.getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
-        container.setIddBlock(container.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE,
-                                                              sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock()));
+        if (ApiSpecificConfig::getBindlessConfiguration()) {
+            container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
+            container.setIddBlock(container.getDevice()->getBindlessHeapsHelper()->getSpaceInHeap(sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock(), BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH));
+        } else {
+            container.getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
+            container.setIddBlock(container.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE,
+                                                                  sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock()));
+        }
         container.nextIddInBlock = 0;
 
         EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);

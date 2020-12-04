@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     uint32_t bindingTablePointer = 0u;
     bool isBindlessKernel = kernelDescriptor.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindlessAndStateless;
     if (!isBindlessKernel) {
-
+        container.prepareBindfulSsh();
         if (bindingTableStateCount > 0u) {
             auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
             sshOffset = ssh->getUsed();
@@ -89,9 +89,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                 dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
                 kernelDescriptor.payloadMappings.bindingTable.tableOffset));
         }
-
-        idd.setBindingTablePointer(bindingTablePointer);
     }
+    idd.setBindingTablePointer(bindingTablePointer);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<Family>(&idd, preemptionMode);
 
@@ -114,8 +113,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     }
 
     idd.setSamplerStatePointer(samplerStateOffset);
-
-    EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(idd, samplerCount, bindingTableStateCount);
+    if (!isBindlessKernel) {
+        EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(idd, samplerCount, bindingTableStateCount);
+    }
 
     auto numGrfCrossThreadData = static_cast<uint32_t>(sizeCrossThreadData / sizeof(float[8]));
     idd.setCrossThreadConstantDataReadLength(numGrfCrossThreadData);
@@ -221,13 +221,18 @@ template <typename Family>
 void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &container) {
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-    auto heap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto heapBase = ApiSpecificConfig::getBindlessConfiguration() ? container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()->getUnderlyingBuffer() : container.getIndirectHeap(HeapType::DYNAMIC_STATE)->getCpuBase();
 
     auto mediaStateFlush = container.getCommandStream()->getSpaceForCmd<MEDIA_STATE_FLUSH>();
     *mediaStateFlush = Family::cmdInitMediaStateFlush;
 
+    auto iddOffset = static_cast<uint32_t>(ptrDiff(container.getIddBlock(), heapBase));
+    iddOffset += ApiSpecificConfig::getBindlessConfiguration() ? static_cast<uint32_t>(container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()->getGpuAddress() -
+                                                                                       container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()->getGpuBaseAddress())
+                                                               : 0;
+
     MEDIA_INTERFACE_DESCRIPTOR_LOAD cmd = Family::cmdInitMediaInterfaceDescriptorLoad;
-    cmd.setInterfaceDescriptorDataStartAddress(static_cast<uint32_t>(ptrDiff(container.getIddBlock(), heap->getCpuBase())));
+    cmd.setInterfaceDescriptorDataStartAddress(iddOffset);
     cmd.setInterfaceDescriptorTotalLength(sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock());
 
     auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
@@ -352,6 +357,8 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
         statelessMocsIndex,
         container.getIndirectObjectHeapBaseAddress(),
         container.getInstructionHeapBaseAddress(),
+        0,
+        false,
         false,
         gmmHelper,
         false,

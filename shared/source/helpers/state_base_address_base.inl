@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,30 +26,51 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     uint32_t statelessMocsIndex,
     uint64_t indirectObjectHeapBaseAddress,
     uint64_t instructionHeapBaseAddress,
+    uint64_t globalHeapsBaseAddress,
     bool setInstructionStateBaseAddress,
+    bool useGlobalHeapsBaseAddress,
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable,
     MemoryCompressionState memoryCompressionState) {
 
     *stateBaseAddress = GfxFamily::cmdInitStateBaseAddress;
 
-    if (dsh) {
+    if (useGlobalHeapsBaseAddress) {
         stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
         stateBaseAddress->setDynamicStateBufferSizeModifyEnable(true);
-        stateBaseAddress->setDynamicStateBaseAddress(dsh->getHeapGpuBase());
-        stateBaseAddress->setDynamicStateBufferSize(dsh->getHeapSizeInPages());
-    }
+        stateBaseAddress->setDynamicStateBaseAddress(globalHeapsBaseAddress);
+        stateBaseAddress->setDynamicStateBufferSize(MemoryConstants::pageSize64k);
 
-    if (ioh) {
         stateBaseAddress->setIndirectObjectBaseAddressModifyEnable(true);
         stateBaseAddress->setIndirectObjectBufferSizeModifyEnable(true);
-        stateBaseAddress->setIndirectObjectBaseAddress(ioh->getHeapGpuBase());
-        stateBaseAddress->setIndirectObjectBufferSize(ioh->getHeapSizeInPages());
-    }
+        stateBaseAddress->setIndirectObjectBaseAddress(indirectObjectHeapBaseAddress);
+        stateBaseAddress->setIndirectObjectBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
-    if (ssh) {
         stateBaseAddress->setSurfaceStateBaseAddressModifyEnable(true);
-        stateBaseAddress->setSurfaceStateBaseAddress(ssh->getHeapGpuBase());
+        stateBaseAddress->setSurfaceStateBaseAddress(globalHeapsBaseAddress);
+
+        stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+        stateBaseAddress->setBindlessSurfaceStateBaseAddress(globalHeapsBaseAddress);
+        stateBaseAddress->setBindlessSurfaceStateSize(MemoryConstants::sizeOf4GBinPageEntities);
+    } else {
+        if (dsh) {
+            stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
+            stateBaseAddress->setDynamicStateBufferSizeModifyEnable(true);
+            stateBaseAddress->setDynamicStateBaseAddress(dsh->getHeapGpuBase());
+            stateBaseAddress->setDynamicStateBufferSize(dsh->getHeapSizeInPages());
+        }
+
+        if (ioh) {
+            stateBaseAddress->setIndirectObjectBaseAddressModifyEnable(true);
+            stateBaseAddress->setIndirectObjectBufferSizeModifyEnable(true);
+            stateBaseAddress->setIndirectObjectBaseAddress(ioh->getHeapGpuBase());
+            stateBaseAddress->setIndirectObjectBufferSize(ioh->getHeapSizeInPages());
+        }
+
+        if (ssh) {
+            stateBaseAddress->setSurfaceStateBaseAddressModifyEnable(true);
+            stateBaseAddress->setSurfaceStateBaseAddress(ssh->getHeapGpuBase());
+        }
     }
 
     if (setInstructionStateBaseAddress) {

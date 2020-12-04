@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -404,7 +404,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             mocsIndex,
             getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()),
             instructionHeapBaseAddress,
+            0,
             true,
+            false,
             device.getGmmHelper(),
             isMultiOsContextCapable(),
             dispatchFlags.memoryCompressionState);
