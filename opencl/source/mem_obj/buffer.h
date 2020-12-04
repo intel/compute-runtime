@@ -53,23 +53,6 @@ using ValidateInputAndCreateBufferFunc = std::function<cl_mem(cl_context context
 extern ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer;
 } // namespace BufferFunctions
 
-namespace CreateBuffer {
-struct AllocationInfo {
-    GraphicsAllocation *mapAllocation = nullptr;
-    GraphicsAllocation *memory = nullptr;
-    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
-
-    bool zeroCopyAllowed = true;
-    bool isHostPtrSVM = false;
-
-    bool alignementSatisfied = true;
-    bool allocateMemory = true;
-    bool copyMemoryFromHostPtr = false;
-};
-} // namespace CreateBuffer
-
-using AllocationInfoType = StackVec<CreateBuffer::AllocationInfo, 1>;
-
 class Buffer : public MemObj {
   public:
     constexpr static size_t maxBufferSizeForReadWriteOnCpu = 10 * MB;
@@ -173,8 +156,6 @@ class Buffer : public MemObj {
     uint64_t getBufferAddress(uint32_t rootDeviceIndex) const;
 
     bool isCompressed(uint32_t rootDeviceIndex) const;
-
-    static void cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, AllocationInfoType &allocationInfo);
 
   protected:
     Buffer(Context *context,

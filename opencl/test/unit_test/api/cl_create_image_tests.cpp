@@ -1358,4 +1358,46 @@ TEST_P(clCreateNon2dImageFromImageTest, GivenImage2dWhenCreatingImageFromNon2dIm
 INSTANTIATE_TEST_CASE_P(clCreateNon2dImageFromImageTests,
                         clCreateNon2dImageFromImageTest,
                         ::testing::ValuesIn(non2dImageTypes));
+
+using clCreateImageWithMultiDeviceContextTests = clCreateImageTest;
+
+TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyFilled) {
+    UltClDeviceFactory deviceFactory{2, 0};
+    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+
+    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+    auto context = clCreateContext(nullptr, 2u, devices, nullptr, nullptr, &retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto pContext = castToObject<Context>(context);
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
+
+    EXPECT_EQ(1u, pContext->getMaxRootDeviceIndex());
+
+    std::unique_ptr<char[]> ptr;
+    char *hostPtr = nullptr;
+
+    ptr = std::make_unique<char[]>(alignUp(imageDesc.image_width * imageDesc.image_height * 4, MemoryConstants::pageSize));
+    hostPtr = ptr.get();
+
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+
+    auto image = clCreateImage(context, flags, &imageFormat, &imageDesc, hostPtr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+
+    Image *imageObj = NEO::castToObject<Image>(image);
+
+    EXPECT_EQ(imageObj->getMultiGraphicsAllocation().getGraphicsAllocations().size(), 2u);
+    EXPECT_NE(imageObj->getMultiGraphicsAllocation().getGraphicsAllocation(0u), nullptr);
+    EXPECT_NE(imageObj->getMultiGraphicsAllocation().getGraphicsAllocation(1u), nullptr);
+    EXPECT_NE(imageObj->getMultiGraphicsAllocation().getGraphicsAllocation(0u), imageObj->getMultiGraphicsAllocation().getGraphicsAllocation(1u));
+
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    clReleaseContext(context);
+}
+
 } // namespace ClCreateImageTests

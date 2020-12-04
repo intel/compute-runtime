@@ -36,6 +36,25 @@ struct OpenCLObjectMapper<_cl_mem> {
     typedef class MemObj DerivedType;
 };
 
+namespace CreateMemObj {
+struct AllocationInfo {
+    GraphicsAllocation *mapAllocation = nullptr;
+    GraphicsAllocation *memory = nullptr;
+    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
+
+    bool zeroCopyAllowed = true;
+    bool isHostPtrSVM = false;
+
+    bool alignementSatisfied = true;
+    bool allocateMemory = true;
+    bool copyMemoryFromHostPtr = false;
+
+    bool transferNeeded = false;
+};
+} // namespace CreateMemObj
+
+using AllocationInfoType = StackVec<CreateMemObj::AllocationInfo, 1>;
+
 class MemObj : public BaseObject<_cl_mem> {
   public:
     constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFF00LL;
@@ -132,6 +151,7 @@ class MemObj : public BaseObject<_cl_mem> {
     const cl_mem_flags &getFlagsIntel() const { return flagsIntel; }
     const MultiGraphicsAllocation &getMultiGraphicsAllocation() const { return multiGraphicsAllocation; }
     MultiGraphicsAllocation &getMigrateableMultiGraphicsAllocation() { return multiGraphicsAllocation; }
+    static void cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, AllocationInfoType &allocationInfo, bool isParentObject);
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);

@@ -1816,7 +1816,7 @@ TEST_F(MultiRootDeviceBufferTest, WhenCleanAllGraphicsAllocationsCalledThenGraph
     allocationInfo[1u] = {};
     allocationInfo[1u].memory = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1u, MemoryConstants::pageSize});
 
-    Buffer::cleanAllGraphicsAllocations(*context, *context->getMemoryManager(), allocationInfo);
+    Buffer::cleanAllGraphicsAllocations(*context, *context->getMemoryManager(), allocationInfo, false);
 }
 
 TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferGraphicsAllocationHasCorrectRootDeviceIndex) {

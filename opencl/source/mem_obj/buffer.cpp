@@ -204,7 +204,7 @@ Buffer *Buffer::create(Context *context,
         }
 
         if (errcodeRet != CL_SUCCESS) {
-            cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfo);
+            cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfo, false);
             return nullptr;
         }
 
@@ -304,7 +304,7 @@ Buffer *Buffer::create(Context *context,
 
         if (!allocationInfo[rootDeviceIndex].memory) {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;
-            cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfo);
+            cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfo, false);
 
             return nullptr;
         }
@@ -347,7 +347,7 @@ Buffer *Buffer::create(Context *context,
 
     if (!pBuffer) {
         errcodeRet = CL_OUT_OF_HOST_MEMORY;
-        cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfo);
+        cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfo, false);
 
         return nullptr;
     }
@@ -735,15 +735,6 @@ bool Buffer::isCompressed(uint32_t rootDeviceIndex) const {
     }
 
     return false;
-}
-
-void Buffer::cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, AllocationInfoType &allocationInfo) {
-    for (auto &index : context.getRootDeviceIndices()) {
-        if (allocationInfo[index].memory) {
-            memoryManager.removeAllocationFromHostPtrManager(allocationInfo[index].memory);
-            memoryManager.freeGraphicsMemory(allocationInfo[index].memory);
-        }
-    }
 }
 
 void Buffer::setSurfaceState(const Device *device,

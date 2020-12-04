@@ -35,6 +35,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
+    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+
+    dstImage->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
+
     auto cmdType = CL_COMMAND_WRITE_IMAGE;
     auto isMemTransferNeeded = true;
     if (dstImage->isMemObjZeroCopy()) {

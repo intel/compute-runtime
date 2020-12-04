@@ -405,4 +405,15 @@ void MemObj::storeProperties(const cl_mem_properties *properties) {
     }
 }
 
+void MemObj::cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, AllocationInfoType &allocationInfo, bool isParentObject) {
+    if (!isParentObject) {
+        for (auto &index : context.getRootDeviceIndices()) {
+            if (allocationInfo[index].memory) {
+                memoryManager.removeAllocationFromHostPtrManager(allocationInfo[index].memory);
+                memoryManager.freeGraphicsMemory(allocationInfo[index].memory);
+            }
+        }
+    }
+}
+
 } // namespace NEO

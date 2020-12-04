@@ -41,6 +41,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
+    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+
+    srcImage->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
+
     cl_command_type cmdType = CL_COMMAND_READ_IMAGE;
     auto blitAllowed = blitEnqueueAllowed(cmdType) && blitEnqueueImageAllowed(origin, region);
     auto &csr = getCommandStreamReceiver(blitAllowed);
