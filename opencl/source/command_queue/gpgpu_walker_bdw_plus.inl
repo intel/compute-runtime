@@ -243,16 +243,18 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
         hwInfo,
         args);
 
-    //MI_STORE_REGISTER_MEM for context local timestamp
-    timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);
+    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+        //MI_STORE_REGISTER_MEM for context local timestamp
+        timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);
 
-    //low part
-    auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
-    MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
-    adjustMiStoreRegMemMode(&cmd);
-    cmd.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
-    cmd.setMemoryAddress(timeStampAddress);
-    *pMICmdLow = cmd;
+        //low part
+        auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
+        MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
+        adjustMiStoreRegMemMode(&cmd);
+        cmd.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+        cmd.setMemoryAddress(timeStampAddress);
+        *pMICmdLow = cmd;
+    }
 }
 
 template <typename GfxFamily>
@@ -263,21 +265,28 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
-    auto pPipeControlCmd = commandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmdPipeControl = GfxFamily::cmdInitPipeControl;
-    cmdPipeControl.setCommandStreamerStallEnable(true);
-    *pPipeControlCmd = cmdPipeControl;
+    uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalEndTS);
+    PipeControlArgs args;
+    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        *commandStream,
+        PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
+        timeStampAddress,
+        0llu,
+        hwInfo,
+        args);
 
-    //MI_STORE_REGISTER_MEM for context local timestamp
-    uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextEndTS);
+    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+        //MI_STORE_REGISTER_MEM for context local timestamp
+        uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextEndTS);
 
-    //low part
-    auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
-    MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
-    adjustMiStoreRegMemMode(&cmd);
-    cmd.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
-    cmd.setMemoryAddress(timeStampAddress);
-    *pMICmdLow = cmd;
+        //low part
+        auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
+        MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
+        adjustMiStoreRegMemMode(&cmd);
+        cmd.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+        cmd.setMemoryAddress(timeStampAddress);
+        *pMICmdLow = cmd;
+    }
 }
 
 template <typename GfxFamily>
