@@ -12,6 +12,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -72,6 +73,12 @@ class Kernel : public BaseObject<_cl_kernel> {
         cl_mem_flags svmFlags;
         bool isPatched = false;
         bool isStatelessUncacheable = false;
+    };
+
+    enum class TunningStatus {
+        STANDARD_TUNNING_IN_PROGRESS,
+        SUBDEVICE_TUNNING_IN_PROGRESS,
+        TUNNING_DONE
     };
 
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
@@ -288,7 +295,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool isVmeKernel() const { return getDefaultKernelInfo().isVmeWorkload; }
     bool requiresSpecialPipelineSelectMode() const { return specialPipelineSelectMode; }
 
-    MOCKABLE_VIRTUAL bool isSingleSubdevicePreferred() const { return false; }
+    void performKernelTunning(CommandStreamReceiver &commandStreamReceiver, const Vec3<size_t> &lws, const Vec3<size_t> &gws, const Vec3<size_t> &offsets, TimestampPacketContainer *timestampContainer);
+    MOCKABLE_VIRTUAL bool isSingleSubdevicePreferred() const;
 
     //residency for kernel surfaces
     MOCKABLE_VIRTUAL void makeResident(CommandStreamReceiver &commandStreamReceiver);
@@ -585,5 +593,46 @@ class Kernel : public BaseObject<_cl_kernel> {
     };
     std::vector<KernelDeviceInfo> kernelDeviceInfos;
     const uint32_t defaultRootDeviceIndex;
+
+    struct KernelConfig {
+        Vec3<size_t> gws;
+        Vec3<size_t> lws;
+        Vec3<size_t> offsets;
+        bool operator==(const KernelConfig &other) const { return this->gws == other.gws && this->lws == other.lws && this->offsets == other.offsets; }
+    };
+    struct KernelConfigHash {
+        size_t operator()(KernelConfig const &config) const {
+            auto hash = std::hash<size_t>{};
+            size_t gwsHashX = hash(config.gws.x);
+            size_t gwsHashY = hash(config.gws.y);
+            size_t gwsHashZ = hash(config.gws.z);
+            size_t gwsHash = hashCombine(gwsHashX, gwsHashY, gwsHashZ);
+            size_t lwsHashX = hash(config.lws.x);
+            size_t lwsHashY = hash(config.lws.y);
+            size_t lwsHashZ = hash(config.lws.z);
+            size_t lwsHash = hashCombine(lwsHashX, lwsHashY, lwsHashZ);
+            size_t offsetsHashX = hash(config.offsets.x);
+            size_t offsetsHashY = hash(config.offsets.y);
+            size_t offsetsHashZ = hash(config.offsets.z);
+            size_t offsetsHash = hashCombine(offsetsHashX, offsetsHashY, offsetsHashZ);
+            return hashCombine(gwsHash, lwsHash, offsetsHash);
+        }
+
+        size_t hashCombine(size_t hash1, size_t hash2, size_t hash3) const {
+            return (hash1 ^ (hash2 << 1u)) ^ (hash3 << 2u);
+        }
+    };
+    struct KernelSubmissionData {
+        std::unique_ptr<TimestampPacketContainer> kernelStandardTimestamps;
+        std::unique_ptr<TimestampPacketContainer> kernelSubdeviceTimestamps;
+        TunningStatus status;
+        bool singleSubdevicePrefered = false;
+    };
+
+    bool hasTunningFinished(KernelSubmissionData &submissionData);
+    bool hasRunFinished(TimestampPacketContainer *timestampContainer);
+
+    std::unordered_map<KernelConfig, KernelSubmissionData, KernelConfigHash> kernelSubmissionMap;
+    bool singleSubdevicePreferedInCurrentEnqueue = false;
 };
 } // namespace NEO

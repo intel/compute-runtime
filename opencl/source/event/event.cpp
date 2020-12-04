@@ -269,23 +269,10 @@ bool Event::calcProfilingData() {
                 }
             }
 
-            uint64_t globalStartTS = timestamps[0]->tagForCpuAccess->packets[0].globalStart;
-            uint64_t globalEndTS = timestamps[0]->tagForCpuAccess->packets[0].globalEnd;
+            uint64_t globalStartTS = 0u;
+            uint64_t globalEndTS = 0u;
+            Event::getBoundaryTimestampValues(timestampPacketContainer.get(), globalStartTS, globalEndTS);
 
-            for (const auto &timestamp : timestamps) {
-                if (!timestamp->isProfilingCapable()) {
-                    continue;
-                }
-                for (auto i = 0u; i < timestamp->tagForCpuAccess->packetsUsed; ++i) {
-                    const auto &packet = timestamp->tagForCpuAccess->packets[i];
-                    if (globalStartTS > packet.globalStart) {
-                        globalStartTS = packet.globalStart;
-                    }
-                    if (globalEndTS < packet.globalEnd) {
-                        globalEndTS = packet.globalEnd;
-                    }
-                }
-            }
             calculateProfilingDataInternal(globalStartTS, globalEndTS, &globalEndTS, globalStartTS);
 
         } else if (timeStampNode) {
@@ -355,6 +342,28 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     }
 
     dataCalculated = true;
+}
+
+void Event::getBoundaryTimestampValues(TimestampPacketContainer *timestampContainer, uint64_t &globalStartTS, uint64_t &globalEndTS) {
+    const auto timestamps = timestampContainer->peekNodes();
+
+    globalStartTS = timestamps[0]->tagForCpuAccess->packets[0].globalStart;
+    globalEndTS = timestamps[0]->tagForCpuAccess->packets[0].globalEnd;
+
+    for (const auto &timestamp : timestamps) {
+        if (!timestamp->isProfilingCapable()) {
+            continue;
+        }
+        for (auto i = 0u; i < timestamp->tagForCpuAccess->packetsUsed; ++i) {
+            const auto &packet = timestamp->tagForCpuAccess->packets[i];
+            if (globalStartTS > packet.globalStart) {
+                globalStartTS = packet.globalStart;
+            }
+            if (globalEndTS < packet.globalEnd) {
+                globalEndTS = packet.globalEnd;
+            }
+        }
+    }
 }
 
 inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {

@@ -38,6 +38,7 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/program/program_tests.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -1923,6 +1924,103 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
     status = clSetKernelExecInfo(mockKernel.mockKernel, CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL, sizeof(cl_bool), &enableIndirectSharedAccess);
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_FALSE(mockKernel.mockKernel->unifiedMemoryControls.indirectSharedAllocationsAllowed);
+}
+
+TEST(KernelConfigTests, givenTwoKernelConfigsWhenCompareThenResultsAreCorrect) {
+    Vec3<size_t> lws{1, 1, 1};
+    Vec3<size_t> gws{1, 1, 1};
+    Vec3<size_t> offsets{1, 1, 1};
+    MockKernel::KernelConfig config{gws, lws, offsets};
+    MockKernel::KernelConfig config2{gws, lws, offsets};
+    EXPECT_TRUE(config == config2);
+
+    config2.offsets.z = 2;
+    EXPECT_FALSE(config == config2);
+
+    config2.lws.z = 2;
+    config2.offsets.z = 1;
+    EXPECT_FALSE(config == config2);
+
+    config2.lws.z = 1;
+    config2.gws.z = 2;
+    EXPECT_FALSE(config == config2);
+}
+
+HWTEST_F(KernelResidencyTest, givenEnableKernelTuningWhenPerformTunningThenKerneConfigDataIsTracked) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableKernelTunning.set(1u);
+
+    auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
+    MockKernelWithInternals mockKernel(*this->pClDevice);
+
+    Vec3<size_t> lws{1, 1, 1};
+    Vec3<size_t> gws{1, 1, 1};
+    Vec3<size_t> offsets{1, 1, 1};
+    MockKernel::KernelConfig config{gws, lws, offsets};
+
+    MockTimestampPacketContainer container(*commandStreamReceiver.getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer subdeviceContainer(*commandStreamReceiver.getTimestampPacketAllocator(), 2);
+
+    auto result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
+    EXPECT_EQ(result, mockKernel.mockKernel->kernelSubmissionMap.end());
+
+    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+
+    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
+    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
+    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::STANDARD_TUNNING_IN_PROGRESS);
+    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+
+    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &subdeviceContainer);
+
+    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
+    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
+    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
+    EXPECT_TRUE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+
+    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+
+    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
+    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
+    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
+    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+
+    container.getNode(0u)->tagForCpuAccess->packets->globalEnd = 2u;
+    container.getNode(0u)->tagForCpuAccess->packets->contextEnd = 2u;
+    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+
+    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
+    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
+    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
+    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+
+    subdeviceContainer.getNode(0u)->tagForCpuAccess->packets->globalEnd = 2u;
+    subdeviceContainer.getNode(0u)->tagForCpuAccess->packets->contextEnd = 2u;
+    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+
+    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
+    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
+    EXPECT_NE(result->second.kernelStandardTimestamps.get(), nullptr);
+    EXPECT_NE(result->second.kernelSubdeviceTimestamps.get(), nullptr);
+    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
+    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+
+    subdeviceContainer.getNode(1u)->tagForCpuAccess->packets->globalEnd = 2u;
+    subdeviceContainer.getNode(1u)->tagForCpuAccess->packets->contextEnd = 2u;
+    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+
+    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
+    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
+    EXPECT_EQ(result->second.kernelStandardTimestamps.get(), nullptr);
+    EXPECT_EQ(result->second.kernelSubdeviceTimestamps.get(), nullptr);
+    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::TUNNING_DONE);
+    EXPECT_EQ(result->second.singleSubdevicePrefered, mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+
+    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
+    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
+    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::TUNNING_DONE);
+    EXPECT_EQ(result->second.singleSubdevicePrefered, mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
 }
 
 TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasImagesOnlyThenTrueIsReturned) {

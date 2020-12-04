@@ -131,6 +131,12 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserStartConfirmation, DebugPauseState::hasUserStartConfirmation);
     }
 
+    mainKernel->performKernelTunning(commandQueue.getGpgpuCommandStreamReceiver(),
+                                     multiDispatchInfo.begin()->getLocalWorkgroupSize(),
+                                     multiDispatchInfo.begin()->getActualWorkgroupSize(),
+                                     multiDispatchInfo.begin()->getOffset(),
+                                     currentTimestampPacketNodes);
+
     size_t currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
         dispatchInfo.dispatchInitCommands(*commandStream, timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo(), numSupportedDevices);
@@ -143,6 +149,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         currentDispatchIndex++;
         dispatchInfo.dispatchEpilogueCommands(*commandStream, timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo(), numSupportedDevices);
     }
+
     if (mainKernel->requiresCacheFlushCommand(commandQueue)) {
         uint64_t postSyncAddress = 0;
         if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {

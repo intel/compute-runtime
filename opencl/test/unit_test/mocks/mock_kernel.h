@@ -38,11 +38,14 @@ class MockKernel : public Kernel {
     using Kernel::kernelArgHandlers;
     using Kernel::kernelArgRequiresCacheFlush;
     using Kernel::kernelArguments;
+    using Kernel::KernelConfig;
     using Kernel::kernelDeviceInfos;
+    using Kernel::kernelSubmissionMap;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
     using Kernel::patchBufferOffset;
     using Kernel::patchWithImplicitSurface;
+    using Kernel::singleSubdevicePreferedInCurrentEnqueue;
     using Kernel::svmAllocationsRequireCacheFlush;
     using Kernel::threadArbitrationPolicy;
     using Kernel::unifiedMemoryControls;
