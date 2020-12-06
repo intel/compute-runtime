@@ -140,17 +140,17 @@ TEST_F(DispatchInfoTest, GivenFullGeometryWhenDispatchInfoIsCreatedThenValuesAre
     EXPECT_EQ(nullptr, dispatchInfo->getKernel());
 }
 
-TEST_F(DispatchInfoTest, WhenMultiDispatchInfoIsCreatedTheItIsNonCopyable) {
+TEST_F(DispatchInfoTest, WhenMultiDispatchInfoIsCreatedThenItIsNonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<MultiDispatchInfo>::value);
     EXPECT_FALSE(std::is_copy_constructible<MultiDispatchInfo>::value);
 }
 
-TEST_F(DispatchInfoTest, WhenMultiDispatchInfoIsCreatedTheItIsNonAssignable) {
+TEST_F(DispatchInfoTest, WhenMultiDispatchInfoIsCreatedThenItIsNonAssignable) {
     EXPECT_FALSE(std::is_move_assignable<MultiDispatchInfo>::value);
     EXPECT_FALSE(std::is_copy_assignable<MultiDispatchInfo>::value);
 }
 
-TEST_F(DispatchInfoTest, WhenMultiDispatchInfoIsCreatedTheItIsEmpty) {
+TEST_F(DispatchInfoTest, WhenMultiDispatchInfoIsCreatedThenItIsEmpty) {
     MultiDispatchInfo multiDispatchInfo;
     EXPECT_TRUE(multiDispatchInfo.empty());
     EXPECT_EQ(0u, multiDispatchInfo.getRequiredScratchSize());

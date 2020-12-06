@@ -19,7 +19,7 @@ constexpr size_t testOrigin[]{2, 3, 5, 7};
 
 typedef ::testing::TestWithParam<std::pair<uint32_t, size_t>> MipLevelTest;
 
-TEST_P(MipLevelTest, givenMemObjectTypeReturnProperMipLevel) {
+TEST_P(MipLevelTest, givenMemObjectTypeThenProperMipLevelIsReturned) {
     auto pair = GetParam();
     EXPECT_EQ(static_cast<uint32_t>(pair.second), findMipLevel(pair.first, testOrigin));
 }

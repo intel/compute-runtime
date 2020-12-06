@@ -151,7 +151,7 @@ TEST_F(MemoryManagementTest, WhenPointerIsDeletedThenAllocationShouldbeVisible) 
 }
 
 #if ENABLE_ME_FOR_LEAK_TESTING
-TEST_F(MemoryManagementTest, EnableForLeakTesting) {
+TEST_F(MemoryManagementTest, GivenEnableForLeakTestingThenDetectLeak) {
     // Useful reference : MemoryManagement::onAllocationEvent
     MemoryManagement::breakOnAllocationEvent = 1;
     MemoryManagement::breakOnDeallocationEvent = 0;

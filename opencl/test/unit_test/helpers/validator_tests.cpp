@@ -254,7 +254,7 @@ TEST(validateYuvOperation, GivenValidateYuvOperationWhenNullRegionThenReturnFail
     EXPECT_EQ(CL_INVALID_VALUE, ret);
 }
 
-TEST(areNotNullptr, WhenGivenAllNonNullParamsTheReturnsTrue) {
+TEST(areNotNullptr, WhenGivenAllNonNullParamsThenReturnsTrue) {
     int a = 0;
     int b = 0;
     int c = 0;
@@ -263,7 +263,7 @@ TEST(areNotNullptr, WhenGivenAllNonNullParamsTheReturnsTrue) {
     EXPECT_TRUE(areNotNullptr(&a, &b, &c));
 }
 
-TEST(areNotNullptr, WhenGivenAllNullParamsTheReturnsFalse) {
+TEST(areNotNullptr, WhenGivenAllNullParamsThenReturnsFalse) {
     int *a = nullptr;
     int *b = nullptr;
     int *c = nullptr;
@@ -272,7 +272,7 @@ TEST(areNotNullptr, WhenGivenAllNullParamsTheReturnsFalse) {
     EXPECT_FALSE(areNotNullptr(a, b, c));
 }
 
-TEST(areNotNullptr, WhenGivenNullParameterAmongNonNullParamsTheReturnsFalse) {
+TEST(areNotNullptr, WhenGivenNullParameterAmongNonNullParamsThenReturnsFalse) {
     int *a = nullptr;
     int b = 0;
     int c = 0;

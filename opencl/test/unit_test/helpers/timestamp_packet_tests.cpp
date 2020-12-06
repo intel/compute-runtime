@@ -230,7 +230,7 @@ TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenMarkAsCompleted) {
     EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
-TEST_F(TimestampPacketSimpleTests, givenTimestampPacketContainerWhenMovedTheMoveAllNodes) {
+TEST_F(TimestampPacketSimpleTests, givenTimestampPacketContainerWhenMovedThenMoveAllNodes) {
     EXPECT_TRUE(std::is_move_constructible<TimestampPacketContainer>::value);
     EXPECT_TRUE(std::is_move_assignable<TimestampPacketContainer>::value);
     EXPECT_FALSE(std::is_copy_assignable<TimestampPacketContainer>::value);
@@ -277,7 +277,7 @@ TEST_F(TimestampPacketSimpleTests, whenIsCompletedIsCalledThenItReturnsProperTim
     EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
-TEST_F(TimestampPacketSimpleTests, givenMultiplePacketsInUseWhenCompletionIsCheckedTheVerifyAllUsedNodes) {
+TEST_F(TimestampPacketSimpleTests, givenMultiplePacketsInUseWhenCompletionIsCheckedThenVerifyAllUsedNodes) {
     TimestampPacketStorage timestampPacketStorage;
     auto &packets = timestampPacketStorage.packets;
     timestampPacketStorage.initialize();

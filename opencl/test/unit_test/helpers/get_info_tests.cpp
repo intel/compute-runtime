@@ -87,7 +87,7 @@ TEST(getInfo, GivenValidInputWhenSettingParamValueReturnSizeThenValueIsUpdated) 
     EXPECT_EQ(1u, paramValueReturnSize);
 }
 
-TEST(getInfoHelper, GivenInstanceOfGetInfoHelperAndNullPtrParamsSuccessIsReturned) {
+TEST(getInfoHelper, GivenInstanceOfGetInfoHelperAndNullPtrParamsThenSuccessIsReturned) {
     GetInfoStatus retVal;
     GetInfoHelper info(nullptr, 0, nullptr, &retVal);
 
