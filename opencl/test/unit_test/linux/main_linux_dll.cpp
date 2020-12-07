@@ -232,7 +232,7 @@ TEST(DrmTest, givenUseVmBindFlagWhenOverrideBindSupportThenReturnProperValue) {
     EXPECT_FALSE(useVmBind);
 }
 
-TEST_F(DrmTests, createReturnsDrm) {
+TEST_F(DrmTests, GivenErrorCodeWhenCreatingDrmThenDrmCreatedOnlyWithSpecificErrors) {
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 
@@ -283,7 +283,7 @@ TEST_F(DrmTests, createReturnsDrm) {
     EXPECT_EQ(deviceId, lDeviceId);
 }
 
-TEST_F(DrmTests, createTwiceReturnsDifferentDrm) {
+TEST_F(DrmTests, WhenCreatingTwiceThenDifferentDrmReturned) {
     auto drm1 = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm1, nullptr);
     auto drm2 = DrmWrap::createDrm(*rootDeviceEnvironment);
@@ -291,7 +291,7 @@ TEST_F(DrmTests, createTwiceReturnsDifferentDrm) {
     EXPECT_NE(drm1, drm2);
 }
 
-TEST_F(DrmTests, createDriFallback) {
+TEST_F(DrmTests, WhenDriDeviceFoundThenDrmCreatedOnFallback) {
     VariableBackup<decltype(haveDri)> backupHaveDri(&haveDri);
 
     haveDri = 1;
@@ -299,14 +299,14 @@ TEST_F(DrmTests, createDriFallback) {
     EXPECT_NE(drm, nullptr);
 }
 
-TEST_F(DrmTests, createNoDevice) {
+TEST_F(DrmTests, GivenNoDeviceWhenCreatingDrmThenNullIsReturned) {
     VariableBackup<decltype(haveDri)> backupHaveDri(&haveDri);
     haveDri = -1;
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
 }
 
-TEST_F(DrmTests, createUnknownDevice) {
+TEST_F(DrmTests, GivenUnknownDeviceWhenCreatingDrmThenNullIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.PrintDebugMessages.set(true);
 
@@ -323,7 +323,7 @@ TEST_F(DrmTests, createUnknownDevice) {
     ::testing::internal::GetCapturedStdout();
 }
 
-TEST_F(DrmTests, createNoSoftPin) {
+TEST_F(DrmTests, GivenNoSoftPinWhenCreatingDrmThenNullIsReturned) {
     VariableBackup<decltype(haveSoftPin)> backupHaveSoftPin(&haveSoftPin);
     haveSoftPin = 0;
 
@@ -331,7 +331,7 @@ TEST_F(DrmTests, createNoSoftPin) {
     EXPECT_EQ(drm, nullptr);
 }
 
-TEST_F(DrmTests, failOnDeviceId) {
+TEST_F(DrmTests, WhenCantFindDeviceIdThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnDeviceId)> backupFailOnDeviceId(&failOnDeviceId);
     failOnDeviceId = -1;
 
@@ -339,7 +339,7 @@ TEST_F(DrmTests, failOnDeviceId) {
     EXPECT_EQ(drm, nullptr);
 }
 
-TEST_F(DrmTests, failOnEuTotal) {
+TEST_F(DrmTests, WhenCantQueryEuCountThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnEuTotal)> backupfailOnEuTotal(&failOnEuTotal);
     failOnEuTotal = -1;
 
@@ -347,7 +347,7 @@ TEST_F(DrmTests, failOnEuTotal) {
     EXPECT_EQ(drm, nullptr);
 }
 
-TEST_F(DrmTests, failOnSubsliceTotal) {
+TEST_F(DrmTests, WhenCantQuerySubsliceCountThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnSubsliceTotal)> backupfailOnSubsliceTotal(&failOnSubsliceTotal);
     failOnSubsliceTotal = -1;
 
@@ -355,7 +355,7 @@ TEST_F(DrmTests, failOnSubsliceTotal) {
     EXPECT_EQ(drm, nullptr);
 }
 
-TEST_F(DrmTests, failOnRevisionId) {
+TEST_F(DrmTests, WhenCantQueryRevisionIdThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnRevisionId)> backupFailOnRevisionId(&failOnRevisionId);
     failOnRevisionId = -1;
 
@@ -363,7 +363,7 @@ TEST_F(DrmTests, failOnRevisionId) {
     EXPECT_EQ(drm, nullptr);
 }
 
-TEST_F(DrmTests, failOnSoftPin) {
+TEST_F(DrmTests, WhenCantQuerySoftPinSupportThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnSoftPin)> backupFailOnSoftPin(&failOnSoftPin);
     failOnSoftPin = -1;
 
@@ -371,7 +371,7 @@ TEST_F(DrmTests, failOnSoftPin) {
     EXPECT_EQ(drm, nullptr);
 }
 
-TEST_F(DrmTests, failOnParamBoost) {
+TEST_F(DrmTests, GivenFailOnParamBoostWhenCreatingDrmThenDrmIsCreated) {
     VariableBackup<decltype(failOnParamBoost)> backupFailOnParamBoost(&failOnParamBoost);
     failOnParamBoost = -1;
 
@@ -380,7 +380,7 @@ TEST_F(DrmTests, failOnParamBoost) {
     EXPECT_NE(drm, nullptr);
 }
 
-TEST_F(DrmTests, failOnContextCreate) {
+TEST_F(DrmTests, GivenFailOnContextCreateWhenCreatingDrmThenDrmIsCreated) {
     VariableBackup<decltype(failOnContextCreate)> backupFailOnContextCreate(&failOnContextCreate);
 
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
@@ -391,7 +391,7 @@ TEST_F(DrmTests, failOnContextCreate) {
     failOnContextCreate = 0;
 }
 
-TEST_F(DrmTests, failOnSetPriority) {
+TEST_F(DrmTests, GivenFailOnSetPriorityWhenCreatingDrmThenDrmIsCreated) {
     VariableBackup<decltype(failOnSetPriority)> backupFailOnSetPriority(&failOnSetPriority);
 
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
@@ -403,7 +403,7 @@ TEST_F(DrmTests, failOnSetPriority) {
     failOnSetPriority = 0;
 }
 
-TEST_F(DrmTests, failOnDrmGetVersion) {
+TEST_F(DrmTests, WhenCantQueryDrmVersionThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnDrmVersion)> backupFailOnDrmVersion(&failOnDrmVersion);
 
     failOnDrmVersion = -1;
@@ -412,7 +412,7 @@ TEST_F(DrmTests, failOnDrmGetVersion) {
     failOnDrmVersion = 0;
 }
 
-TEST_F(DrmTests, failOnInvalidDeviceName) {
+TEST_F(DrmTests, GivenInvalidDrmVersionNameWhenCreatingDrmThenNullIsReturned) {
     VariableBackup<decltype(failOnDrmVersion)> backupFailOnDrmVersion(&failOnDrmVersion);
 
     strcpy(providedDrmVersion, "NA");
