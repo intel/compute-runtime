@@ -35,7 +35,7 @@ GEN12LPTEST_F(Gen12LPAubBatchBufferTests, givenSimpleCCSWithBatchBufferWhenItHas
     setupAUBWithBatchBuffer<FamilyType>(pDevice, aub_stream::ENGINE_CCS, gpuBatchBufferAddr);
 }
 
-GEN12LPTEST_F(Gen12LPTimestampTests, givenCommandQueueWithProfilingEnabledWhenKernelIsEnqueuedThenProfilingTimestampsAreNotZero) {
+GEN12LPTEST_F(Gen12LPTimestampTests, DISABLED_givenCommandQueueWithProfilingEnabledWhenKernelIsEnqueuedThenProfilingTimestampsAreNotZero) {
     cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, &properties[0], false);
 
