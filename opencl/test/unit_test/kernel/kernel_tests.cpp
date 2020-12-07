@@ -97,8 +97,8 @@ TEST(KernelTest, WhenKernelIsCreatedThenCorrectMembersAreMemObjects) {
 }
 
 TEST_F(KernelTests, WhenKernelIsCreatedThenKernelHeapIsCorrect) {
-    EXPECT_EQ(pKernel->getKernelInfo().heapInfo.pKernelHeap, pKernel->getKernelHeap());
-    EXPECT_EQ(pKernel->getKernelInfo().heapInfo.KernelHeapSize, pKernel->getKernelHeapSize());
+    EXPECT_EQ(pKernel->getKernelInfo(rootDeviceIndex).heapInfo.pKernelHeap, pKernel->getKernelHeap());
+    EXPECT_EQ(pKernel->getKernelInfo(rootDeviceIndex).heapInfo.KernelHeapSize, pKernel->getKernelHeapSize());
 }
 
 TEST_F(KernelTests, GivenInvalidParamNameWhenGettingInfoThenInvalidValueErrorIsReturned) {
@@ -210,7 +210,7 @@ TEST_F(KernelTests, givenBinaryWhenItIsQueriedForGpuAddressThenAbsoluteAddressIs
         &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    auto expectedGpuAddress = GmmHelper::decanonize(pKernel->getKernelInfo().kernelAllocation->getGpuAddress());
+    auto expectedGpuAddress = GmmHelper::decanonize(pKernel->getKernelInfo(rootDeviceIndex).kernelAllocation->getGpuAddress());
     EXPECT_EQ(expectedGpuAddress, paramValue);
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
@@ -1642,7 +1642,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
     EXPECT_EQ(0u, commandStreamReceiver.makeResidentAllocations.size());
     pKernel->makeResident(pDevice->getGpgpuCommandStreamReceiver());
     EXPECT_EQ(1u, commandStreamReceiver.makeResidentAllocations.size());
-    EXPECT_TRUE(commandStreamReceiver.isMadeResident(pKernel->getKernelInfo().getGraphicsAllocation()));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(pKernel->getKernelInfo(rootDeviceIndex).getGraphicsAllocation()));
 
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
@@ -3120,14 +3120,14 @@ TEST(KernelTest, givenKernelWhenForcePerDssBackedBufferProgrammingIsSetThenKerne
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockKernelWithInternals kernel(*device);
 
-    EXPECT_TRUE(kernel.mockKernel->requiresPerDssBackedBuffer());
+    EXPECT_TRUE(kernel.mockKernel->requiresPerDssBackedBuffer(device->getRootDeviceIndex()));
 }
 
 TEST(KernelTest, givenKernelWhenForcePerDssBackedBufferProgrammingIsNotSetThenKernelDoesntRequirePerDssBackedBuffer) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockKernelWithInternals kernel(*device);
 
-    EXPECT_FALSE(kernel.mockKernel->requiresPerDssBackedBuffer());
+    EXPECT_FALSE(kernel.mockKernel->requiresPerDssBackedBuffer(device->getRootDeviceIndex()));
 }
 
 TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaultValue) {

@@ -70,10 +70,11 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     Vec3<size_t> &numberOfWorkgroups,
     Vec3<size_t> &startOfWorkgroups) {
 
+    auto rootDeviceIndex = commandQueue.getDevice().getRootDeviceIndex();
     auto walkerCmdBuf = allocateWalkerSpace(commandStream, kernel);
     WALKER_TYPE<GfxFamily> walkerCmd = GfxFamily::cmdInitGpgpuWalker;
     uint32_t dim = dispatchInfo.getDim();
-    uint32_t simd = kernel.getKernelInfo().getMaxSimdSize();
+    uint32_t simd = kernel.getKernelInfo(rootDeviceIndex).getMaxSimdSize();
 
     size_t globalOffsets[3] = {dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z};
     size_t startWorkGroups[3] = {startOfWorkgroups.x, startOfWorkgroups.y, startOfWorkgroups.z};
@@ -85,7 +86,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel, rootDeviceIndex);
 
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
@@ -93,7 +94,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         ioh,
         ssh,
         kernel,
-        kernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, commandQueue.getDevice().getRootDeviceIndex()),
+        kernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
         simd,
         localWorkSizes,
         offsetInterfaceDescriptorTable,
@@ -107,7 +108,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, globalOffsets, startWorkGroups,
                                                            numWorkGroups, localWorkSizes, simd, dim,
                                                            false, false,
-                                                           *kernel.getKernelInfo().patchInfo.threadPayload, 0u);
+                                                           *kernel.getKernelInfo(rootDeviceIndex).patchInfo.threadPayload, 0u);
 
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd);
     *walkerCmdBuf = walkerCmd;

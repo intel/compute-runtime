@@ -540,7 +540,7 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
     auto allocationAddress = printfAllocation->getGpuAddressToPatch();
 
     auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel.mockKernel->getCrossThreadData(rootDeviceIndex)),
-                                        kernel.mockKernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);
+                                        kernel.mockKernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);
 
     EXPECT_EQ(allocationAddress, *(uintptr_t *)printfPatchAddress);
 
@@ -550,7 +550,8 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
 }
 
 HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithCpuAddress) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    auto rootDeviceIndex = 1u;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), rootDeviceIndex));
     MockKernelWithInternals kernel(*device);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
     SPatchAllocateStatelessPrintfSurface printfSurface;
@@ -580,7 +581,7 @@ HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCr
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(kernel.mockKernel->getSurfaceStateHeap(device->getRootDeviceIndex()),
-                  kernel.mockKernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->SurfaceStateHeapOffset));
+                  kernel.mockKernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->SurfaceStateHeapOffset));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(allocationAddress, surfaceAddress);

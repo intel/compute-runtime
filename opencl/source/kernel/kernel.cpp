@@ -251,7 +251,7 @@ cl_int Kernel::initialize() {
         localBindingTableOffset = (patchInfo.bindingTableState != nullptr) ? patchInfo.bindingTableState->Offset : 0;
 
         // patch crossthread data and ssh with inline surfaces, if necessary
-        auto perHwThreadPrivateMemorySize = PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(patchInfo.pAllocateStatelessPrivateSurface, getKernelInfo().getMaxSimdSize());
+        auto perHwThreadPrivateMemorySize = PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(patchInfo.pAllocateStatelessPrivateSurface, kernelInfo.getMaxSimdSize());
 
         if (perHwThreadPrivateMemorySize) {
             kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch);
@@ -376,7 +376,7 @@ cl_int Kernel::initialize() {
             program->allocateBlockPrivateSurfaces(*pClDevice);
         }
 
-        if (program->isKernelDebugEnabled() && getKernelInfo().patchInfo.pAllocateSystemThreadSurface) {
+        if (program->isKernelDebugEnabled() && kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
             debugEnabled = true;
         }
 
@@ -643,9 +643,10 @@ cl_int Kernel::getSubGroupInfo(ClDevice &clDevice, cl_kernel_sub_group_info para
                                size_t *paramValueSizeRet) const {
     size_t numDimensions = 0;
     size_t WGS = 1;
-    auto maxSimdSize = static_cast<size_t>(getKernelInfo().getMaxSimdSize());
-    auto maxRequiredWorkGroupSize = static_cast<size_t>(getKernelInfo().getMaxRequiredWorkGroupSize(maxKernelWorkGroupSize));
-    auto largestCompiledSIMDSize = static_cast<size_t>(getKernelInfo().patchInfo.executionEnvironment->LargestCompiledSIMDSize);
+    const auto &kernelInfo = getKernelInfo(clDevice.getRootDeviceIndex());
+    auto maxSimdSize = static_cast<size_t>(kernelInfo.getMaxSimdSize());
+    auto maxRequiredWorkGroupSize = static_cast<size_t>(kernelInfo.getMaxRequiredWorkGroupSize(maxKernelWorkGroupSize));
+    auto largestCompiledSIMDSize = static_cast<size_t>(kernelInfo.patchInfo.executionEnvironment->LargestCompiledSIMDSize);
 
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
@@ -731,10 +732,10 @@ cl_int Kernel::getSubGroupInfo(ClDevice &clDevice, cl_kernel_sub_group_info para
         return changeGetInfoStatusToCLResultType(info.set<size_t>(Math::divideAndRoundUp(maxRequiredWorkGroupSize, largestCompiledSIMDSize)));
     }
     case CL_KERNEL_COMPILE_NUM_SUB_GROUPS: {
-        return changeGetInfoStatusToCLResultType(info.set<size_t>(static_cast<size_t>(getKernelInfo().patchInfo.executionEnvironment->CompiledSubGroupsNumber)));
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(static_cast<size_t>(kernelInfo.patchInfo.executionEnvironment->CompiledSubGroupsNumber)));
     }
     case CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL: {
-        return changeGetInfoStatusToCLResultType(info.set<size_t>(getKernelInfo().requiredSubGroupSize));
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(kernelInfo.requiredSubGroupSize));
     }
     default:
         return CL_INVALID_VALUE;
@@ -822,8 +823,8 @@ cl_int Kernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) {
     cl_int retVal = CL_SUCCESS;
     bool updateExposedKernel = true;
     auto argWasUncacheable = false;
-    if (getKernelInfo().builtinDispatchBuilder != nullptr) {
-        updateExposedKernel = getKernelInfo().builtinDispatchBuilder->setExplicitArg(argIndex, argSize, argVal, retVal);
+    if (getDefaultKernelInfo().builtinDispatchBuilder != nullptr) {
+        updateExposedKernel = getDefaultKernelInfo().builtinDispatchBuilder->setExplicitArg(argIndex, argSize, argVal, retVal);
     }
     if (updateExposedKernel) {
         if (argIndex >= kernelArgHandlers.size()) {
@@ -1811,8 +1812,8 @@ void Kernel::getParentObjectCounts(ObjectCounts &objectCount) {
     }
 }
 
-bool Kernel::hasPrintfOutput() const {
-    return getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface != nullptr;
+bool Kernel::hasPrintfOutput(uint32_t rootDeviceIndex) const {
+    return getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface != nullptr;
 }
 
 size_t Kernel::getInstructionHeapSizeForExecutionModel() const {
@@ -2245,7 +2246,7 @@ void Kernel::provideInitializationHints() {
         const auto &patchInfo = kernelInfos[i]->patchInfo;
         if (patchInfo.mediavfestate) {
             auto scratchSize = patchInfo.mediavfestate->PerThreadScratchSpace;
-            scratchSize *= getDevice().getSharedDeviceInfo().computeUnitsUsedForScratch * getKernelInfo().getMaxSimdSize();
+            scratchSize *= getDevice().getSharedDeviceInfo().computeUnitsUsedForScratch * getKernelInfo(i).getMaxSimdSize();
             if (scratchSize > 0) {
                 context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, REGISTER_PRESSURE_TOO_HIGH,
                                                 kernelInfos[i]->kernelDescriptor.kernelMetadata.kernelName.c_str(), scratchSize);
@@ -2338,12 +2339,12 @@ bool Kernel::isPatched() const {
 cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
                                                 size_t argSize,
                                                 const void *argValue) const {
-    if (getKernelInfo().kernelArgInfo[argIndex].isImage) {
+    if (getDefaultKernelInfo().kernelArgInfo[argIndex].isImage) {
         cl_mem mem = *(static_cast<const cl_mem *>(argValue));
         MemObj *pMemObj = nullptr;
         WithCastToInternal(mem, &pMemObj);
         if (pMemObj) {
-            auto accessQualifier = getKernelInfo().kernelArgInfo[argIndex].metadata.accessQualifier;
+            auto accessQualifier = getDefaultKernelInfo().kernelArgInfo[argIndex].metadata.accessQualifier;
             cl_mem_flags flags = pMemObj->getFlags();
             if ((accessQualifier == KernelArgMetadata::AccessReadOnly && ((flags | CL_MEM_WRITE_ONLY) == flags)) ||
                 (accessQualifier == KernelArgMetadata::AccessWriteOnly && ((flags | CL_MEM_READ_ONLY) == flags))) {

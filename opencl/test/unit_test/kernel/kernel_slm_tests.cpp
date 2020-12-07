@@ -94,7 +94,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
         4u,
         pDevice->getPreemptionMode(),
         nullptr,
-        pDevice->getHardwareInfo());
+        *pDevice);
 
     // add the heap base + offset
     uint32_t *pIdData = (uint32_t *)indirectHeap.getCpuBase() + offsetInterfaceDescriptorData;

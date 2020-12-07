@@ -30,7 +30,7 @@ uint32_t argMocs(Kernel &kernel, size_t argIndex) {
     auto rootDeviceIndex = kernel.getDevices()[0]->getRootDeviceIndex();
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     auto surfaceStateHeapAddress = kernel.getSurfaceStateHeap(rootDeviceIndex);
-    auto surfaceStateHeapAddressOffset = kernel.getKernelInfo().kernelArgInfo[argIndex].offsetHeap;
+    auto surfaceStateHeapAddressOffset = kernel.getKernelInfo(rootDeviceIndex).kernelArgInfo[argIndex].offsetHeap;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(surfaceStateHeapAddress, surfaceStateHeapAddressOffset));
     return surfaceState->getMemoryObjectControlState();
 }

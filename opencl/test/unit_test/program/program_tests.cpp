@@ -1367,7 +1367,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     auto &residencyVector = pCommandStreamReceiver->getResidencyAllocations();
 
     //we expect kernel ISA here and constant allocation
-    auto kernelIsa = pKernel->getKernelInfo().getGraphicsAllocation();
+    auto kernelIsa = pKernel->getKernelInfo(rootDeviceIndex).getGraphicsAllocation();
     auto constantAllocation = pProgram->getConstantSurface(pDevice->getRootDeviceIndex());
 
     auto element = std::find(residencyVector.begin(), residencyVector.end(), kernelIsa);

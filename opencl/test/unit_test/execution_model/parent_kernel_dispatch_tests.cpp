@@ -129,7 +129,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
 
     auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u);
 
-    EXPECT_LE(pKernel->getKernelInfo().heapInfo.SurfaceStateHeapSize, ssh.getMaxAvailableSpace());
+    EXPECT_LE(pKernel->getKernelInfo(rootDeviceIndex).heapInfo.SurfaceStateHeapSize, ssh.getMaxAvailableSpace());
 
     size_t minRequiredSize = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
     size_t minRequiredSizeForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*pKernel, rootDeviceIndex);
@@ -167,10 +167,10 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
     size_t sshUsed = blockedCommandsData->ssh->getUsed();
 
     size_t expectedSizeSSH = pKernel->getNumberOfBindingTableStates() * sizeof(RENDER_SURFACE_STATE) +
-                             pKernel->getKernelInfo().patchInfo.bindingTableState->Count * sizeof(BINDING_TABLE_STATE) +
+                             pKernel->getKernelInfo(rootDeviceIndex).patchInfo.bindingTableState->Count * sizeof(BINDING_TABLE_STATE) +
                              UnitTestHelper<FamilyType>::getDefaultSshUsage();
 
-    if ((pKernel->requiresSshForBuffers()) || (pKernel->getKernelInfo().patchInfo.imageMemObjKernelArgs.size() > 0)) {
+    if ((pKernel->requiresSshForBuffers()) || (pKernel->getKernelInfo(rootDeviceIndex).patchInfo.imageMemObjKernelArgs.size() > 0)) {
         EXPECT_EQ(expectedSizeSSH, sshUsed);
     }
 
@@ -342,7 +342,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenUsedSSHHeapWhenParent
         // Assuming parent is not using SSH, this is becuase storing allocation on reuse list and allocating
         // new one by obtaining from reuse list returns the same allocation and heap buffer does not differ
         // If parent is not using SSH, then heap obtained has zero usage and the same buffer
-        ASSERT_EQ(0u, mockParentKernel->getKernelInfo().heapInfo.SurfaceStateHeapSize);
+        ASSERT_EQ(0u, mockParentKernel->getKernelInfo(rootDeviceIndex).heapInfo.SurfaceStateHeapSize);
 
         DispatchInfo dispatchInfo(pClDevice, mockParentKernel, 1, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo(mockParentKernel);

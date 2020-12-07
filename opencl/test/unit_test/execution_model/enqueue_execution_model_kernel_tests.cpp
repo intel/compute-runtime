@@ -61,19 +61,19 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
 
-    auto graphicsAllocation = pKernel->getKernelInfo().getGraphicsAllocation();
+    auto graphicsAllocation = pKernel->getKernelInfo(rootDeviceIndex).getGraphicsAllocation();
     auto kernelIsaAddress = graphicsAllocation->getGpuAddressToPatch();
 
     auto &hardwareInfo = pClDevice->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     if (EngineHelpers::isCcs(pCmdQ->getGpgpuEngine().osContext->getEngineType()) && hwHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
-        kernelIsaAddress += pKernel->getKernelInfo().patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
+        kernelIsaAddress += pKernel->getKernelInfo(rootDeviceIndex).patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
     }
 
     pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 0, nullptr, nullptr);
 
-    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
+    if (pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
             EXPECT_NE(0u, idData[0].getSamplerCount());
         } else {
@@ -456,7 +456,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
 
         pCmdQ->enqueueKernel(parentKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
 
-        const auto &patchInfo = parentKernel->getKernelInfo().patchInfo;
+        const auto &patchInfo = parentKernel->getKernelInfo(rootDeviceIndex).patchInfo;
 
         if (patchInfo.pAllocateStatelessDefaultDeviceQueueSurface) {
             auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData(rootDeviceIndex)),

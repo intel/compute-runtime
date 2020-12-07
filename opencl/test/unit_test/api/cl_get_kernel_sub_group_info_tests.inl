@@ -16,18 +16,18 @@ struct KernelSubGroupInfoFixture : HelloWorldFixture<HelloWorldFixtureFactory> {
     void SetUp() override {
         ParentClass::SetUp();
         pKernel->maxKernelWorkGroupSize = static_cast<uint32_t>(pDevice->getDeviceInfo().maxWorkGroupSize / 2);
-        maxSimdSize = static_cast<size_t>(pKernel->getKernelInfo().getMaxSimdSize());
+        maxSimdSize = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize());
         ASSERT_LE(8u, maxSimdSize);
         maxWorkDim = static_cast<size_t>(pClDevice->getDeviceInfo().maxWorkItemDimensions);
         ASSERT_EQ(3u, maxWorkDim);
         maxWorkGroupSize = static_cast<size_t>(pKernel->maxKernelWorkGroupSize);
         ASSERT_GE(1024u, maxWorkGroupSize);
-        largestCompiledSIMDSize = static_cast<size_t>(pKernel->getKernelInfo().patchInfo.executionEnvironment->LargestCompiledSIMDSize);
+        largestCompiledSIMDSize = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->LargestCompiledSIMDSize);
         ASSERT_EQ(32u, largestCompiledSIMDSize);
 
-        auto requiredWorkGroupSizeX = static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
-        auto requiredWorkGroupSizeY = static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
-        auto requiredWorkGroupSizeZ = static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
+        auto requiredWorkGroupSizeX = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
+        auto requiredWorkGroupSizeY = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
+        auto requiredWorkGroupSizeZ = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
 
         calculatedMaxWorkgroupSize = requiredWorkGroupSizeX * requiredWorkGroupSizeY * requiredWorkGroupSizeZ;
         if ((calculatedMaxWorkgroupSize == 0) || (calculatedMaxWorkgroupSize > static_cast<size_t>(pKernel->maxKernelWorkGroupSize))) {
@@ -263,7 +263,7 @@ TEST_F(KernelSubGroupInfoReturnCompileNumberTest, GivenKernelWhenGettingCompileN
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-    EXPECT_EQ(paramValue[0], static_cast<size_t>(pKernel->getKernelInfo().patchInfo.executionEnvironment->CompiledSubGroupsNumber));
+    EXPECT_EQ(paramValue[0], static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->CompiledSubGroupsNumber));
 }
 
 typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnCompileSizeTest;
@@ -286,11 +286,11 @@ TEST_F(KernelSubGroupInfoReturnCompileSizeTest, GivenKernelWhenGettingCompileSub
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
     size_t requiredSubGroupSize = 0;
-    auto start = pKernel->getKernelInfo().attributes.find("intel_reqd_sub_group_size(");
+    auto start = pKernel->getKernelInfo(rootDeviceIndex).attributes.find("intel_reqd_sub_group_size(");
     if (start != std::string::npos) {
         start += strlen("intel_reqd_sub_group_size(");
-        auto stop = pKernel->getKernelInfo().attributes.find(")", start);
-        requiredSubGroupSize = stoi(pKernel->getKernelInfo().attributes.substr(start, stop - start));
+        auto stop = pKernel->getKernelInfo(rootDeviceIndex).attributes.find(")", start);
+        requiredSubGroupSize = stoi(pKernel->getKernelInfo(rootDeviceIndex).attributes.substr(start, stop - start));
     }
 
     EXPECT_EQ(paramValue[0], requiredSubGroupSize);

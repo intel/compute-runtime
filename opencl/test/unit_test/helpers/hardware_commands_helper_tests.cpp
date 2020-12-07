@@ -92,7 +92,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
 
     size_t crossThreadDataSize = kernel->getCrossThreadDataSize(rootDeviceIndex);
     HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
-        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, *kernel, 0, pDevice->getPreemptionMode(), nullptr, pDevice->getHardwareInfo());
+        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, *kernel, 0, pDevice->getPreemptionMode(), nullptr, *pDevice);
 
     auto usedIndirectHeapAfter = indirectHeap.getUsed();
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);
@@ -339,7 +339,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
         sizeof(INTERFACE_DESCRIPTOR_DATA));
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*kernel);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*kernel, rootDeviceIndex);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
@@ -348,7 +348,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
         ssh,
         *kernel,
         kernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
-        kernel->getKernelInfo().getMaxSimdSize(),
+        kernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize(),
         localWorkSizes,
         IDToffset,
         interfaceDescriptorIndex,
@@ -363,7 +363,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     auto usedAfterDSH = dsh.getUsed();
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
-    auto sizeRequiredDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
+    auto sizeRequiredDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(rootDeviceIndex, *kernel);
     auto sizeRequiredIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(rootDeviceIndex, *kernel, localWorkSize);
     auto sizeRequiredSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel, rootDeviceIndex);
 
@@ -394,7 +394,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
@@ -403,7 +403,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
         ssh,
         *mockKernelWithInternal->mockKernel,
         mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
-        mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
+        mockKernelWithInternal->mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize(),
         localWorkSizes,
         0,
         interfaceDescriptorIndex,
@@ -442,7 +442,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhen
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
@@ -451,7 +451,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhen
         ssh,
         *mockKernelWithInternal->mockKernel,
         mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
-        mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
+        mockKernelWithInternal->mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize(),
         localWorkSizes,
         0,
         interfaceDescriptorIndex,
@@ -484,7 +484,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
@@ -493,7 +493,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
         ssh,
         *mockKernelWithInternal->mockKernel,
         mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
-        mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
+        mockKernelWithInternal->mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize(),
         localWorkSizes,
         0,
         interfaceDescriptorIndex,
@@ -552,7 +552,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 
     KernelInfo modifiedKernelInfo = {};
-    modifiedKernelInfo.patchInfo = kernel->getKernelInfo().patchInfo;
+    modifiedKernelInfo.patchInfo = kernel->getKernelInfo(rootDeviceIndex).patchInfo;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[0] = 2;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[1] = 1;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[2] = 0;
@@ -564,7 +564,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     MockKernel mockKernel(kernel->getProgram(), kernelInfos, false);
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(mockKernel);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(mockKernel, rootDeviceIndex);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
@@ -640,7 +640,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
     auto sshUsed = ssh.getUsed();
 
     // Obtain where the pointers will be stored
-    const auto &kernelInfo = kernel->getKernelInfo();
+    const auto &kernelInfo = kernel->getKernelInfo(rootDeviceIndex);
     auto numSurfaceStates = kernelInfo.patchInfo.statelessGlobalMemObjKernelArgs.size() +
                             kernelInfo.patchInfo.imageMemObjKernelArgs.size();
     EXPECT_EQ(2u, numSurfaceStates);
@@ -655,7 +655,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
     const_cast<KernelInfo &>(kernelInfo).requiresSshForBuffers = true;
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*kernel);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*kernel, rootDeviceIndex);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
@@ -664,7 +664,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
         ssh,
         *kernel,
         kernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
-        kernel->getKernelInfo().getMaxSimdSize(),
+        kernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize(),
         localWorkSizes,
         0,
         interfaceDescriptorIndex,
@@ -815,7 +815,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
         // push surfaces states and binding table to given ssh heap
         uint32_t interfaceDescriptorIndex = 0;
         auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
-        auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*pKernel);
+        auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*pKernel, rootDeviceIndex);
 
         HardwareCommandsHelper<FamilyType>::sendIndirectState(
             commandStream,
@@ -824,7 +824,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
             ssh,
             *pKernel,
             pKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
-            pKernel->getKernelInfo().getMaxSimdSize(),
+            pKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize(),
             localWorkSizes,
             0,
             interfaceDescriptorIndex,
@@ -1012,7 +1012,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     mockKernelWithInternal->mockKernel->setSshLocal(mockKernelWithInternal->sshLocal, sizeof(mockKernelWithInternal->sshLocal), rootDeviceIndex);
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
@@ -1132,19 +1132,19 @@ HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineT
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->PassInlineData = 1;
     mockKernelWithInternal->mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 
-    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel));
+    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
 HWTEST_F(HardwareCommandsTest, givenNoDebugSettingsWhenDefaultModeIsExcercisedThenWeFollowKernelSettingForInlineProgramming) {
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->PassInlineData = 1;
-    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel));
+    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
 HWTEST_F(HardwareCommandsTest, givenDisabledPassInlineDataWhenKernelAllowsInlineThenReturnFalse) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnablePassInlineData.set(0u);
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->PassInlineData = 1;
-    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel));
+    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
 HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelDisallowsInlineThenReturnFalse) {
@@ -1156,7 +1156,7 @@ HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelDisallowsInli
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->PassInlineData = 0;
     mockKernelWithInternal->mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 
-    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel));
+    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
 HWTEST_F(HardwareCommandsTest, whenLocalIdxInXDimPresentThenExpectLocalIdsInUseIsTrue) {
@@ -1164,7 +1164,7 @@ HWTEST_F(HardwareCommandsTest, whenLocalIdxInXDimPresentThenExpectLocalIdsInUseI
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 0;
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 0;
 
-    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel));
+    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
 HWTEST_F(HardwareCommandsTest, whenLocalIdxInYDimPresentThenExpectLocalIdsInUseIsTrue) {
@@ -1172,7 +1172,7 @@ HWTEST_F(HardwareCommandsTest, whenLocalIdxInYDimPresentThenExpectLocalIdsInUseI
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 1;
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 0;
 
-    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel));
+    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
 HWTEST_F(HardwareCommandsTest, whenLocalIdxInZDimPresentThenExpectLocalIdsInUseIsTrue) {
@@ -1180,7 +1180,7 @@ HWTEST_F(HardwareCommandsTest, whenLocalIdxInZDimPresentThenExpectLocalIdsInUseI
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 0;
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 1;
 
-    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel));
+    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
 HWTEST_F(HardwareCommandsTest, whenLocalIdxAreNotPresentThenExpectLocalIdsInUseIsFalse) {
@@ -1188,7 +1188,7 @@ HWTEST_F(HardwareCommandsTest, whenLocalIdxAreNotPresentThenExpectLocalIdsInUseI
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 0;
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 0;
 
-    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel));
+    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentThenExpectCacheFlushCommand) {

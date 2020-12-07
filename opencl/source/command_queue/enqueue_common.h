@@ -73,14 +73,14 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                 dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::AuxToNonAux);
             }
         }
-
-        if (kernel->getKernelInfo().builtinDispatchBuilder == nullptr) {
+        auto rootDeviceIndex = device->getRootDeviceIndex();
+        if (kernel->getKernelInfo(rootDeviceIndex).builtinDispatchBuilder == nullptr) {
             DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> builder(getClDevice());
             builder.setDispatchGeometry(workDim, workItems, enqueuedWorkSizes, globalOffsets, Vec3<size_t>{0, 0, 0}, localWorkSizesIn);
             builder.setKernel(kernel);
             builder.bake(multiDispatchInfo);
         } else {
-            auto builder = kernel->getKernelInfo().builtinDispatchBuilder;
+            auto builder = kernel->getKernelInfo(rootDeviceIndex).builtinDispatchBuilder;
             builder->buildDispatchInfos(multiDispatchInfo, kernel, workDim, workItems, enqueuedWorkSizes, globalOffsets);
 
             if (multiDispatchInfo.size() == 0) {
@@ -674,6 +674,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     auto specialPipelineSelectMode = false;
     Kernel *kernel = nullptr;
     bool usePerDssBackedBuffer = false;
+    auto rootDeviceIndex = device->getRootDeviceIndex();
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
@@ -684,14 +685,14 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         kernel->makeResident(getGpgpuCommandStreamReceiver());
         requiresCoherency |= kernel->requiresCoherency();
         mediaSamplerRequired |= kernel->isVmeKernel();
-        auto numGrfRequiredByKernel = kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired;
+        auto numGrfRequiredByKernel = kernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->NumGRFRequired;
         numGrfRequired = std::max(numGrfRequired, numGrfRequiredByKernel);
         specialPipelineSelectMode |= kernel->requiresSpecialPipelineSelectMode();
         if (kernel->hasUncacheableStatelessArgs()) {
             anyUncacheableArgs = true;
         }
 
-        if (kernel->requiresPerDssBackedBuffer()) {
+        if (kernel->requiresPerDssBackedBuffer(rootDeviceIndex)) {
             usePerDssBackedBuffer = true;
         }
     }

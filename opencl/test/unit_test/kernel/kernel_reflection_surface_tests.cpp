@@ -771,7 +771,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelReflectionSurfaceThenKerne
     size_t parentImageCount = 0;
     size_t parentSamplerCount = 0;
 
-    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
+    if (pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         parentImageCount = 1;
         parentSamplerCount = 1;
     }
@@ -824,7 +824,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelReflectionSurfaceThenKerne
     uint32_t parentImages = 0;
     uint32_t parentSamplers = 0;
 
-    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
+    if (pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         parentImages = 1;
         parentSamplers = 1;
         EXPECT_LT(sizeof(IGIL_KernelDataHeader), pKernelHeader->m_ParentSamplerParamsOffset);
@@ -1114,7 +1114,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
     cl_sampler samplerCl = sampler.get();
     cl_mem imageCl = image3d.get();
 
-    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
+    if (pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         pKernel->setArgSampler(0, sizeof(cl_sampler), &samplerCl);
         pKernel->setArgImage(1, sizeof(cl_mem), &imageCl);
     }
@@ -1139,7 +1139,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
 
         if (pKernelHeader->m_ParentKernelImageCount > 0) {
             uint32_t imageIndex = 0;
-            for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
+            for (const auto &arg : pKernel->getKernelInfo(rootDeviceIndex).kernelArgInfo) {
                 if (arg.isImage) {
                     EXPECT_EQ(arg.offsetHeap, pParentImageParams[imageIndex].m_ObjectID);
                     imageIndex++;
@@ -1149,7 +1149,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
 
         if (pKernelHeader->m_ParentSamplerCount > 0) {
             uint32_t samplerIndex = 0;
-            for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
+            for (const auto &arg : pKernel->getKernelInfo(rootDeviceIndex).kernelArgInfo) {
                 if (arg.isSampler) {
                     EXPECT_EQ(OCLRT_ARG_OFFSET_TO_SAMPLER_OBJECT_ID(arg.offsetHeap), pParentSamplerParams[samplerIndex].m_ObjectID);
                     samplerIndex++;

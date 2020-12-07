@@ -37,7 +37,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     size_t enqueuedLocalWorkSize[3] = {0, 0, 0};
 
     auto &kernel = *castToObjectOrAbort<Kernel>(clKernel);
-    const auto &kernelInfo = kernel.getKernelInfo();
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+    const auto &kernelInfo = kernel.getKernelInfo(rootDeviceIndex);
 
     if (kernel.isParentKernel && !this->context->getDefaultDeviceQueue()) {
         return CL_INVALID_OPERATION;
@@ -111,28 +112,28 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     Surface *surfaces[] = {&s};
 
     if (context->isProvidingPerformanceHints()) {
-        if (kernel.hasPrintfOutput()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PRINTF_DETECTED_IN_KERNEL, kernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+        if (kernel.hasPrintfOutput(rootDeviceIndex)) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PRINTF_DETECTED_IN_KERNEL, kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str());
         }
         if (kernel.requiresCoherency()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, KERNEL_REQUIRES_COHERENCY, kernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, KERNEL_REQUIRES_COHERENCY, kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str());
         }
     }
 
-    if (kernel.getKernelInfo().builtinDispatchBuilder != nullptr) {
-        cl_int err = kernel.getKernelInfo().builtinDispatchBuilder->validateDispatch(&kernel, workDim, Vec3<size_t>(region), Vec3<size_t>(workGroupSize), Vec3<size_t>(globalWorkOffset));
+    if (kernelInfo.builtinDispatchBuilder != nullptr) {
+        cl_int err = kernelInfo.builtinDispatchBuilder->validateDispatch(&kernel, workDim, Vec3<size_t>(region), Vec3<size_t>(workGroupSize), Vec3<size_t>(globalWorkOffset));
         if (err != CL_SUCCESS)
             return err;
     }
 
-    DBG_LOG(PrintDispatchParameters, "Kernel: ", kernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName,
+    DBG_LOG(PrintDispatchParameters, "Kernel: ", kernelInfo.kernelDescriptor.kernelMetadata.kernelName,
             ",LWS:, ", localWorkSizeIn ? localWorkSizeIn[0] : 0,
             ",", localWorkSizeIn ? localWorkSizeIn[1] : 0,
             ",", localWorkSizeIn ? localWorkSizeIn[2] : 0,
             ",GWS:,", globalWorkSizeIn[0],
             ",", globalWorkSizeIn[1],
             ",", globalWorkSizeIn[2],
-            ",SIMD:, ", kernel.getKernelInfo().getMaxSimdSize());
+            ",SIMD:, ", kernelInfo.getMaxSimdSize());
 
     if (totalWorkItems > kernel.maxKernelWorkGroupSize) {
         return CL_INVALID_WORK_GROUP_SIZE;

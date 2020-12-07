@@ -114,7 +114,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBHelloWorld, simple) {
 
     auto pSBA = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
     ASSERT_NE(nullptr, pSBA);
-    auto pISA = pKernel->getKernelInfo().getGraphicsAllocation()->getUnderlyingBuffer();
+    auto pISA = pKernel->getKernelInfo(rootDeviceIndex).getGraphicsAllocation()->getUnderlyingBuffer();
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
 }
 
@@ -273,7 +273,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, simple) {
 
     auto pSBA = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
     ASSERT_NE(nullptr, pSBA);
-    auto pISA = pKernel->getKernelInfo().getGraphicsAllocation()->getUnderlyingBuffer();
+    auto pISA = pKernel->getKernelInfo(rootDeviceIndex).getGraphicsAllocation()->getUnderlyingBuffer();
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
 }
 
@@ -502,8 +502,8 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_FALSE(this->kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
-    EXPECT_TRUE(this->kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
+    EXPECT_FALSE(this->kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].pureStatefulBufferAccess);
+    EXPECT_TRUE(this->kernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
 
     this->pCmdQ->flush();
     expectMemory<FamilyType>(reinterpret_cast<void *>(pBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
@@ -937,7 +937,7 @@ HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValid
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_TRUE(this->kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
+    EXPECT_TRUE(this->kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].pureStatefulBufferAccess);
 
     this->pCmdQ->finish();
     expectMemory<FamilyType>(reinterpret_cast<void *>(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),

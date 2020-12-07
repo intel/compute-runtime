@@ -209,6 +209,9 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                            commandQueue.getGpgpuCommandStreamReceiver(), bcsCsr);
     }
 
+    auto rootDeviceIndex = commandQueue.getDevice().getRootDeviceIndex();
+    const auto &kernelInfo = kernel->getKernelInfo(rootDeviceIndex);
+
     DispatchFlags dispatchFlags(
         {},                                                                          //csrDependencies
         nullptr,                                                                     //barrierTimestampPacketNodes
@@ -216,7 +219,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         commandQueue.flushStamp->getStampReference(),                                //flushStampReference
         commandQueue.getThrottle(),                                                  //throttle
         preemptionMode,                                                              //preemptionMode
-        kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired,      //numGrfRequired
+        kernelInfo.patchInfo.executionEnvironment->NumGRFRequired,                   //numGrfRequired
         L3CachingSettings::l3CacheOn,                                                //l3CacheSettings
         kernel->getThreadArbitrationPolicy(),                                        //threadArbitrationPolicy
         kernel->getAdditionalKernelExecInfo(),                                       //additionalKernelExecInfo
@@ -232,7 +235,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         false,                                                                       //implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
         false,                                                                       //epilogueRequired
-        kernel->requiresPerDssBackedBuffer(),                                        //usePerDssBackedBuffer
+        kernel->requiresPerDssBackedBuffer(rootDeviceIndex),                         //usePerDssBackedBuffer
         kernel->isSingleSubdevicePreferred());
 
     if (timestampPacketDependencies) {

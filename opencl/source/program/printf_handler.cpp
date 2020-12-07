@@ -58,12 +58,12 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
                                                      sizeof(printfSurfaceInitialDataSize));
 
     auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getCrossThreadData(rootDeviceIndex)),
-                                        kernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);
+                                        kernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);
 
-    patchWithRequiredSize(printfPatchAddress, kernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->DataParamSize, (uintptr_t)printfSurface->getGpuAddressToPatch());
+    patchWithRequiredSize(printfPatchAddress, kernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->DataParamSize, (uintptr_t)printfSurface->getGpuAddressToPatch());
     if (kernel->requiresSshForBuffers()) {
         auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap(rootDeviceIndex)),
-                                      kernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->SurfaceStateHeapOffset);
+                                      kernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->SurfaceStateHeapOffset);
         void *addressToPatch = printfSurface->getUnderlyingBuffer();
         size_t sizeToPatch = printfSurface->getUnderlyingBufferSize();
         Buffer::setSurfaceState(&device.getDevice(), surfaceState, sizeToPatch, addressToPatch, 0, printfSurface, 0, 0);
@@ -76,7 +76,7 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 
 void PrintfHandler::printEnqueueOutput() {
     PrintFormatter printFormatter(reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer()), static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize()),
-                                  kernel->is32Bit(), kernel->getKernelInfo().patchInfo.stringDataMap);
+                                  kernel->is32Bit(), kernel->getKernelInfo(device.getRootDeviceIndex()).patchInfo.stringDataMap);
     printFormatter.printKernelOutput();
 }
 } // namespace NEO

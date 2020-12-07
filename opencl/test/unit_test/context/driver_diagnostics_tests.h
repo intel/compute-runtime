@@ -233,6 +233,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
         kernel = Kernel::create<MockKernel>(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;
+        rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
     }
 
     void TearDown() override {
@@ -241,6 +242,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
         PerformanceHintEnqueueTest::TearDown();
     }
     Kernel *kernel = nullptr;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
     size_t globalWorkGroupSize[3]{};
 };
 

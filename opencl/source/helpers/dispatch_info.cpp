@@ -15,7 +15,7 @@ bool DispatchInfo::usesSlm() const {
 }
 
 bool DispatchInfo::usesStatelessPrintfSurface() const {
-    return (kernel == nullptr) ? false : (kernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface != nullptr);
+    return (kernel == nullptr) ? false : (kernel->getKernelInfo(pClDevice->getRootDeviceIndex()).patchInfo.pAllocateStatelessPrintfSurface != nullptr);
 }
 
 uint32_t DispatchInfo::getRequiredScratchSize() const {

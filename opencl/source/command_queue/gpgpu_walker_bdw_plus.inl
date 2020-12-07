@@ -68,6 +68,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     IndirectHeap *dsh,
     bool isCcsUsed) {
 
+    auto rootDeviceIndex = devQueueHw.getDevice().getRootDeviceIndex();
+    const auto &kernelInfo = scheduler.getKernelInfo(rootDeviceIndex);
+
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
@@ -89,7 +92,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     DEBUG_BREAK_IF(offsetInterfaceDescriptorTable % 64 != 0);
 
     // Determine SIMD size
-    uint32_t simd = scheduler.getKernelInfo().getMaxSimdSize();
+    uint32_t simd = kernelInfo.getMaxSimdSize();
     DEBUG_BREAK_IF(simd != PARALLEL_SCHEDULER_COMPILATION_SIZE_20);
 
     // Patch our kernel constants
@@ -132,8 +135,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     auto pGpGpuWalkerCmd = commandStream.getSpaceForCmd<GPGPU_WALKER>();
     GPGPU_WALKER cmdWalker = GfxFamily::cmdInitGpgpuWalker;
 
-    bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(scheduler);
-    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(scheduler);
+    bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(scheduler, rootDeviceIndex);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(scheduler, rootDeviceIndex);
 
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
@@ -141,7 +144,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         *ioh,
         *ssh,
         scheduler,
-        scheduler.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, devQueueHw.getDevice().getRootDeviceIndex()),
+        scheduler.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
         simd,
         localWorkSizes,
         offsetInterfaceDescriptorTable,
@@ -159,7 +162,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     size_t workGroups[3] = {(scheduler.getGws() / scheduler.getLws()), 1, 1};
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&cmdWalker, globalOffsets, globalOffsets, workGroups, localWorkSizes,
                                                            simd, 1, true, inlineDataProgrammingRequired,
-                                                           *scheduler.getKernelInfo().patchInfo.threadPayload, 0u);
+                                                           *kernelInfo.patchInfo.threadPayload, 0u);
     *pGpGpuWalkerCmd = cmdWalker;
 
     // Implement disabling special WA DisableLSQCROPERFforOCL if needed

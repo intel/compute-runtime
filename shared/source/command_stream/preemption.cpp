@@ -60,13 +60,14 @@ PreemptionMode PreemptionHelper::taskPreemptionMode(PreemptionMode devicePreempt
 
 void PreemptionHelper::setPreemptionLevelFlags(PreemptionFlags &flags, Device &device, Kernel *kernel) {
     if (kernel) {
+        const auto &kernelInfo = kernel->getKernelInfo(device.getRootDeviceIndex());
         flags.flags.disabledMidThreadPreemptionKernel =
-            kernel->getKernelInfo().patchInfo.executionEnvironment &&
-            kernel->getKernelInfo().patchInfo.executionEnvironment->DisableMidThreadPreemption;
+            kernelInfo.patchInfo.executionEnvironment &&
+            kernelInfo.patchInfo.executionEnvironment->DisableMidThreadPreemption;
         flags.flags.vmeKernel = kernel->isVmeKernel();
         flags.flags.usesFencesForReadWriteImages =
-            kernel->getKernelInfo().patchInfo.executionEnvironment &&
-            kernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages;
+            kernelInfo.patchInfo.executionEnvironment &&
+            kernelInfo.patchInfo.executionEnvironment->UsesFencesForReadWriteImages;
         flags.flags.schedulerKernel = kernel->isSchedulerKernel;
     }
     flags.flags.deviceSupportsVmePreemption = device.getDeviceInfo().vmeAvcSupportsPreemption;

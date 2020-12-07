@@ -417,7 +417,7 @@ HWTEST_F(EnqueueKernelTest, addsIndirectData) {
     callOneWorkItemNDRKernel();
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), pKernel));
     EXPECT_NE(iohBefore, pIOH->getUsed());
-    if (pKernel->requiresSshForBuffers() || (pKernel->getKernelInfo().patchInfo.imageMemObjKernelArgs.size() > 0)) {
+    if (pKernel->requiresSshForBuffers() || (pKernel->getKernelInfo(rootDeviceIndex).patchInfo.imageMemObjKernelArgs.size() > 0)) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
 }

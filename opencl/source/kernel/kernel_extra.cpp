@@ -29,7 +29,7 @@ int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
     return CL_SUCCESS;
 }
 
-bool Kernel::requiresPerDssBackedBuffer() const {
+bool Kernel::requiresPerDssBackedBuffer(uint32_t rootDeviceIndex) const {
     return DebugManager.flags.ForcePerDssBackedBufferProgramming.get();
 }
 

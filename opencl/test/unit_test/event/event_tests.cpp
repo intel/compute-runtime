@@ -568,7 +568,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
-    KernelInfo *kernelInfo = const_cast<KernelInfo *>(&pKernel->getKernelInfo());
+    KernelInfo *kernelInfo = const_cast<KernelInfo *>(&pKernel->getKernelInfo(rootDeviceIndex));
     kernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
     kernelInfo->patchInfo.stringDataMap.insert(std::make_pair(0, testString));
     uint64_t crossThread[10];

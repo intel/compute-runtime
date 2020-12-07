@@ -122,7 +122,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
 
     uint32_t threadsPerWorkGroup = walker->getThreadWidthCounterMaximum();
 
-    EXPECT_EQ(scheduler.getLws() / scheduler.getKernelInfo().getMaxSimdSize(), threadsPerWorkGroup);
+    EXPECT_EQ(scheduler.getLws() / scheduler.getKernelInfo(rootDeviceIndex).getMaxSimdSize(), threadsPerWorkGroup);
 
     numWorkgroupsProgrammed[0] = walker->getThreadGroupIdXDimension();
     numWorkgroupsProgrammed[1] = walker->getThreadGroupIdYDimension();
@@ -149,7 +149,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
 
     auto numChannels = 3;
     auto grfSize = pDevice->getHardwareInfo().capabilityTable.grfSize;
-    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(scheduler.getKernelInfo().getMaxSimdSize(), grfSize, numChannels, scheduler.getLws());
+    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(scheduler.getKernelInfo(rootDeviceIndex).getMaxSimdSize(), grfSize, numChannels, scheduler.getLws());
 
     auto sizeCrossThreadData = scheduler.getCrossThreadDataSize(rootDeviceIndex);
     auto IndirectDataLength = alignUp((uint32_t)(sizeCrossThreadData + sizePerThreadDataTotal), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);

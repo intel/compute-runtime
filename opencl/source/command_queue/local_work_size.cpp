@@ -416,10 +416,11 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
 
     if (kernel != nullptr) {
         auto &device = dispatchInfo.getClDevice();
+        auto rootDeviceIndex = device.getRootDeviceIndex();
         const auto &hwInfo = device.getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto isSimulation = device.isSimulation();
-        if (kernel->requiresLimitedWorkgroupSize(device.getRootDeviceIndex()) && hwHelper.isSpecialWorkgroupSizeRequired(hwInfo, isSimulation)) {
+        if (kernel->requiresLimitedWorkgroupSize(rootDeviceIndex) && hwHelper.isSpecialWorkgroupSizeRequired(hwInfo, isSimulation)) {
             setSpecialWorkgroupSize(workGroupSize);
         } else if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
             WorkSizeInfo wsInfo(dispatchInfo);
@@ -427,7 +428,7 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dispatchInfo.getDim());
         } else {
             auto maxWorkGroupSize = kernel->maxKernelWorkGroupSize;
-            auto simd = kernel->getKernelInfo().getMaxSimdSize();
+            auto simd = kernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize();
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             if (dispatchInfo.getDim() == 1) {
                 computeWorkgroupSize1D(maxWorkGroupSize, workGroupSize, workItems, simd);
@@ -475,8 +476,9 @@ void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo)
         preferredWorkGroupSize[1] = lws.y;
         preferredWorkGroupSize[2] = lws.z;
 
+        const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo(dispatchInfo.getClDevice().getRootDeviceIndex());
         if (dispatchInfo.getEnqueuedWorkgroupSize().x == 0) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, NULL_LOCAL_WORKGROUP_SIZE, dispatchInfo.getKernel()->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, NULL_LOCAL_WORKGROUP_SIZE, kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(),
                                             preferredWorkGroupSize[0], preferredWorkGroupSize[1], preferredWorkGroupSize[2]);
         } else {
             size_t localWorkSizesIn[3] = {dispatchInfo.getEnqueuedWorkgroupSize().x, dispatchInfo.getEnqueuedWorkgroupSize().y, dispatchInfo.getEnqueuedWorkgroupSize().z};
@@ -484,7 +486,7 @@ void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo)
                 if (localWorkSizesIn[i] != preferredWorkGroupSize[i]) {
                     context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, BAD_LOCAL_WORKGROUP_SIZE,
                                                     localWorkSizesIn[0], localWorkSizesIn[1], localWorkSizesIn[2],
-                                                    dispatchInfo.getKernel()->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
+                                                    kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(),
                                                     preferredWorkGroupSize[0], preferredWorkGroupSize[1], preferredWorkGroupSize[2]);
                     break;
                 }

@@ -14,7 +14,7 @@ struct KernelSubGroupInfoKhrFixture : HelloWorldFixture<HelloWorldFixtureFactory
 
     void SetUp() override {
         ParentClass::SetUp();
-        MaxSimdSize = static_cast<size_t>(pKernel->getKernelInfo().getMaxSimdSize());
+        MaxSimdSize = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize());
         ASSERT_GE(MaxSimdSize, 8u);
         MaxWorkDim = static_cast<size_t>(pClDevice->getDeviceInfo().maxWorkItemDimensions);
         ASSERT_EQ(MaxWorkDim, 3u);
@@ -141,11 +141,11 @@ TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, GivenKernelWhenGettingRequire
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
     size_t requiredSubGroupSize = 0;
-    auto start = pKernel->getKernelInfo().attributes.find("intel_reqd_sub_group_size(");
+    auto start = pKernel->getKernelInfo(rootDeviceIndex).attributes.find("intel_reqd_sub_group_size(");
     if (start != std::string::npos) {
         start += strlen("intel_reqd_sub_group_size(");
-        auto stop = pKernel->getKernelInfo().attributes.find(")", start);
-        requiredSubGroupSize = stoi(pKernel->getKernelInfo().attributes.substr(start, stop - start));
+        auto stop = pKernel->getKernelInfo(rootDeviceIndex).attributes.find(")", start);
+        requiredSubGroupSize = stoi(pKernel->getKernelInfo(rootDeviceIndex).attributes.substr(start, stop - start));
     }
 
     EXPECT_EQ(paramValue, requiredSubGroupSize);

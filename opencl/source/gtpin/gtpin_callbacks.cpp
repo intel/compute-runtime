@@ -80,7 +80,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         // Notify GT-Pin that new kernel was created
         Context *pContext = &(pKernel->getContext());
         cl_context context = pContext;
-        auto &kernelInfo = pKernel->getKernelInfo();
+        auto &kernelInfo = pKernel->getKernelInfo(rootDeviceIndex);
         instrument_params_in_t paramsIn = {};
 
         paramsIn.kernel_type = GTPIN_KERNEL_TYPE_CS;

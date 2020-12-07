@@ -187,8 +187,8 @@ class Kernel : public BaseObject<_cl_kernel> {
         return getDefaultKernelInfo().requiresSshForBuffers;
     }
 
-    const KernelInfo &getKernelInfo() const {
-        return getDefaultKernelInfo();
+    const KernelInfo &getKernelInfo(uint32_t rootDeviceIndex) const {
+        return *kernelInfos[rootDeviceIndex];
     }
     const KernelInfoContainer &getKernelInfos() const {
         return kernelInfos;
@@ -296,7 +296,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool isUsingSharedObjArgs() const { return usingSharedObjArgs; }
     bool hasUncacheableStatelessArgs() const { return statelessUncacheableArgsCount > 0; }
 
-    bool hasPrintfOutput() const;
+    bool hasPrintfOutput(uint32_t rootDeviceIndex) const;
 
     void setReflectionSurfaceBlockBtOffset(uint32_t blockID, uint32_t offset);
 
@@ -414,7 +414,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         const bool isCssUsed,
         uint32_t rootDeviceIndex) const;
 
-    bool requiresPerDssBackedBuffer() const;
+    bool requiresPerDssBackedBuffer(uint32_t rootDeviceIndex) const;
     bool requiresLimitedWorkgroupSize(uint32_t rootDeviceIndex) const;
     bool isKernelDebugEnabled() const { return debugEnabled; }
     int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue);
@@ -424,9 +424,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     const ClDeviceVector &getDevices() const {
         return program->getDevices();
     }
+    const KernelInfo &getDefaultKernelInfo() const;
 
   protected:
-    const KernelInfo &getDefaultKernelInfo() const;
     struct ObjectCounts {
         uint32_t imageCount;
         uint32_t samplerCount;

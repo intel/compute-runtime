@@ -133,11 +133,12 @@ WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t
 }
 WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     auto &device = dispatchInfo.getClDevice();
+    const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo(device.getRootDeviceIndex());
     this->maxWorkGroupSize = dispatchInfo.getKernel()->maxKernelWorkGroupSize;
-    auto pExecutionEnvironment = dispatchInfo.getKernel()->getKernelInfo().patchInfo.executionEnvironment;
+    auto pExecutionEnvironment = kernelInfo.patchInfo.executionEnvironment;
     this->hasBarriers = (pExecutionEnvironment != nullptr) && (pExecutionEnvironment->HasBarriers);
-    this->simdSize = (uint32_t)dispatchInfo.getKernel()->getKernelInfo().getMaxSimdSize();
-    this->slmTotalSize = (uint32_t)dispatchInfo.getKernel()->slmTotalSize;
+    this->simdSize = static_cast<uint32_t>(kernelInfo.getMaxSimdSize());
+    this->slmTotalSize = static_cast<uint32_t>(dispatchInfo.getKernel()->slmTotalSize);
     this->coreFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
     this->numThreadsPerSubSlice = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
                                   device.getSharedDeviceInfo().numThreadsPerEU;
@@ -148,7 +149,7 @@ WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
 void WorkSizeInfo::setIfUseImg(Kernel *pKernel) {
     auto ParamsCount = pKernel->getKernelArgsNumber();
     for (auto i = 0u; i < ParamsCount; i++) {
-        if (pKernel->getKernelInfo().kernelArgInfo[i].isImage) {
+        if (pKernel->getDefaultKernelInfo().kernelArgInfo[i].isImage) {
             imgUsed = true;
             yTiledSurfaces = true;
         }

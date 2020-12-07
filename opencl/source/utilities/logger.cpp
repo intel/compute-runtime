@@ -169,8 +169,8 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
     if (dumpKernelArgsEnabled && kernel != nullptr) {
         std::unique_lock<std::mutex> theLock(mtx);
         std::ofstream outFile;
-
-        for (unsigned int i = 0; i < kernel->getKernelInfo().kernelArgInfo.size(); i++) {
+        const auto &kernelInfo = kernel->getDefaultKernelInfo();
+        for (unsigned int i = 0; i < kernelInfo.kernelArgInfo.size(); i++) {
             std::string type;
             std::string fileName;
             const char *ptr = nullptr;
@@ -178,7 +178,7 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
             uint64_t flags = 0;
             std::unique_ptr<char[]> argVal = nullptr;
 
-            auto &argInfo = kernel->getKernelInfo().kernelArgInfo[i];
+            auto &argInfo = kernelInfo.kernelArgInfo[i];
 
             if (argInfo.metadata.addressQualifier == KernelArgMetadata::AddrLocal) {
                 type = "local";
@@ -221,7 +221,7 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
             }
 
             if (ptr && size) {
-                fileName = kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName + "_arg_" + std::to_string(i) + "_" + type + "_size_" + std::to_string(size) + "_flags_" + std::to_string(flags) + ".bin";
+                fileName = kernelInfo.kernelDescriptor.kernelMetadata.kernelName + "_arg_" + std::to_string(i) + "_" + type + "_size_" + std::to_string(size) + "_flags_" + std::to_string(flags) + ".bin";
                 writeToFile(fileName, ptr, size, std::ios::trunc | std::ios::binary);
             }
         }

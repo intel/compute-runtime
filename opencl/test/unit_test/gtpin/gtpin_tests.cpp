@@ -762,7 +762,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
 
     Kernel *pKernel1 = (Kernel *)kernel1;
-    const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
+    const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId1 = pKernel1->getKernelId();
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
@@ -796,7 +796,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
 
     Kernel *pKernel2 = (Kernel *)kernel2;
-    const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
+    const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId2 = pKernel2->getKernelId();
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
@@ -910,7 +910,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
 
     Kernel *pKernel1 = (Kernel *)kernel1;
-    const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
+    const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId1 = pKernel1->getKernelId();
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
@@ -950,7 +950,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
 
     Kernel *pKernel2 = (Kernel *)kernel2;
-    const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
+    const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId2 = pKernel2->getKernelId();
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
@@ -1266,7 +1266,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
     EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
 
     Kernel *pKernel = (Kernel *)kernel;
-    const KernelInfo &kInfo = pKernel->getKernelInfo();
+    const KernelInfo &kInfo = pKernel->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId = pKernel->getKernelId();
     EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
 
@@ -1379,7 +1379,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
     EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
 
     Kernel *pKernel = (Kernel *)kernel;
-    const KernelInfo &kInfo = pKernel->getKernelInfo();
+    const KernelInfo &kInfo = pKernel->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId = pKernel->getKernelId();
     EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
 
@@ -1503,7 +1503,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
 
     Kernel *pKernel1 = (Kernel *)kernel1;
-    const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
+    const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId1 = pKernel1->getKernelId();
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
@@ -1541,7 +1541,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
 
     Kernel *pKernel2 = (Kernel *)kernel2;
-    const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
+    const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId2 = pKernel2->getKernelId();
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
@@ -2339,7 +2339,7 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     uint8_t *pBin2 = reinterpret_cast<uint8_t *>(const_cast<void *>(pKernel->getKernelHeap()));
     EXPECT_EQ(pBin2, &newCode[0]);
 
-    auto kernelIsa = pKernel->getKernelInfo().kernelAllocation->getUnderlyingBuffer();
+    auto kernelIsa = pKernel->getKernelInfo(rootDeviceIndex).kernelAllocation->getUnderlyingBuffer();
 
     EXPECT_EQ(0, memcmp(kernelIsa, newCode, newCodeSize));
 

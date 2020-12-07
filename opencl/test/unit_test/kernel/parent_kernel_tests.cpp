@@ -71,7 +71,7 @@ TEST(ParentKernelTest, WhenPatchingBlocksSimdSizeThenPatchIsAppliedCorrectly) {
 
     parentKernel->patchBlocksSimdSize(rootDeviceIndex);
 
-    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(rootDeviceIndex), parentKernel->getKernelInfo().childrenKernelsIdOffset[0].second);
+    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(rootDeviceIndex), parentKernel->getKernelInfo(rootDeviceIndex).childrenKernelsIdOffset[0].second);
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     EXPECT_EQ(program->blockKernelManager->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
@@ -82,7 +82,8 @@ TEST(ParentKernelTest, GivenParentKernelWhenCheckingForDeviceEnqueueThenTrueIsRe
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context));
 
-    EXPECT_TRUE(parentKernel->getKernelInfo().hasDeviceEnqueue());
+    auto rootDeviceIndex = device.getRootDeviceIndex();
+    EXPECT_TRUE(parentKernel->getKernelInfo(rootDeviceIndex).hasDeviceEnqueue());
 }
 
 TEST(ParentKernelTest, GivenNormalKernelWhenCheckingForDeviceEnqueueThenFalseIsReturned) {
@@ -101,7 +102,7 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenBlocksSimdSizeIsPatched) 
 
     parentKernel->initialize();
 
-    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(rootDeviceIndex), parentKernel->getKernelInfo().childrenKernelsIdOffset[0].second);
+    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(rootDeviceIndex), parentKernel->getKernelInfo(rootDeviceIndex).childrenKernelsIdOffset[0].second);
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     EXPECT_EQ(program->blockKernelManager->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);

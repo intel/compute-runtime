@@ -100,8 +100,9 @@ struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();
-        EXPECT_TRUE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
-        EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
+        auto rootDeviceIndex = this->device->getRootDeviceIndex();
+        EXPECT_TRUE(kernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
+        EXPECT_FALSE(kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].pureStatefulBufferAccess);
     }
 };
 
@@ -112,14 +113,15 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();
         auto &device = dispatchInfo.begin()->getClDevice();
+        auto rootDeviceIndex = device.getRootDeviceIndex();
         if (!device.areSharedSystemAllocationsAllowed()) {
-            EXPECT_FALSE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
+            EXPECT_FALSE(kernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
             if (device.getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported) {
                 EXPECT_TRUE(kernel->allBufferArgsStateful);
             }
         } else {
-            EXPECT_TRUE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
-            EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
+            EXPECT_TRUE(kernel->getKernelInfo(rootDeviceIndex).patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
+            EXPECT_FALSE(kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].pureStatefulBufferAccess);
         }
     }
 };

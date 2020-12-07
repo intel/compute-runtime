@@ -1845,7 +1845,7 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
             retVal = CL_INVALID_KERNEL;
             break;
         }
-        if (pKernel->getKernelInfo().kernelArgInfo.size() <= argIndex) {
+        if (pKernel->getDefaultKernelInfo().kernelArgInfo.size() <= argIndex) {
             retVal = CL_INVALID_ARG_INDEX;
             break;
         }
@@ -4757,12 +4757,14 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         return retVal;
     }
 
-    cl_int kernelArgAddressQualifier = asClKernelArgAddressQualifier(pKernel->getKernelInfo().kernelArgInfo[argIndex].metadata.getAddressQualifier());
-    if ((kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_GLOBAL) &&
-        (kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_CONSTANT)) {
-        retVal = CL_INVALID_ARG_VALUE;
-        TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
-        return retVal;
+    for (const auto &pDevice : pKernel->getDevices()) {
+        cl_int kernelArgAddressQualifier = asClKernelArgAddressQualifier(pKernel->getKernelInfo(pDevice->getRootDeviceIndex()).kernelArgInfo[argIndex].metadata.getAddressQualifier());
+        if ((kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_GLOBAL) &&
+            (kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_CONSTANT)) {
+            retVal = CL_INVALID_ARG_VALUE;
+            TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+            return retVal;
+        }
     }
 
     GraphicsAllocation *pSvmAlloc = nullptr;
