@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,10 @@ void CpuInfo::cpuidex(
     uint32_t functionId,
     uint32_t subfunctionId) const {
     cpuidexFunc(reinterpret_cast<int *>(cpuInfo), functionId, subfunctionId);
+}
+
+bool CpuInfo::isCpuFlagPresent(const char *cpuFlag) {
+    return false;
 }
 
 } // namespace NEO

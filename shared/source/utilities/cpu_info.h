@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -216,6 +216,8 @@ struct CpuInfo {
     static const CpuInfo &getInstance() {
         return instance;
     }
+
+    bool isCpuFlagPresent(const char *cpuFlag);
 
     static void (*cpuidexFunc)(int *, int, int);
     static void (*cpuidFunc)(int[4], int);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,12 @@
 
 #include "shared/source/utilities/cpu_info.h"
 
+#include "shared/source/os_interface/linux/os_inc.h"
+
 #include <cpuid.h>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 namespace NEO {
 
@@ -35,6 +40,24 @@ void CpuInfo::cpuidex(
     uint32_t functionId,
     uint32_t subfunctionId) const {
     cpuidexFunc(reinterpret_cast<int *>(cpuInfo), functionId, subfunctionId);
+}
+
+bool CpuInfo::isCpuFlagPresent(const char *cpuFlag) {
+    std::ifstream ifs(std::string(Os::sysFsProcPathPrefix) + "/cpuinfo");
+    std::string line;
+    while (std::getline(ifs, line)) {
+        if (line.substr(0, 5) == "flags") {
+            std::stringstream ss(line);
+            std::string flag;
+            while (ss >> flag) {
+                if (flag == cpuFlag) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
 }
 
 } // namespace NEO
