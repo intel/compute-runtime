@@ -1433,4 +1433,46 @@ TEST(OclocCompile, givenCommandLineWithoutDeviceWhenCompilingToSpirvThenSucceeds
     EXPECT_THAT(ocloc.internalOptions.c_str(), testing::HasSubstr("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes"));
 }
 
+TEST(OclocCompile, givenDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenInternalOptionsAreSetCorrectly) {
+    MockOfflineCompiler ocloc;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-internal_options",
+        "-cl-ext=+custom_param",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-spv_only"};
+
+    int retVal = ocloc.initialize(argv.size(), argv);
+    ASSERT_EQ(0, retVal);
+    retVal = ocloc.build();
+    EXPECT_EQ(0, retVal);
+    std::string regexToMatch = "\\-ocl\\-version=" + std::to_string(DEFAULT_PLATFORM::hwInfo.capabilityTable.clVersionSupport) +
+                               "0  \\-cl\\-ext=\\-all.* \\-cl\\-ext=\\+custom_param";
+    EXPECT_THAT(ocloc.internalOptions, ::testing::ContainsRegex(regexToMatch));
+}
+
+TEST(OclocCompile, givenNoDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenInternalOptionsAreSetCorrectly) {
+    MockOfflineCompiler ocloc;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-internal_options",
+        "-cl-ext=+custom_param",
+        "-spv_only"};
+
+    int retVal = ocloc.initialize(argv.size(), argv);
+    ASSERT_EQ(0, retVal);
+    retVal = ocloc.build();
+    EXPECT_EQ(0, retVal);
+    EXPECT_THAT(ocloc.internalOptions.c_str(), testing::HasSubstr("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes -cl-ext=+custom_param"));
+}
+
 } // namespace NEO
