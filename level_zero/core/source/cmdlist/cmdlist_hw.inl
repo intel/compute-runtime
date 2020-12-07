@@ -1311,7 +1311,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         hostPointerNeedsFlush = true;
     } else {
         alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        alignedPtr = sourcePtr - offset;
+        alignedPtr = reinterpret_cast<uintptr_t>(ptr) - offset;
 
         if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
             allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
