@@ -18,11 +18,6 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
-extern "C" {
-int open(const char *pathname, int flags, ...);
-int ioctl(int fd, unsigned long int request, ...) throw();
-}
-
 extern int (*c_open)(const char *pathname, int flags, ...);
 extern int (*openFull)(const char *pathname, int flags, ...);
 extern int (*c_ioctl)(int fd, unsigned long int request, ...);
