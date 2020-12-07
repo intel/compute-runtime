@@ -419,7 +419,7 @@ TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreated
     EXPECT_TRUE(pKernelInfo->kernelArgInfo[0].isReadOnly);
 }
 
-TEST(PatchInfo, Constructor) {
+TEST(PatchInfo, WhenPatchInfoIsCreatedThenMembersAreNullptr) {
     PatchInfo patchInfo;
     EXPECT_EQ(nullptr, patchInfo.interfaceDescriptorDataLoad);
     EXPECT_EQ(nullptr, patchInfo.localsurface);
@@ -780,13 +780,13 @@ TEST_F(KernelPrivateSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenPriv
     delete pKernel;
 }
 
-TEST_F(KernelPrivateSurfaceTest, givenNullDataParameterStreamGetConstantBufferSizeReturnsZero) {
+TEST_F(KernelPrivateSurfaceTest, givenNullDataParameterStreamWhenGettingConstantBufferSizeThenZeroIsReturned) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
     EXPECT_EQ(0u, pKernelInfo->getConstantBufferSize());
 }
 
-TEST_F(KernelPrivateSurfaceTest, givenNonNullDataParameterStreamGetConstantBufferSizeReturnsCorrectSize) {
+TEST_F(KernelPrivateSurfaceTest, givenNonNullDataParameterStreamWhenGettingConstantBufferSizeThenCorrectSizeIsReturned) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchDataParameterStream tokenDPS;

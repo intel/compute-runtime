@@ -538,7 +538,7 @@ TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidThenExpectSvm
     EXPECT_EQ(svmPtr, *pKernelArg);
 }
 
-TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidPatchBufferOffsetWithGpuAddress) {
+TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidThenPatchBufferOffsetWithGpuAddress) {
     std::vector<char> svmPtr;
     svmPtr.resize(256);
 
