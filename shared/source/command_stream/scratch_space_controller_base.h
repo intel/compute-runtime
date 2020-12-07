@@ -22,6 +22,7 @@ class ScratchSpaceControllerBase : public ScratchSpaceController {
                                  OsContext &osContext,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override;
+
     uint64_t calculateNewGSH() override;
     uint64_t getScratchPatchAddress() override;
 
@@ -34,6 +35,13 @@ class ScratchSpaceControllerBase : public ScratchSpaceController {
                       OsContext &osContext,
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override;
+    void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
+                                               uint32_t requiredPerThreadScratchSize,
+                                               uint32_t requiredPerThreadPrivateScratchSize,
+                                               uint32_t currentTaskCount,
+                                               OsContext &osContext,
+                                               bool &stateBaseAddressDirty,
+                                               bool &vfeStateDirty) override;
 
   protected:
     void createScratchSpaceAllocation();

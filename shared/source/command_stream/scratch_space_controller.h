@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 
 #include <cstddef>
@@ -43,6 +44,7 @@ class ScratchSpaceController {
                                          OsContext &osContext,
                                          bool &stateBaseAddressDirty,
                                          bool &vfeStateDirty) = 0;
+
     virtual uint64_t calculateNewGSH() = 0;
     virtual uint64_t getScratchPatchAddress() = 0;
 
@@ -55,6 +57,13 @@ class ScratchSpaceController {
                               OsContext &osContext,
                               bool &stateBaseAddressDirty,
                               bool &vfeStateDirty) = 0;
+    virtual void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
+                                                       uint32_t requiredPerThreadScratchSize,
+                                                       uint32_t requiredPerThreadPrivateScratchSize,
+                                                       uint32_t currentTaskCount,
+                                                       OsContext &osContext,
+                                                       bool &stateBaseAddressDirty,
+                                                       bool &vfeStateDirty) = 0;
 
   protected:
     MemoryManager *getMemoryManager() const;

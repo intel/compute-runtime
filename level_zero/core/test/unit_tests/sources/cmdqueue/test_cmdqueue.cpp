@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
@@ -656,6 +657,5 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
 
     commandQueue->destroy();
 }
-
 } // namespace ult
 } // namespace L0

@@ -90,4 +90,13 @@ void ScratchSpaceControllerBase::programHeaps(HeapContainer &heapContainer,
                                               bool &stateBaseAddressDirty,
                                               bool &vfeStateDirty) {
 }
+
+void ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
+                                                                       uint32_t requiredPerThreadScratchSize,
+                                                                       uint32_t requiredPerThreadPrivateScratchSize,
+                                                                       uint32_t currentTaskCount,
+                                                                       OsContext &osContext,
+                                                                       bool &stateBaseAddressDirty,
+                                                                       bool &vfeStateDirty) {
+}
 } // namespace NEO

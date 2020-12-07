@@ -497,7 +497,14 @@ struct MockScratchController : public ScratchSpaceController {
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override {
     }
-
+    void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
+                                               uint32_t requiredPerThreadScratchSize,
+                                               uint32_t requiredPerThreadPrivateScratchSize,
+                                               uint32_t currentTaskCount,
+                                               OsContext &osContext,
+                                               bool &stateBaseAddressDirty,
+                                               bool &vfeStateDirty) override {
+    }
     void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override{};
 };
 
