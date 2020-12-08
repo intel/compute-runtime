@@ -484,7 +484,7 @@ TEST(MemObj, givenGraphicsAllocationWhenCallingIsAllocDumpableThenItReturnsTheCo
     EXPECT_TRUE(gfxAllocation.isAllocDumpable());
 }
 
-TEST(MemObj, givenMemObjNotUsingHostPtrWhenGettingBasePtrTwiceReturnSameMapPtr) {
+TEST(MemObj, givenMemObjNotUsingHostPtrWhenGettingBasePtrTwiceThenReturnSameMapPtr) {
     MockContext context;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
