@@ -469,7 +469,8 @@ TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupsThenReturnCor
 
 TEST(DeviceGenEngineTest, whenGettingQueueFamilyCapabilitiesAllThenReturnCorrectValue) {
     const cl_command_queue_capabilities_intel expectedProperties = CL_QUEUE_CAPABILITY_EVENT_WAIT_LIST_INTEL |
-                                                                   CL_QUEUE_CAPABILITY_EVENTS_INTEL |
+                                                                   CL_QUEUE_CAPABILITY_SINGLE_QUEUE_EVENTS_INTEL |
+                                                                   CL_QUEUE_CAPABILITY_CROSS_QUEUE_EVENTS_INTEL |
                                                                    CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL |
                                                                    CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL |
                                                                    CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL |
@@ -477,6 +478,8 @@ TEST(DeviceGenEngineTest, whenGettingQueueFamilyCapabilitiesAllThenReturnCorrect
                                                                    CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL |
                                                                    CL_QUEUE_CAPABILITY_MAP_IMAGE_INTEL |
                                                                    CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL |
+                                                                   CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL |
+                                                                   CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL |
                                                                    CL_QUEUE_CAPABILITY_MARKER_INTEL |
                                                                    CL_QUEUE_CAPABILITY_BARRIER_INTEL |
                                                                    CL_QUEUE_CAPABILITY_KERNEL_INTEL;
@@ -489,7 +492,7 @@ TEST(DeviceGenEngineTest, givenCopyQueueWhenGettingQueueFamilyCapabilitiesThenDo
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
-    EXPECT_EQ(CL_QUEUE_CAPABILITY_ALL_INTEL, device->getQueueFamilyCapabilities(NEO::EngineGroupType::Compute));
-    EXPECT_EQ(CL_QUEUE_CAPABILITY_ALL_INTEL, device->getQueueFamilyCapabilities(NEO::EngineGroupType::RenderCompute));
+    EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, device->getQueueFamilyCapabilities(NEO::EngineGroupType::Compute));
+    EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, device->getQueueFamilyCapabilities(NEO::EngineGroupType::RenderCompute));
     EXPECT_EQ(propertiesWithoutKernel, device->getQueueFamilyCapabilities(NEO::EngineGroupType::Copy));
 }

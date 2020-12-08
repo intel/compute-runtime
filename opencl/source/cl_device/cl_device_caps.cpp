@@ -375,7 +375,7 @@ void ClDevice::initializeCaps() {
         }
     } else {
         cl_queue_family_properties_intel properties;
-        properties.capabilities = CL_QUEUE_CAPABILITY_ALL_INTEL;
+        properties.capabilities = CL_QUEUE_DEFAULT_CAPABILITIES_INTEL;
         properties.count = 1;
         properties.properties = deviceInfo.queueOnHostProperties;
         deviceInfo.queueFamilyProperties.push_back(properties);

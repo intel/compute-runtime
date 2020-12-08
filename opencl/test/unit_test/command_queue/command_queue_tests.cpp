@@ -1253,7 +1253,15 @@ TEST(CommandQueue, givenSupportForOutEventAndOutEventIsPassedWhenValidatingSuppo
     EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, nullptr));
     EXPECT_FALSE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, &outEvent));
 
-    queue.queueCapabilities |= CL_QUEUE_CAPABILITY_EVENTS_INTEL;
+    queue.queueCapabilities |= CL_QUEUE_CAPABILITY_SINGLE_QUEUE_EVENTS_INTEL;
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, nullptr));
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, &outEvent));
+
+    queue.queueCapabilities |= CL_QUEUE_CAPABILITY_CROSS_QUEUE_EVENTS_INTEL;
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, nullptr));
+    EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, &outEvent));
+
+    queue.queueCapabilities &= ~CL_QUEUE_CAPABILITY_SINGLE_QUEUE_EVENTS_INTEL;
     EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, nullptr));
     EXPECT_TRUE(queue.validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, nullptr, &outEvent));
 }

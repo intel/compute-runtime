@@ -364,7 +364,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     cl_command_queue_properties commandQueueProperties = 0;
     std::vector<uint64_t> propertiesVector;
 
-    cl_command_queue_capabilities_intel queueCapabilities = CL_QUEUE_CAPABILITY_ALL_INTEL;
+    cl_command_queue_capabilities_intel queueCapabilities = CL_QUEUE_DEFAULT_CAPABILITIES_INTEL;
     cl_uint queueFamilyIndex = 0;
     cl_uint queueIndexWithinFamily = 0;
     bool queueFamilySelected = false;

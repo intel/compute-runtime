@@ -65,7 +65,7 @@ struct ApiFixture {
     }
 
     void disableQueueCapabilities(cl_command_queue_capabilities_intel capabilities) {
-        if (pCommandQueue->queueCapabilities == CL_QUEUE_CAPABILITY_ALL_INTEL) {
+        if (pCommandQueue->queueCapabilities == CL_QUEUE_DEFAULT_CAPABILITIES_INTEL) {
             pCommandQueue->queueCapabilities = pDevice->getQueueFamilyCapabilitiesAll();
         }
 

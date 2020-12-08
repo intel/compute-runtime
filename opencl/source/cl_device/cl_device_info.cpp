@@ -188,11 +188,6 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
             src = &param;
         }
         break;
-    case CL_DEVICE_NUM_QUEUE_FAMILIES_INTEL:
-        srcSize = retSize = sizeof(cl_uint);
-        param = static_cast<cl_uint>(deviceInfo.queueFamilyProperties.size());
-        src = &param;
-        break;
     case CL_DEVICE_SIMULTANEOUS_INTEROPS_INTEL:
         if (simultaneousInterops.size() > 1u) {
             srcSize = retSize = sizeof(cl_uint) * simultaneousInterops.size();

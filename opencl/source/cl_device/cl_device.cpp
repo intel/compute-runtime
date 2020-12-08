@@ -204,7 +204,8 @@ bool ClDevice::arePipesSupported() const {
 
 cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {
     return CL_QUEUE_CAPABILITY_EVENT_WAIT_LIST_INTEL |
-           CL_QUEUE_CAPABILITY_EVENTS_INTEL |
+           CL_QUEUE_CAPABILITY_SINGLE_QUEUE_EVENTS_INTEL |
+           CL_QUEUE_CAPABILITY_CROSS_QUEUE_EVENTS_INTEL |
            CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL |
            CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL |
            CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL |
@@ -212,6 +213,8 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {
            CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL |
            CL_QUEUE_CAPABILITY_MAP_IMAGE_INTEL |
            CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL |
+           CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL |
+           CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL |
            CL_QUEUE_CAPABILITY_MARKER_INTEL |
            CL_QUEUE_CAPABILITY_BARRIER_INTEL |
            CL_QUEUE_CAPABILITY_KERNEL_INTEL;
@@ -228,7 +231,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
     if (disabledProperties != 0) {
         return getQueueFamilyCapabilitiesAll() & ~disabledProperties;
     }
-    return CL_QUEUE_CAPABILITY_ALL_INTEL;
+    return CL_QUEUE_DEFAULT_CAPABILITIES_INTEL;
 }
 
 } // namespace NEO
