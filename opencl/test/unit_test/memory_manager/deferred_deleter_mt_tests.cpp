@@ -208,7 +208,7 @@ TEST_F(DeferredDeleterTest, GivenAsyncThreadWaitsForQueueItemTwiceWhenDeletingTh
     EXPECT_EQ(0, deleter->getElementsToRelease());
 }
 
-TEST_F(DeferredDeleterTest, WhenReleasingAllElementsAreReleased) {
+TEST_F(DeferredDeleterTest, WhenReleasingThenAllElementsAreReleased) {
     deleter->setElementsToRelease(1);
     EXPECT_EQ(1, deleter->getElementsToRelease());
     EXPECT_FALSE(deleter->baseAreElementsReleased());

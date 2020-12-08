@@ -523,7 +523,7 @@ TEST_F(PageTableTestsGPU, WhenPageTableIsCreatedThenItIsEmpty) {
     EXPECT_TRUE(ppgtt->isEmpty());
 }
 
-TEST_F(PageTableTests32, WhenMappingFirstPageIsAt0) {
+TEST_F(PageTableTests32, WhenMappingThenFirstPageIsAtZero) {
     std::unique_ptr<PageTable<void, 0, 9>> pt(new PageTable<void, 0, 9>(&allocator));
     auto phys = pt->map(0x10000, pageSize, 0, MemoryBanks::MainBank);
     EXPECT_EQ(0u, phys);

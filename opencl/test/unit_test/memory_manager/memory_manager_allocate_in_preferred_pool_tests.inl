@@ -671,7 +671,7 @@ TEST(MemoryManagerTest, givenExternalHostMemoryWhenGetAllocationDataIsCalledThen
     EXPECT_EQ(allocData.hostPtr, hostPtr);
 }
 
-TEST(MemoryManagerTest, getAllocationDataProperlyHandlesRootDeviceIndexFromAllcationProperties) {
+TEST(MemoryManagerTest, GivenAllocationPropertiesWhenGettingAllocationDataThenSameRootDeviceIndexIsUsed) {
     const uint32_t rootDevicesCount = 100u;
 
     AllocationData allocData;

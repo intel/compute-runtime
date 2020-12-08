@@ -435,7 +435,7 @@ TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationThen32b
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(MemoryAllocatorTest, givenNotEnoughSpaceInAllocatorWhenAskedFor32bitAllocationNullptrIsReturned) {
+TEST_F(MemoryAllocatorTest, givenNotEnoughSpaceInAllocatorWhenAskedFor32bitAllocationThenNullptrIsReturned) {
     size_t size = 0xfffff000;
     auto allocationFirst = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), 0x5000, nullptr, GraphicsAllocation::AllocationType::BUFFER);
     auto allocation = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), size, nullptr, GraphicsAllocation::AllocationType::BUFFER);

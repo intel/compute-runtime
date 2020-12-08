@@ -28,7 +28,7 @@ struct MockLocalMemoryUsageBankSelector : public LocalMemoryUsageBankSelector {
     }
 };
 
-TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenItsCreatedAllValuesAreZero) {
+TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenItsCreatedThenAllValuesAreZero) {
     MockLocalMemoryUsageBankSelector selector(2u);
 
     for (uint32_t i = 0; i < selector.banksCount; i++) {
@@ -75,7 +75,7 @@ TEST(localMemoryUsageTest, givenOverrideLeastOccupiedBankDebugFlagWhenGetLeastOc
     EXPECT_EQ(forcedBankIndex, bankIndex);
 }
 
-TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryAllocatedSeveralTimesItIsStoredOnDifferentBanks) {
+TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryAllocatedSeveralTimesThenItIsStoredOnDifferentBanks) {
     MockLocalMemoryUsageBankSelector selector(5u);
 
     uint64_t allocationSize = 1024u;
