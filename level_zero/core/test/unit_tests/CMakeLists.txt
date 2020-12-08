@@ -118,8 +118,10 @@ target_link_libraries(${TARGET_NAME}
                       gmock-gtest
 )
 
-if(SKIP_NEO_UNIT_TESTS)
+if(NOT TARGET mock_gmm AND SKIP_NEO_UNIT_TESTS)
   add_subdirectory(${NEO_SOURCE_DIR}/opencl/test/unit_test/mock_gmm ${CMAKE_BINARY_DIR}/mock_gmm)
+endif()
+if(SKIP_NEO_UNIT_TESTS)
   add_subdirectory(${NEO_SOURCE_DIR}/opencl/test/unit_test/mock_gdi ${CMAKE_BINARY_DIR}/mock_gdi)
 endif()
 
