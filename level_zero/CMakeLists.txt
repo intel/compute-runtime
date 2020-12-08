@@ -61,22 +61,13 @@ if(BUILD_WITH_L0)
   endif()
 
   if(UNIX)
-    # Xml Package
+    # Xml Library
     find_package(LibXml2)
     if(PC_LIBXML_FOUND)
       include_directories(SYSTEM ${LIBXML2_INCLUDE_DIR})
       message(STATUS "LibXml2 Library headers directory: ${LIBXML2_INCLUDE_DIR}")
     else()
       message(STATUS "LibXml2 Library headers not available. Building without.")
-    endif()
-    # Netlink and Generic Netlink
-    find_path(LIBGENL_INCLUDE_DIR netlink/genl/genl.h PATH_SUFFIXES libnl3)
-    if(LIBGENL_INCLUDE_DIR)
-      message(STATUS "LibGenl headers directory: ${LIBGENL_INCLUDE_DIR}")
-      include_directories(SYSTEM ${LIBGENL_INCLUDE_DIR})
-      set(LIBGENL_FOUND TRUE)
-    else()
-      message(STATUS "LibGenl headers not available. Building without")
     endif()
   endif()
 
