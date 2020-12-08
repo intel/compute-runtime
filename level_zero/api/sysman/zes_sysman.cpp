@@ -11,7 +11,11 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDeviceGetProperties(
     zes_device_handle_t hDevice,
     zes_device_properties_t *pProperties) {
-    return L0::SysmanDevice::fromHandle(hDevice)->deviceGetProperties(pProperties);
+    SysmanDevice sd = L0::SysmanDevice::fromHandle(hDevice);
+    if (sd != nullptr)
+      return sd->deviceGetProperties(pProperties);
+    else
+      return ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
