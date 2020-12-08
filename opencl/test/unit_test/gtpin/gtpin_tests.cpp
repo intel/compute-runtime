@@ -763,7 +763,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
 
     Kernel *pKernel1 = (Kernel *)kernel1;
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId1 = pKernel1->getKernelId();
+    uint64_t gtpinKernelId1 = pKernel1->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
     constexpr size_t n = 256;
@@ -797,7 +797,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
 
     Kernel *pKernel2 = (Kernel *)kernel2;
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId2 = pKernel2->getKernelId();
+    uint64_t gtpinKernelId2 = pKernel2->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -911,7 +911,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
 
     Kernel *pKernel1 = (Kernel *)kernel1;
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId1 = pKernel1->getKernelId();
+    uint64_t gtpinKernelId1 = pKernel1->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
     cl_uint workDim = 1;
@@ -951,7 +951,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
 
     Kernel *pKernel2 = (Kernel *)kernel2;
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId2 = pKernel2->getKernelId();
+    uint64_t gtpinKernelId2 = pKernel2->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -1267,7 +1267,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
 
     Kernel *pKernel = (Kernel *)kernel;
     const KernelInfo &kInfo = pKernel->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId = pKernel->getKernelId();
+    uint64_t gtpinKernelId = pKernel->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
 
     constexpr size_t n = 256;
@@ -1380,7 +1380,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
 
     Kernel *pKernel = (Kernel *)kernel;
     const KernelInfo &kInfo = pKernel->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId = pKernel->getKernelId();
+    uint64_t gtpinKernelId = pKernel->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
 
     constexpr size_t n = 256;
@@ -1504,7 +1504,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
 
     Kernel *pKernel1 = (Kernel *)kernel1;
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId1 = pKernel1->getKernelId();
+    uint64_t gtpinKernelId1 = pKernel1->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
     constexpr size_t n = 256;
@@ -1542,7 +1542,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
 
     Kernel *pKernel2 = (Kernel *)kernel2;
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId2 = pKernel2->getKernelId();
+    uint64_t gtpinKernelId2 = pKernel2->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -2325,18 +2325,18 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     Kernel *pKernel = castToObject<Kernel>(kernel);
     ASSERT_NE(nullptr, pKernel);
 
-    bool isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted();
+    bool isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted(rootDeviceIndex);
     EXPECT_FALSE(isKernelCodeSubstituted);
 
     // Substitute new kernel code
     constexpr size_t newCodeSize = 64;
     uint8_t newCode[newCodeSize] = {0x0, 0x1, 0x2, 0x3, 0x4};
-    pKernel->substituteKernelHeap(&newCode[0], newCodeSize);
+    pKernel->substituteKernelHeap(rootDeviceIndex, &newCode[0], newCodeSize);
 
     // Verify that substitution went properly
-    isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted();
+    isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted(rootDeviceIndex);
     EXPECT_TRUE(isKernelCodeSubstituted);
-    uint8_t *pBin2 = reinterpret_cast<uint8_t *>(const_cast<void *>(pKernel->getKernelHeap()));
+    uint8_t *pBin2 = reinterpret_cast<uint8_t *>(const_cast<void *>(pKernel->getKernelHeap(rootDeviceIndex)));
     EXPECT_EQ(pBin2, &newCode[0]);
 
     auto kernelIsa = pKernel->getKernelInfo(rootDeviceIndex).kernelAllocation->getUnderlyingBuffer();

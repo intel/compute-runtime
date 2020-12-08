@@ -52,7 +52,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(
 
     totalSize += borderColorSize + additionalSizeRequiredDsh();
 
-    DEBUG_BREAK_IF(!(totalSize >= kernel.getDynamicStateHeapSize() || kernel.getKernelInfo(rootDeviceIndex).isVmeWorkload));
+    DEBUG_BREAK_IF(!(totalSize >= kernel.getDynamicStateHeapSize(rootDeviceIndex) || kernel.getKernelInfo(rootDeviceIndex).isVmeWorkload));
 
     return alignUp(totalSize, EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
 }
@@ -245,7 +245,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     uint32_t samplerCount = 0;
     if (patchInfo.samplerStateArray) {
         samplerCount = patchInfo.samplerStateArray->Count;
-        samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, patchInfo.samplerStateArray->Offset, samplerCount, patchInfo.samplerStateArray->BorderColorOffset, kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper());
+        samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, patchInfo.samplerStateArray->Offset,
+                                                                       samplerCount, patchInfo.samplerStateArray->BorderColorOffset,
+                                                                       kernel.getDynamicStateHeap(rootDeviceIndex), device.getBindlessHeapsHelper());
     }
 
     auto threadPayload = kernelInfo.patchInfo.threadPayload;

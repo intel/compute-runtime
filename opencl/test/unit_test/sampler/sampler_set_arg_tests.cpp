@@ -122,7 +122,7 @@ HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorre
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
-        ptrOffset(pKernel->getDynamicStateHeap(),
+        ptrOffset(pKernel->getDynamicStateHeap(rootDeviceIndex),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
     EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), static_cast<cl_bool>(!samplerState->getNonNormalizedCoordinateEnable()));
     EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR, samplerState->getTcxAddressControlMode());
@@ -426,7 +426,7 @@ HWTEST_P(NormalizedTest, WhenSettingKernelArgSamplerThenCoordsAreCorrect) {
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
-        ptrOffset(pKernel->getDynamicStateHeap(),
+        ptrOffset(pKernel->getDynamicStateHeap(rootDeviceIndex),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     EXPECT_EQ(normalizedCoordinates, static_cast<cl_bool>(!samplerState->getNonNormalizedCoordinateEnable()));
@@ -477,7 +477,7 @@ HWTEST_P(AddressingModeTest, WhenSettingKernelArgSamplerThenModesAreCorrect) {
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
-        ptrOffset(pKernel->getDynamicStateHeap(),
+        ptrOffset(pKernel->getDynamicStateHeap(rootDeviceIndex),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     auto expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
@@ -557,7 +557,7 @@ HWTEST_F(SamplerSetArgTest, GivenMipmapsWhenSettingKernelArgSamplerThenLodAreCor
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
-        ptrOffset(pKernel->getDynamicStateHeap(),
+        ptrOffset(pKernel->getDynamicStateHeap(rootDeviceIndex),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     EXPECT_EQ(FamilyType::SAMPLER_STATE::MIP_MODE_FILTER_LINEAR, samplerState->getMipModeFilter());
@@ -588,7 +588,7 @@ HWTEST_P(FilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect) {
         retVal);
 
     auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
-        ptrOffset(pKernel->getDynamicStateHeap(),
+        ptrOffset(pKernel->getDynamicStateHeap(rootDeviceIndex),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     sampler->setArg(const_cast<SAMPLER_STATE *>(samplerState));

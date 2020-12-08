@@ -156,7 +156,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
     mediaVFEstate.PerThreadScratchSpace = 1024; //whatever greater than 0
     mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
 
-    cl_ulong scratchSpaceSize = static_cast<cl_ulong>(mockKernel.mockKernel->getScratchSize());
+    cl_ulong scratchSpaceSize = static_cast<cl_ulong>(mockKernel.mockKernel->getScratchSize(testedRootDeviceIndex));
     EXPECT_EQ(scratchSpaceSize, 1024u);
 
     retVal = clGetKernelWorkGroupInfo(

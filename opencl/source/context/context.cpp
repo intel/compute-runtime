@@ -412,7 +412,7 @@ SchedulerKernel &Context::getSchedulerKernel() {
             kernelInfos,
             &retVal);
 
-        UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize() != 0);
+        UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize(clDevice->getRootDeviceIndex()) != 0);
 
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
     };

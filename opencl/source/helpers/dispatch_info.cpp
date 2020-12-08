@@ -19,11 +19,11 @@ bool DispatchInfo::usesStatelessPrintfSurface() const {
 }
 
 uint32_t DispatchInfo::getRequiredScratchSize() const {
-    return (kernel == nullptr) ? 0 : kernel->getScratchSize();
+    return (kernel == nullptr) ? 0 : kernel->getScratchSize(pClDevice->getRootDeviceIndex());
 }
 
 uint32_t DispatchInfo::getRequiredPrivateScratchSize() const {
-    return (kernel == nullptr) ? 0 : kernel->getPrivateScratchSize();
+    return (kernel == nullptr) ? 0 : kernel->getPrivateScratchSize(pClDevice->getRootDeviceIndex());
 }
 
 Kernel *MultiDispatchInfo::peekMainKernel() const {

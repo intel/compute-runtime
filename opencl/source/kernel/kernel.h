@@ -141,7 +141,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     cl_int getInfo(cl_kernel_info paramName, size_t paramValueSize,
                    void *paramValue, size_t *paramValueSizeRet) const;
     void getAdditionalInfo(cl_kernel_info paramName, const void *&paramValue, size_t &paramValueSizeRet) const;
-    void getAdditionalWorkGroupInfo(cl_kernel_work_group_info paramName, const void *&paramValue, size_t &paramValueSizeRet) const;
+    void getAdditionalWorkGroupInfo(cl_kernel_work_group_info paramName, const void *&paramValue, size_t &paramValueSizeRet, uint32_t rootDeviceIndex) const;
 
     cl_int getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName,
                       size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
@@ -154,13 +154,13 @@ class Kernel : public BaseObject<_cl_kernel> {
                            size_t paramValueSize, void *paramValue,
                            size_t *paramValueSizeRet) const;
 
-    const void *getKernelHeap() const;
+    const void *getKernelHeap(uint32_t rootDeviceIndex) const;
     void *getSurfaceStateHeap(uint32_t rootDeviceIndex) const;
-    const void *getDynamicStateHeap() const;
+    const void *getDynamicStateHeap(uint32_t rootDeviceIndex) const;
 
-    size_t getKernelHeapSize() const;
+    size_t getKernelHeapSize(uint32_t rootDeviceIndex) const;
     size_t getSurfaceStateHeapSize(uint32_t rootDeviceIndex) const;
-    size_t getDynamicStateHeapSize() const;
+    size_t getDynamicStateHeapSize(uint32_t rootDeviceIndex) const;
     size_t getNumberOfBindingTableStates() const;
     size_t getBindingTableOffset() const {
         return localBindingTableOffset;
@@ -168,10 +168,10 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void resizeSurfaceStateHeap(uint32_t rootDeviceIndex, void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset);
 
-    void substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize);
-    bool isKernelHeapSubstituted() const;
-    uint64_t getKernelId() const;
-    void setKernelId(uint64_t newKernelId);
+    void substituteKernelHeap(uint32_t rootDeviceIndex, void *newKernelHeap, size_t newKernelHeapSize);
+    bool isKernelHeapSubstituted(uint32_t rootDeviceIndex) const;
+    uint64_t getKernelId(uint32_t rootDeviceIndex) const;
+    void setKernelId(uint32_t rootDeviceIndex, uint64_t newKernelId);
     uint32_t getStartOffset() const;
     void setStartOffset(uint32_t offset);
 
@@ -183,8 +183,8 @@ class Kernel : public BaseObject<_cl_kernel> {
         return getDefaultKernelInfo().kernelArgInfo.size();
     }
 
-    bool requiresSshForBuffers() const {
-        return getDefaultKernelInfo().requiresSshForBuffers;
+    bool requiresSshForBuffers(uint32_t rootDeviceIndex) const {
+        return getKernelInfo(rootDeviceIndex).requiresSshForBuffers;
     }
 
     const KernelInfo &getKernelInfo(uint32_t rootDeviceIndex) const {
@@ -200,12 +200,12 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     Program *getProgram() const { return program; }
 
-    uint32_t getScratchSize() {
-        return getDefaultKernelInfo().patchInfo.mediavfestate ? getDefaultKernelInfo().patchInfo.mediavfestate->PerThreadScratchSpace : 0;
+    uint32_t getScratchSize(uint32_t rootDeviceIndex) {
+        return getKernelInfo(rootDeviceIndex).patchInfo.mediavfestate ? getKernelInfo(rootDeviceIndex).patchInfo.mediavfestate->PerThreadScratchSpace : 0;
     }
 
-    uint32_t getPrivateScratchSize() {
-        return getDefaultKernelInfo().patchInfo.mediaVfeStateSlot1 ? getDefaultKernelInfo().patchInfo.mediaVfeStateSlot1->PerThreadScratchSpace : 0;
+    uint32_t getPrivateScratchSize(uint32_t rootDeviceIndex) {
+        return getKernelInfo(rootDeviceIndex).patchInfo.mediaVfeStateSlot1 ? getKernelInfo(rootDeviceIndex).patchInfo.mediaVfeStateSlot1->PerThreadScratchSpace : 0;
     }
 
     void createReflectionSurface();
@@ -215,7 +215,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     void patchDefaultDeviceQueue(DeviceQueue *devQueue);
     void patchEventPool(DeviceQueue *devQueue);
     void patchBlocksSimdSize(uint32_t rootDeviceIndex);
-    bool usesSyncBuffer();
+    bool usesSyncBuffer(uint32_t rootDeviceIndex);
     void patchSyncBuffer(Device &device, GraphicsAllocation *gfxAllocation, size_t bufferOffset);
     void patchBindlessSurfaceStateOffsets(const Device &device, const size_t sshOffset);
 
@@ -352,26 +352,26 @@ class Kernel : public BaseObject<_cl_kernel> {
     KernelExecutionType getExecutionType() const {
         return executionType;
     }
-    bool isUsingSyncBuffer() const {
-        return (getDefaultKernelInfo().patchInfo.pAllocateSyncBuffer != nullptr);
+    bool isUsingSyncBuffer(uint32_t rootDeviceIndex) const {
+        return (getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSyncBuffer != nullptr);
     }
 
     bool checkIfIsParentKernelAndBlocksUsesPrintf();
 
-    bool is32Bit() const {
-        return getDefaultKernelInfo().gpuPointerSize == 4;
+    bool is32Bit(uint32_t rootDeviceIndex) const {
+        return getKernelInfo(rootDeviceIndex).gpuPointerSize == 4;
     }
 
-    int32_t getDebugSurfaceBti() const {
-        if (getDefaultKernelInfo().patchInfo.pAllocateSystemThreadSurface) {
-            return getDefaultKernelInfo().patchInfo.pAllocateSystemThreadSurface->BTI;
+    int32_t getDebugSurfaceBti(uint32_t rootDeviceIndex) const {
+        if (getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface) {
+            return getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface->BTI;
         }
         return -1;
     }
 
-    size_t getPerThreadSystemThreadSurfaceSize() const {
-        if (getDefaultKernelInfo().patchInfo.pAllocateSystemThreadSurface) {
-            return getDefaultKernelInfo().patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize;
+    size_t getPerThreadSystemThreadSurfaceSize(uint32_t rootDeviceIndex) const {
+        if (getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface) {
+            return getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize;
         }
         return 0;
     }
@@ -381,7 +381,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         return usingImagesOnly;
     }
 
-    void fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsForAuxTranslation);
+    void fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsForAuxTranslation, uint32_t rootDeviceIndex);
 
     MOCKABLE_VIRTUAL bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const;
 

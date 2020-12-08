@@ -529,7 +529,7 @@ bool CommandQueue::setupDebugSurface(Kernel *kernel) {
     auto debugSurface = getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
 
     auto rootDeviceIndex = device->getRootDeviceIndex();
-    DEBUG_BREAK_IF(!kernel->requiresSshForBuffers());
+    DEBUG_BREAK_IF(!kernel->requiresSshForBuffers(rootDeviceIndex));
     auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap(rootDeviceIndex)),
                                   kernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface->Offset);
     void *addressToPatch = reinterpret_cast<void *>(debugSurface->getGpuAddress());

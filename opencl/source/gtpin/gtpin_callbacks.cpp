@@ -73,7 +73,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
             // Kernel with no SSH or Kernel EM, not supported
             return;
         }
-        if (pKernel->isKernelHeapSubstituted()) {
+        if (pKernel->isKernelHeapSubstituted(rootDeviceIndex)) {
             // ISA for this kernel was already substituted
             return;
         }
@@ -85,8 +85,8 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
 
         paramsIn.kernel_type = GTPIN_KERNEL_TYPE_CS;
         paramsIn.simd = (GTPIN_SIMD_WIDTH)kernelInfo.getMaxSimdSize();
-        paramsIn.orig_kernel_binary = (uint8_t *)pKernel->getKernelHeap();
-        paramsIn.orig_kernel_size = static_cast<uint32_t>(pKernel->getKernelHeapSize());
+        paramsIn.orig_kernel_binary = (uint8_t *)pKernel->getKernelHeap(rootDeviceIndex);
+        paramsIn.orig_kernel_size = static_cast<uint32_t>(pKernel->getKernelHeapSize(rootDeviceIndex));
         paramsIn.buffer_type = GTPIN_BUFFER_BINDFULL;
         paramsIn.buffer_desc.BTI = static_cast<uint32_t>(gtpinBTI);
         paramsIn.igc_hash_id = kernelInfo.shaderHashCode;
@@ -97,8 +97,8 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         instrument_params_out_t paramsOut = {0};
         (*GTPinCallbacks.onKernelCreate)((context_handle_t)(cl_context)context, &paramsIn, &paramsOut);
         // Substitute ISA of created kernel with instrumented code
-        pKernel->substituteKernelHeap(paramsOut.inst_kernel_binary, paramsOut.inst_kernel_size);
-        pKernel->setKernelId(paramsOut.kernel_id);
+        pKernel->substituteKernelHeap(rootDeviceIndex, paramsOut.inst_kernel_binary, paramsOut.inst_kernel_size);
+        pKernel->setKernelId(rootDeviceIndex, paramsOut.kernel_id);
     }
 }
 
@@ -106,14 +106,15 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
     if (isGTPinInitialized) {
         auto pCmdQ = reinterpret_cast<CommandQueue *>(pCmdQueue);
         auto &device = pCmdQ->getDevice();
+        auto rootDeviceIndex = device.getRootDeviceIndex();
         auto pKernel = castToObjectOrAbort<Kernel>(kernel);
-        if (pKernel->isParentKernel || pKernel->getSurfaceStateHeapSize(device.getRootDeviceIndex()) == 0) {
+        if (pKernel->isParentKernel || pKernel->getSurfaceStateHeapSize(rootDeviceIndex) == 0) {
             // Kernel with no SSH, not supported
             return;
         }
         Context *pContext = &(pKernel->getContext());
         cl_context context = (cl_context)pContext;
-        uint64_t kernelId = pKernel->getKernelId();
+        uint64_t kernelId = pKernel->getKernelId(rootDeviceIndex);
         command_buffer_handle_t commandBuffer = (command_buffer_handle_t)((uintptr_t)(sequenceCount++));
         uint32_t kernelOffset = 0;
         resource_handle_t resource = 0;
@@ -138,7 +139,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
-        void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI, device.getRootDeviceIndex());
+        void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI, rootDeviceIndex);
         cl_mem buffer = (cl_mem)resource;
         auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
         pBuffer->setArgStateful(pSurfaceState, false, false, false, false, device);

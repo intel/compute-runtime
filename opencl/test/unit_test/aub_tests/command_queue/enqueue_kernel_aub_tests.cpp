@@ -109,8 +109,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBHelloWorld, simple) {
     EXPECT_EQ(0u, addrIDD % alignmentIDD);
 
     // Check kernel start pointer matches hard-coded kernel.
-    auto pExpectedISA = pKernel->getKernelHeap();
-    auto expectedSize = pKernel->getKernelHeapSize();
+    auto pExpectedISA = pKernel->getKernelHeap(rootDeviceIndex);
+    auto expectedSize = pKernel->getKernelHeapSize(rootDeviceIndex);
 
     auto pSBA = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
     ASSERT_NE(nullptr, pSBA);
@@ -268,8 +268,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, simple) {
     EXPECT_EQ(0u, addrIDD % alignmentIDD);
 
     // Check kernel start pointer matches hard-coded kernel.
-    auto pExpectedISA = pKernel->getKernelHeap();
-    auto expectedSize = pKernel->getKernelHeapSize();
+    auto pExpectedISA = pKernel->getKernelHeap(rootDeviceIndex);
+    auto expectedSize = pKernel->getKernelHeapSize(rootDeviceIndex);
 
     auto pSBA = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
     ASSERT_NE(nullptr, pSBA);

@@ -34,8 +34,9 @@ class SchedulerKernel : public Kernel {
     }
 
     size_t getCurbeSize() {
-        size_t crossTrheadDataSize = getDefaultKernelInfo().patchInfo.dataParameterStream ? getDefaultKernelInfo().patchInfo.dataParameterStream->DataParameterStreamSize : 0;
-        size_t dshSize = getDefaultKernelInfo().heapInfo.DynamicStateHeapSize;
+        auto &defaultKernelInfo = getDefaultKernelInfo();
+        size_t crossTrheadDataSize = defaultKernelInfo.patchInfo.dataParameterStream ? defaultKernelInfo.patchInfo.dataParameterStream->DataParameterStreamSize : 0;
+        size_t dshSize = defaultKernelInfo.heapInfo.DynamicStateHeapSize;
 
         crossTrheadDataSize = alignUp(crossTrheadDataSize, 64);
         dshSize = alignUp(dshSize, 64);

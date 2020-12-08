@@ -452,7 +452,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
 
     testing::internal::CaptureStdout();
     MemObjsForAuxTranslation memObjects;
-    mockKernel.mockKernel->fillWithBuffersForAuxTranslation(memObjects);
+    mockKernel.mockKernel->fillWithBuffersForAuxTranslation(memObjects, rootDeviceIndex);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ARGUMENT_AUX_TRANSLATION],
              mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(), 0, mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelArgInfo.at(0).metadataExtended->argName.c_str());

@@ -94,7 +94,7 @@ void HardwareParse::findHardwareCommands() {
 }
 
 template <typename FamilyType>
-const void *HardwareParse::getStatelessArgumentPointer(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh) {
+const void *HardwareParse::getStatelessArgumentPointer(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
@@ -115,7 +115,7 @@ const void *HardwareParse::getStatelessArgumentPointer(const Kernel &kernel, uin
         offsetCrossThreadData);
 
     // Determine where the argument is
-    auto &patchInfo = kernel.getDefaultKernelInfo().patchInfo;
+    auto &patchInfo = kernel.getKernelInfo(rootDeviceIndex).patchInfo;
     for (auto &arg : patchInfo.statelessGlobalMemObjKernelArgs) {
         if (arg->ArgumentNumber == indexArg) {
             return ptrOffset(pCrossThreadData, arg->DataParamOffset);

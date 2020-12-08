@@ -97,8 +97,8 @@ TEST(KernelTest, WhenKernelIsCreatedThenCorrectMembersAreMemObjects) {
 }
 
 TEST_F(KernelTests, WhenKernelIsCreatedThenKernelHeapIsCorrect) {
-    EXPECT_EQ(pKernel->getKernelInfo(rootDeviceIndex).heapInfo.pKernelHeap, pKernel->getKernelHeap());
-    EXPECT_EQ(pKernel->getKernelInfo(rootDeviceIndex).heapInfo.KernelHeapSize, pKernel->getKernelHeapSize());
+    EXPECT_EQ(pKernel->getKernelInfo(rootDeviceIndex).heapInfo.pKernelHeap, pKernel->getKernelHeap(rootDeviceIndex));
+    EXPECT_EQ(pKernel->getKernelInfo(rootDeviceIndex).heapInfo.KernelHeapSize, pKernel->getKernelHeapSize(rootDeviceIndex));
 }
 
 TEST_F(KernelTests, GivenInvalidParamNameWhenGettingInfoThenInvalidValueErrorIsReturned) {
@@ -167,7 +167,7 @@ TEST_F(KernelTests, GivenKernelBinaryProgramIntelWhenGettingInfoThenKernelBinary
     size_t paramValueSize = 0;
     char *paramValue = nullptr;
     size_t paramValueSizeRet = 0;
-    const char *pKernelData = reinterpret_cast<const char *>(pKernel->getKernelHeap());
+    const char *pKernelData = reinterpret_cast<const char *>(pKernel->getKernelHeap(rootDeviceIndex));
     EXPECT_NE(nullptr, pKernelData);
 
     // get size of kernel binary
@@ -2670,7 +2670,7 @@ TEST(KernelTest, givenKernelWithKernelInfoWith32bitPointerSizeThenReport32bit) {
     MockProgram program(&context, false, toClDeviceVector(*device));
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, MockKernel::toKernelInfoContainer(info, rootDeviceIndex)));
 
-    EXPECT_TRUE(kernel->is32Bit());
+    EXPECT_TRUE(kernel->is32Bit(rootDeviceIndex));
 }
 
 TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
@@ -2683,7 +2683,7 @@ TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
     MockProgram program(&context, false, toClDeviceVector(*device));
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, MockKernel::toKernelInfoContainer(info, rootDeviceIndex)));
 
-    EXPECT_FALSE(kernel->is32Bit());
+    EXPECT_FALSE(kernel->is32Bit(rootDeviceIndex));
 }
 
 TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonStatefulAccessThenMarkKernelForAuxTranslation) {
@@ -2978,7 +2978,7 @@ TEST(KernelTest, givenKernelRequiringPrivateScratchSpaceWhenGettingSizeForPrivat
     mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
     mockKernel.kernelInfo.patchInfo.mediaVfeStateSlot1 = &mediaVFEstateSlot1;
 
-    EXPECT_EQ(1024u, mockKernel.mockKernel->getPrivateScratchSize());
+    EXPECT_EQ(1024u, mockKernel.mockKernel->getPrivateScratchSize(device->getRootDeviceIndex()));
 }
 
 TEST(KernelTest, givenKernelWithoutMediaVfeStateSlot1WhenGettingSizeForPrivateScratchSpaceThenCorrectSizeIsReturned) {
@@ -2987,7 +2987,7 @@ TEST(KernelTest, givenKernelWithoutMediaVfeStateSlot1WhenGettingSizeForPrivateSc
     MockKernelWithInternals mockKernel(*device);
     mockKernel.kernelInfo.patchInfo.mediaVfeStateSlot1 = nullptr;
 
-    EXPECT_EQ(0u, mockKernel.mockKernel->getPrivateScratchSize());
+    EXPECT_EQ(0u, mockKernel.mockKernel->getPrivateScratchSize(device->getRootDeviceIndex()));
 }
 
 TEST(KernelTest, givenKernelWithPatchInfoCollectionEnabledWhenPatchWithImplicitSurfaceCalledThenPatchInfoDataIsCollected) {

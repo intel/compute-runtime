@@ -84,7 +84,7 @@ struct WorkSizeInfo {
 
     WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, GFXCORE_FAMILY coreFamily, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface);
     WorkSizeInfo(const DispatchInfo &dispatchInfo);
-    void setIfUseImg(Kernel *pKernel);
+    void setIfUseImg(const KernelInfo &kernelInfo);
     void setMinWorkGroupSize();
     void checkRatio(const size_t workItems[3]);
 };

@@ -22,7 +22,7 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetDebugSurfaceBtiIsCal
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockDebugKernel>(device->getDevice(), &program));
 
-    EXPECT_EQ(0, kernel->getDebugSurfaceBti());
+    EXPECT_EQ(0, kernel->getDebugSurfaceBti(device->getRootDeviceIndex()));
 }
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenCorrectValueIsReturned) {
@@ -31,7 +31,7 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThrea
     program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(device->getDevice(), &program));
 
-    EXPECT_EQ(MockDebugKernel::perThreadSystemThreadSurfaceSize, kernel->getPerThreadSystemThreadSurfaceSize());
+    EXPECT_EQ(MockDebugKernel::perThreadSystemThreadSurfaceSize, kernel->getPerThreadSystemThreadSurfaceSize(device->getRootDeviceIndex()));
 }
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenQueryingIsKernelDebugEnabledThenTrueIsReturned) {
@@ -60,7 +60,7 @@ TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetDebugSurfaceBtiIsCalledT
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(device->getDevice(), &program));
 
-    EXPECT_EQ(-1, kernel->getDebugSurfaceBti());
+    EXPECT_EQ(-1, kernel->getDebugSurfaceBti(device->getRootDeviceIndex()));
 }
 
 TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenZeroIsReturned) {
@@ -69,5 +69,5 @@ TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetPerThreadSystemThreadSur
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(device->getDevice(), &program));
 
-    EXPECT_EQ(0u, kernel->getPerThreadSystemThreadSurfaceSize());
+    EXPECT_EQ(0u, kernel->getPerThreadSystemThreadSurfaceSize(device->getRootDeviceIndex()));
 }

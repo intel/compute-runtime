@@ -64,16 +64,16 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
     if (DebugManager.flags.ForceDispatchScheduler.get()) {
         forceDispatchScheduler(multiDispatchInfo);
     } else {
+        auto rootDeviceIndex = device->getRootDeviceIndex();
         if (kernel->isAuxTranslationRequired()) {
             auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getClDevice());
             builtInLock.takeOwnership(builder);
-            kernel->fillWithBuffersForAuxTranslation(memObjsForAuxTranslation);
+            kernel->fillWithBuffersForAuxTranslation(memObjsForAuxTranslation, rootDeviceIndex);
             multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
             if (!memObjsForAuxTranslation.empty()) {
                 dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::AuxToNonAux);
             }
         }
-        auto rootDeviceIndex = device->getRootDeviceIndex();
         if (kernel->getKernelInfo(rootDeviceIndex).builtinDispatchBuilder == nullptr) {
             DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> builder(getClDevice());
             builder.setDispatchGeometry(workDim, workItems, enqueuedWorkSizes, globalOffsets, Vec3<size_t>{0, 0, 0}, localWorkSizesIn);
@@ -373,7 +373,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
         printfHandler->prepareDispatch(multiDispatchInfo);
     }
 
-    if (multiDispatchInfo.peekMainKernel()->usesSyncBuffer()) {
+    if (multiDispatchInfo.peekMainKernel()->usesSyncBuffer(device->getRootDeviceIndex())) {
         auto &gws = multiDispatchInfo.begin()->getGWS();
         auto &lws = multiDispatchInfo.begin()->getLocalWorkgroupSize();
         size_t workGroupsCount = (gws.x * gws.y * gws.z) /
@@ -649,7 +649,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         printfHandler->makeResident(getGpgpuCommandStreamReceiver());
     }
 
-    if (multiDispatchInfo.peekMainKernel()->usesSyncBuffer()) {
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+    if (multiDispatchInfo.peekMainKernel()->usesSyncBuffer(rootDeviceIndex)) {
         device->syncBufferHandler->makeResident(getGpgpuCommandStreamReceiver());
     }
 
@@ -674,7 +675,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     auto specialPipelineSelectMode = false;
     Kernel *kernel = nullptr;
     bool usePerDssBackedBuffer = false;
-    auto rootDeviceIndex = device->getRootDeviceIndex();
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {

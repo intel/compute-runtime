@@ -131,7 +131,7 @@ struct HardwareParse {
     }
 
     template <typename FamilyType>
-    const void *getStatelessArgumentPointer(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh);
+    const void *getStatelessArgumentPointer(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);
 
     template <typename CmdType>
     CmdType *getCommand(GenCmdList::iterator itorStart, GenCmdList::iterator itorEnd) {

@@ -143,13 +143,12 @@ WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     this->numThreadsPerSubSlice = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
                                   device.getSharedDeviceInfo().numThreadsPerEU;
     this->localMemSize = static_cast<uint32_t>(device.getSharedDeviceInfo().localMemSize);
-    setIfUseImg(dispatchInfo.getKernel());
+    setIfUseImg(kernelInfo);
     setMinWorkGroupSize();
 }
-void WorkSizeInfo::setIfUseImg(Kernel *pKernel) {
-    auto ParamsCount = pKernel->getKernelArgsNumber();
-    for (auto i = 0u; i < ParamsCount; i++) {
-        if (pKernel->getDefaultKernelInfo().kernelArgInfo[i].isImage) {
+void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
+    for (auto i = 0u; i < kernelInfo.kernelArgInfo.size(); i++) {
+        if (kernelInfo.kernelArgInfo[i].isImage) {
             imgUsed = true;
             yTiledSurfaces = true;
         }

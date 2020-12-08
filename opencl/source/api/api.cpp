@@ -3410,7 +3410,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     }
 
     if ((pKernel->getExecutionType() != KernelExecutionType::Default) ||
-        pKernel->isUsingSyncBuffer()) {
+        pKernel->isUsingSyncBuffer(pCommandQueue->getDevice().getRootDeviceIndex())) {
         retVal = CL_INVALID_KERNEL;
         TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
         return retVal;
@@ -5818,7 +5818,9 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         return retVal;
     }
 
-    auto &hardwareInfo = pKernel->getDevices()[0]->getHardwareInfo();
+    auto &device = pCommandQueue->getClDevice();
+    auto rootDeviceIndex = device.getRootDeviceIndex();
+    auto &hardwareInfo = device.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     if (!hwHelper.isCooperativeDispatchSupported(pCommandQueue->getGpgpuEngine().getEngineType(), hardwareInfo.platform.eProductFamily)) {
         retVal = CL_INVALID_COMMAND_QUEUE;
@@ -5842,13 +5844,13 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         }
     }
 
-    if (pKernel->isUsingSyncBuffer()) {
+    if (pKernel->isUsingSyncBuffer(rootDeviceIndex)) {
         if (pKernel->getExecutionType() != KernelExecutionType::Concurrent) {
             retVal = CL_INVALID_KERNEL;
             return retVal;
         }
 
-        pCommandQueue->getDevice().getSpecializedDevice<ClDevice>()->allocateSyncBufferHandler();
+        device.allocateSyncBufferHandler();
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_KERNEL_INTEL, eventWaitList, event)) {

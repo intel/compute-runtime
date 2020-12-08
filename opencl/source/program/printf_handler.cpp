@@ -61,7 +61,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
                                         kernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);
 
     patchWithRequiredSize(printfPatchAddress, kernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->DataParamSize, (uintptr_t)printfSurface->getGpuAddressToPatch());
-    if (kernel->requiresSshForBuffers()) {
+    if (kernel->requiresSshForBuffers(rootDeviceIndex)) {
         auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap(rootDeviceIndex)),
                                       kernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->SurfaceStateHeapOffset);
         void *addressToPatch = printfSurface->getUnderlyingBuffer();
@@ -75,8 +75,9 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 }
 
 void PrintfHandler::printEnqueueOutput() {
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     PrintFormatter printFormatter(reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer()), static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize()),
-                                  kernel->is32Bit(), kernel->getKernelInfo(device.getRootDeviceIndex()).patchInfo.stringDataMap);
+                                  kernel->is32Bit(rootDeviceIndex), kernel->getKernelInfo(rootDeviceIndex).patchInfo.stringDataMap);
     printFormatter.printKernelOutput();
 }
 } // namespace NEO
