@@ -88,7 +88,11 @@ ze_result_t ContextImp::freeMem(const void *ptr) {
 ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, size_t size) {
     Device *device = L0::Device::fromHandle(hDevice);
     NEO::Device *neoDevice = device->getNEODevice();
-    auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr, size, neoDevice->getRootDeviceIndex());
+    auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(
+        ptr,
+        size,
+        neoDevice->getRootDeviceIndex(),
+        nullptr);
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -112,7 +116,11 @@ ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr
 ze_result_t ContextImp::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t size) {
     Device *device = L0::Device::fromHandle(hDevice);
     NEO::Device *neoDevice = device->getNEODevice();
-    auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr, size, neoDevice->getRootDeviceIndex());
+    auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(
+        ptr,
+        size,
+        neoDevice->getRootDeviceIndex(),
+        nullptr);
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

@@ -197,7 +197,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool indirectAllocationsAllowed = false;
     bool internalUsage = false;
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
-    NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, size_t *offset);
+    NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize);
     bool containsStatelessUncachedResource = false;
 };
 

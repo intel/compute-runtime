@@ -1216,7 +1216,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         appendEventForProfiling(hEvent, true);
         NEO::GraphicsAllocation *gpuAllocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr,
                                                                                                             size,
-                                                                                                            neoDevice->getRootDeviceIndex());
+                                                                                                            neoDevice->getRootDeviceIndex(),
+                                                                                                            nullptr);
         if (gpuAllocation == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -1301,17 +1302,15 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
 
     if (srcAllocFound == false) {
         alloc = device->getDriverHandle()->findHostPointerAllocation(ptr, static_cast<size_t>(bufferSize), device->getRootDeviceIndex());
-        if (alloc != nullptr) {
-            offset += ptrDiff(buffer, alloc->getUnderlyingBuffer());
-        } else {
-            alloc = getHostPtrAlloc(buffer, bufferSize, &offset);
+        if (alloc == nullptr) {
+            alloc = getHostPtrAlloc(buffer, bufferSize);
         }
         alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
 
         hostPointerNeedsFlush = true;
     } else {
         alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        alignedPtr = reinterpret_cast<uintptr_t>(ptr) - offset;
+        alignedPtr = sourcePtr;
 
         if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
             allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {

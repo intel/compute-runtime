@@ -52,8 +52,38 @@ TEST_F(HostPointerManagerTest, givenNoHeapManagerThenReturnFeatureUnsupported) {
     result = hostDriverHandle->releaseImportedPointer(testPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 
-    auto gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(testPtr, 1u, device->getRootDeviceIndex());
+    auto gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(testPtr, 1u, device->getRootDeviceIndex(), nullptr);
     EXPECT_EQ(nullptr, gfxAllocation);
+}
+
+TEST_F(HostPointerManagerTest, givenHostPointerImportedWhenGettingExistingAllocationThenRetrieveProperGpuAddress) {
+    void *testPtr = heapPointer;
+
+    auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uintptr_t gpuAddress = 0u;
+    auto gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(testPtr,
+                                                                           1u,
+                                                                           device->getRootDeviceIndex(),
+                                                                           &gpuAddress);
+    ASSERT_NE(nullptr, gfxAllocation);
+    EXPECT_EQ(testPtr, gfxAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(static_cast<uintptr_t>(gfxAllocation->getGpuAddress()), gpuAddress);
+
+    size_t offset = 10u;
+    testPtr = ptrOffset(testPtr, offset);
+    gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(testPtr,
+                                                                      1u,
+                                                                      device->getRootDeviceIndex(),
+                                                                      &gpuAddress);
+    ASSERT_NE(nullptr, gfxAllocation);
+    EXPECT_EQ(heapPointer, gfxAllocation->getUnderlyingBuffer());
+    auto expectedGpuAddress = static_cast<uintptr_t>(gfxAllocation->getGpuAddress()) + offset;
+    EXPECT_EQ(expectedGpuAddress, gpuAddress);
+
+    result = hostDriverHandle->releaseImportedPointer(heapPointer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(HostPointerManagerTest, givenPointerRegisteredWhenSvmAllocationExistsThenRetrieveSvmFirst) {
@@ -77,12 +107,51 @@ TEST_F(HostPointerManagerTest, givenPointerRegisteredWhenSvmAllocationExistsThen
     auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(usmBuffer, 1u, device->getRootDeviceIndex());
+    auto gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(usmBuffer, 1u, device->getRootDeviceIndex(), nullptr);
     ASSERT_NE(nullptr, gfxAllocation);
     EXPECT_EQ(usmBuffer, gfxAllocation->getUnderlyingBuffer());
 
     result = hostDriverHandle->releaseImportedPointer(testPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    hostDriverHandle->getMemoryManager()->freeGraphicsMemory(usmAllocation);
+    hostDriverHandle->getMemoryManager()->freeSystemMemory(usmBuffer);
+}
+
+TEST_F(HostPointerManagerTest, givenSvmAllocationExistsWhenGettingExistingAllocationThenRetrieveProperGpuAddress) {
+    size_t usmSize = MemoryConstants::pageSize;
+    void *usmBuffer = hostDriverHandle->getMemoryManager()->allocateSystemMemory(usmSize, usmSize);
+    NEO::GraphicsAllocation *usmAllocation = hostDriverHandle->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), false, usmSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, neoDevice->getDeviceBitfield()},
+        usmBuffer);
+    ASSERT_NE(nullptr, usmAllocation);
+
+    NEO::SvmAllocationData allocData(device->getRootDeviceIndex());
+    allocData.gpuAllocations.addAllocation(usmAllocation);
+    allocData.cpuAllocation = nullptr;
+    allocData.size = usmSize;
+    allocData.memoryType = InternalMemoryType::NOT_SPECIFIED;
+    allocData.device = nullptr;
+    hostDriverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
+
+    uintptr_t gpuAddress = 0u;
+    auto gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(usmBuffer,
+                                                                           1u,
+                                                                           device->getRootDeviceIndex(),
+                                                                           &gpuAddress);
+    ASSERT_NE(nullptr, gfxAllocation);
+    EXPECT_EQ(usmBuffer, gfxAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(static_cast<uintptr_t>(gfxAllocation->getGpuAddress()), gpuAddress);
+
+    size_t offset = 10u;
+    void *offsetUsmBuffer = ptrOffset(usmBuffer, offset);
+    gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(offsetUsmBuffer,
+                                                                      1u,
+                                                                      device->getRootDeviceIndex(),
+                                                                      &gpuAddress);
+    ASSERT_NE(nullptr, gfxAllocation);
+    EXPECT_EQ(usmBuffer, gfxAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(offsetUsmBuffer), gpuAddress);
 
     hostDriverHandle->getMemoryManager()->freeGraphicsMemory(usmAllocation);
     hostDriverHandle->getMemoryManager()->freeSystemMemory(usmBuffer);

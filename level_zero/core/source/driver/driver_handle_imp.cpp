@@ -453,13 +453,27 @@ NEO::GraphicsAllocation *DriverHandleImp::findHostPointerAllocation(void *ptr, s
     return nullptr;
 }
 
-NEO::GraphicsAllocation *DriverHandleImp::getDriverSystemMemoryAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) {
+NEO::GraphicsAllocation *DriverHandleImp::getDriverSystemMemoryAllocation(void *ptr,
+                                                                          size_t size,
+                                                                          uint32_t rootDeviceIndex,
+                                                                          uintptr_t *gpuAddress) {
     NEO::SvmAllocationData *allocData = nullptr;
     bool allocFound = findAllocationDataForRange(ptr, size, &allocData);
     if (allocFound) {
+        if (gpuAddress != nullptr) {
+            *gpuAddress = reinterpret_cast<uintptr_t>(ptr);
+        }
         return allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
     }
-    return findHostPointerAllocation(ptr, size, rootDeviceIndex);
+    auto allocation = findHostPointerAllocation(ptr, size, rootDeviceIndex);
+    if (allocation != nullptr) {
+        if (gpuAddress != nullptr) {
+            uintptr_t offset = reinterpret_cast<uintptr_t>(ptr) -
+                               reinterpret_cast<uintptr_t>(allocation->getUnderlyingBuffer());
+            *gpuAddress = static_cast<uintptr_t>(allocation->getGpuAddress()) + offset;
+        }
+    }
+    return allocation;
 }
 
 } // namespace L0

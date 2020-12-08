@@ -73,9 +73,15 @@ struct Mock<DriverHandle> : public DriverHandleImp {
     NEO::GraphicsAllocation *findHostPointerAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override {
         return nullptr;
     }
-    NEO::GraphicsAllocation *getDriverSystemMemoryAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override {
+    NEO::GraphicsAllocation *getDriverSystemMemoryAllocation(void *ptr,
+                                                             size_t size,
+                                                             uint32_t rootDeviceIndex,
+                                                             uintptr_t *gpuAddress) override {
         auto svmData = svmAllocsManager->getSVMAlloc(ptr);
         if (svmData != nullptr) {
+            if (gpuAddress != nullptr) {
+                *gpuAddress = reinterpret_cast<uintptr_t>(ptr);
+            }
             return svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
         }
         return nullptr;

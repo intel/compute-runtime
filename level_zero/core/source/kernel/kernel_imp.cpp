@@ -524,11 +524,11 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     uintptr_t gpuAddress = 0u;
     NEO::GraphicsAllocation *alloc = module->getDevice()->getDriverHandle()->getDriverSystemMemoryAllocation(requestedAddress,
                                                                                                              1u,
-                                                                                                             module->getDevice()->getRootDeviceIndex());
+                                                                                                             module->getDevice()->getRootDeviceIndex(),
+                                                                                                             &gpuAddress);
     if (nullptr == alloc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    gpuAddress = static_cast<uintptr_t>(alloc->getGpuAddress());
     return setArgBufferWithAlloc(argIndex, gpuAddress, alloc);
 }
 

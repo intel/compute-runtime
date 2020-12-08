@@ -76,7 +76,10 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t getHostPointerBaseAddress(void *ptr, void **baseAddress) override;
 
     virtual NEO::GraphicsAllocation *findHostPointerAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override;
-    virtual NEO::GraphicsAllocation *getDriverSystemMemoryAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override;
+    virtual NEO::GraphicsAllocation *getDriverSystemMemoryAllocation(void *ptr,
+                                                                     size_t size,
+                                                                     uint32_t rootDeviceIndex,
+                                                                     uintptr_t *gpuAddress) override;
     uint32_t parseAffinityMask(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
     void createHostPointerManager();
 

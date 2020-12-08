@@ -205,7 +205,7 @@ struct CommandListCoreFamily : CommandListImp {
     void programThreadArbitrationPolicy(Device *device);
 
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
-    virtual AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize);
+    MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize);
     ze_result_t addEventsToCmdList(ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 };
 
