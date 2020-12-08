@@ -29,6 +29,10 @@ if(BUILD_WITH_L0)
     endif()
   endif()
 
+  if(NOT DEFINED DONT_USE_PREBUILT_KERNELS_L0)
+    set(DONT_USE_PREBUILT_KERNELS_L0 FALSE)
+  endif()
+
   project(level-zero-gpu VERSION ${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_VERSION_BUILD})
   message(STATUS "Level Zero driver version: ${PROJECT_VERSION}")
 
@@ -272,9 +276,15 @@ if(BUILD_WITH_L0)
   target_sources(${TARGET_NAME_L0}
                  PRIVATE
                  $<TARGET_OBJECTS:${BUILTINS_SPIRV_LIB_NAME}>
-                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
-                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
   )
+  if(NOT ${DONT_USE_PREBUILT_KERNELS_L0})
+    message("Prebuilt kernels are linked to Level Zero.")
+    target_sources(${TARGET_NAME_L0}
+                   PRIVATE
+                   $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
+                   $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
+    )
+  endif()
 
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/inc)
 
