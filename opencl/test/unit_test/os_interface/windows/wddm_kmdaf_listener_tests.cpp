@@ -13,10 +13,10 @@
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
+#include "shared/test/unit_test/mock_gdi/mock_gdi.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_kmdaf_listener.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"

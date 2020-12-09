@@ -40,10 +40,6 @@ if(NOT SKIP_UNIT_TESTS)
 
   append_sources_from_properties(CORE_ENABLERS NEO_CORE_SRCS_LINK)
 
-  if(NOT TARGET mock_gmm AND SKIP_NEO_UNIT_TESTS)
-    add_subdirectory(${NEO_SOURCE_DIR}/opencl/test/unit_test/mock_gmm ${CMAKE_BINARY_DIR}/mock_gmm)
-  endif()
-
   add_executable(${TARGET_NAME}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp

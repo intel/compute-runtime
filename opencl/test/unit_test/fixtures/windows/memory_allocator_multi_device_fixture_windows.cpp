@@ -9,10 +9,10 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/test/unit_test/mock_gdi/mock_gdi.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
 #include "opencl/test/unit_test/fixtures/memory_allocator_multi_device_fixture.h"
-#include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 
 using namespace NEO;

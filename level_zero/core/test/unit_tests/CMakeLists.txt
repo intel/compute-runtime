@@ -118,13 +118,6 @@ target_link_libraries(${TARGET_NAME}
                       gmock-gtest
 )
 
-if(NOT TARGET mock_gmm AND SKIP_NEO_UNIT_TESTS)
-  add_subdirectory(${NEO_SOURCE_DIR}/opencl/test/unit_test/mock_gmm ${CMAKE_BINARY_DIR}/mock_gmm)
-endif()
-if(SKIP_NEO_UNIT_TESTS)
-  add_subdirectory(${NEO_SOURCE_DIR}/opencl/test/unit_test/mock_gdi ${CMAKE_BINARY_DIR}/mock_gdi)
-endif()
-
 target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>

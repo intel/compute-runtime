@@ -10,7 +10,7 @@ if(WIN32)
   set(DEF_FILE "${CMAKE_CURRENT_SOURCE_DIR}/gdi32_mock.def")
 
   # Setting up our local list of test files
-  set(IGDRCL_SRCS_tests_mock_gdi
+  set(NEO_SHARED_TESTS_mock_gdi
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi.h
@@ -19,7 +19,7 @@ if(WIN32)
   )
 
   # this is a DLL
-  add_library(mock_gdi SHARED ${IGDRCL_SRCS_tests_mock_gdi})
+  add_library(mock_gdi SHARED ${NEO_SHARED_TESTS_mock_gdi})
 
   add_definitions(-DINSIDE_PLUGIN)
 
