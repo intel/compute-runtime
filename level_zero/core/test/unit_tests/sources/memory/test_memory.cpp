@@ -10,7 +10,9 @@
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
+#include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 
 namespace L0 {
 namespace ult {

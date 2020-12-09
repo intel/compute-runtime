@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_host_pointer_manager.h"
 

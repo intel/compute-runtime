@@ -30,6 +30,8 @@ namespace L0 {
 
 struct DriverHandleImp *GlobalDriver;
 
+DriverHandleImp::DriverHandleImp() = default;
+
 ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
                                            ze_context_handle_t *phContext) {
     ContextImp *context = new ContextImp(this);

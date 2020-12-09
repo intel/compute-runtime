@@ -15,12 +15,13 @@
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl_timestamps.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device_for_spirv.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 namespace L0 {
 namespace ult {
@@ -440,7 +441,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenSetBarrierThenPipeControlIsProgr
     EXPECT_NE(cmdList.end(), itor);
 }
 
-class MockEvent : public Mock<Event> {
+class MockEvent : public ::L0::Event {
   public:
     MockEvent() {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
@@ -451,6 +452,26 @@ class MockEvent : public Mock<Event> {
     NEO::GraphicsAllocation &getAllocation() override {
         return *mockAllocation.get();
     }
+
+    ze_result_t destroy() override {
+        return ZE_RESULT_SUCCESS;
+    };
+    ze_result_t hostSignal() override {
+        return ZE_RESULT_SUCCESS;
+    };
+    ze_result_t hostSynchronize(uint64_t timeout) override {
+        return ZE_RESULT_SUCCESS;
+    };
+    ze_result_t queryStatus() override {
+        return ZE_RESULT_SUCCESS;
+    };
+    ze_result_t reset() override {
+        return ZE_RESULT_SUCCESS;
+    };
+    ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override {
+        return ZE_RESULT_SUCCESS;
+    };
+
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
 };
 
