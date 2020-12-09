@@ -436,6 +436,13 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
         fclDeviceCtx->SetOclApiVersion(hwInfo.capabilityTable.clVersionSupport * 10);
         preferredIntermediateRepresentation = fclDeviceCtx->GetPreferredIntermediateRepresentation();
+        if (this->fclDeviceCtx->GetUnderlyingVersion() > 4U) {
+            auto igcPlatform = fclDeviceCtx->GetPlatformHandle();
+            if (nullptr == igcPlatform) {
+                return OUT_OF_HOST_MEMORY;
+            }
+            IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo.platform);
+        }
     } else {
         if (!isQuiet()) {
             argHelper->printf("Compilation from IR - skipping loading of FCL\n");

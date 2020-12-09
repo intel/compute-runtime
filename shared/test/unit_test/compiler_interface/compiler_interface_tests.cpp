@@ -1067,6 +1067,60 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSpecializationCon
     EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
 }
 
+TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenInterfaceVersionAbove4ThenPopulatePlatformInfo) {
+    auto device = this->pDevice;
+
+    auto prevDebugVars = getFclDebugVars();
+
+    auto debugVars = prevDebugVars;
+    debugVars.overrideFclDeviceCtxVersion = 5;
+
+    setFclDebugVars(debugVars);
+
+    auto ret = pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
+    ASSERT_NE(nullptr, ret);
+    ASSERT_EQ(1U, pCompilerInterface->fclDeviceContexts.size());
+    auto platform = pCompilerInterface->fclDeviceContexts.begin()->second->GetPlatformHandle();
+    ASSERT_NE(nullptr, platform);
+    EXPECT_EQ(device->getHardwareInfo().platform.eProductFamily, platform->GetProductFamily());
+
+    setFclDebugVars(prevDebugVars);
+}
+
+TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenCouldNotPopulatePlatformInfoAndInterfaceVersionAbove4ThenReturnNullptr) {
+    auto device = this->pDevice;
+
+    auto prevDebugVars = getFclDebugVars();
+
+    auto debugVars = prevDebugVars;
+    debugVars.failCreatePlatformInterface = true;
+    debugVars.overrideFclDeviceCtxVersion = 5;
+
+    setFclDebugVars(debugVars);
+
+    auto ret = pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
+    EXPECT_EQ(nullptr, ret);
+
+    setFclDebugVars(prevDebugVars);
+}
+
+TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenInterfaceVersion4ThenDontPopulatePlatformInfo) {
+    auto device = this->pDevice;
+
+    auto prevDebugVars = getFclDebugVars();
+
+    auto debugVars = prevDebugVars;
+    debugVars.failCreatePlatformInterface = true;
+    debugVars.overrideFclDeviceCtxVersion = 4;
+
+    setFclDebugVars(debugVars);
+
+    auto ret = pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
+    EXPECT_NE(nullptr, ret);
+
+    setFclDebugVars(prevDebugVars);
+}
+
 struct SpecConstantsTranslationCtxMock {
     bool returnFalse = false;
 

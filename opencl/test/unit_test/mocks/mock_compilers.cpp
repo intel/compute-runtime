@@ -605,8 +605,15 @@ IGC::OclTranslationOutputBase *MockFclOclTranslationCtx::TranslateImpl(
     return out;
 }
 
-MockFclOclDeviceCtx::MockFclOclDeviceCtx() = default;
-MockFclOclDeviceCtx::~MockFclOclDeviceCtx() = default;
+MockFclOclDeviceCtx::MockFclOclDeviceCtx() {
+    platform = new MockCIFPlatform;
+}
+
+MockFclOclDeviceCtx::~MockFclOclDeviceCtx() {
+    if (nullptr != platform) {
+        platform->Release();
+    }
+}
 
 CIF::ICIF *MockFclOclDeviceCtx::Create(CIF::InterfaceId_t intId, CIF::Version_t version) {
     return new MockFclOclDeviceCtx;

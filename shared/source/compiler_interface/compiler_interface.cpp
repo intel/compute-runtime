@@ -363,6 +363,15 @@ IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &dev
         return nullptr;
     }
     newDeviceCtx->SetOclApiVersion(device.getHardwareInfo().capabilityTable.clVersionSupport * 10);
+    if (newDeviceCtx->GetUnderlyingVersion() > 4U) {
+        auto igcPlatform = newDeviceCtx->GetPlatformHandle();
+        if (nullptr == igcPlatform.get()) {
+            DEBUG_BREAK_IF(true); // could not acquire handles to platform descriptor
+            return nullptr;
+        }
+        const HardwareInfo *hwInfo = &device.getHardwareInfo();
+        IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
+    }
     fclDeviceContexts[&device] = std::move(newDeviceCtx);
 
     return fclDeviceContexts[&device].get();

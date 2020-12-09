@@ -20,6 +20,7 @@ namespace NEO {
 
 class MockCompilerInterface : public CompilerInterface {
   public:
+    using CompilerInterface::fclDeviceContexts;
     using CompilerInterface::initialize;
     using CompilerInterface::isCompilerAvailable;
     using CompilerInterface::isFclAvailable;

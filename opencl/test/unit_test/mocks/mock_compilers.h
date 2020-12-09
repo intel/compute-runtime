@@ -33,6 +33,7 @@ struct MockCompilerDebugVars {
     bool failCreatePlatformInterface = false;
     bool failCreateGtSystemInfoInterface = false;
     bool failCreateIgcFeWaInterface = false;
+    int64_t overrideFclDeviceCtxVersion = -1;
     IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine = IGC::SystemRoutineType::undefined;
     std::string *receivedInternalOptionsOutput = nullptr;
     std::string *receivedInput = nullptr;
@@ -259,7 +260,22 @@ struct MockFclOclDeviceCtx : MockCIF<IGC::FclOclDeviceCtxTagOCL> {
                                                             IGC::CodeType::CodeType_t outType,
                                                             CIF::Builtins::BufferSimple *err) override;
 
+    IGC::PlatformBase *GetPlatformHandleImpl(CIF::Version_t ver) override {
+        if (getFclDebugVars().failCreatePlatformInterface) {
+            return nullptr;
+        }
+        return platform;
+    }
+
+    CIF::Version_t GetUnderlyingVersion() const override {
+        if (getFclDebugVars().overrideFclDeviceCtxVersion >= 0) {
+            return getFclDebugVars().overrideFclDeviceCtxVersion;
+        }
+        return CIF::ICIF::GetUnderlyingVersion();
+    }
+
     uint32_t oclApiVersion = 120;
+    MockCIFPlatform *platform = nullptr;
 };
 
 } // namespace NEO
