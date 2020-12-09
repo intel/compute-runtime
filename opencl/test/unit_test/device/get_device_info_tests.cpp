@@ -647,7 +647,7 @@ TEST(GetDeviceInfo, WhenQueryingNonUniformWorkGroupSupportThenProperValueIsRetur
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_bool), paramRetSize);
 
-    cl_bool expectedNonUniformGroupSupport = deviceFactory.rootDevices[0]->areOcl21FeaturesSupported() ? CL_TRUE : CL_FALSE;
+    cl_bool expectedNonUniformGroupSupport = CL_TRUE;
     EXPECT_EQ(expectedNonUniformGroupSupport, nonUniformGroupSupport);
 }
 

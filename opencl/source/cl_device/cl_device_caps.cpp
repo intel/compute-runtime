@@ -344,7 +344,7 @@ void ClDevice::initializeCaps() {
                                               CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM;
     }
 
-    deviceInfo.nonUniformWorkGroupSupport = ocl21FeaturesEnabled;
+    deviceInfo.nonUniformWorkGroupSupport = true;
     deviceInfo.workGroupCollectiveFunctionsSupport = ocl21FeaturesEnabled;
     deviceInfo.genericAddressSpaceSupport = ocl21FeaturesEnabled;
 
