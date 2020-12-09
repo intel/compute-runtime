@@ -190,7 +190,7 @@ void KernelInfo::storePatchToken(const SPatchExecutionEnvironment *execEnv) {
         this->requiresSshForBuffers = true;
     }
     if (execEnv->IndirectStatelessCount > 0) {
-        this->hasStatelessAccessToHostMemory = true;
+        this->hasIndirectStatelessAccess = true;
     }
 }
 

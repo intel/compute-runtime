@@ -265,6 +265,45 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
     cl_int retVal = CL_SUCCESS;
 };
 
+class StatelessCopyKernelFixture : public ProgramFixture {
+  public:
+    DebugManagerStateRestore restorer;
+    using ProgramFixture::SetUp;
+
+  protected:
+    void SetUp(ClDevice *device, Context *context) {
+        ProgramFixture::SetUp();
+        DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
+        DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
+
+        CreateProgramFromBinary(
+            context,
+            toClDeviceVector(*device),
+            "stateless_copy_buffer");
+        ASSERT_NE(nullptr, pProgram);
+
+        retVal = pProgram->build(
+            pProgram->getDevices(),
+            CompilerOptions::greaterThan4gbBuffersRequired.data(),
+            false);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+
+        kernel.reset(Kernel::create<MockKernel>(
+            pProgram,
+            pProgram->getKernelInfosForKernel("StatelessCopyBuffer"),
+            &retVal));
+        ASSERT_NE(nullptr, kernel);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+    }
+
+    void TearDown() override {
+        ProgramFixture::TearDown();
+    }
+
+    std::unique_ptr<Kernel> kernel = nullptr;
+    cl_int retVal = CL_SUCCESS;
+};
+
 class BindlessKernelFixture : public ProgramFixture {
   public:
     using ProgramFixture::SetUp;
