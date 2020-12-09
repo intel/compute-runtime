@@ -69,9 +69,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
 
     for (auto i = 0u; i < workDim; i++) {
         region[i] = globalWorkSizeIn ? globalWorkSizeIn[i] : 0;
-        if (region[i] == 0 && (kernel.getDevices()[0]->areOcl21FeaturesEnabled() == false)) {
-            return CL_INVALID_GLOBAL_WORK_SIZE;
-        }
         globalWorkOffset[i] = globalWorkOffsetIn
                                   ? globalWorkOffsetIn[i]
                                   : 0;

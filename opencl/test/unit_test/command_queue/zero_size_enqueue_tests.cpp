@@ -61,10 +61,7 @@ class ZeroSizeEnqueueHandlerTestZeroGws : public ZeroSizeEnqueueHandlerTest {
     std::tuple<unsigned int, size_t *> testGwsInputs[14];
 };
 
-HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndOpenClIs21WhenEnqueingKernelThenCommandMarkerShouldBeEnqueued) {
-    pClDevice->enabledClVersion = 21;
-    pClDevice->ocl21FeaturesEnabled = true;
-
+HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedWhenEnqueingKernelThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -80,25 +77,6 @@ HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndOpe
     }
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndOpenClIs12WhenEnqueingKernelThenErrorIsReturned) {
-    pClDevice->enabledClVersion = 12;
-    pClDevice->ocl21FeaturesEnabled = false;
-
-    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
-
-    MockKernelWithInternals mockKernel(*pClDevice);
-
-    for (auto testInput : testGwsInputs) {
-        auto workDim = std::get<0>(testInput);
-        auto gws = std::get<1>(testInput);
-        mockCmdQ->lastCommandType = static_cast<cl_command_type>(CL_COMMAND_COPY_BUFFER);
-
-        retVal = mockCmdQ->enqueueKernel(mockKernel.mockKernel, workDim, nullptr, gws, nullptr, 0, nullptr, nullptr);
-        EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, retVal);
-        EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_COPY_BUFFER), mockCmdQ->lastCommandType);
-    }
-}
-
 HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndLocalWorkSizeIsSetWhenEnqueingKernelThenNoExceptionIsThrown) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
@@ -110,14 +88,10 @@ HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndLoc
     size_t lws[1] = {1};
 
     EXPECT_NO_THROW(retVal = mockCmdQ->enqueueKernel(mockKernel.mockKernel, workDim, nullptr, gws, lws, 0, nullptr, nullptr));
-    auto expected = (pClDevice->areOcl21FeaturesEnabled() == false ? CL_INVALID_GLOBAL_WORK_SIZE : CL_SUCCESS);
-    EXPECT_EQ(expected, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenEnqueingKernelThenEventCommandTypeShoudBeUnchanged) {
-    if (pClDevice->areOcl21FeaturesEnabled() == false) {
-        return;
-    }
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;
