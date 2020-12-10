@@ -20,6 +20,8 @@
 
 namespace NEO {
 
+static_assert(std::is_pod<GfxDbgKernelDebugData>::value);
+
 const char *SourceLevelDebugger::notifyNewDeviceSymbol = "notifyNewDevice";
 const char *SourceLevelDebugger::notifySourceCodeSymbol = "notifySourceCode";
 const char *SourceLevelDebugger::getDebuggerOptionSymbol = "getDebuggerOption";
@@ -119,7 +121,7 @@ void SourceLevelDebugger::getFunctions() {
 
 bool SourceLevelDebugger::notifyNewDevice(uint32_t deviceHandle) {
     if (isActive) {
-        GfxDbgNewDeviceData newDevice;
+        GfxDbgNewDeviceData newDevice = {};
         newDevice.version = IGFXDBG_CURRENT_VERSION;
         newDevice.dh = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandle));
         newDevice.udh = GfxDeviceHandle(0);
@@ -135,7 +137,7 @@ bool SourceLevelDebugger::notifyNewDevice(uint32_t deviceHandle) {
 
 bool SourceLevelDebugger::notifyDeviceDestruction() {
     if (isActive) {
-        GfxDbgDeviceDestructionData deviceDestruction;
+        GfxDbgDeviceDestructionData deviceDestruction = {};
         deviceDestruction.version = IGFXDBG_CURRENT_VERSION;
         deviceDestruction.dh = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(this->deviceHandle));
         if (sourceLevelDebuggerInterface) {
@@ -151,7 +153,7 @@ bool SourceLevelDebugger::notifyDeviceDestruction() {
 
 bool SourceLevelDebugger::notifySourceCode(const char *source, size_t sourceSize, std::string &file) const {
     if (isActive) {
-        GfxDbgSourceCode sourceCode;
+        GfxDbgSourceCode sourceCode = {};
         char fileName[FILENAME_MAX] = "";
 
         sourceCode.version = IGFXDBG_CURRENT_VERSION;
@@ -175,7 +177,7 @@ bool SourceLevelDebugger::isOptimizationDisabled() const {
     if (isActive) {
         const size_t optionValueSize = 4;
         char value[optionValueSize] = {0};
-        GfxDbgOption option;
+        GfxDbgOption option = {};
         option.version = IGFXDBG_CURRENT_VERSION;
         option.optionName = DBG_OPTION_IS_OPTIMIZATION_DISABLED;
         option.valueLen = sizeof(value);
@@ -197,7 +199,7 @@ bool SourceLevelDebugger::isOptimizationDisabled() const {
 
 bool SourceLevelDebugger::notifyKernelDebugData(const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize) const {
     if (isActive) {
-        GfxDbgKernelDebugData kernelDebugData;
+        GfxDbgKernelDebugData kernelDebugData = {};
         kernelDebugData.hDevice = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(this->deviceHandle));
         kernelDebugData.version = IGFXDBG_CURRENT_VERSION;
         kernelDebugData.hProgram = reinterpret_cast<GenRtProgramHandle>(0);

@@ -325,6 +325,41 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
     EXPECT_STREQ(info.kernelDescriptor.kernelMetadata.kernelName.c_str(), interceptor.kernelDebugDataArgIn.kernelName);
 }
 
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNullptrDebugDataIsPassedToNotifyThenDebuggerNotifiedWithNullPointersAndZeroSizes) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    MockSourceLevelDebugger debugger;
+    char isa[8];
+
+    KernelInfo info;
+    info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
+
+    info.heapInfo.KernelHeapSize = sizeof(isa);
+    info.heapInfo.pKernelHeap = isa;
+
+    debugger.notifyKernelDebugData(nullptr, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+
+    EXPECT_TRUE(interceptor.kernelDebugDataCalled);
+
+    EXPECT_EQ(static_cast<uint32_t>(IGFXDBG_CURRENT_VERSION), interceptor.kernelDebugDataArgIn.version);
+    EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(MockSourceLevelDebugger::mockDeviceHandle)), interceptor.kernelDebugDataArgIn.hDevice);
+    EXPECT_EQ(reinterpret_cast<GenRtProgramHandle>(0), interceptor.kernelDebugDataArgIn.hProgram);
+
+    EXPECT_EQ(nullptr, interceptor.kernelDebugDataArgIn.dbgGenIsaBuffer);
+    EXPECT_EQ(0u, interceptor.kernelDebugDataArgIn.dbgGenIsaSize);
+    EXPECT_EQ(nullptr, interceptor.kernelDebugDataArgIn.dbgVisaBuffer);
+    EXPECT_EQ(0u, interceptor.kernelDebugDataArgIn.dbgVisaSize);
+
+    EXPECT_EQ(info.heapInfo.KernelHeapSize, interceptor.kernelDebugDataArgIn.KernelBinSize);
+    EXPECT_EQ(isa, interceptor.kernelDebugDataArgIn.kernelBinBuffer);
+    EXPECT_STREQ(info.kernelDescriptor.kernelMetadata.kernelName.c_str(), interceptor.kernelDebugDataArgIn.kernelName);
+}
+
 TEST(SourceLevelDebugger, givenNoVisaWhenNotifyKernelDebugDataIsCalledThenDebuggerLibraryFunctionIsCalledWithIsa) {
     DebuggerLibraryRestorer restorer;
 
