@@ -168,4 +168,6 @@ else()
   set(RUN_ULT_CMD LD_LIBRARY_PATH=$<TARGET_FILE_DIR:${TARGET_NAME}> $<TARGET_FILE:${TARGET_NAME}>)
 endif()
 
+add_dependencies(unit_tests ${TARGET_NAME})
+
 create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR}/..)

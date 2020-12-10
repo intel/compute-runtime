@@ -147,4 +147,6 @@ else()
   )
 endif()
 
+add_dependencies(unit_tests ${TARGET_NAME})
+
 create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR}/..)

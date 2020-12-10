@@ -7,6 +7,8 @@
 set(SHARED_TEST_PROJECTS_FOLDER "neo shared")
 if(NOT SKIP_UNIT_TESTS)
 
+  add_custom_target(unit_tests)
+
   set(TARGET_NAME neo_shared_tests)
 
   # disable optimizations for ults
@@ -117,6 +119,7 @@ if(NOT SKIP_UNIT_TESTS)
   get_property(NEO_CORE_tests_mocks GLOBAL PROPERTY NEO_CORE_tests_mocks)
   target_sources(${TARGET_NAME} PRIVATE ${NEO_CORE_tests_mocks})
   add_dependencies(${TARGET_NAME} prepare_test_kernel_for_shared)
-  create_project_source_tree(${TARGET_NAME})
+  add_dependencies(unit_tests ${TARGET_NAME})
 
+  create_project_source_tree(${TARGET_NAME})
 endif()

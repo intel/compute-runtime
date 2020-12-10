@@ -42,7 +42,6 @@ link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 add_custom_target(prepare_test_kernels)
 add_custom_target(copy_test_files_per_product)
 add_custom_target(run_unit_tests ALL)
-add_custom_target(unit_tests)
 add_dependencies(unit_tests copy_test_files_per_product)
 
 set(IGDRCL_SRCS_tests_local
@@ -71,14 +70,6 @@ if(UNIX)
                      COMMAND igdrcl_linux_dll_tests ${IGDRCL_TESTS_LISTENER_OPTION}
                      COMMAND WORKING_DIRECTORY ${TargetDir}
   )
-  if(PRE_ULT_COMMAND)
-    add_custom_command(
-                       TARGET unit_tests
-                       POST_BUILD
-                       COMMAND echo running ${PRE_ULT_COMMAND} utility before ULTs execution
-                       COMMAND ${PRE_ULT_COMMAND}
-    )
-  endif()
 endif()
 
 set(NEO_IGDRCL_TESTS__TARGET_OBJECTS

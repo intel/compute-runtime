@@ -108,6 +108,10 @@ string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_LIB_DEFAULT_DEVICE)
 add_custom_target(run_ocloc_tests ALL
                   DEPENDS ocloc_tests
 )
+
+add_dependencies(run_unit_tests run_ocloc_tests)
+add_dependencies(unit_tests ocloc_tests)
+
 macro(macro_for_each_platform)
   if("${PLATFORM_IT_LOWER}" STREQUAL "${CLOC_LIB_DEFAULT_DEVICE}")
     foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
@@ -115,8 +119,10 @@ macro(macro_for_each_platform)
         list(GET ${PLATFORM_TYPE}_${GEN_TYPE}_REVISIONS 0 REVISION_ID)
         get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
         add_dependencies(run_ocloc_tests prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
+        add_dependencies(unit_tests prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
         neo_copy_test_files(copy_test_files_${family_name_with_type}_${REVISION_ID} ${family_name_with_type})
         add_dependencies(run_ocloc_tests copy_test_files_${family_name_with_type}_${REVISION_ID})
+        add_dependencies(unit_tests copy_test_files_${family_name_with_type}_${REVISION_ID})
         set(run_tests_cmd ocloc_tests --device ${CLOC_LIB_DEFAULT_DEVICE} --family_type ${family_name_with_type} --rev_id ${REVISION_ID})
       endif()
     endforeach()
