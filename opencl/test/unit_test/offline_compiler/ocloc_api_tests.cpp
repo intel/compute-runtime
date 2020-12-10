@@ -7,6 +7,8 @@
 
 #include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
 
 #include "environment.h"
 #include "gtest/gtest.h"
@@ -55,4 +57,96 @@ TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {
 
     EXPECT_EQ(retVal, NEO::INVALID_FILE);
     EXPECT_NE(std::string::npos, output.find("Command was: ocloc -file test_files/IDoNotExist.cl -device "s + argv[4]));
+}
+
+TEST(OclocApiTests, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPackedAsElf) {
+    auto prevFclDebugVars = NEO::getFclDebugVars();
+    auto debugVars = prevFclDebugVars;
+    std::string receivedInput;
+    debugVars.receivedInput = &receivedInput;
+    setFclDebugVars(debugVars);
+
+    const char *argv[] = {
+        "ocloc",
+        "-file",
+        "main.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    const char *headerA = R"===(
+       void foo() {} 
+)===";
+
+    const char *headerB = R"===(
+       void bar() {} 
+)===";
+
+    const char *main = R"===(
+#include "includeA.h"
+#include "includeB.h"
+
+__kernel void k(){
+    foo();
+    bar();
+}
+)===";
+
+    const char *sourcesNames[] = {"main.cl"};
+    const uint8_t *sources[] = {reinterpret_cast<const uint8_t *>(main)};
+    const uint64_t sourcesLen[] = {strlen(main) + 1};
+
+    const char *headersNames[] = {"includeA.h", "includeB.h"};
+    const uint8_t *headers[] = {reinterpret_cast<const uint8_t *>(headerA), reinterpret_cast<const uint8_t *>(headerB)};
+    const uint64_t headersLen[] = {strlen(headerA) + 1, strlen(headerB) + 1};
+
+    uint32_t numOutputs = 0U;
+    uint8_t **outputs = nullptr;
+    uint64_t *outputsLen = nullptr;
+    char **ouputsNames = nullptr;
+
+    oclocInvoke(argc, argv,
+                1, sources, sourcesLen, sourcesNames,
+                2, headers, headersLen, headersNames,
+                &numOutputs, &outputs, &outputsLen, &ouputsNames);
+
+    NEO::setFclDebugVars(prevFclDebugVars);
+
+    std::string decodeErr, decodeWarn;
+    ArrayRef<const uint8_t> rawElf(reinterpret_cast<const uint8_t *>(receivedInput.data()), receivedInput.size());
+    auto elf = NEO::Elf::decodeElf(rawElf, decodeErr, decodeWarn);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << decodeWarn << " " << decodeErr;
+    EXPECT_EQ(NEO::Elf::ET_OPENCL_SOURCE, elf.elfFileHeader->type);
+    using SectionT = std::remove_reference_t<decltype(*elf.sectionHeaders.begin())>;
+    const SectionT *sourceSection, *headerASection, *headerBSection;
+
+    ASSERT_NE(NEO::Elf::SHN_UNDEF, elf.elfFileHeader->shStrNdx);
+    auto sectionNamesSection = elf.sectionHeaders.begin() + elf.elfFileHeader->shStrNdx;
+    auto elfStrings = sectionNamesSection->data.toArrayRef<const char>();
+    for (const auto &section : elf.sectionHeaders) {
+        if (NEO::Elf::SHT_OPENCL_SOURCE == section.header->type) {
+            sourceSection = &section;
+        } else if (NEO::Elf::SHT_OPENCL_HEADER == section.header->type) {
+            auto sectionName = elfStrings.begin() + section.header->name;
+            if (0 == strcmp("includeA.h", sectionName)) {
+                headerASection = &section;
+            } else if (0 == strcmp("includeB.h", sectionName)) {
+                headerBSection = &section;
+            } else {
+                EXPECT_FALSE(true) << sectionName;
+            }
+        }
+    }
+
+    ASSERT_NE(nullptr, sourceSection);
+    EXPECT_EQ(sourcesLen[0], sourceSection->data.size());
+    EXPECT_STREQ(main, reinterpret_cast<const char *>(sourceSection->data.begin()));
+
+    ASSERT_NE(nullptr, headerASection);
+    EXPECT_EQ(sourcesLen[0], sourceSection->data.size());
+    EXPECT_STREQ(headerA, reinterpret_cast<const char *>(headerASection->data.begin()));
+
+    ASSERT_NE(nullptr, headerBSection);
+    EXPECT_EQ(sourcesLen[0], sourceSection->data.size());
+    EXPECT_STREQ(headerB, reinterpret_cast<const char *>(headerBSection->data.begin()));
 }

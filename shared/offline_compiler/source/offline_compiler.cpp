@@ -110,12 +110,34 @@ int OfflineCompiler::buildIrBinary() {
                                                          : (useLlvmBc ? IGC::CodeType::llvmBc : preferredIntermediateRepresentation);
 
     //sourceCode.size() returns the number of characters without null terminated char
-    auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size() + 1);
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> fclSrc = nullptr;
     pBuildInfo->fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), options.c_str(), options.size());
     pBuildInfo->fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), internalOptions.c_str(), internalOptions.size());
     auto err = CIF::Builtins::CreateConstBuffer(fclMain.get(), nullptr, 0);
 
-    auto fclTranslationCtx = fclDeviceCtx->CreateTranslationCtx(IGC::CodeType::oclC, pBuildInfo->intermediateRepresentation, err.get());
+    auto srcType = IGC::CodeType::undefined;
+    std::vector<uint8_t> tempSrcStorage;
+    if (this->argHelper->hasHeaders()) {
+        srcType = IGC::CodeType::elf;
+
+        NEO::Elf::ElfEncoder<> elfEncoder(true, true, 1U);
+        elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_SOURCE;
+        elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SOURCE, "CLMain", sourceCode);
+
+        for (const auto &header : this->argHelper->getHeaders()) {
+            ArrayRef<const uint8_t> headerData(header.data, header.length);
+            ConstStringRef headerName = header.name;
+
+            elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_HEADER, headerName, headerData);
+        }
+        tempSrcStorage = elfEncoder.encode();
+        fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), tempSrcStorage.data(), tempSrcStorage.size());
+    } else {
+        srcType = IGC::CodeType::oclC;
+        fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size() + 1);
+    }
+
+    auto fclTranslationCtx = fclDeviceCtx->CreateTranslationCtx(srcType, pBuildInfo->intermediateRepresentation, err.get());
 
     if (true == NEO::areNotNullptr(err->GetMemory<char>())) {
         updateBuildLog(err->GetMemory<char>(), err->GetSizeRaw());
