@@ -315,6 +315,7 @@ struct MockCommandList : public CommandList {
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;
 };
-
+#undef ADDMETHOD
+#undef ADDMETHOD_NOBASE
 } // namespace ult
 } // namespace L0

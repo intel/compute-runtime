@@ -620,39 +620,36 @@ TEST(zeDriverHandleGetProperties, whenZeDriverGetPropertiesIsCalledThenGetProper
     ze_result_t result;
     Mock<DriverHandle> driverHandle;
     ze_driver_properties_t properties;
+    ze_result_t expectedResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 
-    EXPECT_CALL(driverHandle, getProperties(&properties))
-        .Times(1)
-        .WillRepeatedly(Return(ZE_RESULT_SUCCESS));
-
+    driverHandle.getPropertiesResult = expectedResult;
     result = zeDriverGetProperties(driverHandle.toHandle(), &properties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(expectedResult, result);
+    EXPECT_EQ(1u, driverHandle.getPropertiesCalled);
 }
 
 TEST(zeDriverHandleGetApiVersion, whenZeDriverGetApiIsCalledThenGetApiVersionIsCalled) {
     ze_result_t result;
     Mock<DriverHandle> driverHandle;
     ze_api_version_t version;
+    ze_result_t expectedResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 
-    EXPECT_CALL(driverHandle, getApiVersion(&version))
-        .Times(1)
-        .WillRepeatedly(Return(ZE_RESULT_SUCCESS));
-
+    driverHandle.getApiVersionResult = expectedResult;
     result = zeDriverGetApiVersion(driverHandle.toHandle(), &version);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(expectedResult, result);
+    EXPECT_EQ(1u, driverHandle.getApiVersionCalled);
 }
 
 TEST(zeDriverGetIpcProperties, whenZeDriverGetIpcPropertiesIsCalledThenGetIPCPropertiesIsCalled) {
     ze_result_t result;
     Mock<DriverHandle> driverHandle;
     ze_driver_ipc_properties_t ipcProperties;
+    ze_result_t expectedResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 
-    EXPECT_CALL(driverHandle, getIPCProperties(&ipcProperties))
-        .Times(1)
-        .WillRepeatedly(Return(ZE_RESULT_SUCCESS));
-
+    driverHandle.getIPCPropertiesResult = expectedResult;
     result = zeDriverGetIpcProperties(driverHandle.toHandle(), &ipcProperties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(expectedResult, result);
+    EXPECT_EQ(1u, driverHandle.getIPCPropertiesCalled);
 }
 } // namespace ult
 } // namespace L0
