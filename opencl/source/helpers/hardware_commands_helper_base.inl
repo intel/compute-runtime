@@ -238,7 +238,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
 
     auto dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh, (kernelInfo.patchInfo.bindingTableState != nullptr) ? kernelInfo.patchInfo.bindingTableState->Count : 0,
                                                                                                   kernel.getSurfaceStateHeap(rootDeviceIndex), kernel.getSurfaceStateHeapSize(rootDeviceIndex),
-                                                                                                  kernel.getNumberOfBindingTableStates(), kernel.getBindingTableOffset());
+                                                                                                  kernel.getNumberOfBindingTableStates(rootDeviceIndex), kernel.getBindingTableOffset(rootDeviceIndex));
 
     // Copy our sampler state if it exists
     uint32_t samplerStateOffset = 0;
@@ -281,7 +281,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     uint64_t offsetInterfaceDescriptor = offsetInterfaceDescriptorTable + interfaceDescriptorIndex * sizeof(INTERFACE_DESCRIPTOR_DATA);
     DEBUG_BREAK_IF(patchInfo.executionEnvironment == nullptr);
 
-    auto bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
+    auto bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates(rootDeviceIndex)));
     if (resetBindingTablePrefetch(kernel)) {
         bindingTablePrefetchSize = 0;
     }

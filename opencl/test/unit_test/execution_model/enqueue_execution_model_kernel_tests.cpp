@@ -328,7 +328,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
         Kernel *blockKernel = Kernel::create(pKernel->getProgram(), MockKernel::toKernelInfoContainer(*pBlockInfo, rootDeviceIndex), nullptr);
         blockSSH = alignUp(blockSSH, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-        if (blockKernel->getNumberOfBindingTableStates() > 0) {
+        if (blockKernel->getNumberOfBindingTableStates(rootDeviceIndex) > 0) {
             ASSERT_NE(nullptr, pBlockInfo->patchInfo.bindingTableState);
             auto dstBlockBti = ptrOffset(blockSSH, pBlockInfo->patchInfo.bindingTableState->Offset);
             EXPECT_EQ(0U, reinterpret_cast<uintptr_t>(dstBlockBti) % INTERFACE_DESCRIPTOR_DATA::BINDINGTABLEPOINTER_ALIGN_SIZE);
@@ -336,7 +336,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
             auto srcBlockBti = ptrOffset(pBlockInfo->heapInfo.pSsh, pBlockInfo->patchInfo.bindingTableState->Offset);
             auto srcBindingTable = reinterpret_cast<const BINDING_TABLE_STATE *>(srcBlockBti);
-            for (uint32_t i = 0; i < blockKernel->getNumberOfBindingTableStates(); ++i) {
+            for (uint32_t i = 0; i < blockKernel->getNumberOfBindingTableStates(rootDeviceIndex); ++i) {
                 uint32_t dstSurfaceStatePointer = dstBindingTable[i].getSurfaceStatePointer();
                 uint32_t srcSurfaceStatePointer = srcBindingTable[i].getSurfaceStatePointer();
                 auto *dstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh->getCpuBase(), dstSurfaceStatePointer));

@@ -680,8 +680,11 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE], kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
-             *kernel->localWorkSizeX, *kernel->localWorkSizeY, *kernel->localWorkSizeZ);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
+             kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeX,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeY,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
@@ -692,8 +695,11 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE], kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
-             *kernel->localWorkSizeX, *kernel->localWorkSizeY, *kernel->localWorkSizeZ);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
+             kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeX,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeY,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
     EXPECT_TRUE(containsHint(expectedHint, userData));
     DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
@@ -705,8 +711,11 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE], kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
-             *kernel->localWorkSizeX, *kernel->localWorkSizeY, *kernel->localWorkSizeZ);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
+             kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeX,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeY,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
     EXPECT_TRUE(containsHint(expectedHint, userData));
     DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
@@ -716,8 +725,11 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE], kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
-             *kernel->localWorkSizeX, *kernel->localWorkSizeY, *kernel->localWorkSizeZ);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
+             kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeX,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeY,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
@@ -729,8 +741,11 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE], kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
-             *kernel->localWorkSizeX, *kernel->localWorkSizeY, *kernel->localWorkSizeZ);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
+             kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeX,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeY,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
@@ -742,8 +757,11 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE], kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
-             *kernel->localWorkSizeX, *kernel->localWorkSizeY, *kernel->localWorkSizeZ);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
+             kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(),
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeX,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeY,
+             *kernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 

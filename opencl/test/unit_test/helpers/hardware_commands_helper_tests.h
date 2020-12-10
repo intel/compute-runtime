@@ -47,6 +47,6 @@ struct HardwareCommandsTest : ClDeviceFixture,
     size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const Kernel &srcKernel) {
         return EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(dstHeap, (srcKernel.getKernelInfo(rootDeviceIndex).patchInfo.bindingTableState != nullptr) ? srcKernel.getKernelInfo(rootDeviceIndex).patchInfo.bindingTableState->Count : 0,
                                                                                srcKernel.getSurfaceStateHeap(rootDeviceIndex), srcKernel.getSurfaceStateHeapSize(rootDeviceIndex),
-                                                                               srcKernel.getNumberOfBindingTableStates(), srcKernel.getBindingTableOffset());
+                                                                               srcKernel.getNumberOfBindingTableStates(rootDeviceIndex), srcKernel.getBindingTableOffset(rootDeviceIndex));
     }
 };

@@ -196,36 +196,23 @@ void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQ
 
     size_t globalWorkSizes[3] = {gws.x, gws.y, gws.z};
 
+    auto rootDeviceIndex = commandQueue.getDevice().getRootDeviceIndex();
     // Patch our kernel constants
-    *kernel.globalWorkOffsetX = static_cast<uint32_t>(offset.x);
-    *kernel.globalWorkOffsetY = static_cast<uint32_t>(offset.y);
-    *kernel.globalWorkOffsetZ = static_cast<uint32_t>(offset.z);
+    kernel.setGlobalWorkOffsetValues(rootDeviceIndex, static_cast<uint32_t>(offset.x), static_cast<uint32_t>(offset.y), static_cast<uint32_t>(offset.z));
+    kernel.setGlobalWorkSizeValues(rootDeviceIndex, static_cast<uint32_t>(gws.x), static_cast<uint32_t>(gws.y), static_cast<uint32_t>(gws.z));
 
-    *kernel.globalWorkSizeX = static_cast<uint32_t>(gws.x);
-    *kernel.globalWorkSizeY = static_cast<uint32_t>(gws.y);
-    *kernel.globalWorkSizeZ = static_cast<uint32_t>(gws.z);
-
-    if (isMainKernel || (kernel.localWorkSizeX2 == &Kernel::dummyPatchLocation)) {
-        *kernel.localWorkSizeX = static_cast<uint32_t>(lws.x);
-        *kernel.localWorkSizeY = static_cast<uint32_t>(lws.y);
-        *kernel.localWorkSizeZ = static_cast<uint32_t>(lws.z);
+    if (isMainKernel || (!kernel.isLocalWorkSize2Patched(rootDeviceIndex))) {
+        kernel.setLocalWorkSizeValues(rootDeviceIndex, static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
     }
 
-    *kernel.localWorkSizeX2 = static_cast<uint32_t>(lws.x);
-    *kernel.localWorkSizeY2 = static_cast<uint32_t>(lws.y);
-    *kernel.localWorkSizeZ2 = static_cast<uint32_t>(lws.z);
-
-    *kernel.enqueuedLocalWorkSizeX = static_cast<uint32_t>(elws.x);
-    *kernel.enqueuedLocalWorkSizeY = static_cast<uint32_t>(elws.y);
-    *kernel.enqueuedLocalWorkSizeZ = static_cast<uint32_t>(elws.z);
+    kernel.setLocalWorkSize2Values(rootDeviceIndex, static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
+    kernel.setEnqueuedLocalWorkSizeValues(rootDeviceIndex, static_cast<uint32_t>(elws.x), static_cast<uint32_t>(elws.y), static_cast<uint32_t>(elws.z));
 
     if (isMainKernel) {
-        *kernel.numWorkGroupsX = static_cast<uint32_t>(totalNumberOfWorkgroups.x);
-        *kernel.numWorkGroupsY = static_cast<uint32_t>(totalNumberOfWorkgroups.y);
-        *kernel.numWorkGroupsZ = static_cast<uint32_t>(totalNumberOfWorkgroups.z);
+        kernel.setNumWorkGroupsValues(rootDeviceIndex, static_cast<uint32_t>(totalNumberOfWorkgroups.x), static_cast<uint32_t>(totalNumberOfWorkgroups.y), static_cast<uint32_t>(totalNumberOfWorkgroups.z));
     }
 
-    *kernel.workDim = dim;
+    kernel.setWorkDim(rootDeviceIndex, dim);
 
     // Send our indirect object data
     size_t localWorkSizes[3] = {lws.x, lws.y, lws.z};

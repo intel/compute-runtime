@@ -2225,11 +2225,11 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     Kernel *pKernel = castToObject<Kernel>(kernel);
     ASSERT_NE(nullptr, pKernel);
 
-    size_t numBTS1 = pKernel->getNumberOfBindingTableStates();
+    size_t numBTS1 = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
     EXPECT_EQ(2u, numBTS1);
     size_t sizeSurfaceStates1 = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
     EXPECT_NE(0u, sizeSurfaceStates1);
-    size_t offsetBTS1 = pKernel->getBindingTableOffset();
+    size_t offsetBTS1 = pKernel->getBindingTableOffset(rootDeviceIndex);
     EXPECT_NE(0u, offsetBTS1);
 
     GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
@@ -2241,11 +2241,11 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     bool surfaceAdded = gtpinHelper.addSurfaceState(pKernel, rootDeviceIndex);
     EXPECT_TRUE(surfaceAdded);
 
-    size_t numBTS2 = pKernel->getNumberOfBindingTableStates();
+    size_t numBTS2 = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
     EXPECT_EQ(numBTS1 + 1, numBTS2);
     size_t sizeSurfaceStates2 = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
     EXPECT_GT(sizeSurfaceStates2, sizeSurfaceStates1);
-    size_t offsetBTS2 = pKernel->getBindingTableOffset();
+    size_t offsetBTS2 = pKernel->getBindingTableOffset(rootDeviceIndex);
     EXPECT_GT(offsetBTS2, offsetBTS1);
 
     void *pSS2 = gtpinHelper.getSurfaceState(pKernel, 0, rootDeviceIndex);
@@ -2261,11 +2261,11 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     surfaceAdded = gtpinHelper.addSurfaceState(pKernel, rootDeviceIndex);
     EXPECT_FALSE(surfaceAdded);
 
-    size_t numBTS3 = pKernel->getNumberOfBindingTableStates();
+    size_t numBTS3 = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
     EXPECT_EQ(0u, numBTS3);
     size_t sizeSurfaceStates3 = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
     EXPECT_EQ(0u, sizeSurfaceStates3);
-    size_t offsetBTS3 = pKernel->getBindingTableOffset();
+    size_t offsetBTS3 = pKernel->getBindingTableOffset(rootDeviceIndex);
     EXPECT_EQ(0u, offsetBTS3);
     void *pSS3 = gtpinHelper.getSurfaceState(pKernel, 0, rootDeviceIndex);
     EXPECT_EQ(nullptr, pSS3);

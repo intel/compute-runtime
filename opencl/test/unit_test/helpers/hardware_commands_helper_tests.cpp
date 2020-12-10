@@ -385,7 +385,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     auto expectedBindingTableCount = 3u;
-    mockKernelWithInternal->mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
+    mockKernelWithInternal->mockKernel->kernelDeviceInfos[rootDeviceIndex].numberOfBindingTableStates = expectedBindingTableCount;
 
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
@@ -431,7 +431,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhen
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     auto expectedBindingTableCount = 3u;
-    mockKernelWithInternal->mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
+    mockKernelWithInternal->mockKernel->kernelDeviceInfos[rootDeviceIndex].numberOfBindingTableStates = expectedBindingTableCount;
     auto isScheduler = const_cast<bool *>(&mockKernelWithInternal->mockKernel->isSchedulerKernel);
     *isScheduler = true;
 
@@ -475,7 +475,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     auto expectedBindingTableCount = 100u;
-    mockKernelWithInternal->mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
+    mockKernelWithInternal->mockKernel->kernelDeviceInfos[rootDeviceIndex].numberOfBindingTableStates = expectedBindingTableCount;
 
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
@@ -802,7 +802,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
         auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
         // Initialize binding table state pointers with pattern
-        EXPECT_EQ(numSurfaces, pKernel->getNumberOfBindingTableStates());
+        EXPECT_EQ(numSurfaces, pKernel->getNumberOfBindingTableStates(rootDeviceIndex));
 
         const size_t localWorkSizes[3]{256, 1, 1};
 
@@ -890,7 +890,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     auto usedBefore = ssh.getUsed();
 
     // Initialize binding table state pointers with pattern
-    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
+    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
     EXPECT_EQ(0u, numSurfaceStates);
 
     // set binding table states
@@ -933,7 +933,7 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
     // Initialize binding table state pointers with pattern
-    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
+    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
     EXPECT_EQ(0u, numSurfaceStates);
 
     auto dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);

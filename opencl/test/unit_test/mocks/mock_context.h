@@ -47,6 +47,8 @@ class MockContext : public Context {
     std::unique_ptr<AsyncEventsHandler> &getAsyncEventsHandlerUniquePtr();
     void initializeWithDevices(const ClDeviceVector &devices, bool noSpecialQueue);
 
+    SchedulerKernel &getSchedulerKernel() override;
+
   private:
     ClDevice *pDevice = nullptr;
 };

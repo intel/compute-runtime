@@ -17,6 +17,7 @@
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "d3d_sharing_functions.h"
 
@@ -126,6 +127,52 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
     }
 
     setupContextType();
+}
+
+SchedulerKernel &MockContext::getSchedulerKernel() {
+    if (schedulerBuiltIn->pKernel) {
+        return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
+    }
+
+    auto initializeSchedulerProgramAndKernel = [&] {
+        cl_int retVal = CL_SUCCESS;
+        auto clDevice = getDevice(0);
+        auto src = SchedulerKernel::loadSchedulerKernel(&clDevice->getDevice());
+
+        auto program = Program::createBuiltInFromGenBinary(this,
+                                                           devices,
+                                                           src.resource.data(),
+                                                           src.resource.size(),
+                                                           &retVal);
+        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
+        DEBUG_BREAK_IF(!program);
+
+        retVal = program->processGenBinary(*clDevice);
+        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
+
+        schedulerBuiltIn->pProgram = program;
+
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(getMaxRootDeviceIndex() + 1);
+        for (auto rootDeviceIndex : rootDeviceIndices) {
+            auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName, rootDeviceIndex);
+            DEBUG_BREAK_IF(!kernelInfo);
+            kernelInfos[rootDeviceIndex] = kernelInfo;
+        }
+
+        schedulerBuiltIn->pKernel = Kernel::create<MockSchedulerKernel>(
+            schedulerBuiltIn->pProgram,
+            kernelInfos,
+            &retVal);
+
+        UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize(clDevice->getRootDeviceIndex()) != 0);
+
+        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
+    };
+    std::call_once(schedulerBuiltIn->programIsInitialized, initializeSchedulerProgramAndKernel);
+
+    UNRECOVERABLE_IF(schedulerBuiltIn->pKernel == nullptr);
+    return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
 }
 
 MockDefaultContext::MockDefaultContext() : MockContext(nullptr, nullptr) {

@@ -143,7 +143,7 @@ class Context : public BaseObject<_cl_context> {
 
     ContextType peekContextType() const { return contextType; }
 
-    SchedulerKernel &getSchedulerKernel();
+    MOCKABLE_VIRTUAL SchedulerKernel &getSchedulerKernel();
 
     bool isDeviceAssociated(const ClDevice &clDevice) const;
     ClDevice *getSubDeviceByIndex(uint32_t subDeviceIndex) const;

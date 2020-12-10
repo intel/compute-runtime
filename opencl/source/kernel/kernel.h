@@ -161,9 +161,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     size_t getKernelHeapSize(uint32_t rootDeviceIndex) const;
     size_t getSurfaceStateHeapSize(uint32_t rootDeviceIndex) const;
     size_t getDynamicStateHeapSize(uint32_t rootDeviceIndex) const;
-    size_t getNumberOfBindingTableStates() const;
-    size_t getBindingTableOffset() const {
-        return localBindingTableOffset;
+    size_t getNumberOfBindingTableStates(uint32_t rootDeviceIndex) const;
+    size_t getBindingTableOffset(uint32_t rootDeviceIndex) const {
+        return kernelDeviceInfos[rootDeviceIndex].localBindingTableOffset;
     }
 
     void resizeSurfaceStateHeap(uint32_t rootDeviceIndex, void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset);
@@ -304,37 +304,6 @@ class Kernel : public BaseObject<_cl_kernel> {
                                             size_t argSize,
                                             const void *argValue) const;
 
-    uint32_t *globalWorkOffsetX = &Kernel::dummyPatchLocation;
-    uint32_t *globalWorkOffsetY = &Kernel::dummyPatchLocation;
-    uint32_t *globalWorkOffsetZ = &Kernel::dummyPatchLocation;
-
-    uint32_t *localWorkSizeX = &Kernel::dummyPatchLocation;
-    uint32_t *localWorkSizeY = &Kernel::dummyPatchLocation;
-    uint32_t *localWorkSizeZ = &Kernel::dummyPatchLocation;
-
-    uint32_t *localWorkSizeX2 = &Kernel::dummyPatchLocation;
-    uint32_t *localWorkSizeY2 = &Kernel::dummyPatchLocation;
-    uint32_t *localWorkSizeZ2 = &Kernel::dummyPatchLocation;
-
-    uint32_t *globalWorkSizeX = &Kernel::dummyPatchLocation;
-    uint32_t *globalWorkSizeY = &Kernel::dummyPatchLocation;
-    uint32_t *globalWorkSizeZ = &Kernel::dummyPatchLocation;
-
-    uint32_t *enqueuedLocalWorkSizeX = &Kernel::dummyPatchLocation;
-    uint32_t *enqueuedLocalWorkSizeY = &Kernel::dummyPatchLocation;
-    uint32_t *enqueuedLocalWorkSizeZ = &Kernel::dummyPatchLocation;
-
-    uint32_t *numWorkGroupsX = &Kernel::dummyPatchLocation;
-    uint32_t *numWorkGroupsY = &Kernel::dummyPatchLocation;
-    uint32_t *numWorkGroupsZ = &Kernel::dummyPatchLocation;
-
-    uint32_t *maxWorkGroupSizeForCrossThreadData = &Kernel::dummyPatchLocation;
-    uint32_t maxKernelWorkGroupSize = 0;
-    uint32_t *workDim = &Kernel::dummyPatchLocation;
-    uint32_t *dataParameterSimdSize = &Kernel::dummyPatchLocation;
-    uint32_t *parentEventOffset = &Kernel::dummyPatchLocation;
-    uint32_t *preferredWkgMultipleOffset = &Kernel::dummyPatchLocation;
-
     static uint32_t dummyPatchLocation;
 
     std::vector<size_t> slmSizes;
@@ -426,6 +395,16 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
     const KernelInfo &getDefaultKernelInfo() const;
 
+    void setGlobalWorkOffsetValues(uint32_t rootDeviceIndex, uint32_t globalWorkOffsetX, uint32_t globalWorkOffsetY, uint32_t globalWorkOffsetZ);
+    void setGlobalWorkSizeValues(uint32_t rootDeviceIndex, uint32_t globalWorkSizeX, uint32_t globalWorkSizeY, uint32_t globalWorkSizeZ);
+    void setLocalWorkSizeValues(uint32_t rootDeviceIndex, uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
+    void setLocalWorkSize2Values(uint32_t rootDeviceIndex, uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
+    void setEnqueuedLocalWorkSizeValues(uint32_t rootDeviceIndex, uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
+    bool isLocalWorkSize2Patched(uint32_t rootDeviceIndex);
+    void setNumWorkGroupsValues(uint32_t rootDeviceIndex, uint32_t numWorkGroupsX, uint32_t numWorkGroupsY, uint32_t numWorkGroupsZ);
+    void setWorkDim(uint32_t rootDeviceIndex, uint32_t workDim);
+    uint32_t getMaxKernelWorkGroupSize(uint32_t rootDeviceIndex) const;
+
   protected:
     struct ObjectCounts {
         uint32_t imageCount;
@@ -511,7 +490,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void resolveArgs();
 
-    void reconfigureKernel();
+    void reconfigureKernel(uint32_t rootDeviceIndex);
 
     void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
@@ -533,9 +512,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::vector<GraphicsAllocation *> kernelUnifiedMemoryGfxAllocations;
 
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
-
-    size_t numberOfBindingTableStates = 0u;
-    size_t localBindingTableOffset = 0u;
 
     GraphicsAllocation *kernelReflectionSurface = nullptr;
 
@@ -561,6 +537,40 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
 
     struct KernelDeviceInfo : public NonCopyableClass {
+        uint32_t *globalWorkOffsetX = &Kernel::dummyPatchLocation;
+        uint32_t *globalWorkOffsetY = &Kernel::dummyPatchLocation;
+        uint32_t *globalWorkOffsetZ = &Kernel::dummyPatchLocation;
+
+        uint32_t *localWorkSizeX = &Kernel::dummyPatchLocation;
+        uint32_t *localWorkSizeY = &Kernel::dummyPatchLocation;
+        uint32_t *localWorkSizeZ = &Kernel::dummyPatchLocation;
+
+        uint32_t *localWorkSizeX2 = &Kernel::dummyPatchLocation;
+        uint32_t *localWorkSizeY2 = &Kernel::dummyPatchLocation;
+        uint32_t *localWorkSizeZ2 = &Kernel::dummyPatchLocation;
+
+        uint32_t *globalWorkSizeX = &Kernel::dummyPatchLocation;
+        uint32_t *globalWorkSizeY = &Kernel::dummyPatchLocation;
+        uint32_t *globalWorkSizeZ = &Kernel::dummyPatchLocation;
+
+        uint32_t *enqueuedLocalWorkSizeX = &Kernel::dummyPatchLocation;
+        uint32_t *enqueuedLocalWorkSizeY = &Kernel::dummyPatchLocation;
+        uint32_t *enqueuedLocalWorkSizeZ = &Kernel::dummyPatchLocation;
+
+        uint32_t *numWorkGroupsX = &Kernel::dummyPatchLocation;
+        uint32_t *numWorkGroupsY = &Kernel::dummyPatchLocation;
+        uint32_t *numWorkGroupsZ = &Kernel::dummyPatchLocation;
+
+        uint32_t *maxWorkGroupSizeForCrossThreadData = &Kernel::dummyPatchLocation;
+        uint32_t maxKernelWorkGroupSize = 0;
+        uint32_t *workDim = &Kernel::dummyPatchLocation;
+        uint32_t *dataParameterSimdSize = &Kernel::dummyPatchLocation;
+        uint32_t *parentEventOffset = &Kernel::dummyPatchLocation;
+        uint32_t *preferredWkgMultipleOffset = &Kernel::dummyPatchLocation;
+
+        size_t numberOfBindingTableStates = 0u;
+        size_t localBindingTableOffset = 0u;
+
         std::unique_ptr<char[]> pSshLocal;
         uint32_t sshLocalSize = 0u;
         char *crossThreadData = nullptr;

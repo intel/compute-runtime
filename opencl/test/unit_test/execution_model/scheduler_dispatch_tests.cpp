@@ -45,7 +45,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
-    SchedulerKernel &scheduler = context->getSchedulerKernel();
+    auto &scheduler = static_cast<MockSchedulerKernel &>(context->getSchedulerKernel());
 
     auto *executionModelDshAllocation = pDevQueueHw->getDshBuffer();
     auto *dshHeap = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
@@ -70,27 +70,27 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
         pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
         false);
 
-    EXPECT_EQ(0u, *scheduler.globalWorkOffsetX);
-    EXPECT_EQ(0u, *scheduler.globalWorkOffsetY);
-    EXPECT_EQ(0u, *scheduler.globalWorkOffsetZ);
+    EXPECT_EQ(0u, *scheduler.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetX);
+    EXPECT_EQ(0u, *scheduler.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetY);
+    EXPECT_EQ(0u, *scheduler.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetZ);
 
-    EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.localWorkSizeX);
-    EXPECT_EQ(1u, *scheduler.localWorkSizeY);
-    EXPECT_EQ(1u, *scheduler.localWorkSizeZ);
+    EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
+    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
+    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
 
-    EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.localWorkSizeX2);
-    EXPECT_EQ(1u, *scheduler.localWorkSizeY2);
-    EXPECT_EQ(1u, *scheduler.localWorkSizeZ2);
+    EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX2);
+    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY2);
+    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ2);
 
-    if (scheduler.enqueuedLocalWorkSizeX != &Kernel::dummyPatchLocation) {
-        EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.enqueuedLocalWorkSizeX);
+    if (scheduler.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeX != &Kernel::dummyPatchLocation) {
+        EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeX);
     }
-    EXPECT_EQ(1u, *scheduler.enqueuedLocalWorkSizeY);
-    EXPECT_EQ(1u, *scheduler.enqueuedLocalWorkSizeZ);
+    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeY);
+    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeZ);
 
-    EXPECT_EQ((uint32_t)(scheduler.getGws() / scheduler.getLws()), *scheduler.numWorkGroupsX);
-    EXPECT_EQ(0u, *scheduler.numWorkGroupsY);
-    EXPECT_EQ(0u, *scheduler.numWorkGroupsZ);
+    EXPECT_EQ((uint32_t)(scheduler.getGws() / scheduler.getLws()), *scheduler.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsX);
+    EXPECT_EQ(0u, *scheduler.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsY);
+    EXPECT_EQ(0u, *scheduler.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsZ);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream, 0);

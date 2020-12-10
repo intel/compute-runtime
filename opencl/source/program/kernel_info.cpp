@@ -133,8 +133,9 @@ WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t
 }
 WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     auto &device = dispatchInfo.getClDevice();
-    const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo(device.getRootDeviceIndex());
-    this->maxWorkGroupSize = dispatchInfo.getKernel()->maxKernelWorkGroupSize;
+    auto rootDeviceIndex = device.getRootDeviceIndex();
+    const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo(rootDeviceIndex);
+    this->maxWorkGroupSize = dispatchInfo.getKernel()->getMaxKernelWorkGroupSize(rootDeviceIndex);
     auto pExecutionEnvironment = kernelInfo.patchInfo.executionEnvironment;
     this->hasBarriers = (pExecutionEnvironment != nullptr) && (pExecutionEnvironment->HasBarriers);
     this->simdSize = static_cast<uint32_t>(kernelInfo.getMaxSimdSize());

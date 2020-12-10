@@ -13,7 +13,7 @@ namespace NEO {
 bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
     return false;
 }
-void Kernel::reconfigureKernel() {
+void Kernel::reconfigureKernel(uint32_t rootDeviceIndex) {
 }
 int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
     if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL) {

@@ -241,7 +241,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
         ProgramFixture::TearDown();
         PerformanceHintEnqueueTest::TearDown();
     }
-    Kernel *kernel = nullptr;
+    MockKernel *kernel = nullptr;
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
     size_t globalWorkGroupSize[3]{};
 };

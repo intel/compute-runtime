@@ -40,7 +40,6 @@ class MockKernel : public Kernel {
     using Kernel::kernelDeviceInfos;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
-    using Kernel::numberOfBindingTableStates;
     using Kernel::patchBufferOffset;
     using Kernel::patchWithImplicitSurface;
     using Kernel::svmAllocationsRequireCacheFlush;
@@ -595,6 +594,7 @@ class MockParentKernel : public Kernel {
 
 class MockSchedulerKernel : public SchedulerKernel {
   public:
+    using SchedulerKernel::kernelDeviceInfos;
     MockSchedulerKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg) : SchedulerKernel(programArg, kernelInfoArg){};
 };
 

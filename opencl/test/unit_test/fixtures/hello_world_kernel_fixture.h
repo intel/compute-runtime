@@ -97,7 +97,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     std::string *pKernelName = nullptr;
     cl_uint simd = 32;
     cl_int retVal = CL_SUCCESS;
-    Kernel *pKernel = nullptr;
+    MockKernel *pKernel = nullptr;
     MockContext *pContext = nullptr;
 };
 } // namespace NEO
