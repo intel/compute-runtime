@@ -3215,7 +3215,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, whenSlbEndOffsetGreaterThanZeroTh
 
 using KernelMultiRootDeviceTest = MultiRootDeviceFixture;
 
-TEST_F(KernelMultiRootDeviceTest, WhenGettingRootDeviceIndexThenCorrectRootDeviceIndexIsReturned) {
+TEST_F(KernelMultiRootDeviceTest, givenKernelWithPrivateSurfaceWhenInitializeThenPrivateSurfacesHaveCorrectRootDeviceIndex) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup private memory
@@ -3226,13 +3226,21 @@ TEST_F(KernelMultiRootDeviceTest, WhenGettingRootDeviceIndexThenCorrectRootDevic
     tokenSPS.PerThreadPrivateMemorySize = 112;
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &tokenSPS;
 
-    MockProgram program(context.get(), false, toClDeviceVector(*device1));
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, MockKernel::toKernelInfoContainer(*pKernelInfo, device1->getRootDeviceIndex())));
+    KernelInfoContainer kernelInfos;
+    kernelInfos.resize(deviceFactory->rootDevices.size());
+    for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+        kernelInfos[rootDeviceIndex] = pKernelInfo.get();
+    }
+
+    MockProgram program(context.get(), false, context->getDevices());
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, kernelInfos));
     kernel->initialize();
 
-    auto privateSurface = kernel->kernelDeviceInfos[device1->getRootDeviceIndex()].privateSurface;
-    ASSERT_NE(nullptr, privateSurface);
-    EXPECT_EQ(expectedRootDeviceIndex, privateSurface->getRootDeviceIndex());
+    for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+        auto privateSurface = kernel->kernelDeviceInfos[rootDeviceIndex].privateSurface;
+        ASSERT_NE(nullptr, privateSurface);
+        EXPECT_EQ(rootDeviceIndex, privateSurface->getRootDeviceIndex());
+    }
 }
 
 TEST(KernelCreateTest, whenInitFailedThenReturnNull) {
