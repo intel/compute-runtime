@@ -73,7 +73,8 @@ Kernel::Kernel(Program *programArg, const KernelInfoContainer &kernelInfosArg, b
       executionEnvironment(programArg->getExecutionEnvironment()),
       program(programArg),
       deviceVector(programArg->getDevices()),
-      kernelInfos(kernelInfosArg) {
+      kernelInfos(kernelInfosArg),
+      defaultRootDeviceIndex(programArg->getDevices()[0]->getRootDeviceIndex()) {
     kernelDeviceInfos.resize(program->getMaxRootDeviceIndex() + 1);
     program->retain();
     program->retainForKernel();
@@ -2600,15 +2601,7 @@ const HardwareInfo &Kernel::getHardwareInfo(uint32_t rootDeviceIndex) const {
 }
 
 const KernelInfo &Kernel::getDefaultKernelInfo() const {
-    const KernelInfo *pKernelInfo = nullptr;
-    for (auto &kernelInfo : kernelInfos) {
-        if (kernelInfo) {
-            pKernelInfo = kernelInfo;
-            break;
-        }
-    }
-    UNRECOVERABLE_IF(!pKernelInfo);
-    return *pKernelInfo;
+    return *kernelInfos[defaultRootDeviceIndex];
 }
 void Kernel::setGlobalWorkOffsetValues(uint32_t rootDeviceIndex, uint32_t globalWorkOffsetX, uint32_t globalWorkOffsetY, uint32_t globalWorkOffsetZ) {
     *kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetX = globalWorkOffsetX;

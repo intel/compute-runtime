@@ -580,5 +580,6 @@ class Kernel : public BaseObject<_cl_kernel> {
         uint64_t privateSurfaceSize = 0u;
     };
     std::vector<KernelDeviceInfo> kernelDeviceInfos;
+    const uint32_t defaultRootDeviceIndex;
 };
 } // namespace NEO
