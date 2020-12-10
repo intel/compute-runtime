@@ -77,9 +77,6 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
     cl_name_version openClCFeature;
     openClCFeature.version = CL_MAKE_VERSION(3, 0, 0);
 
-    strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_order_acq_rel");
-    openclCFeatures.push_back(openClCFeature);
-
     strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_int64");
     openclCFeatures.push_back(openClCFeature);
 
@@ -92,6 +89,9 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
     }
 
     if (hwInfo.capabilityTable.supportsOcl21Features) {
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_order_acq_rel");
+        openclCFeatures.push_back(openClCFeature);
+
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_order_seq_cst");
         openclCFeatures.push_back(openClCFeature);
 

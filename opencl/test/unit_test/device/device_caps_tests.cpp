@@ -78,14 +78,14 @@ struct DeviceGetCapsTest : public ::testing::Test {
         auto &hwInfo = clDevice.getHardwareInfo();
         auto openclCFeatureIterator = clDevice.getDeviceInfo().openclCFeatures.begin();
 
-        EXPECT_STREQ("__opencl_c_atomic_order_acq_rel", openclCFeatureIterator->name);
-        EXPECT_STREQ("__opencl_c_int64", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_int64", openclCFeatureIterator->name);
 
         if (hwInfo.capabilityTable.supportsImages) {
             EXPECT_STREQ("__opencl_c_3d_image_writes", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_images", (++openclCFeatureIterator)->name);
         }
         if (hwInfo.capabilityTable.supportsOcl21Features) {
+            EXPECT_STREQ("__opencl_c_atomic_order_acq_rel", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_atomic_order_seq_cst", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_atomic_scope_all_devices", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_atomic_scope_device", (++openclCFeatureIterator)->name);
