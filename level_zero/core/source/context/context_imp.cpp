@@ -8,8 +8,10 @@
 #include "level_zero/core/source/context/context_imp.h"
 
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 
@@ -93,7 +95,18 @@ ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr
 
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
     auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));
-    return changeMemoryOperationStatusToL0ResultType(success);
+    ze_result_t res = changeMemoryOperationStatusToL0ResultType(success);
+
+    if (ZE_RESULT_SUCCESS == res) {
+        auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+        if (allocData && allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
+            DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
+            std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
+            driverHandleImp->sharedMakeResidentAllocations.insert({ptr, allocation});
+        }
+    }
+
+    return res;
 }
 
 ze_result_t ContextImp::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t size) {
@@ -102,6 +115,12 @@ ze_result_t ContextImp::evictMemory(ze_device_handle_t hDevice, void *ptr, size_
     auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr, size, neoDevice->getRootDeviceIndex());
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    {
+        DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
+        std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
+        driverHandleImp->sharedMakeResidentAllocations.erase(ptr);
     }
 
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();

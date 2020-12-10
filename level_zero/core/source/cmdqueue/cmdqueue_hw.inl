@@ -29,6 +29,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
@@ -259,6 +260,15 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             residencyContainer.push_back(device->getDebugSurface());
         }
     }
+
+    NEO::PageFaultManager *pageFaultManager = nullptr;
+    if (performMigration) {
+        pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+        if (pageFaultManager == nullptr) {
+            performMigration = false;
+        }
+    }
+
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         auto cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
@@ -284,14 +294,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                        commandList->getPrintfFunctionContainer().begin(),
                                        commandList->getPrintfFunctionContainer().end());
 
-        NEO::PageFaultManager *pageFaultManager = nullptr;
-        if (performMigration) {
-            pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-            if (pageFaultManager == nullptr) {
-                performMigration = false;
-            }
-        }
-
         for (auto alloc : commandList->commandContainer.getResidencyContainer()) {
             if (residencyContainer.end() ==
                 std::find(residencyContainer.begin(), residencyContainer.end(), alloc)) {
@@ -305,6 +307,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                     }
                 }
             }
+        }
+    }
+
+    if (performMigration) {
+        for (auto alloc : static_cast<DriverHandleImp *>(device->getDriverHandle())->sharedMakeResidentAllocations) {
+            pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc.second->getGpuAddress()));
         }
     }
 

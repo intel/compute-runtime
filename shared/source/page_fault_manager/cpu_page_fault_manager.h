@@ -26,7 +26,7 @@ class PageFaultManager : public NonCopyableOrMovableClass {
 
     virtual ~PageFaultManager() = default;
 
-    void moveAllocationToGpuDomain(void *ptr);
+    MOCKABLE_VIRTUAL void moveAllocationToGpuDomain(void *ptr);
     void moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocsManager *unifiedMemoryManager);
     void insertAllocation(void *ptr, size_t size, SVMAllocsManager *unifiedMemoryManager, void *cmdQ, const MemoryProperties &memoryProperties);
     void removeAllocation(void *ptr);

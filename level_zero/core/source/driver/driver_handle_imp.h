@@ -84,6 +84,9 @@ struct DriverHandleImp : public DriverHandle {
     // Experimental functions
     std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
 
+    std::mutex sharedMakeResidentAllocationsLock;
+    std::map<void *, NEO::GraphicsAllocation *> sharedMakeResidentAllocations;
+
     std::string affinityMaskString = "";
     std::vector<Device *> devices;
     // Spec extensions
