@@ -140,14 +140,16 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValid
     EXPECT_EQ(0u, debugModeRegisterCount);
     EXPECT_EQ(0u, tdDebugControlRegisterCount);
 
-    auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(1u, stateSipCmds.size());
+    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipWANeeded(hwInfo)) {
+        auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
+        ASSERT_EQ(1u, stateSipCmds.size());
 
-    STATE_SIP *stateSip = genCmdCast<STATE_SIP *>(*stateSipCmds[0]);
+        STATE_SIP *stateSip = genCmdCast<STATE_SIP *>(*stateSipCmds[0]);
 
-    auto systemRoutine = SipKernel::getSipKernelAllocation(*neoDevice);
-    ASSERT_NE(nullptr, systemRoutine);
-    EXPECT_EQ(systemRoutine->getGpuAddress(), stateSip->getSystemInstructionPointer());
+        auto systemRoutine = SipKernel::getSipKernelAllocation(*neoDevice);
+        ASSERT_NE(nullptr, systemRoutine);
+        EXPECT_EQ(systemRoutine->getGpuAddress(), stateSip->getSystemInstructionPointer());
+    }
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(commandLists[i]);

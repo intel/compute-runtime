@@ -125,6 +125,7 @@ class HwHelper {
     virtual bool isMediaBlockIOSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCopyOnlyEngineType(EngineGroupType type) const = 0;
     virtual void adjustAddressWidthForCanonize(uint32_t &addressWidth) const = 0;
+    virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -316,6 +317,8 @@ class HwHelperHw : public HwHelper {
     bool isCopyOnlyEngineType(EngineGroupType type) const override;
 
     void adjustAddressWidthForCanonize(uint32_t &addressWidth) const override;
+
+    bool isSipWANeeded(const HardwareInfo &hwInfo) const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

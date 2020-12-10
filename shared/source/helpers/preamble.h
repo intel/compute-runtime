@@ -105,4 +105,11 @@ struct TdDebugControlRegisterOffset {
     };
 };
 
+template <typename GfxFamily>
+struct GlobalSipRegister {
+    enum {
+        registerOffset = 0xE42C,
+    };
+};
+
 } // namespace NEO
