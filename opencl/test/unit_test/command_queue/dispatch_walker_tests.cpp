@@ -380,6 +380,37 @@ HWTEST_F(DispatchWalkerTest, GivenNumWorkGroupsWhenDispatchingWalkerThenNumWorkG
     EXPECT_EQ(10u, *kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsZ);
 }
 
+HWTEST_F(DispatchWalkerTest, GivenGlobalWorkOffsetWhenDispatchingWalkerThenGlobalWorkOffsetIsCorrectlySet) {
+    kernelInfo.workloadInfo.globalWorkOffsetOffsets[0] = 0u;
+    kernelInfo.workloadInfo.globalWorkOffsetOffsets[1] = 4u;
+    kernelInfo.workloadInfo.globalWorkOffsetOffsets[2] = 8u;
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {1, 2, 3};
+    size_t workItems[3] = {2, 5, 10};
+    size_t workGroupSize[3] = {1, 1, 1};
+    cl_uint dimensions = 3;
+
+    DispatchInfo dispatchInfo(pClDevice, &kernel, dimensions, workItems, workGroupSize, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        CL_COMMAND_NDRANGE_KERNEL);
+
+    EXPECT_EQ(1u, *kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetX);
+    EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetY);
+    EXPECT_EQ(3u, *kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetZ);
+}
+
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndDefaultAlgorithmWhenDispatchingWalkerThenLwsIsCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(false);

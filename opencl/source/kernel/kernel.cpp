@@ -2613,7 +2613,7 @@ const KernelInfo &Kernel::getDefaultKernelInfo() const {
 void Kernel::setGlobalWorkOffsetValues(uint32_t rootDeviceIndex, uint32_t globalWorkOffsetX, uint32_t globalWorkOffsetY, uint32_t globalWorkOffsetZ) {
     *kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetX = globalWorkOffsetX;
     *kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetY = globalWorkOffsetY;
-    *kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetY = globalWorkOffsetZ;
+    *kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetZ = globalWorkOffsetZ;
 }
 
 void Kernel::setGlobalWorkSizeValues(uint32_t rootDeviceIndex, uint32_t globalWorkSizeX, uint32_t globalWorkSizeY, uint32_t globalWorkSizeZ) {
