@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ Mock<MetricEnumeration>::~Mock() {
 
 MockMetricsDiscoveryApi *Mock<MetricEnumeration>::g_mockApi = nullptr;
 
-TCompletionCode MockMetricsDiscoveryApi::OpenMetricsDevice(IMetricsDevice_1_5 **device) {
-    return Mock<MetricEnumeration>::g_mockApi->MockOpenMetricsDevice(device);
+TCompletionCode MockMetricsDiscoveryApi::OpenAdapterGroup(IAdapterGroup_1_8 **group) {
+    return Mock<MetricEnumeration>::g_mockApi->MockOpenAdapterGroup(group);
 }
 
 TCompletionCode MockMetricsDiscoveryApi::OpenMetricsDeviceFromFile(const char *fileName, void *openParams, IMetricsDevice_1_5 **device) {
@@ -43,9 +43,7 @@ void Mock<MetricEnumeration>::setMockedApi(MockMetricsDiscoveryApi *mockedApi) {
         metricContext.setMetricEnumeration(*this);
 
         // Mock metrics library api functions.
-        openMetricsDevice = mockedApi->OpenMetricsDevice;
-        closeMetricsDevice = mockedApi->CloseMetricsDevice;
-        openMetricsDeviceFromFile = mockedApi->OpenMetricsDeviceFromFile;
+        openAdapterGroup = mockedApi->OpenAdapterGroup;
 
         // Mock metrics library api.
         Mock<MetricEnumeration>::g_mockApi = mockedApi;
@@ -259,6 +257,66 @@ IMetric_1_0 ::~IMetric_1_0() {}
 TMetricParams_1_0 *IMetric_1_0::GetParams() {
     UNRECOVERABLE_IF(true);
     return nullptr;
+}
+
+IAdapter_1_8 *IAdapterGroup_1_8::GetAdapter(uint32_t index) {
+    UNRECOVERABLE_IF(true);
+    return nullptr;
+}
+
+IAdapterGroup_1_6 ::~IAdapterGroup_1_6() {
+}
+
+const TAdapterGroupParams_1_6 *IAdapterGroup_1_6::GetParams(void) const {
+    UNRECOVERABLE_IF(true);
+    return nullptr;
+}
+
+IAdapter_1_6 *IAdapterGroup_1_6::GetAdapter(uint32_t index) {
+    UNRECOVERABLE_IF(true);
+    return nullptr;
+}
+
+TCompletionCode IAdapterGroup_1_6::Close() {
+    UNRECOVERABLE_IF(true);
+    return CC_ERROR_NOT_SUPPORTED;
+}
+
+IAdapter_1_6 ::~IAdapter_1_6() {}
+
+const TAdapterParams_1_6 *IAdapter_1_6 ::GetParams(void) const {
+    UNRECOVERABLE_IF(true);
+    return nullptr;
+}
+
+const TAdapterParams_1_8 *IAdapter_1_8::GetParams(void) const {
+    UNRECOVERABLE_IF(true);
+    return nullptr;
+}
+
+TCompletionCode IAdapter_1_6 ::Reset() {
+    UNRECOVERABLE_IF(true);
+    return CC_ERROR_NOT_SUPPORTED;
+}
+
+TCompletionCode IAdapter_1_6 ::OpenMetricsDevice(IMetricsDevice_1_5 **metricsDevice) {
+    UNRECOVERABLE_IF(true);
+    return CC_ERROR_NOT_SUPPORTED;
+}
+
+TCompletionCode IAdapter_1_6 ::OpenMetricsDeviceFromFile(const char *fileName, void *openParams, IMetricsDevice_1_5 **metricsDevice) {
+    UNRECOVERABLE_IF(true);
+    return CC_ERROR_NOT_SUPPORTED;
+}
+
+TCompletionCode IAdapter_1_6 ::CloseMetricsDevice(IMetricsDevice_1_5 *metricsDevice) {
+    UNRECOVERABLE_IF(true);
+    return CC_ERROR_NOT_SUPPORTED;
+}
+
+TCompletionCode IAdapter_1_6 ::SaveMetricsDeviceToFile(const char *fileName, void *saveParams, IMetricsDevice_1_5 *metricsDevice) {
+    UNRECOVERABLE_IF(true);
+    return CC_ERROR_NOT_SUPPORTED;
 }
 
 } // namespace MetricsDiscovery

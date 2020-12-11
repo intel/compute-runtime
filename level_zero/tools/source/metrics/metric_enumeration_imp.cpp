@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,20 +80,14 @@ ze_result_t MetricEnumeration::loadMetricsDiscovery() {
 
     // Load exported functions.
     if (hMetricsDiscovery) {
-        openMetricsDevice = reinterpret_cast<MetricsDiscovery::OpenMetricsDevice_fn>(
-            hMetricsDiscovery->getProcAddress("OpenMetricsDevice"));
-        closeMetricsDevice = reinterpret_cast<MetricsDiscovery::CloseMetricsDevice_fn>(
-            hMetricsDiscovery->getProcAddress("CloseMetricsDevice"));
-        openMetricsDeviceFromFile =
-            reinterpret_cast<MetricsDiscovery::OpenMetricsDeviceFromFile_fn>(
-                hMetricsDiscovery->getProcAddress("OpenMetricsDeviceFromFile"));
+        openAdapterGroup = reinterpret_cast<MetricsDiscovery::OpenAdapterGroup_fn>(
+            hMetricsDiscovery->getProcAddress("OpenAdapterGroup"));
     }
 
-    if (openMetricsDevice == nullptr || closeMetricsDevice == nullptr ||
-        openMetricsDeviceFromFile == nullptr) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "cannot load %s exported functions\n", MetricEnumeration::getMetricsDiscoveryFilename());
+    if (openAdapterGroup == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "cannot load %s exported functions\n", MetricEnumeration::getMetricsDiscoveryFilename());
         cleanupMetricsDiscovery();
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     // Return success if exported functions have been loaded.
@@ -101,12 +95,34 @@ ze_result_t MetricEnumeration::loadMetricsDiscovery() {
 }
 
 ze_result_t MetricEnumeration::openMetricsDiscovery() {
-    UNRECOVERABLE_IF(openMetricsDevice == nullptr);
-    UNRECOVERABLE_IF(closeMetricsDevice == nullptr);
+    UNRECOVERABLE_IF(openAdapterGroup == nullptr);
 
-    auto openResult = openMetricsDevice(&pMetricsDevice);
-    if (openResult != MetricsDiscovery::CC_OK) {
+    // Clean up members.
+    pAdapterGroup = nullptr;
+    pAdapter = nullptr;
+    pMetricsDevice = nullptr;
+
+    // Open adapter group.
+    openAdapterGroup(&pAdapterGroup);
+    if (pAdapterGroup == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics adapter groups %s\n", " ");
+        cleanupMetricsDiscovery();
         return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    // Obtain metrics adapter that matches adapter used by l0.
+    pAdapter = getMetricsAdapter();
+    if (pAdapter == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics adapter %s\n", " ");
+        cleanupMetricsDiscovery();
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    pAdapter->OpenMetricsDevice(&pMetricsDevice);
+    if (pMetricsDevice == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %s\n", " ");
+        cleanupMetricsDiscovery();
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -119,16 +135,13 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
 
     metricGroups.clear();
 
-    if (pMetricsDevice) {
-        closeMetricsDevice(pMetricsDevice);
+    if (pAdapter && pMetricsDevice) {
+        pAdapter->CloseMetricsDevice(pMetricsDevice);
         pMetricsDevice = nullptr;
     }
 
     if (hMetricsDiscovery != nullptr) {
-        openMetricsDevice = nullptr;
-        closeMetricsDevice = nullptr;
-        openMetricsDeviceFromFile = nullptr;
-
+        openAdapterGroup = nullptr;
         hMetricsDiscovery.reset();
     }
 

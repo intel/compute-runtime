@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,16 +90,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     metricsSetParams.ShortName = "Metric set description";
     metricsSetParams.RawReportSize = 256;
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -200,16 +191,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     metricsSetParams.ShortName = "Metric set description";
     metricsSetParams.RawReportSize = 256;
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -395,17 +377,7 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetMetricStreamerReadDataIsC
     metricsSetParams.ShortName = "Metric set description";
     metricsSetParams.RawReportSize = 256;
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
-
+    openMetricsAdapter();
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
 
@@ -503,16 +475,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
     metricsSetParams.ShortName = "Metric set description";
     metricsSetParams.RawReportSize = 256;
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -625,16 +588,7 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetCommandListAppendMetricSt
     metricsSetParams.ShortName = "Metric set description";
     metricsSetParams.RawReportSize = 256;
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -757,8 +711,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
 
     uint32_t markerValue = 0x12345678;
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
+    openMetricsAdapter();
 
     EXPECT_CALL(*mockMetricEnumeration, isInitialized())
         .Times(1)
@@ -767,14 +720,6 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
     EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
         .Times(1)
         .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
 
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
         .Times(1)
@@ -905,8 +850,7 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
     CommandBufferSize_1_0 commandBufferSize = {};
     commandBufferSize.GpuMemorySize = 100;
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
+    openMetricsAdapter();
 
     EXPECT_CALL(*mockMetricEnumeration, isInitialized())
         .Times(1)
@@ -915,14 +859,6 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
     EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
         .Times(1)
         .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
 
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
         .Times(1)

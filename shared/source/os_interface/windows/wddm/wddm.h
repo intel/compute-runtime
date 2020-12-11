@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,6 +118,7 @@ class Wddm {
     D3DKMT_HANDLE getPagingQueueSyncObject() const { return pagingQueueSyncObject; }
     inline Gdi *getGdi() const { return hwDeviceId->getGdi(); }
     MOCKABLE_VIRTUAL bool verifyAdapterLuid(LUID adapterLuid) const;
+    LUID getAdapterLuid() const;
 
     PFND3DKMT_ESCAPE getEscapeHandle() const;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,9 @@
 #include "shared/test/unit_test/mocks/mock_os_library.h"
 
 using namespace MetricsLibraryApi;
+
+using ::testing::_;
+using ::testing::Return;
 
 namespace L0 {
 namespace ult {
@@ -51,6 +54,49 @@ void MetricContextFixture::TearDown() {
 
     // Call base class.
     ContextFixture::TearDown();
+}
+
+void MetricContextFixture::openMetricsAdapter() {
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(0);
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(adapter, OpenMetricsDevice(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(adapter, CloseMetricsDevice(_))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(adapterGroup, GetAdapter(_))
+        .Times(0);
+
+    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
+        .Times(1)
+        .WillOnce(Return(&adapter));
+}
+
+void MetricContextFixture::openMetricsAdapterGroup() {
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(0);
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(adapter, OpenMetricsDevice(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(adapter, CloseMetricsDevice(_))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
 }
 
 Mock<MetricsLibrary>::Mock(::L0::MetricContext &metricContext) : MetricsLibrary(metricContext) {

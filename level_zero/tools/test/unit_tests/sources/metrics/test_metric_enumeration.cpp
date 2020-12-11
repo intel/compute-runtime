@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryDeviceWhenZetGetMetr
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
 
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(nullptr), Return(TCompletionCode::CC_ERROR_GENERAL)));
 
@@ -41,16 +41,7 @@ TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryInterfaceVersionWhen
     metricsDeviceParams.Version.MajorNumber = 0;
     metricsDeviceParams.Version.MinorNumber = 1;
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .Times(1)
@@ -63,16 +54,7 @@ TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryInterfaceVersionWhen
 
 TEST_F(MetricEnumerationTest, givenNoConcurrentMetricGroupsWhenZetGetMetricGroupIsCalledThenReturnsZeroMetricsGroups) {
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .Times(1)
@@ -101,16 +83,7 @@ TEST_F(MetricEnumerationTest, givenTwoConcurrentMetricGroupsWhenZetGetMetricGrou
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
     metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -169,16 +142,7 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetGetMetricGroupProperti
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -235,16 +199,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetGetMetricGroupProperties
     zet_metric_group_handle_t metricGroupHandle = {};
     zet_metric_group_properties_t metricGroupProperties = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -308,16 +263,7 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetMetricGetIsCalledThenR
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -378,16 +324,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetIsCalledThenRet
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -461,16 +398,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetIsCalledThenRet
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -547,16 +475,7 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetMetricGetPropertiestIs
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -639,16 +558,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCa
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -738,16 +648,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCa
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -836,16 +737,7 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenzetContextActivateMetricG
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -919,16 +811,7 @@ TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenzetContextActiv
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1005,16 +888,7 @@ TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenZetContextActiv
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1091,16 +965,7 @@ TEST_F(MetricEnumerationTest, givenValidTimeBasedMetricGroupWhenzetContextActiva
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1177,16 +1042,7 @@ TEST_F(MetricEnumerationTest, givenActivateTheSameMetricGroupTwiceWhenzetContext
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1255,16 +1111,7 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsWh
     zet_metric_group_handle_t metricGroupHandle[2] = {};
     zet_metric_group_properties_t metricGroupProperties[2] = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1334,16 +1181,7 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsAt
     zet_metric_group_handle_t metricGroupHandle[2] = {};
     zet_metric_group_properties_t metricGroupProperties[2] = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1411,16 +1249,7 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithTheSameDomainsWhen
     zet_metric_group_handle_t metricGroupHandle[2] = {};
     zet_metric_group_properties_t metricGroupProperties[2] = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1490,16 +1319,7 @@ TEST_F(MetricEnumerationTest, givenDeactivateTestsWhenzetContextActivateMetricGr
     zet_metric_group_handle_t metricGroupHandle[2] = {};
     zet_metric_group_properties_t metricGroupProperties[2] = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1580,16 +1400,7 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetMetricGroupCalculateMe
     // One api: metric group.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1639,16 +1450,7 @@ TEST_F(MetricEnumerationTest, givenIncorrectRawReportSizeWhenZetMetricGroupCalcu
     // One api: metric group.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1717,16 +1519,7 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeWhenZetMetricGroupCalcula
     // One api: metric group.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1807,16 +1600,7 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndLowerProvidedCalculate
     // One api: metric group.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1895,16 +1679,7 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedRepor
     // One api: metric group.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -1981,16 +1756,7 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedRepor
     // One api: metric group.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -2067,16 +1833,7 @@ TEST_F(MetricEnumerationTest, givenIncorrectCalculationTypeWhenZetMetricGroupCal
     // One api: metric group.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));
@@ -2148,16 +1905,7 @@ TEST_F(MetricEnumerationTest, givenNotInitializedMetricEnumerationWhenIsInitiali
     Mock<IMetric_1_0> metric;
     MetricsDiscovery::TMetricParams_1_0 metricParams = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));

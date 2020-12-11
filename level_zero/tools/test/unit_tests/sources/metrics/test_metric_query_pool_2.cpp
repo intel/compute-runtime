@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,16 +152,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenStreamerIsOpenThenQueryPool
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
-
-    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
+    openMetricsAdapter();
 
     EXPECT_CALL(metricsDevice, GetParams())
         .WillRepeatedly(Return(&metricsDeviceParams));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,6 +147,8 @@ class MetricContextFixture : public ContextFixture {
   protected:
     void SetUp() override;
     void TearDown() override;
+    void openMetricsAdapter();
+    void openMetricsAdapterGroup();
 
   public:
     // Mocked objects.
@@ -158,6 +160,8 @@ class MetricContextFixture : public ContextFixture {
     MockMetricsDiscoveryApi mockMetricsDiscoveryApi = {};
 
     // Metrics discovery device
+    Mock<IAdapterGroup_1_8> adapterGroup;
+    Mock<IAdapter_1_8> adapter;
     Mock<IMetricsDevice_1_5> metricsDevice;
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
 };
