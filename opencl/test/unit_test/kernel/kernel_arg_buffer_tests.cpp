@@ -17,6 +17,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "test.h"
 
 #include "CL/cl.h"
@@ -43,6 +44,90 @@ TEST_F(KernelArgBufferTest, GivenValidBufferWhenSettingKernelArgThenBufferAddres
     EXPECT_EQ(buffer->getCpuAddress(), *pKernelArg);
 
     delete buffer;
+}
+
+struct MultiDeviceKernelArgBufferTest : public ::testing::Test {
+
+    void SetUp() override {
+        ClDeviceVector devicesForContext;
+        devicesForContext.push_back(deviceFactory.rootDevices[1]);
+        devicesForContext.push_back(deviceFactory.subDevices[4]);
+        devicesForContext.push_back(deviceFactory.subDevices[5]);
+        pContext = std::make_unique<MockContext>(devicesForContext);
+        kernelInfos.resize(3);
+        kernelInfos[0] = nullptr;
+        pKernelInfosStorage[0] = std::make_unique<KernelInfo>();
+        pKernelInfosStorage[1] = std::make_unique<KernelInfo>();
+        kernelInfos[1] = pKernelInfosStorage[0].get();
+        kernelInfos[2] = pKernelInfosStorage[1].get();
+
+        auto &hwHelper = HwHelper::get(renderCoreFamily);
+
+        // setup kernel arg offsets
+        KernelArgPatchInfo kernelArgPatchInfo;
+
+        for (auto i = 0u; i < 2; i++) {
+            pKernelInfosStorage[i]->heapInfo.pSsh = pSshLocal[i];
+            pKernelInfosStorage[i]->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal[i]);
+            pKernelInfosStorage[i]->usesSsh = true;
+            pKernelInfosStorage[i]->requiresSshForBuffers = true;
+            pKernelInfosStorage[i]->kernelDescriptor.kernelAttributes.simdSize = hwHelper.getMinimalSIMDSize();
+
+            auto crossThreadDataPointer = &pCrossThreadData[i];
+            memcpy_s(ptrOffset(&pCrossThreadData[i], i * sizeof(void *)), sizeof(void *), &crossThreadDataPointer, sizeof(void *));
+            pKernelInfosStorage[i]->crossThreadData = pCrossThreadData[i];
+
+            pKernelInfosStorage[i]->kernelArgInfo.resize(1);
+            pKernelInfosStorage[i]->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+            pKernelInfosStorage[i]->kernelArgInfo[0].isBuffer = true;
+
+            pKernelInfosStorage[i]->patchInfo.dataParameterStream = &dataParameterStream[i];
+            dataParameterStream[i].DataParameterStreamSize = (i + 1) * sizeof(void *);
+
+            pKernelInfosStorage[i]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = i * sizeof(void *);
+            pKernelInfosStorage[i]->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(void *);
+        }
+
+        auto retVal = CL_INVALID_PROGRAM;
+        pBuffer = std::unique_ptr<Buffer>(Buffer::create(pContext.get(), 0u, MemoryConstants::pageSize, nullptr, retVal));
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, pBuffer);
+
+        pProgram = std::make_unique<MockProgram>(pContext.get(), false, pContext->getDevices());
+    }
+
+    void TearDown() override {
+        for (auto i = 0u; i < 2; i++) {
+            pKernelInfosStorage[i]->crossThreadData = nullptr;
+        }
+    }
+
+    UltClDeviceFactory deviceFactory{3, 2};
+    std::unique_ptr<MockContext> pContext;
+    SPatchDataParameterStream dataParameterStream[2]{};
+    std::unique_ptr<KernelInfo> pKernelInfosStorage[2];
+    char pCrossThreadData[2][64]{};
+    char pSshLocal[2][64]{};
+    KernelInfoContainer kernelInfos;
+    std::unique_ptr<Buffer> pBuffer;
+    std::unique_ptr<MockProgram> pProgram;
+};
+TEST_F(MultiDeviceKernelArgBufferTest, GivenValidBufferWhenSettingKernelArgThenBufferAddressIsCorrect) {
+
+    auto pKernel = std::unique_ptr<MockKernel>(Kernel::create<MockKernel>(pProgram.get(), kernelInfos, nullptr));
+
+    EXPECT_NE(nullptr, pKernel);
+    cl_mem val = pBuffer.get();
+    auto pVal = &val;
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    for (auto &rootDeviceIndex : pContext->getRootDeviceIndices()) {
+        auto pKernelArg = reinterpret_cast<size_t *>(pKernel->getCrossThreadData(rootDeviceIndex) +
+                                                     kernelInfos[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+        EXPECT_EQ(pBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch(), *pKernelArg);
+    }
 }
 
 TEST_F(KernelArgBufferTest, GivenSvmPtrStatelessWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
@@ -88,6 +173,33 @@ HWTEST_F(KernelArgBufferTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArgumen
     delete buffer;
 }
 
+HWTEST_F(MultiDeviceKernelArgBufferTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
+    cl_mem val = pBuffer.get();
+    auto pVal = &val;
+
+    for (auto i = 0; i < 2; i++) {
+        pKernelInfosStorage[i]->usesSsh = true;
+        pKernelInfosStorage[i]->requiresSshForBuffers = true;
+    }
+
+    auto pKernel = std::unique_ptr<MockKernel>(Kernel::create<MockKernel>(pProgram.get(), kernelInfos, nullptr));
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(pKernel->requiresCoherency());
+
+    for (auto &rootDeviceIndex : pContext->getRootDeviceIndices()) {
+        EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize(rootDeviceIndex));
+
+        typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+        auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
+            ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex), kernelInfos[rootDeviceIndex]->kernelArgInfo[0].offsetHeap));
+
+        auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
+        EXPECT_EQ(pBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), surfaceAddress);
+    }
+}
+
 HWTEST_F(KernelArgBufferTest, GivenBufferFromSvmPtrWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
 
     Buffer *buffer = new MockBuffer();
@@ -123,6 +235,20 @@ TEST_F(KernelArgBufferTest, GivenNullPtrWhenSettingKernelArgThenKernelArgIsNull)
                                   this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
     EXPECT_EQ(nullptr, *pKernelArg);
+}
+
+TEST_F(MultiDeviceKernelArgBufferTest, GivenNullPtrWhenSettingKernelArgThenKernelArgIsNull) {
+
+    auto pKernel = std::unique_ptr<MockKernel>(Kernel::create<MockKernel>(pProgram.get(), kernelInfos, nullptr));
+
+    auto val = nullptr;
+    auto pVal = &val;
+    pKernel->setArg(0, sizeof(cl_mem *), pVal);
+    for (auto &rootDeviceIndex : pContext->getRootDeviceIndices()) {
+        auto pKernelArg = reinterpret_cast<void **>(pKernel->getCrossThreadData(rootDeviceIndex) +
+                                                    kernelInfos[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+        EXPECT_EQ(nullptr, *pKernelArg);
+    }
 }
 
 TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPtrPassedIsNullThenOnly4BytesAreBeingPatched) {

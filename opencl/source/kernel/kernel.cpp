@@ -168,10 +168,10 @@ template void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData
 template void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization &patch);
 
 cl_int Kernel::initialize() {
-    std::vector<bool> isDeviceInitialized(program->getMaxRootDeviceIndex() + 1, false);
+    std::bitset<64> isDeviceInitialized{};
     for (auto &pClDevice : getDevices()) {
         auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
-        if (isDeviceInitialized[rootDeviceIndex]) {
+        if (isDeviceInitialized.test(rootDeviceIndex)) {
             continue;
         }
         reconfigureKernel(rootDeviceIndex);
@@ -372,7 +372,7 @@ cl_int Kernel::initialize() {
         if (program->isKernelDebugEnabled() && kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
             debugEnabled = true;
         }
-        isDeviceInitialized[rootDeviceIndex] = true;
+        isDeviceInitialized.set(rootDeviceIndex);
     }
 
     provideInitializationHints();
@@ -1317,13 +1317,13 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                             size_t argSize,
                             const void *argVal) {
 
-    if (argSize != sizeof(cl_mem *))
+    if (argSize != sizeof(cl_mem *)) {
         return CL_INVALID_ARG_SIZE;
+    }
+
+    std::bitset<64> isArgSet{};
 
     auto clMem = reinterpret_cast<const cl_mem *>(argVal);
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-    const auto &kernelArgInfo = getKernelInfo(rootDeviceIndex).kernelArgInfo[argIndex];
-    patchBufferOffset(kernelArgInfo, nullptr, nullptr, rootDeviceIndex);
 
     if (clMem && *clMem) {
         auto clMemObj = *clMem;
@@ -1335,70 +1335,85 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         if (!buffer)
             return CL_INVALID_MEM_OBJECT;
 
-        auto graphicsAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
-
         if (buffer->peekSharingHandler()) {
             usingSharedObjArgs = true;
         }
+        for (auto &pClDevice : getDevices()) {
+            auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+            if (isArgSet.test(rootDeviceIndex)) {
+                continue;
+            }
+            const auto &kernelArgInfo = getKernelInfo(rootDeviceIndex).kernelArgInfo[argIndex];
+            patchBufferOffset(kernelArgInfo, nullptr, nullptr, rootDeviceIndex);
+            auto graphicsAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
 
-        auto patchLocation = ptrOffset(getCrossThreadData(rootDeviceIndex),
-                                       kernelArgInfo.kernelArgPatchInfoVector[0].crossthreadOffset);
+            auto patchLocation = ptrOffset(getCrossThreadData(rootDeviceIndex),
+                                           kernelArgInfo.kernelArgPatchInfoVector[0].crossthreadOffset);
 
-        auto patchSize = kernelArgInfo.kernelArgPatchInfoVector[0].size;
+            auto patchSize = kernelArgInfo.kernelArgPatchInfoVector[0].size;
 
-        uint64_t addressToPatch = buffer->setArgStateless(patchLocation, patchSize, rootDeviceIndex, !this->isBuiltIn);
+            uint64_t addressToPatch = buffer->setArgStateless(patchLocation, patchSize, rootDeviceIndex, !this->isBuiltIn);
 
-        if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-            PatchInfoData patchInfoData(addressToPatch - buffer->getOffset(), static_cast<uint64_t>(buffer->getOffset()),
-                                        PatchInfoAllocationType::KernelArg, reinterpret_cast<uint64_t>(getCrossThreadData(rootDeviceIndex)),
-                                        static_cast<uint64_t>(kernelArgInfo.kernelArgPatchInfoVector[0].crossthreadOffset),
-                                        PatchInfoAllocationType::IndirectObjectHeap, patchSize);
-            this->patchInfoDataList.push_back(patchInfoData);
-        }
+            if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+                PatchInfoData patchInfoData(addressToPatch - buffer->getOffset(), static_cast<uint64_t>(buffer->getOffset()),
+                                            PatchInfoAllocationType::KernelArg, reinterpret_cast<uint64_t>(getCrossThreadData(rootDeviceIndex)),
+                                            static_cast<uint64_t>(kernelArgInfo.kernelArgPatchInfoVector[0].crossthreadOffset),
+                                            PatchInfoAllocationType::IndirectObjectHeap, patchSize);
+                this->patchInfoDataList.push_back(patchInfoData);
+            }
 
-        bool disableL3 = false;
-        bool forceNonAuxMode = false;
-        bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
+            bool disableL3 = false;
+            bool forceNonAuxMode = false;
+            bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
 
-        if (isAuxTranslationKernel) {
-            if (((AuxTranslationDirection::AuxToNonAux == auxTranslationDirection) && argIndex == 1) ||
-                ((AuxTranslationDirection::NonAuxToAux == auxTranslationDirection) && argIndex == 0)) {
+            if (isAuxTranslationKernel) {
+                if (((AuxTranslationDirection::AuxToNonAux == auxTranslationDirection) && argIndex == 1) ||
+                    ((AuxTranslationDirection::NonAuxToAux == auxTranslationDirection) && argIndex == 0)) {
+                    forceNonAuxMode = true;
+                }
+                disableL3 = (argIndex == 0);
+            } else if (graphicsAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
+                       !kernelArgInfo.pureStatefulBufferAccess) {
                 forceNonAuxMode = true;
             }
-            disableL3 = (argIndex == 0);
-        } else if (graphicsAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
-                   !kernelArgInfo.pureStatefulBufferAccess) {
-            forceNonAuxMode = true;
+
+            if (requiresSshForBuffers(rootDeviceIndex)) {
+                auto surfaceState = ptrOffset(getSurfaceStateHeap(rootDeviceIndex), kernelArgInfo.offsetHeap);
+                buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, isAuxTranslationKernel, kernelArgInfo.isReadOnly, pClDevice->getDevice());
+            }
+
+            kernelArguments[argIndex].isStatelessUncacheable = kernelArgInfo.pureStatefulBufferAccess ? false : buffer->isMemObjUncacheable();
+
+            auto allocationForCacheFlush = graphicsAllocation;
+
+            //if we make object uncacheable for surface state and there are not stateless accessess , then ther is no need to flush caches
+            if (buffer->isMemObjUncacheableForSurfaceState() && kernelArgInfo.pureStatefulBufferAccess) {
+                allocationForCacheFlush = nullptr;
+            }
+
+            addAllocationToCacheFlushVector(argIndex, allocationForCacheFlush);
+            isArgSet.set(rootDeviceIndex);
         }
-
-        if (requiresSshForBuffers(rootDeviceIndex)) {
-            auto surfaceState = ptrOffset(getSurfaceStateHeap(rootDeviceIndex), kernelArgInfo.offsetHeap);
-            buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, isAuxTranslationKernel, kernelArgInfo.isReadOnly, getDevice().getDevice());
-        }
-
-        kernelArguments[argIndex].isStatelessUncacheable = kernelArgInfo.pureStatefulBufferAccess ? false : buffer->isMemObjUncacheable();
-
-        auto allocationForCacheFlush = graphicsAllocation;
-
-        //if we make object uncacheable for surface state and there are not stateless accessess , then ther is no need to flush caches
-        if (buffer->isMemObjUncacheableForSurfaceState() && kernelArgInfo.pureStatefulBufferAccess) {
-            allocationForCacheFlush = nullptr;
-        }
-
-        addAllocationToCacheFlushVector(argIndex, allocationForCacheFlush);
         return CL_SUCCESS;
     } else {
-
-        auto patchLocation = ptrOffset(getCrossThreadData(rootDeviceIndex),
-                                       kernelArgInfo.kernelArgPatchInfoVector[0].crossthreadOffset);
-
-        patchWithRequiredSize(patchLocation, kernelArgInfo.kernelArgPatchInfoVector[0].size, 0u);
-
         storeKernelArg(argIndex, BUFFER_OBJ, nullptr, argVal, argSize);
+        for (auto &pClDevice : getDevices()) {
+            auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+            if (isArgSet.test(rootDeviceIndex)) {
+                continue;
+            }
+            const auto &kernelArgInfo = getKernelInfo(rootDeviceIndex).kernelArgInfo[argIndex];
+            patchBufferOffset(kernelArgInfo, nullptr, nullptr, rootDeviceIndex);
+            auto patchLocation = ptrOffset(getCrossThreadData(rootDeviceIndex),
+                                           kernelArgInfo.kernelArgPatchInfoVector[0].crossthreadOffset);
 
-        if (requiresSshForBuffers(rootDeviceIndex)) {
-            auto surfaceState = ptrOffset(getSurfaceStateHeap(rootDeviceIndex), kernelArgInfo.offsetHeap);
-            Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, 0, nullptr, 0, nullptr, 0, 0);
+            patchWithRequiredSize(patchLocation, kernelArgInfo.kernelArgPatchInfoVector[0].size, 0u);
+
+            if (requiresSshForBuffers(rootDeviceIndex)) {
+                auto surfaceState = ptrOffset(getSurfaceStateHeap(rootDeviceIndex), kernelArgInfo.offsetHeap);
+                Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, 0, nullptr, 0, nullptr, 0, 0);
+            }
+            isArgSet.set(rootDeviceIndex);
         }
 
         return CL_SUCCESS;
