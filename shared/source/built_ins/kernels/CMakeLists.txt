@@ -127,10 +127,9 @@ function(generate_cpp_spirv builtin)
 
   set(OUTPUT_LIST_SPV_FILES ${OUTPUT_LIST_SPV_FILES} ${OUTPUT_FILES_FOR_SPV} PARENT_SCOPE)
   set(OUTPUT_LIST_CPP_FILES ${OUTPUT_LIST_CPP_FILES} ${OUTPUT_FILE_CPP} PARENT_SCOPE)
-  string(TOLOWER ${DEFAULT_SUPPORTED_PLATFORM} DEF_PLATFORM)
   add_custom_command(
                      OUTPUT ${GENERATED_SPV_INPUT}
-                     COMMAND ${cloc_cmd_prefix} -q -spv_only -file ${INPUT_FILENAME} -device ${DEF_PLATFORM} -out_dir ${OUTPUTDIR} -output_no_suffix -options "-cl-kernel-arg-info"
+                     COMMAND ${cloc_cmd_prefix} -q -spv_only -file ${INPUT_FILENAME} -out_dir ${OUTPUTDIR} -output_no_suffix -options "-cl-kernel-arg-info"
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      DEPENDS ${INPUT_FILENAME} ocloc copy_compiler_files
   )

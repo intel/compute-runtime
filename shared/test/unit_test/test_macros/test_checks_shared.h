@@ -26,6 +26,11 @@ bool supportsSvm(const Device *pDevice);
 
 } // namespace NEO
 
+#define REQUIRE_32BIT_OR_SKIP()               \
+    if (NEO::TestChecks::is64Bit() == true) { \
+        GTEST_SKIP();                         \
+    }
+
 #define REQUIRE_64BIT_OR_SKIP()                \
     if (NEO::TestChecks::is64Bit() == false) { \
         GTEST_SKIP();                          \
