@@ -33,6 +33,7 @@ class DrmMock : public Drm {
     using Drm::checkQueueSliceSupport;
     using Drm::classHandles;
     using Drm::engineInfo;
+    using Drm::generateElfUUID;
     using Drm::generateUUID;
     using Drm::getQueueSliceCount;
     using Drm::memoryInfo;

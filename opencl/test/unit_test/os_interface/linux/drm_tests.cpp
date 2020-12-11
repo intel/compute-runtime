@@ -390,23 +390,6 @@ TEST(DrmTest, givenPlatformWithSupportToChangeSliceCountWhenCallSetQueueSliceCou
     EXPECT_EQ(drm->getSliceMask(newSliceCount), sseu.slice_mask);
 }
 
-TEST(DrmTest, GivenDrmWhenGeneratingUUIDThenCorrectStringsAreReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto uuid1 = drm.generateUUID();
-    auto uuid2 = drm.generateUUID();
-
-    std::string uuidff;
-    for (int i = 0; i < 0xff - 2; i++) {
-        uuidff = drm.generateUUID();
-    }
-
-    EXPECT_STREQ("00000000-0000-0000-0000-000000000001", uuid1.c_str());
-    EXPECT_STREQ("00000000-0000-0000-0000-000000000002", uuid2.c_str());
-    EXPECT_STREQ("00000000-0000-0000-0000-0000000000ff", uuidff.c_str());
-}
-
 namespace NEO {
 namespace SysCalls {
 extern uint32_t closeFuncCalled;

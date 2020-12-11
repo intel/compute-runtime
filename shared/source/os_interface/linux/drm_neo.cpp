@@ -503,21 +503,6 @@ uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) {
     return 0;
 }
 
-std::string Drm::generateUUID() {
-    const char uuidString[] = "00000000-0000-0000-%04" SCNx64 "-%012" SCNx64;
-    char buffer[36 + 1] = "00000000-0000-0000-0000-000000000000";
-    uuid++;
-
-    UNRECOVERABLE_IF(uuid == 0xFFFFFFFFFFFFFFFF);
-
-    uint64_t parts[2] = {0, 0};
-    parts[0] = uuid & 0xFFFFFFFFFFFF;
-    parts[1] = (uuid & 0xFFFF000000000000) >> 48;
-    snprintf(buffer, sizeof(buffer), uuidString, parts[1], parts[0]);
-
-    return std::string(buffer, 36);
-}
-
 Drm::~Drm() {
     destroyVirtualMemoryAddressSpace();
 }

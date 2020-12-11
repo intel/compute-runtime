@@ -162,6 +162,7 @@ class Drm {
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
     std::string generateUUID();
+    std::string generateElfUUID(const void *data);
     bool sliceCountChangeSupported = false;
     drm_i915_gem_context_param_sseu sseu{};
     bool preemptionSupported = false;
