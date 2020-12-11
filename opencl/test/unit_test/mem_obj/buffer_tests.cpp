@@ -1809,14 +1809,20 @@ TEST_F(BufferTransferTests, givenBufferWhenTransferFromHostPtrCalledThenCopyRequ
 
 using MultiRootDeviceBufferTest = MultiRootDeviceFixture;
 
-TEST_F(MultiRootDeviceBufferTest, WhenCleanAllGraphicsAllocationsCalledThenGraphicsAllocationsAreProperlyRemoved) {
+TEST_F(MultiRootDeviceBufferTest, WhenCleanAllGraphicsAllocationsCalledThenGraphicsAllocationsAreProperlyRemovedAccordingToIsParentObjectFlag) {
     AllocationInfoType allocationInfo;
     allocationInfo.resize(3u);
 
     allocationInfo[1u] = {};
     allocationInfo[1u].memory = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1u, MemoryConstants::pageSize});
 
-    Buffer::cleanAllGraphicsAllocations(*context, *context->getMemoryManager(), allocationInfo, false);
+    bool isParentObject = true;
+    Buffer::cleanAllGraphicsAllocations(*context, *context->getMemoryManager(), allocationInfo, isParentObject);
+    EXPECT_EQ(mockMemoryManager->freeGraphicsMemoryCalled, 0u);
+
+    isParentObject = false;
+    Buffer::cleanAllGraphicsAllocations(*context, *context->getMemoryManager(), allocationInfo, isParentObject);
+    EXPECT_EQ(mockMemoryManager->freeGraphicsMemoryCalled, 1u);
 }
 
 TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferGraphicsAllocationHasCorrectRootDeviceIndex) {
