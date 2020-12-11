@@ -31,6 +31,7 @@ clCreateContextFromType
 clRetainContext
 clReleaseContext
 clGetContextInfo
+clSetContextDestructorCallback
 clCreateCommandQueue
 clRetainCommandQueue
 clReleaseCommandQueue
@@ -136,7 +137,6 @@ clSetProgramReleaseCallback
 clSetProgramSpecializationConstant
 clCreateBufferWithProperties
 clCreateImageWithProperties
-clGetKernelArgInfo
 clGetImageParamsINTEL
 clCreatePerfCountersCommandQueueINTEL
 clCreateAcceleratorINTEL
