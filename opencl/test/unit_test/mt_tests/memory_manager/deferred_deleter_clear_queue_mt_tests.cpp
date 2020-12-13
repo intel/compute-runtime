@@ -43,7 +43,7 @@ struct ClearQueueTest : public ::testing::Test,
 std::atomic<bool> ClearQueueTest::startClear;
 std::atomic<int> ClearQueueTest::threadStopped;
 
-TEST_P(ClearQueueTest, clearQueueAfterFeed) {
+TEST_P(ClearQueueTest, WhenQueueIsClearedThenAllElementsAreReleased) {
     auto elementsInQueue = GetParam();
     EXPECT_EQ(0, deleter->clearCalled);
     for (int i = 0; i < elementsInQueue; i++) {
@@ -111,7 +111,7 @@ struct DeferredDeleterMtTest : public ::testing::Test {
     std::unique_ptr<MyDeferredDeleter> deleter;
 };
 
-TEST_F(DeferredDeleterMtTest, asyncThreadsStopDeferredDeleter) {
+TEST_F(DeferredDeleterMtTest, WhenForcingSafeStopThenDeferredDeleterIsStopped) {
     deleter->addClient();
 
     waitForAsyncThread();

@@ -84,7 +84,7 @@ struct IntelTracingMtTest : public Test<PlatformFixture> {
     std::atomic<int> count{0};
 };
 
-TEST_F(IntelTracingMtTest, SafeTracingFromMultipleThreads) {
+TEST_F(IntelTracingMtTest, WhenTracingFromMultipleThreadsThenAllThreadsAreCreated) {
     status = clCreateTracingHandleINTEL(testedClDevice, callback, this, &handle);
     EXPECT_EQ(CL_SUCCESS, status);
 

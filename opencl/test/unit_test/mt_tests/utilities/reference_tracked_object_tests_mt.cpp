@@ -77,7 +77,7 @@ void DecRefCount(MockReferenceTrackedObject *obj, bool useInternalRefCount, std:
     *flagAfterBgDecRefCount = true;
 }
 
-TEST(ReferenceTrackedObject, whenDecreasingApiRefcountSimultaneouslyWillRetrieveProperCustomDeleterWhileObjectIsStillAlive) {
+TEST(ReferenceTrackedObject, whenDecreasingApiRefcountSimultaneouslyThenRetrieveProperCustomDeleterWhileObjectIsStillAlive) {
     ASSERT_NE(MockReferenceTrackedObjectDerivative::GetMarker(), MockReferenceTrackedObject::GetMarker());
 
     std::atomic<int> marker;
@@ -104,7 +104,7 @@ TEST(ReferenceTrackedObject, whenDecreasingApiRefcountSimultaneouslyWillRetrieve
     EXPECT_EQ(MockReferenceTrackedObjectDerivative::GetMarker(), marker);
 }
 
-TEST(ReferenceTrackedObject, whenDecreasingInternalRefcountSimultaneouslyWillRetrieveProperCustomDeleterWhileObjectIsStillAlive) {
+TEST(ReferenceTrackedObject, whenDecreasingInternalRefcountSimultaneouslyThenRetrieveProperCustomDeleterWhileObjectIsStillAlive) {
     ASSERT_NE(MockReferenceTrackedObjectDerivative::GetMarker(), MockReferenceTrackedObject::GetMarker());
 
     std::atomic<int> marker;
