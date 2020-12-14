@@ -139,6 +139,7 @@ class SVMAllocsManager {
 
   protected:
     void *createZeroCopySvmAllocation(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties, const DeviceBitfield &deviceBitfield);
+    GraphicsAllocation::AllocationType getGraphicsAllocationType(const UnifiedMemoryProperties &unifiedMemoryProperties) const;
 
     void freeZeroCopySvmAllocation(SvmAllocationData *svmData);
 

@@ -51,6 +51,7 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/surface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/unified_memory_manager_extra.cpp
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_MEMORY_MANAGER ${NEO_CORE_MEMORY_MANAGER})
