@@ -46,7 +46,7 @@ void compilerOutputRemove(const std::string &fileName, const std::string &type) 
     std::remove(getCompilerOutputFileName(fileName, type).c_str());
 }
 
-TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildTest) {
+TEST_F(MultiCommandTests, WhenBuildingMultiCommandThenSuccessIsReturned) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
@@ -71,7 +71,7 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildTest) {
 
     deleteFileWithArgs();
 }
-TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildWithOutputFileTest) {
+TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsReturned) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
@@ -103,7 +103,7 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildWithOutputFileTest) {
 
     deleteFileWithArgs();
 }
-TEST_F(MultiCommandTests, GoodMultiBuildTestWithspecifiedOutputDir) {
+TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWhenBuildingMultiCommandThenSuccessIsReturned) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
@@ -138,7 +138,7 @@ TEST_F(MultiCommandTests, GoodMultiBuildTestWithspecifiedOutputDir) {
     deleteFileWithArgs();
     delete pMultiCommand;
 }
-TEST_F(MultiCommandTests, LackOfTxtFileWithArgsMultiTest) {
+TEST_F(MultiCommandTests, GivenMissingTextFileWithArgsWhenBuildingMultiCommandThenInvalidFileErrorIsReturned) {
     nameOfFileWithArgs = "test_files/ImANotExistedComandFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
@@ -156,7 +156,7 @@ TEST_F(MultiCommandTests, LackOfTxtFileWithArgsMultiTest) {
     EXPECT_EQ(INVALID_FILE, retVal);
     DebugManager.flags.PrintDebugMessages.set(false);
 }
-TEST_F(MultiCommandTests, LackOfClFilePointedInTxtFileMultiTest) {
+TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFileErrorIsReturned) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
@@ -183,7 +183,7 @@ TEST_F(MultiCommandTests, LackOfClFilePointedInTxtFileMultiTest) {
 
     deleteFileWithArgs();
 }
-TEST_F(MultiCommandTests, GoodMultiBuildTestWithOutputFileListFlag) {
+TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuccessIsReturned) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
@@ -221,7 +221,7 @@ TEST_F(MultiCommandTests, GoodMultiBuildTestWithOutputFileListFlag) {
     deleteOutFileList();
     delete pMultiCommand;
 }
-TEST_F(OfflineCompilerTests, GoodArgTest) {
+TEST_F(OfflineCompilerTests, GivenArgsWhenOfflineCompilerIsCreatedThenSuccessIsReturned) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -281,7 +281,7 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
     }
 }
 
-TEST_F(OfflineCompilerTests, GoodBuildTest) {
+TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -308,7 +308,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTest) {
     delete pOfflineCompiler;
 }
 
-TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
+TEST_F(OfflineCompilerTests, GivenLlvmTextWhenBuildingThenBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -331,7 +331,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
     delete pOfflineCompiler;
 }
 
-TEST_F(OfflineCompilerTests, WhenFclNotNeededDontLoadIt) {
+TEST_F(OfflineCompilerTests, WhenFclNotNeededThenDontLoadIt) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -347,7 +347,7 @@ TEST_F(OfflineCompilerTests, WhenFclNotNeededDontLoadIt) {
     EXPECT_NE(nullptr, offlineCompiler.igcDeviceCtx);
 }
 
-TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
+TEST_F(OfflineCompilerTests, WhenParsingBinToCharArrayThenCorrectResult) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -390,7 +390,7 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
 
     delete pOfflineCompiler;
 }
-TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
+TEST_F(OfflineCompilerTests, GivenCppFileWhenBuildingTheBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -413,7 +413,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
 
     delete pOfflineCompiler;
 }
-TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
+TEST_F(OfflineCompilerTests, GivenOutputDirWhenBuildingThenBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -436,7 +436,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
 
     delete pOfflineCompiler;
 }
-TEST_F(OfflineCompilerTests, PrintUsage) {
+TEST_F(OfflineCompilerTests, GivenHelpOptionThenBuildDoesNotOccur) {
     std::vector<std::string> argv = {
         "ocloc",
         "--help"};
@@ -450,7 +450,7 @@ TEST_F(OfflineCompilerTests, PrintUsage) {
 
     delete pOfflineCompiler;
 }
-TEST_F(OfflineCompilerTests, NaughtyArgTest_File) {
+TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsReturned) {
     DebugManager.flags.PrintDebugMessages.set(true);
     std::vector<std::string> argv = {
         "ocloc",
@@ -469,7 +469,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_File) {
     delete pOfflineCompiler;
 }
 
-TEST_F(OfflineCompilerTests, NaughtyArgTest_Flag) {
+TEST_F(OfflineCompilerTests, GivenInvalidFlagWhenBuildingThenInvalidCommandLineErrorIsReturned) {
     std::vector<std::string> argv = {
         "ocloc",
         "-n",
@@ -487,7 +487,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_Flag) {
     delete pOfflineCompiler;
 }
 
-TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
+TEST_F(OfflineCompilerTests, GivenInvalidOptionsWhenBuildingThenInvalidCommandLineErrorIsReturned) {
     std::vector<std::string> argvA = {
         "ocloc",
         "-file",
@@ -518,7 +518,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
     delete pOfflineCompiler;
 }
 
-TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenExitWithErrorMsg) {
+TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenInvalidDeviceErrorAndErrorMessageAreReturned) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -534,7 +534,7 @@ TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenExitWithErro
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(OfflineCompilerTests, NaughtyKernelTest) {
+TEST_F(OfflineCompilerTests, GivenInvalidKernelWhenBuildingThenBuildProgramFailureErrorIsReturned) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -564,7 +564,7 @@ TEST_F(OfflineCompilerTests, NaughtyKernelTest) {
     delete pOfflineCompiler;
 }
 
-TEST(OfflineCompilerTest, parseCmdLine) {
+TEST(OfflineCompilerTest, WhenParsingCmdLineThenOptionsAreReadCorrectly) {
     std::vector<std::string> argv = {
         "ocloc",
         NEO::CompilerOptions::greaterThan4gbBuffersRequired.data()};
@@ -644,7 +644,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationDisabledWhenDevic
     EXPECT_EQ(std::string::npos, found);
 }
 
-TEST(OfflineCompilerTest, getStringWithinDelimiters) {
+TEST(OfflineCompilerTest, GivenDelimitersWhenGettingStringThenParseIsCorrect) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
@@ -669,7 +669,7 @@ TEST(OfflineCompilerTest, getStringWithinDelimiters) {
     EXPECT_EQ(std::string::npos, dst.find(")===\""));
 }
 
-TEST(OfflineCompilerTest, convertToPascalCase) {
+TEST(OfflineCompilerTest, WhenConvertingToPascalCaseThenResultIsCorrect) {
     EXPECT_EQ(0, strcmp("AuxTranslation", convertToPascalCase("aux_translation").c_str()));
     EXPECT_EQ(0, strcmp("CopyBufferToBuffer", convertToPascalCase("copy_buffer_to_buffer").c_str()));
     EXPECT_EQ(0, strcmp("CopyBufferRect", convertToPascalCase("copy_buffer_rect").c_str()));
@@ -689,7 +689,7 @@ TEST(OfflineCompilerTest, convertToPascalCase) {
     EXPECT_EQ(0, strcmp("", convertToPascalCase("").c_str()));
 }
 
-TEST(OfflineCompilerTest, getHardwareInfo) {
+TEST(OfflineCompilerTest, GivenValidParamWhenGettingHardwareInfoThenSuccessIsReturned) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
@@ -699,7 +699,7 @@ TEST(OfflineCompilerTest, getHardwareInfo) {
     EXPECT_NE(0u, mockOfflineCompiler->getHardwareInfo().gtSystemInfo.MaxSlicesSupported);
 }
 
-TEST(OfflineCompilerTest, storeBinary) {
+TEST(OfflineCompilerTest, WhenStoringBinaryThenStoredCorrectly) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
@@ -714,7 +714,7 @@ TEST(OfflineCompilerTest, storeBinary) {
     delete[] pDstBinary;
 }
 
-TEST(OfflineCompilerTest, updateBuildLog) {
+TEST(OfflineCompilerTest, WhenUpdatingBuildLogThenMessageIsAppended) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
@@ -727,7 +727,7 @@ TEST(OfflineCompilerTest, updateBuildLog) {
     EXPECT_EQ(0, (ErrorString + "\n" + FinalString).compare(mockOfflineCompiler->getBuildLog().c_str()));
 }
 
-TEST(OfflineCompilerTest, buildSourceCode) {
+TEST(OfflineCompilerTest, GivenSourceCodeWhenBuildingThenSuccessIsReturned) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
@@ -807,7 +807,7 @@ TEST(OfflineCompilerTest, GivenKernelWhenNoCharAfterKernelSourceThenBuildWithSuc
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(OfflineCompilerTest, generateElfBinary) {
+TEST(OfflineCompilerTest, WhenGeneratingElfBinaryThenBinaryIsCreated) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 

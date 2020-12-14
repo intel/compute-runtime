@@ -35,7 +35,7 @@ TEST(OclocValidate, WhenInputFileIsMissingThenFail) {
     EXPECT_STREQ("Error : Input file missing : src.gen\n", oclocStdout.c_str());
 }
 
-TEST(OclocValidate, WhenInputFileIsAvailableTheLogItsSize) {
+TEST(OclocValidate, WhenInputFileIsAvailableThenLogItsSize) {
     MockOclocArgHelper::FilesMap files{{"src.gen", "01234567"}};
     MockOclocArgHelper argHelper{files};
     argHelper.getPrinterRef() = MessagePrinter(true);

@@ -337,12 +337,12 @@ TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformClosedRangeWhe
     EXPECT_TRUE(got.empty());
 }
 
-TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeFromWhenGenIsUnknownTheReturnEmptyList) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeFromWhenGenIsUnknownThenReturnEmptyList) {
     auto got = NEO::getTargetPlatformsForFatbinary("gen2-", oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 }
 
-TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeToWhenGenIsUnknownTheReturnEmptyList) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeToWhenGenIsUnknownThenReturnEmptyList) {
     auto got = NEO::getTargetPlatformsForFatbinary("-gen2", oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 }
