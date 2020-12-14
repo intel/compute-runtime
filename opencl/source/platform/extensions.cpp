@@ -86,6 +86,9 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
 
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_images");
         openclCFeatures.push_back(openClCFeature);
+
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_read_write_images");
+        openclCFeatures.push_back(openClCFeature);
     }
 
     if (hwInfo.capabilityTable.supportsOcl21Features) {
@@ -105,9 +108,6 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
         openclCFeatures.push_back(openClCFeature);
 
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_program_scope_global_variables");
-        openclCFeatures.push_back(openClCFeature);
-
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_read_write_images");
         openclCFeatures.push_back(openClCFeature);
 
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_work_group_collective_functions");

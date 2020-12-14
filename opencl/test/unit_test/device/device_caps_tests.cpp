@@ -83,6 +83,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
         if (hwInfo.capabilityTable.supportsImages) {
             EXPECT_STREQ("__opencl_c_3d_image_writes", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_images", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_read_write_images", (++openclCFeatureIterator)->name);
         }
         if (hwInfo.capabilityTable.supportsOcl21Features) {
             EXPECT_STREQ("__opencl_c_atomic_order_acq_rel", (++openclCFeatureIterator)->name);
@@ -91,7 +92,6 @@ struct DeviceGetCapsTest : public ::testing::Test {
             EXPECT_STREQ("__opencl_c_atomic_scope_device", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_generic_address_space", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_program_scope_global_variables", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_read_write_images", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_work_group_collective_functions", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_subgroups", (++openclCFeatureIterator)->name);
         }
