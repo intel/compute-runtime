@@ -199,9 +199,7 @@ endforeach()
 foreach(builtin_images_stateless ${GENERATED_BUILTINS_IMAGES_STATELESS})
   generate_cpp_spirv(${builtin_images_stateless})
 endforeach()
-add_custom_target(spirv_builtins ALL DEPENDS ${OUTPUT_LIST_SPV_FILES} ${OUTPUT_LIST_CPP_FILES})
 add_library(${BUILTINS_SPIRV_LIB_NAME} OBJECT ${OUTPUT_LIST_CPP_FILES})
-set_target_properties(spirv_builtins PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUIILINS_PROJECTS_FOLDER}")
 set_target_properties(${BUILTINS_SPIRV_LIB_NAME} PROPERTIES
                       POSITION_INDEPENDENT_CODE ON
                       FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUIILINS_PROJECTS_FOLDER}"
