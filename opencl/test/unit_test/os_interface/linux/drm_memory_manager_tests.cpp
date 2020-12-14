@@ -63,6 +63,8 @@ typedef Test<DrmMemoryManagerWithLocalMemoryFixture> DrmMemoryManagerWithLocalMe
 typedef Test<DrmMemoryManagerFixtureWithoutQuietIoctlExpectation> DrmMemoryManagerWithExplicitExpectationsTest;
 
 TEST_F(DrmMemoryManagerTest, givenDebugVariableWhenCreatingDrmMemoryManagerThenSetSupportForMultiStorageResources) {
+    DebugManagerStateRestore dbgState;
+
     EXPECT_TRUE(memoryManager->supportsMultiStorageResources);
 
     {

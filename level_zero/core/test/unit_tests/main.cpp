@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/unit_test/base_ult_config_listener.h"
 #include "shared/test/unit_test/helpers/default_hw_info.inl"
 #include "shared/test/unit_test/helpers/memory_leak_listener.h"
 #include "shared/test/unit_test/helpers/test_files.h"
@@ -207,6 +208,9 @@ int main(int argc, char **argv) {
         listeners.Append(customEventListener);
     }
 
+    listeners.Append(new NEO::MemoryLeakListener);
+    listeners.Append(new NEO::BaseUltConfigListener);
+
     binaryNameSuffix.append(NEO::familyName[hwInfoForTests.platform.eRenderCoreFamily]);
     binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
 
@@ -222,7 +226,6 @@ int main(int argc, char **argv) {
     testBinaryFilesNoRev.append(testFiles);
     testFiles = testBinaryFiles;
     testFilesNoRev = testBinaryFilesNoRev;
-    listeners.Append(new NEO::MemoryLeakListener);
 
     NEO::GmmHelper::createGmmContextWrapperFunc =
         NEO::GmmClientContextBase::create<NEO::MockGmmClientContext>;

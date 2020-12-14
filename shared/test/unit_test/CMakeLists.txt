@@ -44,6 +44,8 @@ if(NOT SKIP_UNIT_TESTS)
 
   add_executable(${TARGET_NAME}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}/base_ult_config_listener.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/base_ult_config_listener.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h

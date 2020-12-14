@@ -56,6 +56,7 @@ set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_aub_command_stream_receiver.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_command_stream_receiver.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_management.cpp

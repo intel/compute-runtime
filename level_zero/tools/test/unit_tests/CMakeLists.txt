@@ -20,6 +20,7 @@ ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 
 add_executable(${TARGET_NAME}
                ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
+               ${NEO_SOURCE_DIR}/shared/test/unit_test/base_ult_config_listener.cpp
                ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.h
                ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.cpp
                ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.h
