@@ -92,8 +92,8 @@ void MockGmmResourceInfo::setSurfaceFormat() {
         }
     };
 
-    if (mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_P010) {
-        tempSurface.GMMSurfaceFormat = GMM_RESOURCE_FORMAT::GMM_FORMAT_P010;
+    if (mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_P010 || mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_P016) {
+        tempSurface.GMMSurfaceFormat = mockResourceCreateParams.Format;
         tempSurface.NumChannels = 1;
         tempSurface.ImageElementSizeInBytes = 16;
         tempSurface.PerChannelSizeInBytes = 16;

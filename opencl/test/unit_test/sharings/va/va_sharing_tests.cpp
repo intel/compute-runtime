@@ -579,10 +579,7 @@ TEST_F(VaSharingTests, givenInValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapter
     EXPECT_EQ(0u, devices);
 }
 
-TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndP010FormatWhenCreatingSharedVaSurfaceForPlane0ThenCorrectFormatIsUsedByImageAndGMM) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
-
+TEST_F(VaSharingTests, givenP010FormatWhenCreatingSharedVaSurfaceForPlane0ThenCorrectFormatIsUsedByImageAndGMM) {
     vaSharing->sharingFunctions.derivedImageFormatBpp = 16;
     vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_P010;
 
@@ -596,10 +593,7 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndP010FormatWhenCreatingSha
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
-TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndP010FormatWhenCreatingSharedVaSurfaceForPlane1ThenCorrectFormatIsUsedByImageAndGMM) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
-
+TEST_F(VaSharingTests, givenP010FormatWhenCreatingSharedVaSurfaceForPlane1ThenCorrectFormatIsUsedByImageAndGMM) {
     vaSharing->sharingFunctions.derivedImageFormatBpp = 16;
     vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_P010;
 
@@ -610,6 +604,34 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndP010FormatWhenCreatingSha
     EXPECT_EQ(static_cast<cl_channel_order>(CL_RG), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16G16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P010, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    EXPECT_EQ(CL_SUCCESS, errCode);
+}
+
+TEST_F(VaSharingTests, givenP016FormatWhenCreatingSharedVaSurfaceForPlane0ThenCorrectFormatIsUsedByImageAndGMM) {
+    vaSharing->sharingFunctions.derivedImageFormatBpp = 16;
+    vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_P016;
+
+    auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
+                                                                             CL_MEM_READ_WRITE, 0, &vaSurfaceId, 0, &errCode));
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
+    EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT16), vaSurface->getImageFormat().image_channel_data_type);
+    EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P016, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    EXPECT_EQ(CL_SUCCESS, errCode);
+}
+
+TEST_F(VaSharingTests, givenP016FormatWhenCreatingSharedVaSurfaceForPlane1ThenCorrectFormatIsUsedByImageAndGMM) {
+    vaSharing->sharingFunctions.derivedImageFormatBpp = 16;
+    vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_P016;
+
+    auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
+                                                                             CL_MEM_READ_WRITE, 0, &vaSurfaceId, 1, &errCode));
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
+    EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT16), vaSurface->getImageFormat().image_channel_data_type);
+    EXPECT_EQ(static_cast<cl_channel_order>(CL_RG), vaSurface->getImageFormat().image_channel_order);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16G16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P016, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -883,17 +905,12 @@ TEST(VaSurface, givenInValidPlaneOrFlagsWhenValidatingInputsThenTrueIsReturned) 
     EXPECT_FALSE(VASurface::validate(CL_MEM_USE_HOST_PTR, 0));
 }
 
-TEST(VaSurface, givenEnabledExtendedVaFormatsWhenGettingUnsupportedSurfaceFormatInfoThenNullptrIsReturned) {
-    auto formatInfo = VASurface::getExtendedSurfaceFormatInfo(VA_FOURCC_P016);
-    EXPECT_EQ(nullptr, formatInfo);
-}
-
 TEST(VaSurface, givenNotSupportedVaFormatsWhenCheckingIfSupportedThenFalseIsReturned) {
     EXPECT_FALSE(VASurface::isSupportedFourCC(VA_FOURCC_NV11));
-
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableExtendedVaFormats.set(true);
-    EXPECT_FALSE(VASurface::isSupportedFourCC(VA_FOURCC_P016));
+    EXPECT_FALSE(VASurface::isSupportedFourCC(VA_FOURCC_NV11));
+    EXPECT_EQ(nullptr, VASurface::getExtendedSurfaceFormatInfo(VA_FOURCC_NV11));
 }
 
 TEST(VaSharingFunctions, givenErrorReturnedFromVaLibWhenQuerySupportedVaImageFormatsThenSupportedFormatsAreNotSet) {
