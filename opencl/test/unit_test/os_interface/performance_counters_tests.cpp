@@ -511,7 +511,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenOaConf
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
-TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetricsLibraryIsInvalidGpuReportSizeIsInvalid) {
+TEST_F(PerformanceCountersMetricsLibraryTest, GivenInvalidMetricsLibraryWhenGettingGpuCommandSizeThenZeroIsReported) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_TRUE(performanceCountersBase->enable(false));
@@ -576,7 +576,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenCreati
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
-TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterReturnsValidPointer) {
+TEST_F(PerformanceCountersMetricsLibraryTest, WhenGettingHwPerfCounterThenValidPointerIsReturned) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_TRUE(performanceCountersBase->enable(false));

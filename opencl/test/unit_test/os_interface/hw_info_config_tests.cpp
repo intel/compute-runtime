@@ -44,7 +44,7 @@ HWTEST_F(HwInfoConfigTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenR
     EXPECT_NE(0u, hwInfoConfig->getHostMemCapabilities(&pInHwInfo));
 }
 
-TEST_F(HwInfoConfigTest, givenHwInfoConfigSetHwInfoValuesFromConfigStringReturnsSetsProperValues) {
+TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     uint64_t hwInfoConfig = 0x0;
 
     bool success = parseHwInfoConfigString("1x1x1", hwInfoConfig);
@@ -88,7 +88,7 @@ TEST_F(HwInfoConfigTest, givenHwInfoConfigSetHwInfoValuesFromConfigStringReturns
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 128u);
 }
 
-TEST_F(HwInfoConfigTest, givenInvalidHwInfoSetHwInfoValuesFromConfigString) {
+TEST_F(HwInfoConfigTest, givenInvalidHwInfoWhenParsingHwInfoConfigThenErrorIsReturned) {
     uint64_t hwInfoConfig = 0x0;
     bool success = parseHwInfoConfigString("1", hwInfoConfig);
     EXPECT_FALSE(success);

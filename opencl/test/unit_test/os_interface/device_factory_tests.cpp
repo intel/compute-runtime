@@ -213,7 +213,7 @@ TEST_F(DeviceFactoryTest, whenPrepareDeviceEnvironmentsIsCalledThenAllRootDevice
     }
 }
 
-TEST_F(DeviceFactoryTest, givenInvalidHwConfigStringPrepareDeviceEnvironmentsForProductFamilyOverrideReturnsFalse) {
+TEST_F(DeviceFactoryTest, givenInvalidHwConfigStringWhenPreparingDeviceEnvironmentsForProductFamilyOverrideThenFalseIsReturned) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.HardwareInfoOverride.set("1x3");
 

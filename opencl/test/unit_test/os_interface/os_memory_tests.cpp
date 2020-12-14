@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-TEST(OSMemory, reserveCpuAddressRange) {
+TEST(OSMemory, WhenReservingCpuAddressRangeThenMemoryIsAligned) {
     auto osMemory = OSMemory::create();
     size_t reservedCpuAddressRangeSize = 1024;
     auto reservedCpuAddressRange = osMemory->reserveCpuAddressRange(reservedCpuAddressRangeSize, MemoryConstants::pageSize64k);
