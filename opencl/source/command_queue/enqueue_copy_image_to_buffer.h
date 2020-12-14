@@ -31,6 +31,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImageToBuffer(
     const cl_event *eventWaitList,
     cl_event *event) {
 
+    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+
+    srcImage->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
+    dstBuffer->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
+
     auto eBuiltInOpsType = EBuiltInOps::CopyImage3dToBuffer;
     if (forceStateless(dstBuffer->getSize())) {
         eBuiltInOpsType = EBuiltInOps::CopyImage3dToBufferStateless;
