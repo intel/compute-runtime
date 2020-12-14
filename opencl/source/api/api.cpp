@@ -2278,7 +2278,7 @@ cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueReadBuffer, &retVal);
             return retVal;
@@ -2369,7 +2369,7 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, eventWaitList, event)) {
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clEnqueueReadBufferRect, &retVal);
         return retVal;
@@ -2428,7 +2428,7 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueWriteBuffer, &retVal);
             return retVal;
@@ -2509,7 +2509,7 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, eventWaitList, event)) {
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clEnqueueWriteBufferRect, &retVal);
         return retVal;
@@ -2565,7 +2565,7 @@ cl_int CL_API_CALL clEnqueueFillBuffer(cl_command_queue commandQueue,
         EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (CL_SUCCESS == retVal) {
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueFillBuffer, &retVal);
             return retVal;
@@ -2622,7 +2622,7 @@ cl_int CL_API_CALL clEnqueueCopyBuffer(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueCopyBuffer, &retVal);
             return retVal;
@@ -2680,7 +2680,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
         WithCastToInternal(dstBuffer, &pDstBuffer));
 
     if (CL_SUCCESS == retVal) {
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueCopyBufferRect, &retVal);
             return retVal;
@@ -2755,7 +2755,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueReadImage, &retVal);
             return retVal;
@@ -2828,7 +2828,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueWriteImage, &retVal);
             return retVal;
@@ -2887,7 +2887,7 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueFillImage, &retVal);
             return retVal;
@@ -2973,7 +2973,7 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueCopyImage, &retVal);
             return retVal;
@@ -3038,7 +3038,7 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueCopyImageToBuffer, &retVal);
             return retVal;
@@ -3103,7 +3103,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueCopyBufferToImage, &retVal);
             return retVal;
@@ -3164,7 +3164,7 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
             break;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             break;
         }
@@ -3247,7 +3247,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
             break;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_IMAGE_INTEL, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             break;
         }
@@ -3318,7 +3318,7 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (!pCommandQueue->validateCapabilityForOperation(requiredCapability, eventWaitList, event)) {
+        if (!pCommandQueue->validateCapabilityForOperation(requiredCapability, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueUnmapMemObject, &retVal);
             return retVal;
@@ -3437,7 +3437,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_KERNEL_INTEL, eventWaitList, event)) {
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_KERNEL_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
         return retVal;
@@ -3622,7 +3622,7 @@ cl_int CL_API_CALL clEnqueueMarkerWithWaitList(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MARKER_INTEL, eventWaitList, event)) {
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MARKER_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clEnqueueMarkerWithWaitList, &retVal);
         return retVal;
@@ -3659,7 +3659,7 @@ cl_int CL_API_CALL clEnqueueBarrierWithWaitList(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_BARRIER_INTEL, eventWaitList, event)) {
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_BARRIER_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clEnqueueBarrierWithWaitList, &retVal);
         return retVal;
@@ -5885,7 +5885,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         device.allocateSyncBufferHandler();
     }
 
-    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_KERNEL_INTEL, eventWaitList, event)) {
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_KERNEL_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
         return retVal;
     }

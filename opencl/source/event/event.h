@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -219,6 +219,10 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     CommandQueue *getCommandQueue() {
+        return cmdQueue;
+    }
+
+    const CommandQueue *getCommandQueue() const {
         return cmdQueue;
     }
 

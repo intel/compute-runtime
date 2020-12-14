@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -301,7 +301,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL bool setupDebugSurface(Kernel *kernel);
 
     bool validateCapability(cl_command_queue_capabilities_intel capability) const;
-    bool validateCapabilityForOperation(cl_command_queue_capabilities_intel capability, const cl_event *waitList, const cl_event *outEvent) const;
+    bool validateCapabilitiesForEventWaitList(cl_uint numEventsInWaitList, const cl_event *waitList) const;
+    bool validateCapabilityForOperation(cl_command_queue_capabilities_intel capability, cl_uint numEventsInWaitList, const cl_event *waitList, const cl_event *outEvent) const;
     cl_uint getQueueFamilyIndex() const { return queueFamilyIndex; }
     cl_uint getQueueIndexWithinFamily() const { return queueIndexWithinFamily; }
     bool isQueueFamilySelected() const { return queueFamilySelected; }

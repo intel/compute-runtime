@@ -542,12 +542,36 @@ bool CommandQueue::validateCapability(cl_command_queue_capabilities_intel capabi
     return this->queueCapabilities == CL_QUEUE_DEFAULT_CAPABILITIES_INTEL || isValueSet(this->queueCapabilities, capability);
 }
 
-bool CommandQueue::validateCapabilityForOperation(cl_command_queue_capabilities_intel capability, const cl_event *waitList, const cl_event *outEvent) const {
+bool CommandQueue::validateCapabilitiesForEventWaitList(cl_uint numEventsInWaitList, const cl_event *waitList) const {
+    for (cl_uint eventIndex = 0u; eventIndex < numEventsInWaitList; eventIndex++) {
+        const Event *event = castToObject<Event>(waitList[eventIndex]);
+        if (event->isUserEvent()) {
+            continue;
+        }
+
+        const CommandQueue *eventCommandQueue = event->getCommandQueue();
+        const bool crossQueue = this != eventCommandQueue;
+        const cl_command_queue_capabilities_intel createCap = crossQueue ? CL_QUEUE_CAPABILITY_CREATE_CROSS_QUEUE_EVENTS_INTEL
+                                                                         : CL_QUEUE_CAPABILITY_CREATE_SINGLE_QUEUE_EVENTS_INTEL;
+        const cl_command_queue_capabilities_intel waitCap = crossQueue ? CL_QUEUE_CAPABILITY_CROSS_QUEUE_EVENT_WAIT_LIST_INTEL
+                                                                       : CL_QUEUE_CAPABILITY_SINGLE_QUEUE_EVENT_WAIT_LIST_INTEL;
+        if (!validateCapability(waitCap) || !eventCommandQueue->validateCapability(createCap)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool CommandQueue::validateCapabilityForOperation(cl_command_queue_capabilities_intel capability,
+                                                  cl_uint numEventsInWaitList,
+                                                  const cl_event *waitList,
+                                                  const cl_event *outEvent) const {
     const bool operationValid = validateCapability(capability);
-    const bool waitListValid = waitList == nullptr || validateCapability(CL_QUEUE_CAPABILITY_EVENT_WAIT_LIST_INTEL);
+    const bool waitListValid = validateCapabilitiesForEventWaitList(numEventsInWaitList, waitList);
     const bool outEventValid = outEvent == nullptr ||
-                               validateCapability(CL_QUEUE_CAPABILITY_SINGLE_QUEUE_EVENTS_INTEL) ||
-                               validateCapability(CL_QUEUE_CAPABILITY_CROSS_QUEUE_EVENTS_INTEL);
+                               validateCapability(CL_QUEUE_CAPABILITY_CREATE_SINGLE_QUEUE_EVENTS_INTEL) ||
+                               validateCapability(CL_QUEUE_CAPABILITY_CREATE_CROSS_QUEUE_EVENTS_INTEL);
     return operationValid && waitListValid && outEventValid;
 }
 

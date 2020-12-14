@@ -475,9 +475,10 @@ TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupsThenReturnCor
 }
 
 TEST(DeviceGenEngineTest, whenGettingQueueFamilyCapabilitiesAllThenReturnCorrectValue) {
-    const cl_command_queue_capabilities_intel expectedProperties = CL_QUEUE_CAPABILITY_EVENT_WAIT_LIST_INTEL |
-                                                                   CL_QUEUE_CAPABILITY_SINGLE_QUEUE_EVENTS_INTEL |
-                                                                   CL_QUEUE_CAPABILITY_CROSS_QUEUE_EVENTS_INTEL |
+    const cl_command_queue_capabilities_intel expectedProperties = CL_QUEUE_CAPABILITY_CREATE_SINGLE_QUEUE_EVENTS_INTEL |
+                                                                   CL_QUEUE_CAPABILITY_CREATE_CROSS_QUEUE_EVENTS_INTEL |
+                                                                   CL_QUEUE_CAPABILITY_SINGLE_QUEUE_EVENT_WAIT_LIST_INTEL |
+                                                                   CL_QUEUE_CAPABILITY_CROSS_QUEUE_EVENT_WAIT_LIST_INTEL |
                                                                    CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL |
                                                                    CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL |
                                                                    CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL |
