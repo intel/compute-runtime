@@ -90,8 +90,10 @@ ze_result_t WddmPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) 
     uint32_t valueCounter = 0;
     uint64_t valueTimeStamp = 0;
     memcpy_s(&valueCounter, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    valueCounter = (valueCounter >> energyUnits);
-    pEnergy->energy = static_cast<uint64_t>(valueCounter) * convertJouleToMicroJoule;
+    uint32_t conversionUnit = (1 << energyUnits);
+    double valueConverted = static_cast<double>(valueCounter) / static_cast<double>(conversionUnit);
+    valueConverted *= static_cast<double>(convertJouleToMicroJoule);
+    pEnergy->energy = static_cast<uint64_t>(valueConverted);
     memcpy_s(&valueTimeStamp, sizeof(uint64_t), (response.dataBuffer + sizeof(uint32_t)), sizeof(uint64_t));
     pEnergy->timestamp = valueTimeStamp;
 
