@@ -74,6 +74,7 @@ struct DeviceImp : public Device {
     void setSysmanHandle(SysmanDevice *pSysman) override;
     SysmanDevice *getSysmanHandle() override;
     ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) override;
+    ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) override;
     ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) override;
 
     NEO::Device *neoDevice = nullptr;

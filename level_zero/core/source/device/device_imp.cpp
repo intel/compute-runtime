@@ -110,9 +110,13 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     NEO::CommandStreamReceiver *csr = nullptr;
     uint32_t engineGroupIndex = desc->ordinal;
     mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
-    auto ret = getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
+    if (desc->priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW) {
+        getCsrForLowPriority(&csr);
+    } else {
+        auto ret = getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
     }
 
     UNRECOVERABLE_IF(csr == nullptr);
@@ -775,6 +779,27 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     }
     return ZE_RESULT_SUCCESS;
 }
+
+ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
+    if (this->getNEODevice()->getNumAvailableDevices() > 1) {
+        for (auto &it : neoDevice->getDeviceById(0)->getEngines()) {
+            if (it.osContext->isLowPriority()) {
+                *csr = it.commandStreamReceiver;
+                return ZE_RESULT_SUCCESS;
+            }
+        }
+    } else {
+        for (auto &it : neoDevice->getEngines()) {
+            if (it.osContext->isLowPriority()) {
+                *csr = it.commandStreamReceiver;
+                return ZE_RESULT_SUCCESS;
+            }
+        }
+    }
+    // if the code falls through, we have no low priority context created by neoDevice.
+    UNRECOVERABLE_IF(true);
+}
+
 ze_result_t DeviceImp::mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) {
     NEO::Device *neoDevice = this->neoDevice;
     if (this->getNEODevice()->getNumAvailableDevices() > 1) {

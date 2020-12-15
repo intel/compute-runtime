@@ -504,6 +504,86 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandL
     commandQueue->destroy();
 }
 
+using DeviceCreateCommandQueueTest = Test<DeviceFixture>;
+TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueIsCalledThenLowPriorityCsrIsAssigned) {
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    EXPECT_NE(commandQueue, nullptr);
+    EXPECT_TRUE(commandQueue->getCsr()->getOsContext().isLowPriority());
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForLowPriority(&csr);
+    EXPECT_EQ(commandQueue->getCsr(), csr);
+    commandQueue->destroy();
+}
+
+TEST_F(DeviceCreateCommandQueueTest, givenNormalPriorityDescWhenCreateCommandQueueIsCalledWithValidArgumentThenCsrIsAssignedWithOrdinalAndIndex) {
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    EXPECT_NE(commandQueue, nullptr);
+    EXPECT_FALSE(commandQueue->getCsr()->getOsContext().isLowPriority());
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    EXPECT_EQ(commandQueue->getCsr(), csr);
+    commandQueue->destroy();
+}
+
+TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCsrWhenCreateCommandQueueIsCalledThenAbortIsThrown) {
+    // remove low priority EngineControl objects for negative testing
+    neoDevice->engines.erase(std::remove_if(
+        neoDevice->engines.begin(),
+        neoDevice->engines.end(),
+        [](EngineControl &p) { return p.osContext->isLowPriority(); }));
+
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    ze_result_t res{};
+    EXPECT_THROW(res = device->createCommandQueue(&desc, &commandQueueHandle), std::exception);
+}
+
+using MultiDeviceCreateCommandQueueTest = Test<MultiDeviceFixture>;
+
+TEST_F(MultiDeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueIsCalledThenLowPriorityCsrIsAssigned) {
+    auto device = driverHandle->devices[0];
+
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    EXPECT_NE(commandQueue, nullptr);
+    EXPECT_TRUE(commandQueue->getCsr()->getOsContext().isLowPriority());
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForLowPriority(&csr);
+    EXPECT_EQ(commandQueue->getCsr(), csr);
+    commandQueue->destroy();
+}
+
 using ContextCreateCommandQueueTest = Test<ContextFixture>;
 
 TEST_F(ContextCreateCommandQueueTest, givenCallToContextCreateCommandQueueThenCallSucceeds) {

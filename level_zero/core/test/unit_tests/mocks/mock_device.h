@@ -235,6 +235,10 @@ struct Mock<Device> : public Device {
         return ZE_RESULT_SUCCESS;
     }
 
+    ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) override {
+        return ZE_RESULT_SUCCESS;
+    }
+
     ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) override {
         return ZE_RESULT_SUCCESS;
     }
