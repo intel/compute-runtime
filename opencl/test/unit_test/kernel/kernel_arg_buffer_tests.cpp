@@ -201,6 +201,59 @@ TEST_F(KernelArgBufferTest, givenNoCacheFlushBufferWhenSettingAsArgThenNotExpect
     EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 }
 
+TEST_F(KernelArgBufferTest, givenBufferWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnFalse) {
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+
+    auto val = (cl_mem)&buffer;
+    auto pVal = &val;
+
+    for (auto pureStatefulBufferAccess : {false, true}) {
+        pKernelInfo->kernelArgInfo[0].pureStatefulBufferAccess = pureStatefulBufferAccess;
+
+        auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
+    }
+}
+
+TEST_F(KernelArgBufferTest, givenBufferInHostMemoryWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnCorrectValue) {
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+
+    auto val = (cl_mem)&buffer;
+    auto pVal = &val;
+
+    for (auto pureStatefulBufferAccess : {false, true}) {
+        pKernelInfo->kernelArgInfo[0].pureStatefulBufferAccess = pureStatefulBufferAccess;
+
+        auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_EQ(!pureStatefulBufferAccess, pKernel->hasDirectStatelessAccessToHostMemory());
+    }
+}
+
+TEST_F(KernelArgBufferTest, givenInvalidMemObjWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnFalse) {
+    KernelInfo kernelInfo;
+    MockKernel emptyKernel(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0));
+    EXPECT_FALSE(emptyKernel.hasDirectStatelessAccessToHostMemory());
+
+    pKernel->kernelArguments.at(0).type = Kernel::NONE_OBJ;
+    EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
+
+    pKernel->kernelArguments.at(0).type = Kernel::BUFFER_OBJ;
+    EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
+}
+
+TEST_F(KernelArgBufferTest, whenSettingAuxTranslationRequiredThenIsAuxTranslationRequiredReturnsCorrectValue) {
+    for (auto auxTranslationRequired : {false, true}) {
+        pKernel->setAuxTranslationRequired(auxTranslationRequired);
+        EXPECT_EQ(auxTranslationRequired, pKernel->isAuxTranslationRequired());
+    }
+}
+
 class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
   public:
     void SetUp() {

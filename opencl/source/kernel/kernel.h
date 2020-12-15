@@ -114,6 +114,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
 
     bool isAuxTranslationRequired() const { return auxTranslationRequired; }
+    void setAuxTranslationRequired(bool onOff) { auxTranslationRequired = onOff; }
+    void updateAuxTranslationRequired();
 
     char *getCrossThreadData(uint32_t rootDeviceIndex) const {
         return kernelDeviceInfos[rootDeviceIndex].crossThreadData;
@@ -491,6 +493,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     void resolveArgs();
 
     void reconfigureKernel(uint32_t rootDeviceIndex);
+    bool hasDirectStatelessAccessToHostMemory() const;
 
     void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;

@@ -2464,6 +2464,18 @@ void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsF
     }
 }
 
+bool Kernel::hasDirectStatelessAccessToHostMemory() const {
+    for (uint32_t i = 0; i < getKernelArgsNumber(); i++) {
+        if (BUFFER_OBJ == kernelArguments.at(i).type && !getDefaultKernelInfo().kernelArgInfo.at(i).pureStatefulBufferAccess) {
+            auto buffer = castToObject<Buffer>(getKernelArg(i));
+            if (buffer && buffer->getMultiGraphicsAllocation().getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out, uint32_t rootDeviceIndex) const {
     if (false == HwHelper::cacheFlushAfterWalkerSupported(getHardwareInfo(rootDeviceIndex))) {
         return;

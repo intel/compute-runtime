@@ -41,4 +41,6 @@ int32_t Kernel::setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t 
     return CL_INVALID_VALUE;
 }
 
+void Kernel::updateAuxTranslationRequired() {
+}
 } // namespace NEO

@@ -65,6 +65,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         forceDispatchScheduler(multiDispatchInfo);
     } else {
         auto rootDeviceIndex = device->getRootDeviceIndex();
+        kernel->updateAuxTranslationRequired();
         if (kernel->isAuxTranslationRequired()) {
             auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getClDevice());
             builtInLock.takeOwnership(builder);

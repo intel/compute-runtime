@@ -33,6 +33,7 @@ class MockKernel : public Kernel {
     using Kernel::auxTranslationRequired;
     using Kernel::containsStatelessWrites;
     using Kernel::executionType;
+    using Kernel::hasDirectStatelessAccessToHostMemory;
     using Kernel::isSchedulerKernel;
     using Kernel::kernelArgHandlers;
     using Kernel::kernelArgRequiresCacheFlush;
