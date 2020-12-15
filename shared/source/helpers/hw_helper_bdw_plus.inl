@@ -65,9 +65,13 @@ const HwHelper::EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineIn
 }
 
 template <typename GfxFamily>
-void HwHelperHw<GfxFamily>::addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
-                                                   EngineControl &engine, const HardwareInfo &hwInfo) const {
-    engineGroups[static_cast<uint32_t>(EngineGroupType::RenderCompute)].push_back(engine);
+EngineGroupType HwHelperHw<GfxFamily>::getEngineGroupType(aub_stream::EngineType engineType, const HardwareInfo &hwInfo) const {
+    switch (engineType) {
+    case aub_stream::ENGINE_RCS:
+        return EngineGroupType::RenderCompute;
+    default:
+        UNRECOVERABLE_IF(true);
+    }
 }
 
 template <typename GfxFamily>

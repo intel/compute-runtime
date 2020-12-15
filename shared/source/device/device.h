@@ -116,6 +116,7 @@ class Device : public ReferenceTrackedObject<Device> {
 
     virtual bool createDeviceImpl();
     virtual bool createEngines();
+    void addEngineToEngineGroup(EngineControl &engine);
     bool createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage);
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     virtual uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;

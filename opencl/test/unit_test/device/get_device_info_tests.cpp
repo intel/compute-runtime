@@ -694,17 +694,14 @@ class MockHwHelper : public HwHelperHw<GfxFamily> {
         return result;
     }
 
-    void addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
-                                EngineControl &engine, const HardwareInfo &hwInfo) const override {
-        switch (engine.getEngineType()) {
+    EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, const HardwareInfo &hwInfo) const override {
+        switch (engineType) {
         case aub_stream::ENGINE_CCS:
-            engineGroups[static_cast<int>(EngineGroupType::Compute)].push_back(engine);
-            break;
+            return EngineGroupType::Compute;
         case aub_stream::ENGINE_BCS:
-            engineGroups[static_cast<int>(EngineGroupType::Copy)].push_back(engine);
-            break;
+            return EngineGroupType::Copy;
         default:
-            break;
+            UNRECOVERABLE_IF(true);
         }
     }
 

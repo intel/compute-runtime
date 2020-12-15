@@ -200,16 +200,16 @@ const HwHelper::EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInsta
 };
 
 template <>
-void HwHelperHw<Family>::addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
-                                                EngineControl &engine, const HardwareInfo &hwInfo) const {
-    if (engine.getEngineType() == aub_stream::ENGINE_RCS) {
-        engineGroups[static_cast<uint32_t>(EngineGroupType::RenderCompute)].push_back(engine);
-    }
-    if (engine.getEngineType() == aub_stream::ENGINE_CCS) {
-        engineGroups[static_cast<uint32_t>(EngineGroupType::Compute)].push_back(engine);
-    }
-    if (engine.getEngineType() == aub_stream::ENGINE_BCS && DebugManager.flags.EnableBlitterOperationsSupport.get() != 0) {
-        engineGroups[static_cast<uint32_t>(EngineGroupType::Copy)].push_back(engine);
+EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, const HardwareInfo &hwInfo) const {
+    switch (engineType) {
+    case aub_stream::ENGINE_RCS:
+        return EngineGroupType::RenderCompute;
+    case aub_stream::ENGINE_CCS:
+        return EngineGroupType::Compute;
+    case aub_stream::ENGINE_BCS:
+        return EngineGroupType::Copy;
+    default:
+        UNRECOVERABLE_IF(true);
     }
 }
 

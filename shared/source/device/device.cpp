@@ -115,6 +115,19 @@ bool Device::createEngines() {
     return true;
 }
 
+void Device::addEngineToEngineGroup(EngineControl &engine) {
+    const HardwareInfo &hardwareInfo = this->getHardwareInfo();
+    const HwHelper &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engine.getEngineType(), hardwareInfo);
+
+    if (hwHelper.isCopyOnlyEngineType(engineGroupType) && DebugManager.flags.EnableBlitterOperationsSupport.get() == 0) {
+        return;
+    }
+
+    const uint32_t engineGroupIndex = static_cast<uint32_t>(engineGroupType);
+    this->engineGroups[engineGroupIndex].push_back(engine);
+}
+
 std::unique_ptr<CommandStreamReceiver> Device::createCommandStreamReceiver() const {
     return std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
 }
@@ -165,9 +178,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     EngineControl engine{commandStreamReceiver.get(), osContext};
     engines.push_back(engine);
     if (!lowPriority && !internalUsage) {
-        const auto &hardwareInfo = this->getHardwareInfo();
-        auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-        hwHelper.addEngineToEngineGroup(engineGroups, engine, hwInfo);
+        addEngineToEngineGroup(engine);
     }
 
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));

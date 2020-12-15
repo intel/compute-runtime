@@ -1345,17 +1345,14 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
             return result;
         }
 
-        void addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
-                                    EngineControl &engine, const HardwareInfo &hwInfo) const override {
-            switch (engine.getEngineType()) {
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, const HardwareInfo &hwInfo) const override {
+            switch (engineType) {
             case aub_stream::ENGINE_CCS:
-                engineGroups[static_cast<int>(EngineGroupType::Compute)].push_back(engine);
-                break;
+                return EngineGroupType::Compute;
             case aub_stream::ENGINE_BCS:
-                engineGroups[static_cast<int>(EngineGroupType::Copy)].push_back(engine);
-                break;
+                return EngineGroupType::Copy;
             default:
-                break;
+                UNRECOVERABLE_IF(true);
             }
         }
     };
@@ -1434,25 +1431,6 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1>>();
-    MockContext context{};
-    cl_command_queue_properties properties[5] = {};
-
-    fillProperties(properties, 0, 0);
-    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, false, false);
-    MockCommandQueue queueBcs(&context, context.getDevice(0), properties);
-    EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver());
-    EXPECT_TRUE(queueBcs.isCopyOnly);
-    EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
-    EXPECT_TRUE(queueBcs.isQueueFamilySelected());
-    EXPECT_EQ(properties[1], queueBcs.getQueueFamilyIndex());
-    EXPECT_EQ(properties[3], queueBcs.getQueueIndexWithinFamily());
-}
-
-HWTEST_F(CommandQueueOnSpecificEngineTests, givenBliterDisabledAndBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
-    DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterOperationsSupport.set(0);
-
     auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1>>();
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
