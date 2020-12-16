@@ -27,7 +27,7 @@ struct PerformanceCountersLinuxTest : public PerformanceCountersFixture,
     }
 };
 
-TEST_F(PerformanceCountersLinuxTest, createPerformanceCountersWithPassingDrmFileDescriptor) {
+TEST_F(PerformanceCountersLinuxTest, WhenCreatingPerformanceCountersThenDrmFileDescriptorIsPassed) {
     auto performanceCounters = PerformanceCounters::create(&device->getDevice());
 
     EXPECT_NE(nullptr, performanceCounters);

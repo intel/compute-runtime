@@ -100,7 +100,7 @@ class DrmGemCloseWorkerFixture {
 
 typedef Test<DrmGemCloseWorkerFixture> DrmGemCloseWorkerTests;
 
-TEST_F(DrmGemCloseWorkerTests, gemClose) {
+TEST_F(DrmGemCloseWorkerTests, WhenClosingGemThenSucceeds) {
     this->drmMock->gem_close_expected = 1;
 
     auto worker = new DrmGemCloseWorker(*mm);
@@ -111,7 +111,7 @@ TEST_F(DrmGemCloseWorkerTests, gemClose) {
     delete worker;
 }
 
-TEST_F(DrmGemCloseWorkerTests, gemCloseExit) {
+TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsWhenClosingGemThenSucceeds) {
     this->drmMock->gem_close_expected = -1;
 
     auto worker = new DrmGemCloseWorker(*mm);
@@ -131,7 +131,7 @@ TEST_F(DrmGemCloseWorkerTests, gemCloseExit) {
     delete worker;
 }
 
-TEST_F(DrmGemCloseWorkerTests, close) {
+TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsAndCloseFalseWhenClosingGemThenSucceeds) {
     this->drmMock->gem_close_expected = -1;
 
     auto worker = new DrmGemCloseWorker(*mm);

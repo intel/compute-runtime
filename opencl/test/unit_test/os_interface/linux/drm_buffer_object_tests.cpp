@@ -73,7 +73,7 @@ class DrmBufferObjectFixture {
 
 typedef Test<DrmBufferObjectFixture> DrmBufferObjectTest;
 
-TEST_F(DrmBufferObjectTest, exec) {
+TEST_F(DrmBufferObjectTest, WhenCallingExecThenReturnIsCorrect) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = 0;
 
@@ -83,7 +83,7 @@ TEST_F(DrmBufferObjectTest, exec) {
     EXPECT_EQ(0u, mock->execBuffer.flags);
 }
 
-TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
+TEST_F(DrmBufferObjectTest, GivenInvalidParamsWhenCallingExecThenEfaultIsReturned) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = -1;
     mock->errnoValue = EFAULT;
@@ -91,20 +91,20 @@ TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
     EXPECT_EQ(EFAULT, bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage));
 }
 
-TEST_F(DrmBufferObjectTest, setTiling_success) {
+TEST_F(DrmBufferObjectTest, WhenSettingTilingThenCallSucceeds) {
     mock->ioctl_expected.total = 1; //set_tiling
     auto ret = bo->setTiling(I915_TILING_X, 0);
     EXPECT_TRUE(ret);
 }
 
-TEST_F(DrmBufferObjectTest, setTiling_theSameTiling) {
+TEST_F(DrmBufferObjectTest, WhenSettingSameTilingThenCallSucceeds) {
     mock->ioctl_expected.total = 0; //set_tiling
     bo->tileBy(I915_TILING_X);
     auto ret = bo->setTiling(I915_TILING_X, 0);
     EXPECT_TRUE(ret);
 }
 
-TEST_F(DrmBufferObjectTest, setTiling_ioctlFailed) {
+TEST_F(DrmBufferObjectTest, GivenInvalidTilingWhenSettingTilingThenCallFails) {
     mock->ioctl_expected.total = 1; //set_tiling
     mock->ioctl_res = -1;
     auto ret = bo->setTiling(I915_TILING_X, 0);

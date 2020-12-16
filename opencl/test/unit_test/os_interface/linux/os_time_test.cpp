@@ -53,24 +53,24 @@ struct DrmTimeTest : public ::testing::Test {
     std::unique_ptr<OSInterface> osInterface;
 };
 
-TEST_F(DrmTimeTest, DetectWithNullDrmNoCrash) {
+TEST_F(DrmTimeTest, GivenMockOsTimeThenInitializes) {
 }
 
-TEST_F(DrmTimeTest, GetCpuTime) {
+TEST_F(DrmTimeTest, WhenGettingCpuTimeThenSucceeds) {
     uint64_t time = 0;
     auto error = osTime->getCpuTime(&time);
     EXPECT_TRUE(error);
     EXPECT_NE(0ULL, time);
 }
 
-TEST_F(DrmTimeTest, GetCpuTimeFail) {
+TEST_F(DrmTimeTest, GivenFalseTimeFuncWhenGettingCpuTimeThenFails) {
     uint64_t time = 0;
     osTime->setGetTimeFunc(getTimeFuncFalse);
     auto error = osTime->getCpuTime(&time);
     EXPECT_FALSE(error);
 }
 
-TEST_F(DrmTimeTest, GetGpuTime) {
+TEST_F(DrmTimeTest, WhenGettingGpuTimeThenSuceeds) {
     uint64_t time = 0;
     auto pDrm = new DrmMockTime();
     osTime->updateDrm(pDrm);
@@ -85,7 +85,7 @@ TEST_F(DrmTimeTest, GetGpuTime) {
     EXPECT_NE(0ULL, time);
 }
 
-TEST_F(DrmTimeTest, GetGpuTimeFails) {
+TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingGpuTimeThenFails) {
     uint64_t time = 0;
     auto pDrm = new DrmMockFail();
     osTime->updateDrm(pDrm);
@@ -97,7 +97,7 @@ TEST_F(DrmTimeTest, GetGpuTimeFails) {
     EXPECT_FALSE(error);
 }
 
-TEST_F(DrmTimeTest, GetCpuGpuTime) {
+TEST_F(DrmTimeTest, WhenGettingCpuGpuTimeThenSucceeds) {
     TimeStampData CPUGPUTime01 = {0, 0};
     TimeStampData CPUGPUTime02 = {0, 0};
     auto pDrm = new DrmMockTime();
@@ -114,7 +114,7 @@ TEST_F(DrmTimeTest, GetCpuGpuTime) {
     EXPECT_GT(CPUGPUTime02.CPUTimeinNS, CPUGPUTime01.CPUTimeinNS);
 }
 
-TEST_F(DrmTimeTest, GIVENDrmWHENGetCpuGpuTimeTHENPassed) {
+TEST_F(DrmTimeTest, GivenDrmWhenGettingCpuGpuTimeThenSucceeds) {
     TimeStampData CPUGPUTime01 = {0, 0};
     TimeStampData CPUGPUTime02 = {0, 0};
     auto pDrm = new DrmMockTime();
@@ -137,7 +137,7 @@ TEST_F(DrmTimeTest, givenGetCpuGpuTimeWhenItIsUnavailableThenReturnFalse) {
     EXPECT_FALSE(error);
 }
 
-TEST_F(DrmTimeTest, GetCpuGpuTimeFails) {
+TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingCpuGpuTimeThenFails) {
     TimeStampData CPUGPUTime01 = {0, 0};
     auto pDrm = new DrmMockFail();
     osTime->updateDrm(pDrm);
@@ -145,7 +145,7 @@ TEST_F(DrmTimeTest, GetCpuGpuTimeFails) {
     EXPECT_FALSE(error);
 }
 
-TEST_F(DrmTimeTest, GetCpuGpuTimeCpuFails) {
+TEST_F(DrmTimeTest, GivenInvalidFuncTimeWhenGettingCpuGpuTimeCpuThenFails) {
     TimeStampData CPUGPUTime01 = {0, 0};
     auto pDrm = new DrmMockTime();
     osTime->setGetTimeFunc(getTimeFuncFalse);
@@ -154,7 +154,7 @@ TEST_F(DrmTimeTest, GetCpuGpuTimeCpuFails) {
     EXPECT_FALSE(error);
 }
 
-TEST_F(DrmTimeTest, detect) {
+TEST_F(DrmTimeTest, WhenGettingTimeThenTimeIsCorrect) {
     auto drm = new DrmMockCustom;
     osTime->updateDrm(drm);
 

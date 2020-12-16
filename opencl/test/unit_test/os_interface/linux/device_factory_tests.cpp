@@ -12,7 +12,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
-TEST_F(DeviceFactoryLinuxTest, PrepareDeviceEnvironmentsCheckEUCntSSCnt) {
+TEST_F(DeviceFactoryLinuxTest, WhenPreparingDeviceEnvironmentsThenInitializedCorrectly) {
     const HardwareInfo *refHwinfo = defaultHwInfo.get();
 
     pDrm->StoredEUVal = 16;
@@ -50,7 +50,7 @@ TEST_F(DeviceFactoryLinuxTest, givenSomeDisabledSSAndEUWhenPrepareDeviceEnvironm
     EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 12);
 }
 
-TEST_F(DeviceFactoryLinuxTest, PrepareDeviceEnvironmentsDrmCreateFailedConfigureHwInfo) {
+TEST_F(DeviceFactoryLinuxTest, GivenInvalidHwInfoWhenPreparingDeviceEnvironmentsThenFailIsReturned) {
 
     pDrm->StoredRetValForDeviceID = -1;
 

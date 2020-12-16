@@ -23,7 +23,7 @@
 
 using namespace NEO;
 
-TEST(DrmTest, GetDeviceID) {
+TEST(DrmTest, WhenGettingDeviceIdThenCorrectIdReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -52,7 +52,7 @@ TEST(DrmTest, GivenInvalidPciPathWhenFrequencyIsQueriedThenReturnError) {
     EXPECT_EQ(0, maxFrequency);
 }
 
-TEST(DrmTest, GetRevisionID) {
+TEST(DrmTest, WhenGettingRevisionIdThenCorrectIdIsReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -90,7 +90,7 @@ TEST(DrmTest, GivenDrmWhenAskedForGttSizeThenReturnCorrectValue) {
     EXPECT_EQ(0u, queryGttSize);
 }
 
-TEST(DrmTest, GivenDrmWhenAskedForPreemptionCorrectValueReturned) {
+TEST(DrmTest, GivenDrmWhenAskedForPreemptionThenCorrectValueReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -227,7 +227,7 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
 }
 
-TEST(DrmTest, getExecSoftPin) {
+TEST(DrmTest, WhenGettingExecSoftPinThenCorrectValueIsReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -245,7 +245,7 @@ TEST(DrmTest, getExecSoftPin) {
     delete pDrm;
 }
 
-TEST(DrmTest, enableTurboBoost) {
+TEST(DrmTest, WhenEnablingTurboBoostThenSucceeds) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -256,7 +256,7 @@ TEST(DrmTest, enableTurboBoost) {
     delete pDrm;
 }
 
-TEST(DrmTest, getEnabledPooledEu) {
+TEST(DrmTest, WhenGettingEnabledPooledEuThenCorrectValueIsReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -291,7 +291,7 @@ TEST(DrmTest, getEnabledPooledEu) {
     delete pDrm;
 }
 
-TEST(DrmTest, getMinEuInPool) {
+TEST(DrmTest, WhenGettingMinEuInPoolThenCorrectValueIsReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
