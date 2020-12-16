@@ -3038,6 +3038,12 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
             return retVal;
         }
 
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
+            TRACING_EXIT(clEnqueueCopyImageToBuffer, &retVal);
+            return retVal;
+        }
+
         retVal = pCommandQueue->enqueueCopyImageToBuffer(
             pSrcImage,
             pDstBuffer,
@@ -3093,6 +3099,12 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
         }
         retVal = Image::validateRegionAndOrigin(dstOrigin, region, pDstImage->getImageDesc());
         if (retVal != CL_SUCCESS) {
+            TRACING_EXIT(clEnqueueCopyBufferToImage, &retVal);
+            return retVal;
+        }
+
+        if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL, eventWaitList, event)) {
+            retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueCopyBufferToImage, &retVal);
             return retVal;
         }
