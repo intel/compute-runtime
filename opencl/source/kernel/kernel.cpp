@@ -136,11 +136,11 @@ inline void patch(const SrcT &src, void *dst, uint32_t dstOffsetBytes) {
 }
 
 template <typename PatchTokenT>
-void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const PatchTokenT &patch) {
+void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const Device &device, const PatchTokenT &patch) {
     uint32_t crossThreadDataOffset = patch.DataParamOffset;
     uint32_t pointerSize = patch.DataParamSize;
     uint32_t sshOffset = patch.SurfaceStateHeapOffset;
-    auto rootDeviceIndex = allocation.getRootDeviceIndex();
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     void *crossThreadData = getCrossThreadData(rootDeviceIndex);
     void *ssh = getSurfaceStateHeap(rootDeviceIndex);
     if (crossThreadData != nullptr) {
@@ -157,15 +157,15 @@ void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, Graphic
         auto surfaceState = ptrOffset(ssh, sshOffset);
         void *addressToPatch = reinterpret_cast<void *>(allocation.getGpuAddressToPatch());
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
-        Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, sizeToPatch, addressToPatch, 0, &allocation, 0, 0);
+        Buffer::setSurfaceState(&device, surfaceState, sizeToPatch, addressToPatch, 0, &allocation, 0, 0);
     }
 }
 
-template void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization &patch);
+template void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const Device &device, const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization &patch);
 
-template void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const SPatchAllocateStatelessPrivateSurface &patch);
+template void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const Device &device, const SPatchAllocateStatelessPrivateSurface &patch);
 
-template void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization &patch);
+template void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const Device &device, const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization &patch);
 
 cl_int Kernel::initialize() {
     std::bitset<64> isDeviceInitialized{};
@@ -316,14 +316,14 @@ cl_int Kernel::initialize() {
                 return CL_OUT_OF_RESOURCES;
             }
             const auto &patch = patchInfo.pAllocateStatelessPrivateSurface;
-            patchWithImplicitSurface(reinterpret_cast<void *>(kernelDeviceInfo.privateSurface->getGpuAddressToPatch()), *kernelDeviceInfo.privateSurface, *patch);
+            patchWithImplicitSurface(reinterpret_cast<void *>(kernelDeviceInfo.privateSurface->getGpuAddressToPatch()), *kernelDeviceInfo.privateSurface, pClDevice->getDevice(), *patch);
         }
         if (patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization) {
             DEBUG_BREAK_IF(program->getConstantSurface(rootDeviceIndex) == nullptr);
             uintptr_t constMemory = isBuiltIn ? (uintptr_t)program->getConstantSurface(rootDeviceIndex)->getUnderlyingBuffer() : (uintptr_t)program->getConstantSurface(rootDeviceIndex)->getGpuAddressToPatch();
 
             const auto &patch = patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization;
-            patchWithImplicitSurface(reinterpret_cast<void *>(constMemory), *program->getConstantSurface(rootDeviceIndex), *patch);
+            patchWithImplicitSurface(reinterpret_cast<void *>(constMemory), *program->getConstantSurface(rootDeviceIndex), pClDevice->getDevice(), *patch);
         }
 
         if (patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization) {
@@ -331,7 +331,7 @@ cl_int Kernel::initialize() {
             uintptr_t globalMemory = isBuiltIn ? (uintptr_t)program->getGlobalSurface(rootDeviceIndex)->getUnderlyingBuffer() : (uintptr_t)program->getGlobalSurface(rootDeviceIndex)->getGpuAddressToPatch();
 
             const auto &patch = patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization;
-            patchWithImplicitSurface(reinterpret_cast<void *>(globalMemory), *program->getGlobalSurface(rootDeviceIndex), *patch);
+            patchWithImplicitSurface(reinterpret_cast<void *>(globalMemory), *program->getGlobalSurface(rootDeviceIndex), pClDevice->getDevice(), *patch);
         }
 
         if (patchInfo.pAllocateStatelessEventPoolSurface) {
@@ -1137,6 +1137,7 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
                 if (image && image->isImageFromImage()) {
                     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
                 }
+                memObj->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*executionEnvironment.memoryManager, commandStreamReceiver.getRootDeviceIndex());
                 commandStreamReceiver.makeResident(*memObj->getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex()));
                 if (memObj->getMcsAllocation()) {
                     commandStreamReceiver.makeResident(*memObj->getMcsAllocation());

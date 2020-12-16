@@ -131,17 +131,17 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
     }
 
     cleanCurrentKernelInfo(rootDeviceIndex);
-    for (auto &buildInfo : buildInfos) {
-        if (buildInfo.constantSurface || buildInfo.globalSurface) {
-            clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface);
-            clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.globalSurface);
-            buildInfo.constantSurface = nullptr;
-            buildInfo.globalSurface = nullptr;
-        }
+    auto &buildInfo = buildInfos[rootDeviceIndex];
+
+    if (buildInfo.constantSurface || buildInfo.globalSurface) {
+        clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface);
+        clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.globalSurface);
+        buildInfo.constantSurface = nullptr;
+        buildInfo.globalSurface = nullptr;
     }
 
     ProgramInfo programInfo;
-    auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
+    auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
     SingleDeviceBinary binary = {};
     binary.deviceBinary = blob;
     std::string decodeErrors;

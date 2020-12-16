@@ -482,7 +482,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     // Sets-up both crossThreadData and ssh for given implicit (private/constant, etc.) allocation
     template <typename PatchTokenT>
-    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const PatchTokenT &patch);
+    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const Device &device, const PatchTokenT &patch);
 
     void getParentObjectCounts(ObjectCounts &objectCount);
     Kernel(Program *programArg, const KernelInfoContainer &kernelInfsoArg, bool schedulerKernel = false);

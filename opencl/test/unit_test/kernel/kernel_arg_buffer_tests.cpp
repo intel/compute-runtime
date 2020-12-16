@@ -130,6 +130,30 @@ TEST_F(MultiDeviceKernelArgBufferTest, GivenValidBufferWhenSettingKernelArgThenB
     }
 }
 
+TEST_F(MultiDeviceKernelArgBufferTest, WhenMakingKernelArgResidentThenMemoryIsTransferredToProperDevice) {
+
+    auto pKernel = std::unique_ptr<MockKernel>(Kernel::create<MockKernel>(pProgram.get(), kernelInfos, nullptr));
+
+    EXPECT_NE(nullptr, pKernel);
+    cl_mem val = pBuffer.get();
+    auto pVal = &val;
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto csr1 = deviceFactory.rootDevices[1]->getDefaultEngine().commandStreamReceiver;
+    auto csr2 = deviceFactory.rootDevices[2]->getDefaultEngine().commandStreamReceiver;
+
+    pKernel->makeResident(*csr1);
+    EXPECT_EQ(1u, pBuffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex());
+
+    pKernel->makeResident(*csr2);
+    EXPECT_EQ(2u, pBuffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex());
+
+    pKernel->makeResident(*csr1);
+    EXPECT_EQ(1u, pBuffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex());
+}
+
 TEST_F(KernelArgBufferTest, GivenSvmPtrStatelessWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     Buffer *buffer = new MockBuffer();
 

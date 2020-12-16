@@ -259,7 +259,7 @@ HWTEST_F(KernelArgSvmTest, WhenPatchingWithImplicitSurfaceThenPatchIsApplied) {
         RENDER_SURFACE_STATE *surfState = reinterpret_cast<RENDER_SURFACE_STATE *>(pKernel->getSurfaceStateHeap(rootDeviceIndex));
         memset(surfState, 0, rendSurfSize);
 
-        pKernel->patchWithImplicitSurface(ptrToPatch, svmAlloc, patch);
+        pKernel->patchWithImplicitSurface(ptrToPatch, svmAlloc, *pDevice, patch);
 
         // verify cross thread data was properly patched
         EXPECT_EQ(ptrToPatch, *reinterpret_cast<void **>(pKernel->getCrossThreadData(rootDeviceIndex)));
@@ -280,7 +280,7 @@ HWTEST_F(KernelArgSvmTest, WhenPatchingWithImplicitSurfaceThenPatchIsApplied) {
         // when cross thread and ssh data is not available then should not do anything
         pKernel->setCrossThreadData(nullptr, 0);
         pKernel->setSshLocal(nullptr, 0, rootDeviceIndex);
-        pKernel->patchWithImplicitSurface(ptrToPatch, svmAlloc, patch);
+        pKernel->patchWithImplicitSurface(ptrToPatch, svmAlloc, *pDevice, patch);
     }
 }
 
