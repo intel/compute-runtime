@@ -361,15 +361,18 @@ if(BUILD_WITH_L0)
                                    L0_SOURCES_WINDOWS
                                    L0_SRCS_COMPILER_INTERFACE
                                    L0_SRCS_DEBUGGER
+                                   L0_SRCS_DRIVER
                                    L0_SRCS_OCLOC_SHARED
     )
     if(WIN32)
       append_sources_from_properties(L0_RUNTIME_SOURCES
                                      L0_SRCS_DEBUGGER_WINDOWS
+                                     L0_SRCS_DRIVER_WINDOWS
       )
     else()
       append_sources_from_properties(L0_RUNTIME_SOURCES
                                      L0_SRCS_DEBUGGER_LINUX
+                                     L0_SRCS_DRIVER_LINUX
       )
     endif()
 

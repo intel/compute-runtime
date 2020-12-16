@@ -31,6 +31,7 @@ struct L0EnvVariables {
     bool metrics;
     bool pin;
     bool sysman;
+    bool pciIdDeviceOrder;
 };
 
 } // namespace L0

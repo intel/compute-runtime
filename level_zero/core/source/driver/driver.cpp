@@ -41,6 +41,8 @@ void DriverImp::initialize(ze_result_t *result) {
         envReader.getSetting("ZET_ENABLE_PROGRAM_INSTRUMENTATION", false);
     envVariables.sysman =
         envReader.getSetting("ZES_ENABLE_SYSMAN", false);
+    envVariables.pciIdDeviceOrder =
+        envReader.getSetting("ZE_ENABLE_PCI_ID_DEVICE_ORDER", false);
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);

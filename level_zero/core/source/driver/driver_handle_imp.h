@@ -82,6 +82,7 @@ struct DriverHandleImp : public DriverHandle {
                                                                      uintptr_t *gpuAddress) override;
     uint32_t parseAffinityMask(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
     void createHostPointerManager();
+    void sortNeoDevices(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
     // Experimental functions
@@ -107,6 +108,7 @@ struct DriverHandleImp : public DriverHandle {
     // Environment Variables
     bool enableProgramDebugging = false;
     bool enableSysman = false;
+    bool enablePciIdDeviceOrder = false;
 };
 
 extern struct DriverHandleImp *GlobalDriver;

@@ -155,6 +155,9 @@ class Drm {
 
     static Drm *create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     static void overrideBindSupport(bool &useVmBind);
+    std::string getPciPath() {
+        return hwDeviceId->getPciPath();
+    }
 
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);

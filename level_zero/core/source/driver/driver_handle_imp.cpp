@@ -229,6 +229,10 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
     uint32_t affinityMask = std::numeric_limits<uint32_t>::max();
 
+    if (enablePciIdDeviceOrder) {
+        sortNeoDevices(neoDevices);
+    }
+
     if (this->affinityMaskString.length() > 0) {
         affinityMask = parseAffinityMask(neoDevices);
     }
@@ -292,6 +296,7 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     driverHandle->affinityMaskString = envVariables.affinityMask;
     driverHandle->enableProgramDebugging = envVariables.programDebugging;
     driverHandle->enableSysman = envVariables.sysman;
+    driverHandle->enablePciIdDeviceOrder = envVariables.pciIdDeviceOrder;
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
     if (res != ZE_RESULT_SUCCESS) {
