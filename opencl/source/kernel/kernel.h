@@ -170,7 +170,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void resizeSurfaceStateHeap(uint32_t rootDeviceIndex, void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset);
 
-    void substituteKernelHeap(uint32_t rootDeviceIndex, void *newKernelHeap, size_t newKernelHeapSize);
+    void substituteKernelHeap(const Device &device, void *newKernelHeap, size_t newKernelHeapSize);
     bool isKernelHeapSubstituted(uint32_t rootDeviceIndex) const;
     uint64_t getKernelId(uint32_t rootDeviceIndex) const;
     void setKernelId(uint32_t rootDeviceIndex, uint64_t newKernelId);

@@ -63,11 +63,11 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
     }
     if (isGTPinInitialized) {
         auto pKernel = castToObjectOrAbort<Kernel>(kernel);
-        auto device = pKernel->getDevices()[0];
-        auto rootDeviceIndex = device->getRootDeviceIndex();
+        auto &device = pKernel->getDevices()[0]->getDevice();
+        auto rootDeviceIndex = device.getRootDeviceIndex();
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
         // Enlarge local copy of SSH by 1 SS
-        GFXCORE_FAMILY genFamily = device->getHardwareInfo().platform.eRenderCoreFamily;
+        GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         if (pKernel->isParentKernel || !gtpinHelper.addSurfaceState(pKernel, rootDeviceIndex)) {
             // Kernel with no SSH or Kernel EM, not supported
@@ -97,7 +97,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         instrument_params_out_t paramsOut = {0};
         (*GTPinCallbacks.onKernelCreate)((context_handle_t)(cl_context)context, &paramsIn, &paramsOut);
         // Substitute ISA of created kernel with instrumented code
-        pKernel->substituteKernelHeap(rootDeviceIndex, paramsOut.inst_kernel_binary, paramsOut.inst_kernel_size);
+        pKernel->substituteKernelHeap(device, paramsOut.inst_kernel_binary, paramsOut.inst_kernel_size);
         pKernel->setKernelId(rootDeviceIndex, paramsOut.kernel_id);
     }
 }

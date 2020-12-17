@@ -2328,7 +2328,7 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     // Substitute new kernel code
     constexpr size_t newCodeSize = 64;
     uint8_t newCode[newCodeSize] = {0x0, 0x1, 0x2, 0x3, 0x4};
-    pKernel->substituteKernelHeap(rootDeviceIndex, &newCode[0], newCodeSize);
+    pKernel->substituteKernelHeap(pDevice->getDevice(), &newCode[0], newCodeSize);
 
     // Verify that substitution went properly
     isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted(rootDeviceIndex);

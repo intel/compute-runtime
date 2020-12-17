@@ -707,22 +707,30 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
 
 TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenContextProvidesProperHint) {
 
-    auto pDevice = castToObject<ClDevice>(devices[0]);
-    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     auto size = zeroSized ? 0 : 1024;
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(context->getDevices(), context);
     SPatchMediaVFEState mediaVFEstate;
 
     mediaVFEstate.PerThreadScratchSpace = size;
 
+    uint32_t computeUnitsForScratch[] = {0x10, 0x20};
+
+    for (auto &pClDevice : context->getDevices()) {
+        auto &deviceInfo = const_cast<DeviceInfo &>(pClDevice->getSharedDeviceInfo());
+        deviceInfo.computeUnitsUsedForScratch = computeUnitsForScratch[pClDevice->getRootDeviceIndex()];
+    }
+
     mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
-    size *= pDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize();
 
     mockKernel.mockKernel->initialize();
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[REGISTER_PRESSURE_TOO_HIGH],
-             mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(), size);
-    EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
+    for (auto &pClDevice : context->getDevices()) {
+        auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+        auto expectedSize = size * pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize();
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[REGISTER_PRESSURE_TOO_HIGH],
+                 mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(), expectedSize);
+        EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
+    }
 }
 
 TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThenContextProvidesProperHint) {

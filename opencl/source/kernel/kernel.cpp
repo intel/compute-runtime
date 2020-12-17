@@ -794,7 +794,8 @@ size_t Kernel::getKernelHeapSize(uint32_t rootDeviceIndex) const {
     return getKernelInfo(rootDeviceIndex).heapInfo.KernelHeapSize;
 }
 
-void Kernel::substituteKernelHeap(uint32_t rootDeviceIndex, void *newKernelHeap, size_t newKernelHeapSize) {
+void Kernel::substituteKernelHeap(const Device &device, void *newKernelHeap, size_t newKernelHeapSize) {
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     KernelInfo *pKernelInfo = const_cast<KernelInfo *>(&getKernelInfo(rootDeviceIndex));
     void **pKernelHeap = const_cast<void **>(&pKernelInfo->heapInfo.pKernelHeap);
     *pKernelHeap = newKernelHeap;
@@ -810,7 +811,7 @@ void Kernel::substituteKernelHeap(uint32_t rootDeviceIndex, void *newKernelHeap,
     } else {
         memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(pKernelInfo->kernelAllocation);
         pKernelInfo->kernelAllocation = nullptr;
-        status = pKernelInfo->createKernelAllocation(getDevice().getDevice(), isBuiltIn);
+        status = pKernelInfo->createKernelAllocation(device, isBuiltIn);
     }
     UNRECOVERABLE_IF(!status);
 }
@@ -2300,21 +2301,21 @@ void Kernel::provideInitializationHints() {
     Context *context = program->getContextPtr();
     if (context == nullptr || !context->isProvidingPerformanceHints())
         return;
-    for (auto i = 0u; i < kernelDeviceInfos.size(); i++) {
-        if (!kernelInfos[i]) {
-            continue;
-        }
-        if (kernelDeviceInfos[i].privateSurfaceSize) {
+
+    for (auto &pClDevice : getDevices()) {
+        auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+        if (kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, PRIVATE_MEMORY_USAGE_TOO_HIGH,
-                                            kernelInfos[i]->kernelDescriptor.kernelMetadata.kernelName.c_str(), kernelDeviceInfos[i].privateSurfaceSize);
+                                            kernelInfos[rootDeviceIndex]->kernelDescriptor.kernelMetadata.kernelName.c_str(),
+                                            kernelDeviceInfos[rootDeviceIndex].privateSurfaceSize);
         }
-        const auto &patchInfo = kernelInfos[i]->patchInfo;
+        const auto &patchInfo = kernelInfos[rootDeviceIndex]->patchInfo;
         if (patchInfo.mediavfestate) {
             auto scratchSize = patchInfo.mediavfestate->PerThreadScratchSpace;
-            scratchSize *= getDevice().getSharedDeviceInfo().computeUnitsUsedForScratch * getKernelInfo(i).getMaxSimdSize();
+            scratchSize *= pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * getKernelInfo(rootDeviceIndex).getMaxSimdSize();
             if (scratchSize > 0) {
                 context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, REGISTER_PRESSURE_TOO_HIGH,
-                                                kernelInfos[i]->kernelDescriptor.kernelMetadata.kernelName.c_str(), scratchSize);
+                                                kernelInfos[rootDeviceIndex]->kernelDescriptor.kernelMetadata.kernelName.c_str(), scratchSize);
             }
         }
     }

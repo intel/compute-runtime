@@ -254,7 +254,7 @@ class MockKernel : public Kernel {
 //class below have enough internals to service Enqueue operation.
 class MockKernelWithInternals {
   public:
-    MockKernelWithInternals(ClDevice &deviceArg, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment execEnv = {}) {
+    MockKernelWithInternals(const ClDeviceVector &deviceVector, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment execEnv = {}) {
         memset(&kernelHeader, 0, sizeof(SKernelBinaryHeaderCommon));
         memset(&threadPayload, 0, sizeof(SPatchThreadPayload));
         memset(&dataParameterStream, 0, sizeof(SPatchDataParameterStream));
@@ -284,15 +284,27 @@ class MockKernelWithInternals {
             context->incRefInternal();
             mockContext = context;
         }
-        ClDeviceVector deviceVector;
-        deviceVector.push_back(&deviceArg);
-        kernelInfos.resize(deviceArg.getRootDeviceIndex() + 1);
-        kernelInfos[deviceArg.getRootDeviceIndex()] = &kernelInfo;
+        auto maxRootDeviceIndex = 0u;
+
+        for (const auto &pClDevice : deviceVector) {
+            if (pClDevice->getRootDeviceIndex() > maxRootDeviceIndex) {
+                maxRootDeviceIndex = pClDevice->getRootDeviceIndex();
+            }
+        }
+
+        kernelInfos.resize(maxRootDeviceIndex + 1);
+
+        for (const auto &pClDevice : deviceVector) {
+            kernelInfos[pClDevice->getRootDeviceIndex()] = &kernelInfo;
+        }
 
         mockProgram = new MockProgram(context, false, deviceVector);
         mockKernel = new MockKernel(mockProgram, kernelInfos);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
-        mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal), deviceArg.getRootDeviceIndex());
+
+        for (const auto &pClDevice : deviceVector) {
+            mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal), pClDevice->getRootDeviceIndex());
+        }
 
         if (addDefaultArg) {
             defaultKernelArguments.resize(2);
@@ -322,6 +334,9 @@ class MockKernelWithInternals {
             kernelInfo.kernelArgInfo[1].offsetHeap = 64;
             kernelInfo.kernelArgInfo[0].offsetHeap = 64;
         }
+    }
+
+    MockKernelWithInternals(ClDevice &deviceArg, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment execEnv = {}) : MockKernelWithInternals(toClDeviceVector(deviceArg), context, addDefaultArg, execEnv) {
     }
     MockKernelWithInternals(ClDevice &deviceArg, SPatchExecutionEnvironment execEnv) : MockKernelWithInternals(deviceArg, nullptr, false, execEnv) {
         mockKernel->initialize();
