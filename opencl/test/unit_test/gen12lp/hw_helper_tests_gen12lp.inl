@@ -265,22 +265,18 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenIsFusedEuDispatchEnabledIsCalle
     DebugManagerStateRestore restorer;
     auto &helper = HwHelper::get(renderCoreFamily);
     auto &waTable = hardwareInfo.workaroundTable;
-    bool wa;
-    int32_t debugKey;
-    size_t expectedResult;
 
-    const std::array<std::tuple<bool, bool, int32_t>, 6> testParams{std::make_tuple(true, false, -1),
-                                                                    std::make_tuple(false, true, -1),
-                                                                    std::make_tuple(true, false, 0),
-                                                                    std::make_tuple(true, true, 0),
-                                                                    std::make_tuple(false, false, 1),
-                                                                    std::make_tuple(false, true, 1)};
+    std::tuple<bool, bool, int32_t> testParams[]{
+        {true, false, -1},
+        {false, true, -1},
+        {true, false, 0},
+        {true, true, 0},
+        {false, false, 1},
+        {false, true, 1}};
 
-    for (const auto &params : testParams) {
-        std::tie(expectedResult, wa, debugKey) = params;
+    for (auto &[expectedResult, wa, debugKey] : testParams) {
         waTable.waDisableFusedThreadScheduling = wa;
         DebugManager.flags.CFEFusedEUDispatch.set(debugKey);
-
         EXPECT_EQ(expectedResult, helper.isFusedEuDispatchEnabled(hardwareInfo));
     }
 }

@@ -140,18 +140,15 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAdditi
     *pMediaVfeState = FamilyType::cmdInitMediaVfeState;
     auto &waTable = pHwInfo->workaroundTable;
 
-    const std::array<std::tuple<bool, bool, int32_t>, 6> testParams{{std::make_tuple(false, false, 0),
-                                                                     std::make_tuple(false, true, 0),
-                                                                     std::make_tuple(false, false, -1),
-                                                                     std::make_tuple(true, false, 1),
-                                                                     std::make_tuple(true, true, -1),
-                                                                     std::make_tuple(true, true, 1)}};
+    std::tuple<bool, bool, int32_t> testParams[]{
+        {false, false, 0},
+        {false, true, 0},
+        {false, false, -1},
+        {true, false, 1},
+        {true, true, -1},
+        {true, true, 1}};
 
-    for (const auto &params : testParams) {
-        bool expectedValue, waDisableFusedThreadScheduling;
-        int32_t debugKeyValue;
-        std::tie(expectedValue, waDisableFusedThreadScheduling, debugKeyValue) = params;
-
+    for (auto &[expectedValue, waDisableFusedThreadScheduling, debugKeyValue] : testParams) {
         waTable.waDisableFusedThreadScheduling = waDisableFusedThreadScheduling;
         ::DebugManager.flags.CFEFusedEUDispatch.set(debugKeyValue);
         PreambleHelper<FamilyType>::programAdditionalFieldsInVfeState(pMediaVfeState, *pHwInfo);
