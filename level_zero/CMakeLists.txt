@@ -125,8 +125,8 @@ if(BUILD_WITH_L0)
                          TARGET copy_third_party_files
                          PRE_BUILD
                          COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
-                         COMMAND ${CMAKE_COMMAND} -E copy_directory "${IGC_DIR}/lib" "${CUSTOM_COMMAND_BINARY_DIR}/"
-                         DEPENDS "${IGC_DIR}/lib"
+                         COMMAND ${CMAKE_COMMAND} -E copy_directory "${NEO__IGC_LIBRARY_PATH}" "${CUSTOM_COMMAND_BINARY_DIR}/"
+                         DEPENDS "${NEO__IGC_LIBRARY_PATH}"
       )
     endif()
   endif()
@@ -155,8 +155,8 @@ if(BUILD_WITH_L0)
                          TARGET copy_third_party_files
                          PRE_BUILD
                          COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
-                         COMMAND ${CMAKE_COMMAND} -E copy_directory "${GMM_DIR}/lib" "${CUSTOM_COMMAND_BINARY_DIR}/"
-                         DEPENDS "${GMM_DIR}/lib"
+                         COMMAND ${CMAKE_COMMAND} -E copy_directory "${NEO__GMM_LIBRARY_PATH}" "${CUSTOM_COMMAND_BINARY_DIR}/"
+                         DEPENDS "${NEO__GMM_LIBRARY_PATH}"
       )
     endif()
   endif()
