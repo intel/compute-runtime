@@ -20,6 +20,7 @@ MockDispatchKernelEncoder::MockDispatchKernelEncoder() {
 
     EXPECT_CALL(*this, getCrossThreadData).WillRepeatedly(Return(dataCrossThread));
     EXPECT_CALL(*this, getPerThreadData).WillRepeatedly(Return(dataPerThread));
+    EXPECT_CALL(*this, getSlmPolicy()).WillRepeatedly(::testing::Return(SlmPolicy::SlmPolicyNone));
 
     groupSizes[0] = 32u;
     groupSizes[1] = groupSizes[2] = 1;
