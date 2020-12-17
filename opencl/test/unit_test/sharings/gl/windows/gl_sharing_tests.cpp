@@ -804,7 +804,7 @@ TEST(glSharingBasicTest, givenCorrectFlagsWhenGettingSupportedFormatsThenCorrect
 TEST(glSharingBasicTest, givenSupportedImageTypesWhenGettingSupportedFormatsThenCorrectListIsReturned) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_types[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE3D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER};
+    cl_mem_object_type image_types[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE3D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER, CL_MEM_OBJECT_IMAGE2D_ARRAY};
     cl_GLenum glFormats[3] = {};
     cl_uint numImageFormats = 0;
 
@@ -846,7 +846,7 @@ TEST(glSharingBasicTest, givenNullNumImageFormatsWhenGettingSupportedFormatsThen
 TEST(glSharingBasicTest, givenInvalidImageTypeWhenGettingSupportedFormatsThenIvalidValueErrorIsReturned) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_PIPE;
     cl_GLenum glFormats[3] = {};
     cl_uint numImageFormats = 0;
 

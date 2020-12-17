@@ -76,7 +76,7 @@ cl_int GLSharingFunctions::getSupportedFormats(cl_mem_flags flags,
 
     if (imageType != CL_MEM_OBJECT_IMAGE1D && imageType != CL_MEM_OBJECT_IMAGE2D &&
         imageType != CL_MEM_OBJECT_IMAGE3D && imageType != CL_MEM_OBJECT_IMAGE1D_ARRAY &&
-        imageType != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+        imageType != CL_MEM_OBJECT_IMAGE1D_BUFFER && imageType != CL_MEM_OBJECT_IMAGE2D_ARRAY) {
         return CL_INVALID_VALUE;
     }
 
