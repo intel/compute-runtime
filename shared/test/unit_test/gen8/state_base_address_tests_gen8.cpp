@@ -21,7 +21,8 @@ BDWTEST_F(SBATest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersI
         false,
         0,
         nullptr,
-        false);
+        false,
+        MemoryCompressionState::NotApplicable);
 
     EXPECT_EQ(0u, ssh.getUsed());
     EXPECT_EQ(0, memcmp(&stateBaseAddressReference, &stateBaseAddress, sizeof(STATE_BASE_ADDRESS)));

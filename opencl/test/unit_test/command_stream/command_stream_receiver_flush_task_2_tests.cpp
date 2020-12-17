@@ -1208,7 +1208,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrWhenGen
                                                                 generalStateBaseAddress,
                                                                 true,
                                                                 pDevice->getGmmHelper(),
-                                                                false);
+                                                                false,
+                                                                MemoryCompressionState::NotApplicable);
 
     EXPECT_NE(generalStateBaseAddress, sbaCmd.getGeneralStateBaseAddress());
     EXPECT_EQ(GmmHelper::decanonize(generalStateBaseAddress), sbaCmd.getGeneralStateBaseAddress());
@@ -1229,7 +1230,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroGeneralStateBaseAddres
                                                                 generalStateBaseAddress,
                                                                 true,
                                                                 pDevice->getGmmHelper(),
-                                                                false);
+                                                                false,
+                                                                MemoryCompressionState::NotApplicable);
 
     EXPECT_EQ(0ull, sbaCmd.getGeneralStateBaseAddress());
     EXPECT_EQ(0u, sbaCmd.getGeneralStateBufferSize());
@@ -1252,7 +1254,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroInternalHeapBaseAddres
                                                                 0,
                                                                 false,
                                                                 pDevice->getGmmHelper(),
-                                                                false);
+                                                                false,
+                                                                MemoryCompressionState::NotApplicable);
 
     EXPECT_FALSE(sbaCmd.getInstructionBaseAddressModifyEnable());
     EXPECT_EQ(0ull, sbaCmd.getInstructionBaseAddress());
@@ -1280,7 +1283,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenSbaProgram
                                                                 instructionHeapBase,
                                                                 true,
                                                                 pDevice->getGmmHelper(),
-                                                                false);
+                                                                false,
+                                                                MemoryCompressionState::NotApplicable);
 
     EXPECT_FALSE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
     EXPECT_FALSE(sbaCmd.getDynamicStateBufferSizeModifyEnable());

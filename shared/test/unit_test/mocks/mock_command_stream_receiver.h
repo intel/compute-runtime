@@ -47,6 +47,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     bool isMultiOsContextCapable() const override { return multiOsContextCapable; }
 
+    MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {
+        return MemoryCompressionState::NotApplicable;
+    };
+
     CompletionStamp flushTask(
         LinearStream &commandStream,
         size_t commandStreamStart,
@@ -98,6 +102,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t waitForCompletionWithTimeoutCalled = 0;
     uint32_t mockTagAddress = 0;
     bool multiOsContextCapable = false;
+    bool memoryCompressionEnabled = false;
     bool downloadAllocationsCalled = false;
     bool programHardwareContextCalled = false;
     bool callParentGetTagAddress = true;

@@ -676,6 +676,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     auto specialPipelineSelectMode = false;
     Kernel *kernel = nullptr;
     bool usePerDssBackedBuffer = false;
+    bool auxTranslationRequired = false;
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
@@ -689,6 +690,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         auto numGrfRequiredByKernel = static_cast<uint32_t>(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.numGrfRequired);
         numGrfRequired = std::max(numGrfRequired, numGrfRequiredByKernel);
         specialPipelineSelectMode |= kernel->requiresSpecialPipelineSelectMode();
+        auxTranslationRequired |= kernel->isAuxTranslationRequired();
         if (kernel->hasUncacheableStatelessArgs()) {
             anyUncacheableArgs = true;
         }
@@ -734,6 +736,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         }
     }
 
+    auto memoryCompressionState = getGpgpuCommandStreamReceiver().getMemoryCompressionState(auxTranslationRequired);
+
     DispatchFlags dispatchFlags(
         {},                                                                                         //csrDependencies
         &timestampPacketDependencies.barrierNodes,                                                  //barrierTimestampPacketNodes
@@ -746,6 +750,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         kernel->getThreadArbitrationPolicy(),                                                       //threadArbitrationPolicy
         kernel->getAdditionalKernelExecInfo(),                                                      //additionalKernelExecInfo
         kernel->getExecutionType(),                                                                 //kernelExecutionType
+        memoryCompressionState,                                                                     //memoryCompressionState
         getSliceCount(),                                                                            //sliceCount
         blocking,                                                                                   //blocking
         shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC,                             //dcFlush
@@ -961,6 +966,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             ThreadArbitrationPolicy::NotPresent,                                 //threadArbitrationPolicy
             AdditionalKernelExecInfo::NotApplicable,                             //additionalKernelExecInfo
             KernelExecutionType::NotApplicable,                                  //kernelExecutionType
+            MemoryCompressionState::NotApplicable,                               //memoryCompressionState
             getSliceCount(),                                                     //sliceCount
             blocking,                                                            //blocking
             false,                                                               //dcFlush

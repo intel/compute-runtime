@@ -26,6 +26,7 @@ struct DispatchFlagsHelper {
             ThreadArbitrationPolicy::NotPresent,     //threadArbitrationPolicy
             AdditionalKernelExecInfo::NotApplicable, //additionalKernelExecInfo
             KernelExecutionType::NotApplicable,      //kernelExecutionType
+            MemoryCompressionState::NotApplicable,   //memoryCompressionState
             QueueSliceCount::defaultSliceCount,      //sliceCount
             false,                                   //blocking
             false,                                   //dcFlush
@@ -38,7 +39,6 @@ struct DispatchFlagsHelper {
             false,                                   //outOfOrderExecutionAllowed
             false,                                   //epilogueRequired
             false,                                   //usePerDssBackedBuffer
-            false                                    //useSingleSubdevice
-        );
+            false);                                  //useSingleSubdevice
     }
 };

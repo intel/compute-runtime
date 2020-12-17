@@ -62,7 +62,8 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
                                                                     neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), !hwHelper.useSystemMemoryPlacementForISA(hwInfo)),
                                                                     true,
                                                                     neoDevice->getGmmHelper(),
-                                                                    false);
+                                                                    false,
+                                                                    NEO::MemoryCompressionState::NotApplicable);
     *pSbaCmd = sbaCmd;
     gsbaInit = true;
 

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/csr_deps.h"
+#include "shared/source/command_stream/memory_compression_state.h"
 #include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/constants.h"
@@ -52,33 +53,35 @@ struct DispatchFlags {
     DispatchFlags() = delete;
     DispatchFlags(CsrDependencies csrDependencies, TimestampPacketContainer *barrierTimestampPacketNodes, PipelineSelectArgs pipelineSelectArgs,
                   FlushStampTrackingObj *flushStampReference, QueueThrottle throttle, PreemptionMode preemptionMode, uint32_t numGrfRequired,
-                  uint32_t l3CacheSettings, uint32_t threadArbitrationPolicy, uint32_t additionalKernelExecInfo, KernelExecutionType kernelExecutionType, uint64_t sliceCount, bool blocking, bool dcFlush,
-                  bool useSLM, bool guardCommandBufferWithPipeControl, bool gsba32BitRequired,
-                  bool requiresCoherency, bool lowPriority, bool implicitFlush,
-                  bool outOfOrderExecutionAllowed, bool epilogueRequired, bool usePerDSSbackedBuffer, bool useSingleSubdevice) : csrDependencies(csrDependencies),
-                                                                                                                                 barrierTimestampPacketNodes(barrierTimestampPacketNodes),
-                                                                                                                                 pipelineSelectArgs(pipelineSelectArgs),
-                                                                                                                                 flushStampReference(flushStampReference),
-                                                                                                                                 throttle(throttle),
-                                                                                                                                 preemptionMode(preemptionMode),
-                                                                                                                                 numGrfRequired(numGrfRequired),
-                                                                                                                                 l3CacheSettings(l3CacheSettings),
-                                                                                                                                 threadArbitrationPolicy(threadArbitrationPolicy),
-                                                                                                                                 additionalKernelExecInfo(additionalKernelExecInfo),
-                                                                                                                                 kernelExecutionType(kernelExecutionType),
-                                                                                                                                 sliceCount(sliceCount),
-                                                                                                                                 blocking(blocking),
-                                                                                                                                 dcFlush(dcFlush),
-                                                                                                                                 useSLM(useSLM),
-                                                                                                                                 guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControl),
-                                                                                                                                 gsba32BitRequired(gsba32BitRequired),
-                                                                                                                                 requiresCoherency(requiresCoherency),
-                                                                                                                                 lowPriority(lowPriority),
-                                                                                                                                 implicitFlush(implicitFlush),
-                                                                                                                                 outOfOrderExecutionAllowed(outOfOrderExecutionAllowed),
-                                                                                                                                 epilogueRequired(epilogueRequired),
-                                                                                                                                 usePerDssBackedBuffer(usePerDSSbackedBuffer),
-                                                                                                                                 useSingleSubdevice(useSingleSubdevice){};
+                  uint32_t l3CacheSettings, uint32_t threadArbitrationPolicy, uint32_t additionalKernelExecInfo,
+                  KernelExecutionType kernelExecutionType, MemoryCompressionState memoryCompressionState,
+                  uint64_t sliceCount, bool blocking, bool dcFlush, bool useSLM, bool guardCommandBufferWithPipeControl, bool gsba32BitRequired,
+                  bool requiresCoherency, bool lowPriority, bool implicitFlush, bool outOfOrderExecutionAllowed, bool epilogueRequired,
+                  bool usePerDSSbackedBuffer, bool useSingleSubdevice) : csrDependencies(csrDependencies),
+                                                                         barrierTimestampPacketNodes(barrierTimestampPacketNodes),
+                                                                         pipelineSelectArgs(pipelineSelectArgs),
+                                                                         flushStampReference(flushStampReference),
+                                                                         throttle(throttle),
+                                                                         preemptionMode(preemptionMode),
+                                                                         numGrfRequired(numGrfRequired),
+                                                                         l3CacheSettings(l3CacheSettings),
+                                                                         threadArbitrationPolicy(threadArbitrationPolicy),
+                                                                         additionalKernelExecInfo(additionalKernelExecInfo),
+                                                                         kernelExecutionType(kernelExecutionType),
+                                                                         memoryCompressionState(memoryCompressionState),
+                                                                         sliceCount(sliceCount),
+                                                                         blocking(blocking),
+                                                                         dcFlush(dcFlush),
+                                                                         useSLM(useSLM),
+                                                                         guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControl),
+                                                                         gsba32BitRequired(gsba32BitRequired),
+                                                                         requiresCoherency(requiresCoherency),
+                                                                         lowPriority(lowPriority),
+                                                                         implicitFlush(implicitFlush),
+                                                                         outOfOrderExecutionAllowed(outOfOrderExecutionAllowed),
+                                                                         epilogueRequired(epilogueRequired),
+                                                                         usePerDssBackedBuffer(usePerDSSbackedBuffer),
+                                                                         useSingleSubdevice(useSingleSubdevice){};
 
     CsrDependencies csrDependencies;
     TimestampPacketContainer *barrierTimestampPacketNodes = nullptr;
@@ -91,6 +94,7 @@ struct DispatchFlags {
     uint32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotApplicable;
     KernelExecutionType kernelExecutionType = KernelExecutionType::NotApplicable;
+    MemoryCompressionState memoryCompressionState = MemoryCompressionState::NotApplicable;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     uint64_t engineHints = 0;
     bool blocking = false;

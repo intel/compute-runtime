@@ -471,6 +471,10 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     bool isMultiOsContextCapable() const override { return false; }
 
+    MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {
+        return MemoryCompressionState::NotApplicable;
+    }
+
     CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment), 0, 1) {
         this->mockExecutionEnvironment.reset(&this->executionEnvironment);
         executionEnvironment.prepareRootDeviceEnvironments(1);

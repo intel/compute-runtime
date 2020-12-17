@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/memory_compression_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
@@ -27,7 +28,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     uint64_t instructionHeapBaseAddress,
     bool setInstructionStateBaseAddress,
     GmmHelper *gmmHelper,
-    bool isMultiOsContextCapable) {
+    bool isMultiOsContextCapable,
+    MemoryCompressionState memoryCompressionState) {
 
     *stateBaseAddress = GfxFamily::cmdInitStateBaseAddress;
 
@@ -74,7 +76,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
 
-    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper, isMultiOsContextCapable);
+    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper, isMultiOsContextCapable, memoryCompressionState);
 }
 
 template <typename GfxFamily>

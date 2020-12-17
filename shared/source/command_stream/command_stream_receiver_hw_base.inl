@@ -368,6 +368,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     bool sourceLevelDebuggerActive = device.getSourceLevelDebugger() != nullptr ? true : false;
 
+    if (dispatchFlags.memoryCompressionState != MemoryCompressionState::NotApplicable) {
+        if (lastMemoryCompressionState != dispatchFlags.memoryCompressionState) {
+            isStateBaseAddressDirty = true;
+            lastMemoryCompressionState = dispatchFlags.memoryCompressionState;
+        }
+    }
+
     //Reprogram state base address if required
     if (isStateBaseAddressDirty || sourceLevelDebuggerActive) {
         addPipeControlBeforeStateBaseAddress(commandStreamCSR);
@@ -399,7 +406,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             instructionHeapBaseAddress,
             true,
             device.getGmmHelper(),
-            isMultiOsContextCapable());
+            isMultiOsContextCapable(),
+            dispatchFlags.memoryCompressionState);
         *pCmd = cmd;
 
         if (sshDirty) {
@@ -1066,6 +1074,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::programAdditionalPipelineSelect(
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isComputeModeNeeded() const {
     return false;
+}
+
+template <typename GfxFamily>
+inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompressionState(bool auxTranslationRequired) const {
+    return MemoryCompressionState::NotApplicable;
 }
 
 template <typename GfxFamily>

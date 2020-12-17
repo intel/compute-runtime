@@ -189,6 +189,8 @@ class CommandStreamReceiver {
 
     virtual bool isMultiOsContextCapable() const = 0;
 
+    virtual MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const = 0;
+
     void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
         this->latestSentTaskCount = latestSentTaskCount;
     }
@@ -293,6 +295,7 @@ class CommandStreamReceiver {
     uint32_t requiredPrivateScratchSize = 0;
     uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
     KernelExecutionType lastKernelExecutionType = KernelExecutionType::Default;
+    MemoryCompressionState lastMemoryCompressionState = MemoryCompressionState::NotApplicable;
 
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;

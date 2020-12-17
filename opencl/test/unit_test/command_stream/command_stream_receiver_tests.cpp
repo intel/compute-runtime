@@ -299,6 +299,15 @@ TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmitiingBatchBufferThenTaskC
     executionEnvironment.memoryManager->freeGraphicsMemoryImpl(commandBuffer);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCallingGetMemoryCompressionStateThenReturnNotApplicable) {
+    CommandStreamReceiverHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+    for (bool auxTranslationRequired : {false, true}) {
+        auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
+        EXPECT_EQ(MemoryCompressionState::NotApplicable, memoryCompressionState);
+    }
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenDebugVariableEnabledWhenCreatingCsrThenEnableTimestampPacketWriteMode) {
     DebugManagerStateRestore restore;
 

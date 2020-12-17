@@ -11,6 +11,7 @@
 
 namespace NEO {
 
+enum class MemoryCompressionState;
 class GmmHelper;
 class IndirectHeap;
 class LinearStream;
@@ -32,7 +33,8 @@ struct StateBaseAddressHelper {
         uint64_t instructionHeapBaseAddress,
         bool setInstructionStateBaseAddress,
         GmmHelper *gmmHelper,
-        bool isMultiOsContextCapable);
+        bool isMultiOsContextCapable,
+        MemoryCompressionState memoryCompressionState);
 
     static void appendStateBaseAddressParameters(
         STATE_BASE_ADDRESS *stateBaseAddress,
@@ -40,7 +42,8 @@ struct StateBaseAddressHelper {
         bool setGeneralStateBaseAddress,
         uint64_t indirectObjectHeapBaseAddress,
         GmmHelper *gmmHelper,
-        bool isMultiOsContextCapable);
+        bool isMultiOsContextCapable,
+        MemoryCompressionState memoryCompressionState);
 
     static void appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, GmmHelper *gmmHelper);
 

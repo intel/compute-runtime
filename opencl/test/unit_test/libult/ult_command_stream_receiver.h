@@ -75,6 +75,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::isStateSipSent;
     using BaseClass::CommandStreamReceiver::lastKernelExecutionType;
     using BaseClass::CommandStreamReceiver::lastMediaSamplerConfig;
+    using BaseClass::CommandStreamReceiver::lastMemoryCompressionState;
     using BaseClass::CommandStreamReceiver::lastPreemptionMode;
     using BaseClass::CommandStreamReceiver::lastSentCoherencyRequest;
     using BaseClass::CommandStreamReceiver::lastSentL3Config;
@@ -289,6 +290,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;
     bool multiOsContextCapable = false;
+    bool memoryCompressionEnabled = false;
     bool directSubmissionAvailable = false;
     bool blitterDirectSubmissionAvailable = false;
     bool callBaseIsMultiOsContextCapable = false;

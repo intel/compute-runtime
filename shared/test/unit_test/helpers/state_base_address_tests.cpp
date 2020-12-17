@@ -25,7 +25,8 @@ HWTEST2_F(SBATest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
         false,
         0,
         nullptr,
-        false);
+        false,
+        MemoryCompressionState::NotApplicable);
 
     EXPECT_EQ(ssh.getMaxAvailableSpace() / 64 - 1, stateBaseAddress.getBindlessSurfaceStateSize());
     EXPECT_EQ(ssh.getHeapGpuBase(), stateBaseAddress.getBindlessSurfaceStateBaseAddress());
@@ -58,7 +59,8 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
         0,
         false,
         pDevice->getGmmHelper(),
-        true);
+        true,
+        MemoryCompressionState::NotApplicable);
 
     EXPECT_EQ(ssh.getMaxAvailableSpace() / 64 - 1, cmd->getBindlessSurfaceStateSize());
     EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getBindlessSurfaceStateBaseAddress());

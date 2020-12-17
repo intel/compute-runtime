@@ -16,7 +16,8 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     bool setGeneralStateBaseAddress,
     uint64_t indirectObjectHeapBaseAddress,
     GmmHelper *gmmHelper,
-    bool isMultiOsContextCapable) {
+    bool isMultiOsContextCapable,
+    MemoryCompressionState memoryCompressionState) {
 
     if (ssh) {
         stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);

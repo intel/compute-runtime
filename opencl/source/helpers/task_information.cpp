@@ -62,6 +62,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         ThreadArbitrationPolicy::NotPresent,                                         //threadArbitrationPolicy
         AdditionalKernelExecInfo::NotApplicable,                                     //additionalKernelExecInfo
         KernelExecutionType::NotApplicable,                                          //kernelExecutionType
+        MemoryCompressionState::NotApplicable,                                       //memoryCompressionState
         commandQueue.getSliceCount(),                                                //sliceCount
         true,                                                                        //blocking
         true,                                                                        //dcFlush
@@ -212,6 +213,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     auto rootDeviceIndex = commandQueue.getDevice().getRootDeviceIndex();
     const auto &kernelDescriptor = kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor;
 
+    auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired());
+
     DispatchFlags dispatchFlags(
         {},                                                                          //csrDependencies
         nullptr,                                                                     //barrierTimestampPacketNodes
@@ -224,6 +227,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         kernel->getThreadArbitrationPolicy(),                                        //threadArbitrationPolicy
         kernel->getAdditionalKernelExecInfo(),                                       //additionalKernelExecInfo
         kernel->getExecutionType(),                                                  //kernelExecutionType
+        memoryCompressionState,                                                      //memoryCompressionState
         commandQueue.getSliceCount(),                                                //sliceCount
         true,                                                                        //blocking
         flushDC,                                                                     //dcFlush
@@ -346,6 +350,7 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         ThreadArbitrationPolicy::NotPresent,                  //threadArbitrationPolicy
         AdditionalKernelExecInfo::NotApplicable,              //additionalKernelExecInfo
         KernelExecutionType::NotApplicable,                   //kernelExecutionType
+        MemoryCompressionState::NotApplicable,                //memoryCompressionState
         commandQueue.getSliceCount(),                         //sliceCount
         true,                                                 //blocking
         false,                                                //dcFlush
