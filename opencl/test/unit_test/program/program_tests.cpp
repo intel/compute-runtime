@@ -1975,8 +1975,8 @@ TEST_F(ProgramTests, givenExistingGlobalSurfacesWhenProcessGenBinaryThenCleanupT
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
 
-    auto globaltSurface0 = program->buildInfos[0].globalSurface;
-    EXPECT_NE(nullptr, globaltSurface0);
+    auto globalSurface0 = program->buildInfos[0].globalSurface;
+    EXPECT_NE(nullptr, globalSurface0);
     auto globalSurface1 = program->buildInfos[1].globalSurface;
     EXPECT_NE(nullptr, globalSurface1);
 
