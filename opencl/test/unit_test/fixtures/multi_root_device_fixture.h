@@ -42,4 +42,30 @@ class MultiRootDeviceFixture : public ::testing::Test {
     MockMemoryManager *mockMemoryManager;
     VariableBackup<decltype(DeviceFactory::createMemoryManagerFunc)> createMemoryManagerFuncBackup{&DeviceFactory::createMemoryManagerFunc};
 };
+class MultiRootDeviceWithSubDevicesFixture : public ::testing::Test {
+  public:
+    void SetUp() override {
+        createMemoryManagerFuncBackup = [](ExecutionEnvironment &executionEnvironment) -> void {
+            executionEnvironment.memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+        };
+
+        deviceFactory = std::make_unique<UltClDeviceFactory>(3, 2);
+        device1 = deviceFactory->rootDevices[1];
+        device2 = deviceFactory->rootDevices[2];
+
+        cl_device_id devices[] = {device1, device2, deviceFactory->subDevices[2]};
+
+        context.reset(new MockContext(ClDeviceVector(devices, 3), false));
+        mockMemoryManager = static_cast<MockMemoryManager *>(device1->getMemoryManager());
+        ASSERT_EQ(mockMemoryManager, device1->getMemoryManager());
+    }
+
+    const uint32_t expectedRootDeviceIndex = 1;
+    std::unique_ptr<UltClDeviceFactory> deviceFactory;
+    MockClDevice *device1 = nullptr;
+    MockClDevice *device2 = nullptr;
+    std::unique_ptr<MockContext> context;
+    MockMemoryManager *mockMemoryManager;
+    VariableBackup<decltype(DeviceFactory::createMemoryManagerFunc)> createMemoryManagerFuncBackup{&DeviceFactory::createMemoryManagerFunc};
+};
 }; // namespace NEO

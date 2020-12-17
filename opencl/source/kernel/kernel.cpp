@@ -1550,31 +1550,37 @@ cl_int Kernel::setArgImmediate(uint32_t argIndex,
                                const void *argVal) {
 
     auto retVal = CL_INVALID_ARG_VALUE;
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
 
     if (argVal) {
-        const auto &kernelArgInfo = getKernelInfo(rootDeviceIndex).kernelArgInfo[argIndex];
-        DEBUG_BREAK_IF(kernelArgInfo.kernelArgPatchInfoVector.size() <= 0);
-
         storeKernelArg(argIndex, NONE_OBJ, nullptr, nullptr, argSize);
-
-        auto crossThreadData = getCrossThreadData(rootDeviceIndex);
-        auto crossThreadDataEnd = ptrOffset(crossThreadData, getCrossThreadDataSize(rootDeviceIndex));
-
-        for (const auto &kernelArgPatchInfo : kernelArgInfo.kernelArgPatchInfoVector) {
-            DEBUG_BREAK_IF(kernelArgPatchInfo.size <= 0);
-            auto pDst = ptrOffset(crossThreadData, kernelArgPatchInfo.crossthreadOffset);
-
-            auto pSrc = ptrOffset(argVal, kernelArgPatchInfo.sourceOffset);
-
-            DEBUG_BREAK_IF(!(ptrOffset(pDst, kernelArgPatchInfo.size) <= crossThreadDataEnd));
-            UNUSED_VARIABLE(crossThreadDataEnd);
-
-            if (kernelArgPatchInfo.sourceOffset < argSize) {
-                size_t maxBytesToCopy = argSize - kernelArgPatchInfo.sourceOffset;
-                size_t bytesToCopy = std::min(static_cast<size_t>(kernelArgPatchInfo.size), maxBytesToCopy);
-                memcpy_s(pDst, kernelArgPatchInfo.size, pSrc, bytesToCopy);
+        std::bitset<64> isArgSet{};
+        for (auto &pClDevice : getDevices()) {
+            auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+            if (isArgSet.test(rootDeviceIndex)) {
+                continue;
             }
+            const auto &kernelArgInfo = getKernelInfo(rootDeviceIndex).kernelArgInfo[argIndex];
+            DEBUG_BREAK_IF(kernelArgInfo.kernelArgPatchInfoVector.size() <= 0);
+
+            auto crossThreadData = getCrossThreadData(rootDeviceIndex);
+            auto crossThreadDataEnd = ptrOffset(crossThreadData, getCrossThreadDataSize(rootDeviceIndex));
+
+            for (const auto &kernelArgPatchInfo : kernelArgInfo.kernelArgPatchInfoVector) {
+                DEBUG_BREAK_IF(kernelArgPatchInfo.size <= 0);
+                auto pDst = ptrOffset(crossThreadData, kernelArgPatchInfo.crossthreadOffset);
+
+                auto pSrc = ptrOffset(argVal, kernelArgPatchInfo.sourceOffset);
+
+                DEBUG_BREAK_IF(!(ptrOffset(pDst, kernelArgPatchInfo.size) <= crossThreadDataEnd));
+                UNUSED_VARIABLE(crossThreadDataEnd);
+
+                if (kernelArgPatchInfo.sourceOffset < argSize) {
+                    size_t maxBytesToCopy = argSize - kernelArgPatchInfo.sourceOffset;
+                    size_t bytesToCopy = std::min(static_cast<size_t>(kernelArgPatchInfo.size), maxBytesToCopy);
+                    memcpy_s(pDst, kernelArgPatchInfo.size, pSrc, bytesToCopy);
+                }
+            }
+            isArgSet.set(rootDeviceIndex);
         }
         retVal = CL_SUCCESS;
     }

@@ -79,7 +79,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
 
     bool crossThreadDataUnchanged() {
         for (uint32_t i = 0; i < crossThreadDataSize; i++) {
-            if (pKernel->mockCrossThreadData[i] != 0u) {
+            if (pKernel->mockCrossThreadDatas[rootDeviceIndex][i] != 0u) {
                 return false;
             }
         }
