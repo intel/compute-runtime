@@ -160,8 +160,8 @@ class MetricContextFixture : public ContextFixture {
     MockMetricsDiscoveryApi mockMetricsDiscoveryApi = {};
 
     // Metrics discovery device
-    Mock<IAdapterGroup_1_8> adapterGroup;
-    Mock<IAdapter_1_8> adapter;
+    Mock<IAdapterGroup_1_9> adapterGroup;
+    Mock<IAdapter_1_9> adapter;
     Mock<IMetricsDevice_1_5> metricsDevice;
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
 };

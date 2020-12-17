@@ -131,6 +131,9 @@ enum class ClientOptionsType : uint32_t
     Ptbr,
     Compute,
     Tbs,
+    SubDevice,
+    SubDeviceIndex,
+    SubDeviceCount,
     // ...
     Last
 };
@@ -159,6 +162,7 @@ enum class StatusCode : uint32_t
     ReportLost,
     ReportInconsistent,
     CannotOpenFile,
+    ReportContextSwitchLost,
     // ...
     Last
 };
@@ -649,6 +653,30 @@ struct ClientOptionsTbsData_1_0
 };
 
 //////////////////////////////////////////////////////////////////////////
+/// @brief Client options sub device data.
+//////////////////////////////////////////////////////////////////////////
+struct ClientOptionsSubDeviceData_1_0
+{
+    bool    Enabled;
+};
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Client options sub device index data.
+//////////////////////////////////////////////////////////////////////////
+struct ClientOptionsSubDeviceIndexData_1_0
+{
+    uint8_t Index;
+};
+
+//////////////////////////////////////////////////////////////////////////
+/// @brief Client options sub device count data.
+//////////////////////////////////////////////////////////////////////////
+struct ClientOptionsSubDeviceCountData_1_0
+{
+    uint8_t Count;
+};
+
+//////////////////////////////////////////////////////////////////////////
 /// @brief Client options data.
 //////////////////////////////////////////////////////////////////////////
 struct ClientOptionsData_1_0
@@ -657,10 +685,13 @@ struct ClientOptionsData_1_0
 
     union
     {
-        ClientOptionsPoshData_1_0       Posh;
-        ClientOptionsPtbrData_1_0       Ptbr;
-        ClientOptionsComputeData_1_0    Compute;
-        ClientOptionsTbsData_1_0        Tbs;
+        ClientOptionsPoshData_1_0           Posh;
+        ClientOptionsPtbrData_1_0           Ptbr;
+        ClientOptionsComputeData_1_0        Compute;
+        ClientOptionsTbsData_1_0            Tbs;
+        ClientOptionsSubDeviceData_1_0      SubDevice;
+        ClientOptionsSubDeviceIndexData_1_0 SubDeviceIndex;
+        ClientOptionsSubDeviceCountData_1_0 SubDeviceCount;
     };
 };
 
@@ -705,6 +736,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 6
+#define METRICS_LIBRARY_BUILD_NUMBER 44
 
 } // namespace MetricsLibraryApi

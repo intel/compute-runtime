@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,6 +65,8 @@ struct MetricContextImp : public MetricContext {
 
     void setUseCompute(const bool useCompute) override;
     bool isComputeUsed() override;
+    uint32_t getSubDeviceIndex() override;
+    void setSubDeviceIndex(const uint32_t index) override;
 
   protected:
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -73,6 +75,7 @@ struct MetricContextImp : public MetricContext {
     std::unique_ptr<MetricsLibrary> metricsLibrary = nullptr;
     MetricGroupDomains metricGroupDomains;
     MetricStreamer *pMetricStreamer = nullptr;
+    uint32_t subDeviceIndex = 0;
     bool useCompute = false;
 };
 
@@ -81,6 +84,13 @@ MetricContextImp::MetricContextImp(Device &deviceInput)
       metricEnumeration(std::unique_ptr<MetricEnumeration>(new (std::nothrow) MetricEnumeration(*this))),
       metricsLibrary(std::unique_ptr<MetricsLibrary>(new (std::nothrow) MetricsLibrary(*this))),
       metricGroupDomains(*this) {
+
+    auto deviceNeo = deviceInput.getNEODevice();
+    bool isSubDevice = deviceNeo->getParentDevice() != nullptr;
+
+    subDeviceIndex = isSubDevice
+                         ? static_cast<NEO::SubDevice *>(deviceNeo)->getSubDeviceIndex()
+                         : 0;
 }
 
 MetricContextImp::~MetricContextImp() {
@@ -98,15 +108,6 @@ bool MetricContextImp::loadDependencies() {
         result = false;
         DEBUG_BREAK_IF(!result);
     }
-    // Initialize metrics library temporarily
-    // to check requirements expected from the kernel driver.
-    if (result) {
-        result = metricsLibrary->isInitialized();
-        DEBUG_BREAK_IF(!result);
-    }
-
-    // Disable temporary metrics library instance.
-    metricsLibrary->release();
 
     // Set metric context initialization state.
     setInitializationState(result
@@ -154,6 +155,14 @@ bool MetricContextImp::isComputeUsed() {
     return useCompute;
 }
 
+uint32_t MetricContextImp::getSubDeviceIndex() {
+    return subDeviceIndex;
+}
+
+void MetricContextImp::setSubDeviceIndex(const uint32_t index) {
+    subDeviceIndex = index;
+}
+
 ze_result_t
 MetricContextImp::activateMetricGroupsDeferred(const uint32_t count,
                                                zet_metric_group_handle_t *phMetricGroups) {
@@ -171,30 +180,51 @@ bool MetricContextImp::isMetricGroupActivated(const zet_metric_group_handle_t hM
 ze_result_t MetricContextImp::activateMetricGroups() { return metricGroupDomains.activate(); }
 
 ze_result_t MetricContext::enableMetricApi() {
+
     if (!isMetricApiAvailable()) {
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
-    DriverHandle *driverHandle = L0::DriverHandle::fromHandle(GlobalDriverHandle);
+    bool failed = false;
 
-    uint32_t count = 0;
-    if (driverHandle->getDevice(&count, nullptr) != ZE_RESULT_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+    uint32_t rootDeviceCount = 0;
+    uint32_t subDeviceCount = 0;
 
-    std::vector<ze_device_handle_t> devices(count);
-    if (driverHandle->getDevice(&count, devices.data()) != ZE_RESULT_SUCCESS) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+    auto driverHandle = L0::DriverHandle::fromHandle(GlobalDriverHandle);
+    auto rootDevices = std::vector<ze_device_handle_t>();
+    auto subDevices = std::vector<ze_device_handle_t>();
 
-    for (auto deviceHandle : devices) {
-        Device *device = L0::Device::fromHandle(deviceHandle);
-        if (!device->getMetricContext().loadDependencies()) {
-            return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    // Obtain root devices.
+    driverHandle->getDevice(&rootDeviceCount, nullptr);
+    rootDevices.resize(rootDeviceCount);
+    driverHandle->getDevice(&rootDeviceCount, rootDevices.data());
+
+    for (auto rootDeviceHandle : rootDevices) {
+
+        // Initialize root device.
+        auto rootDevice = L0::Device::fromHandle(rootDeviceHandle);
+        failed |= !rootDevice->getMetricContext().loadDependencies();
+
+        // Sub devices count.
+        subDeviceCount = 0;
+        rootDevice->getSubDevices(&subDeviceCount, nullptr);
+
+        // Sub device instances.
+        subDevices.clear();
+        subDevices.resize(subDeviceCount);
+        rootDevice->getSubDevices(&subDeviceCount, subDevices.data());
+
+        // Initialize sub devices.
+        for (uint32_t i = 0; i < subDevices.size(); ++i) {
+
+            auto subDevice = L0::Device::fromHandle(subDevices[i]);
+            failed |= !subDevice->getMetricContext().loadDependencies();
         }
     }
 
-    return ZE_RESULT_SUCCESS;
+    return failed
+               ? ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE
+               : ZE_RESULT_SUCCESS;
 }
 
 std::unique_ptr<MetricContext> MetricContext::create(Device &device) {

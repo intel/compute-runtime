@@ -76,7 +76,7 @@ class MetricEnumerationTestLinux : public MetricContextFixture,
 TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxDrmAdapterWhenGetMetricsAdapterThenReturnSuccess) {
 
     auto adapterGroupParams = TAdapterGroupParams_1_6{};
-    auto adapterParams = TAdapterParams_1_8{};
+    auto adapterParams = TAdapterParams_1_9{};
 
     adapterGroupParams.AdapterCount = 1;
     adapterParams.SystemId.Type = MetricsDiscovery::TAdapterIdType::ADAPTER_ID_TYPE_MAJOR_MINOR;
@@ -112,7 +112,7 @@ TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxMinorPrimaryNodeDrmAdapterWh
     const int32_t drmMaxDevices = 64; // From drm_drv.c#110
 
     auto adapterGroupParams = TAdapterGroupParams_1_6{};
-    auto adapterParams = TAdapterParams_1_8{};
+    auto adapterParams = TAdapterParams_1_9{};
 
     adapterGroupParams.AdapterCount = 1;
     adapterParams.SystemId.Type = MetricsDiscovery::TAdapterIdType::ADAPTER_ID_TYPE_MAJOR_MINOR;
@@ -150,7 +150,7 @@ TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxMinorRenderNodeDrmAdapterWhe
     const int32_t drmMaxDevices = 64; // From drm_drv.c#110
 
     auto adapterGroupParams = TAdapterGroupParams_1_6{};
-    auto adapterParams = TAdapterParams_1_8{};
+    auto adapterParams = TAdapterParams_1_9{};
 
     adapterGroupParams.AdapterCount = 1;
     adapterParams.SystemId.Type = MetricsDiscovery::TAdapterIdType::ADAPTER_ID_TYPE_MAJOR_MINOR;
@@ -185,7 +185,7 @@ TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxMinorRenderNodeDrmAdapterWhe
 TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterTypeWhenGetMetricsAdapterThenReturnFail) {
 
     auto adapterGroupParams = TAdapterGroupParams_1_6{};
-    auto adapterParams = TAdapterParams_1_8{};
+    auto adapterParams = TAdapterParams_1_9{};
 
     adapterGroupParams.AdapterCount = 1;
     adapterParams.SystemId.Type = MetricsDiscovery::TAdapterIdType::ADAPTER_ID_TYPE_LUID;
@@ -220,7 +220,7 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterTypeWhenGe
 TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMajorWhenGetMetricsAdapterThenReturnFail) {
 
     auto adapterGroupParams = TAdapterGroupParams_1_6{};
-    auto adapterParams = TAdapterParams_1_8{};
+    auto adapterParams = TAdapterParams_1_9{};
 
     adapterGroupParams.AdapterCount = 1;
     adapterParams.SystemId.Type = MetricsDiscovery::TAdapterIdType::ADAPTER_ID_TYPE_MAJOR_MINOR;
@@ -256,7 +256,7 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMajorWhenG
 TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMinorWhenGetMetricsAdapterThenReturnFail) {
 
     auto adapterGroupParams = TAdapterGroupParams_1_6{};
-    auto adapterParams = TAdapterParams_1_8{};
+    auto adapterParams = TAdapterParams_1_9{};
 
     adapterGroupParams.AdapterCount = 1;
     adapterParams.SystemId.Type = MetricsDiscovery::TAdapterIdType::ADAPTER_ID_TYPE_MAJOR_MINOR;
@@ -292,7 +292,7 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMinorWhenG
 TEST_F(MetricEnumerationTestLinux, givenIcorrectOpenMetricDeviceOnAdapterWhenGetMetricsAdapterThenReturnFail) {
 
     auto adapterGroupParams = TAdapterGroupParams_1_6{};
-    auto adapterParams = TAdapterParams_1_8{};
+    auto adapterParams = TAdapterParams_1_9{};
 
     adapterGroupParams.AdapterCount = 1;
     adapterParams.SystemId.Type = MetricsDiscovery::TAdapterIdType::ADAPTER_ID_TYPE_MAJOR_MINOR;

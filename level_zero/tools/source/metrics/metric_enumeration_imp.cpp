@@ -97,6 +97,8 @@ ze_result_t MetricEnumeration::loadMetricsDiscovery() {
 ze_result_t MetricEnumeration::openMetricsDiscovery() {
     UNRECOVERABLE_IF(openAdapterGroup == nullptr);
 
+    const uint32_t subDeviceIndex = metricContext.getSubDeviceIndex();
+
     // Clean up members.
     pAdapterGroup = nullptr;
     pAdapter = nullptr;
@@ -118,9 +120,14 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    pAdapter->OpenMetricsDevice(&pMetricsDevice);
+    if (subDeviceIndex == 0) {
+        pAdapter->OpenMetricsDevice(&pMetricsDevice);
+    } else {
+        pAdapter->OpenMetricsSubDevice(subDeviceIndex, &pMetricsDevice);
+    }
+
     if (pMetricsDevice == nullptr) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %s\n", " ");
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %u\n", subDeviceIndex);
         cleanupMetricsDiscovery();
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }

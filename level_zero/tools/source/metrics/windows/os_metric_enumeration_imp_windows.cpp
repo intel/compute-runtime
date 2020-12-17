@@ -33,7 +33,7 @@ bool MetricEnumeration::getAdapterId(uint32_t &major, uint32_t &minor) {
     return true;
 }
 
-MetricsDiscovery::IAdapter_1_8 *MetricEnumeration::getMetricsAdapter() {
+MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
 
     uint32_t major = 0;
     uint32_t minor = 0;

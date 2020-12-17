@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,14 +51,23 @@ bool MetricsLibrary::open() {
 //////////////////////////////////////////////////////
 bool MetricsLibrary::contextCreate(
     const ClientType_1_0 &clientType,
+    ClientOptionsSubDeviceData_1_0 &subDevice,
+    ClientOptionsSubDeviceIndexData_1_0 &subDeviceIndex,
+    ClientOptionsSubDeviceCountData_1_0 &subDeviceCount,
     ClientData_1_0 &clientData,
     ContextCreateData_1_0 &createData,
     ContextHandle_1_0 &handle) {
 
-    MetricsLibraryApi::ClientOptionsData_1_0 clientOptions[1] = {};
+    MetricsLibraryApi::ClientOptionsData_1_0 clientOptions[4] = {};
     clientOptions[0].Type = MetricsLibraryApi::ClientOptionsType::Compute;
     clientOptions[0].Compute.Asynchronous = true;
-    clientData.ClientOptionsCount = 1;
+    clientOptions[1].Type = MetricsLibraryApi::ClientOptionsType::SubDevice;
+    clientOptions[1].SubDevice = subDevice;
+    clientOptions[2].Type = MetricsLibraryApi::ClientOptionsType::SubDeviceIndex;
+    clientOptions[2].SubDeviceIndex = subDeviceIndex;
+    clientOptions[3].Type = MetricsLibraryApi::ClientOptionsType::SubDeviceCount;
+    clientOptions[3].SubDeviceCount = subDeviceCount;
+    clientData.ClientOptionsCount = 4;
     clientData.ClientOptions = clientOptions;
 
     createData.Api = &api->functions;

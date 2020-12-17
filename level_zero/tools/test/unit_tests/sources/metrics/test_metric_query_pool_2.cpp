@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "test.h"
 
@@ -879,5 +880,52 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndMetricsLibraryWillFailWhen
     EXPECT_EQ(zeEventPoolDestroy(eventPoolHandle), ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MetricQueryPoolTest, givenRootDeviceWhenGetSubDeviceClientOptionsIsCalledThenReturnRootDeviceProperties) {
+
+    auto &metricContext = device->getMetricContext();
+    auto &metricsLibrary = metricContext.getMetricsLibrary();
+    auto subDevice = ClientOptionsData_1_0{};
+    auto subDeviceIndex = ClientOptionsData_1_0{};
+    auto subDeviceCount = ClientOptionsData_1_0{};
+
+    metricsLibrary.getSubDeviceClientOptions(*device->getNEODevice(), subDevice, subDeviceIndex, subDeviceCount);
+
+    // Root device
+    EXPECT_EQ(subDevice.Type, MetricsLibraryApi::ClientOptionsType::SubDevice);
+    EXPECT_EQ(subDevice.SubDevice.Enabled, false);
+
+    EXPECT_EQ(subDeviceIndex.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceIndex);
+    EXPECT_EQ(subDeviceIndex.SubDeviceIndex.Index, 0u);
+
+    EXPECT_EQ(subDeviceCount.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceCount);
+    EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, device->getNEODevice()->getNumAvailableDevices());
+}
+
+TEST_F(MetricQueryPoolTest, givenSubDeviceWhenGetSubDeviceClientOptionsIsCalledThenReturnSubDeviceProperties) {
+
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 4);
+    auto rootDevice = deviceFactory->rootDevices[0];
+
+    auto &metricContext = device->getMetricContext();
+    auto &metricsLibrary = metricContext.getMetricsLibrary();
+    auto subDevice = ClientOptionsData_1_0{};
+    auto subDeviceIndex = ClientOptionsData_1_0{};
+    auto subDeviceCount = ClientOptionsData_1_0{};
+
+    // Sub devices
+    for (uint32_t i = 0, count = rootDevice->getNumAvailableDevices(); i < count; ++i) {
+
+        metricsLibrary.getSubDeviceClientOptions(*rootDevice->subdevices[i], subDevice, subDeviceIndex, subDeviceCount);
+
+        EXPECT_EQ(subDevice.Type, MetricsLibraryApi::ClientOptionsType::SubDevice);
+        EXPECT_EQ(subDevice.SubDevice.Enabled, true);
+
+        EXPECT_EQ(subDeviceIndex.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceIndex);
+        EXPECT_EQ(subDeviceIndex.SubDeviceIndex.Index, i);
+
+        EXPECT_EQ(subDeviceCount.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceCount);
+        EXPECT_EQ(subDeviceCount.SubDeviceCount.Count, rootDevice->getNumAvailableDevices());
+    }
+}
 } // namespace ult
 } // namespace L0

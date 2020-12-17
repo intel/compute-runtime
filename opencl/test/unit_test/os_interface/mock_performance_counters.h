@@ -82,7 +82,7 @@ class MockMetricsLibrary : public MetricsLibrary {
     bool open() override;
 
     // Context create / destroy functions.
-    bool contextCreate              (const ClientType_1_0 &client, ClientData_1_0& clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle) override;
+    bool contextCreate              (const ClientType_1_0 &client, ClientOptionsSubDeviceData_1_0 &subDevice, ClientOptionsSubDeviceIndexData_1_0 &subDeviceIndex, ClientOptionsSubDeviceCountData_1_0 &subDeviceCount, ClientData_1_0& clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle) override;
     bool contextDelete              (const ContextHandle_1_0 &handle) override;
 
     // HwCounters functions.

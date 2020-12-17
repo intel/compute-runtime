@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,6 +93,9 @@ class PerformanceCounters {
     /////////////////////////////////////////////////////
     ClientData_1_0 clientData = {};
     ClientType_1_0 clientType = {ClientApi::OpenCL, ClientGen::Unknown};
+    ClientOptionsSubDeviceData_1_0 subDevice = {};
+    ClientOptionsSubDeviceIndexData_1_0 subDeviceIndex = {};
+    ClientOptionsSubDeviceCountData_1_0 subDeviceCount = {};
 
     /////////////////////////////////////////////////////
     // Metrics Library context.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ bool MockMetricsLibrary::open() {
 //////////////////////////////////////////////////////
 // MockMetricsLibrary::contextCreate
 //////////////////////////////////////////////////////
-bool MockMetricsLibrary::contextCreate(const ClientType_1_0 &client, ClientData_1_0 &clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle) {
+bool MockMetricsLibrary::contextCreate(const ClientType_1_0 &client, ClientOptionsSubDeviceData_1_0 &subDevice, ClientOptionsSubDeviceIndexData_1_0 &subDeviceIndex, ClientOptionsSubDeviceCountData_1_0 &subDeviceCount, ClientData_1_0 &clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle) {
     if (client.Api != MetricsLibraryApi::ClientApi::OpenCL) {
         return false;
     }

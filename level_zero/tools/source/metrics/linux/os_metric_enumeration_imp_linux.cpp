@@ -33,7 +33,7 @@ bool MetricEnumeration::getAdapterId(uint32_t &adapterMajor, uint32_t &adapterMi
     return result == 0;
 }
 
-MetricsDiscovery::IAdapter_1_8 *MetricEnumeration::getMetricsAdapter() {
+MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
 
     UNRECOVERABLE_IF(pAdapterGroup == nullptr);
 

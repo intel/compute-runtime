@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,9 @@ using MetricsLibraryApi::ClientApi;
 using MetricsLibraryApi::ClientCallbacks_1_0;
 using MetricsLibraryApi::ClientData_1_0;
 using MetricsLibraryApi::ClientGen;
+using MetricsLibraryApi::ClientOptionsSubDeviceCountData_1_0;
+using MetricsLibraryApi::ClientOptionsSubDeviceData_1_0;
+using MetricsLibraryApi::ClientOptionsSubDeviceIndexData_1_0;
 using MetricsLibraryApi::ClientType_1_0;
 using MetricsLibraryApi::CommandBufferData_1_0;
 using MetricsLibraryApi::CommandBufferSize_1_0;
@@ -58,7 +61,7 @@ class MetricsLibrary {
     MOCKABLE_VIRTUAL bool open();
 
     // Context create / destroy functions.
-    MOCKABLE_VIRTUAL bool contextCreate(const ClientType_1_0 &client, ClientData_1_0 &clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle);
+    MOCKABLE_VIRTUAL bool contextCreate(const ClientType_1_0 &client, ClientOptionsSubDeviceData_1_0 &subDevice, ClientOptionsSubDeviceIndexData_1_0 &subDeviceIndex, ClientOptionsSubDeviceCountData_1_0 &subDeviceCount, ClientData_1_0 &clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle);
     MOCKABLE_VIRTUAL bool contextDelete(const ContextHandle_1_0 &handle);
 
     // HwCounters functions.

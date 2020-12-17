@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,6 +98,9 @@ bool PerformanceCounters::openMetricsLibrary() {
     if (result) {
         result = metricsLibrary->contextCreate(
             clientType,
+            subDevice,
+            subDeviceIndex,
+            subDeviceCount,
             clientData,
             contextData,
             context);

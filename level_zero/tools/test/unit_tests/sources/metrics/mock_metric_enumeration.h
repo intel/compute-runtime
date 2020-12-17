@@ -26,8 +26,10 @@ using MetricGroup = WhiteBox<::L0::MetricGroup>;
 
 using MetricsDiscovery::IAdapter_1_6;
 using MetricsDiscovery::IAdapter_1_8;
+using MetricsDiscovery::IAdapter_1_9;
 using MetricsDiscovery::IAdapterGroup_1_6;
 using MetricsDiscovery::IAdapterGroup_1_8;
+using MetricsDiscovery::IAdapterGroup_1_9;
 using MetricsDiscovery::IConcurrentGroup_1_5;
 using MetricsDiscovery::IInformation_1_0;
 using MetricsDiscovery::IMetric_1_0;
@@ -38,13 +40,16 @@ using MetricsDiscovery::IOverride_1_2;
 using MetricsDiscovery::TAdapterGroupParams_1_6;
 using MetricsDiscovery::TAdapterParams_1_6;
 using MetricsDiscovery::TAdapterParams_1_8;
+using MetricsDiscovery::TAdapterParams_1_9;
 using MetricsDiscovery::TCompletionCode;
 using MetricsDiscovery::TConcurrentGroupParams_1_0;
+using MetricsDiscovery::TEngineParams_1_9;
 using MetricsDiscovery::TGlobalSymbol_1_0;
 using MetricsDiscovery::TMetricParams_1_0;
 using MetricsDiscovery::TMetricsDeviceParams_1_2;
 using MetricsDiscovery::TMetricSetParams_1_4;
 using MetricsDiscovery::TSamplingType;
+using MetricsDiscovery::TSubDeviceParams_1_9;
 using MetricsDiscovery::TTypedValue_1_0;
 
 struct MockMetricsDiscoveryApi {
@@ -53,31 +58,37 @@ struct MockMetricsDiscoveryApi {
     static TCompletionCode MD_STDCALL OpenMetricsDeviceFromFile(const char *fileName, void *openParams, IMetricsDevice_1_5 **device);
     static TCompletionCode MD_STDCALL CloseMetricsDevice(IMetricsDevice_1_5 *device);
     static TCompletionCode MD_STDCALL SaveMetricsDeviceToFile(const char *fileName, void *saveParams, IMetricsDevice_1_5 *device);
-    static TCompletionCode MD_STDCALL OpenAdapterGroup(IAdapterGroup_1_8 **adapterGroup);
+    static TCompletionCode MD_STDCALL OpenAdapterGroup(IAdapterGroup_1_9 **adapterGroup);
 
     // Mocked api functions.
     MOCK_METHOD(TCompletionCode, MockOpenMetricsDeviceFromFile, (const char *, void *, IMetricsDevice_1_5 **));
     MOCK_METHOD(TCompletionCode, MockCloseMetricsDevice, (IMetricsDevice_1_5 *));
     MOCK_METHOD(TCompletionCode, MockSaveMetricsDeviceToFile, (const char *, void *, IMetricsDevice_1_5 *));
-    MOCK_METHOD(TCompletionCode, MockOpenAdapterGroup, (IAdapterGroup_1_8 * *adapterGroup));
+    MOCK_METHOD(TCompletionCode, MockOpenAdapterGroup, (IAdapterGroup_1_9 * *adapterGroup));
 };
 
 template <>
-class Mock<IAdapterGroup_1_8> : public IAdapterGroup_1_8 {
+class Mock<IAdapterGroup_1_9> : public IAdapterGroup_1_9 {
   public:
     Mock(){};
 
-    MOCK_METHOD(IAdapter_1_8 *, GetAdapter, (uint32_t), (override));
+    MOCK_METHOD(IAdapter_1_9 *, GetAdapter, (uint32_t), (override));
     MOCK_METHOD(const TAdapterGroupParams_1_6 *, GetParams, (), (const, override));
     MOCK_METHOD(TCompletionCode, Close, (), (override));
 };
 
 template <>
-class Mock<IAdapter_1_8> : public IAdapter_1_8 {
+class Mock<IAdapter_1_9> : public IAdapter_1_9 {
   public:
     Mock(){};
 
-    MOCK_METHOD(const TAdapterParams_1_8 *, GetParams, (), (const, override));
+    // 1.9
+    MOCK_METHOD(const TSubDeviceParams_1_9 *, GetSubDeviceParams, (const uint32_t subDeviceIndex), (override));
+    MOCK_METHOD(const TEngineParams_1_9 *, GetEngineParams, (const uint32_t subDeviceIndex, const uint32_t engineIndex), (override));
+    MOCK_METHOD(TCompletionCode, OpenMetricsSubDevice, (const uint32_t subDeviceIndex, IMetricsDevice_1_5 **metricsDevice), (override));
+    MOCK_METHOD(TCompletionCode, OpenMetricsSubDeviceFromFile, (const uint32_t subDeviceIndex, const char *fileName, void *openParams, IMetricsDevice_1_5 **metricsDevice), (override));
+
+    MOCK_METHOD(const TAdapterParams_1_9 *, GetParams, (), (const, override));
     MOCK_METHOD(TCompletionCode, Reset, (), (override));
     MOCK_METHOD(TCompletionCode, OpenMetricsDevice, (IMetricsDevice_1_5 **), (override));
     MOCK_METHOD(TCompletionCode, OpenMetricsDeviceFromFile, (const char *, void *, IMetricsDevice_1_5 **), (override));
@@ -146,6 +157,7 @@ struct Mock<MetricEnumeration> : public MetricEnumeration {
     Mock(::L0::MetricContext &metricContext);
     ~Mock() override;
 
+    using MetricEnumeration::cleanupMetricsDiscovery;
     using MetricEnumeration::hMetricsDiscovery;
     using MetricEnumeration::initializationState;
     using MetricEnumeration::openAdapterGroup;
@@ -157,12 +169,12 @@ struct Mock<MetricEnumeration> : public MetricEnumeration {
     // Mock metric enumeration functions.
     MOCK_METHOD(bool, isInitialized, (), (override));
     MOCK_METHOD(ze_result_t, loadMetricsDiscovery, (), (override));
-    MOCK_METHOD(MetricsDiscovery::IAdapter_1_8 *, getMetricsAdapter, (), (override));
+    MOCK_METHOD(MetricsDiscovery::IAdapter_1_9 *, getMetricsAdapter, (), (override));
     MOCK_METHOD(bool, getAdapterId, (uint32_t & drmMajor, uint32_t &drmMinor), (override));
 
     // Not mocked metrics enumeration functions.
     bool baseIsInitialized() { return MetricEnumeration::isInitialized(); }
-    IAdapter_1_8 *baseGetMetricsAdapter() { return MetricEnumeration::getMetricsAdapter(); }
+    IAdapter_1_9 *baseGetMetricsAdapter() { return MetricEnumeration::getMetricsAdapter(); }
     bool baseGetAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor) { return MetricEnumeration::getAdapterId(adapterMajor, adapterMinor); }
     ze_result_t baseLoadMetricsDiscovery() { return MetricEnumeration::loadMetricsDiscovery(); }
 

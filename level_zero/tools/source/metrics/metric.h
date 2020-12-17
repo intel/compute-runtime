@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,6 +54,8 @@ struct MetricContext {
 
     virtual void setUseCompute(const bool useCompute) = 0;
     virtual bool isComputeUsed() = 0;
+    virtual uint32_t getSubDeviceIndex() = 0;
+    virtual void setSubDeviceIndex(const uint32_t index) = 0;
 };
 
 struct Metric : _zet_metric_handle_t {

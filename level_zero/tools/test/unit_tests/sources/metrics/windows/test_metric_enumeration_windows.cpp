@@ -29,7 +29,7 @@ TEST_F(MetricEnumerationTestWindows, givenCorrectWindowsAdapterWhenGetMetricsAda
     auto &osInterface = rootDevice->osInterface;
     auto wddm = new WddmMock(*rootDevice);
     auto adapterGroupParams = TAdapterGroupParams_1_6{};
-    auto adapterParams = TAdapterParams_1_8{};
+    auto adapterParams = TAdapterParams_1_9{};
 
     osInterface = std::make_unique<NEO::OSInterface>();
     osInterface->get()->setWddm(wddm);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "performance_counters_linux.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
@@ -24,10 +25,28 @@ std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device)
     auto &hwHelper = HwHelper::get(gen);
     UNRECOVERABLE_IF(counter == nullptr);
 
+    if (device->getParentDevice() == nullptr) {
+
+        // Root device.
+        counter->subDevice.Enabled = false;
+        counter->subDeviceIndex.Index = 0;
+        counter->subDeviceCount.Count = device->getNumAvailableDevices();
+    } else {
+
+        // Sub device.
+        counter->subDevice.Enabled = true;
+        counter->subDeviceIndex.Index = static_cast<NEO::SubDevice *>(device)->getSubDeviceIndex();
+        counter->subDeviceCount.Count = device->getParentDevice()->getNumAvailableDevices();
+    }
+
+    // Adapter data.
     counter->adapter.Type = LinuxAdapterType::DrmFileDescriptor;
     counter->adapter.DrmFileDescriptor = drm->getFileDescriptor();
     counter->clientData.Linux.Adapter = &(counter->adapter);
+
+    // Gen data.
     counter->clientType.Gen = static_cast<MetricsLibraryApi::ClientGen>(hwHelper.getMetricsLibraryGenId());
+
     return counter;
 }
 

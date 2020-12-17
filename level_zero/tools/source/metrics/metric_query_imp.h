@@ -13,6 +13,7 @@
 
 using MetricsLibraryApi::ClientCallbacks_1_0;
 using MetricsLibraryApi::ClientGen;
+using MetricsLibraryApi::ClientOptionsData_1_0;
 using MetricsLibraryApi::CommandBufferData_1_0;
 using MetricsLibraryApi::ConfigurationHandle_1_0;
 using MetricsLibraryApi::ContextCreateData_1_0;
@@ -44,6 +45,10 @@ struct MetricsLibrary {
     virtual bool load();
     bool isInitialized();
     ze_result_t getInitializationState();
+    void getSubDeviceClientOptions(NEO::Device &neoDevice,
+                                   ClientOptionsData_1_0 &subDevice,
+                                   ClientOptionsData_1_0 &subDeviceIndex,
+                                   ClientOptionsData_1_0 &subDeviceCount);
     static const char *getFilename();
 
     // Deinitialization.

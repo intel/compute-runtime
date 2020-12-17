@@ -33,7 +33,7 @@ struct MetricEnumeration {
 
     virtual ze_result_t openMetricsDiscovery();
     virtual bool getAdapterId(uint32_t &major, uint32_t &minor);
-    virtual MetricsDiscovery::IAdapter_1_8 *getMetricsAdapter();
+    virtual MetricsDiscovery::IAdapter_1_9 *getMetricsAdapter();
     ze_result_t cleanupMetricsDiscovery();
 
     ze_result_t cacheMetricInformation();
@@ -60,8 +60,8 @@ struct MetricEnumeration {
     // Metrics Discovery API.
     std::unique_ptr<NEO::OsLibrary> hMetricsDiscovery = nullptr;
     MetricsDiscovery::OpenAdapterGroup_fn openAdapterGroup = nullptr;
-    MetricsDiscovery::IAdapterGroup_1_8 *pAdapterGroup = nullptr;
-    MetricsDiscovery::IAdapter_1_8 *pAdapter = nullptr;
+    MetricsDiscovery::IAdapterGroup_1_9 *pAdapterGroup = nullptr;
+    MetricsDiscovery::IAdapter_1_9 *pAdapter = nullptr;
     MetricsDiscovery::IMetricsDevice_1_5 *pMetricsDevice = nullptr;
 
   public:

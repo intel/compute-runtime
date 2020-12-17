@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-//     Copyright Â© 2019-2021, Intel Corporation
+//     Copyright © 2019-2020, Intel Corporation
 //
 //     Permission is hereby granted, free of charge, to any person obtaining a
 //     copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // API build number:
 //////////////////////////////////////////////////////////////////////////////////
-#define MD_API_BUILD_NUMBER_CURRENT 131
+#define MD_API_BUILD_NUMBER_CURRENT 133
 
 namespace MetricsDiscovery
 {
@@ -82,7 +82,8 @@ namespace MetricsDiscovery
         MD_API_MINOR_NUMBER_6       = 6, // Multi adapter support
         MD_API_MINOR_NUMBER_7       = 7,
         MD_API_MINOR_NUMBER_8       = 8, // TAdapterParams update
-        MD_API_MINOR_NUMBER_CURRENT = MD_API_MINOR_NUMBER_8,
+        MD_API_MINOR_NUMBER_9       = 9, // Sub device support.
+        MD_API_MINOR_NUMBER_CURRENT = MD_API_MINOR_NUMBER_9,
         MD_API_MINOR_NUMBER_CEIL    = 0xFFFFFFFF
     } MD_API_MINOR_VERSION;
 
@@ -421,8 +422,62 @@ namespace MetricsDiscovery
     //////////////////////////////////////////////////////////////////////////////////
     typedef struct SAdapterParams_1_8 : public SAdapterParams_1_6
     {
-        uint32_t    DomainNumber;
+        uint32_t DomainNumber;
     } TAdapterParams_1_8;
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // Global parameters of GPU adapter:
+    //////////////////////////////////////////////////////////////////////////////////
+    typedef struct SAdapterParams_1_9 : public SAdapterParams_1_8
+    {
+        uint32_t SubDevicesCount;
+    } TAdapterParams_1_9;
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // Global parameters of GPU sub device:
+    //////////////////////////////////////////////////////////////////////////////////
+    typedef struct SSubDeviceParams_1_9
+    {
+        uint32_t EnginesCount;
+    } TSubDeviceParams_1_9;
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // Engine ID types:
+    //////////////////////////////////////////////////////////////////////////////////
+    typedef enum EEngineIdType
+    {
+        ENGINE_ID_TYPE_CLASS_INSTANCE = 0
+    } TEngineIdType;
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // Class / instance engine ID:
+    //////////////////////////////////////////////////////////////////////////////////
+    typedef struct SEngineIdClassInstance_1_9
+    {
+        uint32_t Class;
+        uint32_t Instance;
+    } TEngineIdClassInstance_1_9;
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // Engine identification:
+    //////////////////////////////////////////////////////////////////////////////////
+    typedef struct SEngineId_1_9
+    {
+        TEngineIdType Type;
+
+        union
+        {
+            TEngineIdClassInstance_1_9 ClassInstance;
+        };
+    } TEngineId_1_9;
+
+    //////////////////////////////////////////////////////////////////////////////////
+    // Global parameters of GPU engine:
+    //////////////////////////////////////////////////////////////////////////////////
+    typedef struct SEngineParams_1_9
+    {
+        TEngineId_1_9 EngineId;
+    } TEngineParams_1_9;
 
     //////////////////////////////////////////////////////////////////////////////////
     // Global parameters of Adapter Group:
@@ -1220,6 +1275,32 @@ namespace MetricsDiscovery
     ///////////////////////////////////////////////////////////////////////////////
     //
     // Class:
+    //   IAdapter_1_9
+    //
+    // Description:
+    //   Abstract interface for GPU adapter.
+    //
+    // New:
+    // - GetParams:                     To get this adapter parameters
+    // - GetSubDeviceParams             To get sub device parameters
+    // - GetEngineParams                To get engine parameters
+    // - OpenMetricsSubDevice           To open metrics device on given sub device
+    // - OpenMetricsSubDeviceFromFile   To open metrics device from file on given sub device
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IAdapter_1_9 : public IAdapter_1_8
+    {
+    public:
+        virtual const TAdapterParams_1_9*   GetParams( void ) const;
+        virtual const TSubDeviceParams_1_9* GetSubDeviceParams( const uint32_t subDeviceIndex );
+        virtual const TEngineParams_1_9*    GetEngineParams( const uint32_t subDeviceIndex, const uint32_t engineIndex );
+        virtual TCompletionCode             OpenMetricsSubDevice( const uint32_t subDeviceIndex, IMetricsDevice_1_5** metricsDevice );
+        virtual TCompletionCode             OpenMetricsSubDeviceFromFile( const uint32_t subDeviceIndex, const char* fileName, void* openParams, IMetricsDevice_1_5** metricsDevice );
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
     //   IAdapterGroup_1_6
     //
     // Description:
@@ -1258,13 +1339,31 @@ namespace MetricsDiscovery
         virtual IAdapter_1_8* GetAdapter( uint32_t index );
     };
 
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
+    //   IAdapterGroup_1_9
+    //
+    // Description:
+    //   Abstract interface for the GPU adapters root object.
+    //
+    // New:
+    // - GetAdapter:                    To enumerate available GPU adapters
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IAdapterGroup_1_9 : public IAdapterGroup_1_8
+    {
+    public:
+        virtual IAdapter_1_9* GetAdapter( uint32_t index );
+    };
+
 #ifdef __cplusplus
     extern "C"
     {
 #endif
 
         // [Current] Factory functions
-        typedef TCompletionCode( MD_STDCALL* OpenAdapterGroup_fn )( IAdapterGroup_1_8** adapterGroup );
+        typedef TCompletionCode( MD_STDCALL* OpenAdapterGroup_fn )( IAdapterGroup_1_9** adapterGroup );
 
         // [Legacy] Factory functions
         typedef TCompletionCode( MD_STDCALL* OpenMetricsDevice_fn )( IMetricsDevice_1_5** metricsDevice );
