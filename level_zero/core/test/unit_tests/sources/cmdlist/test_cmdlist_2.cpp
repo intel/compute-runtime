@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -457,60 +457,6 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendMemoryFillCalledThenAppen
     int pattern = 1;
     cmdList.appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0, nullptr, 0, nullptr);
     EXPECT_EQ(cmdList.appendBlitFillCalledTimes, 0u);
-}
-
-HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, Platforms) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
-    commandList.initialize(device, NEO::EngineGroupType::RenderCompute);
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-    void *dstPtr = reinterpret_cast<void *>(0x2345);
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
-
-    commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100, event->toHandle(), 0, nullptr);
-    EXPECT_GT(commandList.appendMemoryCopyKernelWithGACalledTimes, 0u);
-    EXPECT_EQ(commandList.appendMemoryCopyBlitCalledTimes, 0u);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
-        commandList.commandContainer.getCommandStream()->getUsed()));
-    auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
-
-    itor++;
-    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
-
-    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-
-    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
-
-    itor++;
-    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventsThenSemaphoreWaitAndPipeControlAreFound, Platforms) {
@@ -1047,8 +993,11 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToMemoryCopy
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
+    EXPECT_EQ(event->getPacketsInUse(), 0u);
     commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100, event->toHandle(), 0, nullptr);
     EXPECT_GT(commandList.appendMemoryCopyBlitCalledTimes, 1u);
+    EXPECT_EQ(event->getPacketsInUse(), 1u);
+
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0), commandList.commandContainer.getCommandStream()->getUsed()));
@@ -1112,5 +1061,60 @@ HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenLeftMiddleAndRig
     EXPECT_NE(cmdList.end(), itor);
 }
 
+HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, SupportedPlatforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::RenderCompute);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+    EXPECT_EQ(event->getPacketsInUse(), 0u);
+
+    commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100, event->toHandle(), 0, nullptr);
+    EXPECT_GT(commandList.appendMemoryCopyKernelWithGACalledTimes, 0u);
+    EXPECT_EQ(commandList.appendMemoryCopyBlitCalledTimes, 0u);
+    EXPECT_EQ(event->getPacketsInUse(), 1u);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList.commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+
+    itor++;
+    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+
+    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+
+    itor++;
+    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+}
 } // namespace ult
 } // namespace L0

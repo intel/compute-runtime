@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -139,6 +139,10 @@ NEO::GraphicsAllocation &Event::getAllocation() {
     auto eventImp = static_cast<EventImp *>(this);
 
     return *eventImp->eventPool->getAllocation().getGraphicsAllocation(eventImp->device->getNEODevice()->getRootDeviceIndex());
+}
+
+uint64_t Event::getTimestampPacketAddress() {
+    return gpuAddress + packetsInUse * sizeof(TimestampPacketStorage::Packet);
 }
 
 ze_result_t EventImp::calculateProfilingData() {

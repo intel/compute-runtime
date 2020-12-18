@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -204,7 +204,7 @@ struct CommandListCoreFamily : CommandListImp {
                                              ze_event_handle_t hEvent,
                                              bool isIndirect,
                                              bool isPredicate);
-
+    ze_result_t appendLaunchKernelSplit(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions, ze_event_handle_t hEvent);
     ze_result_t prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions);
 
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
@@ -213,6 +213,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, uint32_t lws[3]);
     void appendWriteKernelTimestamp(ze_event_handle_t hEvent, bool beforeWalker, bool maskLsb);
     void appendEventForProfiling(ze_event_handle_t hEvent, bool beforeWalker);
+    void appendEventForProfilingAllWalkers(ze_event_handle_t hEvent, bool beforeWalker);
     void appendEventForProfilingCopyCommand(ze_event_handle_t hEvent, bool beforeWalker);
     void appendSignalEventPostWalker(ze_event_handle_t hEvent);
     void programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired);
@@ -220,7 +221,7 @@ struct CommandListCoreFamily : CommandListImp {
 
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize);
-    ze_result_t addEventsToCmdList(ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

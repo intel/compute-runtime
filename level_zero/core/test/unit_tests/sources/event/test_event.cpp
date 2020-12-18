@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -219,6 +219,8 @@ HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryK
     data.globalStart = 3u;
     data.globalEnd = 4u;
 
+    event->increasePacketsInUse();
+    EXPECT_EQ(event->getPacketsInUse(), 1u);
     event->hostAddress = &data;
 
     ze_kernel_timestamp_result_t result = {};

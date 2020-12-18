@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,11 +46,15 @@ struct Event : _ze_event_handle_t {
 
     virtual NEO::GraphicsAllocation &getAllocation();
 
+    void increasePacketsInUse() { packetsInUse++; }
+    void resetPackets() { packetsInUse = 0; }
     uint64_t getGpuAddress() { return gpuAddress; }
+    uint32_t getPacketsInUse() { return packetsInUse; }
+    uint64_t getTimestampPacketAddress();
 
     void *hostAddress = nullptr;
     uint64_t gpuAddress;
-    uint32_t getPacketsInUse() { return packetsInUse; }
+    uint32_t packetsInUse = 0;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
@@ -61,8 +65,6 @@ struct Event : _ze_event_handle_t {
     uint64_t globalEndTS;
     uint64_t contextStartTS;
     uint64_t contextEndTS;
-
-    uint32_t packetsInUse = 1;
 
     // Metric streamer instance associated with the event.
     MetricStreamer *metricStreamer = nullptr;

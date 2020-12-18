@@ -1047,11 +1047,15 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCo
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
-    commandList->appendEventForProfilingCopyCommand(event->toHandle(), true);
-
+    auto baseAddr = event->getGpuAddress();
     auto contextOffset = offsetof(TimestampPacketStorage::Packet, contextStart);
     auto globalOffset = offsetof(TimestampPacketStorage::Packet, globalStart);
-    auto baseAddr = event->getGpuAddress();
+    EXPECT_EQ(event->getPacketsInUse(), 0u);
+    EXPECT_EQ(event->getTimestampPacketAddress(), baseAddr);
+
+    commandList->appendEventForProfilingCopyCommand(event->toHandle(), true);
+    EXPECT_EQ(event->getPacketsInUse(), 1u);
+
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
