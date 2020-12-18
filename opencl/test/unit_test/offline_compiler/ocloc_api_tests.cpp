@@ -19,6 +19,10 @@ extern Environment *gEnvironment;
 
 using namespace std::string_literals;
 
+TEST(OclocApiTests, WhenOclocVersionIsCalledThenCurrentOclocVersionIsReturned) {
+    EXPECT_EQ(ocloc_version_t::OCLOC_VERSION_CURRENT, oclocVersion());
+}
+
 TEST(OclocApiTests, WhenGoodArgsAreGivenThenSuccessIsReturned) {
     const char *argv[] = {
         "ocloc",

@@ -149,4 +149,8 @@ int oclocFreeOutput(uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **len
     delete[](*nameOutputs);
     return 0;
 }
+
+int oclocVersion() {
+    return static_cast<int>(ocloc_version_t::OCLOC_VERSION_CURRENT);
+}
 }
