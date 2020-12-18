@@ -83,7 +83,7 @@ TEST_F(KernelSlmArgTest, WhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
     slmOffset = ptrOffset(crossThreadData, 0x30);
     EXPECT_EQ(0x400u, *slmOffset);
 
-    EXPECT_EQ(5 * KB, pKernel->slmTotalSize);
+    EXPECT_EQ(5 * KB, pKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
 }
 
 TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
@@ -100,5 +100,5 @@ TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSl
     slmOffset = ptrOffset(crossThreadData, 0x30);
     EXPECT_EQ(0x400u, *slmOffset);
 
-    EXPECT_EQ(5 * KB, pKernel->slmTotalSize);
+    EXPECT_EQ(5 * KB, pKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
 }

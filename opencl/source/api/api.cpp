@@ -1845,7 +1845,7 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
             retVal = CL_INVALID_KERNEL;
             break;
         }
-        if (pKernel->getDefaultKernelInfo().kernelArgInfo.size() <= argIndex) {
+        if (pKernel->getKernelArguments().size() <= argIndex) {
             retVal = CL_INVALID_ARG_INDEX;
             break;
         }

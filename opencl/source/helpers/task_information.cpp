@@ -166,6 +166,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         printfHandler.get()->makeResident(commandStreamReceiver);
     }
     makeTimestampPacketsResident(commandStreamReceiver);
+    auto rootDeviceIndex = commandQueue.getDevice().getRootDeviceIndex();
 
     if (executionModelKernel) {
         uint32_t taskCount = commandStreamReceiver.peekTaskCount() + 1;
@@ -195,7 +196,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         scheduler.makeResident(commandStreamReceiver);
 
         // Update SLM usage
-        slmUsed |= scheduler.slmTotalSize > 0;
+        slmUsed |= scheduler.getSlmTotalSize(rootDeviceIndex) > 0;
 
         this->kernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(commandStreamReceiver);
     }
@@ -210,7 +211,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                            commandQueue.getGpgpuCommandStreamReceiver(), bcsCsr);
     }
 
-    auto rootDeviceIndex = commandQueue.getDevice().getRootDeviceIndex();
     const auto &kernelDescriptor = kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor;
 
     auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired());

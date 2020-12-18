@@ -182,7 +182,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
 
     size_t getKernelArgsNumber() const {
-        return getDefaultKernelInfo().kernelArgInfo.size();
+        return kernelArguments.size();
     }
 
     bool requiresSshForBuffers(uint32_t rootDeviceIndex) const {
@@ -308,11 +308,8 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     static uint32_t dummyPatchLocation;
 
-    std::vector<size_t> slmSizes;
-
     uint32_t allBufferArgsStateful = CL_TRUE;
 
-    uint32_t slmTotalSize;
     bool isBuiltIn = false;
     const bool isParentKernel;
     const bool isSchedulerKernel;
@@ -406,6 +403,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     void setNumWorkGroupsValues(uint32_t rootDeviceIndex, uint32_t numWorkGroupsX, uint32_t numWorkGroupsY, uint32_t numWorkGroupsZ);
     void setWorkDim(uint32_t rootDeviceIndex, uint32_t workDim);
     uint32_t getMaxKernelWorkGroupSize(uint32_t rootDeviceIndex) const;
+    uint32_t getSlmTotalSize(uint32_t rootDeviceIndex) const;
 
   protected:
     struct ObjectCounts {
@@ -573,6 +571,9 @@ class Kernel : public BaseObject<_cl_kernel> {
 
         size_t numberOfBindingTableStates = 0u;
         size_t localBindingTableOffset = 0u;
+
+        std::vector<size_t> slmSizes;
+        uint32_t slmTotalSize = 0u;
 
         std::unique_ptr<char[]> pSshLocal;
         uint32_t sshLocalSize = 0u;

@@ -68,7 +68,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
         pKernel->setKernelArgHandler(0, &Kernel::setArgBuffer);
 
-        pKernel->slmTotalSize = 128;
+        pKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize = 128;
         pKernel->isBuiltIn = true;
     }
 

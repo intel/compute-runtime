@@ -40,7 +40,7 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
         pKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
-        pKernel->slmTotalSize = 128;
+        pKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize = 128;
     }
     void TearDown() override {
         delete pKernel;
@@ -56,7 +56,7 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
     SPatchMediaVFEState *pMediaVFEstate = nullptr;
     SPatchAllocateStatelessPrintfSurface *pPrintfSurface = nullptr;
     MockProgram *pProgram = nullptr;
-    Kernel *pKernel = nullptr;
+    MockKernel *pKernel = nullptr;
 };
 
 typedef Test<DispatchInfoFixture> DispatchInfoTest;

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
@@ -162,7 +163,7 @@ TEST_F(CloneKernelTest, GivenArgLocalWhenCloningKernelThenKernelInfoIsCorrect) {
     EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());
     EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
 
-    EXPECT_EQ(alignUp(slmSize, 1024), pClonedKernel->slmTotalSize);
+    EXPECT_EQ(alignUp(slmSize, 1024), pClonedKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
 }
 
 TEST_F(CloneKernelTest, GivenArgBufferWhenCloningKernelThenKernelInfoIsCorrect) {
@@ -336,10 +337,10 @@ TEST_F(CloneKernelTest, GivenArgAcceleratorWhenCloningKernelThenKernelInfoIsCorr
 }
 
 TEST_F(CloneKernelTest, GivenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect) {
-    std::unique_ptr<Sampler> sampler(new MockSampler(pContext,
-                                                     true,
-                                                     (cl_addressing_mode)CL_ADDRESS_MIRRORED_REPEAT,
-                                                     (cl_filter_mode)CL_FILTER_NEAREST));
+    auto sampler = clUniquePtr<Sampler>(new MockSampler(pContext,
+                                                        true,
+                                                        (cl_addressing_mode)CL_ADDRESS_MIRRORED_REPEAT,
+                                                        (cl_filter_mode)CL_FILTER_NEAREST));
 
     uint32_t objectId = SAMPLER_OBJECT_ID_SHIFT + pKernelInfo->kernelArgInfo[0].offsetHeap;
 
@@ -381,6 +382,8 @@ TEST_F(CloneKernelTest, GivenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect)
 
     auto pNormalizedCoords = ptrOffset(crossThreadData, argInfo.offsetSamplerNormalizedCoords);
     EXPECT_EQ(GetNormCoordsEnum(sampler->normalizedCoordinates), *pNormalizedCoords);
+
+    EXPECT_EQ(3, sampler->getRefInternalCount());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CloneKernelTest, GivenArgDeviceQueueWhenCloningKernelThenKernelInfoIsCorrect) {

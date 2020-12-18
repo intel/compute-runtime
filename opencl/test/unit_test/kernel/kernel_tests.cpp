@@ -2288,7 +2288,7 @@ TEST_F(KernelCrossThreadTests, GivenSlmStatisSizeWhenCreatingKernelThenSlmTotalS
 
     MockKernel *kernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
 
-    EXPECT_EQ(1024u, kernel->slmTotalSize);
+    EXPECT_EQ(1024u, kernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
 
     delete kernel;
 }

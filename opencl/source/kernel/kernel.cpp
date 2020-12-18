@@ -65,8 +65,7 @@ class Surface;
 uint32_t Kernel::dummyPatchLocation = 0xbaddf00d;
 
 Kernel::Kernel(Program *programArg, const KernelInfoContainer &kernelInfosArg, bool schedulerKernel)
-    : slmTotalSize(kernelInfosArg[programArg->getDevices()[0]->getRootDeviceIndex()]->workloadInfo.slmStaticSize),
-      isParentKernel(kernelInfosArg[programArg->getDevices()[0]->getRootDeviceIndex()]->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue),
+    : isParentKernel(kernelInfosArg[programArg->getDevices()[0]->getRootDeviceIndex()]->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue),
       isSchedulerKernel(schedulerKernel),
       executionEnvironment(programArg->getExecutionEnvironment()),
       program(programArg),
@@ -78,7 +77,9 @@ Kernel::Kernel(Program *programArg, const KernelInfoContainer &kernelInfosArg, b
     program->retainForKernel();
     imageTransformer.reset(new ImageTransformer);
     for (const auto &pClDevice : deviceVector) {
-        kernelDeviceInfos[pClDevice->getRootDeviceIndex()].maxKernelWorkGroupSize = static_cast<uint32_t>(pClDevice->getSharedDeviceInfo().maxWorkGroupSize);
+        auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+        kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize = static_cast<uint32_t>(pClDevice->getSharedDeviceInfo().maxWorkGroupSize);
+        kernelDeviceInfos[rootDeviceIndex].slmTotalSize = kernelInfosArg[rootDeviceIndex]->workloadInfo.slmStaticSize;
     }
 }
 
@@ -100,7 +101,7 @@ Kernel::~Kernel() {
     }
 
     for (uint32_t i = 0; i < patchedArgumentsNum; i++) {
-        if (getDefaultKernelInfo().kernelArgInfo.at(i).isSampler) {
+        if (SAMPLER_OBJ == getKernelArguments()[i].type) {
             auto sampler = castToObject<Sampler>(kernelArguments.at(i).object);
             if (sampler) {
                 sampler->decRefInternal();
@@ -372,6 +373,8 @@ cl_int Kernel::initialize() {
         if (program->isKernelDebugEnabled() && kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
             debugEnabled = true;
         }
+        auto numArgs = kernelInfo.kernelArgInfo.size();
+        kernelDeviceInfo.slmSizes.resize(numArgs);
         isDeviceInitialized.set(rootDeviceIndex);
     }
 
@@ -384,13 +387,11 @@ cl_int Kernel::initialize() {
     auto &defaultKernelInfo = getDefaultKernelInfo();
     auto numArgs = defaultKernelInfo.kernelArgInfo.size();
     kernelArguments.resize(numArgs);
-    slmSizes.resize(numArgs);
     kernelArgHandlers.resize(numArgs);
     kernelArgRequiresCacheFlush.resize(numArgs);
 
     for (uint32_t i = 0; i < numArgs; ++i) {
         storeKernelArg(i, NONE_OBJ, nullptr, nullptr, 0);
-        slmSizes[i] = 0;
 
         // set the argument handler
         auto &argInfo = defaultKernelInfo.kernelArgInfo[i];
@@ -483,7 +484,6 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
     const _cl_context *ctxt;
     cl_uint refCount = 0;
     uint64_t nonCannonizedGpuAddress = 0llu;
-    auto defaultRootDeviceIndex = getDevices()[0]->getRootDeviceIndex();
     auto &defaultKernelInfo = getKernelInfo(defaultRootDeviceIndex);
 
     switch (paramName) {
@@ -1112,7 +1112,7 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
                                               availableThreadCount,
                                               dssCount,
                                               dssCount * KB * hardwareInfo.capabilityTable.slmSize,
-                                              hwHelper.alignSlmSize(slmTotalSize),
+                                              hwHelper.alignSlmSize(kernelDeviceInfos[rootDeviceIndex].slmTotalSize),
                                               static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
                                               hwHelper.getBarriersCountFromHasBarriers(barrierCount),
                                               workDim,
@@ -1280,7 +1280,7 @@ cl_int Kernel::setArgLocal(uint32_t argIndex,
 
     storeKernelArg(argIndex, SLM_OBJ, nullptr, argVal, argSize);
 
-    slmSizes[argIndex] = argSize;
+    kernelDeviceInfos[rootDeviceIndex].slmSizes[argIndex] = argSize;
 
     // Extract our current slmOffset
     auto slmOffset = *ptrOffset(crossThreadData,
@@ -1291,7 +1291,7 @@ cl_int Kernel::setArgLocal(uint32_t argIndex,
 
     // Update all slm offsets after this argIndex
     ++argIndex;
-    while (argIndex < slmSizes.size()) {
+    while (argIndex < kernelDeviceInfos[rootDeviceIndex].slmSizes.size()) {
         const auto &kernelArgInfo = defaultKernelInfo.kernelArgInfo[argIndex];
         auto slmAlignment = kernelArgInfo.slmAlignment;
 
@@ -1306,11 +1306,11 @@ cl_int Kernel::setArgLocal(uint32_t argIndex,
             *patchLocation = slmOffset;
         }
 
-        slmOffset += static_cast<uint32_t>(slmSizes[argIndex]);
+        slmOffset += static_cast<uint32_t>(kernelDeviceInfos[rootDeviceIndex].slmSizes[argIndex]);
         ++argIndex;
     }
 
-    slmTotalSize = defaultKernelInfo.workloadInfo.slmStaticSize + alignUp(slmOffset, KB);
+    kernelDeviceInfos[rootDeviceIndex].slmTotalSize = defaultKernelInfo.workloadInfo.slmStaticSize + alignUp(slmOffset, KB);
 
     return CL_SUCCESS;
 }
@@ -2678,5 +2678,8 @@ void Kernel::setWorkDim(uint32_t rootDeviceIndex, uint32_t workDim) {
 
 uint32_t Kernel::getMaxKernelWorkGroupSize(uint32_t rootDeviceIndex) const {
     return kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize;
+}
+uint32_t Kernel::getSlmTotalSize(uint32_t rootDeviceIndex) const {
+    return kernelDeviceInfos[rootDeviceIndex].slmTotalSize;
 }
 } // namespace NEO

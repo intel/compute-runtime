@@ -211,8 +211,8 @@ class MockKernel : public Kernel {
         }
     }
 
-    void setTotalSLMSize(uint32_t size) {
-        slmTotalSize = size;
+    void setTotalSLMSize(uint32_t rootDeviceIndex, uint32_t size) {
+        kernelDeviceInfos[rootDeviceIndex].slmTotalSize = size;
     }
 
     void setKernelArguments(std::vector<SimpleKernelArgInfo> kernelArguments) {

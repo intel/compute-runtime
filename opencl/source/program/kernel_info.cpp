@@ -138,7 +138,7 @@ WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     this->maxWorkGroupSize = dispatchInfo.getKernel()->getMaxKernelWorkGroupSize(rootDeviceIndex);
     this->hasBarriers = kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers();
     this->simdSize = static_cast<uint32_t>(kernelInfo.getMaxSimdSize());
-    this->slmTotalSize = static_cast<uint32_t>(dispatchInfo.getKernel()->slmTotalSize);
+    this->slmTotalSize = static_cast<uint32_t>(dispatchInfo.getKernel()->getSlmTotalSize(rootDeviceIndex));
     this->coreFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
     this->numThreadsPerSubSlice = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
                                   device.getSharedDeviceInfo().numThreadsPerEU;
