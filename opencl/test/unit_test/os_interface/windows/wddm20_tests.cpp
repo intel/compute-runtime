@@ -605,7 +605,7 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
     EXPECT_FALSE(!!privateData->NoRingFlushes);
 }
 
-TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenCreateContextCallWhenDriverHintsItPointsToOpenCL) {
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenCreateContextCallWhenDriverHintsThenItPointsToOpenCL) {
     init();
     auto createContextParams = this->getCreateContextDataFcn();
     EXPECT_EQ(D3DKMT_CLIENTHINT_OPENCL, createContextParams->ClientHint);

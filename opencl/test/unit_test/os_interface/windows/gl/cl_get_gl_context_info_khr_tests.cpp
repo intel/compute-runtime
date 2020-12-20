@@ -22,7 +22,7 @@ using clGetGLContextInfoKhrTest = api_tests;
 
 namespace ULT {
 
-TEST_F(clGetGLContextInfoKhrTest, successWithDefaultPlatform) {
+TEST_F(clGetGLContextInfoKhrTest, GivenDefaultPlatformWhenGettingGlContextThenSuccessIsReturned) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
 
@@ -49,7 +49,7 @@ TEST_F(clGetGLContextInfoKhrTest, successWithDefaultPlatform) {
 
 using clGetGLContextInfoKHRNonDefaultPlatform = ::testing::Test;
 
-TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, successWithNonDefaultPlatform) {
+TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, GivenNonDefaultPlatformWhenGettingGlContextThenSuccessIsReturned) {
     platformsImpl->clear();
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -79,7 +79,7 @@ TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, successWithNonDefaultPlatform) {
     EXPECT_EQ(sizeof(cl_device_id), retSize);
 }
 
-TEST_F(clGetGLContextInfoKhrTest, invalidParam) {
+TEST_F(clGetGLContextInfoKhrTest, GivenInvalidParamWhenGettingGlContextThenInvalidValueErrorIsReturned) {
     cl_device_id retDevice = 0;
     size_t retSize = 0;
     const cl_context_properties properties[] = {CL_GL_CONTEXT_KHR, 1, CL_WGL_HDC_KHR, 2, 0};
