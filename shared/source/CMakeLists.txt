@@ -119,6 +119,7 @@ append_sources_from_properties(CORE_SOURCES
                                NEO_CORE_SRCS_SOURCE_LEVEL_DEBUGGER
                                NEO_CORE_TBX
                                NEO_CORE_UTILITIES
+                               NEO_DEVICE_BINARY_FORMAT
                                NEO_UNIFIED_MEMORY
 )
 
