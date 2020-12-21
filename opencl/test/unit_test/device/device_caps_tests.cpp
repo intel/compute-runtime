@@ -306,6 +306,17 @@ TEST_F(DeviceGetCapsTest, givenDontForcePreemptionModeDebugVariableWhenCreateDev
     }
 }
 
+TEST_F(DeviceGetCapsTest, givenDebugFlagSetWhenCreatingDeviceInfoThenOverrideProfilingTimerResolution) {
+    DebugManagerStateRestore dbgRestorer;
+
+    DebugManager.flags.OverrideProfilingTimerResolution.set(123);
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    EXPECT_EQ(double(123), device->getDeviceInfo().profilingTimerResolution);
+    EXPECT_EQ(123u, device->getDeviceInfo().outProfilingTimerResolution);
+}
+
 TEST_F(DeviceGetCapsTest, givenForcePreemptionModeDebugVariableWhenCreateDeviceThenSetForcedMode) {
     DebugManagerStateRestore dbgRestorer;
     {

@@ -69,6 +69,10 @@ void Device::initializeCaps() {
     deviceInfo.maxMemAllocSize = std::min(std::max(deviceInfo.maxMemAllocSize / 2, static_cast<uint64_t>(128llu * MB)), this->hardwareCapabilities.maxMemAllocSize);
 
     deviceInfo.profilingTimerResolution = getProfilingTimerResolution();
+    if (DebugManager.flags.OverrideProfilingTimerResolution.get() != -1) {
+        deviceInfo.profilingTimerResolution = static_cast<double>(DebugManager.flags.OverrideProfilingTimerResolution.get());
+    }
+
     deviceInfo.outProfilingTimerResolution = static_cast<size_t>(deviceInfo.profilingTimerResolution);
 
     constexpr uint64_t maxPixelSize = 16;
