@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/unit_test/fixtures/device_fixture.h"
 
 #include "test.h"
@@ -31,6 +32,7 @@ class CommandEncodeStatesFixture : public DeviceFixture {
         DeviceFixture::TearDown();
     }
     std::unique_ptr<MyMockCommandContainer> cmdContainer;
+    KernelDescriptor descriptor;
 };
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -256,7 +256,7 @@ struct EncodeComputeMode {
     using STATE_COMPUTE_MODE = typename GfxFamily::STATE_COMPUTE_MODE;
     static void adjustComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable);
 
-    static void adjustPipelineSelect(CommandContainer &container, uint32_t numGrfRequired);
+    static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
 };
 
 template <typename GfxFamily>
