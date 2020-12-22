@@ -9,7 +9,7 @@
 #include "shared/source/helpers/ptr_math.h"
 
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -19,86 +19,97 @@
 
 using namespace NEO;
 
-class KernelSlmArgTest : public Test<ClDeviceFixture> {
+class KernelSlmArgTest : public MultiRootDeviceWithSubDevicesFixture {
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        pKernelInfo = std::make_unique<KernelInfo>();
-        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+        MultiRootDeviceWithSubDevicesFixture::SetUp();
 
-        KernelArgPatchInfo kernelArgPatchInfo;
+        program = std::make_unique<MockProgram>(context.get(), false, context->getDevices());
+        KernelInfoContainer kernelInfos;
+        kernelInfos.resize(3);
+        for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
 
-        pKernelInfo->kernelArgInfo.resize(3);
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+            pKernelInfo[rootDeviceIndex] = std::make_unique<KernelInfo>();
+            pKernelInfo[rootDeviceIndex]->kernelDescriptor.kernelAttributes.simdSize = 1;
 
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x10;
-        pKernelInfo->kernelArgInfo[0].slmAlignment = 0x1;
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20;
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeof(void *);
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
-        pKernelInfo->kernelArgInfo[2].slmAlignment = 0x400;
-        pKernelInfo->workloadInfo.slmStaticSize = 3 * KB;
+            KernelArgPatchInfo kernelArgPatchInfo;
 
-        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
-        pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo.resize(3);
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[1].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x10;
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].slmAlignment = 0x1;
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrLocal;
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20;
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeof(void *);
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].slmAlignment = 0x400;
+            pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].metadata.addressQualifier = KernelArgMetadata::AddrLocal;
+            pKernelInfo[rootDeviceIndex]->workloadInfo.slmStaticSize = 3 * KB;
+
+            kernelInfos[rootDeviceIndex] = pKernelInfo[rootDeviceIndex].get();
+        }
+        pKernel = new MockKernel(program.get(), kernelInfos);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-        pKernel->setKernelArgHandler(0, &Kernel::setArgLocal);
-        pKernel->setKernelArgHandler(1, &Kernel::setArgImmediate);
-        pKernel->setKernelArgHandler(2, &Kernel::setArgLocal);
-
-        uint32_t crossThreadData[0x40] = {};
-        crossThreadData[0x20 / sizeof(uint32_t)] = 0x12344321;
-        pKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
+        for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+            crossThreadData[rootDeviceIndex][0x20 / sizeof(uint32_t)] = 0x12344321;
+            pKernel->setCrossThreadDataForRootDeviceIndex(rootDeviceIndex, &crossThreadData[rootDeviceIndex], sizeof(crossThreadData[rootDeviceIndex]));
+        }
     }
 
     void TearDown() override {
         delete pKernel;
 
-        ClDeviceFixture::TearDown();
+        MultiRootDeviceWithSubDevicesFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<KernelInfo> pKernelInfo[3];
 
     static const size_t slmSize0 = 0x200;
     static const size_t slmSize2 = 0x30;
+    uint32_t crossThreadData[3][0x40]{};
 };
 
 TEST_F(KernelSlmArgTest, WhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
     pKernel->setArg(0, slmSize0, nullptr);
     pKernel->setArg(2, slmSize2, nullptr);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
-    auto slmOffset = ptrOffset(crossThreadData, 0x10);
-    EXPECT_EQ(0u, *slmOffset);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
+        auto slmOffset = ptrOffset(crossThreadData, 0x10);
+        EXPECT_EQ(0u, *slmOffset);
 
-    slmOffset = ptrOffset(crossThreadData, 0x20);
-    EXPECT_EQ(0x12344321u, *slmOffset);
+        slmOffset = ptrOffset(crossThreadData, 0x20);
+        EXPECT_EQ(0x12344321u, *slmOffset);
 
-    slmOffset = ptrOffset(crossThreadData, 0x30);
-    EXPECT_EQ(0x400u, *slmOffset);
+        slmOffset = ptrOffset(crossThreadData, 0x30);
+        EXPECT_EQ(0x400u, *slmOffset);
 
-    EXPECT_EQ(5 * KB, pKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
+        EXPECT_EQ(5 * KB, pKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
+    }
 }
 
 TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
     pKernel->setArg(2, slmSize2, nullptr);
     pKernel->setArg(0, slmSize0, nullptr);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
-    auto slmOffset = ptrOffset(crossThreadData, 0x10);
-    EXPECT_EQ(0u, *slmOffset);
+    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
+        auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
+        auto slmOffset = ptrOffset(crossThreadData, 0x10);
+        EXPECT_EQ(0u, *slmOffset);
 
-    slmOffset = ptrOffset(crossThreadData, 0x20);
-    EXPECT_EQ(0x12344321u, *slmOffset);
+        slmOffset = ptrOffset(crossThreadData, 0x20);
+        EXPECT_EQ(0x12344321u, *slmOffset);
 
-    slmOffset = ptrOffset(crossThreadData, 0x30);
-    EXPECT_EQ(0x400u, *slmOffset);
+        slmOffset = ptrOffset(crossThreadData, 0x30);
+        EXPECT_EQ(0x400u, *slmOffset);
 
-    EXPECT_EQ(5 * KB, pKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
+        EXPECT_EQ(5 * KB, pKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
+    }
 }

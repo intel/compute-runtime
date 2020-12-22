@@ -1271,46 +1271,56 @@ bool Kernel::requiresCoherency() {
     return false;
 }
 
-cl_int Kernel::setArgLocal(uint32_t argIndex,
+cl_int Kernel::setArgLocal(uint32_t argIndexIn,
                            size_t argSize,
                            const void *argVal) {
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-    auto crossThreadData = reinterpret_cast<uint32_t *>(getCrossThreadData(rootDeviceIndex));
-    auto &defaultKernelInfo = getDefaultKernelInfo();
+    std::bitset<64> isArgSet{};
+    storeKernelArg(argIndexIn, SLM_OBJ, nullptr, argVal, argSize);
 
-    storeKernelArg(argIndex, SLM_OBJ, nullptr, argVal, argSize);
+    for (auto &pClDevice : getDevices()) {
+        auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+        if (isArgSet.test(rootDeviceIndex)) {
+            continue;
+        }
+        auto crossThreadData = reinterpret_cast<uint32_t *>(getCrossThreadData(rootDeviceIndex));
+        auto &kernelInfo = *kernelInfos[rootDeviceIndex];
+        auto &kernelDeviceInfo = kernelDeviceInfos[rootDeviceIndex];
 
-    kernelDeviceInfos[rootDeviceIndex].slmSizes[argIndex] = argSize;
+        uint32_t argIndex = argIndexIn;
 
-    // Extract our current slmOffset
-    auto slmOffset = *ptrOffset(crossThreadData,
-                                defaultKernelInfo.kernelArgInfo[argIndex].kernelArgPatchInfoVector[0].crossthreadOffset);
+        kernelDeviceInfo.slmSizes[argIndex] = argSize;
 
-    // Add our size
-    slmOffset += static_cast<uint32_t>(argSize);
+        // Extract our current slmOffset
+        auto slmOffset = *ptrOffset(crossThreadData,
+                                    kernelInfo.kernelArgInfo[argIndex].kernelArgPatchInfoVector[0].crossthreadOffset);
 
-    // Update all slm offsets after this argIndex
-    ++argIndex;
-    while (argIndex < kernelDeviceInfos[rootDeviceIndex].slmSizes.size()) {
-        const auto &kernelArgInfo = defaultKernelInfo.kernelArgInfo[argIndex];
-        auto slmAlignment = kernelArgInfo.slmAlignment;
+        // Add our size
+        slmOffset += static_cast<uint32_t>(argSize);
 
-        // If an local argument, alignment should be non-zero
-        if (slmAlignment) {
-            // Align to specified alignment
-            slmOffset = alignUp(slmOffset, slmAlignment);
+        // Update all slm offsets after this argIndex
+        ++argIndex;
+        while (argIndex < kernelDeviceInfo.slmSizes.size()) {
+            const auto &kernelArgInfo = kernelInfo.kernelArgInfo[argIndex];
+            auto slmAlignment = kernelArgInfo.slmAlignment;
 
-            // Patch our new offset into cross thread data
-            auto patchLocation = ptrOffset(crossThreadData,
-                                           kernelArgInfo.kernelArgPatchInfoVector[0].crossthreadOffset);
-            *patchLocation = slmOffset;
+            // If an local argument, alignment should be non-zero
+            if (slmAlignment) {
+                // Align to specified alignment
+                slmOffset = alignUp(slmOffset, slmAlignment);
+
+                // Patch our new offset into cross thread data
+                auto patchLocation = ptrOffset(crossThreadData,
+                                               kernelArgInfo.kernelArgPatchInfoVector[0].crossthreadOffset);
+                *patchLocation = slmOffset;
+            }
+
+            slmOffset += static_cast<uint32_t>(kernelDeviceInfo.slmSizes[argIndex]);
+            ++argIndex;
         }
 
-        slmOffset += static_cast<uint32_t>(kernelDeviceInfos[rootDeviceIndex].slmSizes[argIndex]);
-        ++argIndex;
+        kernelDeviceInfo.slmTotalSize = kernelInfo.workloadInfo.slmStaticSize + alignUp(slmOffset, KB);
+        isArgSet.set(rootDeviceIndex);
     }
-
-    kernelDeviceInfos[rootDeviceIndex].slmTotalSize = defaultKernelInfo.workloadInfo.slmStaticSize + alignUp(slmOffset, KB);
 
     return CL_SUCCESS;
 }
