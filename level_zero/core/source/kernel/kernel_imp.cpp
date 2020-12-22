@@ -91,7 +91,7 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
         auto surfaceState = surfaceStateHeap.begin() + ptr.bindful;
         void *addressToPatch = reinterpret_cast<void *>(allocation.getUnderlyingBuffer());
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
-        NEO::Buffer::setSurfaceState(&device, surfaceState, sizeToPatch, addressToPatch, 0,
+        NEO::Buffer::setSurfaceState(&device, surfaceState, false, false, sizeToPatch, addressToPatch, 0,
                                      &allocation, 0, 0);
     }
 }

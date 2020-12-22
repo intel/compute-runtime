@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,12 @@
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
+#include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
+#include "opencl/source/mem_obj/buffer.h"
 
 #include "pipe_control_args.h"
 
@@ -24,13 +27,12 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     template <typename GfxFamily>
     bool buildDispatchInfosForAuxTranslation(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
         size_t kernelInstanceNumber = 0;
-        size_t numMemObjectsToTranslate = multiDispatchInfo.getMemObjsForAuxTranslation()->size();
-        resizeKernelInstances(numMemObjectsToTranslate);
+        size_t numKernelObjectsToTranslate = multiDispatchInfo.getKernelObjsForAuxTranslation()->size();
+        resizeKernelInstances(numKernelObjectsToTranslate);
         multiDispatchInfo.setBuiltinOpParams(operationParams);
 
-        for (auto &memObj : *multiDispatchInfo.getMemObjsForAuxTranslation()) {
+        for (auto &kernelObj : *multiDispatchInfo.getKernelObjsForAuxTranslation()) {
             DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder(clDevice);
-            size_t allocationSize = alignUp(memObj->getSize(), 512);
 
             UNRECOVERABLE_IF(builder.getMaxNumDispatches() != 1);
 
@@ -38,7 +40,7 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
                 // Before Kernel
                 registerPipeControlProgramming<GfxFamily>(builder.getDispatchInfo(0).dispatchInitCommands, true);
             }
-            if (kernelInstanceNumber == numMemObjectsToTranslate - 1) {
+            if (kernelInstanceNumber == numKernelObjectsToTranslate - 1) {
                 // After Kernel
                 registerPipeControlProgramming<GfxFamily>(builder.getDispatchInfo(0).dispatchEpilogueCommands, false);
             }
@@ -50,8 +52,20 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
                 builder.setKernel(convertToAuxKernel[kernelInstanceNumber++].get());
             }
 
-            builder.setArg(0, memObj);
-            builder.setArg(1, memObj);
+            size_t allocationSize = 0;
+            if (kernelObj.type == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+                auto buffer = static_cast<Buffer *>(kernelObj.object);
+                builder.setArg(0, buffer);
+                builder.setArg(1, buffer);
+                allocationSize = alignUp(buffer->getSize(), 512);
+            } else {
+                DEBUG_BREAK_IF(kernelObj.type != KernelObjForAuxTranslation::Type::GFX_ALLOC);
+                auto svmAlloc = static_cast<GraphicsAllocation *>(kernelObj.object);
+                auto svmPtr = reinterpret_cast<void *>(svmAlloc->getGpuAddressToPatch());
+                builder.setArgSvmAlloc(0, svmPtr, svmAlloc);
+                builder.setArgSvmAlloc(1, svmPtr, svmAlloc);
+                allocationSize = alignUp(svmAlloc->getUnderlyingBufferSize(), 512);
+            }
 
             size_t xGws = allocationSize / 16;
 

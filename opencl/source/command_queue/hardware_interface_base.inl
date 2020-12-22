@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,7 +101,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         void *addressToPatch = reinterpret_cast<void *>(debugSurface->getGpuAddress());
         size_t sizeToPatch = debugSurface->getUnderlyingBufferSize();
         Buffer::setSurfaceState(&commandQueue.getDevice(), commandQueue.getDevice().getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh),
-                                sizeToPatch, addressToPatch, 0, debugSurface, 0, 0);
+                                false, false, sizeToPatch, addressToPatch, 0, debugSurface, 0, 0);
     }
 
     auto numSupportedDevices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices();

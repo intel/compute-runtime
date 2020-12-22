@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
         }
     }
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device) override {
-        Buffer::setSurfaceState(this->device.get(), memory, getSize(), getCpuAddress(), 0, (externalAlloc != nullptr) ? externalAlloc : &mockGfxAllocation, 0, 0);
+        Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, (externalAlloc != nullptr) ? externalAlloc : &mockGfxAllocation, 0, 0);
     }
     GraphicsAllocation *externalAlloc = nullptr;
 };
@@ -80,7 +80,7 @@ class AlignedBuffer : public MockBufferStorage, public Buffer {
                                    GraphicsAllocationHelper::toMultiGraphicsAllocation(gfxAllocation), true, false, false) {
     }
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device) override {
-        Buffer::setSurfaceState(this->device.get(), memory, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0);
+        Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0);
     }
 };
 
@@ -100,7 +100,7 @@ class UnalignedBuffer : public MockBufferStorage, public Buffer {
                                        GraphicsAllocationHelper::toMultiGraphicsAllocation(gfxAllocation), false, false, false) {
     }
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device) override {
-        Buffer::setSurfaceState(this->device.get(), memory, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0);
+        Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0);
     }
 };
 

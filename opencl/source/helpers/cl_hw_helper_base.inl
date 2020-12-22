@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,8 @@ template <typename Family>
 bool ClHwHelperHw<Family>::isBlitAuxTranslationRequired(const HardwareInfo &hwInfo, const MultiDispatchInfo &multiDispatchInfo) {
     return (HwHelperHw<Family>::getAuxTranslationMode() == AuxTranslationMode::Blit) &&
            hwInfo.capabilityTable.blitterOperationsSupported &&
-           multiDispatchInfo.getMemObjsForAuxTranslation() &&
-           (multiDispatchInfo.getMemObjsForAuxTranslation()->size() > 0);
+           multiDispatchInfo.getKernelObjsForAuxTranslation() &&
+           (multiDispatchInfo.getKernelObjsForAuxTranslation()->size() > 0);
 }
 
 template <typename GfxFamily>

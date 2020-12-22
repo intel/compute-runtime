@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                                                const cl_event *eventWaitList,
                                                cl_event *event) {
     BuiltInOwnershipWrapper builtInLock;
-    MemObjsForAuxTranslation memObjsForAuxTranslation;
+    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
     MultiDispatchInfo multiDispatchInfo(kernel);
 
     if (DebugManager.flags.ForceDispatchScheduler.get()) {
@@ -69,9 +69,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         if (kernel->isAuxTranslationRequired()) {
             auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getClDevice());
             builtInLock.takeOwnership(builder);
-            kernel->fillWithBuffersForAuxTranslation(memObjsForAuxTranslation, rootDeviceIndex);
-            multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
-            if (!memObjsForAuxTranslation.empty()) {
+            kernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation, rootDeviceIndex);
+            multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
+            if (!kernelObjsForAuxTranslation.empty()) {
                 dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::AuxToNonAux);
             }
         }
@@ -89,7 +89,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
             }
         }
         if (kernel->isAuxTranslationRequired()) {
-            if (!memObjsForAuxTranslation.empty()) {
+            if (!kernelObjsForAuxTranslation.empty()) {
                 UNRECOVERABLE_IF(kernel->isParentKernel);
                 dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::NonAuxToAux);
             }
@@ -479,23 +479,31 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(const Multi
                                                                      const EventsRequest &eventsRequest, bool queueBlocked) {
     auto rootDeviceIndex = getDevice().getRootDeviceIndex();
     auto nodesAllocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
-    auto numBuffers = multiDispatchInfo.getMemObjsForAuxTranslation()->size();
-    blitPropertiesContainer.resize(numBuffers * 2);
+    auto numKernelObjs = multiDispatchInfo.getKernelObjsForAuxTranslation()->size();
+    blitPropertiesContainer.resize(numKernelObjs * 2);
 
     auto bufferIndex = 0;
-    for (auto &buffer : *multiDispatchInfo.getMemObjsForAuxTranslation()) {
+    for (auto &kernelObj : *multiDispatchInfo.getKernelObjsForAuxTranslation()) {
+        GraphicsAllocation *allocation = nullptr;
+        if (kernelObj.type == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+            auto buffer = static_cast<Buffer *>(kernelObj.object);
+            allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+        } else {
+            DEBUG_BREAK_IF(kernelObj.type != KernelObjForAuxTranslation::Type::GFX_ALLOC);
+            allocation = static_cast<GraphicsAllocation *>(kernelObj.object);
+        }
         {
             // Aux to NonAux
-            blitPropertiesContainer[bufferIndex] = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,
-                                                                                                        buffer->getGraphicsAllocation(rootDeviceIndex), getGpgpuCommandStreamReceiver().getClearColorAllocation());
+            blitPropertiesContainer[bufferIndex] = BlitProperties::constructPropertiesForAuxTranslation(
+                AuxTranslationDirection::AuxToNonAux, allocation, getGpgpuCommandStreamReceiver().getClearColorAllocation());
             auto auxToNonAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.auxToNonAuxNodes.add(auxToNonAuxNode);
         }
 
         {
             // NonAux to Aux
-            blitPropertiesContainer[bufferIndex + numBuffers] = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::NonAuxToAux,
-                                                                                                                     buffer->getGraphicsAllocation(rootDeviceIndex), getGpgpuCommandStreamReceiver().getClearColorAllocation());
+            blitPropertiesContainer[bufferIndex + numKernelObjs] = BlitProperties::constructPropertiesForAuxTranslation(
+                AuxTranslationDirection::NonAuxToAux, allocation, getGpgpuCommandStreamReceiver().getClearColorAllocation());
             auto nonAuxToAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.nonAuxToAuxNodes.add(nonAuxToAuxNode);
         }

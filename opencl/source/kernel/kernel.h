@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/properties_helper.h"
 #include "opencl/source/kernel/kernel_execution_type.h"
+#include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
 
@@ -357,7 +358,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         return usingImagesOnly;
     }
 
-    void fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsForAuxTranslation, uint32_t rootDeviceIndex);
+    void fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &kernelObjsForAuxTranslation, uint32_t rootDeviceIndex);
 
     MOCKABLE_VIRTUAL bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const;
 
@@ -635,4 +636,5 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::unordered_map<KernelConfig, KernelSubmissionData, KernelConfigHash> kernelSubmissionMap;
     bool singleSubdevicePreferedInCurrentEnqueue = false;
 };
+
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -739,6 +739,8 @@ bool Buffer::isCompressed(uint32_t rootDeviceIndex) const {
 
 void Buffer::setSurfaceState(const Device *device,
                              void *surfaceState,
+                             bool forceNonAuxMode,
+                             bool disableL3,
                              size_t svmSize,
                              void *svmPtr,
                              size_t offset,
@@ -750,7 +752,7 @@ void Buffer::setSurfaceState(const Device *device,
         multiGraphicsAllocation.addAllocation(gfxAlloc);
     }
     auto buffer = Buffer::createBufferHwFromDevice(device, flags, flagsIntel, svmSize, svmPtr, svmPtr, std::move(multiGraphicsAllocation), offset, true, false, false);
-    buffer->setArgStateful(surfaceState, false, false, false, false, *device);
+    buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, false, false, *device);
     delete buffer;
 }
 

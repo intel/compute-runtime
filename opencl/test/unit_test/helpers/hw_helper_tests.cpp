@@ -736,7 +736,7 @@ HWTEST_F(HwHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
 HWTEST_F(HwHelperTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenCheckMemObjectsCountAndDebugFlag) {
     DebugManagerStateRestore restore;
     MockBuffer buffer;
-    MemObjsForAuxTranslation memObjects;
+    KernelObjsForAuxTranslation kernelObjects;
     MultiDispatchInfo multiDispatchInfo;
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -745,10 +745,10 @@ HWTEST_F(HwHelperTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenChec
 
     EXPECT_FALSE(ClHwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 
-    multiDispatchInfo.setMemObjsForAuxTranslation(memObjects);
+    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjects);
     EXPECT_FALSE(ClHwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 
-    memObjects.insert(&buffer);
+    kernelObjects.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, &buffer});
     EXPECT_TRUE(ClHwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 
     hwInfo.capabilityTable.blitterOperationsSupported = false;

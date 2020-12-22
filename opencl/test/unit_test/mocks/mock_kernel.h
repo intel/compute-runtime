@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,15 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/source/scheduler/scheduler_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
@@ -23,6 +26,32 @@
 
 namespace NEO {
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnvironment &execEnv);
+
+struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
+    MockKernelObjForAuxTranslation(Type type) : KernelObjForAuxTranslation(type, nullptr) {
+        if (type == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+            mockBuffer.reset(new MockBuffer);
+            this->object = mockBuffer.get();
+        } else {
+            DEBUG_BREAK_IF(type != KernelObjForAuxTranslation::Type::GFX_ALLOC);
+            mockGraphicsAllocation.reset(new MockGraphicsAllocation(nullptr, 0x100));
+            this->object = mockGraphicsAllocation.get();
+        }
+    };
+
+    MockKernelObjForAuxTranslation(Type type, size_t size) : MockKernelObjForAuxTranslation(type) {
+        if (type == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+            mockBuffer->getGraphicsAllocation(0)->setSize(size);
+        } else {
+            DEBUG_BREAK_IF(type != KernelObjForAuxTranslation::Type::GFX_ALLOC);
+            mockGraphicsAllocation->setSize(size);
+        }
+    }
+
+    std::unique_ptr<MockBuffer> mockBuffer = nullptr;
+    std::unique_ptr<MockGraphicsAllocation> mockGraphicsAllocation = nullptr;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 // Kernel - Core implementation
 ////////////////////////////////////////////////////////////////////////////////

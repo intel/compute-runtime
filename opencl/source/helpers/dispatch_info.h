@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
 #include <algorithm>
@@ -197,19 +198,19 @@ struct MultiDispatchInfo {
         return builtinOpParams;
     }
 
-    void setMemObjsForAuxTranslation(const MemObjsForAuxTranslation &memObjsForAuxTranslation) {
-        this->memObjsForAuxTranslation = &memObjsForAuxTranslation;
+    void setKernelObjsForAuxTranslation(const KernelObjsForAuxTranslation &kernelObjsForAuxTranslation) {
+        this->kernelObjsForAuxTranslation = &kernelObjsForAuxTranslation;
     }
 
-    const MemObjsForAuxTranslation *getMemObjsForAuxTranslation() const {
-        return memObjsForAuxTranslation;
+    const KernelObjsForAuxTranslation *getKernelObjsForAuxTranslation() const {
+        return kernelObjsForAuxTranslation;
     }
 
   protected:
     BuiltinOpParams builtinOpParams = {};
     StackVec<DispatchInfo, 9> dispatchInfos;
     StackVec<MemObj *, 2> redescribedSurfaces;
-    const MemObjsForAuxTranslation *memObjsForAuxTranslation = nullptr;
+    const KernelObjsForAuxTranslation *kernelObjsForAuxTranslation = nullptr;
     Kernel *mainKernel = nullptr;
 };
 } // namespace NEO

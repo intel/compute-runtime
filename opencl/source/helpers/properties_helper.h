@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,6 @@
 #include "opencl/source/api/cl_types.h"
 
 #include <array>
-#include <unordered_set>
 
 namespace NEO {
 class MemObj;
@@ -34,7 +33,6 @@ struct EventsRequest {
 
 using MemObjSizeArray = std::array<size_t, 3>;
 using MemObjOffsetArray = std::array<size_t, 3>;
-using MemObjsForAuxTranslation = std::unordered_set<MemObj *>;
 
 struct TransferProperties {
     TransferProperties() = delete;

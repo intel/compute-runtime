@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -194,9 +194,9 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     for (auto &dispatchInfo : multiDispatchInfo) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, dispatchInfo.getKernel());
-        size_t memObjAuxCount = multiDispatchInfo.getMemObjsForAuxTranslation() != nullptr ? multiDispatchInfo.getMemObjsForAuxTranslation()->size() : 0;
-        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(memObjAuxCount, hwInfo, commandQueueHw.isCacheFlushForBcsRequired());
-        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(memObjAuxCount, hwInfo, commandQueueHw.isCacheFlushForBcsRequired());
+        size_t kernelObjAuxCount = multiDispatchInfo.getKernelObjsForAuxTranslation() != nullptr ? multiDispatchInfo.getKernelObjsForAuxTranslation()->size() : 0;
+        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(kernelObjAuxCount, hwInfo, commandQueueHw.isCacheFlushForBcsRequired());
+        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(kernelObjAuxCount, hwInfo, commandQueueHw.isCacheFlushForBcsRequired());
     }
     if (parentKernel) {
         SchedulerKernel &scheduler = commandQueue.getContext().getSchedulerKernel();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -782,7 +782,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
                 lastKernel = dispatchInfo.getKernel();
                 dispatchInfos.emplace_back(dispatchInfo);
             }
-            dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), *multiDispatchInfo.getMemObjsForAuxTranslation(),
+            dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), *multiDispatchInfo.getKernelObjsForAuxTranslation(),
                                                       auxTranslationDirection);
         }
 
@@ -793,7 +793,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
 
         std::vector<AuxTranslationDirection> auxTranslationDirections;
         std::vector<DispatchInfo> dispatchInfos;
-        std::vector<std::tuple<Kernel *, size_t, MemObjsForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
+        std::vector<std::tuple<Kernel *, size_t, KernelObjsForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
         uint32_t waitCalled = 0;
     };
 
@@ -865,11 +865,11 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size());
 
-    EXPECT_EQ(1u, std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).size()); // before kernel
-    EXPECT_EQ(1u, std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).size()); // after kernel
+    EXPECT_EQ(1u, std::get<KernelObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).size()); // before kernel
+    EXPECT_EQ(1u, std::get<KernelObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).size()); // after kernel
 
-    EXPECT_EQ(&buffer2, *std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).begin());
-    EXPECT_EQ(&buffer2, *std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).begin());
+    EXPECT_EQ(&buffer2, (*std::get<KernelObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).begin()).object);
+    EXPECT_EQ(&buffer2, (*std::get<KernelObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).begin()).object);
 
     auto cmdStream = cmdQ.commandStream;
     auto sizeUsed = cmdStream->getUsed();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,18 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
 
     DebugManagerStateRestore dbgRestore;
 };
+
+struct DispatchWalkerTestForAuxTranslation : DispatchWalkerTest, public ::testing::WithParamInterface<KernelObjForAuxTranslation::Type> {
+    void SetUp() override {
+        DispatchWalkerTest::SetUp();
+        kernelObjType = GetParam();
+    }
+    KernelObjForAuxTranslation::Type kernelObjType;
+};
+
+INSTANTIATE_TEST_CASE_P(,
+                        DispatchWalkerTestForAuxTranslation,
+                        testing::ValuesIn({KernelObjForAuxTranslation::Type::MEM_OBJ, KernelObjForAuxTranslation::Type::GFX_ALLOC}));
 
 HWTEST_F(DispatchWalkerTest, WhenGettingComputeDimensionsThenCorrectNumberOfDimensionsIsReturned) {
     const size_t workItems1D[] = {100, 1, 1};
@@ -1270,7 +1282,7 @@ TEST(DispatchWalker, WhenCalculatingDispatchDimensionsThenCorrectValuesAreReturn
     }
 }
 
-HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded) {
+HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded) {
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
@@ -1281,13 +1293,14 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredTh
     auto &cmdStream = pCmdQ->getCS(0);
     void *buffer = cmdStream.getCpuBase();
     kernel.auxTranslationRequired = true;
-    MockBuffer mockBuffer[2];
+    MockKernelObjForAuxTranslation mockKernelObj1(kernelObjType);
+    MockKernelObjForAuxTranslation mockKernelObj2(kernelObjType);
 
     MultiDispatchInfo multiDispatchInfo;
-    MemObjsForAuxTranslation memObjsForAuxTranslation;
-    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
-    memObjsForAuxTranslation.insert(&mockBuffer[0]);
-    memObjsForAuxTranslation.insert(&mockBuffer[1]);
+    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
+    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
+    kernelObjsForAuxTranslation.insert(mockKernelObj1);
+    kernelObjsForAuxTranslation.insert(mockKernelObj2);
 
     BuiltinOpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
@@ -1323,7 +1336,7 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredTh
     EXPECT_TRUE(endPipeControl->getCommandStreamerStallEnable());
 }
 
-HWTEST_F(DispatchWalkerTest, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded) {
+HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded) {
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
@@ -1334,13 +1347,14 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenNonAuxToAuxWhenTranslationRequiredTh
     auto &cmdStream = pCmdQ->getCS(0);
     void *buffer = cmdStream.getCpuBase();
     kernel.auxTranslationRequired = true;
-    MockBuffer mockBuffer[2];
+    MockKernelObjForAuxTranslation mockKernelObj1(kernelObjType);
+    MockKernelObjForAuxTranslation mockKernelObj2(kernelObjType);
 
     MultiDispatchInfo multiDispatchInfo;
-    MemObjsForAuxTranslation memObjsForAuxTranslation;
-    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
-    memObjsForAuxTranslation.insert(&mockBuffer[0]);
-    memObjsForAuxTranslation.insert(&mockBuffer[1]);
+    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
+    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
+    kernelObjsForAuxTranslation.insert(mockKernelObj1);
+    kernelObjsForAuxTranslation.insert(mockKernelObj2);
 
     BuiltinOpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;

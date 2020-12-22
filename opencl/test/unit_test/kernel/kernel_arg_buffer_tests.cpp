@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -385,7 +385,39 @@ TEST_F(KernelArgBufferTest, givenBufferInHostMemoryWhenHasDirectStatelessAccessT
     }
 }
 
-TEST_F(KernelArgBufferTest, givenInvalidMemObjWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnFalse) {
+TEST_F(KernelArgBufferTest, givenGfxAllocationWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnFalse) {
+    char data[128];
+    void *ptr = &data;
+    MockGraphicsAllocation gfxAllocation(ptr, 128);
+    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+    for (auto pureStatefulBufferAccess : {false, true}) {
+        pKernelInfo->kernelArgInfo[0].pureStatefulBufferAccess = pureStatefulBufferAccess;
+
+        auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
+    }
+}
+
+TEST_F(KernelArgBufferTest, givenGfxAllocationInHostMemoryWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnCorrectValue) {
+    char data[128];
+    void *ptr = &data;
+    MockGraphicsAllocation gfxAllocation(ptr, 128);
+    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+
+    for (auto pureStatefulBufferAccess : {false, true}) {
+        pKernelInfo->kernelArgInfo[0].pureStatefulBufferAccess = pureStatefulBufferAccess;
+
+        auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_EQ(!pureStatefulBufferAccess, pKernel->hasDirectStatelessAccessToHostMemory());
+    }
+}
+
+TEST_F(KernelArgBufferTest, givenInvalidKernelObjWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnFalse) {
     KernelInfo kernelInfo;
     MockKernel emptyKernel(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0));
     EXPECT_FALSE(emptyKernel.hasDirectStatelessAccessToHostMemory());
@@ -394,6 +426,9 @@ TEST_F(KernelArgBufferTest, givenInvalidMemObjWhenHasDirectStatelessAccessToHost
     EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
 
     pKernel->kernelArguments.at(0).type = Kernel::BUFFER_OBJ;
+    EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
+
+    pKernel->kernelArguments.at(0).type = Kernel::SVM_ALLOC_OBJ;
     EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
 }
 

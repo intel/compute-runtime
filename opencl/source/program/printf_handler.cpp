@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
                                       kernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->SurfaceStateHeapOffset);
         void *addressToPatch = printfSurface->getUnderlyingBuffer();
         size_t sizeToPatch = printfSurface->getUnderlyingBufferSize();
-        Buffer::setSurfaceState(&device.getDevice(), surfaceState, sizeToPatch, addressToPatch, 0, printfSurface, 0, 0);
+        Buffer::setSurfaceState(&device.getDevice(), surfaceState, false, false, sizeToPatch, addressToPatch, 0, printfSurface, 0, 0);
     }
 }
 

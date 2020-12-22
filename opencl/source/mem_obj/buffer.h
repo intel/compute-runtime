@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,6 +120,8 @@ class Buffer : public MemObj {
 
     static void setSurfaceState(const Device *device,
                                 void *surfaceState,
+                                bool forceNonAuxMode,
+                                bool disableL3,
                                 size_t svmSize,
                                 void *svmPtr,
                                 size_t offset,
