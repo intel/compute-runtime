@@ -97,6 +97,9 @@ bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint32_t timeou
 }
 
 ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
+    if (0x7fff < events) {
+        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+    }
     registeredEvents = events;
     if (registeredEvents & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
         memHealthAtEventRegister = currentMemHealth();

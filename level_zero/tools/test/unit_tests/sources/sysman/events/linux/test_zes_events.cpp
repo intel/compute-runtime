@@ -211,5 +211,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEvent
     delete[] pDeviceEvents;
 }
 
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForAListOfEventsThenEventRegisterAPIReturnsProperErrorCodeInCaseEventsAreInvalid) {
+    zes_event_type_flags_t events1 = 0x7ffe;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), events1));
+    zes_event_type_flags_t events2 = 0x1e240;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, zesDeviceEventRegister(device->toHandle(), events2));
+}
+
 } // namespace ult
 } // namespace L0
