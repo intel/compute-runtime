@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -878,7 +878,7 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
     return status == STATUS_SUCCESS;
 }
 
-void Wddm::initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIndex, size_t numRootDevices, bool useFrontWindowPool) const {
+void Wddm::initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool) const {
     if (gfxPartition.SVM.Limit != 0) {
         outGfxPartition.heapInit(HeapIndex::HEAP_SVM, gfxPartition.SVM.Base, gfxPartition.SVM.Limit - gfxPartition.SVM.Base + 1);
     } else if (is32bit) {
@@ -892,17 +892,19 @@ void Wddm::initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIn
     outGfxPartition.heapInit(HeapIndex::HEAP_STANDARD64KB, gfxPartition.Standard64KB.Base + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize);
 
     for (auto heap : GfxPartition::heap32Names) {
-        if (useFrontWindowPool && HeapAssigner::heapTypeWithFrontWindowPool(heap)) {
+        if (useExternalFrontWindowPool && HeapAssigner::heapTypeExternalWithFrontWindowPool(heap)) {
             outGfxPartition.heapInitExternalWithFrontWindow(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base,
                                                             gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1);
             size_t externalFrontWindowSize = GfxPartition::externalFrontWindowPoolSize;
             outGfxPartition.heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), outGfxPartition.heapAllocate(heap, externalFrontWindowSize),
                                                             externalFrontWindowSize);
         } else if (HeapAssigner::isInternalHeap(heap)) {
-            outGfxPartition.heapInitWithFrontWindow(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base,
-                                                    gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1,
+            auto baseAddress = gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base >= minAddress ? gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base : minAddress;
+
+            outGfxPartition.heapInitWithFrontWindow(heap, baseAddress,
+                                                    gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - baseAddress + 1,
                                                     GfxPartition::internalFrontWindowPoolSize);
-            outGfxPartition.heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base, GfxPartition::internalFrontWindowPoolSize);
+            outGfxPartition.heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), baseAddress, GfxPartition::internalFrontWindowPoolSize);
         } else {
             outGfxPartition.heapInit(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base,
                                      gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1);

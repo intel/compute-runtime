@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ bool HeapAssigner::useExternal32BitHeap(GraphicsAllocation::AllocationType alloc
     return false;
 }
 
-bool HeapAssigner::heapTypeWithFrontWindowPool(HeapIndex heap) {
+bool HeapAssigner::heapTypeExternalWithFrontWindowPool(HeapIndex heap) {
     return heap == HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY || heap == HeapIndex::HEAP_EXTERNAL;
 }
 

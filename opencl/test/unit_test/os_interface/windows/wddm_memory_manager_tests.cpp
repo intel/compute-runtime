@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1499,6 +1499,7 @@ TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForI
     wddm->init();
     MockWddmMemoryManager memoryManager(*executionEnvironment);
     auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Base;
+    heapBase = std::max(heapBase, static_cast<uint64_t>(wddm->getWddmMinAddress()));
     EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress(0, true));
 }
 
