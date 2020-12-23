@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,14 @@ void BuiltinFunctionsLibImpl::initFunctions() {
             break;
         case Builtin::FillBufferSSHOffset:
             builtinName = "FillBufferSSHOffset";
+            builtin = NEO::EBuiltInOps::FillBuffer;
+            break;
+        case Builtin::FillBufferMiddle:
+            builtinName = "FillBufferMiddle";
+            builtin = NEO::EBuiltInOps::FillBuffer;
+            break;
+        case Builtin::FillBufferRightLeftover:
+            builtinName = "FillBufferRightLeftover";
             builtin = NEO::EBuiltInOps::FillBuffer;
             break;
         case Builtin::QueryKernelTimestamps:

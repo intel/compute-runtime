@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,8 @@ enum class Builtin : uint32_t {
     CopyBufferToBufferSide,
     FillBufferImmediate,
     FillBufferSSHOffset,
+    FillBufferMiddle,
+    FillBufferRightLeftover,
     QueryKernelTimestamps,
     QueryKernelTimestampsWithOffsets,
     COUNT

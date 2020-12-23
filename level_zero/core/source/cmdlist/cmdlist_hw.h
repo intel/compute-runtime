@@ -199,11 +199,11 @@ struct CommandListCoreFamily : CommandListImp {
                                                      size_t bytesPerPixel, Vec3<size_t> copySize,
                                                      Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent);
 
-    ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
-                                             const ze_group_count_t *pThreadGroupDimensions,
-                                             ze_event_handle_t hEvent,
-                                             bool isIndirect,
-                                             bool isPredicate);
+    MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
+                                                              const ze_group_count_t *pThreadGroupDimensions,
+                                                              ze_event_handle_t hEvent,
+                                                              bool isIndirect,
+                                                              bool isPredicate);
     ze_result_t appendLaunchKernelSplit(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions, ze_event_handle_t hEvent);
     ze_result_t prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions);
 

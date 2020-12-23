@@ -1135,9 +1135,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         return appendBlitFill(ptr, pattern, patternSize, size, hSignalEvent, numWaitEvents, phWaitEvents);
     }
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents);
-    if (ret) {
-        return ret;
+    ze_result_t res = addEventsToCmdList(numWaitEvents, phWaitEvents);
+    if (res) {
+        return res;
     }
 
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -1159,20 +1159,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     auto dstAllocation = this->getAlignedAllocation(this->device, ptr, size);
-
-    uintptr_t srcPtr = reinterpret_cast<uintptr_t>(const_cast<void *>(pattern));
-    size_t srcOffset = 0;
-    NEO::EncodeSurfaceState<GfxFamily>::getSshAlignedPointer(srcPtr, srcOffset);
-
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
-    Kernel *builtinFunction = nullptr;
-    uint32_t groupSizeX = 1u;
-
     if (patternSize == 1) {
-        builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
+        auto builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
 
-        groupSizeX = builtinFunction->getImmutableData()->getDescriptor().kernelAttributes.simdSize;
+        uint32_t groupSizeX = builtinFunction->getImmutableData()->getDescriptor().kernelAttributes.simdSize;
         if (groupSizeX > static_cast<uint32_t>(size)) {
             groupSizeX = static_cast<uint32_t>(size);
         }
@@ -1186,50 +1178,92 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         builtinFunction->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
         builtinFunction->setArgumentValue(2, sizeof(value), &value);
 
+        appendEventForProfilingAllWalkers(hSignalEvent, true);
+
+        uint32_t groups = static_cast<uint32_t>(size) / groupSizeX;
+        ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
+        res = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinFunction->toHandle(),
+                                                                       &dispatchFuncArgs, nullptr,
+                                                                       0, nullptr);
+        if (res) {
+            return res;
+        }
     } else {
-        builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferSSHOffset);
+        auto builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
 
-        auto patternAlloc = this->getAlignedAllocation(this->device, reinterpret_cast<void *>(srcPtr), srcOffset + patternSize);
-        if (patternAlloc.alloc == nullptr) {
-            DEBUG_BREAK_IF(true);
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        srcOffset += patternAlloc.offset;
+        size_t middleElSize = sizeof(uint32_t);
+        size_t adjustedSize = size / middleElSize;
+        uint32_t groupSizeX = static_cast<uint32_t>(adjustedSize);
+        uint32_t groupSizeY = 1, groupSizeZ = 1;
+        builtinFunction->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+        builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
 
-        groupSizeX = static_cast<uint32_t>(std::min(patternSize, size));
-        if (builtinFunction->setGroupSize(groupSizeX, 1u, 1u)) {
-            DEBUG_BREAK_IF(true);
-            return ZE_RESULT_ERROR_UNKNOWN;
+        uint32_t groups = static_cast<uint32_t>(adjustedSize) / groupSizeX;
+        uint32_t groupRemainderSizeX = static_cast<uint32_t>(size) % groupSizeX;
+
+        size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
+        uint32_t patternSizeInEls = static_cast<uint32_t>(patternAllocationSize / middleElSize);
+
+        auto patternGfxAlloc = getAllocationFromHostPtrMap(pattern, patternAllocationSize);
+        if (patternGfxAlloc == nullptr) {
+            patternGfxAlloc = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
+                                                                                                                   patternAllocationSize,
+                                                                                                                   NEO::GraphicsAllocation::AllocationType::FILL_PATTERN,
+                                                                                                                   device->getNEODevice()->getDeviceBitfield()});
+            hostPtrMap.insert(std::make_pair(pattern, patternGfxAlloc));
         }
+        void *patternGfxAllocPtr = patternGfxAlloc->getUnderlyingBuffer();
+
+        uint64_t patternAllocPtr = reinterpret_cast<uintptr_t>(patternGfxAllocPtr);
+        uint64_t patternAllocOffset = 0;
+        uint64_t patternSizeToCopy = patternSize;
+        do {
+            memcpy_s(reinterpret_cast<void *>(patternAllocPtr + patternAllocOffset),
+                     patternSizeToCopy, pattern, patternSizeToCopy);
+
+            if ((patternAllocOffset + patternSizeToCopy) > patternAllocationSize) {
+                patternSizeToCopy = patternAllocationSize - patternAllocOffset;
+            }
+
+            patternAllocOffset += patternSizeToCopy;
+        } while (patternAllocOffset < patternAllocationSize);
 
         builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
         builtinFunction->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
-        builtinFunction->setArgBufferWithAlloc(2, patternAlloc.alignedAllocationPtr,
-                                               patternAlloc.alloc);
-        builtinFunction->setArgumentValue(3, sizeof(srcOffset), &srcOffset);
-    }
+        builtinFunction->setArgBufferWithAlloc(2, reinterpret_cast<uintptr_t>(patternGfxAllocPtr), patternGfxAlloc);
+        builtinFunction->setArgumentValue(3, sizeof(patternSizeInEls), &patternSizeInEls);
 
-    appendEventForProfilingAllWalkers(hSignalEvent, true);
+        appendEventForProfilingAllWalkers(hSignalEvent, true);
 
-    uint32_t groups = static_cast<uint32_t>(size) / groupSizeX;
-    ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
+        ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
+        res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
+        if (res) {
+            return res;
+        }
 
-    ze_result_t res = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
+        if (groupRemainderSizeX) {
+            uint32_t dstOffsetRemainder = groups * groupSizeX * static_cast<uint32_t>(middleElSize);
+            uint64_t patternOffsetRemainder = (groupSizeX * groups & (patternSizeInEls - 1)) * middleElSize;
 
-    if (res) {
-        return res;
-    }
+            auto builtinFunctionRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
+            builtinFunctionRemainder->setGroupSize(groupRemainderSizeX, 1u, 1u);
+            ze_group_count_t dispatchFuncArgs{1u, 1u, 1u};
 
-    uint32_t groupRemainderSizeX = static_cast<uint32_t>(size) % groupSizeX;
-    if (groupRemainderSizeX) {
-        builtinFunction->setGroupSize(groupRemainderSizeX, 1u, 1u);
-        ze_group_count_t dispatchFuncArgs{1u, 1u, 1u};
-
-        size_t dstOffset = dstAllocation.offset + (size - groupRemainderSizeX);
-        builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
-        builtinFunction->setArgumentValue(1, sizeof(dstOffset), &dstOffset);
-
-        res = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
+            builtinFunctionRemainder->setArgBufferWithAlloc(0,
+                                                            dstAllocation.alignedAllocationPtr,
+                                                            dstAllocation.alloc);
+            builtinFunctionRemainder->setArgumentValue(1,
+                                                       sizeof(dstOffsetRemainder),
+                                                       &dstOffsetRemainder);
+            builtinFunctionRemainder->setArgBufferWithAlloc(2,
+                                                            reinterpret_cast<uintptr_t>(patternGfxAllocPtr) + patternOffsetRemainder,
+                                                            patternGfxAlloc);
+            builtinFunctionRemainder->setArgumentValue(3, sizeof(patternSizeInEls), &patternSizeInEls);
+            res = appendLaunchKernelSplit(builtinFunctionRemainder->toHandle(), &dispatchFuncArgs, hSignalEvent);
+            if (res) {
+                return res;
+            }
+        }
     }
 
     appendEventForProfilingAllWalkers(hSignalEvent, false);
@@ -1488,7 +1522,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
             appendWriteKernelTimestamp(hEvent, beforeWalker, true);
         } else {
 
-            NEO::PipeControlArgs args;
+            NEO::PipeControlArgs args = {};
             args.dcFlushEnable = true;
 
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);

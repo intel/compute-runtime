@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,5 +16,6 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_signal_event.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_wait_on_events.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_blit.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_fill.cpp
 )
 add_subdirectories()

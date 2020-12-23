@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -190,6 +190,9 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ~CommandList();
     NEO::CommandContainer commandContainer;
     bool getContainsStatelessUncachedResource() { return containsStatelessUncachedResource; }
+    std::map<const void *, NEO::GraphicsAllocation *> &getHostPtrMap() {
+        return hostPtrMap;
+    };
 
   protected:
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
