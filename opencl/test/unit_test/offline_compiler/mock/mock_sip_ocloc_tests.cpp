@@ -13,8 +13,18 @@ static std::vector<char> dummyBinaryForSip;
 
 using namespace NEO;
 
-const char *MockSipKernel::dummyBinaryForSip = "12345678";
+std::vector<char> MockSipKernel::dummyBinaryForSip;
 
 std::vector<char> MockSipKernel::getDummyGenBinary() {
-    return std::vector<char>(dummyBinaryForSip, dummyBinaryForSip + sizeof(MockSipKernel::dummyBinaryForSip));
+    return MockSipKernel::dummyBinaryForSip;
+}
+
+std::vector<char> MockSipKernel::getBinary() {
+    return MockSipKernel::dummyBinaryForSip;
+}
+
+void MockSipKernel::initDummyBinary() {
+}
+
+void MockSipKernel::shutDown() {
 }

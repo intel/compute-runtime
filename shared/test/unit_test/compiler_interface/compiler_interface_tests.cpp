@@ -1007,7 +1007,15 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSipKernelBinaryFa
     EXPECT_EQ(0U, sipBinary.size());
 }
 
-TEST_F(CompilerInterfaceTest, whenIgcReturnsErrorThenGetSipKernelBinaryFailsGracefully) {
+TEST_F(CompilerInterfaceTest, whenIgcTranslatorReturnsNullptrThenGetSipKernelBinaryFailsGracefully) {
+    pCompilerInterface->failCreateIgcTranslationCtx = true;
+    std::vector<char> sipBinary;
+    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary);
+    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(0U, sipBinary.size());
+}
+
+TEST_F(CompilerInterfaceTest, whenIgcTranslatorReturnsBuildErrorThenGetSipKernelBinaryFailsGracefully) {
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.forceBuildFailure = true;
     gEnvironment->igcPushDebugVars(igcDebugVars);
@@ -1032,36 +1040,22 @@ TEST_F(CompilerInterfaceTest, whenEverythingIsOkThenGetSipKernelReturnsIgcsOutpu
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, whenRequestingSipKernelBinaryThenProperSystemRoutineIsSelectedFromCompiler) {
+TEST_F(CompilerInterfaceTest, whenRequestingSipKernelBinaryThenProperInternalOptionsAndSrcAreUsed) {
+    std::string receivedInternalOptions;
+    std::string receivedInput;
+
     MockCompilerDebugVars igcDebugVars;
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd16_", ".bc");
+    igcDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
+    igcDebugVars.receivedInput = &receivedInput;
     gEnvironment->igcPushDebugVars(igcDebugVars);
     std::vector<char> sipBinary;
     auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
     EXPECT_NE(0U, sipBinary.size());
-    EXPECT_EQ(IGC::SystemRoutineType::contextSaveRestore, getIgcDebugVars().typeOfSystemRoutine);
-
-    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsr, sipBinary);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
-    EXPECT_NE(0U, sipBinary.size());
-    EXPECT_EQ(IGC::SystemRoutineType::debug, getIgcDebugVars().typeOfSystemRoutine);
-
-    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsrLocal, sipBinary);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
-    EXPECT_NE(0U, sipBinary.size());
-    EXPECT_EQ(IGC::SystemRoutineType::debugSlm, getIgcDebugVars().typeOfSystemRoutine);
-
-    gEnvironment->igcPopDebugVars();
-}
-
-TEST_F(CompilerInterfaceTest, whenRequestingIvalidSipKernelBinaryThenErrorIsReturned) {
-    MockCompilerDebugVars igcDebugVars;
-    gEnvironment->igcPushDebugVars(igcDebugVars);
-    std::vector<char> sipBinary;
-    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::COUNT, sipBinary);
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
-    EXPECT_EQ(0U, sipBinary.size());
-    EXPECT_EQ(IGC::SystemRoutineType::undefined, getIgcDebugVars().typeOfSystemRoutine);
+    EXPECT_EQ(0, strcmp(getSipKernelCompilerInternalOptions(SipKernelType::Csr), receivedInternalOptions.c_str()));
+    std::string expectedInut = getSipLlSrc(*this->pDevice);
+    EXPECT_EQ(0, strcmp(expectedInut.c_str(), receivedInput.c_str()));
 
     gEnvironment->igcPopDebugVars();
 }

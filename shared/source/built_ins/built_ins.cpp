@@ -46,22 +46,23 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::Success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
 
-        const auto allocType = GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
+        ProgramInfo programInfo;
+        auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(sipBinary.data()), sipBinary.size());
+        SingleDeviceBinary deviceBinary = {};
+        deviceBinary.deviceBinary = blob;
+        std::string decodeErrors;
+        std::string decodeWarnings;
 
-        AllocationProperties properties = {device.getRootDeviceIndex(), sipBinary.size(), allocType, device.getDeviceBitfield()};
-        properties.flags.use32BitFrontWindow = true;
+        DecodeError decodeError;
+        DeviceBinaryFormat singleDeviceBinaryFormat;
+        std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, deviceBinary, decodeErrors, decodeWarnings);
+        UNRECOVERABLE_IF(DecodeError::Success != decodeError);
 
-        auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        auto success = programInfo.kernelInfos[0]->createKernelAllocation(device, true);
+        UNRECOVERABLE_IF(!success);
 
-        auto &hwInfo = device.getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-        if (sipAllocation) {
-            MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
-                                                             device, sipAllocation, 0, sipBinary.data(),
-                                                             sipBinary.size());
-        }
-        sipBuiltIn.first.reset(new SipKernel(type, sipAllocation));
+        sipBuiltIn.first.reset(new SipKernel(type, programInfo.kernelInfos[0]->kernelAllocation));
+        programInfo.kernelInfos[0]->kernelAllocation = nullptr;
     };
     std::call_once(sipBuiltIn.second, initializer);
     UNRECOVERABLE_IF(sipBuiltIn.first == nullptr);

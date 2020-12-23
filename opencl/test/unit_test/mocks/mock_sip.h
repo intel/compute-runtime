@@ -25,8 +25,11 @@ class MockSipKernel : public SipKernel {
     MockSipKernel();
     ~MockSipKernel() override;
 
-    static const char *dummyBinaryForSip;
+    static std::vector<char> dummyBinaryForSip;
     static std::vector<char> getDummyGenBinary();
+    static std::vector<char> getBinary();
+    static void initDummyBinary();
+    static void shutDown();
 
     GraphicsAllocation *getSipAllocation() const override;
 
