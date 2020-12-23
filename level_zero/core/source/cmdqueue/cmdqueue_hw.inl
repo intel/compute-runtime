@@ -311,7 +311,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     if (performMigration) {
-        for (auto alloc : static_cast<DriverHandleImp *>(device->getDriverHandle())->sharedMakeResidentAllocations) {
+        DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
+        std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
+        for (auto alloc : driverHandleImp->sharedMakeResidentAllocations) {
             pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc.second->getGpuAddress()));
         }
     }
