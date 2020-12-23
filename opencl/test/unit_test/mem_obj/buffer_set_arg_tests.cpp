@@ -288,7 +288,7 @@ TEST_F(BufferSetArgTest, WhenSettingKernelArgThenAddressToPatchIsSetCorrectlyAnd
 
 TEST_F(BufferSetArgTest, GivenSvmPointerWhenSettingKernelArgThenAddressToPatchIsSetCorrectlyAndSurfacesSet) {
     REQUIRE_SVM_OR_SKIP(pDevice);
-    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, pDevice->getDeviceBitfield());
+    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, {}, pContext->getRootDeviceIndices(), pContext->getDeviceBitfields());
     EXPECT_NE(nullptr, ptrSVM);
 
     auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSVM);

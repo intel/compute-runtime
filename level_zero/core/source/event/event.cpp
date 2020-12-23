@@ -59,18 +59,16 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, uint32_t numDevices, 
     eventPoolAllocations = new NEO::MultiGraphicsAllocation(maxRootDeviceIndex);
 
     uint32_t rootDeviceIndex = rootDeviceIndices.at(0);
-
-    NEO::SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
-                                                                    devices[0]->getNEODevice()->getDeviceBitfield());
+    auto deviceBitfield = devices[0]->getNEODevice()->getDeviceBitfield();
 
     NEO::AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
                                                       true,
                                                       alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k),
                                                       isEventPoolUsedForTimestamp ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
                                                                                   : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
-                                                      memoryProperties.subdeviceBitfield.count() > 1,
-                                                      memoryProperties.subdeviceBitfield.count() > 1,
-                                                      memoryProperties.subdeviceBitfield};
+                                                      deviceBitfield.count() > 1,
+                                                      deviceBitfield.count() > 1,
+                                                      deviceBitfield};
     unifiedMemoryProperties.alignment = eventAlignment;
 
     void *eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocation(rootDeviceIndices,

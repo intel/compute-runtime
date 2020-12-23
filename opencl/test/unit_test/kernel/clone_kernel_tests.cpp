@@ -517,7 +517,7 @@ TEST_F(CloneKernelTest, GivenArgImmediateWhenCloningKernelThenKernelInfoIsCorrec
 
 TEST_F(CloneKernelTest, GivenExecInfoWhenCloningKernelThenSvmAllocationIsCorrect) {
     REQUIRE_SVM_OR_SKIP(pDevice);
-    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, pDevice->getDeviceBitfield());
+    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, {}, pContext->getRootDeviceIndices(), pContext->getDeviceBitfields());
     ASSERT_NE(nullptr, ptrSVM);
 
     auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSVM);

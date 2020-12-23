@@ -38,9 +38,9 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
         }
 
         CommandQueueFixture::SetUp(pClDevice, 0);
-        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, pDevice->getDeviceBitfield());
+        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
         ASSERT_NE(nullptr, srcSvmPtr);
-        dstSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, pDevice->getDeviceBitfield());
+        dstSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
         ASSERT_NE(nullptr, dstSvmPtr);
         auto srcSvmData = context->getSVMAllocsManager()->getSVMAlloc(srcSvmPtr);
         ASSERT_NE(nullptr, srcSvmData);
@@ -372,7 +372,7 @@ struct EnqueueSvmMemCopyHw : public ::testing::Test {
         }
 
         context = std::make_unique<MockContext>(device.get());
-        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {}, device->getDeviceBitfield());
+        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
         ASSERT_NE(nullptr, srcSvmPtr);
         dstHostPtr = alignedMalloc(256, 64);
     }

@@ -51,9 +51,12 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSynchronizeMemoryThenEnq
 
     auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
     auto svmAllocsManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
-    void *alloc = svmAllocsManager->createSVMAlloc(mockRootDeviceIndex, 256, {}, mockDeviceBitfield);
-
     auto device = std::unique_ptr<MockClDevice>(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+    std::set<uint32_t> rootDeviceIndices{rootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{rootDeviceIndex, device->getDeviceBitfield()}};
+    void *alloc = svmAllocsManager->createSVMAlloc(256, {}, rootDeviceIndices, deviceBitfields);
+
     auto cmdQ = std::make_unique<CommandQueueMock>();
     cmdQ->device = device.get();
     pageFaultManager->insertAllocation(alloc, 256, svmAllocsManager.get(), cmdQ.get(), {});
@@ -86,8 +89,11 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenGpuTransferIsInvokedThen
     };
     auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
     auto svmAllocsManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
-    void *alloc = svmAllocsManager->createSVMAlloc(mockRootDeviceIndex, 256, {}, mockDeviceBitfield);
     auto device = std::unique_ptr<MockClDevice>(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+    std::set<uint32_t> rootDeviceIndices{rootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{rootDeviceIndex, device->getDeviceBitfield()}};
+    void *alloc = svmAllocsManager->createSVMAlloc(256, {}, rootDeviceIndices, deviceBitfields);
     auto cmdQ = std::make_unique<CommandQueueMock>();
     cmdQ->device = device.get();
     pageFaultManager->insertAllocation(alloc, 256, svmAllocsManager.get(), cmdQ.get(), {});

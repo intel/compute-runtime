@@ -665,7 +665,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCalling
 
 TEST_F(PerformanceHintEnqueueTest, GivenSVMPointerWhenEnqueueSVMMapIsCallingThenContextProvidesProperHint) {
     REQUIRE_SVM_OR_SKIP(pPlatform->getClDevice(0));
-    void *svmPtr = context->getSVMAllocsManager()->createSVMAlloc(0, 256, {}, context->getDeviceBitfieldForAllocation(0));
+    void *svmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
 
     pCmdQ->enqueueSVMMap(CL_FALSE, 0, svmPtr, 256, 0, nullptr, nullptr, false);
 

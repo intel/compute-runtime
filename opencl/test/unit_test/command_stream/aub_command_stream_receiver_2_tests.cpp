@@ -1202,8 +1202,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenUsmAllocationWhenDumpAllocationIsCa
     auto memoryManager = std::make_unique<MockMemoryManager>(false, true, *pDevice->executionEnvironment);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, 0b1);
-    auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096, unifiedMemoryProperties);
+    std::set<uint32_t> rootDeviceIndices{rootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{rootDeviceIndex, pDevice->getDeviceBitfield()}};
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
     ASSERT_NE(nullptr, ptr);
 
     auto gfxAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(0);

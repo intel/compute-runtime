@@ -105,6 +105,9 @@ struct DriverHandleImp : public DriverHandle {
 
     uint32_t numDevices = 0;
 
+    std::set<uint32_t> rootDeviceIndices = {};
+    std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
+
     // Environment Variables
     bool enableProgramDebugging = false;
     bool enableSysman = false;

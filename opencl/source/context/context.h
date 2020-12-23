@@ -160,6 +160,7 @@ class Context : public BaseObject<_cl_context> {
     const ClDeviceVector &getDevices() const {
         return devices;
     }
+    const std::map<uint32_t, DeviceBitfield> &getDeviceBitfields() const { return deviceBitfields; };
 
   protected:
     struct BuiltInKernel {

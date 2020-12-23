@@ -3762,11 +3762,10 @@ void *clHostMemAllocINTEL(
     }
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
-                                                                      neoContext->getDeviceBitfieldForAllocation(neoContext->getDevice(0)->getRootDeviceIndex()));
+                                                                      neoContext->getRootDeviceIndices(), neoContext->getDeviceBitfields());
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
-    unifiedMemoryProperties.subdeviceBitfield = neoContext->getDeviceBitfieldForAllocation(neoContext->getDevice(0)->getRootDeviceIndex());
     if (!MemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
                                                        allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
                                                        *neoContext)) {
@@ -3779,7 +3778,7 @@ void *clHostMemAllocINTEL(
         return nullptr;
     }
 
-    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(neoContext->getDevice(0)->getRootDeviceIndex(), size, unifiedMemoryProperties);
+    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 }
 
 void *clDeviceMemAllocINTEL(
@@ -3801,8 +3800,11 @@ void *clDeviceMemAllocINTEL(
         return nullptr;
     }
 
+    auto subDeviceBitfields = neoContext->getDeviceBitfields();
+    subDeviceBitfields[neoDevice->getRootDeviceIndex()] = neoDevice->getDeviceBitfield();
+
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                                                      neoDevice->getDeviceBitfield());
+                                                                      neoContext->getRootDeviceIndices(), subDeviceBitfields);
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
@@ -3813,15 +3815,15 @@ void *clDeviceMemAllocINTEL(
         return nullptr;
     }
 
-    if (size > neoContext->getDevice(0u)->getHardwareCapabilities().maxMemAllocSize &&
+    if (size > neoDevice->getHardwareCapabilities().maxMemAllocSize &&
         !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
         err.set(CL_INVALID_BUFFER_SIZE);
         return nullptr;
     }
 
-    unifiedMemoryProperties.device = device;
+    unifiedMemoryProperties.device = &neoDevice->getDevice();
 
-    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(neoDevice->getRootDeviceIndex(), size, unifiedMemoryProperties);
+    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 }
 
 void *clSharedMemAllocINTEL(
@@ -3846,20 +3848,19 @@ void *clSharedMemAllocINTEL(
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     ClDevice *neoDevice = castToObject<ClDevice>(device);
-    void *unifiedMemoryPropertiesDevice = nullptr;
-    DeviceBitfield subdeviceBitfield;
+    Device *unifiedMemoryPropertiesDevice = nullptr;
+    auto subDeviceBitfields = neoContext->getDeviceBitfields();
     if (neoDevice) {
         if (!neoContext->isDeviceAssociated(*neoDevice)) {
             err.set(CL_INVALID_DEVICE);
             return nullptr;
         }
-        unifiedMemoryPropertiesDevice = device;
-        subdeviceBitfield = neoDevice->getDeviceBitfield();
+        unifiedMemoryPropertiesDevice = &neoDevice->getDevice();
+        subDeviceBitfields[neoDevice->getRootDeviceIndex()] = neoDevice->getDeviceBitfield();
     } else {
         neoDevice = neoContext->getDevice(0);
-        subdeviceBitfield = neoContext->getDeviceBitfieldForAllocation(neoContext->getDevice(0)->getRootDeviceIndex());
     }
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, subdeviceBitfield);
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, neoContext->getRootDeviceIndices(), subDeviceBitfields);
     unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
     if (!MemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
                                                        allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
@@ -3872,7 +3873,7 @@ void *clSharedMemAllocINTEL(
         err.set(CL_INVALID_BUFFER_SIZE);
         return nullptr;
     }
-    auto ptr = neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(neoDevice->getRootDeviceIndex(), size, unifiedMemoryProperties, neoContext->getSpecialQueue(neoDevice->getRootDeviceIndex()));
+    auto ptr = neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(size, unifiedMemoryProperties, neoContext->getSpecialQueue(neoDevice->getRootDeviceIndex()));
     if (!ptr) {
         err.set(CL_OUT_OF_RESOURCES);
     }
@@ -3975,7 +3976,8 @@ cl_int clGetMemAllocInfoINTEL(
         if (!unifiedMemoryAllocation) {
             return changeGetInfoStatusToCLResultType(info.set<cl_device_id>(static_cast<cl_device_id>(nullptr)));
         }
-        return changeGetInfoStatusToCLResultType(info.set<cl_device_id>(static_cast<cl_device_id>(unifiedMemoryAllocation->device)));
+        auto device = unifiedMemoryAllocation->device ? unifiedMemoryAllocation->device->getSpecializedDevice<ClDevice>() : nullptr;
+        return changeGetInfoStatusToCLResultType(info.set<cl_device_id>(device));
     }
 
     default: {
@@ -4432,7 +4434,7 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
         }
     }
 
-    pAlloc = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), size, MemObjHelper::getSvmAllocationProperties(flags), pDevice->getDeviceBitfield());
+    pAlloc = pContext->getSVMAllocsManager()->createSVMAlloc(size, MemObjHelper::getSvmAllocationProperties(flags), pContext->getRootDeviceIndices(), pContext->getDeviceBitfields());
 
     if (pContext->isProvidingPerformanceHints()) {
         pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_SVM_ALLOC_MEETS_ALIGNMENT_RESTRICTIONS, pAlloc, size);

@@ -22,6 +22,8 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
                                            LinkerInput *const linkerInput, const void *initData) {
     bool globalsAreExported = false;
     GraphicsAllocation *gpuAllocation = nullptr;
+    auto rootDeviceIndex = device.getRootDeviceIndex();
+    auto deviceBitfield = device.getDeviceBitfield();
 
     if (linkerInput != nullptr) {
         globalsAreExported = constant ? linkerInput->getTraits().exportsGlobalConstants : linkerInput->getTraits().exportsGlobalVariables;
@@ -32,21 +34,26 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         svmProps.coherent = false;
         svmProps.readOnly = constant;
         svmProps.hostPtrReadOnly = constant;
-        auto ptr = svmAllocManager->createSVMAlloc(device.getRootDeviceIndex(), size, svmProps, device.getDeviceBitfield());
+
+        std::set<uint32_t> rootDeviceIndices;
+        rootDeviceIndices.insert(rootDeviceIndex);
+        std::map<uint32_t, DeviceBitfield> subDeviceBitfields;
+        subDeviceBitfields.insert({rootDeviceIndex, deviceBitfield});
+        auto ptr = svmAllocManager->createSVMAlloc(size, svmProps, rootDeviceIndices, subDeviceBitfields);
         DEBUG_BREAK_IF(ptr == nullptr);
         if (ptr == nullptr) {
             return nullptr;
         }
         auto svmAlloc = svmAllocManager->getSVMAlloc(ptr);
         UNRECOVERABLE_IF(svmAlloc == nullptr);
-        gpuAllocation = svmAlloc->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
+        gpuAllocation = svmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
     } else {
         auto allocationType = constant ? GraphicsAllocation::AllocationType::CONSTANT_SURFACE : GraphicsAllocation::AllocationType::GLOBAL_SURFACE;
-        gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(),
+        gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
                                                                                          true, // allocateMemory
                                                                                          size, allocationType,
                                                                                          false, // isMultiStorageAllocation
-                                                                                         device.getDeviceBitfield()});
+                                                                                         deviceBitfield});
     }
 
     if (!gpuAllocation) {

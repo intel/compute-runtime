@@ -268,6 +268,8 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
             neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger = DebuggerL0::create(neoDevice.get());
         }
 
+        this->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        this->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         auto device = Device::create(this, neoDevice.release(), currentDeviceMask, false);
         this->devices.push_back(device);
     }
