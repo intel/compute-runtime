@@ -60,6 +60,14 @@ struct Mock<MemoryNeoDrm> : public MemoryNeoDrm {
         return true;
     }
 
+    bool queryMemoryInfoMockReturnFalse() {
+        return false;
+    }
+
+    bool queryMemoryInfoMockReturnFakeTrue() {
+        return true;
+    }
+
     MOCK_METHOD(bool, queryMemoryInfo, (), (override));
 };
 

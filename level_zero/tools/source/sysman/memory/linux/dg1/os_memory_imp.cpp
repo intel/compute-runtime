@@ -13,23 +13,10 @@
 
 namespace L0 {
 
-void LinuxMemoryImp::init() {
-    auto memoryInfo = static_cast<NEO::MemoryInfoImpl *>(pDrm->getMemoryInfo());
-    if (!memoryInfo) {
-        return;
-    }
-    for (auto region : memoryInfo->regions) {
-        if (region.region.memory_class == I915_MEMORY_CLASS_DEVICE) {
-            deviceRegions.push_back(region);
-        }
-    }
-}
-
 LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = &pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getDeviceHandle();
-    init();
 }
 
 bool LinuxMemoryImp::isMemoryModuleSupported() {
@@ -53,9 +40,23 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 }
 
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
-    pState->health = ZES_MEM_HEALTH_OK;
+    std::vector<drm_i915_memory_region_info> deviceRegions;
+    if (pDrm->queryMemoryInfo() == false) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    auto memoryInfo = static_cast<NEO::MemoryInfoImpl *>(pDrm->getMemoryInfo());
+    if (!memoryInfo) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    for (auto region : memoryInfo->regions) {
+        if (region.region.memory_class == I915_MEMORY_CLASS_DEVICE) {
+            deviceRegions.push_back(region);
+        }
+    }
     pState->free = deviceRegions[subdeviceId].unallocated_size;
     pState->size = deviceRegions[subdeviceId].probed_size;
+    pState->health = ZES_MEM_HEALTH_OK;
 
     return ZE_RESULT_SUCCESS;
 }
