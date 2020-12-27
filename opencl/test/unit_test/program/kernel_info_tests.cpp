@@ -262,7 +262,7 @@ TEST(KernelInfo, givenKernelInfoWhenStoreNonTransformableArgThenArgInfoIsNotTran
 
 using KernelInfoMultiRootDeviceTests = MultiRootDeviceFixture;
 
-TEST_F(KernelInfoMultiRootDeviceTests, kernelAllocationHasCorrectRootDeviceIndex) {
+TEST_F(KernelInfoMultiRootDeviceTests, WhenCreatingKernelAllocationThenItHasCorrectRootDeviceIndex) {
     KernelInfo kernelInfo;
     const size_t heapSize = 0x40;
     char heap[heapSize];

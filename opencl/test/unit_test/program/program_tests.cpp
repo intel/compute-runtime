@@ -752,7 +752,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
-TEST_F(ProgramFromSourceTest, CreateWithSource_Build_Options_Duplicate) {
+TEST_F(ProgramFromSourceTest, GivenDuplicateOptionsWhenCreatingWithSourceThenBuildSucceeds) {
     KernelBinaryHelper kbHelper(binaryFileName, false);
 
     retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
@@ -2210,7 +2210,7 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCrea
     }
 }
 
-TEST_F(ProgramTests, givenNewProgramTheStatelessToStatefulBufferOffsetOtimizationIsMatchingThePlatformEnablingStatus) {
+TEST_F(ProgramTests, givenNewProgramThenStatelessToStatefulBufferOffsetOptimizationIsMatchingThePlatformEnablingStatus) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInitInternalOptions();
 

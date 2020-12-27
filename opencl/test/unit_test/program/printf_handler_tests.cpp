@@ -217,7 +217,7 @@ TEST(PrintfHandlerTest, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenPrep
 
 using PrintfHandlerMultiRootDeviceTests = MultiRootDeviceFixture;
 
-TEST_F(PrintfHandlerMultiRootDeviceTests, printfSurfaceHasCorrectRootDeviceIndex) {
+TEST_F(PrintfHandlerMultiRootDeviceTests, GivenPrintfSurfaceThenItHasCorrectRootDeviceIndex) {
     auto printfSurface = std::make_unique<SPatchAllocateStatelessPrintfSurface>();
     printfSurface->DataParamOffset = 0;
     printfSurface->DataParamSize = 8;

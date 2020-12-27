@@ -1119,7 +1119,7 @@ TEST_F(KernelDataTest, GivenDataParameterSamplerAddressModeWhenBuildingThenProgr
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[0].offsetSamplerAddressingMode);
 }
 
-TEST_F(KernelDataTest, GivenDataParameterSamplerCoordinateSnapWaRequired) {
+TEST_F(KernelDataTest, GivenDataParameterSamplerCoordinateSnapWaIsRequiredThenKernelInfoIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t dataOffset = 20;
     uint32_t dataSize = sizeof(uint32_t);
@@ -1147,7 +1147,7 @@ TEST_F(KernelDataTest, GivenDataParameterSamplerCoordinateSnapWaRequired) {
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[1].offsetSamplerSnapWa);
 }
 
-TEST_F(KernelDataTest, GivenDataParameterSamplerNormalizedCoords) {
+TEST_F(KernelDataTest, GivenDataParameterSamplerNormalizedCoordsThenKernelInfoIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t dataOffset = 20;
     uint32_t dataSize = sizeof(uint32_t);
