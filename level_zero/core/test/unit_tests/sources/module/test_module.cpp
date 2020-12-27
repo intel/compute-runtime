@@ -76,6 +76,56 @@ HWTEST_F(ModuleTest, givenNonZeroCountWhenGettingKernelNamesThenNamesAreReturned
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+HWTEST_F(ModuleTest, givenCallToGetKernelImmutableDataWithValidNameThenImutableDataIsReturned) {
+    uint32_t count = 1;
+    const char *kernelNames = nullptr;
+    auto result = module->getKernelNames(&count, &kernelNames);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, count);
+    EXPECT_STREQ(this->kernelName.c_str(), kernelNames);
+
+    auto kernelImmutableData = module->getKernelImmutableData(kernelNames);
+    EXPECT_NE(nullptr, kernelImmutableData);
+}
+
+HWTEST_F(ModuleTest, givenCallToGetKernelImmutableDataWithInvalidNameThenNullptrisReturned) {
+    uint32_t count = 1;
+    const char *kernelNames = nullptr;
+    auto result = module->getKernelNames(&count, &kernelNames);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, count);
+    EXPECT_STREQ(this->kernelName.c_str(), kernelNames);
+
+    auto kernelImmutableData = module->getKernelImmutableData("nonexistent_kernel");
+    EXPECT_EQ(nullptr, kernelImmutableData);
+}
+
+HWTEST_F(ModuleTest, givenTwoCallsToGetKernelImmutableDataThenKernelImmutableDataIsInitializedOnce) {
+    uint32_t count = 1;
+    const char *kernelNames = nullptr;
+    auto result = module->getKernelNames(&count, &kernelNames);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, count);
+    EXPECT_STREQ(this->kernelName.c_str(), kernelNames);
+
+    auto beforeKernelImmutableData = module->getKernelImmutableData(kernelNames);
+    EXPECT_NE(nullptr, beforeKernelImmutableData);
+
+    auto beforeIsaAllocation = beforeKernelImmutableData->getIsaGraphicsAllocation();
+    EXPECT_NE(nullptr, beforeIsaAllocation);
+
+    auto kernelImmutableData = module->getKernelImmutableData(kernelNames);
+    EXPECT_NE(nullptr, kernelImmutableData);
+    EXPECT_EQ(beforeKernelImmutableData, kernelImmutableData);
+
+    auto isaAllocation = kernelImmutableData->getIsaGraphicsAllocation();
+    EXPECT_NE(nullptr, isaAllocation);
+    EXPECT_EQ(beforeIsaAllocation, isaAllocation);
+}
+
 HWTEST_F(ModuleTest, givenUserModuleTypeWhenCreatingModuleThenCorrectTypeIsSet) {
     WhiteBox<Module> module(device, nullptr, ModuleType::User);
     EXPECT_EQ(ModuleType::User, module.type);
@@ -472,6 +522,11 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
     kernelInfo->heapInfo.pKernelHeap = kernelHeap;
     kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device, kernelInfo.get());
+    kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+
     module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
 
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -480,10 +535,6 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     module0->getTranslationUnit()->programInfo.linkerInput = std::move(linkerInput);
     module0->unresolvedExternalsInfo.push_back({unresolvedRelocation});
     module0->unresolvedExternalsInfo[0].instructionsSegmentId = 0u;
-
-    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
-    kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
 
     auto isaPtr = kernelImmData->getIsaGraphicsAllocation()->getUnderlyingBuffer();
 

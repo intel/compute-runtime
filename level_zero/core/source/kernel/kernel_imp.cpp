@@ -64,7 +64,10 @@ inline SamplerPatchValues getAddrMode(ze_sampler_address_mode_t addressingMode) 
     return SamplerPatchValues::AddressNone;
 }
 
-KernelImmutableData::KernelImmutableData(L0::Device *l0device) : device(l0device) {}
+KernelImmutableData::KernelImmutableData(L0::Device *l0device, NEO::KernelInfo *ki) : device(l0device), kernelInfo(ki) {
+    UNRECOVERABLE_IF(kernelInfo == nullptr);
+    this->kernelDescriptor = &kernelInfo->kernelDescriptor;
+}
 
 KernelImmutableData::~KernelImmutableData() {
     if (nullptr != isaGraphicsAllocation) {
@@ -96,14 +99,10 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
     }
 }
 
-void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device,
+void KernelImmutableData::initialize(Device *device,
                                      uint32_t computeUnitsUsedForSratch,
                                      NEO::GraphicsAllocation *globalConstBuffer,
                                      NEO::GraphicsAllocation *globalVarBuffer, bool internalKernel) {
-
-    UNRECOVERABLE_IF(kernelInfo == nullptr);
-    this->kernelDescriptor = &kernelInfo->kernelDescriptor;
-
     auto neoDevice = device->getNEODevice();
     auto memoryManager = device->getNEODevice()->getMemoryManager();
 

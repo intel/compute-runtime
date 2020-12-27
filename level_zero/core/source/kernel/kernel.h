@@ -30,10 +30,11 @@ struct Device;
 struct Module;
 
 struct KernelImmutableData {
-    KernelImmutableData(L0::Device *l0device = nullptr);
+    KernelImmutableData() = default;
+    KernelImmutableData(L0::Device *l0device, NEO::KernelInfo *ki);
     virtual ~KernelImmutableData();
 
-    void initialize(NEO::KernelInfo *kernelInfo, Device *device,
+    void initialize(Device *device,
                     uint32_t computeUnitsUsedForSratch,
                     NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer, bool internalKernel);
 
@@ -65,6 +66,7 @@ struct KernelImmutableData {
 
   protected:
     Device *device = nullptr;
+    NEO::KernelInfo *kernelInfo = nullptr;
     NEO::KernelDescriptor *kernelDescriptor = nullptr;
     std::unique_ptr<NEO::GraphicsAllocation> isaGraphicsAllocation = nullptr;
     std::unique_ptr<NEO::GraphicsAllocation> privateMemoryGraphicsAllocation = nullptr;

@@ -350,10 +350,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
 
     kernelImmDatas.reserve(this->translationUnit->programInfo.kernelInfos.size());
     for (auto &ki : this->translationUnit->programInfo.kernelInfos) {
-        std::unique_ptr<KernelImmutableData> kernelImmData{new KernelImmutableData(this->device)};
-        kernelImmData->initialize(ki, device, device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  this->translationUnit->globalConstBuffer, this->translationUnit->globalVarBuffer,
-                                  this->type == ModuleType::Builtin);
+        std::unique_ptr<KernelImmutableData> kernelImmData{new KernelImmutableData(this->device, ki)};
         kernelImmDatas.push_back(std::move(kernelImmData));
     }
     this->maxGroupSize = static_cast<uint32_t>(this->translationUnit->device->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
@@ -364,6 +361,11 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
 const KernelImmutableData *ModuleImp::getKernelImmutableData(const char *functionName) const {
     for (auto &kernelImmData : kernelImmDatas) {
         if (kernelImmData->getDescriptor().kernelMetadata.kernelName.compare(functionName) == 0) {
+            if (kernelImmData->getIsaGraphicsAllocation() == nullptr) {
+                kernelImmData->initialize(device, device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
+                                          this->translationUnit->globalConstBuffer, this->translationUnit->globalVarBuffer,
+                                          this->type == ModuleType::Builtin);
+            }
             return kernelImmData.get();
         }
     }
