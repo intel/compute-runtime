@@ -10,6 +10,6 @@ RUN apt-get -y update ; apt-get --no-install-recommends install -y --allow-unaut
 RUN mkdir /root/build; cd /root/build ; cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
     -DSUPPORT_GEN8=1 -DSUPPORT_GEN9=0 -DSUPPORT_GEN11=0 -DSUPPORT_GEN12LP=0 \
-    -DBUILD_WITH_L0=0 ../neo; \
+    -DBUILD_WITH_L0=0 -DDONT_CARE_OF_VIRTUALS=1 -DUSE_ULT_PCH=1 ../neo; \
     ninja -j `nproc`
 CMD ["/bin/bash"]

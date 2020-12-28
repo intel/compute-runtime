@@ -15,5 +15,6 @@ then
 fi
 
 git clone ../compute-runtime neo && \
+([[ -z "$DOCKER_USERNAME" ]] || docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD") && \
 docker build -f scripts/docker/${DOCKERFILE} -t ${IMAGE} . && \
 docker images
