@@ -26,6 +26,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueMigrateMemObjects(cl_uint numMemObjects
     NullSurface s;
     Surface *surfaces[] = {&s};
 
+    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+
+    for (unsigned int object = 0; object < numMemObjects; object++) {
+        auto memObject = castToObject<MemObj>(memObjects[object]);
+        memObject->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
+    }
+
     enqueueHandler<CL_COMMAND_MIGRATE_MEM_OBJECTS>(surfaces,
                                                    false,
                                                    MultiDispatchInfo(),

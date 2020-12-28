@@ -3355,6 +3355,15 @@ cl_int CL_API_CALL clEnqueueMigrateMemObjects(cl_command_queue commandQueue,
         return retVal;
     }
 
+    for (unsigned int object = 0; object < numMemObjects; object++) {
+        auto memObject = castToObject<MemObj>(memObjects[object]);
+        if (!memObject) {
+            retVal = CL_INVALID_MEM_OBJECT;
+            TRACING_EXIT(clEnqueueMigrateMemObjects, &retVal);
+            return retVal;
+        }
+    }
+
     const cl_mem_migration_flags allValidFlags = CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED | CL_MIGRATE_MEM_OBJECT_HOST;
 
     if ((flags & (~allValidFlags)) != 0) {
