@@ -50,11 +50,15 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                        const ze_copy_region_t *srcRegion,
                                        uint32_t srcPitch,
                                        uint32_t srcSlicePitch,
-                                       ze_event_handle_t hSignalEvent) override;
+                                       ze_event_handle_t hSignalEvent,
+                                       uint32_t numWaitEvents,
+                                       ze_event_handle_t *phWaitEvents) override;
 
     ze_result_t appendMemoryFill(void *ptr, const void *pattern,
                                  size_t patternSize, size_t size,
-                                 ze_event_handle_t hEvent) override;
+                                 ze_event_handle_t hSignalEvent,
+                                 uint32_t numWaitEvents,
+                                 ze_event_handle_t *phWaitEvents) override;
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
 

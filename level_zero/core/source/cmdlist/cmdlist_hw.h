@@ -107,11 +107,15 @@ struct CommandListCoreFamily : CommandListImp {
                                        const ze_copy_region_t *srcRegion,
                                        uint32_t srcPitch,
                                        uint32_t srcSlicePitch,
-                                       ze_event_handle_t hSignalEvent) override;
+                                       ze_event_handle_t hSignalEvent,
+                                       uint32_t numWaitEvents,
+                                       ze_event_handle_t *phWaitEvents) override;
     ze_result_t appendMemoryPrefetch(const void *ptr, size_t count) override;
     ze_result_t appendMemoryFill(void *ptr, const void *pattern,
                                  size_t patternSize, size_t size,
-                                 ze_event_handle_t hEvent) override;
+                                 ze_event_handle_t hSignalEvent,
+                                 uint32_t numWaitEvents,
+                                 ze_event_handle_t *phWaitEvents) override;
 
     ze_result_t appendMILoadRegImm(uint32_t reg, uint32_t value) override;
     ze_result_t appendMILoadRegReg(uint32_t reg1, uint32_t reg2) override;
@@ -163,7 +167,8 @@ struct CommandListCoreFamily : CommandListImp {
                                                             ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                                             size_t srcRowPitch, size_t srcSlicePitch,
                                                             size_t dstRowPitch, size_t dstSlicePitch,
-                                                            Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent);
+                                                            Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent,
+                                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
                                                           Builtin builtin, const ze_copy_region_t *dstRegion,
@@ -182,7 +187,9 @@ struct CommandListCoreFamily : CommandListImp {
 
     MOCKABLE_VIRTUAL ze_result_t appendBlitFill(void *ptr, const void *pattern,
                                                 size_t patternSize, size_t size,
-                                                ze_event_handle_t hEvent);
+                                                ze_event_handle_t hSignalEvent,
+                                                uint32_t numWaitEvents,
+                                                ze_event_handle_t *phWaitEvents);
 
     MOCKABLE_VIRTUAL ze_result_t appendCopyImageBlit(NEO::GraphicsAllocation *src,
                                                      NEO::GraphicsAllocation *dst,

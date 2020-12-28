@@ -91,9 +91,12 @@ struct CommandList : _ze_command_list_handle_t {
                                                const ze_copy_region_t *srcRegion,
                                                uint32_t srcPitch,
                                                uint32_t srcSlicePitch,
-                                               ze_event_handle_t hSignalEvent) = 0;
+                                               ze_event_handle_t hSignalEvent,
+                                               uint32_t numWaitEvents,
+                                               ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t appendMemoryFill(void *ptr, const void *pattern,
-                                         size_t patternSize, size_t size, ze_event_handle_t hEvent) = 0;
+                                         size_t patternSize, size_t size, ze_event_handle_t hSignalEvent,
+                                         uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t appendMemoryPrefetch(const void *ptr, size_t count) = 0;
     virtual ze_result_t appendSignalEvent(ze_event_handle_t hEvent) = 0;
     virtual ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent) = 0;

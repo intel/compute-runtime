@@ -207,7 +207,9 @@ struct MockCommandList : public CommandList {
                       const ze_copy_region_t *srcRegion,
                       uint32_t srcPitch,
                       uint32_t srcSlicePitch,
-                      ze_event_handle_t hSignalEvent));
+                      ze_event_handle_t hSignalEvent,
+                      uint32_t numWaitEvents,
+                      ze_event_handle_t *phWaitEvents));
 
     ADDMETHOD_NOBASE(appendMemoryPrefetch, ze_result_t, ZE_RESULT_SUCCESS,
                      (const void *ptr,
@@ -218,7 +220,9 @@ struct MockCommandList : public CommandList {
                       const void *pattern,
                       size_t pattern_size,
                       size_t size,
-                      ze_event_handle_t hEvent));
+                      ze_event_handle_t hEvent,
+                      uint32_t numWaitEvents,
+                      ze_event_handle_t *phWaitEvents));
 
     ADDMETHOD_NOBASE(appendSignalEvent, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_event_handle_t hEvent));

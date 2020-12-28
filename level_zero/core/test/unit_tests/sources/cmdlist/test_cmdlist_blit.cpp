@@ -188,7 +188,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithL
     cmdList.initialize(device, NEO::EngineGroupType::Copy);
     uint64_t pattern[4] = {1, 2, 3, 4};
     void *ptr = reinterpret_cast<void *>(0x1234);
-    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, ret);
 }
 
@@ -197,7 +197,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillToNotDevice
     cmdList.initialize(device, NEO::EngineGroupType::Copy);
     uint8_t pattern = 1;
     void *ptr = reinterpret_cast<void *>(0x1234);
-    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr, 0, nullptr);
     EXPECT_EQ(ret, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
@@ -212,7 +212,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBlt
     commandList.initialize(device, NEO::EngineGroupType::Copy);
     uint16_t pattern = 1;
     void *ptr = reinterpret_cast<void *>(0x1234);
-    commandList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    commandList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr, 0, nullptr);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0), commandList.commandContainer.getCommandStream()->getUsed()));
@@ -255,7 +255,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCop
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
     ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
-    commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
+    commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr);
 
     auto &commandContainer = commandList->commandContainer;
     GenCmdList genCmdList;
@@ -323,7 +323,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyR
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages);
 
-    commandList->appendMemoryCopyBlitRegion(&mockAllocationDst, &mockAllocationSrc, 0, 0, srcRegion, dstRegion, {0, 0, 0}, 0, 0, 0, 0, 0, 0, event->toHandle());
+    commandList->appendMemoryCopyBlitRegion(&mockAllocationDst, &mockAllocationSrc, 0, 0, srcRegion, dstRegion, {0, 0, 0}, 0, 0, 0, 0, 0, 0, event->toHandle(), 0, nullptr);
     GenCmdList cmdList;
 
     auto baseAddr = event->getGpuAddress();
@@ -433,8 +433,8 @@ HWTEST2_F(AppendMemoryfillHostPtr, givenTwoCommandListsAndHostPointerUsedInBothW
     cmdListSecond.initialize(deviceMock.get(), NEO::EngineGroupType::RenderCompute);
     uint64_t pattern[4] = {1, 2, 3, 4};
     void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
-    cmdListFirst.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
-    cmdListSecond.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    cmdListFirst.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr, 0, nullptr);
+    cmdListSecond.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr, 0, nullptr);
     EXPECT_EQ(cmdListFirst.hostPtrMap.size(), 1u);
     EXPECT_EQ(cmdListSecond.hostPtrMap.size(), 1u);
     auto allocationFirstList = cmdListFirst.hostPtrMap.begin()->second;
@@ -450,7 +450,7 @@ HWTEST2_F(AppendMemoryfillHostPtr, givenCommandListAndHostPointerWhenMemoryfillC
     cmdList.initialize(deviceMock.get(), NEO::EngineGroupType::RenderCompute);
     uint64_t pattern[4] = {1, 2, 3, 4};
     void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
-    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr, 0, nullptr);
     EXPECT_EQ(cmdList.hostPtrMap.size(), 1u);
     deviceMock.get()->setDriverHandle(driverHandle.get());
 }
@@ -464,7 +464,7 @@ HWTEST2_F(AppendMemoryfillHostPtr, givenCommandListAndHostPointerWithPatternSize
     cmdList.initialize(deviceMock.get(), NEO::EngineGroupType::RenderCompute);
     uint64_t pattern[4] = {1, 2, 3, 4};
     void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
-    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), patternSize, dstSize, nullptr);
+    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), patternSize, dstSize, nullptr, 0, nullptr);
     EXPECT_EQ(memoryFillMockGroupSizeX, 0x1000u);
     deviceMock.get()->setDriverHandle(driverHandle.get());
 }
@@ -478,7 +478,7 @@ HWTEST2_F(AppendMemoryfillHostPtr, givenCommandListAndHostPointerWithSizeLessTha
     cmdList.initialize(deviceMock.get(), NEO::EngineGroupType::RenderCompute);
     uint64_t pattern[4] = {1, 2, 3, 4};
     void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
-    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), patternSize, dstSize, nullptr);
+    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), patternSize, dstSize, nullptr, 0, nullptr);
     EXPECT_EQ(memoryFillMockGroupSizeX, 16u);
     deviceMock.get()->setDriverHandle(driverHandle.get());
 }
@@ -492,7 +492,7 @@ HWTEST2_F(AppendMemoryfillHostPtr, givenCommandListAndHostPointerWithSizeLargerT
     cmdList.initialize(deviceMock.get(), NEO::EngineGroupType::RenderCompute);
     uint64_t pattern[4] = {1, 2, 3, 4};
     void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
-    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), patternSize, dstSize, nullptr);
+    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), patternSize, dstSize, nullptr, 0, nullptr);
     EXPECT_EQ(memoryFillMockGroupSizeX, 32u);
     deviceMock.get()->setDriverHandle(driverHandle.get());
 }
