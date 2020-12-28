@@ -367,6 +367,38 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAl
     cmdContainer->getDeallocationContainer().clear();
 }
 
+TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenCreatedAlocationHaveDifferentBaseThenHeapIsDirty) {
+    std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
+    cmdContainer->initialize(pDevice);
+    cmdContainer->setDirtyStateForAllHeaps(false);
+    HeapType type = HeapType::INDIRECT_OBJECT;
+
+    auto heapAllocation = cmdContainer->getIndirectHeapAllocation(type);
+    auto heap = cmdContainer->getIndirectHeap(type);
+
+    const size_t sizeRequested = 32;
+    const size_t alignment = 32;
+    size_t availableSize = heap->getAvailableSpace();
+
+    heap->getSpace(availableSize - sizeRequested / 2);
+
+    EXPECT_LT(heap->getAvailableSpace(), sizeRequested + alignment);
+
+    auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(type, sizeRequested, alignment);
+    auto newAllocation = heapRequested->getGraphicsAllocation();
+
+    EXPECT_EQ(heap, heapRequested);
+    EXPECT_NE(heapAllocation, newAllocation);
+
+    EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (alignment - 1)) == 0);
+    EXPECT_FALSE(cmdContainer->isHeapDirty(type));
+
+    for (auto deallocation : cmdContainer->getDeallocationContainer()) {
+        cmdContainer->getDevice()->getMemoryManager()->freeGraphicsMemory(deallocation);
+    }
+    cmdContainer->getDeallocationContainer().clear();
+}
+
 TEST_F(CommandContainerTest, whenAllocateNextCmdBufferIsCalledThenNewAllocationIsCreatedAndCommandStreamReplaced) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice);
@@ -456,6 +488,8 @@ TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetingMoreThanAvailableSi
 
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice);
+    cmdContainer.setDirtyStateForAllHeaps(false);
+
     auto usedSpaceBefore = cmdContainer.getIndirectHeap(heap)->getUsed();
     auto availableSizeBefore = cmdContainer.getIndirectHeap(heap)->getAvailableSpace();
 
@@ -465,6 +499,7 @@ TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetingMoreThanAvailableSi
     auto usedSpaceAfter = cmdContainer.getIndirectHeap(heap)->getUsed();
     auto availableSizeAfter = cmdContainer.getIndirectHeap(heap)->getAvailableSpace();
     EXPECT_GT(usedSpaceAfter + availableSizeAfter, usedSpaceBefore + availableSizeBefore);
+    EXPECT_EQ(!cmdContainer.isHeapDirty(heap), heap == IndirectHeap::INDIRECT_OBJECT);
 }
 
 TEST_P(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenHeapsAreCreatedWithCorrectRootDeviceIndex) {
