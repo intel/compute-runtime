@@ -23,7 +23,7 @@ TEST(D3DContextTest, WhenContextIsCreatedThenSharingIsNotPresent) {
     EXPECT_EQ(nullptr, context.getSharing<D3DSharingFunctions<D3DTypesHelper::D3D11>>());
 }
 
-TEST(D3DContextTest, giveDispatchtableContainsValidEntries) {
+TEST(D3DContextTest, givenDispatchTableThenItContainsValidEntries) {
     sharingFactory.fillGlobalDispatchTable();
 
     MockContext context;
@@ -92,8 +92,7 @@ TEST_F(clIntelSharingFormatQueryDX9, givenInvalidImageTypeWhenMediaSurfaceFormat
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clIntelSharingFormatQueryDX9,
-       givenValidParametersWhenRequestedMediaSurfaceFormatsBelowMaximumThenExceedingFormatAreaRemainsUntouched) {
+TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestedMediaSurfaceFormatsBelowMaximumThenExceedingFormatAreaRemainsUntouched) {
     for (cl_uint i = 0; i <= static_cast<cl_uint>(retrievedFormats.size()); ++i) {
         retVal = clGetSupportedDX9MediaSurfaceFormatsINTEL(pContext, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 0, i,
                                                            &retrievedFormats[0], &numImageFormats);

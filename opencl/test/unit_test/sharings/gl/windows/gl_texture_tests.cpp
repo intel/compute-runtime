@@ -187,7 +187,7 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenRenderBufferTextureIsCreatedThenMem
     delete glTexture;
 }
 
-TEST_F(GlSharingTextureTests, givenGmmResourceAsInputeWhenTextureIsCreatedItHasGmmSet) {
+TEST_F(GlSharingTextureTests, givenGmmResourceAsInputWhenTextureIsCreatedThenItHasGmmSet) {
     cl_int retVal = CL_INVALID_VALUE;
 
     glSharing->m_textureInfoOutput.globalShareHandle = textureId;
@@ -378,7 +378,7 @@ TEST_F(GlSharingTextureTests, givenHwCommandQueueAndGlTextureWhenAcquireIsCalled
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(GlSharingTextureTests, verifyGlTextureBufferOffset) {
+TEST_F(GlSharingTextureTests, GivenGlTextureThenBufferOffsetIsCorrect) {
     glSharing->uploadDataToTextureInfo(textureId);
 
     auto rootDeviceIndex = clContext->getDevice(0)->getRootDeviceIndex();

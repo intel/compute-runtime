@@ -1147,7 +1147,7 @@ HWTEST_F(glSharingTests, givenEventCreatedFromFenceObjectWhenItIsPassedToAcquire
     clReleaseEvent(event);
 }
 
-TEST_F(glSharingTests, glSyncEventReportsAsExternallySynchronized) {
+TEST_F(glSharingTests, GivenGlSyncEventThenReportsAsExternallySynchronized) {
     GLsync glSync = {0};
     auto syncEvent = GlSyncEvent::create(context, glSync, nullptr);
     ASSERT_NE(nullptr, syncEvent);

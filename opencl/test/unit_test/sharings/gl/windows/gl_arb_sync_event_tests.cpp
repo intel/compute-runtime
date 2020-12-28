@@ -243,7 +243,7 @@ TEST_F(GlArbSyncEventTest, whenGlArbSyncEventIsCreatedAndSetEventFailsThenCreati
     EXPECT_EQ(nullptr, arbEvent);
 }
 
-TEST_F(GlArbSyncEventTest, whenGlArbSyncEventIsCreatedTheBaseEventIsProperlySet) {
+TEST_F(GlArbSyncEventTest, whenGlArbSyncEventIsCreatedThenBaseEventIsProperlySet) {
     auto *arbEvent = GlArbSyncEvent::create(*this->getBaseEvent());
     EXPECT_NE(nullptr, arbEvent);
     EXPECT_TRUE(this->baseEvent->peekHasChildEvents());

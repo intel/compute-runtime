@@ -168,7 +168,7 @@ TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBuff
     glBuffer->release(clBuffer.get(), rootDeviceIndex);
 }
 
-TEST_F(GlReusedBufferTests, givenMultipleBuffersAndGlobalShareHandleChangedWhenAcquiringSharedBufferDeleteOldGfxAllocationFromReuseVector) {
+TEST_F(GlReusedBufferTests, givenMultipleBuffersAndGlobalShareHandleChangedWhenAcquiringSharedBufferThenDeleteOldGfxAllocationFromReuseVector) {
     GlDllHelper dllParam;
     CL_GL_BUFFER_INFO bufferInfoOutput = dllParam.getBufferInfo();
     bufferInfoOutput.globalShareHandle = 40;
