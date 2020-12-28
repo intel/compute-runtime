@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "level_zero/tools/source/sysman/global_operations/global_operations.h"
 #include "level_zero/tools/source/sysman/memory/memory.h"
 #include "level_zero/tools/source/sysman/pci/pci.h"
+#include "level_zero/tools/source/sysman/performance/performance.h"
 #include "level_zero/tools/source/sysman/power/power.h"
 #include "level_zero/tools/source/sysman/ras/ras.h"
 #include "level_zero/tools/source/sysman/scheduler/scheduler.h"
@@ -30,6 +31,7 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static SysmanDevice *fromHandle(zes_device_handle_t handle) { return Device::fromHandle(handle)->getSysmanHandle(); }
 
+    virtual ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) = 0;
     virtual ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) = 0;
     virtual ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) = 0;
     virtual ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) = 0;

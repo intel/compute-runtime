@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -706,26 +706,26 @@ zesDeviceEnumPerformanceFactorDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_perf_handle_t *phPerf) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->performanceGet(pCount, phPerf);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesPerformanceFactorGetProperties(
     zes_perf_handle_t hPerf,
     zes_perf_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Performance::fromHandle(hPerf)->performanceGetProperties(pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesPerformanceFactorGetConfig(
     zes_perf_handle_t hPerf,
     double *pFactor) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Performance::fromHandle(hPerf)->performanceGetConfig(pFactor);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesPerformanceFactorSetConfig(
     zes_perf_handle_t hPerf,
     double factor) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Performance::fromHandle(hPerf)->performanceSetConfig(factor);
 }

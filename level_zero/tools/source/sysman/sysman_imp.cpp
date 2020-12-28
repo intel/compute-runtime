@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,9 +36,11 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pEvents = new EventsImp(pOsSysman);
     pFanHandleContext = new FanHandleContext(pOsSysman);
     pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
+    pPerformanceHandleContext = new PerformanceHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
+    freeResource(pPerformanceHandleContext);
     freeResource(pFirmwareHandleContext);
     freeResource(pFanHandleContext);
     freeResource(pEvents);
@@ -110,6 +112,9 @@ void SysmanDeviceImp::init() {
     }
     if (pFirmwareHandleContext) {
         pFirmwareHandleContext->init();
+    }
+    if (pPerformanceHandleContext) {
+        pPerformanceHandleContext->init(deviceHandles);
     }
 }
 
@@ -196,4 +201,9 @@ ze_result_t SysmanDeviceImp::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMem
 ze_result_t SysmanDeviceImp::fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) {
     return pFanHandleContext->fanGet(pCount, phFan);
 }
+
+ze_result_t SysmanDeviceImp::performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) {
+    return pPerformanceHandleContext->performanceGet(pCount, phPerformance);
+}
+
 } // namespace L0

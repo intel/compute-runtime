@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,9 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     MemoryHandleContext *pMemoryHandleContext = nullptr;
     FanHandleContext *pFanHandleContext = nullptr;
     FirmwareHandleContext *pFirmwareHandleContext = nullptr;
+    PerformanceHandleContext *pPerformanceHandleContext = nullptr;
 
+    ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) override;
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) override;
     ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) override;
