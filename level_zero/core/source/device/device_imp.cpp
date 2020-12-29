@@ -798,6 +798,7 @@ ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
     }
     // if the code falls through, we have no low priority context created by neoDevice.
     UNRECOVERABLE_IF(true);
+    return ZE_RESULT_ERROR_UNKNOWN;
 }
 
 ze_result_t DeviceImp::mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) {
