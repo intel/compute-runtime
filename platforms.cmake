@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -144,6 +144,19 @@ set(SUPPORT_PLATFORM_DEFAULT TRUE CACHE BOOL "default value for support platform
 
 # Define the hardware configurations we support and test
 macro(SET_FLAGS_FOR GEN_TYPE)
+  foreach(SKU_NAME ${ARGN})
+    if(SUPPORT_${SKU_NAME})
+      if(NOT SUPPORT_${GEN_TYPE})
+        message(STATUS "Auto-Enabling ${GEN_TYPE} support for ${SKU_NAME}")
+        set(SUPPORT_${GEN_TYPE} TRUE CACHE BOOL "Support ${GEN_TYPE} devices")
+      endif()
+      if(NOT DEFINED TESTS_${GEN_TYPE})
+        message(STATUS "Auto-Enabling ${GEN_TYPE} tests for ${SKU_NAME}")
+        set(TESTS_${GEN_TYPE} TRUE CACHE BOOL "Build ULTs for ${GEN_TYPE} devices")
+      endif()
+    endif()
+  endforeach()
+
   set(SUPPORT_${GEN_TYPE} ${SUPPORT_GEN_DEFAULT} CACHE BOOL "Support ${GEN_TYPE} devices")
   set(TESTS_${GEN_TYPE} ${SUPPORT_${GEN_TYPE}} CACHE BOOL "Build ULTs for ${GEN_TYPE} devices")
   set(SUPPORT_DEVICE_ENQUEUE_${GEN_TYPE} TRUE CACHE BOOL "Support ${GEN_TYPE} for device side enqueue")
@@ -151,6 +164,7 @@ macro(SET_FLAGS_FOR GEN_TYPE)
   if(NOT SUPPORT_${GEN_TYPE} OR SKIP_UNIT_TESTS)
     set(TESTS_${GEN_TYPE} FALSE)
   endif()
+
   if(SUPPORT_${GEN_TYPE})
     foreach(${GEN_TYPE}_PLATFORM ${ARGN})
       set(SUPPORT_${${GEN_TYPE}_PLATFORM} ${SUPPORT_PLATFORM_DEFAULT} CACHE BOOL "Support ${${GEN_TYPE}_PLATFORM}")
