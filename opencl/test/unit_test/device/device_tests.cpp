@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -348,6 +348,13 @@ TEST(DeviceCreation, givenDeviceWhenCheckingParentDeviceThenCorrectValueIsReturn
     EXPECT_EQ(nullptr, deviceFactory.rootDevices[1]->getParentDevice());
     EXPECT_EQ(deviceFactory.rootDevices[1], deviceFactory.subDevices[2]->getParentDevice());
     EXPECT_EQ(deviceFactory.rootDevices[1], deviceFactory.subDevices[3]->getParentDevice());
+}
+
+TEST(DeviceCreation, givenRootDeviceWithSubDevicesWhenCheckingEngineGroupsThenItHasOneNonEmptyGroup) {
+    UltDeviceFactory deviceFactory{1, 2};
+    EXPECT_EQ(static_cast<size_t>(EngineGroupType::MaxEngineGroups), deviceFactory.rootDevices[0]->getEngineGroups().size());
+    EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->getNonEmptyEngineGroup(0));
+    EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getNonEmptyEngineGroup(1));
 }
 
 using DeviceHwTest = ::testing::Test;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,6 +99,7 @@ bool RootDevice::createEngines() {
     if (getNumSubDevices() < 2) {
         return Device::createEngines();
     } else {
+        this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
         initializeRootCommandStreamReceiver();
     }
     return true;
@@ -118,7 +119,10 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
     commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
-    engines.emplace_back(commandStreamReceivers.back().get(), osContext);
+
+    EngineControl engine{commandStreamReceivers.back().get(), osContext};
+    engines.push_back(engine);
+    addEngineToEngineGroup(engine);
 }
 
 } // namespace NEO

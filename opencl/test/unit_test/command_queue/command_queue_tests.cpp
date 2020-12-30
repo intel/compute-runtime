@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1347,6 +1347,8 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
 
         EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, const HardwareInfo &hwInfo) const override {
             switch (engineType) {
+            case aub_stream::ENGINE_RCS:
+                return EngineGroupType::RenderCompute;
             case aub_stream::ENGINE_CCS:
                 return EngineGroupType::Compute;
             case aub_stream::ENGINE_BCS:

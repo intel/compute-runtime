@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ MockDevice::MockDevice()
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
     this->engines.resize(1);
     this->engines[0] = {commandStreamReceiver, nullptr};
+    this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
     initializeCaps();
 }
 
@@ -45,6 +46,7 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
     bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
     this->mockMemoryManager.reset(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, enableLocalMemory, aubUsage, *executionEnvironment));
     this->osTime = MockOSTime::create();
+    this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&hwInfo);
     executionEnvironment->initializeMemoryManager();
     initializeCaps();
