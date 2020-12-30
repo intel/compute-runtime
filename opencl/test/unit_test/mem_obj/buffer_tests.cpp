@@ -1889,6 +1889,34 @@ TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedAndEnqueueReadBufferCalledT
     EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
 }
 
+TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedAndEnqueueFillBufferCalledThenBufferMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, MemoryConstants::pageSize, nullptr, retVal));
+
+    unsigned int pattern[] = {2};
+    size_t patternSize = sizeof(pattern);
+
+    auto cmdQ1 = context->getSpecialQueue(1u);
+    cmdQ1->enqueueFillBuffer(buffer.get(), pattern, patternSize, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    cmdQ1->enqueueFillBuffer(buffer.get(), pattern, patternSize, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    auto cmdQ2 = context->getSpecialQueue(2u);
+    cmdQ2->enqueueFillBuffer(buffer.get(), pattern, patternSize, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+
+    cmdQ1->enqueueFillBuffer(buffer.get(), pattern, patternSize, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
+
+    static_cast<MemoryAllocation *>(buffer->getMigrateableMultiGraphicsAllocation().getGraphicsAllocation(2u))->overrideMemoryPool(MemoryPool::LocalMemory);
+    cmdQ2->enqueueFillBuffer(buffer.get(), pattern, patternSize, 0, MemoryConstants::pageSize, 0, nullptr, nullptr);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+}
+
 TEST_F(MultiRootDeviceBufferTest, WhenBuffersAreCreatedAndEnqueueCopyBufferCalledThenBuffersMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
     cl_int retVal = 0;
 
