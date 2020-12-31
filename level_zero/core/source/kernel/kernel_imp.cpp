@@ -533,6 +533,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
 
 ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void *argVal) {
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescImage>();
+    auto isMediaBlockImage = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].getExtendedTypeInfo().isMediaBlockImage;
     if (argVal == nullptr) {
         residencyContainer[argIndex] = nullptr;
         return ZE_RESULT_SUCCESS;
@@ -540,9 +541,9 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
 
     const auto image = Image::fromHandle(*static_cast<const ze_image_handle_t *>(argVal));
     if (kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode == NEO::KernelDescriptor::Bindless) {
-        image->copySurfaceStateToSSH(patchBindlessSurfaceState(image->getAllocation(), arg.bindless), 0u);
+        image->copySurfaceStateToSSH(patchBindlessSurfaceState(image->getAllocation(), arg.bindless), 0u, isMediaBlockImage);
     } else {
-        image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful);
+        image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful, isMediaBlockImage);
     }
     residencyContainer[argIndex] = image->getAllocation();
 

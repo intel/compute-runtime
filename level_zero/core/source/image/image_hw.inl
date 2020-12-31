@@ -153,7 +153,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHeap,
-                                                           const uint32_t surfaceStateOffset) {
+                                                           const uint32_t surfaceStateOffset,
+                                                           bool isMediaBlockArg) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
@@ -161,6 +162,11 @@ void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHea
     auto destSurfaceState = ptrOffset(surfaceStateHeap, surfaceStateOffset);
     memcpy_s(destSurfaceState, sizeof(RENDER_SURFACE_STATE),
              &surfaceState, sizeof(RENDER_SURFACE_STATE));
+    if (isMediaBlockArg) {
+        RENDER_SURFACE_STATE *dstRss = static_cast<RENDER_SURFACE_STATE *>(destSurfaceState);
+        uint32_t elSize = static_cast<uint32_t>(imgInfo.surfaceFormat->ImageElementSizeInBytes);
+        dstRss->setWidth(static_cast<uint32_t>((imgInfo.imgDesc.imageWidth * elSize) / sizeof(uint32_t)));
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

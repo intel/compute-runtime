@@ -855,7 +855,7 @@ TEST_F(KernelBindlessUncachedMemoryTests, givenDeviceAllocationWithUncachedFlagT
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MyMockImage : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
     //MyMockImage() : WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>();
-    void copySurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) override {
+    void copySurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset, bool isMediaBlockArg) override {
         passedSurfaceStateHeap = surfaceStateHeap;
         passedSurfaceStateOffset = surfaceStateOffset;
     }
