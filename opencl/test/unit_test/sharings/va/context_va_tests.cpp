@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ struct VAContextTest : public PlatformFixture,
     cl_context_properties *properties = nullptr;
 };
 
-TEST_F(VAContextTest, sharingAreNotPresentByDefault) {
+TEST_F(VAContextTest, GivenDefaultThenSharingNotPresent) {
     ASSERT_EQ(context->getSharing<VASharingFunctions>(), nullptr);
 }
 
