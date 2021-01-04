@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
