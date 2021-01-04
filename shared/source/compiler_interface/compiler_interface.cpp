@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -308,23 +308,37 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
         return TranslationOutput::ErrorCode::CompilerNotAvailable;
     }
 
-    const char *sipSrc = getSipLlSrc(device);
-    std::string sipInternalOptions = getSipKernelCompilerInternalOptions(type);
+    IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine = IGC::SystemRoutineType::undefined;
+    switch (type) {
+    case SipKernelType::Csr:
+        typeOfSystemRoutine = IGC::SystemRoutineType::contextSaveRestore;
+        break;
+    case SipKernelType::DbgCsr:
+        typeOfSystemRoutine = IGC::SystemRoutineType::debug;
+        break;
+    case SipKernelType::DbgCsrLocal:
+        typeOfSystemRoutine = IGC::SystemRoutineType::debugSlm;
+        break;
+    default:
+        break;
+    }
 
-    auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), sipSrc, strlen(sipSrc) + 1);
-    auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
-    auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), sipInternalOptions.c_str(), sipInternalOptions.size() + 1);
+    auto deviceCtx = getIgcDeviceCtx(device);
+    const bool bindlessSip = false;
 
-    auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::llvmLl, IGC::CodeType::oclGenBin);
+    auto systemRoutineBuffer = igcMain.get()->CreateBuiltin<CIF::Builtins::BufferLatest>();
+    auto stateSaveAreaBuffer = igcMain.get()->CreateBuiltin<CIF::Builtins::BufferLatest>();
 
-    auto igcOutput = translate(igcTranslationCtx.get(), igcSrc.get(),
-                               igcOptions.get(), igcInternalOptions.get());
+    auto result = deviceCtx->GetSystemRoutine(typeOfSystemRoutine,
+                                              bindlessSip,
+                                              systemRoutineBuffer.get(),
+                                              stateSaveAreaBuffer.get());
 
-    if ((igcOutput == nullptr) || (igcOutput->Successful() == false)) {
+    if (!result) {
         return TranslationOutput::ErrorCode::UnknownError;
     }
 
-    retBinary.assign(igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetMemory<char>() + igcOutput->GetOutput()->GetSizeRaw());
+    retBinary.assign(systemRoutineBuffer->GetMemory<char>(), systemRoutineBuffer->GetMemory<char>() + systemRoutineBuffer->GetSizeRaw());
     return TranslationOutput::ErrorCode::Success;
 }
 

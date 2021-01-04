@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -490,6 +490,15 @@ bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutine
                                            bool bindless,
                                            CIF::Builtins::BufferSimple *outSystemRoutineBuffer,
                                            CIF::Builtins::BufferSimple *stateSaveAreaHeaderInit) {
+    MockCompilerDebugVars &debugVars = *NEO::igcDebugVars;
+    debugVars.typeOfSystemRoutine = typeOfSystemRoutine;
+    const char mockData[64] = {'C', 'T', 'N', 'I'};
+
+    if (debugVars.forceBuildFailure || typeOfSystemRoutine == IGC::SystemRoutineType::undefined) {
+        return false;
+    }
+
+    outSystemRoutineBuffer->PushBackRawBytes(mockData, 64);
     return true;
 }
 
@@ -636,7 +645,6 @@ std::vector<char> MockCompilerInterface::getDummyGenBinary() {
     return MockSipKernel::getDummyGenBinary();
 }
 void MockCompilerInterface::releaseDummyGenBinary() {
-    MockSipKernel::shutDown();
 }
 
 } // namespace NEO

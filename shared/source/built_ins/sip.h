@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,6 @@ namespace NEO {
 
 class Device;
 class GraphicsAllocation;
-
-const char *getSipKernelCompilerInternalOptions(SipKernelType kernel);
-
-const char *getSipLlSrc(const Device &device);
 
 class SipKernel {
   public:

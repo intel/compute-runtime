@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,11 +25,8 @@ class MockSipKernel : public SipKernel {
     MockSipKernel();
     ~MockSipKernel() override;
 
-    static std::vector<char> dummyBinaryForSip;
+    static const char *dummyBinaryForSip;
     static std::vector<char> getDummyGenBinary();
-    static std::vector<char> getBinary();
-    static void initDummyBinary();
-    static void shutDown();
 
     GraphicsAllocation *getSipAllocation() const override;
 
