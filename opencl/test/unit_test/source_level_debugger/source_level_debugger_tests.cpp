@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -622,7 +622,7 @@ TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewS
     }
 }
 
-TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenTheyAreCreatedTheyUseDedicatedSourceLevelDebugger) {
+TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenCreatedThenUseDedicatedSourceLevelDebugger) {
     DebuggerLibraryRestorer restorer;
 
     if (defaultHwInfo->capabilityTable.debuggerSupported) {

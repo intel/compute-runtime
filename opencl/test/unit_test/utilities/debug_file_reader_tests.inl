@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,7 +119,7 @@ TEST(SettingsFileReader, GivenSettingNotInFileWhenGettingSettingThenProvidedDefa
     EXPECT_EQ(defaultStringValue, returnedStringValue);
 }
 
-TEST(SettingsFileReader, WhenGettingAppSpecificLocationTheCorrectLocationIsReturned) {
+TEST(SettingsFileReader, WhenGettingAppSpecificLocationThenCorrectLocationIsReturned) {
     std::unique_ptr<TestSettingsFileReader> reader(new TestSettingsFileReader(TestSettingsFileReader::testPath));
     std::string appSpecific = "cl_cache_dir";
     EXPECT_EQ(appSpecific, reader->appSpecificLocation(appSpecific));
