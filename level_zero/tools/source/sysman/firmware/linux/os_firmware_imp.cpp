@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/firmware/linux/os_firmware_imp.h"
+
+#include "shared/source/helpers/string.h"
 
 namespace L0 {
 
@@ -21,14 +23,14 @@ void LinuxFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties)
         getFirmwareVersion(pProperties->name);
         getFirmwareVersion(pProperties->version);
     } else {
-        std::strncpy(pProperties->name, unknown.c_str(), (ZES_STRING_PROPERTY_SIZE - 1));
-        std::strncpy(pProperties->version, unknown.c_str(), (ZES_STRING_PROPERTY_SIZE - 1));
+        strncpy_s(pProperties->name, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        strncpy_s(pProperties->version, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
     }
 }
 void LinuxFirmwareImp::getFirmwareVersion(char *firmwareVersion) {
     std::string fwVersion;
     pFwInterface->fwGetVersion(fwVersion);
-    std::strncpy(firmwareVersion, fwVersion.c_str(), (ZES_STRING_PROPERTY_SIZE - 1));
+    strncpy_s(firmwareVersion, ZES_STRING_PROPERTY_SIZE, fwVersion.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 
 LinuxFirmwareImp::LinuxFirmwareImp(OsSysman *pOsSysman) {
