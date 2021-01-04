@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,11 +30,10 @@ struct Device;
 struct Module;
 
 struct KernelImmutableData {
-    KernelImmutableData() = default;
-    KernelImmutableData(L0::Device *l0device, NEO::KernelInfo *ki);
+    KernelImmutableData(L0::Device *l0device = nullptr);
     virtual ~KernelImmutableData();
 
-    void initialize(Device *device,
+    void initialize(NEO::KernelInfo *kernelInfo, Device *device,
                     uint32_t computeUnitsUsedForSratch,
                     NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer, bool internalKernel);
 
@@ -66,7 +65,6 @@ struct KernelImmutableData {
 
   protected:
     Device *device = nullptr;
-    NEO::KernelInfo *kernelInfo = nullptr;
     NEO::KernelDescriptor *kernelDescriptor = nullptr;
     std::unique_ptr<NEO::GraphicsAllocation> isaGraphicsAllocation = nullptr;
     std::unique_ptr<NEO::GraphicsAllocation> privateMemoryGraphicsAllocation = nullptr;
