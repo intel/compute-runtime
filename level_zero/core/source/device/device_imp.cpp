@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -370,6 +370,8 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     pDeviceProperties->maxMemAllocSize = this->neoDevice->getDeviceInfo().maxMemAllocSize;
 
     pDeviceProperties->maxCommandQueuePriority = 0;
+
+    pDeviceProperties->maxHardwareContexts = 1024 * 64;
 
     pDeviceProperties->numThreadsPerEU = deviceInfo.numThreadsPerEU;
 
