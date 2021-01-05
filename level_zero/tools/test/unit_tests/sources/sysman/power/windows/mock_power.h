@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,26 @@ struct Mock<PowerKmdSysManager> : public PowerKmdSysManager {
     uint32_t mockEnergyCounter = 3231121;
     uint32_t mockTimeStamp = 1123412412;
     uint32_t mockEnergyUnit = 14;
+
+    uint32_t mockFrequencyTimeStamp = 38400000;
+
+    void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
+        uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
+        pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderOut);
+
+        switch (pRequest->inRequestId) {
+        case KmdSysman::Requests::Activity::TimestampFrequency: {
+            uint32_t *pValueFrequency = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValueFrequency = mockFrequencyTimeStamp;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
+        default: {
+            pResponse->outDataSize = 0;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+        } break;
+        }
+    }
 
     void getPowerProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);

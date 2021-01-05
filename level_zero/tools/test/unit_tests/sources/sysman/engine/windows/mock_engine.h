@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,9 +18,10 @@ template <>
 struct Mock<EngineKmdSysManager> : public EngineKmdSysManager {
 
     KmdSysman::ActivityDomainsType mockEngineTypes[3] = {KmdSysman::ActivityDomainsType::ActitvityDomainGT, KmdSysman::ActivityDomainsType::ActivityDomainRenderCompute, KmdSysman::ActivityDomainsType::ActivityDomainMedia};
-    uint64_t mockActivityCounters[3] = {652115546, 22115546, 4115546};
-    uint64_t mockActivityTimeStamps[3] = {456465421541, 456465421545, 456465421548};
+    uint64_t mockActivityCounters[3] = {652411, 222115, 451115};
+    uint64_t mockActivityTimeStamps[3] = {4465421, 2566851, 1226621};
     uint32_t mockNumSupportedEngineGroups = 3;
+    uint32_t mockFrequencyTimeStamp = 38400000;
 
     void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
@@ -48,6 +49,12 @@ struct Mock<EngineKmdSysManager> : public EngineKmdSysManager {
             *pValueTimeStamp = mockActivityTimeStamps[domain];
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = 2 * sizeof(uint64_t);
+        } break;
+        case KmdSysman::Requests::Activity::TimestampFrequency: {
+            uint32_t *pValueFrequency = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValueFrequency = mockFrequencyTimeStamp;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
         } break;
         default: {
             pResponse->outDataSize = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,13 @@ using ::testing::Return;
 
 namespace L0 {
 namespace ult {
+
+uint64_t convertTStoMicroSec(uint64_t TS, uint32_t freq) {
+    double timeFactor = 1.0 / static_cast<double>(freq);
+    timeFactor = static_cast<double>(TS) * timeFactor;
+    timeFactor *= static_cast<double>(microFacor);
+    return static_cast<uint64_t>(timeFactor);
+}
 
 class SysmanKmdManagerFixture : public ::testing::Test {
 

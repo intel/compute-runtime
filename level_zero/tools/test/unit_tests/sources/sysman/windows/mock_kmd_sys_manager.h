@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,8 @@ struct MockEventHandle {
     HANDLE eventHandle;
     bool inited = false;
 };
+
+uint64_t convertTStoMicroSec(uint64_t TS, uint32_t freq);
 
 class MockKmdSysManager : public KmdSysManager {};
 

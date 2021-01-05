@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,8 +104,8 @@ TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetAvtivityThenCorrectValuesAr
         ze_result_t result = zesEngineGetActivity(handle, &stats);
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_EQ(stats.activeTime, pKmdSysManager->mockActivityCounters[engineGroupIndex]);
-        EXPECT_EQ(stats.timestamp, pKmdSysManager->mockActivityTimeStamps[engineGroupIndex]);
+        EXPECT_EQ(stats.activeTime, convertTStoMicroSec(pKmdSysManager->mockActivityCounters[engineGroupIndex], pKmdSysManager->mockFrequencyTimeStamp));
+        EXPECT_EQ(stats.timestamp, convertTStoMicroSec(pKmdSysManager->mockActivityTimeStamps[engineGroupIndex], pKmdSysManager->mockFrequencyTimeStamp));
         engineGroupIndex++;
     }
 }

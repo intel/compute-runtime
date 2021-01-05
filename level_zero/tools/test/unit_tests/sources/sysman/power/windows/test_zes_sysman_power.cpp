@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -145,7 +145,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
         uint64_t mockEnergytoMicroJoules = static_cast<uint64_t>(valueConverted);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(energyCounter.energy, mockEnergytoMicroJoules);
-        EXPECT_EQ(energyCounter.timestamp, pKmdSysManager->mockTimeStamp);
+        EXPECT_EQ(energyCounter.timestamp, convertTStoMicroSec(pKmdSysManager->mockTimeStamp, pKmdSysManager->mockFrequencyTimeStamp));
     }
 }
 
