@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@
 #include <sstream>
 #include <string>
 
-TEST(DebugSettingsManager, WithDebugFunctionality) {
+TEST(DebugSettingsManager, WhenDebugManagerIsCreatedThenInjectFcnIsNull) {
     FullyEnabledTestDebugManager debugManager;
 
     EXPECT_FALSE(debugManager.disabled());
@@ -27,13 +27,13 @@ TEST(DebugSettingsManager, WithDebugFunctionality) {
     EXPECT_EQ(nullptr, debugManager.injectFcn);
 }
 
-TEST(DebugSettingsManager, WithDebugFunctionalityHasSettingsReader) {
+TEST(DebugSettingsManager, WhenDebugManagerIsCreatedThenSettingsReaderIsAvailable) {
     FullyEnabledTestDebugManager debugManager;
     // SettingsReader created
     EXPECT_NE(nullptr, debugManager.getSettingsReader());
 }
 
-TEST(DebugSettingsManager, WithoutDebugFunctionality) {
+TEST(DebugSettingsManager, WhenDebugManagerIsDisabledThenDebugFunctionalityIsNotAvailable) {
     FullyDisabledTestDebugManager debugManager;
 
     // Should not be enabled without debug functionality
