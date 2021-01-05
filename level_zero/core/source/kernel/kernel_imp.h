@@ -129,6 +129,8 @@ struct KernelImp : Kernel {
 
     void patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint32_t z);
 
+    NEO::GraphicsAllocation *privateMemoryGraphicsAllocation = nullptr;
+
     void createPrintfBuffer();
     void setDebugSurface();
     virtual void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) = 0;
@@ -147,7 +149,7 @@ struct KernelImp : Kernel {
     uint32_t numThreadsPerThreadGroup = 1u;
     uint32_t threadExecutionMask = 0u;
 
-    std::unique_ptr<uint8_t[]> crossThreadData = 0;
+    std::unique_ptr<uint8_t[]> crossThreadData = nullptr;
     uint32_t crossThreadDataSize = 0;
 
     std::unique_ptr<uint8_t[]> surfaceStateHeapData = nullptr;

@@ -254,19 +254,95 @@ HWTEST_F(KernelPropertiesTests, givenKernelThenCorrectNameIsRetrieved) {
     delete[] kernelNameRetrieved;
 }
 
-HWTEST_F(KernelPropertiesTests, whenInitializingThenCalculatesProperPrivateSurfaceSize) {
-    uint32_t computeUnitsUsedForSratch = 0x300;
+class KernelImmutableDataTests : public ModuleImmutableDataFixture, public ::testing::Test {
+  public:
+    void SetUp() override {
+        ModuleImmutableDataFixture::SetUp();
+    }
 
-    KernelInfo kernelInfo;
-    auto &kernelAttributes = kernelInfo.kernelDescriptor.kernelAttributes;
-    kernelAttributes.perHwThreadPrivateMemorySize = 0x100;
-    kernelAttributes.simdSize = 8;
+    void TearDown() override {
+        ModuleImmutableDataFixture::TearDown();
+    }
+};
 
-    KernelImmutableData kernelImmutableData(device);
-    kernelImmutableData.initialize(&kernelInfo, device, computeUnitsUsedForSratch, nullptr, nullptr, false);
+HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithNoPrivateMemoryThenPrivateMemoryIsNull) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 0u;
+    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested);
 
-    size_t expectedSize = static_cast<size_t>(kernelAttributes.perHwThreadPrivateMemorySize) * computeUnitsUsedForSratch;
-    EXPECT_GE(expectedSize, kernelImmutableData.getPrivateMemoryGraphicsAllocation()->getUnderlyingBufferSize());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    createKernel(kernel.get());
+
+    EXPECT_EQ(nullptr, kernel->privateMemoryGraphicsAllocation);
+}
+
+HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPrivateMemoryIsCreated) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested);
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    createKernel(kernel.get());
+
+    EXPECT_NE(nullptr, kernel->privateMemoryGraphicsAllocation);
+
+    size_t expectedSize = perHwThreadPrivateMemorySizeRequested *
+                          device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch;
+    EXPECT_EQ(expectedSize, kernel->privateMemoryGraphicsAllocation->getUnderlyingBufferSize());
+}
+
+HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenContainerHasOneExtraSpaceForAllocation) {
+    std::string testFile;
+    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(
+        testFile.c_str(),
+        size);
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+    std::unique_ptr<MockModule> moduleWithPrivateMemory = std::make_unique<MockModule>(device,
+                                                                                       moduleBuildLog,
+                                                                                       ModuleType::User,
+                                                                                       perHwThreadPrivateMemorySizeRequested);
+    bool result = moduleWithPrivateMemory->initialize(&moduleDesc, device->getNEODevice());
+    EXPECT_TRUE(result);
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernelWithPrivateMemory;
+    kernelWithPrivateMemory = std::make_unique<ModuleImmutableDataFixture::MockKernel>(moduleWithPrivateMemory.get());
+
+    createKernel(kernelWithPrivateMemory.get());
+    EXPECT_NE(nullptr, kernelWithPrivateMemory->privateMemoryGraphicsAllocation);
+
+    size_t sizeContainerWithPrivateMemory = kernelWithPrivateMemory->getResidencyContainer().size();
+
+    perHwThreadPrivateMemorySizeRequested = 0u;
+    std::unique_ptr<MockModule> moduleWithoutPrivateMemory = std::make_unique<MockModule>(device,
+                                                                                          moduleBuildLog,
+                                                                                          ModuleType::User,
+                                                                                          perHwThreadPrivateMemorySizeRequested);
+    result = moduleWithoutPrivateMemory->initialize(&moduleDesc, device->getNEODevice());
+    EXPECT_TRUE(result);
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernelWithoutPrivateMemory;
+    kernelWithoutPrivateMemory = std::make_unique<ModuleImmutableDataFixture::MockKernel>(moduleWithoutPrivateMemory.get());
+
+    createKernel(kernelWithoutPrivateMemory.get());
+    EXPECT_EQ(nullptr, kernelWithoutPrivateMemory->privateMemoryGraphicsAllocation);
+
+    size_t sizeContainerWithoutPrivateMemory = kernelWithoutPrivateMemory->getResidencyContainer().size();
+
+    EXPECT_EQ(sizeContainerWithoutPrivateMemory + 1u, sizeContainerWithPrivateMemory);
 }
 
 HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
