@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -245,7 +245,7 @@ Image *Image::create(Context *context,
             allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
 
             Gmm *gmm = nullptr;
-            auto hwInfo = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+            auto &hwInfo = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
             auto &hwHelper = HwHelper::get((&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
             auto clientContext = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext();
 
@@ -287,7 +287,7 @@ Image *Image::create(Context *context,
                     if (!context->isSharedContext) {
                         AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
                                                                                                                   false, // allocateMemory
-                                                                                                                  memoryProperties, *hwInfo,
+                                                                                                                  memoryProperties, hwInfo,
                                                                                                                   context->getDeviceBitfieldForAllocation(rootDeviceIndex));
 
                         allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
@@ -323,7 +323,7 @@ Image *Image::create(Context *context,
                 } else {
                     AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
                                                                                                               true, // allocateMemory
-                                                                                                              memoryProperties, *hwInfo,
+                                                                                                              memoryProperties, hwInfo,
                                                                                                               context->getDeviceBitfieldForAllocation(rootDeviceIndex));
                     allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
 
@@ -373,9 +373,9 @@ Image *Image::create(Context *context,
 
         for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
 
-            auto hwInfo = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+            auto &hwInfo = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
-            if (context->isProvidingPerformanceHints() && HwHelper::renderCompressedImagesSupported(*hwInfo)) {
+            if (context->isProvidingPerformanceHints() && HwHelper::renderCompressedImagesSupported(hwInfo)) {
                 if (allocationInfo[rootDeviceIndex].memory->getDefaultGmm()) {
                     if (allocationInfo[rootDeviceIndex].memory->getDefaultGmm()->isRenderCompressed) {
                         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_COMPRESSED, image);
@@ -422,7 +422,10 @@ Image *Image::create(Context *context,
                     copyRegion = {{imageWidth, imageHeight, std::max(imageDepth, imageCount)}};
                 }
 
-                if (!imgInfo.linearStorage || !MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
+                bool isCpuTransferPreferrred = imgInfo.linearStorage &&
+                                               (MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool()) ||
+                                                defaultHwHelper.isCpuImageTransferPreferred(hwInfo));
+                if (!isCpuTransferPreferrred) {
                     auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
 
                     if (IsNV12Image(&image->getImageFormat())) {
@@ -433,9 +436,23 @@ Image *Image::create(Context *context,
                                                              hostPtr, allocationInfo[rootDeviceIndex].mapAllocation, 0, nullptr, nullptr);
                     }
                 } else {
+                    auto isNotInSystemMemory = !MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
+                    auto &allocations = image->getMultiGraphicsAllocation().getGraphicsAllocations();
+                    if (isNotInSystemMemory) {
+                        for (auto &pAllocation : allocations) {
+                            context->getMemoryManager()->lockResource(pAllocation);
+                        }
+                    }
+
                     image->transferData(allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer(), imgInfo.rowPitch, imgInfo.slicePitch,
                                         const_cast<void *>(hostPtr), hostPtrRowPitch, hostPtrSlicePitch,
                                         copyRegion, copyOrigin);
+
+                    if (isNotInSystemMemory) {
+                        for (auto &pAllocation : allocations) {
+                            context->getMemoryManager()->unlockResource(pAllocation);
+                        }
+                    }
                 }
             }
 

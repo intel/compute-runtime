@@ -18,6 +18,7 @@
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/dispatch_info.h"
@@ -1180,4 +1181,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenAdditionalKernelExecI
     auto &helper = HwHelper::get(renderCoreFamily);
 
     EXPECT_FALSE(helper.additionalKernelExecInfoSupported(*defaultHwInfo));
+}
+
+TEST_F(HwHelperTest, WhenGettingIsCpuImageTransferPreferredThenFalseIsReturned) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(hwHelper.isCpuImageTransferPreferred(*defaultHwInfo));
 }
