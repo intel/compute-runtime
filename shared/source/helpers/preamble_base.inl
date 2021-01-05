@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,7 +117,7 @@ void PreambleHelper<GfxFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::appendProgramVFEState(const HardwareInfo &hwInfo, KernelExecutionType kernelExecutionType, void *cmd) {}
+void PreambleHelper<GfxFamily>::appendProgramVFEState(const HardwareInfo &hwInfo, KernelExecutionType kernelExecutionType, uint32_t additionalKernelExecInfo, void *cmd) {}
 
 template <typename GfxFamily>
 uint32_t PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize) {

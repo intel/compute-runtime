@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1174,4 +1174,10 @@ HWTEST2_F(HwHelperTest, givenHwHelperWhenCheckingSipWaThenFalseIsReturned, isTgl
     auto &helper = HwHelper::get(renderCoreFamily);
 
     EXPECT_FALSE(helper.isSipWANeeded(*defaultHwInfo));
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenAdditionalKernelExecInfoSupportCheckedThenReturnFalse) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    EXPECT_FALSE(helper.additionalKernelExecInfoSupported(*defaultHwInfo));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ uint64_t PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream
     cmd.setScratchSpaceBasePointerHigh(highAddress);
 
     programAdditionalFieldsInVfeState(&cmd, hwInfo);
-    appendProgramVFEState(hwInfo, kernelExecutionType, &cmd);
+    appendProgramVFEState(hwInfo, kernelExecutionType, additionalExecInfo, &cmd);
     *pMediaVfeState = cmd;
 
     return scratchSpaceAddressOffset;

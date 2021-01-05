@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -414,6 +414,11 @@ inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const Hardwa
 
 template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo, GraphicsAllocation *allocation) const {
+    return false;
+}
+
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::additionalKernelExecInfoSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
