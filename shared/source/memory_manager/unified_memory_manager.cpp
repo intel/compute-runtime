@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,7 +123,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                           const UnifiedMemoryProperties &memoryProperties) {
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
 
-    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(memoryProperties);
 
     std::vector<uint32_t> rootDeviceIndicesVector(memoryProperties.rootDeviceIndices.begin(), memoryProperties.rootDeviceIndices.end());
 
@@ -138,6 +138,8 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                  deviceBitfield.count() > 1,
                                                  deviceBitfield};
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
+    unifiedMemoryProperties.flags.isUSMHostAllocation = true;
+    unifiedMemoryProperties.flags.isUSMDeviceAllocation = false;
 
     auto maxRootDeviceIndex = *std::max_element(rootDeviceIndicesVector.begin(), rootDeviceIndicesVector.end(), std::less<uint32_t const>());
     SvmAllocationData allocData(maxRootDeviceIndex);

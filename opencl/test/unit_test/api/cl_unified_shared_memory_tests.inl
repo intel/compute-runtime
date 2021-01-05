@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
@@ -1045,4 +1046,40 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxM
         EXPECT_NE(CL_SUCCESS, retVal);
         EXPECT_EQ(nullptr, unfiedMemoryAllocation);
     }
+}
+
+using MultiRootDeviceClUnifiedSharedMemoryTests = MultiRootDeviceFixture;
+
+TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalledInMultiRootDeviceEnvironmentThenItAllocatesHostUnifiedMemoryAllocations) {
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(context.get(), nullptr, 4, 0, &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemoryHostAllocation);
+
+    auto allocationsManager = context.get()->getSVMAllocsManager();
+
+    EXPECT_EQ(allocationsManager->getNumAllocs(), 1u);
+
+    auto svmAllocation = allocationsManager->getSVMAlloc(unifiedMemoryHostAllocation);
+    auto graphicsAllocation1 = svmAllocation->gpuAllocations.getGraphicsAllocation(1u);
+    auto graphicsAllocation2 = svmAllocation->gpuAllocations.getGraphicsAllocation(2u);
+
+    EXPECT_EQ(svmAllocation->size, 4u);
+    EXPECT_EQ(svmAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+
+    EXPECT_NE(graphicsAllocation1, nullptr);
+    EXPECT_NE(graphicsAllocation2, nullptr);
+
+    EXPECT_EQ(graphicsAllocation1->getRootDeviceIndex(), 1u);
+    EXPECT_EQ(graphicsAllocation2->getRootDeviceIndex(), 2u);
+
+    EXPECT_EQ(graphicsAllocation1->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(graphicsAllocation2->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+
+    EXPECT_EQ(graphicsAllocation1->getGpuAddress(), castToUint64(unifiedMemoryHostAllocation));
+    EXPECT_EQ(graphicsAllocation2->getGpuAddress(), castToUint64(unifiedMemoryHostAllocation));
+
+    retVal = clMemFreeINTEL(context.get(), unifiedMemoryHostAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
