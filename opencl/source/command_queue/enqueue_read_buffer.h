@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,10 +51,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingRead, size, ptr,
                                                  numEventsInWaitList, eventWaitList);
 
+    InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
     //check if we are dealing with SVM pointer here for which we already have an allocation
     if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
         auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
         if (svmEntry) {
+            memoryType = svmEntry->memoryType;
             if ((svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
                 return CL_INVALID_OPERATION;
             }
@@ -97,8 +99,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
         //get offset between base cpu ptr of map allocation and dst ptr
-        size_t dstOffset = ptrDiff(dstPtr, mapAllocation->getUnderlyingBuffer());
-        dstPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + dstOffset);
+        if (memoryType != DEVICE_UNIFIED_MEMORY) {
+            size_t dstOffset = ptrDiff(dstPtr, mapAllocation->getUnderlyingBuffer());
+            dstPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + dstOffset);
+        }
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
