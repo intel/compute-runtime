@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1094,12 +1094,12 @@ TEST(LinkerErrorMessageTests, givenListOfUnresolvedExternalsThenSymbolNameOrSymb
     EXPECT_THAT(err.c_str(), ::testing::HasSubstr(std::to_string(unresolvedExternal.unresolvedRelocation.offset).c_str()));
 }
 
-TEST(RelocationsDebugMessageTests, givenEmptyListOfRelocatedSymbolsTheReturnsEmptyString) {
+TEST(RelocationsDebugMessageTests, givenEmptyListOfRelocatedSymbolsThenReturnsEmptyString) {
     auto message = NEO::constructRelocationsDebugMessage({});
     EXPECT_EQ(0U, message.size()) << message;
 }
 
-TEST(RelocationsDebugMessageTests, givenListOfRelocatedSymbolsTheReturnsProperDebugMessage) {
+TEST(RelocationsDebugMessageTests, givenListOfRelocatedSymbolsThenReturnProperDebugMessage) {
     NEO::Linker::RelocatedSymbolsMap symbols;
 
     auto &funcSymbol = symbols["foo"];

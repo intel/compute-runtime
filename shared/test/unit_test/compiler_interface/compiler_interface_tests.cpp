@@ -1191,7 +1191,7 @@ TEST_F(CompilerInterfaceTest, givenCompilerInterfaceWhenGetSpecializationConstan
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
 }
 
-TEST(TranslationOutput, giveNonEmptyPointerAndSizeMakeCopyWillCloneInputData) {
+TEST(TranslationOutput, givenNonEmptyPointerAndSizeWhenMakingCopyThenCloneInputData) {
     MockCIFBuffer src;
     src.data.assign({2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37});
 
@@ -1207,7 +1207,7 @@ TEST(TranslationOutput, giveNonEmptyPointerAndSizeMakeCopyWillCloneInputData) {
     EXPECT_EQ(0, memcmp(src.GetMemory<void>(), dstBuffer.mem.get(), dstBuffer.size));
 }
 
-TEST(TranslationOutput, givenNullPointerMakeCopyWillClearOutOutput) {
+TEST(TranslationOutput, givenNullPointerWhenMakingCopyThenClearOutOutput) {
     MockCIFBuffer src;
     src.data.assign({2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37});
 
@@ -1228,7 +1228,7 @@ TEST(TranslationOutput, givenNullPointerMakeCopyWillClearOutOutput) {
     EXPECT_EQ(nullptr, dstBuffer.mem);
 }
 
-TEST(TranslationOutput, givenZeroSizeMakeCopyWillClearOutOutput) {
+TEST(TranslationOutput, givenZeroSizeWhenMakingCopyThenClearOutOutput) {
     MockCIFBuffer src;
     src.data.assign({2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37});
 
