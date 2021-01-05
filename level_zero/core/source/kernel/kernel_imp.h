@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,10 +124,16 @@ struct KernelImp : Kernel {
 
     ze_result_t setCacheConfig(ze_cache_config_flags_t flags) override;
 
+    NEO::GraphicsAllocation *getPrivateMemoryGraphicsAllocation() {
+        return privateMemoryGraphicsAllocation;
+    }
+
   protected:
     KernelImp() = default;
 
     void patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint32_t z);
+
+    NEO::GraphicsAllocation *privateMemoryGraphicsAllocation = nullptr;
 
     void createPrintfBuffer();
     void setDebugSurface();
@@ -147,7 +153,7 @@ struct KernelImp : Kernel {
     uint32_t numThreadsPerThreadGroup = 1u;
     uint32_t threadExecutionMask = 0u;
 
-    std::unique_ptr<uint8_t[]> crossThreadData = 0;
+    std::unique_ptr<uint8_t[]> crossThreadData = nullptr;
     uint32_t crossThreadDataSize = 0;
 
     std::unique_ptr<uint8_t[]> surfaceStateHeapData = nullptr;
