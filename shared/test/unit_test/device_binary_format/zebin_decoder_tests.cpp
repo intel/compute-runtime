@@ -2362,8 +2362,8 @@ kernels:
     EXPECT_EQ(512U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.bindingTable.tableOffset);
     ASSERT_EQ(576U, programInfo.kernelInfos[0]->heapInfo.SurfaceStateHeapSize);
     ASSERT_NE(nullptr, programInfo.kernelInfos[0]->heapInfo.pSsh);
-    EXPECT_EQ(128U, reinterpret_cast<const uint32_t *>(ptrOffset(programInfo.kernelInfos[0]->heapInfo.pSsh, 512U))[0]);
-    EXPECT_EQ(448U, reinterpret_cast<const uint32_t *>(ptrOffset(programInfo.kernelInfos[0]->heapInfo.pSsh, 512U))[1]);
+    EXPECT_EQ(128U, reinterpret_cast<const uint32_t *>(ptrOffset(programInfo.kernelInfos[0]->heapInfo.pSsh, 512U))[2]);
+    EXPECT_EQ(448U, reinterpret_cast<const uint32_t *>(ptrOffset(programInfo.kernelInfos[0]->heapInfo.pSsh, 512U))[7]);
 }
 
 TEST(PopulateKernelDescriptor, GivenBtiEntryForWrongArgTypeThenFail) {

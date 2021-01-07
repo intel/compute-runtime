@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -486,7 +486,18 @@ TEST(PatchPointer, GivenUnhandledPointerSizeThenAborts) {
     NEO::ArgDescPointer ptrArg;
     uintptr_t ptrValue = reinterpret_cast<uintptr_t>(&ptrArg);
     ptrArg.pointerSize = 5;
+    ptrArg.stateless = 0U;
     EXPECT_THROW(patchPointer(buffer, ptrArg, ptrValue), std::exception);
+}
+
+TEST(PatchPointer, GivenUnhandledPointerSizeWhenStatelessOffsetIsUndefinedThenIgnoresPointerSize) {
+    alignas(8) uint8_t buffer[64];
+    memset(buffer, 3, sizeof(buffer));
+    NEO::ArgDescPointer ptrArg;
+    uintptr_t ptrValue = reinterpret_cast<uintptr_t>(&ptrArg);
+    ptrArg.pointerSize = 5;
+    ptrArg.stateless = NEO::undefined<NEO::CrossThreadDataOffset>;
+    EXPECT_NO_THROW(patchPointer(buffer, ptrArg, ptrValue));
 }
 
 TEST(PatchPointer, Given32bitPointerSizeThenPatchesOnly32bits) {

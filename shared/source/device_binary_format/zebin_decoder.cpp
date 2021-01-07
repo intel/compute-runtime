@@ -878,10 +878,14 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
 
         auto generatedBindingTablePos = kernelDescriptor.generatedHeaps.size();
         kernelDescriptor.generatedHeaps.resize(generatedBindingTablePos + numEntries * btiSize, 0U);
+
         auto bindingTableIt = reinterpret_cast<int *>(kernelDescriptor.generatedHeaps.data() + generatedBindingTablePos);
-        for (auto &bti : bindingTableIndices) {
-            *bindingTableIt = bti.btiValue * 64U;
+        for (int i = 0; i < numEntries; ++i) {
+            *bindingTableIt = i * maxSurfaceStateSize;
             ++bindingTableIt;
+        }
+
+        for (auto &bti : bindingTableIndices) {
             auto &explicitArg = kernelDescriptor.payloadMappings.explicitArgs[bti.argIndex];
             switch (explicitArg.type) {
             default:

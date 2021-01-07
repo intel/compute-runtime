@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -282,7 +282,7 @@ inline bool patchPointer(ArrayRef<uint8_t> buffer, const ArgDescPointer &arg, ui
     if (arg.pointerSize == 8) {
         return patchNonPointer(buffer, arg.stateless, static_cast<uint64_t>(value));
     } else {
-        UNRECOVERABLE_IF(arg.pointerSize != 4);
+        UNRECOVERABLE_IF((arg.pointerSize != 4) && isValidOffset(arg.stateless));
         return patchNonPointer(buffer, arg.stateless, static_cast<uint32_t>(value));
     }
 }
