@@ -648,7 +648,7 @@ zesRasGetState(
     zes_ras_handle_t hRas,
     ze_bool_t clear,
     zes_ras_state_t *pState) {
-    return L0::Ras::fromHandle(hRas)->rasGetState(pState);
+    return L0::Ras::fromHandle(hRas)->rasGetState(pState, clear);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

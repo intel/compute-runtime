@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -360,8 +360,19 @@ void testSysmanRas(ze_device_handle_t &device) {
             if (rasProperties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
                 std::cout << "Number of fatal accelerator engine resets attempted by the driver = " << rasState.category[ZES_RAS_ERROR_CAT_RESET] << std::endl;
                 std::cout << "Number of fatal errors that have occurred in caches = " << rasState.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS] << std::endl;
+                std::cout << "Number of fatal programming errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS] << std::endl;
+                std::cout << "Number of fatal driver errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS] << std::endl;
+                std::cout << "Number of fatal compute errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS] << std::endl;
+                std::cout << "Number of fatal non compute errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS] << std::endl;
+                std::cout << "Number of fatal display errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS] << std::endl;
             } else {
+                std::cout << "Number of correctable accelerator engine resets attempted by the driver = " << rasState.category[ZES_RAS_ERROR_CAT_RESET] << std::endl;
                 std::cout << "Number of correctable errors that have occurred in caches = " << rasState.category[ZES_RAS_ERROR_CAT_CACHE_ERRORS] << std::endl;
+                std::cout << "Number of correctable programming errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS] << std::endl;
+                std::cout << "Number of correctable driver errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_DRIVER_ERRORS] << std::endl;
+                std::cout << "Number of correctable compute errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS] << std::endl;
+                std::cout << "Number of correctable non compute errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS] << std::endl;
+                std::cout << "Number of correctable display errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS] << std::endl;
             }
         }
     }

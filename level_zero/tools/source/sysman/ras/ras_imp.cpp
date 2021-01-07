@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,9 @@ ze_result_t RasImp::rasSetConfig(const zes_ras_config_t *pConfig) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t RasImp::rasGetState(zes_ras_state_t *pState) {
-    return pOsRas->osRasGetState(*pState);
+ze_result_t RasImp::rasGetState(zes_ras_state_t *pState, ze_bool_t clear) {
+    memset(pState->category, 0, sizeof(pState->category));
+    return pOsRas->osRasGetState(*pState, clear);
 }
 
 void RasImp::init() {
