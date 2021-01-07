@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,13 +11,13 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/built_ins_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/built_ins/built_ins.inl"
 #include "opencl/source/built_ins/vme_dispatch_builder.h"
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/helpers/built_ins_helper.h"
 #include "opencl/source/helpers/convert_color.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/kernel/kernel.h"

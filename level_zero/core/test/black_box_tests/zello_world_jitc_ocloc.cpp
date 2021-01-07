@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
     std::vector<uint8_t> ret;
 
     const char *mainFileName = "main.cl";
-    const char *argv[] = {"ocloc", "-q", "-device", "skl", "-file", mainFileName};
+    const char *argv[] = {"ocloc", "-q", "-device", "skl", "-file", mainFileName, "-options", options.c_str()};
     const unsigned char *sources[] = {reinterpret_cast<const unsigned char *>(src.c_str())};
     size_t sourcesLengths[] = {src.size() + 1};
     const char *sourcesNames[] = {mainFileName};

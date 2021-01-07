@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,13 +13,13 @@
 #include "shared/test/unit_test/helpers/memory_leak_listener.h"
 #include "shared/test/unit_test/helpers/test_files.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.inl"
+#include "shared/test/unit_test/mocks/mock_sip.h"
 
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/utilities/logger.h"
 #include "opencl/test/unit_test/custom_event_listener.h"
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_client_context.h"
-#include "opencl/test/unit_test/mocks/mock_sip.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 

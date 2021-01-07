@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,9 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
+#include "shared/test/unit_test/mocks/mock_sip.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
-#include "opencl/test/unit_test/mocks/mock_sip.h"
 
 #include <memory>
 

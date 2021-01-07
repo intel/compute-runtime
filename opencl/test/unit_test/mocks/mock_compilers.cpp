@@ -11,10 +11,10 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/unit_test/helpers/test_files.h"
 #include "shared/test/unit_test/mocks/mock_compiler_interface.h"
+#include "shared/test/unit_test/mocks/mock_sip.h"
 
 #include "opencl/source/os_interface/os_inc_base.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
-#include "opencl/test/unit_test/mocks/mock_sip.h"
 
 #include "cif/macros/enable.h"
 #include "compiler_options.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,6 @@
 
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "opencl/source/helpers/built_ins_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
 #include "opencl/source/platform/platform.h"

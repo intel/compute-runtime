@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,6 +10,7 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests_gen12lp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/built_ins_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager_state_restore.h
     ${CMAKE_CURRENT_SOURCE_DIR}/default_hw_info.h

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -228,7 +228,7 @@ if(BUILD_WITH_L0)
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_tbx_sockets.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/get_devices.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/source_level_debugger_dll.cpp
-                 ${COMPUTE_RUNTIME_DIR}/opencl/source/helpers/built_ins_helper.cpp
+                 ${COMPUTE_RUNTIME_DIR}/shared/source/helpers/built_ins_helper.cpp
                  ${COMPUTE_RUNTIME_DIR}/shared/source/aub/aub_stream_interface.cpp
   )
 

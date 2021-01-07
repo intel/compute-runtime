@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -48,7 +48,6 @@ set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
     ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/built_ins_helper.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/debug_helpers.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.h
@@ -62,6 +61,8 @@ set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_command_stream_receiver.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/built_ins_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_management.cpp

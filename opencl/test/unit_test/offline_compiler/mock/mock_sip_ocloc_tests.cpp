@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_sip.h"
+#include "shared/test/unit_test/mocks/mock_sip.h"
 
 #include <vector>
 

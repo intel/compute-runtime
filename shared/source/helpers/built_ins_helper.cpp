@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/helpers/built_ins_helper.h"
+#include "shared/source/helpers/built_ins_helper.h"
 
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"

@@ -14,6 +14,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/built_ins_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -588,6 +589,11 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         device->getBuiltinFunctionsLib()->initPageFaultFunction();
         if (device->getHwInfo().capabilityTable.supportsImages) {
             device->getBuiltinFunctionsLib()->initImageFunctions();
+        }
+        auto hwInfo = neoDevice->getHardwareInfo();
+        if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread || neoDevice->isDebuggerActive()) {
+            auto sipType = NEO::SipKernel::getSipKernelType(hwInfo.platform.eRenderCoreFamily, neoDevice->isDebuggerActive());
+            NEO::initSipKernel(sipType, *neoDevice);
         }
     }
 

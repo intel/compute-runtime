@@ -11,10 +11,10 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/built_ins_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "opencl/source/helpers/built_ins_helper.h"
 #include "opencl/source/helpers/convert_color.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 

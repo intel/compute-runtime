@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -22,15 +22,15 @@ set(RUNTIME_SRCS_DLL_BASE
     ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
-    ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/built_ins_helper.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/cpuintrinsics.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/debug_settings_reader_creator.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
     ${NEO_SOURCE_DIR}/opencl/source/api/api.cpp
     ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
     ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
-    ${NEO_SOURCE_DIR}/opencl/source/helpers/built_ins_helper.cpp
 
     ${GTPIN_INIT_FILE}
     ${HW_SRC_LINK}

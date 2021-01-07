@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,7 +8,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/base_object.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/base_object.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/built_ins_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_blit_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/cl_device_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_device_helpers.h

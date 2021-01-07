@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -66,14 +66,15 @@ add_library(compute_runtime_mockable_extra
             EXCLUDE_FROM_ALL
             ${CMAKE_CURRENT_LIST_DIR}/l0_tests.cmake
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
+            ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/built_ins_helper.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/test_files.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_compiler_interface_spirv.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_compiler_interface_spirv.h
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_command_stream_receiver.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_device.cpp
+            ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_sip.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/aub_stream_mocks/aub_stream_interface_mock.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/built_ins_helper.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/debug_helpers.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/source_level_debugger_ult.cpp
@@ -88,7 +89,6 @@ add_library(compute_runtime_mockable_extra
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_resource_info.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_memory_manager.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_sip.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
             ${NEO_SOURCE_DIR}/shared/source/debug_settings/debug_settings_manager.cpp
 )
