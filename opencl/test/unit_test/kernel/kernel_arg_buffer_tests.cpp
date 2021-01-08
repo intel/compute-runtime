@@ -432,6 +432,36 @@ TEST_F(KernelArgBufferTest, givenInvalidKernelObjWhenHasDirectStatelessAccessToH
     EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
 }
 
+TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrueForHostMemoryAllocations) {
+    KernelInfo kernelInfo;
+    EXPECT_FALSE(kernelInfo.hasIndirectStatelessAccess);
+
+    MockKernel kernelWithNoIndirectStatelessAccess(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0));
+    EXPECT_FALSE(kernelWithNoIndirectStatelessAccess.hasIndirectStatelessAccessToHostMemory());
+
+    kernelInfo.hasIndirectStatelessAccess = true;
+
+    MockKernel kernelWithNoIndirectHostAllocations(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0));
+    EXPECT_FALSE(kernelWithNoIndirectHostAllocations.hasIndirectStatelessAccessToHostMemory());
+
+    const auto allocationTypes = {GraphicsAllocation::AllocationType::BUFFER,
+                                  GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
+                                  GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY};
+
+    MockKernel kernelWithIndirectUnifiedMemoryAllocation(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0));
+    MockGraphicsAllocation gfxAllocation;
+    for (const auto type : allocationTypes) {
+        gfxAllocation.setAllocationType(type);
+        kernelWithIndirectUnifiedMemoryAllocation.setUnifiedMemoryExecInfo(&gfxAllocation);
+        if (type == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
+            EXPECT_TRUE(kernelWithIndirectUnifiedMemoryAllocation.hasIndirectStatelessAccessToHostMemory());
+        } else {
+            EXPECT_FALSE(kernelWithIndirectUnifiedMemoryAllocation.hasIndirectStatelessAccessToHostMemory());
+        }
+        kernelWithIndirectUnifiedMemoryAllocation.clearUnifiedMemoryExecInfo();
+    }
+}
+
 TEST_F(KernelArgBufferTest, whenSettingAuxTranslationRequiredThenIsAuxTranslationRequiredReturnsCorrectValue) {
     for (auto auxTranslationRequired : {false, true}) {
         pKernel->setAuxTranslationRequired(auxTranslationRequired);

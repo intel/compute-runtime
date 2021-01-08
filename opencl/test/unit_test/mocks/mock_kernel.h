@@ -63,6 +63,7 @@ class MockKernel : public Kernel {
     using Kernel::containsStatelessWrites;
     using Kernel::executionType;
     using Kernel::hasDirectStatelessAccessToHostMemory;
+    using Kernel::hasIndirectStatelessAccessToHostMemory;
     using Kernel::isSchedulerKernel;
     using Kernel::kernelArgHandlers;
     using Kernel::kernelArgRequiresCacheFlush;

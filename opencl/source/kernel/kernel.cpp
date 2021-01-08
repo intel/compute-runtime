@@ -2615,6 +2615,19 @@ bool Kernel::hasDirectStatelessAccessToHostMemory() const {
     return false;
 }
 
+bool Kernel::hasIndirectStatelessAccessToHostMemory() const {
+    if (!getDefaultKernelInfo().hasIndirectStatelessAccess) {
+        return false;
+    }
+
+    for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
+        if (gfxAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out, uint32_t rootDeviceIndex) const {
     if (false == HwHelper::cacheFlushAfterWalkerSupported(getHardwareInfo(rootDeviceIndex))) {
         return;

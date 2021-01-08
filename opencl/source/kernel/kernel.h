@@ -501,6 +501,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void reconfigureKernel(uint32_t rootDeviceIndex);
     bool hasDirectStatelessAccessToHostMemory() const;
+    bool hasIndirectStatelessAccessToHostMemory() const;
 
     void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
