@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -337,7 +337,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
         EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-        EXPECT_TRUE(cmd->getDcFlushEnable());
+        EXPECT_FALSE(cmd->getDcFlushEnable());
     }
     itor++;
 
