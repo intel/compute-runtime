@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -434,7 +434,6 @@ HWTEST_F(EnqueueReadImageTest, givenDeviceWithBlitterSupportWhenEnqueueReadImage
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideInvalidEngineWithDefault.set(1);
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
 
     auto &capabilityTable = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
     capabilityTable.blitterOperationsSupported = true;
@@ -450,12 +449,6 @@ HWTEST_F(EnqueueReadImageTest, givenDeviceWithBlitterSupportWhenEnqueueReadImage
         size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
         EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), image.get(), CL_TRUE, origin, region);
         EXPECT_TRUE(mockCmdQ->isBlitEnqueueImageAllowed);
-    }
-    {
-        DebugManager.flags.EnableBlitterForReadWriteImage.set(-1);
-        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
-        EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), image.get(), CL_TRUE, origin, region);
-        EXPECT_FALSE(mockCmdQ->isBlitEnqueueImageAllowed);
     }
     {
         DebugManager.flags.EnableBlitterForReadWriteImage.set(0);
