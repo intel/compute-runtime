@@ -20,6 +20,7 @@
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/source/kernel/kernel_hw.h"
 #include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -1054,6 +1055,27 @@ HWTEST_F(KernelGlobalWorkOffsetTests, whenSettingGlobalOffsetThenCrossThreadData
     EXPECT_EQ(*(dst.begin() + desc.payloadMappings.dispatchTraits.globalWorkOffset[0]), globalOffsetx);
     EXPECT_EQ(*(dst.begin() + desc.payloadMappings.dispatchTraits.globalWorkOffset[1]), globalOffsety);
     EXPECT_EQ(*(dst.begin() + desc.payloadMappings.dispatchTraits.globalWorkOffset[2]), globalOffsetz);
+}
+
+using KernelPrintHandlerTest = Test<ModuleFixture>;
+struct MyPrintfHandler : public PrintfHandler {
+    static uint32_t getPrintfSurfaceInitialDataSize() {
+        return PrintfHandler::printfSurfaceInitialDataSize;
+    }
+};
+
+TEST_F(KernelPrintHandlerTest, whenPrintPrintfOutputIsCalledThenPrintfBufferIsUsed) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
+    kernel->module = module.get();
+    kernel->initialize(&desc);
+
+    EXPECT_FALSE(kernel->printfBuffer == nullptr);
+    kernel->printPrintfOutput();
+    auto buffer = *reinterpret_cast<uint32_t *>(kernel->printfBuffer->getUnderlyingBuffer());
+    EXPECT_EQ(buffer, MyPrintfHandler::getPrintfSurfaceInitialDataSize());
 }
 
 } // namespace ult

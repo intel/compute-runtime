@@ -199,6 +199,8 @@ KernelImp::~KernelImp() {
         alignedFree(perThreadDataForWholeThreadGroup);
     }
     if (printfBuffer != nullptr) {
+        //not allowed to call virtual function on destructor, so calling printOutput directly
+        PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice());
         module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(printfBuffer);
     }
     slmArgSizes.clear();

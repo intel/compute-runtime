@@ -473,20 +473,6 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommand
 using CommandQueueDestroySupport = IsAtLeastProduct<IGFX_SKYLAKE>;
 using CommandQueueDestroy = Test<DeviceFixture>;
 
-HWTEST2_F(CommandQueueDestroy, whenCommandQueueDestroyIsCalledPrintPrintfOutputIsCalled, CommandQueueDestroySupport) {
-    ze_command_queue_desc_t desc = {};
-    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
-    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
-    commandQueue->initialize(false, false);
-
-    Mock<Kernel> kernel;
-    commandQueue->printfFunctionContainer.push_back(&kernel);
-
-    EXPECT_EQ(0u, kernel.printPrintfOutputCalledTimes);
-    commandQueue->destroy();
-    EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
-}
-
 using CommandQueueCommands = Test<DeviceFixture>;
 HWTEST_F(CommandQueueCommands, givenCommandQueueWhenExecutingCommandListsThenHardwareContextIsProgrammedAndGlobalAllocationResident) {
     const ze_command_queue_desc_t desc = {};
