@@ -68,6 +68,7 @@ class AppendFillFixture : public DeviceFixture, public ::testing::Test {
 
     void SetUp() override {
         dstPtr = new uint8_t[allocSize];
+        immediateDstPtr = new uint8_t[allocSize];
 
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -80,19 +81,37 @@ class AppendFillFixture : public DeviceFixture, public ::testing::Test {
     }
 
     void TearDown() override {
+        delete[] immediateDstPtr;
         delete[] dstPtr;
     }
 
     std::unique_ptr<Mock<MockDriverFillHandle>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    static constexpr size_t allocSize = 512;
-    static constexpr size_t patternSize = 4;
+    static constexpr size_t allocSize = 70;
+    static constexpr size_t patternSize = 8;
     uint8_t *dstPtr = nullptr;
     uint8_t pattern[patternSize] = {1, 2, 3, 4};
+
+    static constexpr size_t immediateAllocSize = 106;
+    uint8_t immediatePattern = 4;
+    uint8_t *immediateDstPtr = nullptr;
 };
 
 using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
+
+HWTEST2_F(AppendFillFixture,
+          givenCallToAppendMemoryFillWithImmediateValueThenSuccessIsReturned, Platforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+
+    auto result = commandList->appendMemoryFill(immediateDstPtr, &immediatePattern,
+                                                sizeof(immediatePattern),
+                                                immediateAllocSize, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
 
 HWTEST2_F(AppendFillFixture,
           givenCallToAppendMemoryFillThenSuccessIsReturned, Platforms) {

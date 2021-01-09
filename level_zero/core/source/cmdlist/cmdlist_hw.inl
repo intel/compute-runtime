@@ -1182,11 +1182,24 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
         uint32_t groups = static_cast<uint32_t>(size) / groupSizeX;
         ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
-        res = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinFunction->toHandle(),
-                                                                       &dispatchFuncArgs, nullptr,
-                                                                       0, nullptr);
+        res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
         if (res) {
             return res;
+        }
+
+        uint32_t groupRemainderSizeX = static_cast<uint32_t>(size) % groupSizeX;
+        if (groupRemainderSizeX) {
+            builtinFunction->setGroupSize(groupRemainderSizeX, 1u, 1u);
+            ze_group_count_t dispatchFuncRemainderArgs{1u, 1u, 1u};
+
+            size_t dstOffset = dstAllocation.offset + (size - groupRemainderSizeX);
+            builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
+            builtinFunction->setArgumentValue(1, sizeof(dstOffset), &dstOffset);
+
+            res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncRemainderArgs, hSignalEvent);
+            if (res) {
+                return res;
+            }
         }
     } else {
         auto builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
