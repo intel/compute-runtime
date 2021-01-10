@@ -1536,6 +1536,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
         } else {
 
             NEO::PipeControlArgs args = {};
+            args.dcFlushEnable = true;
 
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
             appendWriteKernelTimestamp(hEvent, beforeWalker, true);
