@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #pragma once
 #include "shared/source/helpers/abort.h"
+#include "shared/source/helpers/preprocessor.h"
 
-#define UNRECOVERABLE_IF(expression)                 \
-                                                     \
-    if (expression) {                                \
-        NEO::abortUnrecoverable(__LINE__, __FILE__); \
+#define UNRECOVERABLE_IF(expression)                             \
+    if (expression) {                                            \
+        NEO::abortUnrecoverable(__LINE__, NEO_SOURCE_FILE_PATH); \
     }
 
 #define UNREACHABLE(...) std::abort()

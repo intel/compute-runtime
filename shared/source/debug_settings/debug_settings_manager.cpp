@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,12 +71,18 @@ void DebugSettingsManager<DebugLevel>::dumpFlags() const {
     std::ofstream settingsDumpFile{settingsDumpFileName, std::ios::out};
     DEBUG_BREAK_IF(!settingsDumpFile.good());
 
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)   \
-    settingsDumpFile << #variableName << " = " << flags.variableName.get() << '\n'; \
-    dumpNonDefaultFlag<dataType>(#variableName, flags.variableName.get(), defaultValue);
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                         \
+    settingsDumpFile << getNonReleaseKeyName(#variableName) << " = " << flags.variableName.get() << '\n'; \
+    dumpNonDefaultFlag<dataType>(getNonReleaseKeyName(#variableName), flags.variableName.get(), defaultValue);
+
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
+#undef DECLARE_DEBUG_VARIABLE
+
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)   \
+    settingsDumpFile << #variableName << " = " << flags.variableName.get() << '\n'; \
+    dumpNonDefaultFlag<dataType>(#variableName, flags.variableName.get(), defaultValue);
 #include "release_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 }
@@ -84,14 +90,21 @@ void DebugSettingsManager<DebugLevel>::dumpFlags() const {
 template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::injectSettingsFromReader() {
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)            \
-    {                                                                                        \
-        dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get()); \
-        flags.variableName.set(tempData);                                                    \
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                  \
+    {                                                                                                              \
+        dataType tempData = readerImpl->getSetting(getNonReleaseKeyName(#variableName), flags.variableName.get()); \
+        flags.variableName.set(tempData);                                                                          \
     }
 
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
+    }
+
+#undef DECLARE_DEBUG_VARIABLE
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)            \
+    {                                                                                        \
+        dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get()); \
+        flags.variableName.set(tempData);                                                    \
     }
 #include "release_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE

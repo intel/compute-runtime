@@ -912,7 +912,7 @@ HWTEST_F(WddmDefaultTest, givenFtrWddmHwQueuesFlagWhenCreatingCsrThenPickWddmVer
     WddmCommandStreamReceiver<FamilyType> wddmCsr(*pDevice->executionEnvironment, 0, 1);
 
     auto wddmFromCsr = wddmCsr.peekWddm();
-    EXPECT_EQ(typeid(*wddmFromCsr), typeid(WddmMock));
+    EXPECT_NE(nullptr, wddmFromCsr);
 }
 
 struct WddmCsrCompressionTests : ::testing::Test {

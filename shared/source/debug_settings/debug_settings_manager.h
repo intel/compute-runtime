@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,6 +104,10 @@ class DebugSettingsManager {
     }
     SettingsReader *getReaderImpl() {
         return readerImpl.get();
+    }
+
+    static constexpr const char *getNonReleaseKeyName(const char *key) {
+        return (disabled() && PURGE_DEBUG_KEY_NAMES) ? "" : key;
     }
 
   protected:

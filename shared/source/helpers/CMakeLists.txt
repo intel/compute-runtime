@@ -80,6 +80,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_bdw_plus.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math.h
     ${CMAKE_CURRENT_SOURCE_DIR}/register_offsets.h
     ${CMAKE_CURRENT_SOURCE_DIR}/registered_method_dispatcher.h

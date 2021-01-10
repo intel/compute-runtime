@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2020 Intel Corporation
+# Copyright (C) 2017-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -199,6 +199,12 @@ if(MSVC)
   string(REPLACE "/MDd" "/MTd" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
   string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
   string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASEINTERNAL "${CMAKE_CXX_FLAGS_RELEASEINTERNAL}")
+
+  string(REPLACE "/GR" "/GR-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  add_definitions(-D_HAS_STATIC_RTTI=0)
+  add_definitions(-DPURGE_DEBUG_KEY_NAMES=1)
+else()
+  add_definitions(-DPURGE_DEBUG_KEY_NAMES=0)
 endif()
 
 if(NOT SKIP_UNIT_TESTS)

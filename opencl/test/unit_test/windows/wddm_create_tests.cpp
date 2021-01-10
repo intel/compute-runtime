@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,5 +23,5 @@ TEST(wddmCreateTests, givenInputVersionWhenCreatingThenCreateRequestedObject) {
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::move(hwDeviceIds[0]), rootDeviceEnvironment));
-    EXPECT_EQ(typeid(*wddm.get()), typeid(Wddm));
+    EXPECT_NE(nullptr, wddm);
 }
