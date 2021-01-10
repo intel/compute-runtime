@@ -27,6 +27,7 @@ struct WhiteBox<::L0::KernelImmutableData> : public ::L0::KernelImmutableData {
     using ::L0::KernelImmutableData::isaGraphicsAllocation;
     using ::L0::KernelImmutableData::kernelDescriptor;
     using ::L0::KernelImmutableData::KernelImmutableData;
+    using ::L0::KernelImmutableData::privateMemoryGraphicsAllocation;
     using ::L0::KernelImmutableData::residencyContainer;
 
     WhiteBox() : ::L0::KernelImmutableData() {}

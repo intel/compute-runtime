@@ -72,6 +72,10 @@ KernelImmutableData::~KernelImmutableData() {
         isaGraphicsAllocation.release();
     }
     crossThreadDataTemplate.reset();
+    if (nullptr != privateMemoryGraphicsAllocation) {
+        this->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(&*privateMemoryGraphicsAllocation);
+        privateMemoryGraphicsAllocation.release();
+    }
     surfaceStateHeapTemplate.reset();
     dynamicStateHeapTemplate.reset();
 }
@@ -160,6 +164,21 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     }
 
     ArrayRef<uint8_t> surfaceStateHeapArrayRef = ArrayRef<uint8_t>(surfaceStateHeapTemplate.get(), getSurfaceStateHeapSize());
+    auto &kernelAttributes = kernelDescriptor->kernelAttributes;
+
+    if (kernelAttributes.perHwThreadPrivateMemorySize != 0) {
+        auto privateSurfaceSize = NEO::KernelHelper::getPrivateSurfaceSize(kernelAttributes.perHwThreadPrivateMemorySize, computeUnitsUsedForSratch);
+
+        UNRECOVERABLE_IF(privateSurfaceSize == 0);
+        this->privateMemoryGraphicsAllocation.reset(memoryManager->allocateGraphicsMemoryWithProperties(
+            {neoDevice->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, neoDevice->getDeviceBitfield()}));
+
+        UNRECOVERABLE_IF(this->privateMemoryGraphicsAllocation == nullptr);
+        patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,
+                                 static_cast<uintptr_t>(privateMemoryGraphicsAllocation->getGpuAddressToPatch()),
+                                 *privateMemoryGraphicsAllocation, kernelDescriptor->payloadMappings.implicitArgs.privateMemoryAddress, *neoDevice);
+        this->residencyContainer.push_back(this->privateMemoryGraphicsAllocation.get());
+    }
 
     if (NEO::isValidOffset(kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless)) {
         UNRECOVERABLE_IF(nullptr == globalConstBuffer);
@@ -188,13 +207,17 @@ uint32_t KernelImmutableData::getIsaSize() const {
     return static_cast<uint32_t>(isaGraphicsAllocation->getUnderlyingBufferSize());
 }
 
+uint64_t KernelImmutableData::getPrivateMemorySize() const {
+    uint64_t size = 0;
+    if (privateMemoryGraphicsAllocation != nullptr) {
+        size = privateMemoryGraphicsAllocation->getUnderlyingBufferSize();
+    }
+    return size;
+}
+
 KernelImp::KernelImp(Module *module) : module(module) {}
 
 KernelImp::~KernelImp() {
-    if (nullptr != privateMemoryGraphicsAllocation) {
-        module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(privateMemoryGraphicsAllocation);
-    }
-
     if (perThreadDataForWholeThreadGroup != nullptr) {
         alignedFree(perThreadDataForWholeThreadGroup);
     }
@@ -649,27 +672,6 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                  kernelImmData->getDynamicStateHeapTemplate(),
                  kernelImmData->getDynamicStateHeapDataSize());
         this->dynamicStateHeapDataSize = kernelImmData->getDynamicStateHeapDataSize();
-    }
-
-    auto &kernelAttributes = kernelImmData->getDescriptor().kernelAttributes;
-    auto neoDevice = module->getDevice()->getNEODevice();
-    if (kernelAttributes.perHwThreadPrivateMemorySize != 0) {
-        auto privateSurfaceSize = NEO::KernelHelper::getPrivateSurfaceSize(kernelAttributes.perHwThreadPrivateMemorySize,
-                                                                           neoDevice->getDeviceInfo().computeUnitsUsedForScratch);
-
-        UNRECOVERABLE_IF(privateSurfaceSize == 0);
-        this->privateMemoryGraphicsAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-            {neoDevice->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, neoDevice->getDeviceBitfield()});
-
-        UNRECOVERABLE_IF(this->privateMemoryGraphicsAllocation == nullptr);
-
-        ArrayRef<uint8_t> crossThredDataArrayRef = ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize);
-        ArrayRef<uint8_t> surfaceStateHeapArrayRef = ArrayRef<uint8_t>(this->surfaceStateHeapData.get(), this->surfaceStateHeapDataSize);
-
-        patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,
-                                 static_cast<uintptr_t>(privateMemoryGraphicsAllocation->getGpuAddressToPatch()),
-                                 *privateMemoryGraphicsAllocation, kernelImmData->getDescriptor().payloadMappings.implicitArgs.privateMemoryAddress, *neoDevice);
-        this->residencyContainer.push_back(this->privateMemoryGraphicsAllocation);
     }
 
     if (kernelImmData->getDescriptor().kernelAttributes.requiredWorkgroupSize[0] > 0) {

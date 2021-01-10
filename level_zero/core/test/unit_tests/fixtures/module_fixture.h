@@ -12,104 +12,11 @@
 #include "shared/test/unit_test/helpers/test_files.h"
 
 #include "level_zero/core/source/module/module.h"
-#include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 namespace L0 {
 namespace ult {
-
-struct ModuleImmutableDataFixture : public DeviceFixture {
-    struct MockImmutableData : KernelImmutableData {
-        MockImmutableData(uint32_t perHwThreadPrivateMemorySize) {
-            mockKernelDescriptor = new NEO::KernelDescriptor;
-            mockKernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize = perHwThreadPrivateMemorySize;
-            kernelDescriptor = mockKernelDescriptor;
-            return;
-        }
-        ~MockImmutableData() override {
-            delete mockKernelDescriptor;
-        }
-        NEO::KernelDescriptor *mockKernelDescriptor = nullptr;
-    };
-
-    struct MockModule : public L0::ModuleImp {
-        MockModule(L0::Device *device,
-                   L0::ModuleBuildLog *moduleBuildLog,
-                   L0::ModuleType type,
-                   uint32_t perHwThreadPrivateMemorySize) : ModuleImp(device, moduleBuildLog, type) {
-            mockKernelImmData = new MockImmutableData(perHwThreadPrivateMemorySize);
-        }
-
-        ~MockModule() {
-            delete mockKernelImmData;
-        }
-
-        const KernelImmutableData *getKernelImmutableData(const char *functionName) const override {
-            return mockKernelImmData;
-        }
-        MockImmutableData *mockKernelImmData = nullptr;
-    };
-
-    class MockKernel : public WhiteBox<L0::KernelImp> {
-      public:
-        MockKernel(MockModule *mockModule) : WhiteBox<L0::KernelImp>(mockModule) {
-        }
-        void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
-            return;
-        }
-        void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
-            return;
-        }
-        ~MockKernel() override {
-        }
-        std::unique_ptr<Kernel> clone() const override { return nullptr; }
-    };
-
-    void SetUp() override {
-        DeviceFixture::SetUp();
-    }
-
-    void createModuleFromBinary(uint32_t perHwThreadPrivateMemorySize) {
-        std::string testFile;
-        retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
-
-        size_t size = 0;
-        auto src = loadDataFromFile(
-            testFile.c_str(),
-            size);
-
-        ASSERT_NE(0u, size);
-        ASSERT_NE(nullptr, src);
-
-        ze_module_desc_t moduleDesc = {};
-        moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-        moduleDesc.inputSize = size;
-
-        ModuleBuildLog *moduleBuildLog = nullptr;
-
-        module = std::make_unique<MockModule>(device,
-                                              moduleBuildLog,
-                                              ModuleType::User,
-                                              perHwThreadPrivateMemorySize);
-    }
-
-    void createKernel(MockKernel *kernel) {
-        ze_kernel_desc_t desc = {};
-        desc.pKernelName = kernelName.c_str();
-        kernel->initialize(&desc);
-    }
-
-    void TearDown() override {
-        DeviceFixture::TearDown();
-    }
-
-    const std::string binaryFilename = "test_kernel";
-    const std::string kernelName = "test";
-    const uint32_t numKernelArguments = 6;
-    std::unique_ptr<MockModule> module;
-};
 
 struct ModuleFixture : public DeviceFixture {
     void SetUp() override {

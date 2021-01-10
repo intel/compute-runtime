@@ -48,6 +48,9 @@ struct KernelImmutableData {
     uint32_t getIsaSize() const;
     NEO::GraphicsAllocation *getIsaGraphicsAllocation() const { return isaGraphicsAllocation.get(); }
 
+    uint64_t getPrivateMemorySize() const;
+    NEO::GraphicsAllocation *getPrivateMemoryGraphicsAllocation() const { return privateMemoryGraphicsAllocation.get(); }
+
     const uint8_t *getCrossThreadDataTemplate() const { return crossThreadDataTemplate.get(); }
 
     uint32_t getSurfaceStateHeapSize() const { return surfaceStateHeapSize; }
@@ -64,6 +67,7 @@ struct KernelImmutableData {
     Device *device = nullptr;
     NEO::KernelDescriptor *kernelDescriptor = nullptr;
     std::unique_ptr<NEO::GraphicsAllocation> isaGraphicsAllocation = nullptr;
+    std::unique_ptr<NEO::GraphicsAllocation> privateMemoryGraphicsAllocation = nullptr;
 
     uint32_t crossThreadDataSize = 0;
     std::unique_ptr<uint8_t[]> crossThreadDataTemplate = nullptr;

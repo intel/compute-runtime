@@ -254,43 +254,19 @@ HWTEST_F(KernelPropertiesTests, givenKernelThenCorrectNameIsRetrieved) {
     delete[] kernelNameRetrieved;
 }
 
-class KernelImmutableDataTests : public ModuleImmutableDataFixture, public ::testing::Test {
-  public:
-    void SetUp() override {
-        ModuleImmutableDataFixture::SetUp();
-    }
+HWTEST_F(KernelPropertiesTests, whenInitializingThenCalculatesProperPrivateSurfaceSize) {
+    uint32_t computeUnitsUsedForSratch = 0x300;
 
-    void TearDown() override {
-        ModuleImmutableDataFixture::TearDown();
-    }
-};
+    KernelInfo kernelInfo;
+    auto &kernelAttributes = kernelInfo.kernelDescriptor.kernelAttributes;
+    kernelAttributes.perHwThreadPrivateMemorySize = 0x100;
+    kernelAttributes.simdSize = 8;
 
-HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithNoPrivateMemoryThenPrivateMemoryIsNull) {
-    uint32_t perHwThreadPrivateMemorySizeRequested = 0u;
-    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested);
+    KernelImmutableData kernelImmutableData(device);
+    kernelImmutableData.initialize(&kernelInfo, device, computeUnitsUsedForSratch, nullptr, nullptr, false);
 
-    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
-
-    createKernel(kernel.get());
-
-    EXPECT_EQ(nullptr, kernel->getPrivateMemoryGraphicsAllocation());
-}
-
-HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPrivateMemoryIsCreated) {
-    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
-    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested);
-
-    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
-
-    createKernel(kernel.get());
-
-    EXPECT_NE(nullptr, kernel->getPrivateMemoryGraphicsAllocation());
-
-    size_t expectedSize = perHwThreadPrivateMemorySizeRequested *
-                          device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch;
-    EXPECT_EQ(expectedSize, kernel->getPrivateMemoryGraphicsAllocation()->getUnderlyingBufferSize());
+    size_t expectedSize = static_cast<size_t>(kernelAttributes.perHwThreadPrivateMemorySize) * computeUnitsUsedForSratch;
+    EXPECT_GE(expectedSize, kernelImmutableData.getPrivateMemoryGraphicsAllocation()->getUnderlyingBufferSize());
 }
 
 HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
