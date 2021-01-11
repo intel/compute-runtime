@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,6 +137,24 @@ class ConstStringRef {
         return false;
     }
 
+    constexpr bool containsCaseInsensitive(const char *subString) const noexcept {
+        const char *findBeg = ptr;
+        const char *findEnd = ptr + len;
+        while (findBeg != findEnd) {
+            const char *lhs = findBeg;
+            const char *rhs = subString;
+            while ((lhs < findEnd) && (std::tolower(*lhs) == std::tolower(*rhs)) && ('\0' != *rhs)) {
+                ++lhs;
+                ++rhs;
+            }
+            if ('\0' == *rhs) {
+                return true;
+            }
+            ++findBeg;
+        }
+        return false;
+    }
+
     constexpr bool startsWith(const char *subString) const noexcept {
         const char *findEnd = ptr + len;
         const char *lhs = ptr;
@@ -207,7 +225,7 @@ constexpr bool operator!=(const char *lhs, const ConstStringRef &rhs) {
     return false == equals(rhs, lhs);
 }
 
-constexpr bool equalsCaseInsesitive(const ConstStringRef &lhs, const ConstStringRef &rhs) {
+constexpr bool equalsCaseInsensitive(const ConstStringRef &lhs, const ConstStringRef &rhs) {
     if (lhs.size() != rhs.size()) {
         return false;
     }

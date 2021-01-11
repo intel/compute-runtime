@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 
 #include "environment.h"
 #include "gtest/gtest.h"
+#include "hw_cmds.h"
 
 #include <string>
 
@@ -30,6 +31,26 @@ TEST(OclocApiTests, WhenGoodArgsAreGivenThenSuccessIsReturned) {
         "test_files/copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(retVal, NEO::SUCCESS);
+    EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device "s + argv[4]));
+}
+
+TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        NEO::familyName[NEO::DEFAULT_PLATFORM::hwInfo.platform.eRenderCoreFamily]};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
     testing::internal::CaptureStdout();

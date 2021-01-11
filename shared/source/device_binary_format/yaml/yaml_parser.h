@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -595,7 +595,7 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
         case 1:
             return true;
         case 3:
-            return equalsCaseInsesitive(ConstStringRef("es"), ConstStringRef(token.cstrref().begin() + 1, 2));
+            return equalsCaseInsensitive(ConstStringRef("es"), ConstStringRef(token.cstrref().begin() + 1, 2));
         }
         break;
     }
@@ -618,7 +618,7 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
         if (token.len != 4) {
             return false;
         }
-        return equalsCaseInsesitive(ConstStringRef("rue"), ConstStringRef(token.cstrref().begin() + 1, 3));
+        return equalsCaseInsensitive(ConstStringRef("rue"), ConstStringRef(token.cstrref().begin() + 1, 3));
     }
     case 'f':
     case 'F': {
@@ -626,7 +626,7 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
         if (token.len != 5) {
             return false;
         }
-        return equalsCaseInsesitive(ConstStringRef("alse"), ConstStringRef(token.cstrref().begin() + 1, 4));
+        return equalsCaseInsensitive(ConstStringRef("alse"), ConstStringRef(token.cstrref().begin() + 1, 4));
     }
     case 'o':
     case 'O': {
@@ -638,7 +638,7 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
             return ((token.cstrref()[1] == 'n') | (token.cstrref()[1] == 'N'));
         case 3:
             outValue = false;
-            return equalsCaseInsesitive(ConstStringRef("ff"), ConstStringRef(token.cstrref().begin() + 1, 2));
+            return equalsCaseInsensitive(ConstStringRef("ff"), ConstStringRef(token.cstrref().begin() + 1, 2));
         }
         break;
     }

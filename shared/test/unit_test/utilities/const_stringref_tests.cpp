@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,6 +115,28 @@ TEST(ConstStringRef, WhenCopyAsignedThenIdenticalAsOrigin) {
     EXPECT_EQ(a, b);
 }
 
+TEST(ConstStringRef, WhenCheckingForInclusionCaseInsensitivelyThenDoesNotReadOutOfBounds) {
+    static constexpr ConstStringRef str1("Text", 2);
+    ConstStringRef substr1("tex");
+    EXPECT_FALSE(str1.containsCaseInsensitive(substr1.data()));
+
+    static constexpr ConstStringRef str2("AabAac");
+    ConstStringRef substr2("aac");
+    EXPECT_TRUE(str2.containsCaseInsensitive(substr2.data()));
+
+    static constexpr ConstStringRef str3("AabAac");
+    ConstStringRef substr3("aacd");
+    EXPECT_FALSE(str3.containsCaseInsensitive(substr3.data()));
+}
+
+TEST(ConstStringRef, GivenConstStringRefWithDifferentCasesWhenCheckingIfOneContainsTheOtherOneCaseInsensitivelyThenTrueIsReturned) {
+    static constexpr ConstStringRef str1("TexT");
+    static constexpr ConstStringRef str2("tEXt");
+
+    EXPECT_FALSE(str1.contains(str2.data()));
+    EXPECT_TRUE(str1.containsCaseInsensitive(str2.data()));
+}
+
 TEST(ConstStringRef, WhenCheckingForInclusionThenDoesNotReadOutOfBounds) {
     static constexpr ConstStringRef str1("Text", 2);
     ConstStringRef substr1("Tex");
@@ -189,19 +211,19 @@ TEST(ConstStringRefTruncated, GivenNegativeLengthThenCountFromRight) {
 TEST(ConstStringRefEqualsCaseInsesitive, WhenSizesDifferReturnFalse) {
     ConstStringRef lhs = ConstStringRef::fromArray("\0");
     ConstStringRef rhs = ConstStringRef::fromArray("\0\0");
-    EXPECT_FALSE(equalsCaseInsesitive(lhs, rhs));
+    EXPECT_FALSE(equalsCaseInsensitive(lhs, rhs));
 }
 
 TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsDontMatchThenReturnFalse) {
-    EXPECT_FALSE(equalsCaseInsesitive(ConstStringRef("abc"), ConstStringRef("abd")));
+    EXPECT_FALSE(equalsCaseInsensitive(ConstStringRef("abc"), ConstStringRef("abd")));
 }
 
 TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsIdenticalThenReturnTrue) {
-    EXPECT_TRUE(equalsCaseInsesitive(ConstStringRef("abc"), ConstStringRef("abc")));
+    EXPECT_TRUE(equalsCaseInsensitive(ConstStringRef("abc"), ConstStringRef("abc")));
 }
 
 TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsDifferOnlyByCaseThenReturnTrue) {
-    EXPECT_TRUE(equalsCaseInsesitive(ConstStringRef("aBc"), ConstStringRef("Abc")));
+    EXPECT_TRUE(equalsCaseInsensitive(ConstStringRef("aBc"), ConstStringRef("Abc")));
 }
 
 TEST(ConstStringStartsWith, GivenRightPrefixThenReturnsTrue) {

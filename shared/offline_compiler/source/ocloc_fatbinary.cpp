@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ bool requestedFatBinary(const std::vector<std::string> &args) {
         const bool hasMoreArgs = (argIndex + 1 < args.size());
         if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
             ConstStringRef deviceArg(args[argIndex + 1]);
-            return deviceArg.contains("*") || deviceArg.contains("-") || deviceArg.contains(",") || deviceArg.contains("gen");
+            return deviceArg.contains("*") || deviceArg.contains("-") || deviceArg.contains(",") || deviceArg.containsCaseInsensitive("gen");
         }
     }
     return false;
@@ -112,7 +112,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
 
             if (range.size() == 1) {
                 // open range , from-max or min-to
-                if (range[0].contains("gen")) {
+                if (range[0].containsCaseInsensitive("gen")) {
                     auto coreIdList = asGfxCoreIdList(range[0]);
                     if (coreIdList.empty()) {
                         argHelper->printf("Unknown device : %s\n", set.str().c_str());
@@ -197,7 +197,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
                     requestedPlatforms.insert(requestedPlatforms.end(), from, to);
                 }
             }
-        } else if (set.contains("gen")) {
+        } else if (set.containsCaseInsensitive("gen")) {
             if (set.size() == genArg.size()) {
                 argHelper->printf("Invalid gen-based device : %s - gen should be followed by a number\n", set.str().c_str());
             } else {
