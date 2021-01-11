@@ -1164,13 +1164,16 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
 }
 
 void Kernel::performKernelTunning(CommandStreamReceiver &commandStreamReceiver, const Vec3<size_t> &lws, const Vec3<size_t> &gws, const Vec3<size_t> &offsets, TimestampPacketContainer *timestampContainer) {
-    bool performTunning = false;
+    auto performTunning = TunningType::DISABLED;
 
     if (DebugManager.flags.EnableKernelTunning.get() != -1) {
-        performTunning = DebugManager.flags.EnableKernelTunning.get();
+        performTunning = static_cast<TunningType>(DebugManager.flags.EnableKernelTunning.get());
     }
 
-    if (performTunning) {
+    if (performTunning == TunningType::SIMPLE) {
+        this->singleSubdevicePreferedInCurrentEnqueue = !this->getKernelInfo(commandStreamReceiver.getRootDeviceIndex()).kernelDescriptor.kernelAttributes.flags.useGlobalAtomics;
+
+    } else if (performTunning == TunningType::FULL) {
         KernelConfig config{gws, lws, offsets};
 
         auto submissionDataIt = this->kernelSubmissionMap.find(config);

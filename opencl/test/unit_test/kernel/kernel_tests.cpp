@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1946,9 +1946,9 @@ TEST(KernelConfigTests, givenTwoKernelConfigsWhenCompareThenResultsAreCorrect) {
     EXPECT_FALSE(config == config2);
 }
 
-HWTEST_F(KernelResidencyTest, givenEnableKernelTuningWhenPerformTunningThenKerneConfigDataIsTracked) {
+HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenKernelConfigDataIsTracked) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableKernelTunning.set(1u);
+    DebugManager.flags.EnableKernelTunning.set(2u);
 
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -2021,6 +2021,30 @@ HWTEST_F(KernelResidencyTest, givenEnableKernelTuningWhenPerformTunningThenKerne
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::TUNNING_DONE);
     EXPECT_EQ(result->second.singleSubdevicePrefered, mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
+}
+
+HWTEST_F(KernelResidencyTest, givenSimpleKernelTunningAndNoAtomicsWhenPerformTunningThenSingleSubdeviceIsPreferred) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableKernelTunning.set(1u);
+
+    auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
+    MockKernelWithInternals mockKernel(*this->pClDevice);
+
+    Vec3<size_t> lws{1, 1, 1};
+    Vec3<size_t> gws{1, 1, 1};
+    Vec3<size_t> offsets{1, 1, 1};
+    MockKernel::KernelConfig config{gws, lws, offsets};
+
+    MockTimestampPacketContainer container(*commandStreamReceiver.getTimestampPacketAllocator(), 1);
+
+    auto result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
+    EXPECT_EQ(result, mockKernel.mockKernel->kernelSubmissionMap.end());
+
+    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+
+    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
+    EXPECT_EQ(result, mockKernel.mockKernel->kernelSubmissionMap.end());
+    EXPECT_NE(mockKernel.mockKernel->isSingleSubdevicePreferred(), mockKernel.mockKernel->getKernelInfo(0u).kernelDescriptor.kernelAttributes.flags.useGlobalAtomics);
 }
 
 TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasImagesOnlyThenTrueIsReturned) {

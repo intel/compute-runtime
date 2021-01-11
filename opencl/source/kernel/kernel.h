@@ -82,6 +82,12 @@ class Kernel : public BaseObject<_cl_kernel> {
         TUNNING_DONE
     };
 
+    enum class TunningType {
+        DISABLED,
+        SIMPLE,
+        FULL
+    };
+
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
                                                 size_t argSize,
                                                 const void *argVal);
