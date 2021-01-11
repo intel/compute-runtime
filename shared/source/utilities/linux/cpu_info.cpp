@@ -11,8 +11,6 @@
 
 #include <cpuid.h>
 #include <fstream>
-#include <sstream>
-#include <string>
 
 namespace NEO {
 
@@ -24,8 +22,20 @@ void cpuidex_linux_wrapper(int *cpuInfo, int functionId, int subfunctionId) {
     __cpuid_count(functionId, subfunctionId, cpuInfo[0], cpuInfo[1], cpuInfo[2], cpuInfo[3]);
 }
 
+void get_cpu_flags_linux(std::string &cpuFlags) {
+    std::ifstream cpuinfo(std::string(Os::sysFsProcPathPrefix) + "/cpuinfo");
+    std::string line;
+    while (std::getline(cpuinfo, line)) {
+        if (line.substr(0, 5) == "flags") {
+            cpuFlags = line;
+            break;
+        }
+    }
+}
+
 void (*CpuInfo::cpuidexFunc)(int *, int, int) = cpuidex_linux_wrapper;
 void (*CpuInfo::cpuidFunc)(int[4], int) = cpuid_linux_wrapper;
+void (*CpuInfo::getCpuFlagsFunc)(std::string &) = get_cpu_flags_linux;
 
 const CpuInfo CpuInfo::instance;
 
@@ -40,24 +50,6 @@ void CpuInfo::cpuidex(
     uint32_t functionId,
     uint32_t subfunctionId) const {
     cpuidexFunc(reinterpret_cast<int *>(cpuInfo), functionId, subfunctionId);
-}
-
-bool CpuInfo::isCpuFlagPresent(const char *cpuFlag) {
-    std::ifstream ifs(std::string(Os::sysFsProcPathPrefix) + "/cpuinfo");
-    std::string line;
-    while (std::getline(ifs, line)) {
-        if (line.substr(0, 5) == "flags") {
-            std::stringstream ss(line);
-            std::string flag;
-            while (ss >> flag) {
-                if (flag == cpuFlag) {
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
 }
 
 } // namespace NEO

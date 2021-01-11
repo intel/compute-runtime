@@ -9,6 +9,7 @@
 #include "shared/source/helpers/constants.h"
 
 #include <cstdint>
+#include <string>
 
 #ifndef BIT
 #define BIT(x) (1ull << (x))
@@ -213,18 +214,26 @@ struct CpuInfo {
         return virtualAddressSize;
     }
 
+    bool isCpuFlagPresent(const char *cpuFlag) const {
+        if (cpuFlags.empty()) {
+            getCpuFlagsFunc(cpuFlags);
+        }
+
+        return cpuFlags.find(cpuFlag) != std::string::npos;
+    }
+
     static const CpuInfo &getInstance() {
         return instance;
     }
 
-    bool isCpuFlagPresent(const char *cpuFlag);
-
     static void (*cpuidexFunc)(int *, int, int);
     static void (*cpuidFunc)(int[4], int);
+    static void (*getCpuFlagsFunc)(std::string &);
 
   protected:
     mutable uint64_t features;
     mutable uint32_t virtualAddressSize = is32bit ? 32 : 48;
+    mutable std::string cpuFlags;
     static const CpuInfo instance;
 };
 

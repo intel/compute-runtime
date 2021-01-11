@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,51 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_memory.h"
+#include "shared/source/utilities/cpu_info.h"
 
 #include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 
 #include "gtest/gtest.h"
+
+#include <mutex>
+
+static std::string mockCpuFlags;
+static void mockGetCpuFlagsFunc(std::string &cpuFlags) { cpuFlags = mockCpuFlags; }
+static void (*getCpuFlagsFuncSave)(std::string &) = nullptr;
+
+// CpuInfo is a singleton object so we have to patch it in place
+class CpuInfoOverrideVirtualAddressSizeAndFlags {
+  public:
+    class MockCpuInfo : public CpuInfo {
+      public:
+        using CpuInfo::cpuFlags;
+        using CpuInfo::virtualAddressSize;
+    } *mockCpuInfo = reinterpret_cast<MockCpuInfo *>(const_cast<CpuInfo *>(&CpuInfo::getInstance()));
+
+    CpuInfoOverrideVirtualAddressSizeAndFlags(uint32_t newCpuVirtualAddressSize, const char *newCpuFlags = "") {
+        virtualAddressSizeSave = mockCpuInfo->getVirtualAddressSize();
+        mockCpuInfo->virtualAddressSize = newCpuVirtualAddressSize;
+
+        getCpuFlagsFuncSave = mockCpuInfo->getCpuFlagsFunc;
+        mockCpuInfo->getCpuFlagsFunc = mockGetCpuFlagsFunc;
+        resetCpuFlags();
+        mockCpuFlags = newCpuFlags;
+    }
+
+    ~CpuInfoOverrideVirtualAddressSizeAndFlags() {
+        mockCpuInfo->virtualAddressSize = virtualAddressSizeSave;
+        resetCpuFlags();
+        mockCpuInfo->getCpuFlagsFunc = getCpuFlagsFuncSave;
+        getCpuFlagsFuncSave = nullptr;
+    }
+
+    void resetCpuFlags() {
+        mockCpuFlags = "";
+        mockCpuInfo->getCpuFlagsFunc(mockCpuInfo->cpuFlags);
+    }
+
+    uint32_t virtualAddressSizeSave = 0;
+};
 
 using namespace NEO;
 
@@ -132,13 +173,23 @@ TEST(GfxPartitionTest, GivenLimitedRangeWhenTestingGfxPartitionThenAllExpectatio
     testGfxPartition(gfxPartition, gfxBase, gfxTop, svmTop);
 }
 
-TEST(GfxPartitionTest, GivenUnsupportedRangeThenGfxPartitionIsNotInitialized) {
+TEST(GfxPartitionTest, GivenUnsupportedGpuRangeThenGfxPartitionIsNotInitialized) {
     if (is32bit) {
         GTEST_SKIP();
     }
 
     MockGfxPartition gfxPartition;
     EXPECT_FALSE(gfxPartition.init(maxNBitValue(48 + 1), reservedCpuAddressRangeSize, 0, 1));
+}
+
+TEST(GfxPartitionTest, GivenUnsupportedCpuRangeThenGfxPartitionIsNotInitialize) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(48 + 1);
+    MockGfxPartition gfxPartition;
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1));
 }
 
 TEST(GfxPartitionTest, GivenFullRange48BitSvmHeap64KbSplitWhenTestingGfxPartitionThenAllExpectationsAreMet) {
