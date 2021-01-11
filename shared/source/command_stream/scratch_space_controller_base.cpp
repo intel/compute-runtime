@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,6 +97,7 @@ void ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(BindlessH
                                                                        uint32_t currentTaskCount,
                                                                        OsContext &osContext,
                                                                        bool &stateBaseAddressDirty,
-                                                                       bool &vfeStateDirty) {
+                                                                       bool &vfeStateDirty,
+                                                                       ResidencyContainer &residency) {
 }
 } // namespace NEO

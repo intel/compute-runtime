@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,8 +140,8 @@ void populatePointerKernelArg(ArgDescPointer &dst,
 
     case KernelDescriptor::BindlessAndStateless:
         dst.bindful = undefined<SurfaceStateHeapOffset>;
-        dst.stateless = stateless;
-        dst.bindless = bindless;
+        dst.stateless = undefined<CrossThreadDataOffset>;
+        dst.bindless = stateless;
         dst.pointerSize = pointerSize;
         break;
     }

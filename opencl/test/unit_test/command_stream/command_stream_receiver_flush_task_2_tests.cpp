@@ -503,7 +503,8 @@ struct MockScratchController : public ScratchSpaceController {
                                                uint32_t currentTaskCount,
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
-                                               bool &vfeStateDirty) override {
+                                               bool &vfeStateDirty,
+                                               NEO::ResidencyContainer &residency) override {
     }
     void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override{};
 };

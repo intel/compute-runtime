@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,10 +36,12 @@ class MockScratchSpaceControllerBase : public ScratchSpaceControllerBase {
                                                uint32_t currentTaskCount,
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
-                                               bool &vfeStateDirty) override {
-        ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(heapsHelper, requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, vfeStateDirty);
+                                               bool &vfeStateDirty,
+                                               NEO::ResidencyContainer &residency) override {
+        ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(heapsHelper, requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, vfeStateDirty, residencyContainer);
         programBindlessSurfaceStateForScratchCalled = true;
     }
+    ResidencyContainer residencyContainer;
     bool programHeapsCalled = false;
     bool programBindlessSurfaceStateForScratchCalled = false;
 };
@@ -70,14 +72,14 @@ HWTEST_F(ScratchComtrolerTests, givenCommandQueueWhenProgramHeapBindlessCalledTh
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
 
     ExecutionEnvironment *execEnv = static_cast<ExecutionEnvironment *>(pDevice->getExecutionEnvironment());
-    std::unique_ptr<ScratchSpaceController> scratchController = std::make_unique<MockScratchSpaceControllerBase>(pDevice->getRootDeviceIndex(),
-                                                                                                                 *execEnv,
-                                                                                                                 *csr.getInternalAllocationStorage());
+    std::unique_ptr<MockScratchSpaceControllerBase> scratchController = std::make_unique<MockScratchSpaceControllerBase>(pDevice->getRootDeviceIndex(),
+                                                                                                                         *execEnv,
+                                                                                                                         *csr.getInternalAllocationStorage());
 
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
     HeapContainer heapContainer;
-    scratchController->programBindlessSurfaceStateForScratch(nullptr, 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty);
+    scratchController->programBindlessSurfaceStateForScratch(nullptr, 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, scratchController->residencyContainer);
 
     EXPECT_TRUE(static_cast<MockScratchSpaceControllerBase *>(scratchController.get())->programBindlessSurfaceStateForScratchCalled);
 }

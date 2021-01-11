@@ -773,6 +773,27 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     alignedFree(alloc);
 }
 
+HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithWhenBindlessEnabledThenHeapContainerIsEmpty, CommandQueueExecuteTestSupport) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    neoDevice->bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumAvailableDevices() > 1, neoDevice->getRootDeviceIndex());
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    auto commandQueue = new MockCommandQueue<gfxCoreFamily>(device, csr, &desc);
+    commandQueue->initialize(false, false);
+    auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
+    commandList->initialize(device, NEO::EngineGroupType::Compute);
+    commandList->commandListPerThreadScratchSize = 100u;
+    auto commandListHandle = commandList->toHandle();
+
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+
+    EXPECT_EQ(commandQueue->mockHeapContainer.size(), 0u);
+    commandQueue->destroy();
+    commandList->destroy();
+}
+
 using ExecuteCommandListTests = Test<ContextFixture>;
 HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenContainersAreEmpty, CommandQueueExecuteTestSupport) {
     ze_command_queue_desc_t desc = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,8 @@ class OsContext;
 namespace ScratchSpaceConstants {
 constexpr size_t scratchSpaceOffsetFor64Bit = 4096u;
 }
+
+using ResidencyContainer = std::vector<GraphicsAllocation *>;
 
 class ScratchSpaceController {
   public:
@@ -63,7 +65,8 @@ class ScratchSpaceController {
                                                        uint32_t currentTaskCount,
                                                        OsContext &osContext,
                                                        bool &stateBaseAddressDirty,
-                                                       bool &vfeStateDirty) = 0;
+                                                       bool &vfeStateDirty,
+                                                       ResidencyContainer &residency) = 0;
 
   protected:
     MemoryManager *getMemoryManager() const;
