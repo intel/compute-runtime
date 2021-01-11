@@ -421,6 +421,16 @@ void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svm
     memoryManager->freeGraphicsMemory(cpuAllocation);
 }
 
+bool SVMAllocsManager::hasHostAllocations() {
+    std::unique_lock<SpinLock> lock(mtx);
+    for (auto &allocation : this->SVMAllocs.allocations) {
+        if (allocation.second.memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
+            return true;
+        }
+    }
+    return false;
+}
+
 SvmMapOperation *SVMAllocsManager::getSvmMapOperation(const void *ptr) {
     std::unique_lock<SpinLock> lock(mtx);
     return svmMapOperations.get(ptr);

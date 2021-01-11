@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/unified_memory/unified_memory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/kernel/kernel.h"
@@ -460,6 +462,34 @@ TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirec
         }
         kernelWithIndirectUnifiedMemoryAllocation.clearUnifiedMemoryExecInfo();
     }
+}
+
+TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectStatelessAccessWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrueForHostMemoryAllocations) {
+    KernelInfo kernelInfo;
+    kernelInfo.hasIndirectStatelessAccess = true;
+
+    MockKernel mockKernel(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0));
+    EXPECT_FALSE(mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
+
+    auto svmAllocationsManager = mockKernel.getContext().getSVMAllocsManager();
+    if (svmAllocationsManager == nullptr) {
+        return;
+    }
+
+    mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+    EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
+
+    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
+    auto unifiedDeviceMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
+    EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
+
+    auto hostProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
+    auto unifiedHostMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, hostProperties);
+    EXPECT_TRUE(mockKernel.hasIndirectStatelessAccessToHostMemory());
+
+    svmAllocationsManager->freeSVMAlloc(unifiedDeviceMemoryAllocation);
+    svmAllocationsManager->freeSVMAlloc(unifiedHostMemoryAllocation);
 }
 
 TEST_F(KernelArgBufferTest, whenSettingAuxTranslationRequiredThenIsAuxTranslationRequiredReturnsCorrectValue) {
