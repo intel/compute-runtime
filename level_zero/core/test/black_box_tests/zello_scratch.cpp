@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,13 +12,28 @@ extern bool verbose;
 bool verbose = false;
 
 const char *module = R"===(
-__kernel void kernel_copy(__global int *dst, __global char *src){
-    uint gid = get_global_id(0);
-    dst[gid] = src[gid];
+typedef long16 TYPE;
+__attribute__((reqd_work_group_size(32, 1, 1))) // force LWS to 32
+__attribute__((intel_reqd_sub_group_size(16)))   // force SIMD to 16
+__kernel void
+scratch_kernel(__global int *resIdx, global TYPE *src, global TYPE *dst) {
+    size_t lid = get_local_id(0);
+    size_t gid = get_global_id(0);
+
+    TYPE res1 = src[gid * 3];
+    TYPE res2 = src[gid * 3 + 1];
+    TYPE res3 = src[gid * 3 + 2];
+
+    __local TYPE locMem[32];
+    locMem[lid] = res1;
+    barrier(CLK_LOCAL_MEM_FENCE);
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    TYPE res = (locMem[resIdx[gid]] * res3) * res2 + res1;
+    dst[gid] = res;
 }
 )===";
 
-void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
+void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t cmdQueueDesc = {};
     ze_command_list_handle_t cmdList;
@@ -28,8 +43,17 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
     SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+
     // Create two shared buffers
-    constexpr size_t allocSize = 4096;
+    uint32_t arraySize = 32;
+    uint32_t vectorSize = 16;
+    uint32_t typeSize = sizeof(uint32_t);
+    uint32_t srcAdditionalMul = 3u;
+
+    uint32_t expectedMemorySize = arraySize * vectorSize * typeSize;
+    uint32_t srcMemorySize = expectedMemorySize * srcAdditionalMul;
+    uint32_t idxMemorySize = arraySize * sizeof(uint32_t);
+
     ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     deviceDesc.ordinal = 0;
@@ -38,15 +62,36 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
     hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
     void *srcBuffer = nullptr;
-    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc, allocSize, 1, device, &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, srcMemorySize, 1, &srcBuffer));
 
     void *dstBuffer = nullptr;
-    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc, allocSize, 1, device, &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, expectedMemorySize, 1, &dstBuffer));
+
+    void *idxBuffer = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, idxMemorySize, 1, &idxBuffer));
+
+    void *expectedMemory = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, expectedMemorySize, 1, &expectedMemory));
 
     // Initialize memory
-    constexpr uint8_t val = 55;
-    memset(srcBuffer, val, allocSize);
-    memset(dstBuffer, 0, allocSize);
+    constexpr uint8_t val = 0;
+    memset(srcBuffer, val, srcMemorySize);
+    memset(idxBuffer, 0, idxMemorySize);
+    memset(dstBuffer, 0, expectedMemorySize);
+    memset(expectedMemory, 0, expectedMemorySize);
+
+    auto srcBufferLong = static_cast<uint64_t *>(srcBuffer);
+    auto expectedMemoryLong = static_cast<uint64_t *>(expectedMemory);
+
+    for (uint32_t i = 0; i < arraySize; ++i) {
+        static_cast<uint32_t *>(idxBuffer)[i] = 2;
+        for (uint32_t vecIdx = 0; vecIdx < vectorSize; ++vecIdx) {
+            for (uint32_t srcMulIdx = 0; srcMulIdx < srcAdditionalMul; ++srcMulIdx) {
+                srcBufferLong[(i * vectorSize * srcAdditionalMul) + srcMulIdx * vectorSize + vecIdx] = 1l;
+            }
+            expectedMemoryLong[i * vectorSize + vecIdx] = 2l;
+        }
+    }
 
     std::string buildLog;
     auto spirV = compileToSpirV(module, "", buildLog);
@@ -78,37 +123,25 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
     SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
     ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.pKernelName = "kernel_copy";
+    kernelDesc.pKernelName = "scratch_kernel";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
-    ze_kernel_properties_t kernProps;
-    SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));
-    std::cout << "Kernel : \n"
-              << " * name : " << kernelDesc.pKernelName << "\n"
-              << " * uuid.mid : " << kernProps.uuid.mid << "\n"
-              << " * uuid.kid : " << kernProps.uuid.kid << "\n"
-              << " * maxSubgroupSize : " << kernProps.maxSubgroupSize << "\n"
-              << " * localMemSize : " << kernProps.localMemSize << "\n"
-              << " * spillMemSize : " << kernProps.spillMemSize << "\n"
-              << " * privateMemSize : " << kernProps.privateMemSize << "\n"
-              << " * maxNumSubgroups : " << kernProps.maxNumSubgroups << "\n"
-              << " * numKernelArgs : " << kernProps.numKernelArgs << "\n"
-              << " * requiredSubgroupSize : " << kernProps.requiredSubgroupSize << "\n"
-              << " * requiredNumSubGroups : " << kernProps.requiredNumSubGroups << "\n"
-              << " * requiredGroupSizeX : " << kernProps.requiredGroupSizeX << "\n"
-              << " * requiredGroupSizeY : " << kernProps.requiredGroupSizeY << "\n"
-              << " * requiredGroupSizeZ : " << kernProps.requiredGroupSizeZ << "\n";
 
-    uint32_t groupSizeX = 32u;
+    ze_kernel_properties_t kernelProperties = {};
+    SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernelProperties));
+    std::cout << "Scratch size = " << kernelProperties.spillMemSize << "\n";
+
+    uint32_t groupSizeX = arraySize;
     uint32_t groupSizeY = 1u;
     uint32_t groupSizeZ = 1u;
-    SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, allocSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, groupSizeX, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(dstBuffer), &dstBuffer));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(idxBuffer), &idxBuffer));
 
     ze_group_count_t dispatchTraits;
-    dispatchTraits.groupCountX = allocSize / groupSizeX;
+    dispatchTraits.groupCountX = 1u;
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
@@ -123,14 +156,14 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
 
     // Validate
     outputValidationSuccessful = true;
-    if (memcmp(dstBuffer, srcBuffer, allocSize)) {
+    if (memcmp(dstBuffer, expectedMemory, expectedMemorySize)) {
         outputValidationSuccessful = false;
-        uint8_t *srcCharBuffer = static_cast<uint8_t *>(srcBuffer);
+        uint8_t *srcCharBuffer = static_cast<uint8_t *>(expectedMemory);
         uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
-        for (size_t i = 0; i < allocSize; i++) {
+        for (size_t i = 0; i < expectedMemorySize; i++) {
             if (srcCharBuffer[i] != dstCharBuffer[i]) {
-                std::cout << "srcBuffer[" << i << "] = " << std::dec << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
-                          << "dstBuffer[" << i << "] = " << std::dec << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
+                std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
+                          << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
                 break;
             }
         }
@@ -139,6 +172,8 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, idxBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, expectedMemory));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
@@ -153,14 +188,13 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     std::cout << "Device : \n"
               << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n\n";
 
-    executeKernelAndValidate(context, device, outputValidationSuccessful);
+    executeGpuKernelAndValidate(context, device, outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    std::cout << "\nZello World JIT Results validation "
-              << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+    std::cout << "\nZello Scratch Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
 
     return 0;
 }

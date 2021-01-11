@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       zello_ipc_copy_dma_buf_p2p
       zello_copy
       zello_world_global_work_offset
+      zello_scratch
   )
 
   include_directories(common)
@@ -47,6 +48,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   endforeach()
 
   target_link_libraries(zello_world_jitc_ocloc PUBLIC ocloc_lib)
+  target_link_libraries(zello_scratch PUBLIC ocloc_lib)
   if(UNIX)
     target_link_libraries(zello_world_global_work_offset PUBLIC ocloc_lib)
   endif()
