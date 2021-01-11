@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,19 @@ ElfSectionHeader<NumBits> &ElfEncoder<NumBits>::appendSection(SECTION_HEADER_TYP
     section.offset = 0U;
     section.name = appendSectionName(sectionLabel);
     section.addralign = 8U;
+    switch (sectionType) {
+    case SHT_REL:
+        section.entsize = sizeof(ElfRel<NumBits>);
+        break;
+    case SHT_RELA:
+        section.entsize = sizeof(ElfRela<NumBits>);
+        break;
+    case SHT_SYMTAB:
+        section.entsize = sizeof(ElfSymbolEntry<NumBits>);
+        break;
+    default:
+        break;
+    }
     appendSection(section, sectionData);
     return *sectionHeaders.rbegin();
 }

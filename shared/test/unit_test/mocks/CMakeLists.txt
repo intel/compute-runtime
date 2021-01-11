@@ -18,6 +18,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_debugger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_elf.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.cpp

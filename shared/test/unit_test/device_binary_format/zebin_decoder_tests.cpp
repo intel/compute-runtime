@@ -1652,7 +1652,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataSectionThenSetsUpInitDataAndSi
     EXPECT_EQ(nullptr, programInfo.globalVariables.initData);
 }
 
-TEST(DecodeSingleDeviceBinaryZebin, GivenSymtabSectionThenEmirsWarningAndSkipsIt) {
+TEST(DecodeSingleDeviceBinaryZebin, GivenSymtabSectionThenEmitsWarningAndSkipsIt) {
     ZebinTestData::ValidEmptyProgram zebin;
     const uint8_t data[] = {2, 3, 5, 7, 11, 13, 17, 19};
     zebin.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Elf::SectionsNamesZebin::symtab, data).entsize = sizeof(NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64>);
@@ -1680,7 +1680,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenSymtabWithInvalidSymEntriesThenFails) {
     std::string decodeWarnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid symbol table entries size - expected : 24, got : 23\n", decodeErrors.c_str());
+    EXPECT_STREQ("Invalid symbol table entries size - expected : 24, got : 23\n", decodeErrors.c_str());
     EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
 }
 

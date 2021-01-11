@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -978,12 +978,6 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
     }
 
     if (false == zebinSections.symtabSections.empty()) {
-        auto expectedSymSize = sizeof(NEO::Elf::ElfSymbolEntry<Elf::EI_CLASS_64>);
-        auto gotSymSize = zebinSections.symtabSections[0]->header->entsize;
-        if (expectedSymSize != gotSymSize) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid symbol table entries size - expected : " + std::to_string(expectedSymSize) + ", got : " + std::to_string(gotSymSize) + "\n");
-            return DecodeError::InvalidBinary;
-        }
         outWarning.append("DeviceBinaryFormat::Zebin : Ignoring symbol table\n");
     }
 
