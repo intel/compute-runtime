@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,7 +104,6 @@ class MockDevice : public RootDevice {
         pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(pHwInfo);
         T *device = new T(executionEnvironment, rootDeviceIndex);
-        executionEnvironment->memoryManager = std::move(device->mockMemoryManager);
         return createDeviceInternals(device);
     }
 
@@ -129,17 +128,9 @@ class MockDevice : public RootDevice {
     }
 
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
-    std::unique_ptr<MemoryManager> mockMemoryManager;
 
-    NEO::CompilerInterface *getCompilerInterface() const override {
-        if (mockCompilerInterface != nullptr) {
-            return mockCompilerInterface;
-        } else {
-            return Device::getCompilerInterface();
-        }
-    }
-
-    NEO::CompilerInterface *mockCompilerInterface = nullptr;
+  private:
+    void initializeMemoryManager() const;
 };
 
 template <>

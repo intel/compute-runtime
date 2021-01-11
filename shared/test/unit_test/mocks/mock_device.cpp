@@ -25,10 +25,10 @@ decltype(&createCommandStream) MockDevice::createCommandStreamReceiverFunc = cre
 
 MockDevice::MockDevice()
     : MockDevice(new MockExecutionEnvironment(), 0u) {
+    initializeMemoryManager();
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment, this->getRootDeviceIndex(), this->getDeviceBitfield());
     commandStreamReceivers.resize(1);
     commandStreamReceivers[0].reset(commandStreamReceiver);
-    this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
     this->engines.resize(1);
     this->engines[0] = {commandStreamReceiver, nullptr};
     this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
@@ -41,14 +41,11 @@ const char *MockDevice::getProductAbbrev() const {
 
 MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex)
     : RootDevice(executionEnvironment, rootDeviceIndex) {
-    auto &hwInfo = getHardwareInfo();
-    bool enableLocalMemory = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getEnableLocalMemory(hwInfo);
-    bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
-    this->mockMemoryManager.reset(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, enableLocalMemory, aubUsage, *executionEnvironment));
+    initializeMemoryManager();
     this->osTime = MockOSTime::create();
     this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
+    auto &hwInfo = getHardwareInfo();
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&hwInfo);
-    executionEnvironment->initializeMemoryManager();
     initializeCaps();
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 }
@@ -92,14 +89,23 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     }
 }
 
+void MockDevice::initializeMemoryManager() const {
+    if (executionEnvironment->memoryManager == nullptr) {
+        auto &hwInfo = getHardwareInfo();
+        bool enableLocalMemory = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getEnableLocalMemory(hwInfo);
+        bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
+        executionEnvironment->memoryManager.reset(new MockMemoryManager(false, enableLocalMemory, aubUsage, *executionEnvironment));
+    }
+}
+
 MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(ExecutionEnvironment *executionEnvironment, uint32_t internalDeviceIndex) : MockDevice(executionEnvironment, internalDeviceIndex) {
-    this->mockMemoryManager.reset(new MockAllocSysMemAgnosticMemoryManager(*executionEnvironment));
+    executionEnvironment->memoryManager.reset(new MockAllocSysMemAgnosticMemoryManager(*executionEnvironment));
 }
 FailDevice::FailDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : MockDevice(executionEnvironment, deviceIndex) {
-    this->mockMemoryManager.reset(new FailMemoryManager(*executionEnvironment));
+    executionEnvironment->memoryManager.reset(new FailMemoryManager(*executionEnvironment));
 }
 FailDeviceAfterOne::FailDeviceAfterOne(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : MockDevice(executionEnvironment, deviceIndex) {
-    this->mockMemoryManager.reset(new FailMemoryManager(1, *executionEnvironment));
+    executionEnvironment->memoryManager.reset(new FailMemoryManager(1, *executionEnvironment));
 }

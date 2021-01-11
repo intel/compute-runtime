@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
-#include "shared/test/unit_test/helpers/variable_backup.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests.h"
@@ -20,12 +19,13 @@
 
 struct DrmDirectSubmissionTest : public DrmMemoryManagerBasic {
     void SetUp() override {
-        backupUlt = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
-
         DrmMemoryManagerBasic::SetUp();
         executionEnvironment.incRefInternal();
 
-        ultHwConfig.forceOsAgnosticMemoryManager = false;
+        executionEnvironment.memoryManager = std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                                DebugManager.flags.EnableForcePin.get(),
+                                                                                true,
+                                                                                executionEnvironment);
         device.reset(MockDevice::create<MockDevice>(&executionEnvironment, 0u));
         osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm(),
                                                      0u, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
@@ -38,8 +38,6 @@ struct DrmDirectSubmissionTest : public DrmMemoryManagerBasic {
 
     std::unique_ptr<OsContextLinux> osContext;
     std::unique_ptr<MockDevice> device;
-
-    std::unique_ptr<VariableBackup<UltHwConfig>> backupUlt;
 };
 
 template <typename GfxFamily, typename Dispatcher>

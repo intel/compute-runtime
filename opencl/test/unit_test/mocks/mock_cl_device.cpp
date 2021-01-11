@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,7 @@ decltype(&createCommandStream) &MockClDevice::createCommandStreamReceiverFunc = 
 
 MockClDevice::MockClDevice(MockDevice *pMockDevice)
     : ClDevice(*pMockDevice, platform()), device(*pMockDevice), sharedDeviceInfo(device.deviceInfo),
-      executionEnvironment(pMockDevice->executionEnvironment), mockMemoryManager(pMockDevice->mockMemoryManager),
-      engines(pMockDevice->engines) {
+      executionEnvironment(pMockDevice->executionEnvironment), engines(pMockDevice->engines) {
 }
 
 bool MockClDevice::areOcl21FeaturesSupported() const {

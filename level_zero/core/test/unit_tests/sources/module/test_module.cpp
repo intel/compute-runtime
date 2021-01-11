@@ -734,15 +734,17 @@ HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOpti
             return TranslationOutput::ErrorCode::BuildFailure;
         }
         std::string receivedApiOptions;
-    } mockCompilerInterface;
+    };
+    auto *pMockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
 
     L0::ModuleTranslationUnit moduleTu(this->device);
     moduleTu.options = "abcd";
-    this->neoDevice->mockCompilerInterface = &mockCompilerInterface;
     auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
     EXPECT_FALSE(ret);
     EXPECT_STREQ("abcd", moduleTu.options.c_str());
-    EXPECT_STREQ("abcd", mockCompilerInterface.receivedApiOptions.c_str());
+    EXPECT_STREQ("abcd", pMockCompilerInterface->receivedApiOptions.c_str());
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOptions2) {
@@ -754,16 +756,18 @@ HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOpti
             return TranslationOutput::ErrorCode::Success;
         }
         std::string inputInternalOptions;
-    } mockCompilerInterface;
+    };
+    auto pMockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(1);
 
     MockModuleTranslationUnit moduleTu(this->device);
-    this->neoDevice->mockCompilerInterface = &mockCompilerInterface;
     auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
     EXPECT_TRUE(ret);
-    EXPECT_NE(mockCompilerInterface.inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
+    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
 }
 
 TEST(BuildOptions, givenNoSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenFalseIsReturned) {
