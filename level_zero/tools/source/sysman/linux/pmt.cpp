@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 namespace L0 {
 const std::string PlatformMonitoringTech::baseTelemDevice("/dev/telem");
-const std::string PlatformMonitoringTech::baseTelemSysFS("/sys/class/pmt_telem/telem");
+const std::string PlatformMonitoringTech::baseTelemSysFS("/sys/class/pmt_telemetry/telem");
 
 void PlatformMonitoringTech::init(const std::string &deviceName, FsAccess *pFsAccess) {
     pmtSupported = false;
