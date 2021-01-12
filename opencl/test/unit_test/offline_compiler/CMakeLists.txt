@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -61,6 +61,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.h
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/device_binary_format/zebin_tests.h
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/test_files.cpp
     ${IGDRCL_SRCS_cloc}
     ${IGDRCL_SRCS_offline_compiler_mock}

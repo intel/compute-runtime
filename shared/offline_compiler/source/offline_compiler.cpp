@@ -903,6 +903,12 @@ bool OfflineCompiler::generateElfBinary() {
         return false;
     }
 
+    // return "as is" if zebin format
+    if (isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize))) {
+        this->elfBinary = std::vector<uint8_t>(genBinary, genBinary + genBinarySize);
+        return true;
+    }
+
     SingleDeviceBinary binary = {};
     binary.buildOptions = this->options;
     binary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary), this->irBinarySize);

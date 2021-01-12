@@ -11,6 +11,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/platform/extensions.h"
@@ -1474,5 +1475,16 @@ TEST(OclocCompile, givenNoDeviceAndInternalOptionsOptionWhenCompilingToSpirvThen
     EXPECT_EQ(0, retVal);
     EXPECT_THAT(ocloc.internalOptions.c_str(), testing::HasSubstr("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes -cl-ext=+custom_param"));
 }
+TEST(OclocCompile, givenPackedDeviceBinaryFormatWhenGeneratingElfBinaryItIsReturnedAsItIs) {
+    MockOfflineCompiler ocloc;
+    ZebinTestData::ValidEmptyProgram zebin;
 
+    // genBinary is deleted in ocloc's destructor
+    ocloc.genBinary = new char[zebin.storage.size()];
+    ocloc.genBinarySize = zebin.storage.size();
+    memcpy_s(ocloc.genBinary, ocloc.genBinarySize, zebin.storage.data(), zebin.storage.size());
+
+    ASSERT_EQ(true, ocloc.generateElfBinary());
+    EXPECT_EQ(0, memcmp(zebin.storage.data(), ocloc.elfBinary.data(), zebin.storage.size()));
+}
 } // namespace NEO
