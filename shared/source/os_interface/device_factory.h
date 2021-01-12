@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,6 @@ class DeviceFactory {
     static bool isHwModeSelected();
 
     static std::unique_ptr<Device> (*createRootDeviceFunc)(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
-    static void (*createMemoryManagerFunc)(ExecutionEnvironment &executionEnvironment);
+    static bool (*createMemoryManagerFunc)(ExecutionEnvironment &executionEnvironment);
 };
 } // namespace NEO

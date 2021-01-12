@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,10 +19,6 @@ namespace NEO {
 class MultiRootDeviceFixture : public ::testing::Test {
   public:
     void SetUp() override {
-        createMemoryManagerFuncBackup = [](ExecutionEnvironment &executionEnvironment) -> void {
-            executionEnvironment.memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
-        };
-
         deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
         device1 = deviceFactory->rootDevices[1];
         device2 = deviceFactory->rootDevices[2];
@@ -40,15 +36,10 @@ class MultiRootDeviceFixture : public ::testing::Test {
     MockClDevice *device2 = nullptr;
     std::unique_ptr<MockContext> context;
     MockMemoryManager *mockMemoryManager;
-    VariableBackup<decltype(DeviceFactory::createMemoryManagerFunc)> createMemoryManagerFuncBackup{&DeviceFactory::createMemoryManagerFunc};
 };
 class MultiRootDeviceWithSubDevicesFixture : public ::testing::Test {
   public:
     void SetUp() override {
-        createMemoryManagerFuncBackup = [](ExecutionEnvironment &executionEnvironment) -> void {
-            executionEnvironment.memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
-        };
-
         deviceFactory = std::make_unique<UltClDeviceFactory>(3, 2);
         device1 = deviceFactory->rootDevices[1];
         device2 = deviceFactory->rootDevices[2];
@@ -66,6 +57,5 @@ class MultiRootDeviceWithSubDevicesFixture : public ::testing::Test {
     MockClDevice *device2 = nullptr;
     std::unique_ptr<MockContext> context;
     MockMemoryManager *mockMemoryManager;
-    VariableBackup<decltype(DeviceFactory::createMemoryManagerFunc)> createMemoryManagerFuncBackup{&DeviceFactory::createMemoryManagerFunc};
 };
 }; // namespace NEO

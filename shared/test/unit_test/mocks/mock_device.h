@@ -128,9 +128,6 @@ class MockDevice : public RootDevice {
     }
 
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
-
-  private:
-    void initializeMemoryManager() const;
 };
 
 template <>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -131,7 +131,7 @@ std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvir
         return devices;
     }
 
-    if (!executionEnvironment.initializeMemoryManager()) {
+    if (!DeviceFactory::createMemoryManagerFunc(executionEnvironment)) {
         return devices;
     }
 
@@ -148,8 +148,8 @@ std::unique_ptr<Device> (*DeviceFactory::createRootDeviceFunc)(ExecutionEnvironm
     return std::unique_ptr<Device>(Device::create<RootDevice>(&executionEnvironment, rootDeviceIndex));
 };
 
-void (*DeviceFactory::createMemoryManagerFunc)(ExecutionEnvironment &) = [](ExecutionEnvironment &executionEnvironment) -> void {
-    executionEnvironment.initializeMemoryManager();
+bool (*DeviceFactory::createMemoryManagerFunc)(ExecutionEnvironment &) = [](ExecutionEnvironment &executionEnvironment) -> bool {
+    return executionEnvironment.initializeMemoryManager();
 };
 
 } // namespace NEO

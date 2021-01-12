@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 }
 
 // Tests for cl_khr_image2d_from_buffer
-class Image2dFromBufferTest : public ClDeviceFixture, public ::testing::Test {
+class Image2dFromBufferTest : public ::testing::Test {
   public:
     Image2dFromBufferTest() {}
 

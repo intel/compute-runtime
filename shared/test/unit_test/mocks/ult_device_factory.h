@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ struct UltDeviceFactory {
     ~UltDeviceFactory();
 
     static void prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, uint32_t rootDevicesCount);
+    static bool initializeMemoryManager(ExecutionEnvironment &executionEnvironment);
 
     std::vector<MockDevice *> rootDevices;
     std::vector<SubDevice *> subDevices;

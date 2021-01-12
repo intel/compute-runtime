@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,11 +18,7 @@
 using namespace NEO;
 
 UltClDeviceFactory::UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount) {
-
-    auto executionEnvironment = new ClExecutionEnvironment();
-    UltDeviceFactory::prepareDeviceEnvironments(*executionEnvironment, rootDevicesCount);
-
-    pUltDeviceFactory = std::make_unique<UltDeviceFactory>(rootDevicesCount, subDevicesCount, *executionEnvironment);
+    pUltDeviceFactory = std::make_unique<UltDeviceFactory>(rootDevicesCount, subDevicesCount, *(new ClExecutionEnvironment));
 
     for (auto &pRootDevice : pUltDeviceFactory->rootDevices) {
         auto pRootClDevice = new MockClDevice{pRootDevice};

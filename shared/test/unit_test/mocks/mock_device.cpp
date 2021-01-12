@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/unit_test/mocks/ult_device_factory.h"
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
@@ -25,8 +26,8 @@ decltype(&createCommandStream) MockDevice::createCommandStreamReceiverFunc = cre
 
 MockDevice::MockDevice()
     : MockDevice(new MockExecutionEnvironment(), 0u) {
-    initializeMemoryManager();
-    CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment, this->getRootDeviceIndex(), this->getDeviceBitfield());
+    UltDeviceFactory::initializeMemoryManager(*executionEnvironment);
+    CommandStreamReceiver *commandStreamReceiver = createCommandStream(*executionEnvironment, this->getRootDeviceIndex(), this->getDeviceBitfield());
     commandStreamReceivers.resize(1);
     commandStreamReceivers[0].reset(commandStreamReceiver);
     this->engines.resize(1);
@@ -41,7 +42,7 @@ const char *MockDevice::getProductAbbrev() const {
 
 MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex)
     : RootDevice(executionEnvironment, rootDeviceIndex) {
-    initializeMemoryManager();
+    UltDeviceFactory::initializeMemoryManager(*executionEnvironment);
     this->osTime = MockOSTime::create();
     this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
     auto &hwInfo = getHardwareInfo();
@@ -86,15 +87,6 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
 
     if (preemptionMode == PreemptionMode::MidThread || isDebuggerActive()) {
         commandStreamReceivers[engineIndex]->createPreemptionAllocation();
-    }
-}
-
-void MockDevice::initializeMemoryManager() const {
-    if (executionEnvironment->memoryManager == nullptr) {
-        auto &hwInfo = getHardwareInfo();
-        bool enableLocalMemory = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getEnableLocalMemory(hwInfo);
-        bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
-        executionEnvironment->memoryManager.reset(new MockMemoryManager(false, enableLocalMemory, aubUsage, *executionEnvironment));
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,8 @@
 #include "shared/test/unit_test/helpers/variable_backup.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+
 using namespace NEO;
 
 UltDeviceFactory::UltDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount)
@@ -22,12 +24,14 @@ UltDeviceFactory::UltDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevice
     DebugManagerStateRestore restorer;
     VariableBackup<bool> createSingleDeviceBackup{&MockDevice::createSingleDevice, false};
     VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createRootDeviceFuncBackup{&DeviceFactory::createRootDeviceFunc};
+    VariableBackup<decltype(DeviceFactory::createMemoryManagerFunc)> createMemoryManagerFuncBackup{&DeviceFactory::createMemoryManagerFunc};
 
     DebugManager.flags.CreateMultipleRootDevices.set(rootDevicesCount);
     DebugManager.flags.CreateMultipleSubDevices.set(subDevicesCount);
     createRootDeviceFuncBackup = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
         return std::unique_ptr<Device>(MockDevice::create<MockDevice>(&executionEnvironment, rootDeviceIndex));
     };
+    createMemoryManagerFuncBackup = UltDeviceFactory::initializeMemoryManager;
 
     auto createdDevices = DeviceFactory::createDevices(executionEnvironment);
 
@@ -46,7 +50,7 @@ UltDeviceFactory::~UltDeviceFactory() {
     }
 }
 
-void NEO::UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, uint32_t rootDevicesCount) {
+void UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, uint32_t rootDevicesCount) {
     uint32_t numRootDevices = rootDevicesCount;
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
     for (auto i = 0u; i < numRootDevices; i++) {
@@ -58,4 +62,12 @@ void NEO::UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &exec
     }
     executionEnvironment.calculateMaxOsContextCount();
     DeviceFactory::createMemoryManagerFunc(executionEnvironment);
+}
+bool UltDeviceFactory::initializeMemoryManager(ExecutionEnvironment &executionEnvironment) {
+    if (executionEnvironment.memoryManager == nullptr) {
+        bool enableLocalMemory = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*defaultHwInfo);
+        bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
+        executionEnvironment.memoryManager.reset(new MockMemoryManager(false, enableLocalMemory, aubUsage, executionEnvironment));
+    }
+    return true;
 }

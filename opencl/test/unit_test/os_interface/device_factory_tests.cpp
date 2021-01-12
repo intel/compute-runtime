@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -275,8 +275,10 @@ TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExist
 
 using UltDeviceFactoryTest = DeviceFactoryTest;
 
-TEST_F(UltDeviceFactoryTest, givenUltDeviceFactoryPrepareDeviceEnvironmentsCallWhenItIsDoneThenMockMemoryManagerIsAllocated) {
-    UltDeviceFactory::prepareDeviceEnvironments(*executionEnvironment, 2u);
+TEST_F(UltDeviceFactoryTest, givenExecutionEnvironmentWhenCreatingUltDeviceFactoryThenMockMemoryManagerIsAllocated) {
+    executionEnvironment->rootDeviceEnvironments.clear();
+    executionEnvironment->memoryManager.reset();
+    UltDeviceFactory ultDeviceFactory{2, 0, *executionEnvironment};
 
     EXPECT_EQ(2u, executionEnvironment->rootDeviceEnvironments.size());
     EXPECT_NE(nullptr, executionEnvironment->memoryManager.get());
