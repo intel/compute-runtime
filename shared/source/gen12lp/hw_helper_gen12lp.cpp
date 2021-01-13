@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -157,7 +157,7 @@ void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo,
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInfo) {
+uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInfo) const {
     if (Gen12LPHelpers::imagePitchAlignmentWaRequired(hwInfo->platform.eProductFamily)) {
         HwHelper &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
         if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo)) {
