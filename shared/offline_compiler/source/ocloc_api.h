@@ -1,9 +1,15 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#ifndef _OCLOC_API_H
+#define _OCLOC_API_H
+#if defined(__cplusplus)
+#pragma once
+#endif
 
 #include <cstdint>
 
@@ -97,3 +103,4 @@ SIGNATURE oclocFreeOutput(uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t
 /// Returns the current version of oclock
 SIGNATURE oclocVersion();
 }
+#endif //_OCLOC_API_H
