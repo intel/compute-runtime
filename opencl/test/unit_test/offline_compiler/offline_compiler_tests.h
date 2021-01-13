@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace NEO {
 class OfflineCompilerTests : public ::testing::Test {
   public:
     OfflineCompiler *pOfflineCompiler = nullptr;
-    int retVal = SUCCESS;
+    int retVal = OfflineCompiler::ErrorCode::SUCCESS;
     std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
 };
 
@@ -31,7 +31,7 @@ class MultiCommandTests : public ::testing::Test {
     MultiCommand *pMultiCommand = nullptr;
     std::string nameOfFileWithArgs;
     std::string outFileList;
-    int retVal = SUCCESS;
+    int retVal = OfflineCompiler::ErrorCode::SUCCESS;
     std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
 };
 

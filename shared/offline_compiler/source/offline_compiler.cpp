@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_library.h"
@@ -286,11 +287,13 @@ std::string &OfflineCompiler::getBuildLog() {
     return buildLog;
 }
 
-int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
+int OfflineCompiler::getHardwareInfo(std::string deviceName) {
     int retVal = INVALID_DEVICE;
 
+    overridePlatformName(deviceName);
+
     for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
-        if (hardwarePrefix[productId] && (0 == strcmp(pDeviceName, hardwarePrefix[productId]))) {
+        if (hardwarePrefix[productId] && (0 == strcmp(deviceName.c_str(), hardwarePrefix[productId]))) {
             if (hardwareInfoTable[productId]) {
                 hwInfo = *hardwareInfoTable[productId];
                 if (revisionId != -1) {

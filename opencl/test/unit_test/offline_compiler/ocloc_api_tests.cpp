@@ -40,7 +40,7 @@ TEST(OclocApiTests, WhenGoodArgsAreGivenThenSuccessIsReturned) {
                              nullptr, nullptr, nullptr, nullptr);
     std::string output = testing::internal::GetCapturedStdout();
 
-    EXPECT_EQ(retVal, NEO::SUCCESS);
+    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
     EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device "s + argv[4]));
 }
 
@@ -60,7 +60,7 @@ TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
                              nullptr, nullptr, nullptr, nullptr);
     std::string output = testing::internal::GetCapturedStdout();
 
-    EXPECT_EQ(retVal, NEO::SUCCESS);
+    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::SUCCESS);
     EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device "s + argv[4]));
 }
 
@@ -80,7 +80,7 @@ TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {
                              nullptr, nullptr, nullptr, nullptr);
     std::string output = testing::internal::GetCapturedStdout();
 
-    EXPECT_EQ(retVal, NEO::INVALID_FILE);
+    EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::INVALID_FILE);
     EXPECT_NE(std::string::npos, output.find("Command was: ocloc -file test_files/IDoNotExist.cl -device "s + argv[4]));
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,13 +14,13 @@
 
 namespace NEO {
 int MultiCommand::singleBuild(const std::vector<std::string> &args) {
-    int retVal = SUCCESS;
+    int retVal = OfflineCompiler::ErrorCode::SUCCESS;
 
     if (requestedFatBinary(args)) {
         retVal = buildFatBinary(args, argHelper);
     } else {
         std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(args.size(), args, true, retVal, argHelper)};
-        if (retVal == SUCCESS) {
+        if (retVal == OfflineCompiler::ErrorCode::SUCCESS) {
             retVal = buildWithSafetyGuard(pCompiler.get());
 
             std::string &buildLog = pCompiler->getBuildLog();
@@ -30,14 +30,14 @@ int MultiCommand::singleBuild(const std::vector<std::string> &args) {
         }
         outFileName += ".bin";
     }
-    if (retVal == SUCCESS) {
+    if (retVal == OfflineCompiler::ErrorCode::SUCCESS) {
         if (!quiet)
             argHelper->printf("Build succeeded.\n");
     } else {
         argHelper->printf("Build failed with error code: %d\n", retVal);
     }
 
-    if (retVal == SUCCESS) {
+    if (retVal == OfflineCompiler::ErrorCode::SUCCESS) {
         outputFile << getCurrentDirectoryOwn(outDirForBuilds) + outFileName;
     } else {
         outputFile << "Unsuccesful build";
@@ -48,7 +48,7 @@ int MultiCommand::singleBuild(const std::vector<std::string> &args) {
 }
 
 MultiCommand *MultiCommand::create(const std::vector<std::string> &args, int &retVal, OclocArgHelper *helper) {
-    retVal = ErrorCode::SUCCESS;
+    retVal = OfflineCompiler::ErrorCode::SUCCESS;
     auto pMultiCommand = new MultiCommand();
 
     if (pMultiCommand) {
@@ -56,7 +56,7 @@ MultiCommand *MultiCommand::create(const std::vector<std::string> &args, int &re
         retVal = pMultiCommand->initialize(args);
     }
 
-    if (retVal != ErrorCode::SUCCESS) {
+    if (retVal != OfflineCompiler::ErrorCode::SUCCESS) {
         delete pMultiCommand;
         pMultiCommand = nullptr;
     }
@@ -107,7 +107,7 @@ int MultiCommand::initialize(const std::vector<std::string> &args) {
         } else {
             argHelper->printf("Invalid option (arg %zu): %s\n", argIndex, currArg.c_str());
             printHelp();
-            return INVALID_COMMAND_LINE;
+            return OfflineCompiler::ErrorCode::INVALID_COMMAND_LINE;
         }
     }
 
@@ -116,11 +116,11 @@ int MultiCommand::initialize(const std::vector<std::string> &args) {
         argHelper->readFileToVectorOfStrings(pathToCommandFile, lines);
         if (lines.empty()) {
             argHelper->printf("Command file was empty.\n");
-            return INVALID_FILE;
+            return OfflineCompiler::ErrorCode::INVALID_FILE;
         }
     } else {
         argHelper->printf("Could not find/open file with builds argument.s\n");
-        return INVALID_FILE;
+        return OfflineCompiler::ErrorCode::INVALID_FILE;
     }
 
     runBuilds(args[0]);
@@ -136,7 +136,7 @@ void MultiCommand::runBuilds(const std::string &argZero) {
         std::vector<std::string> args = {argZero};
 
         int retVal = splitLineInSeparateArgs(args, lines[i], i);
-        if (retVal != SUCCESS) {
+        if (retVal != OfflineCompiler::ErrorCode::SUCCESS) {
             retValues.push_back(retVal);
             continue;
         }
@@ -188,22 +188,22 @@ int MultiCommand::splitLineInSeparateArgs(std::vector<std::string> &qargs, const
         }
         if (end == std::string::npos) {
             argHelper->printf("One of the quotes is open in build number %zu\n", numberOfBuild + 1);
-            return INVALID_FILE;
+            return OfflineCompiler::ErrorCode::INVALID_FILE;
         }
         argLen = end - start;
         i = end;
         qargs.push_back(commandsLine.substr(start, argLen));
     }
-    return SUCCESS;
+    return OfflineCompiler::ErrorCode::SUCCESS;
 }
 
 int MultiCommand::showResults() {
-    int retValue = SUCCESS;
+    int retValue = OfflineCompiler::ErrorCode::SUCCESS;
     int indexRetVal = 0;
     for (int retVal : retValues) {
         retValue |= retVal;
         if (!quiet) {
-            if (retVal != SUCCESS) {
+            if (retVal != OfflineCompiler::ErrorCode::SUCCESS) {
                 argHelper->printf("Build command %d: failed. Error code: %d\n", indexRetVal, retVal);
             } else {
                 argHelper->printf("Build command %d: successful\n", indexRetVal);

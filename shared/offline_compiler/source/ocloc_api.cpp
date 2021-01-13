@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
     try {
         if (numArgs == 1 || (numArgs > 1 && (ConstStringRef("-h") == allArgs[1] || ConstStringRef("--help") == allArgs[1]))) {
             helper->printf("%s", help);
-            return ErrorCode::SUCCESS;
+            return OfflineCompiler::ErrorCode::SUCCESS;
         } else if (numArgs > 1 && ConstStringRef("disasm") == allArgs[1]) {
             BinaryDecoder disasm(helper.get());
             int retVal = disasm.validateInput(allArgs);
@@ -99,7 +99,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
                 return retVal;
             }
         } else if (numArgs > 1 && ConstStringRef("multi") == allArgs[1]) {
-            int retValue = ErrorCode::SUCCESS;
+            int retValue = OfflineCompiler::ErrorCode::SUCCESS;
             std::unique_ptr<MultiCommand> pMulti{(MultiCommand::create(allArgs, retValue, helper.get()))};
             return retValue;
         } else if (requestedFatBinary(allArgs)) {
@@ -107,10 +107,10 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
         } else if (numArgs > 1 && ConstStringRef("validate") == allArgs[1]) {
             return NEO::Ocloc::validate(allArgs, helper.get());
         } else {
-            int retVal = ErrorCode::SUCCESS;
+            int retVal = OfflineCompiler::ErrorCode::SUCCESS;
 
             std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(numArgs, allArgs, true, retVal, helper.get())};
-            if (retVal == ErrorCode::SUCCESS) {
+            if (retVal == OfflineCompiler::ErrorCode::SUCCESS) {
                 retVal = buildWithSafetyGuard(pCompiler.get());
 
                 std::string buildLog = pCompiler->getBuildLog();
@@ -118,7 +118,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
                     helper->printf("%s\n", buildLog.c_str());
                 }
 
-                if (retVal == ErrorCode::SUCCESS) {
+                if (retVal == OfflineCompiler::ErrorCode::SUCCESS) {
                     if (!pCompiler->isQuiet())
                         helper->printf("Build succeeded.\n");
                 } else {
@@ -126,7 +126,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
                 }
             }
 
-            if (retVal != ErrorCode::SUCCESS)
+            if (retVal != OfflineCompiler::ErrorCode::SUCCESS)
                 printOclocCmdLine(numArgs, argv, helper);
 
             return retVal;

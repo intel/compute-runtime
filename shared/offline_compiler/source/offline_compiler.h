@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,22 +28,22 @@ class OsLibrary;
 
 std::string convertToPascalCase(const std::string &inString);
 
-enum ErrorCode {
-    SUCCESS = 0,
-    OUT_OF_HOST_MEMORY = -6,
-    BUILD_PROGRAM_FAILURE = -11,
-    INVALID_DEVICE = -33,
-    INVALID_PROGRAM = -44,
-    INVALID_COMMAND_LINE = -5150,
-    INVALID_FILE = -5151,
-    PRINT_USAGE = -5152,
-};
-
 std::string generateFilePath(const std::string &directory, const std::string &fileNameBase, const char *extension);
 std::string getDevicesTypes();
 
 class OfflineCompiler {
   public:
+    enum ErrorCode {
+        SUCCESS = 0,
+        OUT_OF_HOST_MEMORY = -6,
+        BUILD_PROGRAM_FAILURE = -11,
+        INVALID_DEVICE = -33,
+        INVALID_PROGRAM = -44,
+        INVALID_COMMAND_LINE = -5150,
+        INVALID_FILE = -5151,
+        PRINT_USAGE = -5152,
+    };
+
     static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper);
     int build();
     std::string &getBuildLog();
@@ -77,7 +77,7 @@ class OfflineCompiler {
   protected:
     OfflineCompiler();
 
-    int getHardwareInfo(const char *pDeviceName);
+    int getHardwareInfo(std::string deviceName);
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);

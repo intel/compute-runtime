@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -153,7 +153,7 @@ TEST_F(MultiCommandTests, GivenMissingTextFileWithArgsWhenBuildingMultiCommandTh
 
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pMultiCommand);
-    EXPECT_EQ(INVALID_FILE, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_FILE, retVal);
     DebugManager.flags.PrintDebugMessages.set(false);
 }
 TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFileErrorIsReturned) {
@@ -178,7 +178,7 @@ TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFi
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(nullptr, pMultiCommand);
-    EXPECT_EQ(INVALID_FILE, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_FILE, retVal);
     DebugManager.flags.PrintDebugMessages.set(false);
 
     deleteFileWithArgs();
@@ -446,7 +446,7 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionThenBuildDoesNotOccur) {
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
     EXPECT_STRNE("", output.c_str());
-    EXPECT_EQ(PRINT_USAGE, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::PRINT_USAGE, retVal);
 
     delete pOfflineCompiler;
 }
@@ -464,7 +464,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsR
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_EQ(INVALID_FILE, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_FILE, retVal);
     DebugManager.flags.PrintDebugMessages.set(false);
     delete pOfflineCompiler;
 }
@@ -482,7 +482,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFlagWhenBuildingThenInvalidCommandLineE
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_EQ(INVALID_COMMAND_LINE, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_COMMAND_LINE, retVal);
 
     delete pOfflineCompiler;
 }
@@ -499,7 +499,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidOptionsWhenBuildingThenInvalidCommandLi
     EXPECT_STRNE(output.c_str(), "");
 
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_EQ(INVALID_COMMAND_LINE, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_COMMAND_LINE, retVal);
 
     delete pOfflineCompiler;
 
@@ -513,7 +513,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidOptionsWhenBuildingThenInvalidCommandLi
     output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_EQ(INVALID_COMMAND_LINE, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::INVALID_COMMAND_LINE, retVal);
 
     delete pOfflineCompiler;
 }
@@ -1209,7 +1209,7 @@ TEST(OfflineCompilerTest, givenCompilerWhenBuildSourceCodeFailsThenGenerateElfBi
     MockOfflineCompiler compiler;
     compiler.overrideBuildSourceCodeStatus = true;
 
-    auto expectedError = BUILD_PROGRAM_FAILURE;
+    auto expectedError = OfflineCompiler::ErrorCode::BUILD_PROGRAM_FAILURE;
     compiler.buildSourceCodeStatus = expectedError;
 
     EXPECT_EQ(0u, compiler.generateElfBinaryCalled);
@@ -1240,7 +1240,7 @@ TEST(OfflineCompilerTest, givenDeviceSpecificKernelFileWhenCompilerIsInitialized
         gEnvironment->devicePrefix.c_str()};
 
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(SUCCESS, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
     EXPECT_STREQ("-cl-opt-disable", mockOfflineCompiler->options.c_str());
 }
 
@@ -1259,7 +1259,7 @@ TEST(OfflineCompilerTest, givenRevisionIdWhenCompilerIsInitializedThenPassItToHw
         "3"};
 
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(SUCCESS, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, 3);
 }
 
@@ -1278,7 +1278,7 @@ TEST(OfflineCompilerTest, givenNoRevisionIdWhenCompilerIsInitializedThenHwInfoHa
     mockOfflineCompiler->getHardwareInfo(gEnvironment->devicePrefix.c_str());
     auto revId = mockOfflineCompiler->hwInfo.platform.usRevId;
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(SUCCESS, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, revId);
 }
 
@@ -1295,7 +1295,7 @@ TEST(OfflineCompilerTest, whenDeviceIsSpecifiedThenDefaultConfigFromTheDeviceIsU
         gEnvironment->devicePrefix.c_str()};
 
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(SUCCESS, retVal);
+    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
 
     auto actualHwInfo = mockOfflineCompiler->hwInfo;
     auto expectedHwInfo = actualHwInfo;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/hw_info.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_helper.h"
 
 #include "hw_cmds.h"
 
@@ -46,6 +47,8 @@ void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, uint64_t) = {
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn) {
     std::transform(platform.begin(), platform.end(), platform.begin(), ::tolower);
 
+    overridePlatformName(platform);
+
     bool ret = false;
     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
         if (hardwarePrefix[j] == nullptr)
@@ -56,6 +59,7 @@ bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwIn
             break;
         }
     }
+
     return ret;
 }
 

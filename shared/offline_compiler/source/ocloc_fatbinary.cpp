@@ -265,7 +265,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
         argsCopy[deviceArgIndex] = targetPlatform.str();
 
         std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argsCopy.size(), argsCopy, false, retVal, argHelper)};
-        if (ErrorCode::SUCCESS != retVal) {
+        if (OfflineCompiler::ErrorCode::SUCCESS != retVal) {
             argHelper->printf("Error! Couldn't create OfflineCompiler. Exiting.\n");
             return retVal;
         }
