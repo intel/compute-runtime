@@ -93,6 +93,7 @@ static constexpr ConstStringRef payloadArguments("payload_arguments");
 static constexpr ConstStringRef bindingTableIndices("binding_table_indices");
 static constexpr ConstStringRef perThreadPayloadArguments("per_thread_payload_arguments");
 static constexpr ConstStringRef perThreadMemoryBuffers("per_thread_memory_buffers");
+static constexpr ConstStringRef experimentalProperties("experimental_properties");
 
 namespace ExecutionEnv {
 static constexpr ConstStringRef actualKernelStartOffset("actual_kernel_start_offset");
@@ -186,6 +187,11 @@ static constexpr ConstStringRef spillFillSpace("spill_fill_space");
 static constexpr ConstStringRef singleSpace("single_space");
 } // namespace MemoryUsage
 } // namespace PerThreadMemoryBuffer
+namespace ExperimentalProperties {
+static constexpr ConstStringRef hasNonKernelArgLoad("has_non_kernel_arg_load");
+static constexpr ConstStringRef hasNonKernelArgStore("has_non_kernel_arg_store");
+static constexpr ConstStringRef hasNonKernelArgAtomic("has_non_kernel_arg_atomic");
+} // namespace ExperimentalProperties
 } // namespace Kernel
 } // namespace Tags
 
@@ -217,6 +223,9 @@ using SimdSizeT = int32_t;
 using SlmSizeT = int32_t;
 using SubgroupIndependentForwardProgressT = bool;
 using WorkgroupWalkOrderDimensionsT = int32_t[3];
+using HasNonKernelArgLoad = int32_t;
+using HasNonKernelArgStore = int32_t;
+using HasNonKernelArgAtomic = int32_t;
 
 namespace Defaults {
 static constexpr BarrierCountT barrierCount = 0;
@@ -235,6 +244,9 @@ static constexpr RequiredWorkGroupSizeT requiredWorkGroupSize = {0, 0, 0};
 static constexpr SlmSizeT slmSize = 0;
 static constexpr SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = false;
 static constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0, 1, 2};
+static constexpr HasNonKernelArgLoad hasNonKernelArgLoad = false;
+static constexpr HasNonKernelArgStore hasNonKernelArgStore = false;
+static constexpr HasNonKernelArgAtomic hasNonKernelArgAtomic = false;
 } // namespace Defaults
 
 static constexpr ConstStringRef required[] = {
@@ -262,6 +274,12 @@ struct ExecutionEnvBaseT {
     SlmSizeT slmSize = Defaults::slmSize;
     SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = Defaults::subgroupIndependentForwardProgress;
     WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions{Defaults::workgroupWalkOrderDimensions[0], Defaults::workgroupWalkOrderDimensions[1], Defaults::workgroupWalkOrderDimensions[2]};
+};
+
+struct ExperimentalPropertiesBaseT {
+    HasNonKernelArgLoad hasNonKernelArgLoad = Defaults::hasNonKernelArgLoad;
+    HasNonKernelArgStore hasNonKernelArgStore = Defaults::hasNonKernelArgStore;
+    HasNonKernelArgAtomic hasNonKernelArgAtomic = Defaults::hasNonKernelArgAtomic;
 };
 
 } // namespace ExecutionEnv

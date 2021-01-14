@@ -454,6 +454,7 @@ kernels:
     ASSERT_FALSE(kernelSections.bindingTableIndicesNd.empty());
     ASSERT_FALSE(kernelSections.perThreadPayloadArgumentsNd.empty());
     ASSERT_FALSE(kernelSections.perThreadMemoryBuffersNd.empty());
+    ASSERT_TRUE(kernelSections.experimentalPropertiesNd.empty());
 
     EXPECT_EQ("name", parser.readKey(*kernelSections.nameNd[0])) << parser.readKey(*kernelSections.nameNd[0]).str();
     EXPECT_EQ("execution_env", parser.readKey(*kernelSections.executionEnvNd[0])) << parser.readKey(*kernelSections.executionEnvNd[0]).str();
@@ -461,6 +462,64 @@ kernels:
     EXPECT_EQ("per_thread_payload_arguments", parser.readKey(*kernelSections.perThreadPayloadArgumentsNd[0])) << parser.readKey(*kernelSections.perThreadPayloadArgumentsNd[0]).str();
     EXPECT_EQ("binding_table_indices", parser.readKey(*kernelSections.bindingTableIndicesNd[0])) << parser.readKey(*kernelSections.bindingTableIndicesNd[0]).str();
     EXPECT_EQ("per_thread_memory_buffers", parser.readKey(*kernelSections.perThreadMemoryBuffersNd[0])) << parser.readKey(*kernelSections.perThreadMemoryBuffersNd[0]).str();
+}
+
+TEST(ExtractZeInfoKernelSections, GivenExperimentalPropertyInKnownSectionsThenSectionIsCapturedProperly) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    execution_env:
+      actual_kernel_start_offset: 0
+    payload_arguments:
+      - arg_type:        global_id_offset
+        offset:          0
+        size:            12
+    per_thread_payload_arguments:
+      - arg_type:        local_id
+        offset:          0
+        size:            192
+    binding_table_indices:
+      - bti_value:       0
+        arg_index:       0
+    per_thread_memory_buffers:
+      - type:            scratch
+        usage:           single_space
+        size:            64
+    experimental_properties:
+      - has_non_kernel_arg_load: 1
+        has_non_kernel_arg_store: 1
+        has_non_kernel_arg_atomic: 0
+...
+)===";
+
+    NEO::ZeInfoKernelSections kernelSections;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+    EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+    ASSERT_TRUE(success);
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    std::string warnings;
+    NEO::extractZeInfoKernelSections(parser, kernelNode, kernelSections, "some_kernel", warnings);
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_FALSE(kernelSections.nameNd.empty());
+    ASSERT_FALSE(kernelSections.executionEnvNd.empty());
+    ASSERT_FALSE(kernelSections.payloadArgumentsNd.empty());
+    ASSERT_FALSE(kernelSections.bindingTableIndicesNd.empty());
+    ASSERT_FALSE(kernelSections.perThreadPayloadArgumentsNd.empty());
+    ASSERT_FALSE(kernelSections.perThreadMemoryBuffersNd.empty());
+    ASSERT_FALSE(kernelSections.experimentalPropertiesNd.empty());
+
+    EXPECT_EQ("name", parser.readKey(*kernelSections.nameNd[0])) << parser.readKey(*kernelSections.nameNd[0]).str();
+    EXPECT_EQ("execution_env", parser.readKey(*kernelSections.executionEnvNd[0])) << parser.readKey(*kernelSections.executionEnvNd[0]).str();
+    EXPECT_EQ("payload_arguments", parser.readKey(*kernelSections.payloadArgumentsNd[0])) << parser.readKey(*kernelSections.payloadArgumentsNd[0]).str();
+    EXPECT_EQ("per_thread_payload_arguments", parser.readKey(*kernelSections.perThreadPayloadArgumentsNd[0])) << parser.readKey(*kernelSections.perThreadPayloadArgumentsNd[0]).str();
+    EXPECT_EQ("binding_table_indices", parser.readKey(*kernelSections.bindingTableIndicesNd[0])) << parser.readKey(*kernelSections.bindingTableIndicesNd[0]).str();
+    EXPECT_EQ("per_thread_memory_buffers", parser.readKey(*kernelSections.perThreadMemoryBuffersNd[0])) << parser.readKey(*kernelSections.perThreadMemoryBuffersNd[0]).str();
+    EXPECT_EQ("experimental_properties", parser.readKey(*kernelSections.experimentalPropertiesNd[0])) << parser.readKey(*kernelSections.experimentalPropertiesNd[0]).str();
 }
 
 TEST(ExtractZeInfoKernelSections, GivenUnknownSectionThenEmitsAWarning) {
@@ -611,6 +670,238 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenTwoPerThreadMemoryBuffersSectionsTh
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of per_thread_memory_buffers section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(ReadZeExperimentalProperties, GivenYamlWithLoadExperimentalPropertyEntryThenExperimentalPropertiesAreCorrectlyRead) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    experimental_properties:
+      - has_non_kernel_arg_load: 1
+        has_non_kernel_arg_store: 0
+        has_non_kernel_arg_atomic: 0
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &experimentalPropertiesNode = *parser.findNodeWithKeyDfs("experimental_properties");
+    std::string errors;
+    std::string warnings;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExperimentalPropertiesBaseT experimentalProperties;
+    auto err = NEO::readZeInfoExperimentalProperties(parser,
+                                                     experimentalPropertiesNode,
+                                                     experimentalProperties,
+                                                     "some_kernel",
+                                                     errors,
+                                                     warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_EQ(experimentalProperties.hasNonKernelArgLoad, 1);
+    EXPECT_EQ(experimentalProperties.hasNonKernelArgStore, 0);
+    EXPECT_EQ(experimentalProperties.hasNonKernelArgAtomic, 0);
+}
+
+TEST(ReadZeExperimentalProperties, GivenYamlWithStoreExperimentalPropertyEntryThenExperimentalPropertiesAreCorrectlyRead) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    experimental_properties:
+      - has_non_kernel_arg_load: 0
+        has_non_kernel_arg_store: 1
+        has_non_kernel_arg_atomic: 0
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &experimentalPropertiesNode = *parser.findNodeWithKeyDfs("experimental_properties");
+    std::string errors;
+    std::string warnings;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExperimentalPropertiesBaseT experimentalProperties;
+    auto err = NEO::readZeInfoExperimentalProperties(parser,
+                                                     experimentalPropertiesNode,
+                                                     experimentalProperties,
+                                                     "some_kernel",
+                                                     errors,
+                                                     warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_EQ(experimentalProperties.hasNonKernelArgLoad, 0);
+    EXPECT_EQ(experimentalProperties.hasNonKernelArgStore, 1);
+    EXPECT_EQ(experimentalProperties.hasNonKernelArgAtomic, 0);
+}
+
+TEST(ReadZeExperimentalProperties, GivenYamlWithAtomicExperimentalPropertyEntryThenExperimentalPropertiesAreCorrectlyRead) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    experimental_properties:
+      - has_non_kernel_arg_load: 0
+        has_non_kernel_arg_store: 0
+        has_non_kernel_arg_atomic: 1
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &experimentalPropertiesNode = *parser.findNodeWithKeyDfs("experimental_properties");
+    std::string errors;
+    std::string warnings;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExperimentalPropertiesBaseT experimentalProperties;
+    auto err = NEO::readZeInfoExperimentalProperties(parser,
+                                                     experimentalPropertiesNode,
+                                                     experimentalProperties,
+                                                     "some_kernel",
+                                                     errors,
+                                                     warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_EQ(experimentalProperties.hasNonKernelArgLoad, 0);
+    EXPECT_EQ(experimentalProperties.hasNonKernelArgStore, 0);
+    EXPECT_EQ(experimentalProperties.hasNonKernelArgAtomic, 1);
+}
+
+TEST(ReadZeExperimentalProperties, GivenYamlWithInvalidExperimentalPropertyEntryValueThenErrorIsReturned) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    experimental_properties:
+      - has_non_kernel_arg_load: true
+        has_non_kernel_arg_store: 0
+        has_non_kernel_arg_atomic: 0
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &experimentalPropertiesNode = *parser.findNodeWithKeyDfs("experimental_properties");
+    std::string errors;
+    std::string warnings;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExperimentalPropertiesBaseT experimentalProperties;
+    auto err = NEO::readZeInfoExperimentalProperties(parser,
+                                                     experimentalPropertiesNode,
+                                                     experimentalProperties,
+                                                     "some_kernel",
+                                                     errors,
+                                                     warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+}
+
+TEST(ReadZeExperimentalProperties, GivenYamlWithInvalidExperimentalPropertyEntryThenErrorIsReturned) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    experimental_properties:
+      - has_non_kernel_arg_load: 1
+        has_non_kernel_arg_store: 0
+        has_non_kernel_arg_invalid: 0
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &experimentalPropertiesNode = *parser.findNodeWithKeyDfs("experimental_properties");
+    std::string errors;
+    std::string warnings;
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::ExecutionEnv::ExperimentalPropertiesBaseT experimentalProperties;
+    auto err = NEO::readZeInfoExperimentalProperties(parser,
+                                                     experimentalPropertiesNode,
+                                                     experimentalProperties,
+                                                     "some_kernel",
+                                                     errors,
+                                                     warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+}
+
+TEST(PopulateKernelDescriptor, GivenValidExperimentalPropertiesThenPopulateKernelDescriptorSucceeds) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        local_size
+          offset:          16
+          size:            12
+      experimental_properties:
+        - has_non_kernel_arg_load: 0
+          has_non_kernel_arg_store: 0
+          has_non_kernel_arg_atomic: 0
+...
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+}
+
+TEST(PopulateKernelDescriptor, GivenErrorWhileReadingExperimentalPropertiesThenPopulateKernelDescriptorFails) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        local_size
+          offset:          16
+          size:            12
+      experimental_properties:
+        - has_non_kernel_arg_load: true
+          has_non_kernel_arg_store: 0
+          has_non_kernel_arg_atomic: 0
+...
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenValidYamlEntriesThenSetProperMembers) {

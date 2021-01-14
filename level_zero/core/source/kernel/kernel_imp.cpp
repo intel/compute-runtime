@@ -362,7 +362,7 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
 }
 
 ze_result_t KernelImp::setIndirectAccess(ze_kernel_indirect_access_flags_t flags) {
-    if (NEO::DebugManager.flags.DisableIndirectAccess.get() == 1) {
+    if (NEO::DebugManager.flags.DisableIndirectAccess.get() == 1 && this->kernelHasIndirectAccess == false) {
         return ZE_RESULT_SUCCESS;
     }
 
@@ -385,10 +385,10 @@ ze_result_t KernelImp::getIndirectAccess(ze_kernel_indirect_access_flags_t *flag
         *flags |= ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE;
     }
     if (this->unifiedMemoryControls.indirectHostAllocationsAllowed) {
-        *flags |= ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE;
+        *flags |= ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST;
     }
     if (this->unifiedMemoryControls.indirectSharedAllocationsAllowed) {
-        *flags |= ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE;
+        *flags |= ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -713,6 +713,10 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     residencyContainer.insert(residencyContainer.end(), kernelImmData->getResidencyContainer().begin(),
                               kernelImmData->getResidencyContainer().end());
+
+    kernelHasIndirectAccess = kernelImmData->getDescriptor().kernelAttributes.hasNonKernelArgLoad ||
+                              kernelImmData->getDescriptor().kernelAttributes.hasNonKernelArgStore ||
+                              kernelImmData->getDescriptor().kernelAttributes.hasNonKernelArgAtomic;
 
     return ZE_RESULT_SUCCESS;
 }

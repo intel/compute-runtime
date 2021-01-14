@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,6 +56,9 @@ struct KernelDescriptor final {
         uint16_t numArgsToPatch = 0U;
         uint16_t numGrfRequired = 0U;
         uint8_t barrierCount = 0u;
+        bool hasNonKernelArgLoad = true;
+        bool hasNonKernelArgStore = true;
+        bool hasNonKernelArgAtomic = true;
 
         AddressingMode bufferAddressingMode = BindfulAndStateless;
         AddressingMode imageAddressingMode = Bindful;

@@ -124,6 +124,10 @@ struct KernelImp : Kernel {
 
     ze_result_t setCacheConfig(ze_cache_config_flags_t flags) override;
 
+    bool hasIndirectAccess() {
+        return kernelHasIndirectAccess;
+    }
+
   protected:
     KernelImp() = default;
 
@@ -174,6 +178,8 @@ struct KernelImp : Kernel {
     uint32_t globalOffsets[3] = {};
 
     ze_cache_config_flags_t cacheConfigFlags = 0u;
+
+    bool kernelHasIndirectAccess = true;
 };
 
 } // namespace L0
