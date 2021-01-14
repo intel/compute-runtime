@@ -209,6 +209,10 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
 void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
                                                             const UnifiedMemoryProperties &memoryProperties,
                                                             void *cmdQ) {
+    if (memoryProperties.rootDeviceIndices.size() > 1 && !memoryProperties.device) {
+        return createHostUnifiedMemoryAllocation(size, memoryProperties);
+    }
+
     auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported(*memoryProperties.rootDeviceIndices.begin());
 
     if (DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {

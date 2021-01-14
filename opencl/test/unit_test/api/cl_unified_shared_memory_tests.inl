@@ -1083,3 +1083,37 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalle
     retVal = clMemFreeINTEL(context.get(), unifiedMemoryHostAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCalledWithoutDeviceInMultiRootDeviceEnvironmentThenItAllocatesHostUnifiedMemoryAllocations) {
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(context.get(), nullptr, nullptr, 4, 0, &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    auto allocationsManager = context.get()->getSVMAllocsManager();
+
+    EXPECT_EQ(allocationsManager->getNumAllocs(), 1u);
+
+    auto svmAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
+    auto graphicsAllocation1 = svmAllocation->gpuAllocations.getGraphicsAllocation(1u);
+    auto graphicsAllocation2 = svmAllocation->gpuAllocations.getGraphicsAllocation(2u);
+
+    EXPECT_EQ(svmAllocation->size, 4u);
+    EXPECT_EQ(svmAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
+
+    EXPECT_NE(graphicsAllocation1, nullptr);
+    EXPECT_NE(graphicsAllocation2, nullptr);
+
+    EXPECT_EQ(graphicsAllocation1->getRootDeviceIndex(), 1u);
+    EXPECT_EQ(graphicsAllocation2->getRootDeviceIndex(), 2u);
+
+    EXPECT_EQ(graphicsAllocation1->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(graphicsAllocation2->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+
+    EXPECT_EQ(graphicsAllocation1->getGpuAddress(), castToUint64(unifiedMemorySharedAllocation));
+    EXPECT_EQ(graphicsAllocation2->getGpuAddress(), castToUint64(unifiedMemorySharedAllocation));
+
+    retVal = clMemFreeINTEL(context.get(), unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
