@@ -457,7 +457,7 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndNdOnWhenDispatchingWalkerThe
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
-    size_t workItems[3] = {2, 5, 10};
+    size_t workItems[3] = {2, 3, 5};
     cl_uint dimensions = 3;
     DispatchInfo dispatchInfo(pClDevice, const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
@@ -473,8 +473,8 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndNdOnWhenDispatchingWalkerThe
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-    EXPECT_EQ(5u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-    EXPECT_EQ(10u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
+    EXPECT_EQ(3u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
+    EXPECT_EQ(5u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmWhenDispatchingWalkerThenLwsIsCorrect) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -421,7 +421,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenHelloWorldKernelWhenEnqueingKernelThenH
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
-    size_t workSize[] = {256};
+    size_t workSize[] = {64};
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
         KernelFixture::pKernel,
@@ -460,7 +460,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenKernelWithSimpleArgWhenEnqueingKernelTh
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
-    size_t workSize[] = {256};
+    size_t workSize[] = {64};
     auto retVal = EnqueueKernelHelper<>::enqueueKernel(
         pCmdQ,
         KernelFixture::pKernel,

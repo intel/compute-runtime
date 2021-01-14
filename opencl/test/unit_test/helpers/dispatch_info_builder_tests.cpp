@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -242,7 +242,7 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingElwsThenCorrectValuesAreReturned) {
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenGettingLwsThenCorrectValuesAreReturned) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder);
 
     MultiDispatchInfo mdi0, mdi1, mdi2, mdi3;
@@ -253,46 +253,31 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingLwsThenCorrectValuesAreReturned) {
     EXPECT_TRUE(mdi0.empty());
 
     diBuilder->setKernel(pKernel);
-    diBuilder->setDispatchGeometry(Vec3<size_t>(16, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder->setDispatchGeometry(Vec3<size_t>(4, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
     diBuilder->bake(mdi1);
     for (auto &dispatchInfo : mdi1) {
-        EXPECT_EQ(16u, dispatchInfo.getLocalWorkgroupSize().x);
+        EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().x);
         EXPECT_EQ(1u, dispatchInfo.getLocalWorkgroupSize().y);
         EXPECT_EQ(1u, dispatchInfo.getLocalWorkgroupSize().z);
     }
 
     diBuilder->setKernel(pKernel);
-    diBuilder->setDispatchGeometry(Vec3<size_t>(16, 16, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder->setDispatchGeometry(Vec3<size_t>(4, 4, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
     diBuilder->bake(mdi2);
     for (auto &dispatchInfo : mdi2) {
-        EXPECT_EQ(16u, dispatchInfo.getLocalWorkgroupSize().x);
-        EXPECT_EQ(16u, dispatchInfo.getLocalWorkgroupSize().y);
+        EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().x);
+        EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().y);
         EXPECT_EQ(1u, dispatchInfo.getLocalWorkgroupSize().z);
     }
 
-    size_t expectedResult[] = {16u, 16u, 1u};
-    const auto &hwInfo = pDevice->getHardwareInfo();
-    auto isSimulation = pDevice->isSimulation();
-
-    EXPECT_FALSE(isSimulation);
-
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (hwHelper.isSpecialWorkgroupSizeRequired(hwInfo, isSimulation)) {
-        for (auto &result : expectedResult) {
-            result = 1u;
-        }
-    }
-
     diBuilder->setKernel(pKernel);
-    diBuilder->setDispatchGeometry(Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder->setDispatchGeometry(Vec3<size_t>(4, 4, 4), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
     diBuilder->bake(mdi3);
     for (auto &dispatchInfo : mdi3) {
-        EXPECT_EQ(expectedResult[0], dispatchInfo.getLocalWorkgroupSize().x);
-        EXPECT_EQ(expectedResult[1], dispatchInfo.getLocalWorkgroupSize().y);
-        EXPECT_EQ(expectedResult[2], dispatchInfo.getLocalWorkgroupSize().z);
+        EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().y);
+        EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().z);
+        EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().x);
     }
-
-    delete diBuilder;
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenCheckingIfBuiltinThenReturnTrue) {
