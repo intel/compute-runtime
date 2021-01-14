@@ -47,7 +47,7 @@ bool HwHelperHw<Family>::isL3Configurable(const HardwareInfo &hwInfo) {
 }
 
 template <typename Family>
-SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
+SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
     if (!debuggingActive) {
         return SipKernelType::Csr;
     }

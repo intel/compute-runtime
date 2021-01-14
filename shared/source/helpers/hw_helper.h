@@ -54,7 +54,7 @@ class HwHelper {
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
     virtual bool isL3Configurable(const HardwareInfo &hwInfo) = 0;
-    virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
+    virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const = 0;
@@ -200,7 +200,7 @@ class HwHelperHw : public HwHelper {
 
     bool isL3Configurable(const HardwareInfo &hwInfo) override;
 
-    SipKernelType getSipKernelType(bool debuggingActive) override;
+    SipKernelType getSipKernelType(bool debuggingActive) const override;
 
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
 
