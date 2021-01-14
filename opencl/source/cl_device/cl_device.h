@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,6 +125,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
 
     static cl_command_queue_capabilities_intel getQueueFamilyCapabilitiesAll();
     MOCKABLE_VIRTUAL cl_command_queue_capabilities_intel getQueueFamilyCapabilities(EngineGroupType type);
+    void getQueueFamilyName(char *outputName, size_t maxOutputNameLength, EngineGroupType type);
 
   protected:
     void initializeCaps();

@@ -369,6 +369,7 @@ void ClDevice::initializeCaps() {
             properties.capabilities = getQueueFamilyCapabilities(engineGroupType);
             properties.count = static_cast<cl_uint>(enginesInFamily.size());
             properties.properties = deviceInfo.queueOnHostProperties;
+            getQueueFamilyName(properties.name, CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL, engineGroupType);
             deviceInfo.queueFamilyProperties.push_back(properties);
         }
     }

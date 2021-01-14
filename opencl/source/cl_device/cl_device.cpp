@@ -12,6 +12,7 @@
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/sync_buffer_handler.h"
@@ -241,6 +242,33 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
         return getQueueFamilyCapabilitiesAll() & ~disabledProperties;
     }
     return CL_QUEUE_DEFAULT_CAPABILITIES_INTEL;
+}
+
+void ClDevice::getQueueFamilyName(char *outputName, size_t maxOutputNameLength, EngineGroupType type) {
+    std::string name{};
+
+    const auto &clHwHelper = ClHwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
+    const bool hasHwSpecificName = clHwHelper.getQueueFamilyName(name, type);
+
+    if (!hasHwSpecificName) {
+        switch (type) {
+        case EngineGroupType::RenderCompute:
+            name = "rcs";
+            break;
+        case EngineGroupType::Compute:
+            name = "ccs";
+            break;
+        case EngineGroupType::Copy:
+            name = "bcs";
+            break;
+        default:
+            name = "";
+            break;
+        }
+    }
+
+    UNRECOVERABLE_IF(name.length() > maxOutputNameLength + 1);
+    strncpy_s(outputName, maxOutputNameLength, name.c_str(), name.size());
 }
 
 } // namespace NEO

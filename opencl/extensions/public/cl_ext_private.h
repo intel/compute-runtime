@@ -178,8 +178,10 @@ using cl_unified_shared_memory_capabilities_intel = cl_bitfield;
 
 typedef cl_bitfield cl_command_queue_capabilities_intel;
 
+#define CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL 64
 typedef struct _cl_queue_family_properties_intel {
     cl_command_queue_properties properties;
     cl_command_queue_capabilities_intel capabilities;
     cl_uint count;
+    char name[CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL];
 } cl_queue_family_properties_intel;

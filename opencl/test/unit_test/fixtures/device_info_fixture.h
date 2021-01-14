@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,4 +36,19 @@ struct GetDeviceInfoMemCapabilitiesTest : ::testing::Test {
         }
     }
 };
+
+struct QueueFamilyNameTest : ::testing::Test {
+    void SetUp() override {
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    }
+
+    void verify(EngineGroupType type, const char *expectedName) {
+        char name[CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL];
+        device->getQueueFamilyName(name, sizeof(name), type);
+        EXPECT_EQ(0, std::strcmp(name, expectedName));
+    }
+
+    std::unique_ptr<MockClDevice> device = {};
+};
+
 } // namespace NEO

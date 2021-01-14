@@ -14,6 +14,7 @@
 #include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/platform/extensions.h"
+#include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
@@ -1491,4 +1492,20 @@ TEST_F(DeviceGetCapsTest, givenClDeviceWhenInitializingCapsThenUseGetQueueFamily
     device->queueCaps = CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL | CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL;
     device->initializeCaps();
     EXPECT_EQ(device->queueCaps, device->getDeviceInfo().queueFamilyProperties[0].capabilities);
+}
+
+HWTEST_F(QueueFamilyNameTest, givenCcsWhenGettingQueueFamilyNameThenReturnProperValue) {
+    verify(EngineGroupType::Compute, "ccs");
+}
+
+HWTEST_F(QueueFamilyNameTest, givenRcsWhenGettingQueueFamilyNameThenReturnProperValue) {
+    verify(EngineGroupType::RenderCompute, "rcs");
+}
+
+HWTEST_F(QueueFamilyNameTest, givenBcsWhenGettingQueueFamilyNameThenReturnProperValue) {
+    verify(EngineGroupType::Copy, "bcs");
+}
+
+HWTEST_F(QueueFamilyNameTest, givenInvalidEngineGroupWhenGettingQueueFamilyNameThenReturnEmptyName) {
+    verify(EngineGroupType::MaxEngineGroups, "");
 }

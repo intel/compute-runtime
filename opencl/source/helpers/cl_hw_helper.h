@@ -12,6 +12,8 @@
 #include "engine_group_types.h"
 #include "igfxfmid.h"
 
+#include <string>
+
 namespace NEO {
 
 class Context;
@@ -26,6 +28,7 @@ class ClHwHelper {
     virtual bool requiresAuxResolves(const KernelInfo &kernelInfo) const = 0;
     virtual bool allowRenderCompressionForContext(const HardwareInfo &hwInfo, const Context &context) const = 0;
     virtual cl_command_queue_capabilities_intel getAdditionalDisabledQueueFamilyCapabilities(EngineGroupType type) const = 0;
+    virtual bool getQueueFamilyName(std::string &name, EngineGroupType type) const = 0;
 
   protected:
     virtual bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const = 0;
@@ -45,6 +48,7 @@ class ClHwHelperHw : public ClHwHelper {
     bool requiresAuxResolves(const KernelInfo &kernelInfo) const override;
     bool allowRenderCompressionForContext(const HardwareInfo &hwInfo, const Context &context) const override;
     cl_command_queue_capabilities_intel getAdditionalDisabledQueueFamilyCapabilities(EngineGroupType type) const override;
+    bool getQueueFamilyName(std::string &name, EngineGroupType type) const override;
 
   protected:
     bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const override;

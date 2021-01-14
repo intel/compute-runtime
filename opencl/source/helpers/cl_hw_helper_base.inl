@@ -42,4 +42,9 @@ inline bool ClHwHelperHw<GfxFamily>::allowRenderCompressionForContext(const Hard
     return true;
 }
 
+template <typename GfxFamily>
+inline bool ClHwHelperHw<GfxFamily>::getQueueFamilyName(std::string &name, EngineGroupType type) const {
+    return false;
+}
+
 } // namespace NEO
