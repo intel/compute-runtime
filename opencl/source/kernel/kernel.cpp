@@ -42,6 +42,7 @@
 #include "opencl/source/kernel/image_transformer.h"
 #include "opencl/source/kernel/kernel.inl"
 #include "opencl/source/kernel/kernel_info_cl.h"
+#include "opencl/source/kernel/svm_object_arg.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/pipe.h"
@@ -101,11 +102,14 @@ Kernel::~Kernel() {
     }
 
     for (uint32_t i = 0; i < patchedArgumentsNum; i++) {
-        if (SAMPLER_OBJ == getKernelArguments()[i].type) {
-            auto sampler = castToObject<Sampler>(kernelArguments.at(i).object);
+        if (SAMPLER_OBJ == kernelArguments[i].type) {
+            auto sampler = castToObject<Sampler>(kernelArguments[i].object);
             if (sampler) {
                 sampler->decRefInternal();
             }
+        } else if (SVM_ALLOC_OBJ == kernelArguments[i].type) {
+            auto svmObjectArg = reinterpret_cast<SvmObjectArg *>(kernelArguments[i].object);
+            delete svmObjectArg;
         }
     }
 
@@ -375,6 +379,7 @@ cl_int Kernel::initialize() {
         }
         auto numArgs = kernelInfo.kernelArgInfo.size();
         kernelDeviceInfo.slmSizes.resize(numArgs);
+        kernelDeviceInfo.kernelArgRequiresCacheFlush.resize(numArgs);
         isDeviceInitialized.set(rootDeviceIndex);
     }
 
@@ -388,7 +393,6 @@ cl_int Kernel::initialize() {
     auto numArgs = defaultKernelInfo.kernelArgInfo.size();
     kernelArguments.resize(numArgs);
     kernelArgHandlers.resize(numArgs);
-    kernelArgRequiresCacheFlush.resize(numArgs);
 
     for (uint32_t i = 0; i < numArgs; ++i) {
         storeKernelArg(i, NONE_OBJ, nullptr, nullptr, 0);
@@ -452,11 +456,11 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
             break;
         case SVM_OBJ:
             setArgSvm(i, pSourceKernel->getKernelArgInfo(i).size, const_cast<void *>(pSourceKernel->getKernelArgInfo(i).value),
-                      pSourceKernel->getKernelArgInfo(i).pSvmAlloc, pSourceKernel->getKernelArgInfo(i).svmFlags);
+                      pSourceKernel->getKernelArgInfo(i).pSvmAllocs, pSourceKernel->getKernelArgInfo(i).svmFlags);
             break;
         case SVM_ALLOC_OBJ:
-            setArgSvmAlloc(i, const_cast<void *>(pSourceKernel->getKernelArgInfo(i).value),
-                           (GraphicsAllocation *)pSourceKernel->getKernelArgInfo(i).object);
+            setArgMultiDeviceSvmAlloc(i, const_cast<void *>(pSourceKernel->getKernelArgInfo(i).value),
+                                      reinterpret_cast<SvmObjectArg *>(pSourceKernel->getKernelArgInfo(i).object)->getMultiDeviceSvmAlloc());
             break;
         default:
             setArg(i, pSourceKernel->getKernelArgInfo(i).size, pSourceKernel->getKernelArgInfo(i).value);
@@ -926,36 +930,40 @@ void *Kernel::patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, Grap
     return ptrToPatch;
 }
 
-cl_int Kernel::setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, GraphicsAllocation *svmAlloc, cl_mem_flags svmFlags) {
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-    auto &kernelInfo = getKernelInfo(rootDeviceIndex);
-    void *ptrToPatch = patchBufferOffset(kernelInfo.kernelArgInfo[argIndex], svmPtr, svmAlloc, rootDeviceIndex);
+cl_int Kernel::setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, const MultiGraphicsAllocation *svmAllocs, cl_mem_flags svmFlags) {
     setArgImmediate(argIndex, sizeof(void *), &svmPtr);
+    storeKernelArg(argIndex, SVM_OBJ, nullptr, svmPtr, sizeof(void *), svmAllocs, svmFlags);
 
-    storeKernelArg(argIndex, SVM_OBJ, nullptr, svmPtr, sizeof(void *), svmAlloc, svmFlags);
+    std::bitset<64> isArgSet{};
 
-    if (requiresSshForBuffers(rootDeviceIndex)) {
-        const auto &kernelArgInfo = kernelInfo.kernelArgInfo[argIndex];
-        auto surfaceState = ptrOffset(getSurfaceStateHeap(rootDeviceIndex), kernelArgInfo.offsetHeap);
-        Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, false, false, svmAllocSize + ptrDiff(svmPtr, ptrToPatch), ptrToPatch, 0, svmAlloc, svmFlags, 0);
+    for (const auto &pClDevice : getDevices()) {
+        auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+        if (isArgSet.test(rootDeviceIndex)) {
+            continue;
+        }
+
+        auto svmAlloc = svmAllocs ? svmAllocs->getGraphicsAllocation(rootDeviceIndex) : nullptr;
+        auto &kernelInfo = getKernelInfo(rootDeviceIndex);
+        void *ptrToPatch = patchBufferOffset(kernelInfo.kernelArgInfo[argIndex], svmPtr, svmAlloc, rootDeviceIndex);
+
+        if (requiresSshForBuffers(rootDeviceIndex)) {
+            const auto &kernelArgInfo = kernelInfo.kernelArgInfo[argIndex];
+            auto surfaceState = ptrOffset(getSurfaceStateHeap(rootDeviceIndex), kernelArgInfo.offsetHeap);
+            Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, svmAllocSize + ptrDiff(svmPtr, ptrToPatch), ptrToPatch, 0, svmAlloc, svmFlags, 0);
+        }
+        addAllocationToCacheFlushVector(argIndex, svmAlloc, rootDeviceIndex);
+        isArgSet.set(rootDeviceIndex);
     }
     if (!kernelArguments[argIndex].isPatched) {
         patchedArgumentsNum++;
         kernelArguments[argIndex].isPatched = true;
     }
-    addAllocationToCacheFlushVector(argIndex, svmAlloc);
-
     return CL_SUCCESS;
 }
-
-cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc) {
-    DBG_LOG_INPUTS("setArgBuffer svm_alloc", svmAlloc);
-
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+void Kernel::setArgSvmAllocForSingleDevice(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc, const Device &device) {
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     auto &kernelInfo = getKernelInfo(rootDeviceIndex);
     const auto &kernelArgInfo = kernelInfo.kernelArgInfo[argIndex];
-
-    storeKernelArg(argIndex, SVM_ALLOC_OBJ, svmAlloc, svmPtr, sizeof(uintptr_t));
 
     void *ptrToPatch = patchBufferOffset(kernelArgInfo, svmPtr, svmAlloc, rootDeviceIndex);
 
@@ -991,27 +999,62 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
             offset = ptrDiff(ptrToPatch, svmAlloc->getGpuAddressToPatch());
             allocSize -= offset;
         }
-        Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, forceNonAuxMode, disableL3, allocSize, ptrToPatch, offset, svmAlloc, 0, 0);
+        Buffer::setSurfaceState(&device, surfaceState, forceNonAuxMode, disableL3, allocSize, ptrToPatch, offset, svmAlloc, 0, 0);
     }
+
+    addAllocationToCacheFlushVector(argIndex, svmAlloc, rootDeviceIndex);
+}
+cl_int Kernel::setArgMultiDeviceSvmAlloc(uint32_t argIndex, void *svmPtr, MultiGraphicsAllocation *svmAllocs) {
+    DBG_LOG_INPUTS("setArgMultiDeviceSvmAlloc svm_allocs", svmAllocs);
+    if (kernelArguments[argIndex].object) {
+        delete reinterpret_cast<SvmObjectArg *>(kernelArguments[argIndex].object);
+    }
+    storeKernelArg(argIndex, SVM_ALLOC_OBJ, new SvmObjectArg(svmAllocs), svmPtr, sizeof(uintptr_t));
+
+    std::bitset<64> isArgSet{};
+
+    for (const auto &pClDevice : getDevices()) {
+        auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+        if (isArgSet.test(rootDeviceIndex)) {
+            continue;
+        }
+        auto pSvmAlloc = svmAllocs ? svmAllocs->getGraphicsAllocation(rootDeviceIndex) : nullptr;
+        setArgSvmAllocForSingleDevice(argIndex, svmPtr, pSvmAlloc, pClDevice->getDevice());
+        isArgSet.set(rootDeviceIndex);
+    }
+    if (!kernelArguments[argIndex].isPatched) {
+        patchedArgumentsNum++;
+        kernelArguments[argIndex].isPatched = true;
+    }
+
+    return CL_SUCCESS;
+}
+
+cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc) {
+    DBG_LOG_INPUTS("setArgSvmAlloc svm_alloc", svmAlloc);
+    if (kernelArguments[argIndex].object && SVM_ALLOC_OBJ == kernelArguments[argIndex].type) {
+        delete reinterpret_cast<SvmObjectArg *>(kernelArguments[argIndex].object);
+    }
+    storeKernelArg(argIndex, SVM_ALLOC_OBJ, new SvmObjectArg(svmAlloc), svmPtr, sizeof(uintptr_t));
+
+    setArgSvmAllocForSingleDevice(argIndex, svmPtr, svmAlloc, getDevice().getDevice());
 
     if (!kernelArguments[argIndex].isPatched) {
         patchedArgumentsNum++;
         kernelArguments[argIndex].isPatched = true;
     }
 
-    addAllocationToCacheFlushVector(argIndex, svmAlloc);
-
     return CL_SUCCESS;
 }
 
 void Kernel::storeKernelArg(uint32_t argIndex, kernelArgType argType, void *argObject,
                             const void *argValue, size_t argSize,
-                            GraphicsAllocation *argSvmAlloc, cl_mem_flags argSvmFlags) {
+                            const MultiGraphicsAllocation *argSvmAllocs, cl_mem_flags argSvmFlags) {
     kernelArguments[argIndex].type = argType;
     kernelArguments[argIndex].object = argObject;
     kernelArguments[argIndex].value = argValue;
     kernelArguments[argIndex].size = argSize;
-    kernelArguments[argIndex].pSvmAlloc = argSvmAlloc;
+    kernelArguments[argIndex].pSvmAllocs = argSvmAllocs;
     kernelArguments[argIndex].svmFlags = argSvmFlags;
 }
 
@@ -1135,11 +1178,12 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
 }
 
 inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceiver) {
-    auto numArgs = kernelInfos[commandStreamReceiver.getRootDeviceIndex()]->kernelArgInfo.size();
+    auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
+    auto numArgs = kernelInfos[rootDeviceIndex]->kernelArgInfo.size();
     for (decltype(numArgs) argIndex = 0; argIndex < numArgs; argIndex++) {
         if (kernelArguments[argIndex].object) {
             if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
-                auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
+                auto pSVMAlloc = reinterpret_cast<SvmObjectArg *>(kernelArguments[argIndex].object)->getGraphicsAllocation(rootDeviceIndex);
                 auto pageFaultManager = executionEnvironment.memoryManager->getPageFaultManager();
                 if (pageFaultManager &&
                     this->isUnifiedMemorySyncRequired) {
@@ -1153,8 +1197,8 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
                 if (image && image->isImageFromImage()) {
                     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
                 }
-                memObj->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*executionEnvironment.memoryManager, commandStreamReceiver.getRootDeviceIndex());
-                commandStreamReceiver.makeResident(*memObj->getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex()));
+                memObj->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*executionEnvironment.memoryManager, rootDeviceIndex);
+                commandStreamReceiver.makeResident(*memObj->getGraphicsAllocation(rootDeviceIndex));
                 if (memObj->getMcsAllocation()) {
                     commandStreamReceiver.makeResident(*memObj->getMcsAllocation());
                 }
@@ -1326,7 +1370,7 @@ void Kernel::getResidency(std::vector<Surface *> &dst, uint32_t rootDeviceIndex)
     for (decltype(numArgs) argIndex = 0; argIndex < numArgs; argIndex++) {
         if (kernelArguments[argIndex].object) {
             if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
-                auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
+                auto pSVMAlloc = reinterpret_cast<SvmObjectArg *>(kernelArguments[argIndex].object)->getGraphicsAllocation(rootDeviceIndex);
                 dst.push_back(new GeneralSurface(pSVMAlloc));
             } else if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
                 auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
@@ -1351,8 +1395,7 @@ bool Kernel::requiresCoherency() {
     for (decltype(numArgs) argIndex = 0; argIndex < numArgs; argIndex++) {
         if (kernelArguments[argIndex].object) {
             if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
-                auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
-                if (pSVMAlloc->isCoherent()) {
+                if (reinterpret_cast<SvmObjectArg *>(kernelArguments[argIndex].object)->isCoherent()) {
                     return true;
                 }
             }
@@ -1501,7 +1544,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                 allocationForCacheFlush = nullptr;
             }
 
-            addAllocationToCacheFlushVector(argIndex, allocationForCacheFlush);
+            addAllocationToCacheFlushVector(argIndex, allocationForCacheFlush, rootDeviceIndex);
             isArgSet.set(rootDeviceIndex);
         }
         return CL_SUCCESS;
@@ -1646,7 +1689,7 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         patch<uint32_t, size_t>((imageDesc.image_height * pixelSize) - 1, crossThreadData, kernelArgInfo.offsetFlatHeight);
         patch<uint32_t, size_t>(imageDesc.image_row_pitch - 1, crossThreadData, kernelArgInfo.offsetFlatPitch);
 
-        addAllocationToCacheFlushVector(argIndex, graphicsAllocation);
+        addAllocationToCacheFlushVector(argIndex, graphicsAllocation, rootDeviceIndex);
         retVal = CL_SUCCESS;
     }
 
@@ -2587,7 +2630,7 @@ void Kernel::fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &ke
             }
         }
         if (SVM_ALLOC_OBJ == getKernelArguments().at(i).type && !kernelInfo.kernelArgInfo.at(i).pureStatefulBufferAccess) {
-            auto svmAlloc = reinterpret_cast<GraphicsAllocation *>(const_cast<void *>(getKernelArg(i)));
+            auto svmAlloc = reinterpret_cast<SvmObjectArg *>(kernelArguments[i].object)->getGraphicsAllocation(rootDeviceIndex);
             if (svmAlloc && svmAlloc->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
                 kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, svmAlloc});
                 auto &context = this->program->getContext();
@@ -2609,8 +2652,8 @@ bool Kernel::hasDirectStatelessAccessToHostMemory() const {
             }
         }
         if (SVM_ALLOC_OBJ == kernelArguments.at(i).type && !getDefaultKernelInfo().kernelArgInfo.at(i).pureStatefulBufferAccess) {
-            auto svmAlloc = reinterpret_cast<const GraphicsAllocation *>(getKernelArg(i));
-            if (svmAlloc && svmAlloc->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
+            auto svmObjectArg = reinterpret_cast<SvmObjectArg *>(kernelArguments[i].object);
+            if (svmObjectArg && svmObjectArg->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
                 return true;
             }
         }
@@ -2640,7 +2683,7 @@ void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out, uint32_t
     if (false == HwHelper::cacheFlushAfterWalkerSupported(getHardwareInfo(rootDeviceIndex))) {
         return;
     }
-    for (GraphicsAllocation *alloc : this->kernelArgRequiresCacheFlush) {
+    for (GraphicsAllocation *alloc : this->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush) {
         if (nullptr == alloc) {
             continue;
         }
@@ -2666,7 +2709,8 @@ bool Kernel::allocationForCacheFlush(GraphicsAllocation *argAllocation) const {
     return argAllocation->isFlushL3Required();
 }
 
-void Kernel::addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation) {
+void Kernel::addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation, uint32_t rootDeviceIndex) {
+    auto &kernelArgRequiresCacheFlush = kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush;
     if (argAllocation == nullptr) {
         kernelArgRequiresCacheFlush[argIndex] = nullptr;
     } else {

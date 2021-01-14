@@ -1151,10 +1151,12 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerDisabledWhenAllocationReq
     DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
 
     MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+
+    auto &kernelArgRequiresCacheFlush = kernel1.kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush;
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
-    kernel1.kernelArgRequiresCacheFlush.resize(1);
+    kernelArgRequiresCacheFlush.resize(1);
     MockGraphicsAllocation cacheRequiringAllocation;
-    kernel1.kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+    kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({&kernel1}));
     // create commandStream
@@ -1188,11 +1190,11 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenWalkerWithTwoK
     MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex));
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
-    kernel1.kernelArgRequiresCacheFlush.resize(1);
-    kernel2.kernelArgRequiresCacheFlush.resize(1);
+    kernel1.kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush.resize(1);
+    kernel2.kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush.resize(1);
     MockGraphicsAllocation cacheRequiringAllocation;
-    kernel1.kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
-    kernel2.kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+    kernel1.kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+    kernel2.kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({&kernel1, &kernel2}));
     // create commandStream
@@ -1226,11 +1228,11 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenTwoWalkersForQ
     MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex));
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
-    kernel1.kernelArgRequiresCacheFlush.resize(1);
-    kernel2.kernelArgRequiresCacheFlush.resize(1);
+    kernel1.kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush.resize(1);
+    kernel2.kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush.resize(1);
     MockGraphicsAllocation cacheRequiringAllocation;
-    kernel1.kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
-    kernel2.kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+    kernel1.kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+    kernel2.kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
 
     MockMultiDispatchInfo multiDispatchInfo1(pClDevice, std::vector<Kernel *>({&kernel1}));
     MockMultiDispatchInfo multiDispatchInfo2(pClDevice, std::vector<Kernel *>({&kernel2}));
