@@ -57,8 +57,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     UNRECOVERABLE_IF(kernel == nullptr);
     appendEventForProfiling(hEvent, true);
     const auto functionImmutableData = kernel->getImmutableData();
-    commandListPerThreadScratchSize = std::max<std::uint32_t>(commandListPerThreadScratchSize,
-                                                              kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
+    auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
+                                                        kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
+
+    this->setCommandListPerThreadScratchSize(perThreadScratchSize);
 
     auto kernelPreemptionMode = obtainFunctionPreemptionMode(kernel);
     commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);

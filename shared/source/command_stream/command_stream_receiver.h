@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -131,6 +131,7 @@ class CommandStreamReceiver {
     void overrideDispatchPolicy(DispatchMode overrideValue) { this->dispatchMode = overrideValue; }
 
     void setMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
+    bool getMediaVFEStateDirty() { return mediaVfeStateDirty; }
 
     void setRequiredScratchSizes(uint32_t newRequiredScratchSize, uint32_t newRequiredPrivateScratchSize);
     GraphicsAllocation *getScratchAllocation();

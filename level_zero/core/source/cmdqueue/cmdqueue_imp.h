@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,6 @@ struct CommandQueueImp : public CommandQueue {
     CommandQueueImp() = delete;
     CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
         : device(device), csr(csr), desc(*desc) {
-        std::atomic_init(&commandQueuePerThreadScratchSize, 0u);
     }
 
     ze_result_t destroy() override;
@@ -95,7 +94,6 @@ struct CommandQueueImp : public CommandQueue {
     std::atomic<uint32_t> taskCount{0};
     std::vector<Kernel *> printfFunctionContainer;
     bool gsbaInit = false;
-    bool frontEndInit = false;
     bool gpgpuEnabled = false;
     CommandBufferManager buffers;
     NEO::ResidencyContainer residencyContainer;

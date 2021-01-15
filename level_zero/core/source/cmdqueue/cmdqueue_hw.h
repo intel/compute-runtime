@@ -37,7 +37,7 @@ struct CommandQueueHw : public CommandQueueImp {
 
     void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream);
     size_t estimateStateBaseAddressCmdSize();
-    MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, NEO::LinearStream &commandStream);
+    MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream);
 
     size_t estimateFrontEndCmdSize();
     size_t estimatePipelineSelect();
@@ -46,7 +46,8 @@ struct CommandQueueHw : public CommandQueueImp {
     MOCKABLE_VIRTUAL void handleScratchSpace(NEO::ResidencyContainer &residency,
                                              NEO::HeapContainer &heapContainer,
                                              NEO::ScratchSpaceController *scratchController,
-                                             bool &gsbaState, bool &frontEndState);
+                                             bool &gsbaState, bool &frontEndState,
+                                             uint32_t perThreadScratchSpaceSize);
 };
 
 } // namespace L0

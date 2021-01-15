@@ -69,6 +69,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     removeHostPtrAllocations();
     commandContainer.reset();
     containsStatelessUncachedResource = false;
+    indirectAllocationsAllowed = false;
+    unifiedMemoryControls.indirectHostAllocationsAllowed = false;
+    unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
+    commandListPreemptionMode = device->getDevicePreemptionMode();
+    commandListPerThreadScratchSize = 0u;
 
     if (!isCopyOnly()) {
         if (!NEO::ApiSpecificConfig::getBindlessConfiguration()) {

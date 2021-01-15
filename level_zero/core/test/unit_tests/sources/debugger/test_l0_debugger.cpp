@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,12 +178,12 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsE
         GTEST_SKIP();
     }
 
-    commandQueue->commandQueuePerThreadScratchSize = 4096;
-
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+    CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(4096);
+
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);

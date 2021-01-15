@@ -17,7 +17,6 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/interlocked_max.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
@@ -118,6 +117,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     device->activateMetricGroups();
 
     size_t totalCmdBuffers = 0;
+    uint32_t perThreadScratchSpaceSize = 0;
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
 
@@ -140,7 +140,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             statePreemption = commandListPreemption;
         }
 
-        interlockedMax(commandQueuePerThreadScratchSize, commandList->getCommandListPerThreadScratchSize());
+        if (perThreadScratchSpaceSize < commandList->getCommandListPerThreadScratchSize()) {
+            perThreadScratchSpaceSize = commandList->getCommandListPerThreadScratchSize();
+        }
+
         if (commandList->getCommandListPerThreadScratchSize() != 0) {
             if (commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
                 heapContainer.push_back(commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
@@ -176,10 +179,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     handleScratchSpace(residencyContainer,
                        heapContainer,
                        scratchSpaceController,
-                       gsbaStateDirty, frontEndStateDirty);
+                       gsbaStateDirty, frontEndStateDirty,
+                       perThreadScratchSpaceSize);
 
     gsbaStateDirty |= !gsbaInit;
-    frontEndStateDirty |= !frontEndInit;
+    frontEndStateDirty |= csr->getMediaVFEStateDirty();
     if (!isCopyOnlyCommandQueue) {
 
         if (!gpgpuEnabled) {
@@ -225,7 +229,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         if (frontEndStateDirty) {
-            programFrontEnd(scratchSpaceController->getScratchPatchAddress(), child);
+            programFrontEnd(scratchSpaceController->getScratchPatchAddress(), scratchSpaceController->getPerThreadScratchSpaceSize(), child);
         }
         if (gsbaStateDirty) {
             auto indirectHeap = CommandList::fromHandle(phCommandLists[0])->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
@@ -372,18 +376,18 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, NEO::LinearStream &commandStream) {
+void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     UNRECOVERABLE_IF(csr == nullptr);
     NEO::PreambleHelper<GfxFamily>::programVFEState(&commandStream,
                                                     device->getHwInfo(),
-                                                    commandQueuePerThreadScratchSize,
+                                                    perThreadScratchSpaceSize,
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
                                                     csr->getOsContext().getEngineType(),
                                                     NEO::AdditionalKernelExecInfo::NotApplicable,
                                                     NEO::KernelExecutionType::NotApplicable);
-    frontEndInit = true;
+    csr->setMediaVFEStateDirty(false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

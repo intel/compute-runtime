@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,6 +191,69 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenExecutingCommandListsThenEndingPip
 
     uint64_t taskCountToWrite = neoDevice->getDefaultEngine().commandStreamReceiver->peekTaskCount();
     EXPECT_EQ(taskCountToWrite, taskCountToWriteCmd->getImmediateData());
+
+    commandQueue->destroy();
+}
+
+using CommandQueueExecuteSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsThenMVSIsProgrammedWithMaxPTSS, CommandQueueExecuteSupport) {
+    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+    using PARSE = typename FamilyType::PARSE;
+    ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+
+    CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(512u);
+    CommandList::fromHandle(commandLists[1])->setCommandListPerThreadScratchSize(1024u);
+
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1024u, neoDevice->getDefaultEngine().commandStreamReceiver->getScratchSpaceController()->getPerThreadScratchSpaceSize());
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList,
+                                          ptrOffset(commandQueue->commandStream->getCpuBase(), 0),
+                                          usedSpaceAfter));
+
+    auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
+    // We should have only 1 state added
+    ASSERT_EQ(1u, mediaVfeStates.size());
+
+    CommandList::fromHandle(commandLists[0])->reset();
+    CommandList::fromHandle(commandLists[1])->reset();
+    CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(2048u);
+    CommandList::fromHandle(commandLists[1])->setCommandListPerThreadScratchSize(1024u);
+
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+    usedSpaceBefore = commandQueue->commandStream->getUsed();
+
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2048u, neoDevice->getDefaultEngine().commandStreamReceiver->getScratchSpaceController()->getPerThreadScratchSpaceSize());
+
+    usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList1;
+    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList1,
+                                          ptrOffset(commandQueue->commandStream->getCpuBase(), 0),
+                                          usedSpaceAfter));
+
+    mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
+    // We should have 2 states added
+    ASSERT_EQ(2u, mediaVfeStates.size());
 
     commandQueue->destroy();
 }

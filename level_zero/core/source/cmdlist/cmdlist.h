@@ -147,6 +147,10 @@ struct CommandList : _ze_command_list_handle_t {
         return commandListPerThreadScratchSize;
     }
 
+    void setCommandListPerThreadScratchSize(uint32_t size) {
+        commandListPerThreadScratchSize = size;
+    }
+
     NEO::PreemptionMode getCommandListPreemptionMode() const {
         return commandListPreemptionMode;
     }
