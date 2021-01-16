@@ -208,7 +208,7 @@ TEST(ConstStringRefTruncated, GivenNegativeLengthThenCountFromRight) {
     EXPECT_EQ(7U, substr.length());
 }
 
-TEST(ConstStringRefEqualsCaseInsesitive, WhenSizesDifferReturnFalse) {
+TEST(ConstStringRefEqualsCaseInsesitive, WhenSizesDifferThenReturnFalse) {
     ConstStringRef lhs = ConstStringRef::fromArray("\0");
     ConstStringRef rhs = ConstStringRef::fromArray("\0\0");
     EXPECT_FALSE(equalsCaseInsensitive(lhs, rhs));
