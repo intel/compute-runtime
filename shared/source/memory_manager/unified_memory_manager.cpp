@@ -313,7 +313,12 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
             if (svmData->cpuAllocation) {
                 this->memoryManager->waitForEnginesCompletion(*svmData->cpuAllocation);
             }
-            this->memoryManager->waitForEnginesCompletion(*svmData->gpuAllocations.getDefaultGraphicsAllocation());
+
+            for (auto &gpuAllocation : svmData->gpuAllocations.getGraphicsAllocations()) {
+                if (gpuAllocation) {
+                    this->memoryManager->waitForEnginesCompletion(*gpuAllocation);
+                }
+            }
         }
 
         auto pageFaultManager = this->memoryManager->getPageFaultManager();

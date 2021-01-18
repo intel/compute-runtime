@@ -1117,3 +1117,37 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCal
     retVal = clMemFreeINTEL(context.get(), unifiedMemorySharedAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCalledWithoutDeviceInMultiRootDeviceEnvironmentThenItWaitsForAllGpuAllocations) {
+    mockMemoryManager->waitAllocations.reset(new MultiGraphicsAllocation(2u));
+
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(context.get(), nullptr, nullptr, 4, 0, &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    auto allocationsManager = context.get()->getSVMAllocsManager();
+
+    EXPECT_EQ(allocationsManager->getNumAllocs(), 1u);
+
+    auto svmAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
+    auto graphicsAllocation1 = svmAllocation->gpuAllocations.getGraphicsAllocation(1u);
+    auto graphicsAllocation2 = svmAllocation->gpuAllocations.getGraphicsAllocation(2u);
+
+    EXPECT_EQ(svmAllocation->size, 4u);
+
+    EXPECT_NE(graphicsAllocation1, nullptr);
+    EXPECT_NE(graphicsAllocation2, nullptr);
+
+    retVal = clMemBlockingFreeINTEL(context.get(), unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(mockMemoryManager->waitForEnginesCompletionCalled, 2u);
+    EXPECT_EQ(mockMemoryManager->waitAllocations.get()->getGraphicsAllocation(1u), graphicsAllocation1);
+    EXPECT_EQ(mockMemoryManager->waitAllocations.get()->getGraphicsAllocation(2u), graphicsAllocation2);
+
+    EXPECT_EQ(allocationsManager->getNumAllocs(), 0u);
+
+    svmAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
+    EXPECT_EQ(nullptr, svmAllocation);
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,6 +91,14 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         OsAgnosticMemoryManager::unlockResourceImpl(gfxAllocation);
     }
 
+    void waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) override {
+        waitForEnginesCompletionCalled++;
+        if (waitAllocations.get()) {
+            waitAllocations.get()->addAllocation(&graphicsAllocation);
+        }
+        MemoryManager::waitForEnginesCompletion(graphicsAllocation);
+    }
+
     void handleFenceCompletion(GraphicsAllocation *graphicsAllocation) override {
         handleFenceCompletionCalled++;
         OsAgnosticMemoryManager::handleFenceCompletion(graphicsAllocation);
@@ -114,6 +122,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
     uint32_t handleFenceCompletionCalled = 0u;
+    uint32_t waitForEnginesCompletionCalled = 0u;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;
     bool allocationInDevicePoolCreated = false;
@@ -130,6 +139,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool forceRenderCompressed = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
+    std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;
 };
 
 class GMockMemoryManager : public MockMemoryManager {
