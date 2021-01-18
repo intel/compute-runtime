@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,11 +93,7 @@ TEST(clGetSupportedImageFormatsTest, givenPlatformNotSupportingReadWriteImagesWh
         &numImageFormats);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    if (context->getDevice(0)->areOcl21FeaturesEnabled()) {
-        EXPECT_GT(numImageFormats, 0u);
-    } else {
-        EXPECT_EQ(0u, numImageFormats);
-    }
+    EXPECT_GT(numImageFormats, 0u);
 }
 
 TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageAndNullPointerToNumFormatsWhenGettingSupportImageFormatsThenCLSuccessReturned) {

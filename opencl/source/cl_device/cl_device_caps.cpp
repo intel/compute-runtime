@@ -255,7 +255,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.nativeVectorWidthFloat = 1;
     deviceInfo.nativeVectorWidthDouble = 1;
     deviceInfo.nativeVectorWidthHalf = 8;
-    deviceInfo.maxReadWriteImageArgs = ocl21FeaturesEnabled ? 128 : 0;
+    deviceInfo.maxReadWriteImageArgs = hwInfo.capabilityTable.supportsImages ? 128 : 0;
     deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
 
     //copy system info to prevent misaligned reads

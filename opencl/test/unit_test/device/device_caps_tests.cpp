@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -170,7 +170,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 
     EXPECT_LE(128u, sharedCaps.maxReadImageArgs);
     EXPECT_LE(128u, sharedCaps.maxWriteImageArgs);
-    if (device->areOcl21FeaturesEnabled()) {
+    if (defaultHwInfo->capabilityTable.supportsImages) {
         EXPECT_EQ(128u, caps.maxReadWriteImageArgs);
     } else {
         EXPECT_EQ(0u, caps.maxReadWriteImageArgs);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -314,13 +314,6 @@ cl_int Context::getSupportedImageFormats(
     cl_image_format *imageFormats,
     cl_uint *numImageFormatsReturned) {
     size_t numImageFormats = 0;
-
-    if (isValueSet(CL_MEM_KERNEL_READ_AND_WRITE, flags) && device->getSpecializedDevice<ClDevice>()->areOcl21FeaturesEnabled() == false) {
-        if (numImageFormatsReturned) {
-            *numImageFormatsReturned = static_cast<cl_uint>(numImageFormats);
-        }
-        return CL_SUCCESS;
-    }
 
     const bool nv12ExtensionEnabled = device->getSpecializedDevice<ClDevice>()->getDeviceInfo().nv12Extension;
     const bool packedYuvExtensionEnabled = device->getSpecializedDevice<ClDevice>()->getDeviceInfo().packedYuvExtension;
