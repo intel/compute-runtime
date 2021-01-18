@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,12 +11,12 @@
 
 #include "test.h"
 
-TEST(IsDeviceBinaryFormatPatchtokens, GivenValidBinaryReturnTrue) {
+TEST(IsDeviceBinaryFormatPatchtokens, GivenValidBinaryThenReturnTrue) {
     PatchTokensTestData::ValidProgramWithKernel programTokens;
     EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Patchtokens>(programTokens.storage));
 }
 
-TEST(IsDeviceBinaryFormatPatchtokens, GivenInvalidBinaryReturnFalse) {
+TEST(IsDeviceBinaryFormatPatchtokens, GivenInvalidBinaryThenReturnFalse) {
     const uint8_t binary[] = "not_patchtokens";
     EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Patchtokens>(binary));
 }

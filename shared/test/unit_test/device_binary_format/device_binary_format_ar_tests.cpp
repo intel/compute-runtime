@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,12 @@
 
 #include "test.h"
 
-TEST(IsDeviceBinaryFormatAr, GivenValidBinaryReturnTrue) {
+TEST(IsDeviceBinaryFormatAr, GivenValidBinaryThenReturnTrue) {
     auto emptyArchive = ArrayRef<const uint8_t>::fromAny(NEO::Ar::arMagic.begin(), NEO::Ar::arMagic.size());
     EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Archive>(emptyArchive));
 }
 
-TEST(IsDeviceBinaryFormatAr, GivenInvalidBinaryReturnTrue) {
+TEST(IsDeviceBinaryFormatAr, GivenInvalidBinaryThenReturnTrue) {
     const uint8_t binary[] = "not_ar";
     EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Archive>(binary));
 }

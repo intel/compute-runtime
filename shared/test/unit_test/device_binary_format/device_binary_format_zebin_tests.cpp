@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,13 +12,13 @@
 
 #include "test.h"
 
-TEST(IsDeviceBinaryFormatZebin, GivenValidBinaryReturnTrue) {
+TEST(IsDeviceBinaryFormatZebin, GivenValidBinaryThenReturnTrue) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Elf::ET_ZEBIN_EXE;
     EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U)));
 }
 
-TEST(IsDeviceBinaryFormatZebin, GivenInvalidBinaryReturnFalse) {
+TEST(IsDeviceBinaryFormatZebin, GivenInvalidBinaryThenReturnFalse) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> someElf;
     EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&someElf, 1U)));
 }

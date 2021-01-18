@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,20 +47,20 @@ TEST(ArDecoderIsStringPadding, GivenCharacterThenReturnsTrueOnlyIfArStringPaddin
     EXPECT_FALSE(isStringPadding('a'));
 }
 
-TEST(ArDecoderReadUnpaddedString, GivenPaddedStringTheReturnsUnpaddedStringPart) {
+TEST(ArDecoderReadUnpaddedString, GivenPaddedStringThenReturnUnpaddedStringPart) {
     const char paddedString[] = "abcd/   \0";
     auto unpadded = readUnpaddedString<sizeof(paddedString)>(paddedString);
     EXPECT_EQ(paddedString, unpadded.begin());
     EXPECT_EQ(4U, unpadded.size());
 }
 
-TEST(ArDecoderReadUnpaddedString, GivenEmptyPaddedStringTheReturnsEmptyString) {
+TEST(ArDecoderReadUnpaddedString, GivenEmptyPaddedStringThenReturnEmptyString) {
     const char paddedString[] = "//   \0";
     auto unpadded = readUnpaddedString<sizeof(paddedString)>(paddedString);
     EXPECT_TRUE(unpadded.empty());
 }
 
-TEST(ArDecoderReadUnpaddedString, GivenUnpaddedStringTheReturnsDataInBounds) {
+TEST(ArDecoderReadUnpaddedString, GivenUnpaddedStringThenReturnDataInBounds) {
     const char paddedString[] = "abcdefgh";
     auto unpadded = readUnpaddedString<3>(paddedString);
     EXPECT_EQ(paddedString, unpadded.begin());

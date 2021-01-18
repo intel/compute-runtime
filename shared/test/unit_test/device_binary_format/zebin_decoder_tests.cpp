@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1977,7 +1977,7 @@ kernels:
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected exactly 1 of name section, got : 0\nDeviceBinaryFormat::Zebin : Expected exactly 1 of execution_env section, got : 0\n", decodeErrors.c_str());
 }
 
-TEST(PopulateKernelDescriptor, GivenInvalidExecutionEnvironmentThanFails) {
+TEST(PopulateKernelDescriptor, GivenInvalidExecutionEnvironmentThenFail) {
     NEO::ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
