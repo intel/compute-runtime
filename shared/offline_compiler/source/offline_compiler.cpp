@@ -394,8 +394,6 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     if (deviceName.empty()) {
         internalOptions = CompilerOptions::concatenate("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes", internalOptions);
     } else {
-        auto oclVersion = getOclVersionCompilerInternalOption(hwInfo.capabilityTable.clVersionSupport);
-
         std::string extensionsList = getExtensionsList(hwInfo);
         if (requiresAdditionalExtensions(options)) {
             extensionsList += "cl_khr_3d_image_writes ";
@@ -404,8 +402,14 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         if (requiresOpenClCFeatures(options)) {
             getOpenclCFeaturesList(hwInfo, openclCFeatures);
         }
+
         auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);
+        auto oclVersion = getOclVersionCompilerInternalOption(hwInfo.capabilityTable.clVersionSupport);
         internalOptions = CompilerOptions::concatenate(oclVersion, compilerExtensions, internalOptions);
+
+        if (hwInfo.capabilityTable.supportsImages) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
+        }
     }
 
     parseDebugSettings();

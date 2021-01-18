@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,9 +93,14 @@ void Program::initInternalOptions(std::string &internalOptions) const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
     }
 
-    auto &hwHelper = HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.isForceEmuInt32DivRemSPWARequired(pClDevice->getHardwareInfo())) {
+    auto &hwInfo = pClDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (hwHelper.isForceEmuInt32DivRemSPWARequired(hwInfo)) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
+    }
+
+    if (hwInfo.capabilityTable.supportsImages) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
     }
 
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);

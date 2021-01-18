@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ static constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-s
 static constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
 static constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
 static constexpr ConstStringRef allowZebin = "-allow-zebin";
+static constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
 
 constexpr size_t nullterminateSize = 1U;
 constexpr size_t spaceSeparatorSize = 1U;

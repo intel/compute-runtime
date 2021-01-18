@@ -279,6 +279,12 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
                 EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr(std::string{feature.name})));
             }
         }
+
+        if (DEFAULT_PLATFORM::hwInfo.capabilityTable.supportsImages) {
+            EXPECT_THAT(internalOptions, ::testing::HasSubstr(CompilerOptions::enableImageSupport.data()));
+        } else {
+            EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr(CompilerOptions::enableImageSupport.data())));
+        }
     }
 }
 

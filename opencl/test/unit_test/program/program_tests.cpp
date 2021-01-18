@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2220,6 +2220,20 @@ TEST_F(ProgramTests, givenNewProgramThenStatelessToStatefulBufferOffsetOptimizat
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));
     } else {
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::hasBufferOffsetArg));
+    }
+}
+
+TEST(ProgramTest, givenImagesSupportedWhenCreatingProgramThenInternalOptionsAreCorrectlyInitialized) {
+    VariableBackup<bool> supportsImagesCapability{&defaultHwInfo->capabilityTable.supportsImages};
+
+    for (auto areImagesSupported : ::testing::Bool()) {
+        supportsImagesCapability = areImagesSupported;
+        UltClDeviceFactory clDeviceFactory{1, 0};
+        MockContext context{clDeviceFactory.rootDevices[0]};
+        MockProgram program(&context, false, toClDeviceVector(*clDeviceFactory.rootDevices[0]));
+
+        auto internalOptions = program.getInitInternalOptions();
+        EXPECT_EQ(areImagesSupported, CompilerOptions::contains(internalOptions, CompilerOptions::enableImageSupport));
     }
 }
 
