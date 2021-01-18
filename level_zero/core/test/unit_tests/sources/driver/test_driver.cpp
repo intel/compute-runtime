@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/test/unit_test/mocks/ult_device_factory.h"
 
 #include "opencl/test/unit_test/mocks/mock_io_functions.h"
@@ -329,24 +330,12 @@ struct MaskArray {
 struct DriverTestMultipleDeviceWithAffinityMask : public ::testing::WithParamInterface<std::tuple<std::string, std::string>>,
                                                   public ::testing::Test {
     void SetUp() override {
+        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
-
-        NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
-        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
-        }
-
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            devices.push_back(std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(
-                NEO::defaultHwInfo.get(),
-                executionEnvironment, i)));
-        }
     }
 
     DebugManagerStateRestore restorer;
-    std::vector<std::unique_ptr<NEO::Device>> devices;
 
     const uint32_t numRootDevices = 2u;
     const uint32_t numSubDevices = 4u;
@@ -354,17 +343,20 @@ struct DriverTestMultipleDeviceWithAffinityMask : public ::testing::WithParamInt
 
 TEST_P(DriverTestMultipleDeviceWithAffinityMask,
        whenSettingAffinityMaskToRetrieveOneSubDeviceOnEachDeviceThenCorrectDevicesAreExposed) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
     L0::DriverHandleImp *driverHandle = new DriverHandleImp;
 
     std::string subDevice0String = std::get<0>(GetParam());
-    uint32_t subDevice0Index = std::stoi(subDevice0String, nullptr, 0);
-
     std::string subDevice1String = std::get<1>(GetParam());
-    uint32_t subDevice1Index = std::stoi(subDevice1String, nullptr, 0);
 
     constexpr uint32_t totalRootDevices = 2;
 
-    driverHandle->affinityMaskString = "0." + subDevice0String + "," + "1." + subDevice1String;
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0." + subDevice0String + "," + "1." + subDevice1String);
+
+    NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
+    auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -396,11 +388,7 @@ TEST_P(DriverTestMultipleDeviceWithAffinityMask,
 
         DeviceImp *subDevice = reinterpret_cast<DeviceImp *>(L0::Device::fromHandle(hSubDevice));
 
-        if (i == 0) {
-            EXPECT_EQ(subDevice->neoDevice, device->neoDevice->getDeviceById(subDevice0Index));
-        } else {
-            EXPECT_EQ(subDevice->neoDevice, device->neoDevice->getDeviceById(subDevice1Index));
-        }
+        EXPECT_EQ(subDevice->neoDevice, device->neoDevice->getDeviceById(0u));
     }
 
     delete driverHandle;
@@ -409,14 +397,19 @@ TEST_P(DriverTestMultipleDeviceWithAffinityMask,
 
 TEST_P(DriverTestMultipleDeviceWithAffinityMask,
        whenSettingAffinityMaskToRetrieveAllDevicesInOneDeviceAndOneSubDeviceInOtherThenCorrectDevicesAreExposed) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
     L0::DriverHandleImp *driverHandle = new DriverHandleImp;
 
     std::string subDevice1String = std::get<1>(GetParam());
-    uint32_t subDevice1Index = std::stoi(subDevice1String, nullptr, 0);
 
     constexpr uint32_t totalRootDevices = 2;
 
-    driverHandle->affinityMaskString = "0,1." + subDevice1String;
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0,1." + subDevice1String);
+
+    NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
+    auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -450,7 +443,7 @@ TEST_P(DriverTestMultipleDeviceWithAffinityMask,
             DeviceImp *subDevice = reinterpret_cast<DeviceImp *>(L0::Device::fromHandle(hSubDevice));
 
             EXPECT_EQ(1u, subDeviceCount);
-            EXPECT_EQ(subDevice->neoDevice, device->neoDevice->getDeviceById(subDevice1Index));
+            EXPECT_EQ(subDevice->neoDevice, device->neoDevice->getDeviceById(0u));
         }
     }
 
@@ -467,11 +460,17 @@ INSTANTIATE_TEST_SUITE_P(DriverTestMultipleDeviceWithAffinityMaskTests,
 
 TEST_F(DriverTestMultipleDeviceWithAffinityMask,
        whenSettingAffinityMaskWithDeviceLargerThanAvailableDevicesThenRootDeviceValueIsIgnored) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
     L0::DriverHandleImp *driverHandle = new DriverHandleImp;
 
     constexpr uint32_t totalRootDevices = 2;
     uint32_t subDevice1Index = 0;
-    driverHandle->affinityMaskString = "0,23,1." + std::to_string(subDevice1Index);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0,23,1." + std::to_string(subDevice1Index));
+
+    NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
+    auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -515,9 +514,15 @@ TEST_F(DriverTestMultipleDeviceWithAffinityMask,
 
 TEST_F(DriverTestMultipleDeviceWithAffinityMask,
        whenSettingAffinityMaskWithSubDeviceLargerThanAvailableSubDevicesThenSubDeviceValueIsIgnored) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
     L0::DriverHandleImp *driverHandle = new DriverHandleImp;
 
-    driverHandle->affinityMaskString = "0,1.77";
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.77");
+
+    NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
+    auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

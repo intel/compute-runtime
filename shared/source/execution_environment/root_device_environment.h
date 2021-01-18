@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,8 @@ class HwDeviceId;
 class MemoryOperationsHandler;
 class OSInterface;
 struct HardwareInfo;
+
+constexpr uint32_t allDevicesActive = std::numeric_limits<uint32_t>::max();
 
 struct RootDeviceEnvironment {
   protected:
@@ -61,6 +63,8 @@ struct RootDeviceEnvironment {
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<Debugger> debugger;
     ExecutionEnvironment &executionEnvironment;
+
+    uint32_t deviceAffinityMask = allDevicesActive;
 
   private:
     std::mutex mtx;

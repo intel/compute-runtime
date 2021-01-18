@@ -12,6 +12,8 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/ult_hw_config.h"
+#include "shared/test/unit_test/helpers/variable_backup.h"
 #include "shared/test/unit_test/mocks/ult_device_factory.h"
 
 #include "opencl/source/platform/platform.h"
@@ -92,6 +94,67 @@ TEST_F(DeviceFactoryTest, WhenOverridingUsingDebugManagerThenOverridesAreApplied
               hwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
     EXPECT_EQ(refDelayQuickKmdSleepForSporadicWaitsMicroseconds + 12,
               hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
+}
+
+TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(5);
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("1.0,2.3,2.1,1.3,0,2.0,4.0,4.2,4.3,4.1");
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
+    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+
+    EXPECT_EQ(devices.size(), 4u);
+    EXPECT_EQ(devices[0]->getNumAvailableDevices(), 4u);
+    EXPECT_EQ(devices[1]->getNumAvailableDevices(), 2u);
+    EXPECT_EQ(devices[2]->getNumAvailableDevices(), 3u);
+    EXPECT_EQ(devices[3]->getNumAvailableDevices(), 4u);
+}
+
+TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterRootDeviceThanAvailableWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0,92,1.1");
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
+    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+
+    EXPECT_EQ(devices.size(), 2u);
+    EXPECT_EQ(devices[0]->getNumAvailableDevices(), 4u);
+    EXPECT_EQ(devices[1]->getNumAvailableDevices(), 1u);
+}
+
+TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterSubDeviceThanAvailableWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.54");
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
+    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+
+    EXPECT_EQ(devices.size(), 1u);
+    EXPECT_EQ(devices[0]->getNumAvailableDevices(), 4u);
+}
+
+TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToRootDevicesOnlyWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0,1");
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
+    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+
+    EXPECT_EQ(devices.size(), 2u);
+    EXPECT_EQ(devices[0]->getNumAvailableDevices(), 4u);
+    EXPECT_EQ(devices[1]->getNumAvailableDevices(), 4u);
 }
 
 TEST_F(DeviceFactoryTest, WhenOverridingEngineTypeThenDebugEngineIsReported) {
