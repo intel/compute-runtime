@@ -17,7 +17,7 @@ namespace ult {
 using EventPoolCreate = Test<DeviceFixture>;
 using EventCreate = Test<DeviceFixture>;
 
-TEST_F(EventPoolCreate, allocationContainsAtLeast16Bytes) {
+TEST_F(EventPoolCreate, GivenEventPoolThenAllocationContainsAtLeast16Bytes) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
         nullptr,
@@ -116,7 +116,7 @@ TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErro
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, value);
 }
 
-TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithNoDevice) {
+TEST_F(EventPoolCreate, GivenNoDeviceThenEventPoolIsCreated) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
         nullptr,
@@ -129,7 +129,7 @@ TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithNoDevice) {
     eventPool->destroy();
 }
 
-TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithDevice) {
+TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
         nullptr,
