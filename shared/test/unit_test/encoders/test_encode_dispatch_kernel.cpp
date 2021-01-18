@@ -29,7 +29,7 @@ using namespace NEO;
 
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
-TEST_F(CommandEncodeStatesTest, givenDefaultCommandConatinerGetNumIddsInBlock) {
+TEST_F(CommandEncodeStatesTest, givenDefaultCommandContainerWhenGettingNumIddPerBlockThen64IsReturned) {
     auto numIdds = cmdContainer->getNumIddPerBlock();
     EXPECT_EQ(64u, numIdds);
 }
