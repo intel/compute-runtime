@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,7 +154,7 @@ TEST(AlignWholeSize, GivenSizeOneLessThanTwoPageSizeAndUnalignedPointerWhenAlign
     auto retSize = alignSizeWholePage(ptrNotAlignedToPage, size);
     EXPECT_EQ(retSize, 4096u * 2);
 }
-TEST(AlignWholeSize, allocationOverlapsToAnotherPage) {
+TEST(AlignWholeSize, GivenNonAlignedPointerThenAllocationOverlapsToAnotherPage) {
 
     int size = 4096;
     auto retSize = alignSizeWholePage(ptrNotAlignedToPage, size);

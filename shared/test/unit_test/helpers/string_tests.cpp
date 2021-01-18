@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 #if defined(__linux__)
 
-TEST(StringHelpers, strncpy) {
+TEST(StringHelpers, GivenParamsWhenUsingStrncpyThenReturnIsCorrect) {
     char dst[1024] = "";
     char src[1024] = "HelloWorld";
 
@@ -50,7 +50,7 @@ TEST(StringHelpers, strncpy) {
         EXPECT_EQ(0, dst[i]);
 }
 
-TEST(StringHelpers, memmove) {
+TEST(StringHelpers, GivenParamsWhenUsingMemmoveThenReturnIsCorrect) {
     char dst[1024] = "";
     char src[1024] = "HelloWorld";
 
@@ -71,7 +71,7 @@ TEST(StringHelpers, memmove) {
     EXPECT_EQ(0, memcmp(dst, src, sizeof(dst)));
 }
 
-TEST(StringHelpers, strcpy) {
+TEST(StringHelpers, GivenParamsWhenUsingStrcpyThenReturnIsCorrect) {
     char dst[1024] = "";
     char src[1024] = "HelloWorld";
 
@@ -108,7 +108,7 @@ TEST(StringHelpers, strcpy) {
         EXPECT_EQ(pattern, dst[i]);
 }
 
-TEST(StringHelpers, strnlen) {
+TEST(StringHelpers, GivenParamsWhenUsingStrnlenThenReturnIsCorrect) {
     char src[1024] = "HelloWorld";
 
     auto ret = strnlen_s(nullptr, sizeof(src));
@@ -121,7 +121,7 @@ TEST(StringHelpers, strnlen) {
     EXPECT_EQ(ret, strlen(src));
 }
 
-TEST(StringHelpers, memcpy) {
+TEST(StringHelpers, GivenParamsWhenUsingMemcpyThenReturnIsCorrect) {
     char dst[1024] = "";
     char src[1024] = "HelloWorld";
 

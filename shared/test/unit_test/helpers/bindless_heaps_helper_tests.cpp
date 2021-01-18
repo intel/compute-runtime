@@ -86,7 +86,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocateSsInHeapTwic
     EXPECT_NE(ssInHeapInfo1.surfaceStateOffset, ssInHeapInfo2.surfaceStateOffset);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocateMoreSsThanNewHeapAllocationCreated) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocatingMoreSsThenNewHeapAllocationCreated) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     size_t ssSize = 0x40;
     auto ssCount = bindlessHeapHelper->globalSsh->getAvailableSpace() / ssSize;
