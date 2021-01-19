@@ -52,20 +52,6 @@ TEST_F(ContextCommandListCreate, whenCreatingCommandListImmediateFromContextThen
 
 using CommandListCreate = Test<DeviceFixture>;
 
-TEST(zeCommandListCreateImmediate, DISABLED_redirectsToObject) {
-    Mock<Device> device;
-    Mock<Context> context;
-    ze_command_queue_desc_t desc = {};
-    ze_command_list_handle_t commandList = {};
-
-    EXPECT_CALL(device, createCommandListImmediate(&desc, &commandList))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-
-    auto result = zeCommandListCreateImmediate(context.toHandle(), device.toHandle(), &desc, &commandList);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
 TEST_F(CommandListCreate, whenCommandListIsCreatediWithInvalidProductFamilyThenFailureIsReturned) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(PRODUCT_FAMILY::IGFX_MAX_PRODUCT, device, NEO::EngineGroupType::RenderCompute, returnValue));
