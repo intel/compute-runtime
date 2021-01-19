@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,10 +51,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     dc.srcOffset = srcOrigin;
     dc.dstOffset = dstOrigin;
     dc.size = region;
-    if (srcImage->getImageDesc().num_mip_levels > 0) {
+    if (isMipMapped(srcImage->getImageDesc())) {
         dc.srcMipLevel = findMipLevel(srcImage->getImageDesc().image_type, srcOrigin);
     }
-    if (dstImage->getImageDesc().num_mip_levels > 0) {
+    if (isMipMapped(dstImage->getImageDesc())) {
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, dstOrigin);
     }
 

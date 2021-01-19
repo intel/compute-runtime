@@ -11,6 +11,7 @@
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/enqueue_write_image_fixture.h"
+#include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
@@ -571,4 +572,25 @@ HWTEST_F(NegativeFailAllocationTest, givenEnqueueReadImageWhenHostPtrAllocationC
                                      nullptr);
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+}
+
+using OneMipLevelWriteImageTests = Test<OneMipLevelImageFixture>;
+
+HWTEST_F(OneMipLevelWriteImageTests, GivenNotMippedImageWhenWritingImageThenDoNotProgramDestinationMipLevel) {
+    auto queue = createQueue<FamilyType>();
+    auto retVal = queue->enqueueWriteImage(
+        image.get(),
+        CL_TRUE,
+        origin,
+        region,
+        0,
+        0,
+        cpuPtr,
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(builtinOpsParamsCaptured);
+    EXPECT_EQ(0u, usedBuiltinOpsParams.dstMipLevel);
 }

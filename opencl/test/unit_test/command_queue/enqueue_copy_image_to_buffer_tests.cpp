@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/enqueue_copy_image_to_buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
@@ -333,4 +334,24 @@ HWTEST_F(EnqueueCopyImageToBufferStatefulTest, givenBufferWhenCopyingImageToBuff
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+using OneMipLevelCopyImageToBufferImageTests = Test<OneMipLevelImageFixture>;
+
+HWTEST_F(OneMipLevelCopyImageToBufferImageTests, GivenNotMippedImageWhenCopyingImageToBufferThenDoNotProgramSourceMipLevel) {
+    auto dstBuffer = std::unique_ptr<Buffer>(createBuffer());
+    auto queue = createQueue<FamilyType>();
+    auto retVal = queue->enqueueCopyImageToBuffer(
+        image.get(),
+        dstBuffer.get(),
+        origin,
+        region,
+        0u,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(builtinOpsParamsCaptured);
+    EXPECT_EQ(0u, usedBuiltinOpsParams.srcMipLevel);
 }
