@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,11 +210,20 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
     return nullptr;
 }
 
-bool VASurface::isSupportedFourCC(int fourcc) {
+bool VASurface::isSupportedFourCCTwoPlaneFormat(int fourcc) {
     if ((fourcc == VA_FOURCC_NV12) ||
-        (DebugManager.flags.EnableExtendedVaFormats.get() && fourcc == VA_FOURCC_P010)) {
+        (fourcc == VA_FOURCC_P010) ||
+        (fourcc == VA_FOURCC_P016)) {
         return true;
     }
     return false;
 }
+
+bool VASurface::isSupportedFourCCThreePlaneFormat(int fourcc) {
+    if (DebugManager.flags.EnableExtendedVaFormats.get() && fourcc == VA_FOURCC_RGBP) {
+        return true;
+    }
+    return false;
+}
+
 } // namespace NEO

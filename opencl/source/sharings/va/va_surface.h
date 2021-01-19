@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,8 @@ class VASurface : VASharing {
 
     static bool validate(cl_mem_flags flags, cl_uint plane);
     static const ClSurfaceFormatInfo *getExtendedSurfaceFormatInfo(uint32_t formatFourCC);
-    static bool isSupportedFourCC(int fourcc);
+    static bool isSupportedFourCCTwoPlaneFormat(int fourcc);
+    static bool isSupportedFourCCThreePlaneFormat(int fourcc);
 
   protected:
     VASurface(VASharingFunctions *sharingFunctions, VAImageID imageId,
