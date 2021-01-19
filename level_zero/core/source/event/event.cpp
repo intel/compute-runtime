@@ -172,13 +172,13 @@ ze_result_t EventImp::calculateProfilingData() {
 
 void EventImp::assignTimestampData(void *address) {
     auto baseAddr = reinterpret_cast<uint64_t>(address);
+    uint32_t packetsToCopy = packetsInUse ? packetsInUse : NEO::TimestampPacketSizeControl::preferredPacketCount;
 
     auto copyData = [&](uint32_t &timestampField, auto tsAddr) {
         memcpy_s(static_cast<void *>(&timestampField), sizeof(uint32_t), reinterpret_cast<void *>(tsAddr), sizeof(uint32_t));
     };
 
-    for (uint32_t i = 0; i < packetsInUse; i++) {
-
+    for (uint32_t i = 0; i < packetsToCopy; i++) {
         auto &packet = timestampsData->packets[i];
         copyData(packet.globalStart, baseAddr + offsetof(TimestampPacketStorage::Packet, globalStart));
         copyData(packet.contextStart, baseAddr + offsetof(TimestampPacketStorage::Packet, contextStart));
@@ -223,10 +223,14 @@ ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
         }
     };
 
-    eventTsSetFunc(baseAddr + offsetof(TimestampPacketStorage::Packet, contextStart));
-    eventTsSetFunc(baseAddr + offsetof(TimestampPacketStorage::Packet, globalStart));
-    eventTsSetFunc(baseAddr + offsetof(TimestampPacketStorage::Packet, contextEnd));
-    eventTsSetFunc(baseAddr + offsetof(TimestampPacketStorage::Packet, globalEnd));
+    for (uint32_t i = 0; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
+        eventTsSetFunc(baseAddr + offsetof(TimestampPacketStorage::Packet, contextStart));
+        eventTsSetFunc(baseAddr + offsetof(TimestampPacketStorage::Packet, globalStart));
+        eventTsSetFunc(baseAddr + offsetof(TimestampPacketStorage::Packet, contextEnd));
+        eventTsSetFunc(baseAddr + offsetof(TimestampPacketStorage::Packet, globalEnd));
+        baseAddr += sizeof(struct TimestampPacketStorage::Packet);
+    }
+    assignTimestampData(hostAddress);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -288,6 +292,7 @@ ze_result_t EventImp::hostSynchronize(uint64_t timeout) {
 }
 
 ze_result_t EventImp::reset() {
+    resetPackets();
     return hostEventSetValue(Event::STATE_INITIAL);
 }
 

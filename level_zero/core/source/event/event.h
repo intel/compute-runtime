@@ -54,7 +54,7 @@ struct Event : _ze_event_handle_t {
 
     void *hostAddress = nullptr;
     uint64_t gpuAddress;
-    uint32_t packetsInUse = 0;
+    uint32_t packetsInUse;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
@@ -157,8 +157,8 @@ struct EventPoolImp : public EventPool {
     size_t numEvents;
 
   protected:
-    const uint32_t eventSize = static_cast<uint32_t>(NEO::TimestampPacketSizeControl::preferredPacketCount * alignUp(sizeof(struct TimestampPacketStorage::Packet),
-                                                                                                                     MemoryConstants::cacheLineSize));
+    const uint32_t eventSize = static_cast<uint32_t>(alignUp(NEO::TimestampPacketSizeControl::preferredPacketCount * sizeof(struct TimestampPacketStorage::Packet),
+                                                             MemoryConstants::cacheLineSize));
     const uint32_t eventAlignment = MemoryConstants::cacheLineSize;
 };
 

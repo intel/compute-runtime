@@ -42,9 +42,8 @@ TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelT
 
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
-
-    uint32_t kernelTimestampsSize = static_cast<uint32_t>(NEO::TimestampPacketSizeControl::preferredPacketCount *
-                                                          alignUp(sizeof(struct TimestampPacketStorage::Packet), MemoryConstants::cacheLineSize));
+    uint32_t packetsSize = NEO::TimestampPacketSizeControl::preferredPacketCount * sizeof(struct TimestampPacketStorage::Packet);
+    uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(packetsSize, MemoryConstants::cacheLineSize));
     EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }
 
@@ -194,6 +193,20 @@ class TimestampEventCreate : public Test<DeviceFixture> {
 
 TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventFlagSet) {
     EXPECT_TRUE(event->isTimestampEvent);
+}
+
+TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCorrectDataAreSet) {
+    EXPECT_NE(nullptr, event->timestampsData);
+
+    for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
+        auto &packet = event->timestampsData->packets[i];
+        EXPECT_EQ(Event::State::STATE_INITIAL, packet.contextStart);
+        EXPECT_EQ(Event::State::STATE_INITIAL, packet.globalStart);
+        EXPECT_EQ(Event::State::STATE_INITIAL, packet.contextEnd);
+        EXPECT_EQ(Event::State::STATE_INITIAL, packet.globalEnd);
+    }
+
+    EXPECT_EQ(0u, event->getPacketsInUse());
 }
 
 TEST_F(TimestampEventCreate, givenSingleTimestampEventThenAllocationSizeCreatedForAllTimestamps) {
