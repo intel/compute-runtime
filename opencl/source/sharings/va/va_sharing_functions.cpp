@@ -76,15 +76,17 @@ void VASharingFunctions::initFunctions() {
 }
 
 void VASharingFunctions::querySupportedVaImageFormats(VADisplay vaDisplay) {
-    UNRECOVERABLE_IF(supportedFormats.size() != 0);
     int maxFormats = this->maxNumImageFormats(vaDisplay);
     if (maxFormats > 0) {
         std::unique_ptr<VAImageFormat[]> allVaFormats(new VAImageFormat[maxFormats]);
-        this->queryImageFormats(vaDisplay, allVaFormats.get(), &maxFormats);
-
-        for (int i = 0; i < maxFormats; i++) {
-            if (VASurface::isSupportedFourCC(allVaFormats[i].fourcc)) {
-                supportedFormats.emplace_back(allVaFormats[i]);
+        auto result = this->queryImageFormats(vaDisplay, allVaFormats.get(), &maxFormats);
+        if (result == VA_STATUS_SUCCESS) {
+            for (int i = 0; i < maxFormats; i++) {
+                if (VASurface::isSupportedFourCCTwoPlaneFormat(allVaFormats[i].fourcc)) {
+                    supported2PlaneFormats.emplace_back(allVaFormats[i]);
+                } else if (VASurface::isSupportedFourCCThreePlaneFormat(allVaFormats[i].fourcc)) {
+                    supported3PlaneFormats.emplace_back(allVaFormats[i]);
+                }
             }
         }
     }
@@ -92,6 +94,7 @@ void VASharingFunctions::querySupportedVaImageFormats(VADisplay vaDisplay) {
 
 cl_int VASharingFunctions::getSupportedFormats(cl_mem_flags flags,
                                                cl_mem_object_type imageType,
+                                               cl_uint plane,
                                                cl_uint numEntries,
                                                VAImageFormat *formats,
                                                cl_uint *numImageFormats) {
@@ -104,12 +107,26 @@ cl_int VASharingFunctions::getSupportedFormats(cl_mem_flags flags,
     }
 
     if (numImageFormats != nullptr) {
-        *numImageFormats = static_cast<cl_uint>(supportedFormats.size());
+        if (plane == 2) {
+            *numImageFormats = static_cast<cl_uint>(supported3PlaneFormats.size());
+        } else if (plane < 2) {
+            *numImageFormats = static_cast<cl_uint>(supported2PlaneFormats.size() + supported3PlaneFormats.size());
+        }
     }
 
-    if (formats != nullptr && supportedFormats.size() > 0) {
-        uint32_t elementsToCopy = std::min(numEntries, static_cast<uint32_t>(supportedFormats.size()));
-        memcpy_s(formats, elementsToCopy * sizeof(VAImageFormat), &supportedFormats[0], elementsToCopy * sizeof(VAImageFormat));
+    if (plane == 2) {
+        if (formats != nullptr && supported3PlaneFormats.size() > 0) {
+            uint32_t elementsToCopy = std::min(numEntries, static_cast<uint32_t>(supported3PlaneFormats.size()));
+            memcpy_s(formats, elementsToCopy * sizeof(VAImageFormat), &supported3PlaneFormats[0], elementsToCopy * sizeof(VAImageFormat));
+        }
+    } else if (plane < 2) {
+        if (formats != nullptr && (supported2PlaneFormats.size() > 0 || supported3PlaneFormats.size() > 0)) {
+            uint32_t elementsToCopy = std::min(numEntries, static_cast<uint32_t>(supported2PlaneFormats.size() + supported3PlaneFormats.size()));
+            std::vector<VAImageFormat> tmp_formats;
+            tmp_formats.insert(tmp_formats.end(), supported2PlaneFormats.begin(), supported2PlaneFormats.end());
+            tmp_formats.insert(tmp_formats.end(), supported3PlaneFormats.begin(), supported3PlaneFormats.end());
+            memcpy_s(formats, elementsToCopy * sizeof(VAImageFormat), &tmp_formats[0], elementsToCopy * sizeof(VAImageFormat));
+        }
     }
 
     return CL_SUCCESS;

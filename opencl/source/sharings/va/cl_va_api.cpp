@@ -141,6 +141,7 @@ cl_int CL_API_CALL clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
     cl_context context,
     cl_mem_flags flags,
     cl_mem_object_type imageType,
+    cl_uint plane,
     cl_uint numEntries,
     VAImageFormat *vaApiFormats,
     cl_uint *numImageFormats) {
@@ -155,5 +156,5 @@ cl_int CL_API_CALL clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
         return CL_INVALID_CONTEXT;
     }
 
-    return pSharing->getSupportedFormats(flags, imageType, numEntries, vaApiFormats, numImageFormats);
+    return pSharing->getSupportedFormats(flags, imageType, plane, numEntries, vaApiFormats, numImageFormats);
 }

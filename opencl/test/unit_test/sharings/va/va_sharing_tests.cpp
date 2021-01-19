@@ -785,22 +785,31 @@ TEST_F(ApiVaSharingTests, givenSupportedImageTypeWhenGettingSupportedVAApiFormat
     VAImageFormat vaApiFormats[10] = {};
     cl_uint numImageFormats = 0;
 
-    VAImageFormat supportedFormat = {VA_FOURCC_NV12, VA_LSB_FIRST, 8, 0, 0, 0, 0, 0};
+    std::vector<std::unique_ptr<VAImageFormat>> supportedFormats;
+    supportedFormats.push_back(std::make_unique<VAImageFormat>(VAImageFormat{VA_FOURCC_NV12, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0}));
+    supportedFormats.push_back(std::make_unique<VAImageFormat>(VAImageFormat{VA_FOURCC_P010, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0}));
+    supportedFormats.push_back(std::make_unique<VAImageFormat>(VAImageFormat{VA_FOURCC_P016, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0}));
 
     for (auto flag : flags) {
 
-        cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
-            &context,
-            flag,
-            image_type,
-            arrayCount(vaApiFormats),
-            vaApiFormats,
-            &numImageFormats);
+        for (auto plane : {0, 1}) {
 
-        EXPECT_EQ(CL_SUCCESS, result);
-        EXPECT_EQ(1u, numImageFormats);
+            cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+                &context,
+                flag,
+                image_type,
+                plane,
+                arrayCount(vaApiFormats),
+                vaApiFormats,
+                &numImageFormats);
 
-        EXPECT_EQ(supportedFormat.fourcc, vaApiFormats[0].fourcc);
+            EXPECT_EQ(CL_SUCCESS, result);
+            EXPECT_EQ(3u, numImageFormats);
+            int i = 0;
+            for (auto &format : supportedFormats) {
+                EXPECT_EQ(format->fourcc, vaApiFormats[i++].fourcc);
+            }
+        }
     }
 }
 
@@ -809,16 +818,20 @@ TEST_F(ApiVaSharingTests, givenZeroNumEntriesWhenGettingSupportedVAApiFormatsThe
     cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 0;
 
-    cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
-        &context,
-        flags,
-        image_type,
-        0,
-        nullptr,
-        &numImageFormats);
+    for (auto plane : {0, 1}) {
 
-    EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(1u, numImageFormats);
+        cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+            &context,
+            flags,
+            image_type,
+            plane,
+            0,
+            nullptr,
+            &numImageFormats);
+
+        EXPECT_EQ(CL_SUCCESS, result);
+        EXPECT_EQ(3u, numImageFormats);
+    }
 }
 
 TEST_F(ApiVaSharingTests, givenNullNumImageFormatsWhenGettingSupportedVAApiFormatsThenNumFormatsIsNotDereferenced) {
@@ -829,6 +842,7 @@ TEST_F(ApiVaSharingTests, givenNullNumImageFormatsWhenGettingSupportedVAApiForma
         &context,
         flags,
         image_type,
+        0,
         0,
         nullptr,
         nullptr);
@@ -846,6 +860,7 @@ TEST_F(ApiVaSharingTests, givenInvalidImageTypeWhenGettingSupportedVAApiFormatsT
         &context,
         flags,
         image_type,
+        0,
         arrayCount(vaApiFormats),
         vaApiFormats,
         &numImageFormats);
@@ -864,6 +879,7 @@ TEST_F(ApiVaSharingTests, givenInvalidFlagsWhenGettingSupportedVAApiFormatsThenI
         &context,
         flags,
         image_type,
+        0,
         arrayCount(vaApiFormats),
         vaApiFormats,
         &numImageFormats);
@@ -883,6 +899,7 @@ TEST_F(ApiVaSharingTests, givenInvalidContextWhenGettingSupportedVAApiFormatsThe
         &contextWihtoutVASharing,
         flags,
         image_type,
+        0,
         arrayCount(vaApiFormats),
         vaApiFormats,
         &numImageFormats);
@@ -906,10 +923,10 @@ TEST(VaSurface, givenInValidPlaneOrFlagsWhenValidatingInputsThenTrueIsReturned) 
 }
 
 TEST(VaSurface, givenNotSupportedVaFormatsWhenCheckingIfSupportedThenFalseIsReturned) {
-    EXPECT_FALSE(VASurface::isSupportedFourCC(VA_FOURCC_NV11));
+    EXPECT_FALSE(VASurface::isSupportedFourCCTwoPlaneFormat(VA_FOURCC_NV11));
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableExtendedVaFormats.set(true);
-    EXPECT_FALSE(VASurface::isSupportedFourCC(VA_FOURCC_NV11));
+    EXPECT_FALSE(VASurface::isSupportedFourCCThreePlaneFormat(VA_FOURCC_NV11));
     EXPECT_EQ(nullptr, VASurface::getExtendedSurfaceFormatInfo(VA_FOURCC_NV11));
 }
 
@@ -919,13 +936,14 @@ TEST(VaSharingFunctions, givenErrorReturnedFromVaLibWhenQuerySupportedVaImageFor
 
     sharingFunctions.querySupportedVaImageFormats(VADisplay(1));
 
-    EXPECT_EQ(0u, sharingFunctions.supportedFormats.size());
+    EXPECT_EQ(0u, sharingFunctions.supported2PlaneFormats.size());
+    EXPECT_EQ(0u, sharingFunctions.supported3PlaneFormats.size());
 }
 
 TEST(VaSharingFunctions, givenNoSupportedFormatsWhenQuerySupportedVaImageFormatsThenSupportedFormatsAreNotSet) {
     VASharingFunctionsMock sharingFunctions;
-    EXPECT_EQ(0u, sharingFunctions.supportedFormats.size());
-
+    EXPECT_EQ(0u, sharingFunctions.supported2PlaneFormats.size());
+    EXPECT_EQ(0u, sharingFunctions.supported3PlaneFormats.size());
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 0;
@@ -934,6 +952,7 @@ TEST(VaSharingFunctions, givenNoSupportedFormatsWhenQuerySupportedVaImageFormats
     sharingFunctions.getSupportedFormats(
         flags,
         image_type,
+        0,
         10,
         vaApiFormats,
         &numImageFormats);
@@ -944,11 +963,11 @@ TEST(VaSharingFunctions, givenNoSupportedFormatsWhenQuerySupportedVaImageFormats
 TEST(VaSharingFunctions, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupportedFormatsThenOnlyNumEntiresAreReturned) {
     VASharingFunctionsMock sharingFunctions;
     VAImageFormat imageFormat = {VA_FOURCC_NV12, 1, 12};
-    sharingFunctions.supportedFormats.emplace_back(imageFormat);
-    imageFormat.fourcc = VA_FOURCC_NV21;
-    sharingFunctions.supportedFormats.emplace_back(imageFormat);
+    sharingFunctions.supported2PlaneFormats.emplace_back(imageFormat);
+    imageFormat.fourcc = VA_FOURCC_P010;
+    sharingFunctions.supported2PlaneFormats.emplace_back(imageFormat);
 
-    EXPECT_EQ(2u, sharingFunctions.supportedFormats.size());
+    EXPECT_EQ(2u, sharingFunctions.supported2PlaneFormats.size());
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -958,6 +977,7 @@ TEST(VaSharingFunctions, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupp
     sharingFunctions.getSupportedFormats(
         flags,
         image_type,
+        0,
         1,
         vaApiFormats,
         &numImageFormats);
@@ -997,4 +1017,213 @@ TEST_F(VaSharingTests, givenInteropUserSyncIsNotSpecifiedDuringContextCreationWh
 
         EXPECT_EQ(!specifyInteropUseSync, mockCommandQueue.finishCalled);
     }
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentEquals2WithEmptySupported3PlaneFormatsVectorThentNoFormatIsReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 4;
+    VAImageFormat vaApiFormats[4] = {};
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        2,
+        1,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(0u, vaApiFormats[0].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentGreaterThan2ThenNoFormatIsReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+    VAImageFormat imageFormat = {VA_FOURCC_RGBP, 1, 12};
+    sharingFunctions.supported3PlaneFormats.emplace_back(imageFormat);
+    imageFormat = {VA_FOURCC_NV12, 1, 12};
+    sharingFunctions.supported2PlaneFormats.emplace_back(imageFormat);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 2;
+    VAImageFormat vaApiFormats[2] = {};
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        3,
+        1,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(0u, vaApiFormats[0].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[1].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentEquals2ThenOnlyRGBPFormatIsReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+    VAImageFormat imageFormat = {VA_FOURCC_RGBP, 1, 12};
+    sharingFunctions.supported3PlaneFormats.emplace_back(imageFormat);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 1;
+    VAImageFormat vaApiFormats[3] = {};
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        2,
+        1,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_RGBP), vaApiFormats[0].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndEmptySupportedFormatsVectorsThenNoFormatIsReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 1;
+    VAImageFormat vaApiFormats[3] = {};
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        0,
+        1,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(0u, vaApiFormats[0].fourcc);
+
+    VAImageFormat imageFormat = {VA_FOURCC_NV12, 1, 12};
+    sharingFunctions.supported2PlaneFormats.emplace_back(imageFormat);
+    sharingFunctions.supported3PlaneFormats.emplace_back(imageFormat);
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        0,
+        1,
+        nullptr,
+        &numImageFormats);
+
+    EXPECT_EQ(0u, vaApiFormats[0].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndSupportedFormatsVectorsThenAll2And3PlaneFormatsAreReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 4;
+    VAImageFormat vaApiFormats[4] = {};
+
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_NV12, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_P010, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_P016, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    sharingFunctions.supported3PlaneFormats.push_back(VAImageFormat{VA_FOURCC_RGBP, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        0,
+        4,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_NV12), vaApiFormats[0].fourcc);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_P010), vaApiFormats[1].fourcc);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_P016), vaApiFormats[2].fourcc);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_RGBP), vaApiFormats[3].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndOnly3PlaneSupportedFormatsVectorThen3PlaneFormatIsReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 4;
+    VAImageFormat vaApiFormats[4] = {};
+
+    sharingFunctions.supported3PlaneFormats.push_back(VAImageFormat{VA_FOURCC_RGBP, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        0,
+        4,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_RGBP), vaApiFormats[0].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[1].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[2].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[3].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndOnly2PlaneSupportedFormatsVectorThen2PlaneFormatsAreReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 4;
+    VAImageFormat vaApiFormats[4] = {};
+
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_NV12, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_P010, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    sharingFunctions.supported2PlaneFormats.push_back(VAImageFormat{VA_FOURCC_P016, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        0,
+        4,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_NV12), vaApiFormats[0].fourcc);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_P010), vaApiFormats[1].fourcc);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_P016), vaApiFormats[2].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[3].fourcc);
+}
+
+TEST_F(VaSharingTests, givenPlaneArgumentEquals2WithoutNoProperFormatsThenReturn) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
+    EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 1;
+
+    sharingFunctions.supported3PlaneFormats.push_back(VAImageFormat{VA_FOURCC_RGBP, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
+
+    cl_int result = sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        2,
+        4,
+        nullptr,
+        &numImageFormats);
+
+    EXPECT_EQ(result, CL_SUCCESS);
 }
