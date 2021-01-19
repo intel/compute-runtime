@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/compiler_interface/linker.inl"
 #include "shared/source/device/device.h"
+#include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -22,6 +23,17 @@
 #include <sstream>
 
 namespace NEO {
+
+SegmentType LinkerInput::getSegmentForSection(ConstStringRef name) {
+    if (name == NEO::Elf::SectionsNamesZebin::dataConst || name == NEO::Elf::SectionsNamesZebin::dataGlobalConst) {
+        return NEO::SegmentType::GlobalConstants;
+    } else if (name == NEO::Elf::SectionsNamesZebin::dataGlobal) {
+        return NEO::SegmentType::GlobalVariables;
+    } else if (name.startsWith(NEO::Elf::SpecialSectionNames::text.data())) {
+        return NEO::SegmentType::Instructions;
+    }
+    return NEO::SegmentType::Unknown;
+}
 
 bool LinkerInput::decodeGlobalVariablesSymbolTable(const void *data, uint32_t numEntries) {
     auto symbolEntryIt = reinterpret_cast<const vISA::GenSymEntry *>(data);
@@ -129,6 +141,103 @@ void LinkerInput::addDataRelocationInfo(const RelocationInfo &relocationInfo) {
     this->traits.requiresPatchingOfGlobalVariablesBuffer |= (relocationInfo.relocationSegment == SegmentType::GlobalVariables);
     this->traits.requiresPatchingOfGlobalConstantsBuffer |= (relocationInfo.relocationSegment == SegmentType::GlobalConstants);
     this->dataRelocations.push_back(relocationInfo);
+}
+
+void LinkerInput::addElfTextSegmentRelocation(RelocationInfo relocationInfo, uint32_t instructionsSegmentId) {
+    this->traits.requiresPatchingOfInstructionSegments = true;
+
+    if (instructionsSegmentId >= relocations.size()) {
+        static_assert(std::is_nothrow_move_constructible<decltype(relocations[0])>::value, "");
+        relocations.resize(instructionsSegmentId + 1);
+    }
+
+    auto &outRelocInfo = relocations[instructionsSegmentId];
+
+    relocationInfo.symbolSegment = SegmentType::Unknown;
+    relocationInfo.relocationSegment = SegmentType::Instructions;
+
+    outRelocInfo.push_back(std::move(relocationInfo));
+}
+
+void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId) {
+    for (auto &reloc : elf.getRelocations()) {
+        NEO::LinkerInput::RelocationInfo relocationInfo;
+        relocationInfo.offset = reloc.offset;
+        relocationInfo.symbolName = reloc.symbolName;
+
+        switch (reloc.relocType) {
+        case uint32_t(Elf::RELOCATION_X8664_TYPE::R_X8664_64):
+            relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+            break;
+        case uint32_t(Elf::RELOCATION_X8664_TYPE::R_X8664_32):
+            relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::AddressLow;
+        default:
+            break;
+        }
+        auto name = elf.getSectionName(reloc.targetSectionIndex);
+        ConstStringRef nameRef(name);
+
+        if (nameRef.startsWith(NEO::Elf::SectionsNamesZebin::textPrefix.data())) {
+            auto kernelName = name.substr(static_cast<int>(NEO::Elf::SectionsNamesZebin::textPrefix.length()));
+            auto segmentIdIter = nameToSegmentId.find(kernelName);
+            if (segmentIdIter != nameToSegmentId.end()) {
+                this->addElfTextSegmentRelocation(relocationInfo, segmentIdIter->second);
+            }
+        } else if (nameRef.startsWith(NEO::Elf::SpecialSectionNames::data.data())) {
+            auto symbolSectionName = elf.getSectionName(reloc.symbolSectionIndex);
+            auto symbolSegment = getSegmentForSection(symbolSectionName);
+
+            if (symbolSegment == NEO::SegmentType::GlobalConstants || symbolSegment == NEO::SegmentType::GlobalVariables) {
+                relocationInfo.symbolSegment = symbolSegment;
+                auto relocationSegment = getSegmentForSection(nameRef);
+
+                if (relocationSegment == NEO::SegmentType::GlobalConstants || relocationSegment == NEO::SegmentType::GlobalVariables) {
+                    relocationInfo.relocationSegment = relocationSegment;
+                    this->addDataRelocationInfo(relocationInfo);
+                }
+            } else {
+                DEBUG_BREAK_IF(true);
+            }
+        }
+    }
+
+    symbols.reserve(elf.getSymbols().size());
+
+    for (auto &symbol : elf.getSymbols()) {
+        auto bind = elf.extractSymbolBind(symbol);
+
+        if (bind == Elf::SYMBOL_TABLE_BIND::STB_GLOBAL) {
+            SymbolInfo &symbolInfo = symbols[elf.getSymbolName(symbol.name)];
+            symbolInfo.offset = static_cast<uint32_t>(symbol.value);
+            symbolInfo.size = static_cast<uint32_t>(symbol.size);
+            auto type = elf.extractSymbolType(symbol);
+
+            auto symbolSectionName = elf.getSectionName(symbol.shndx);
+            auto symbolSegment = getSegmentForSection(symbolSectionName);
+
+            switch (type) {
+            default:
+                DEBUG_BREAK_IF(true);
+                break;
+            case Elf::SYMBOL_TABLE_TYPE::STT_OBJECT:
+                symbolInfo.segment = symbolSegment;
+                traits.exportsGlobalVariables = symbolSegment == SegmentType::GlobalVariables;
+                traits.exportsGlobalConstants = symbolSegment == SegmentType::GlobalConstants;
+                break;
+            case Elf::SYMBOL_TABLE_TYPE::STT_FUNC: {
+                auto kernelName = symbolSectionName.substr(static_cast<int>(NEO::Elf::SectionsNamesZebin::textPrefix.length()));
+                auto segmentIdIter = nameToSegmentId.find(kernelName);
+                if (segmentIdIter != nameToSegmentId.end()) {
+                    symbolInfo.segment = SegmentType::Instructions;
+                    traits.exportsFunctions = true;
+                    int32_t instructionsSegmentId = static_cast<int32_t>(segmentIdIter->second);
+                    UNRECOVERABLE_IF((this->exportedFunctionsSegmentId != -1) && (this->exportedFunctionsSegmentId != instructionsSegmentId));
+                    this->exportedFunctionsSegmentId = instructionsSegmentId;
+                }
+            } break;
+            }
+        }
+    }
 }
 
 bool Linker::processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions) {

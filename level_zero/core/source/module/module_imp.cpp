@@ -8,6 +8,7 @@
 #include "level_zero/core/source/module/module_imp.h"
 
 #include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/api_specific_config.h"
@@ -28,6 +29,7 @@
 #include "program_debug_data.h"
 
 #include <memory>
+#include <unordered_map>
 
 namespace L0 {
 
@@ -223,6 +225,18 @@ bool ModuleTranslationUnit::processUnpackedBinary() {
 
     for (auto &kernelInfo : this->programInfo.kernelInfos) {
         kernelInfo->apply(deviceInfoConstants);
+    }
+
+    if (programInfo.decodedElf.elfFileHeader) {
+        NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+        uint32_t id = 0;
+        for (auto &kernelInfo : this->programInfo.kernelInfos) {
+            nameToKernelId[kernelInfo->kernelDescriptor.kernelMetadata.kernelName] = id;
+            id++;
+        }
+        programInfo.prepareLinkerInputStorage();
+        programInfo.linkerInput->decodeElfSymbolTableAndRelocations(programInfo.decodedElf, nameToKernelId);
     }
 
     auto gfxCore = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;

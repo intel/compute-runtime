@@ -29,6 +29,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSect
         outErrReason.append("DeviceBinaryFormat::Zebin : Invalid or missing shStrNdx in elf header\n");
         return DecodeError::InvalidBinary;
     }
+
     auto sectionHeaderNamesData = elf.sectionHeaders[elf.elfFileHeader->shStrNdx].data;
     ConstStringRef sectionHeaderNamesString(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());
 
@@ -43,7 +44,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSect
                 out.textKernelSections.push_back(&elfSectionHeader);
             } else if (sectionName == NEO::Elf::SectionsNamesZebin::dataConst) {
                 out.constDataSections.push_back(&elfSectionHeader);
-            } else if (sectionName == ".data.global_const") {
+            } else if (sectionName == NEO::Elf::SectionsNamesZebin::dataGlobalConst) {
                 outWarning.append("Misspelled section name : " + sectionName.str() + ", should be : " + NEO::Elf::SectionsNamesZebin::dataConst.str() + "\n");
                 out.constDataSections.push_back(&elfSectionHeader);
             } else if (sectionName == NEO::Elf::SectionsNamesZebin::dataGlobal) {
@@ -64,6 +65,10 @@ DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSect
             break;
         case NEO::Elf::SHT_STRTAB:
             // ignoring intentionally - section header names
+            continue;
+        case NEO::Elf::SHT_REL:
+        case NEO::Elf::SHT_RELA:
+            // ignoring intentionally - rel/rela sections handled by Elf decoder
             continue;
         case NEO::Elf::SHT_ZEBIN_GTPIN_INFO:
             // ignoring intentionally - gtpin internal data
@@ -970,6 +975,8 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
     if (DecodeError::Success != extractError) {
         return extractError;
     }
+
+    dst.decodedElf = elf;
 
     if (false == zebinSections.globalDataSections.empty()) {
         dst.globalVariables.initData = zebinSections.globalDataSections[0]->data.begin();

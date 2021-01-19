@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
 
 #include <cstdint>
 #include <limits>
@@ -88,17 +89,22 @@ struct LinkerInput {
         SegmentType relocationSegment = SegmentType::Unknown;
         SegmentType symbolSegment = SegmentType::Unknown;
     };
-
+    using SectionNameToSegmentIdMap = std::unordered_map<std::string, uint32_t>;
     using Relocations = std::vector<RelocationInfo>;
     using SymbolMap = std::unordered_map<std::string, SymbolInfo>;
     using RelocationsPerInstSegment = std::vector<Relocations>;
 
     virtual ~LinkerInput() = default;
 
+    static SegmentType getSegmentForSection(ConstStringRef name);
+
     MOCKABLE_VIRTUAL bool decodeGlobalVariablesSymbolTable(const void *data, uint32_t numEntries);
     MOCKABLE_VIRTUAL bool decodeExportedFunctionsSymbolTable(const void *data, uint32_t numEntries, uint32_t instructionsSegmentId);
     MOCKABLE_VIRTUAL bool decodeRelocationTable(const void *data, uint32_t numEntries, uint32_t instructionsSegmentId);
     void addDataRelocationInfo(const RelocationInfo &relocationInfo);
+
+    void addElfTextSegmentRelocation(RelocationInfo relocationInfo, uint32_t instructionsSegmentId);
+    void decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId);
 
     const Traits &getTraits() const {
         return traits;

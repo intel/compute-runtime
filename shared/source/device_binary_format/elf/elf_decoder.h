@@ -63,12 +63,12 @@ struct Elf {
         return (elfSymbol.info >> 4) & 0xf;
     }
 
-    std::string getSectionName(uint32_t id) const {
+    MOCKABLE_VIRTUAL std::string getSectionName(uint32_t id) const {
         auto sectionHeaderNamesData = sectionHeaders[elfFileHeader->shStrNdx].data;
         return std::string(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()) + sectionHeaders[id].header->name);
     }
 
-    std::string getSymbolName(uint32_t nameOffset) const {
+    MOCKABLE_VIRTUAL std::string getSymbolName(uint32_t nameOffset) const {
         auto sectionHeaderNamesData = sectionHeaders[elfFileHeader->shStrNdx].data;
         return std::string(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()) + nameOffset);
     }

@@ -5,11 +5,13 @@
  *
  */
 
+#include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/program/program_initialization.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+#include "shared/test/unit_test/mocks/mock_elf.h"
 #include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -262,6 +264,603 @@ TEST(LinkerInputTests, whenDataRelocationsAreAddedThenProperTraitsAreSet) {
     EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
     EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
     EXPECT_TRUE(linkerInput.isValid());
+}
+
+TEST(LinkerInputTests, WhenGettingSegmentForSectionNameThenCorrectSegmentIsReturned) {
+    auto segmentConst = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataConst.str());
+    auto segmentGlobalConst = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataGlobalConst.str());
+    auto segmentGlobal = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataGlobal.str());
+    auto segmentInstructions = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::textPrefix.str());
+    auto segmentInstructions2 = NEO::LinkerInput::getSegmentForSection(".text.abc");
+
+    EXPECT_EQ(NEO::SegmentType::GlobalConstants, segmentConst);
+    EXPECT_EQ(NEO::SegmentType::GlobalConstants, segmentGlobalConst);
+    EXPECT_EQ(NEO::SegmentType::GlobalVariables, segmentGlobal);
+    EXPECT_EQ(NEO::SegmentType::Instructions, segmentInstructions);
+    EXPECT_EQ(NEO::SegmentType::Instructions, segmentInstructions2);
+}
+
+TEST(LinkerInputTests, WhenGettingSegmentForUnknownSectionNameThenUnknownSegmentIsReturned) {
+    auto segment = NEO::LinkerInput::getSegmentForSection("Not_a_valid_section_name");
+    EXPECT_EQ(NEO::SegmentType::Unknown, segment);
+}
+
+TEST(LinkerInputTests, WhenAddingElfTextRelocationForSegmentIndexThenInstructionSegmentForRelocationAndProperTraitsAreSet) {
+    NEO::LinkerInput linkerInput = {};
+    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfInstructionSegments);
+    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
+    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
+
+    NEO::LinkerInput::RelocationInfo relocInfo;
+    relocInfo.offset = 7u;
+    relocInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
+    relocInfo.symbolName = "test";
+    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
+    relocInfo.symbolSegment = NEO::SegmentType::GlobalConstants;
+
+    linkerInput.addElfTextSegmentRelocation(relocInfo, 5);
+
+    ASSERT_EQ(0u, linkerInput.getDataRelocations().size());
+    ASSERT_EQ(6u, linkerInput.getRelocationsInInstructionSegments().size());
+
+    auto relocs = linkerInput.getRelocationsInInstructionSegments()[5];
+
+    ASSERT_EQ(1u, relocs.size());
+
+    EXPECT_EQ(NEO::SegmentType::Instructions, relocs[0].relocationSegment);
+    EXPECT_EQ(NEO::SegmentType::Unknown, relocs[0].symbolSegment);
+    EXPECT_EQ(std::string("test"), relocs[0].symbolName);
+    EXPECT_EQ(7u, relocs[0].offset);
+
+    EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfInstructionSegments);
+    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
+    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
+    EXPECT_TRUE(linkerInput.isValid());
+}
+
+TEST(LinkerInputTests, WhenAddingTwoElfTextRelocationForSingleSegmentIndexThenBothRelocationsAreAddedForTheSameSegment) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::LinkerInput::RelocationInfo relocInfo;
+    relocInfo.offset = 7u;
+    relocInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
+    relocInfo.symbolName = "test";
+    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
+    relocInfo.symbolSegment = NEO::SegmentType::GlobalConstants;
+
+    linkerInput.addElfTextSegmentRelocation(relocInfo, 0);
+
+    ASSERT_EQ(1u, linkerInput.getRelocationsInInstructionSegments().size());
+    auto &relocs = linkerInput.getRelocationsInInstructionSegments()[0];
+    EXPECT_EQ(1u, relocs.size());
+
+    relocInfo.offset = 24u;
+    linkerInput.addElfTextSegmentRelocation(relocInfo, 0);
+
+    EXPECT_EQ(2u, relocs.size());
+    EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfInstructionSegments);
+}
+
+TEST(LinkerInputTests, WhenDecodingElfTextRelocationsThenCorrectRelocationsAreAdded) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.const";
+    sectionNames[2] = ".text.hello";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
+    reloc.offset = 64;
+    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc.symbolName = "symbol1";
+    reloc.symbolSectionIndex = 1;
+    reloc.symbolTableIndex = 0;
+    reloc.targetSectionIndex = 0;
+
+    elf64.relocations.emplace_back(reloc);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2;
+    reloc2.offset = 32;
+    reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_32);
+    reloc2.symbolName = "symbol2";
+    reloc2.symbolSectionIndex = 1;
+    reloc2.symbolTableIndex = 0;
+    reloc2.targetSectionIndex = 2;
+
+    elf64.relocations.emplace_back(reloc2);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+    nameToKernelId["abc"] = 0;
+    nameToKernelId["hello"] = 1;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto relocations = linkerInput.getRelocationsInInstructionSegments();
+    ASSERT_EQ(2u, relocations.size());
+
+    auto &segment0Relocs = relocations[0];
+    ASSERT_EQ(1u, segment0Relocs.size());
+
+    EXPECT_EQ(64u, segment0Relocs[0].offset);
+    EXPECT_EQ(NEO::SegmentType::Instructions, segment0Relocs[0].relocationSegment);
+    EXPECT_EQ("symbol1", segment0Relocs[0].symbolName);
+    EXPECT_EQ(NEO::SegmentType::Unknown, segment0Relocs[0].symbolSegment);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, segment0Relocs[0].type);
+
+    auto &segment1Relocs = relocations[1];
+    ASSERT_EQ(1u, segment1Relocs.size());
+
+    EXPECT_EQ(32u, segment1Relocs[0].offset);
+    EXPECT_EQ(NEO::SegmentType::Instructions, segment1Relocs[0].relocationSegment);
+    EXPECT_EQ("symbol2", segment1Relocs[0].symbolName);
+    EXPECT_EQ(NEO::SegmentType::Unknown, segment1Relocs[0].symbolSegment);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::AddressLow, segment1Relocs[0].type);
+}
+
+TEST(LinkerInputTests, GivenNoKernelNameToIdWhenDecodingElfTextRelocationsThenNoRelocationIsAdded) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.const";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
+    reloc.offset = 64;
+    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc.symbolName = "symbol1";
+    reloc.symbolSectionIndex = 1;
+    reloc.symbolTableIndex = 0;
+    reloc.targetSectionIndex = 0;
+
+    elf64.relocations.emplace_back(reloc);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+    nameToKernelId["wrong_name"] = 0;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto relocations = linkerInput.getRelocationsInInstructionSegments();
+    ASSERT_EQ(0u, relocations.size());
+}
+
+TEST(LinkerInputTests, GivenInvalidTextSectionNameWhenDecodingElfTextRelocationsThenNoRelocationIsAdded) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".invalid.abc";
+    sectionNames[1] = ".data.const";
+    sectionNames[2] = ".text.hello";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
+    reloc.offset = 64;
+    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc.symbolName = "symbol1";
+    reloc.symbolSectionIndex = 1;
+    reloc.symbolTableIndex = 0;
+    reloc.targetSectionIndex = 0;
+
+    elf64.relocations.emplace_back(reloc);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+    nameToKernelId["abc"] = 0;
+    nameToKernelId["hello"] = 1;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto relocations = linkerInput.getRelocationsInInstructionSegments();
+    ASSERT_EQ(0u, relocations.size());
+}
+
+TEST(LinkerInputTests, GivenInvalidRelocationTypeWhenDecodingElfTextRelocationsThenUnknownTypeIsSet) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.const";
+    sectionNames[2] = ".text.hello";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
+    reloc.offset = 64;
+    reloc.relocType = 0xffffffff; // invalid type
+    reloc.symbolName = "symbol1";
+    reloc.symbolSectionIndex = 1;
+    reloc.symbolTableIndex = 0;
+    reloc.targetSectionIndex = 0;
+
+    elf64.relocations.emplace_back(reloc);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+    nameToKernelId["abc"] = 0;
+    nameToKernelId["hello"] = 1;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto relocations = linkerInput.getRelocationsInInstructionSegments();
+    ASSERT_EQ(1u, relocations.size());
+    ASSERT_EQ(1u, relocations[0].size());
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Unknown, relocations[0][0].type);
+}
+
+TEST(LinkerInputTests, WhenDecodingElfGlobalDataRelocationsThenCorrectRelocationsAreAdded) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.global";
+    sectionNames[2] = ".data.const";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
+    reloc.offset = 64;
+    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc.symbolName = "symbol1";
+    reloc.symbolSectionIndex = 1;
+    reloc.symbolTableIndex = 0;
+    reloc.targetSectionIndex = 1;
+
+    elf64.relocations.emplace_back(reloc);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2;
+    reloc2.offset = 32;
+    reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc2.symbolName = "symbol2";
+    reloc2.symbolSectionIndex = 2;
+    reloc2.symbolTableIndex = 0;
+    reloc2.targetSectionIndex = 1;
+
+    elf64.relocations.emplace_back(reloc2);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+    nameToKernelId["abc"] = 0;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto relocations = linkerInput.getDataRelocations();
+    ASSERT_EQ(2u, relocations.size());
+
+    EXPECT_EQ(64u, relocations[0].offset);
+    EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocations[0].relocationSegment);
+    EXPECT_EQ("symbol1", relocations[0].symbolName);
+    EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocations[0].symbolSegment);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[0].type);
+
+    EXPECT_EQ(32u, relocations[1].offset);
+    EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocations[1].relocationSegment);
+    EXPECT_EQ("symbol2", relocations[1].symbolName);
+    EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocations[1].symbolSegment);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[1].type);
+}
+
+TEST(LinkerInputTests, WhenDecodingElfConstantDataRelocationsThenCorrectRelocationsAreAdded) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.global";
+    sectionNames[2] = ".data.const";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
+    reloc.offset = 64;
+    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc.symbolName = "symbol1";
+    reloc.symbolSectionIndex = 1;
+    reloc.symbolTableIndex = 0;
+    reloc.targetSectionIndex = 2;
+
+    elf64.relocations.emplace_back(reloc);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2;
+    reloc2.offset = 32;
+    reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc2.symbolName = "symbol2";
+    reloc2.symbolSectionIndex = 2;
+    reloc2.symbolTableIndex = 0;
+    reloc2.targetSectionIndex = 2;
+
+    elf64.relocations.emplace_back(reloc2);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+    nameToKernelId["abc"] = 0;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto relocations = linkerInput.getDataRelocations();
+    ASSERT_EQ(2u, relocations.size());
+
+    EXPECT_EQ(64u, relocations[0].offset);
+    EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocations[0].relocationSegment);
+    EXPECT_EQ("symbol1", relocations[0].symbolName);
+    EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocations[0].symbolSegment);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[0].type);
+
+    EXPECT_EQ(32u, relocations[1].offset);
+    EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocations[1].relocationSegment);
+    EXPECT_EQ("symbol2", relocations[1].symbolName);
+    EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocations[1].symbolSegment);
+    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[1].type);
+}
+
+TEST(LinkerInputTests, GivenUnsupportedDataSegmentWhenDecodingElfDataRelocationThenNoRelocationsAreAdded) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data";
+    sectionNames[2] = ".data.const";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
+    reloc.offset = 64;
+    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc.symbolName = "symbol1";
+    reloc.symbolSectionIndex = 2;
+    reloc.symbolTableIndex = 0;
+    reloc.targetSectionIndex = 1;
+
+    elf64.relocations.emplace_back(reloc);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+    nameToKernelId["abc"] = 0;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto relocations = linkerInput.getDataRelocations();
+    ASSERT_EQ(0u, relocations.size());
+}
+
+TEST(LinkerInputTests, GivenUnsupportedSymbolSegmentWhenDecodingElfDataRelocationThenNoRelocationsAreAddedAndDebugBreakIsCalled) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data";
+    sectionNames[2] = ".data.const";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
+    reloc.offset = 64;
+    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc.symbolName = "symbol1";
+    reloc.symbolSectionIndex = 1;
+    reloc.symbolTableIndex = 0;
+    reloc.targetSectionIndex = 2;
+
+    elf64.relocations.emplace_back(reloc);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+    nameToKernelId["abc"] = 0;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto relocations = linkerInput.getDataRelocations();
+    ASSERT_EQ(0u, relocations.size());
+}
+
+TEST(LinkerInputTests, GivenGlobalAndLocalElfSymbolsWhenDecodingThenOnlyGlobalSymbolsAreAdded) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.const";
+    sectionNames[2] = ".text.hello";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
+    symbol.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbol.name = 0;
+    symbol.other = 0;
+    symbol.shndx = 1;
+    symbol.size = 8;
+    symbol.value = 0x1234000;
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol2;
+    symbol2.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbol2.name = 8;
+    symbol2.other = 0;
+    symbol2.shndx = 0;
+    symbol2.size = 16;
+    symbol2.value = 0x5000;
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol3;
+    symbol3.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC | NEO::Elf::SYMBOL_TABLE_BIND::STB_LOCAL << 4;
+    symbol3.name = 16;
+    symbol3.other = 0;
+    symbol3.shndx = 0;
+    symbol3.size = 8;
+    symbol3.value = 0;
+
+    elf64.symbolTable.emplace_back(symbol);
+    elf64.symbolTable.emplace_back(symbol2);
+    elf64.symbolTable.emplace_back(symbol3);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+    nameToKernelId["abc"] = 0;
+    nameToKernelId["hello"] = 1;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto symbols = linkerInput.getSymbols();
+    ASSERT_EQ(2u, symbols.size());
+
+    EXPECT_EQ(0x1234000u, symbols[std::to_string(symbol.name)].offset);
+    EXPECT_EQ(NEO::SegmentType::GlobalConstants, symbols[std::to_string(symbol.name)].segment);
+    EXPECT_EQ(8u, symbols[std::to_string(symbol.name)].size);
+
+    EXPECT_EQ(0x5000u, symbols[std::to_string(symbol2.name)].offset);
+    EXPECT_EQ(NEO::SegmentType::Instructions, symbols[std::to_string(symbol2.name)].segment);
+    EXPECT_EQ(16u, symbols[std::to_string(symbol2.name)].size);
+
+    EXPECT_FALSE(linkerInput.getTraits().exportsGlobalVariables);
+    EXPECT_TRUE(linkerInput.getTraits().exportsGlobalConstants);
+    EXPECT_TRUE(linkerInput.getTraits().exportsFunctions);
+}
+
+TEST(LinkerInputTests, GivenGlobalFunctionsInTwoSegementsWhenDecodingThenUnrecoverableIsCalled) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.const";
+    sectionNames[2] = ".text.hello";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
+    symbol.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbol.name = 0;
+    symbol.other = 0;
+    symbol.shndx = 0;
+    symbol.size = 8;
+    symbol.value = 0x1234000;
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol2;
+    symbol2.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbol2.name = 8;
+    symbol2.other = 0;
+    symbol2.shndx = 2;
+    symbol2.size = 16;
+    symbol2.value = 0x5000;
+
+    elf64.symbolTable.emplace_back(symbol);
+    elf64.symbolTable.emplace_back(symbol2);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+    nameToKernelId["abc"] = 0;
+    nameToKernelId["hello"] = 1;
+
+    EXPECT_THROW(linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId), std::exception);
+
+    auto symbols = linkerInput.getSymbols();
+    ASSERT_EQ(2u, symbols.size());
+    EXPECT_EQ(0, linkerInput.getExportedFunctionsSegmentId());
+}
+
+TEST(LinkerInputTests, GivenNoKernelNameToIdWhenDecodingGlobalFunctionThenExportedFunctionsSegmentIsNotSet) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
+    symbol.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbol.name = 0;
+    symbol.other = 0;
+    symbol.shndx = 0;
+    symbol.size = 8;
+    symbol.value = 0x1234000;
+
+    elf64.symbolTable.emplace_back(symbol);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+    nameToKernelId["hello"] = 1;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto symbols = linkerInput.getSymbols();
+    ASSERT_EQ(1u, symbols.size());
+    EXPECT_EQ(-1, linkerInput.getExportedFunctionsSegmentId());
+}
+
+TEST(LinkerInputTests, GivenGlobalElfSymbolOfNoTypeWhenDecodingThenSymbolWithUnknownSegmentIsAddedAndDebugBreakCalled) {
+    NEO::LinkerInput linkerInput = {};
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.const";
+    sectionNames[2] = ".text.hello";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
+    symbol.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_NOTYPE | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbol.name = 0;
+    symbol.other = 0;
+    symbol.shndx = 1;
+    symbol.size = 8;
+    symbol.value = 0x1234000;
+
+    elf64.symbolTable.emplace_back(symbol);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+
+    nameToKernelId["abc"] = 0;
+    nameToKernelId["hello"] = 1;
+
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+
+    auto symbols = linkerInput.getSymbols();
+    ASSERT_EQ(1u, symbols.size());
+    EXPECT_EQ(SegmentType::Unknown, symbols.begin()->second.segment);
+
+    EXPECT_FALSE(linkerInput.getTraits().exportsGlobalVariables);
+    EXPECT_FALSE(linkerInput.getTraits().exportsGlobalConstants);
+    EXPECT_FALSE(linkerInput.getTraits().exportsFunctions);
 }
 
 TEST(LinkerTests, givenEmptyLinkerInputThenLinkerOutputIsEmpty) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ enum SHT_ZEBIN : uint32_t {
 namespace SectionsNamesZebin {
 static constexpr ConstStringRef textPrefix = ".text.";
 static constexpr ConstStringRef dataConst = ".data.const";
+static constexpr ConstStringRef dataGlobalConst = ".data.global_const";
 static constexpr ConstStringRef dataGlobal = ".data.global";
 static constexpr ConstStringRef symtab = ".symtab";
 static constexpr ConstStringRef relTablePrefix = ".rel.";
