@@ -368,11 +368,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     bool sourceLevelDebuggerActive = device.getSourceLevelDebugger() != nullptr ? true : false;
 
+    auto memoryCompressionState = lastMemoryCompressionState;
     if (dispatchFlags.memoryCompressionState != MemoryCompressionState::NotApplicable) {
-        if (lastMemoryCompressionState != dispatchFlags.memoryCompressionState) {
-            isStateBaseAddressDirty = true;
-            lastMemoryCompressionState = dispatchFlags.memoryCompressionState;
-        }
+        memoryCompressionState = dispatchFlags.memoryCompressionState;
+    }
+    if (memoryCompressionState != lastMemoryCompressionState) {
+        isStateBaseAddressDirty = true;
+        lastMemoryCompressionState = memoryCompressionState;
     }
 
     //Reprogram state base address if required
@@ -409,7 +411,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             false,
             device.getGmmHelper(),
             isMultiOsContextCapable(),
-            dispatchFlags.memoryCompressionState);
+            memoryCompressionState);
         *pCmd = cmd;
 
         if (sshDirty) {

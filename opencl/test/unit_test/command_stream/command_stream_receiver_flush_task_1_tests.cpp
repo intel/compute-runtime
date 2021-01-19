@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1193,6 +1193,29 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWhenCallFlushTas
 
 class CommandStreamReceiverFlushTaskMemoryCompressionTests : public UltCommandStreamReceiverTest,
                                                              public ::testing::WithParamInterface<MemoryCompressionState> {};
+
+HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemoryCompressionStateNotApplicableWhenFlushTaskIsCalledThenUseLastMemoryCompressionState) {
+    auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.memoryCompressionState = MemoryCompressionState::NotApplicable;
+
+    mockCsr.lastMemoryCompressionState = GetParam();
+    MemoryCompressionState lastMemoryCompressionState = mockCsr.lastMemoryCompressionState;
+
+    mockCsr.flushTask(commandStream,
+                      0,
+                      dsh,
+                      ioh,
+                      ssh,
+                      taskLevel,
+                      dispatchFlags,
+                      *pDevice);
+    EXPECT_EQ(lastMemoryCompressionState, mockCsr.lastMemoryCompressionState);
+}
 
 HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemoryCompressionStateApplicableWhenFlushTaskIsCalledThenUpdateLastMemoryCompressionState) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
