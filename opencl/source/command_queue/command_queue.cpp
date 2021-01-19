@@ -778,7 +778,12 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
 }
 
 void CommandQueue::overrideEngine(aub_stream::EngineType engineType) {
-    if (engineType == aub_stream::EngineType::ENGINE_BCS) {
+    const HardwareInfo &hwInfo = getDevice().getHardwareInfo();
+    const HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engineType, hwInfo);
+    const bool isEngineCopyOnly = hwHelper.isCopyOnlyEngineType(engineGroupType);
+
+    if (isEngineCopyOnly) {
         bcsEngine = &device->getEngine(engineType, false, false);
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;

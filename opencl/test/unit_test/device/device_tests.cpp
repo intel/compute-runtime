@@ -474,6 +474,45 @@ TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupsThenReturnCor
     EXPECT_EQ(nullptr, device->getNonEmptyEngineGroup(2));
 }
 
+TEST(DeviceGenEngineTest, givenNoEmptyGroupsWhenGettingNonEmptyGroupIndexThenReturnCorrectResults) {
+    const auto nonEmptyEngineGroup = std::vector<EngineControl>{EngineControl{nullptr, nullptr}};
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+    auto &engineGroups = device->getEngineGroups();
+    engineGroups.clear();
+    engineGroups.push_back(nonEmptyEngineGroup);
+    engineGroups.push_back(nonEmptyEngineGroup);
+    engineGroups.push_back(nonEmptyEngineGroup);
+    engineGroups.push_back(nonEmptyEngineGroup);
+
+    EXPECT_EQ(0u, device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(0u)));
+    EXPECT_EQ(1u, device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(1u)));
+    EXPECT_EQ(2u, device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(2u)));
+    EXPECT_EQ(3u, device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(3u)));
+    EXPECT_ANY_THROW(device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(4u)));
+    EXPECT_ANY_THROW(device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(5u)));
+}
+
+TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupIndexThenReturnCorrectResults) {
+    const auto emptyEngineGroup = std::vector<EngineControl>{};
+    const auto nonEmptyEngineGroup = std::vector<EngineControl>{EngineControl{nullptr, nullptr}};
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+    auto &engineGroups = device->getEngineGroups();
+    engineGroups.clear();
+    engineGroups.push_back(emptyEngineGroup);
+    engineGroups.push_back(nonEmptyEngineGroup);
+    engineGroups.push_back(emptyEngineGroup);
+    engineGroups.push_back(nonEmptyEngineGroup);
+
+    EXPECT_ANY_THROW(device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(0u)));
+    EXPECT_EQ(0u, device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(1u)));
+    EXPECT_ANY_THROW(device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(2u)));
+    EXPECT_EQ(1u, device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(3u)));
+    EXPECT_ANY_THROW(device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(4u)));
+    EXPECT_ANY_THROW(device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(5u)));
+}
+
 TEST(DeviceGenEngineTest, whenGettingQueueFamilyCapabilitiesAllThenReturnCorrectValue) {
     const cl_command_queue_capabilities_intel expectedProperties = CL_QUEUE_CAPABILITY_CREATE_SINGLE_QUEUE_EVENTS_INTEL |
                                                                    CL_QUEUE_CAPABILITY_CREATE_CROSS_QUEUE_EVENTS_INTEL |

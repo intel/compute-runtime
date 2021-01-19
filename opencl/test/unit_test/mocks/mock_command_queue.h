@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 namespace NEO {
 class MockCommandQueue : public CommandQueue {
   public:
+    using CommandQueue::bcsEngine;
     using CommandQueue::blitEnqueueAllowed;
     using CommandQueue::blitEnqueueImageAllowed;
     using CommandQueue::bufferCpuCopyAllowed;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -241,6 +241,21 @@ const std::vector<EngineControl> *Device::getNonEmptyEngineGroup(size_t index) c
         nonEmptyGroupIndex++;
     }
     return nullptr;
+}
+
+size_t Device::getIndexOfNonEmptyEngineGroup(EngineGroupType engineGroupType) const {
+    const auto groupIndex = static_cast<size_t>(engineGroupType);
+    UNRECOVERABLE_IF(groupIndex >= engineGroups.size());
+    UNRECOVERABLE_IF(engineGroups[groupIndex].empty());
+
+    size_t result = 0u;
+    for (auto currentGroupIndex = 0u; currentGroupIndex < groupIndex; currentGroupIndex++) {
+        if (!engineGroups[currentGroupIndex].empty()) {
+            result++;
+        }
+    }
+
+    return result;
 }
 
 EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPriority, bool internalUsage) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,8 @@
 #include "shared/source/helpers/hw_info.h"
 
 #include "opencl/source/os_interface/performance_counters.h"
+
+#include "engine_group_types.h"
 
 namespace NEO {
 class OSTime;
@@ -50,6 +52,7 @@ class Device : public ReferenceTrackedObject<Device> {
         return this->engineGroups;
     }
     const std::vector<EngineControl> *getNonEmptyEngineGroup(size_t index) const;
+    size_t getIndexOfNonEmptyEngineGroup(EngineGroupType engineGroupType) const;
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
