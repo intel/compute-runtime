@@ -132,29 +132,6 @@ set(TEST_MODULES
     ${CMAKE_CURRENT_SOURCE_DIR}/test_modules/test_kernel.cl
 )
 
-add_custom_target(copy_l0_test_files)
-
-add_custom_command(TARGET copy_l0_test_files
-                   POST_BUILD
-                   COMMAND echo deleting and re-creating "${CUSTOM_COMMAND_BINARY_DIR}/test_files" ...
-                   COMMAND ${CMAKE_COMMAND} -E remove_directory "${CUSTOM_COMMAND_BINARY_DIR}/test_files"
-                   COMMAND ${CMAKE_COMMAND} -E make_directory "${CUSTOM_COMMAND_BINARY_DIR}/test_files"
-                   DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/test_files"
-)
-set_target_properties(copy_l0_test_files PROPERTIES FOLDER ${TARGET_NAME_L0})
-
-if(UNIX)
-  add_custom_command(TARGET copy_l0_test_files
-                     POST_BUILD
-                     COMMAND ${CMAKE_COMMAND} -E copy_directory "${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files/linux" "${CUSTOM_COMMAND_BINARY_DIR}/test_files/linux"
-                     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/test_files"
-  )
-
-  add_dependencies(${TARGET_NAME}
-                   copy_l0_test_files
-  )
-endif()
-
 macro(macro_for_each_gen)
   foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
     if(${GEN_TYPE}_HAS_${PLATFORM_TYPE})

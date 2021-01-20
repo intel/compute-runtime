@@ -45,8 +45,6 @@
 
 #include "hw_helpers.h"
 
-#include <bitset>
-
 namespace NEO {
 bool releaseFP64Override();
 } // namespace NEO
@@ -563,11 +561,14 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         device->setDebugSurface(debugSurface);
     }
 
-    std::bitset<32> deviceMaskBitset(currentDeviceMask);
-    if (device->neoDevice->getNumAvailableDevices() == 1 && deviceMaskBitset.count() != 1u) {
+    if (device->neoDevice->getNumAvailableDevices() == 1) {
         device->numSubDevices = 0;
     } else {
         for (uint32_t i = 0; i < device->neoDevice->getNumAvailableDevices(); i++) {
+
+            if (!((1UL << i) & currentDeviceMask)) {
+                continue;
+            }
 
             ze_device_handle_t subDevice = Device::create(driverHandle,
                                                           device->neoDevice->getDeviceById(i),

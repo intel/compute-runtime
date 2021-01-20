@@ -24,7 +24,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     MOCKABLE_VIRTUAL bool initializeMemoryManager();
     void calculateMaxOsContextCount();
     void prepareRootDeviceEnvironments(uint32_t numRootDevices);
-    void parseAffinityMask();
     void setDebuggingEnabled() {
         debuggingEnabled = true;
     }

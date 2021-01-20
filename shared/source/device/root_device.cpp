@@ -72,15 +72,14 @@ bool RootDevice::createDeviceImpl() {
         numSubDevices = 0;
     }
     UNRECOVERABLE_IF(!subdevices.empty());
+    subdevices.resize(numSubDevices, nullptr);
     for (auto i = 0u; i < numSubDevices; i++) {
-        if (!((1UL << i) & executionEnvironment->rootDeviceEnvironments[this->rootDeviceIndex]->deviceAffinityMask)) {
-            continue;
-        }
-        auto subDevice = createSubDevice(static_cast<uint32_t>(subdevices.size()));
+
+        auto subDevice = createSubDevice(i);
         if (!subDevice) {
             return false;
         }
-        subdevices.push_back(subDevice);
+        subdevices[i] = subDevice;
     }
     auto status = Device::createDeviceImpl();
     if (!status) {

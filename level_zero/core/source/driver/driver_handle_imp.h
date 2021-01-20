@@ -80,6 +80,7 @@ struct DriverHandleImp : public DriverHandle {
                                                                      size_t size,
                                                                      uint32_t rootDeviceIndex,
                                                                      uintptr_t *gpuAddress) override;
+    uint32_t parseAffinityMask(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
     void createHostPointerManager();
     void sortNeoDevices(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
 
@@ -90,6 +91,7 @@ struct DriverHandleImp : public DriverHandle {
     std::mutex sharedMakeResidentAllocationsLock;
     std::map<void *, NEO::GraphicsAllocation *> sharedMakeResidentAllocations;
 
+    std::string affinityMaskString = "";
     std::vector<Device *> devices;
     // Spec extensions
     const std::vector<std::pair<std::string, uint32_t>> extensionsSupported = {
