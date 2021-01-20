@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,9 +34,14 @@ ze_result_t LinuxSysmanImp::init() {
     pSysfsAccess = SysfsAccess::create(myDeviceName);
     UNRECOVERABLE_IF(nullptr == pSysfsAccess);
 
-    pPmt = new PlatformMonitoringTech();
-    UNRECOVERABLE_IF(nullptr == pPmt);
-    pPmt->init(myDeviceName, pFsAccess);
+    std::string realRootPath;
+    result = pSysfsAccess->getRealPath("device", realRootPath);
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+    auto rootPciPathOfGpuDevice = getPciRootPortDirectoryPath(realRootPath);
+    PlatformMonitoringTech::create(pParentSysmanDeviceImp->deviceHandles, pFsAccess, rootPciPathOfGpuDevice, mapOfSubDeviceIdToPmtObject);
+
     pPmuInterface = PmuInterface::create(this);
     UNRECOVERABLE_IF(nullptr == pPmuInterface);
 
@@ -83,9 +88,29 @@ SysmanDeviceImp *LinuxSysmanImp::getSysmanDeviceImp() {
     return pParentSysmanDeviceImp;
 }
 
-PlatformMonitoringTech &LinuxSysmanImp::getPlatformMonitoringTechAccess() {
-    UNRECOVERABLE_IF(nullptr == pPmt);
-    return *pPmt;
+std::string LinuxSysmanImp::getPciRootPortDirectoryPath(std::string realPciPath) {
+    size_t loc;
+    // we need to change the absolute path to two levels up to get
+    // the Discrete card's root port.
+    // the root port is always at a fixed distance as defined in HW
+    uint8_t nLevel = 2;
+    while (nLevel > 0) {
+        loc = realPciPath.find_last_of('/');
+        if (loc == std::string::npos) {
+            break;
+        }
+        realPciPath = realPciPath.substr(0, loc);
+        nLevel--;
+    }
+    return realPciPath;
+}
+
+PlatformMonitoringTech *LinuxSysmanImp::getPlatformMonitoringTechAccess(uint32_t subDeviceId) {
+    auto subDeviceIdToPmtEntry = mapOfSubDeviceIdToPmtObject.find(subDeviceId);
+    if (subDeviceIdToPmtEntry == mapOfSubDeviceIdToPmtObject.end()) {
+        return nullptr;
+    }
+    return subDeviceIdToPmtEntry->second;
 }
 
 LinuxSysmanImp::LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) {
@@ -113,13 +138,12 @@ LinuxSysmanImp::~LinuxSysmanImp() {
         delete pFwUtilInterface;
         pFwUtilInterface = nullptr;
     }
-    if (nullptr != pPmt) {
-        delete pPmt;
-        pPmt = nullptr;
-    }
     if (nullptr != pPmuInterface) {
         delete pPmuInterface;
         pPmuInterface = nullptr;
+    }
+    for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
+        delete subDeviceIdToPmtEntry.second;
     }
 }
 

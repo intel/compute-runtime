@@ -194,6 +194,21 @@ void testSysmanPower(ze_device_handle_t &device) {
     }
 }
 
+std::string getTemperatureSensorType(zes_temp_sensors_t type) {
+    static const std::map<zes_temp_sensors_t, std::string> mgetSensorType{
+        {ZES_TEMP_SENSORS_GLOBAL, "ZES_TEMP_SENSORS_GLOBAL"},
+        {ZES_TEMP_SENSORS_GPU, "ZES_TEMP_SENSORS_GPU"},
+        {ZES_TEMP_SENSORS_MEMORY, "ZES_TEMP_SENSORS_MEMORY"},
+        {ZES_TEMP_SENSORS_GLOBAL_MIN, "ZES_TEMP_SENSORS_GLOBAL_MIN"},
+        {ZES_TEMP_SENSORS_GPU_MIN, "ZES_TEMP_SENSORS_GPU_MIN"},
+        {ZES_TEMP_SENSORS_MEMORY_MIN, "ZES_TEMP_SENSORS_MEMORY_MIN"}};
+    auto i = mgetSensorType.find(type);
+    if (i == mgetSensorType.end())
+        return "NOT SUPPORTED MODE Engine avalialbe";
+    else
+        return mgetSensorType.at(type);
+}
+
 void testSysmanTemperature(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Temperature tests ---- " << std::endl;
@@ -207,10 +222,14 @@ void testSysmanTemperature(ze_device_handle_t &device) {
     VALIDATECALL(zesDeviceEnumTemperatureSensors(device, &count, handles.data()));
 
     for (const auto &handle : handles) {
+        zes_temp_properties_t properties = {};
+        VALIDATECALL(zesTemperatureGetProperties(handle, &properties));
+
         double temperature;
         VALIDATECALL(zesTemperatureGetState(handle, &temperature));
         if (verbose) {
-            std::cout << "temperature current state is: " << temperature << std::endl;
+            std::cout << "For subDevice " << properties.subdeviceId << " temperature current state for "
+                      << getTemperatureSensorType(properties.type) << " is: " << temperature << std::endl;
         }
     }
 }

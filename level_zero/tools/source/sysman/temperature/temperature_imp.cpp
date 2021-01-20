@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,16 +35,15 @@ void TemperatureImp::init() {
     }
 }
 
-TemperatureImp::TemperatureImp(OsSysman *pOsSysman, zes_temp_sensors_t type) {
-    pOsTemperature = OsTemperature::create(pOsSysman, type);
+TemperatureImp::TemperatureImp(const ze_device_handle_t &deviceHandle, OsSysman *pOsSysman, zes_temp_sensors_t type) {
+    ze_device_properties_t deviceProperties = {};
+    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+    pOsTemperature = OsTemperature::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                           deviceProperties.subdeviceId, type);
     init();
 }
 
 TemperatureImp::~TemperatureImp() {
-    if (nullptr != pOsTemperature) {
-        delete pOsTemperature;
-        pOsTemperature = nullptr;
-    }
 }
 
 } // namespace L0

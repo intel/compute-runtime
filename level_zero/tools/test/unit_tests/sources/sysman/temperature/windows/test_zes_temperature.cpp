@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
   protected:
     Mock<TemperatureKmdSysManager> *pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
 
@@ -34,7 +35,16 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         }
 
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();
-        pSysmanDeviceImp->pTempHandleContext->init();
+        uint32_t subDeviceCount = 0;
+        // We received a device handle. Check for subdevices in this device
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+        pSysmanDeviceImp->pTempHandleContext->init(deviceHandles);
     }
     void TearDown() override {
         SysmanDeviceFixture::TearDown();
@@ -121,8 +131,8 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGlobalTemp
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingUnsupportedSensorsTemperatureThenUnsupportedReturned) {
-    auto pTemperatureImpMemory = std::make_unique<TemperatureImp>(pOsSysman, ZES_TEMP_SENSORS_GLOBAL_MIN);
-    auto pWddmTemperatureImp = static_cast<WddmTemperatureImp *>(pTemperatureImpMemory->pOsTemperature);
+    auto pTemperatureImpMemory = std::make_unique<TemperatureImp>(deviceHandles[0], pOsSysman, ZES_TEMP_SENSORS_GLOBAL_MIN);
+    auto pWddmTemperatureImp = static_cast<WddmTemperatureImp *>(pTemperatureImpMemory->pOsTemperature.get());
     double pTemperature = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pWddmTemperatureImp->getSensorTemperature(&pTemperature));
 }

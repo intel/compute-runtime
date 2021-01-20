@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "sysman/linux/os_sysman_imp.h"
 #include "sysman/pci/os_pci.h"
 
 namespace L0 {
@@ -30,7 +31,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
     FsAccess *pfsAccess = nullptr;
-    std::string changeDirNLevelsUp(std::string realRootPath, uint8_t nLevel);
+    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
 
   private:
     static const std::string deviceDir;

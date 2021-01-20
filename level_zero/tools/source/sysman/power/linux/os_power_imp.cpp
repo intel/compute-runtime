@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "level_zero/tools/source/sysman/power/linux/os_power_imp.h"
 
-#include "level_zero/tools/source/sysman/linux/pmt.h"
+#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
 #include "sysman/linux/os_sysman_imp.h"
@@ -54,11 +54,13 @@ ze_result_t LinuxPowerImp::setEnergyThreshold(double threshold) {
 }
 
 bool LinuxPowerImp::isPowerModuleSupported() {
-    return pPmt->isPmtSupported();
+    return (pPmt != nullptr);
 }
 LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pPmt = &pLinuxSysmanImp->getPlatformMonitoringTechAccess();
+    // Lets hardcode subDeviceId to 0, as we are expecting this code to execute on device without subdevice
+    uint32_t subDeviceId = 0;
+    pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subDeviceId);
 }
 
 OsPower *OsPower::create(OsSysman *pOsSysman) {

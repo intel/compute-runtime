@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
-#include "sysman/linux/os_sysman_imp.h"
 #include "sysman/pci/pci_imp.h"
 
 namespace L0 {
@@ -20,15 +19,6 @@ const std::string LinuxPciImp::resourceFile("device/resource");
 const std::string LinuxPciImp::maxLinkSpeedFile("device/max_link_speed");
 const std::string LinuxPciImp::maxLinkWidthFile("device/max_link_width");
 
-std::string LinuxPciImp::changeDirNLevelsUp(std::string realRootPath, uint8_t nLevel) {
-    size_t loc;
-    while (nLevel > 0) {
-        loc = realRootPath.find_last_of('/');
-        realRootPath = realRootPath.substr(0, loc);
-        nLevel--;
-    }
-    return realRootPath;
-}
 ze_result_t LinuxPciImp::getProperties(zes_pci_properties_t *properties) {
     properties->haveBandwidthCounters = false;
     properties->havePacketCounters = false;
@@ -52,14 +42,14 @@ ze_result_t LinuxPciImp::getMaxLinkSpeed(double &maxLinkSpeed) {
         std::string rootPortPath;
         std::string realRootPath;
         result = pSysfsAccess->getRealPath(deviceDir, realRootPath);
-        // we need to change the absolute path to two levels up to get actual
-        // values of speed and width at the Discrete card's root port.
-        // the root port is always at a fixed distance as defined in HW
-        rootPortPath = changeDirNLevelsUp(realRootPath, 2);
         if (ZE_RESULT_SUCCESS != result) {
             maxLinkSpeed = 0;
             return result;
         }
+
+        // we need to get actual values of speed and width at the Discrete card's root port.
+        rootPortPath = pLinuxSysmanImp->getPciRootPortDirectoryPath(realRootPath);
+
         result = pfsAccess->read(rootPortPath + '/' + "max_link_speed", maxLinkSpeed);
         if (ZE_RESULT_SUCCESS != result) {
             maxLinkSpeed = 0;
@@ -81,14 +71,14 @@ ze_result_t LinuxPciImp::getMaxLinkWidth(int32_t &maxLinkwidth) {
         std::string rootPortPath;
         std::string realRootPath;
         result = pSysfsAccess->getRealPath(deviceDir, realRootPath);
-        // we need to change the absolute path to two levels up to get actual
-        // values of speed and width at the Discrete card's root port.
-        // the root port is always at a fixed distance as defined in HW
-        rootPortPath = changeDirNLevelsUp(realRootPath, 2);
         if (ZE_RESULT_SUCCESS != result) {
             maxLinkwidth = -1;
             return result;
         }
+
+        // we need to get actual values of speed and width at the Discrete card's root port.
+        rootPortPath = pLinuxSysmanImp->getPciRootPortDirectoryPath(realRootPath);
+
         result = pfsAccess->read(rootPortPath + '/' + "max_link_width", maxLinkwidth);
         if (ZE_RESULT_SUCCESS != result) {
             maxLinkwidth = -1;
@@ -163,7 +153,7 @@ ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 LinuxPciImp::LinuxPciImp(OsSysman *pOsSysman) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pfsAccess = &pLinuxSysmanImp->getFsAccess();
     Device *pDevice = pLinuxSysmanImp->getDeviceHandle();

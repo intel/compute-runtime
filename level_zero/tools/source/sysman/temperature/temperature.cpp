@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,8 @@ TemperatureHandleContext::~TemperatureHandleContext() {
     }
 }
 
-void TemperatureHandleContext::createHandle(zes_temp_sensors_t type) {
-    Temperature *pTemperature = new TemperatureImp(pOsSysman, type);
+void TemperatureHandleContext::createHandle(const ze_device_handle_t &deviceHandle, zes_temp_sensors_t type) {
+    Temperature *pTemperature = new TemperatureImp(deviceHandle, pOsSysman, type);
     if (pTemperature->initSuccess == true) {
         handleList.push_back(pTemperature);
     } else {
@@ -26,10 +26,14 @@ void TemperatureHandleContext::createHandle(zes_temp_sensors_t type) {
     }
 }
 
-void TemperatureHandleContext::init() {
-    createHandle(ZES_TEMP_SENSORS_GLOBAL);
-    createHandle(ZES_TEMP_SENSORS_GPU);
-    createHandle(ZES_TEMP_SENSORS_MEMORY);
+void TemperatureHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+    for (const auto &deviceHandle : deviceHandles) {
+        createHandle(deviceHandle, ZES_TEMP_SENSORS_GLOBAL);
+        createHandle(deviceHandle, ZES_TEMP_SENSORS_GLOBAL_MIN);
+        createHandle(deviceHandle, ZES_TEMP_SENSORS_GPU);
+        createHandle(deviceHandle, ZES_TEMP_SENSORS_GPU_MIN);
+        createHandle(deviceHandle, ZES_TEMP_SENSORS_MEMORY);
+    }
 }
 
 ze_result_t TemperatureHandleContext::temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) {

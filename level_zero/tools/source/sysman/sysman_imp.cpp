@@ -60,7 +60,6 @@ SysmanDeviceImp::~SysmanDeviceImp() {
 
 void SysmanDeviceImp::init() {
     uint32_t subDeviceCount = 0;
-    std::vector<ze_device_handle_t> deviceHandles;
     // We received a device handle. Check for subdevices in this device
     Device::fromHandle(hCoreDevice)->getSubDevices(&subDeviceCount, nullptr);
     if (subDeviceCount == 0) {
@@ -81,7 +80,7 @@ void SysmanDeviceImp::init() {
         pFabricPortHandleContext->init();
     }
     if (pTempHandleContext) {
-        pTempHandleContext->init();
+        pTempHandleContext->init(deviceHandles);
     }
     if (pPci) {
         pPci->init();

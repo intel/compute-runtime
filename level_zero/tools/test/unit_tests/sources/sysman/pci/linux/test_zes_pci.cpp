@@ -207,12 +207,6 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVe
     }
 }
 
-TEST_F(ZesPciFixture, GivenValidPathWhileCallingchangeDirNLevelsUpThenReturnedPathIsNLevelUpThenTheCurrentPath) {
-    PublicLinuxPciImp *pOsPci = static_cast<PublicLinuxPciImp *>(pPciImp->pOsPci);
-    std::string testMockRealPath2LevelsUp = pOsPci->changeDirNLevelsUp(mockRealPath, 2);
-    EXPECT_EQ(testMockRealPath2LevelsUp, mockRealPath2LevelsUp);
-}
-
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStateThenVerifyzetSysmanPciGetStateCallReturnNotSupported) {
     zes_pci_state_t state;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetState(device, &state));

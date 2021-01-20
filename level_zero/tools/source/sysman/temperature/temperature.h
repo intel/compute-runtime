@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ struct TemperatureHandleContext {
     TemperatureHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~TemperatureHandleContext();
 
-    void init();
+    void init(std::vector<ze_device_handle_t> &deviceHandles);
 
     ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature);
 
@@ -44,7 +44,7 @@ struct TemperatureHandleContext {
     std::vector<Temperature *> handleList = {};
 
   private:
-    void createHandle(zes_temp_sensors_t type);
+    void createHandle(const ze_device_handle_t &deviceHandle, zes_temp_sensors_t type);
 };
 
 } // namespace L0

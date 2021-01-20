@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,10 +13,12 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
-#include "level_zero/tools/source/sysman/linux/pmt.h"
+#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
 #include "level_zero/tools/source/sysman/linux/xml_parser/xml_parser.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
+
+#include <map>
 
 namespace L0 {
 class PmuInterface;
@@ -35,20 +37,21 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     ProcfsAccess &getProcfsAccess();
     SysfsAccess &getSysfsAccess();
     NEO::Drm &getDrm();
-    PlatformMonitoringTech &getPlatformMonitoringTechAccess();
+    PlatformMonitoringTech *getPlatformMonitoringTechAccess(uint32_t subDeviceId);
     Device *getDeviceHandle();
     SysmanDeviceImp *getSysmanDeviceImp();
+    std::string getPciRootPortDirectoryPath(std::string realPciPath);
 
   protected:
     XmlParser *pXmlParser = nullptr;
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
-    PlatformMonitoringTech *pPmt = nullptr;
     NEO::Drm *pDrm = nullptr;
     Device *pDevice = nullptr;
     PmuInterface *pPmuInterface = nullptr;
     FirmwareUtil *pFwUtilInterface = nullptr;
+    std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
 
   private:
     LinuxSysmanImp() = delete;

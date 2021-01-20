@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,10 +20,10 @@ class TemperatureImp : public Temperature, NEO::NonCopyableOrMovableClass {
     ze_result_t temperatureGetState(double *pTemperature) override;
 
     TemperatureImp() = default;
-    TemperatureImp(OsSysman *pOsSysman, zes_temp_sensors_t type);
+    TemperatureImp(const ze_device_handle_t &deviceHandle, OsSysman *pOsSysman, zes_temp_sensors_t type);
     ~TemperatureImp() override;
 
-    OsTemperature *pOsTemperature = nullptr;
+    std::unique_ptr<OsTemperature> pOsTemperature = nullptr;
     void init();
 };
 } // namespace L0

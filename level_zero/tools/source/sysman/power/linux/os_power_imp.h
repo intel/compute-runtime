@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/power/os_power.h"
+
+#include <memory>
 
 namespace L0 {
 

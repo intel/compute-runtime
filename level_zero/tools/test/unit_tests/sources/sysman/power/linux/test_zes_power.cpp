@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,21 +18,54 @@ namespace ult {
 
 constexpr uint64_t convertJouleToMicroJoule = 1000000u;
 constexpr uint32_t powerHandleComponentCount = 1u;
+const std::map<std::string, uint64_t> deviceKeyOffsetMapPower = {
+    {"PACKAGE_ENERGY", 0x400},
+    {"COMPUTE_TEMPERATURES", 0x68},
+    {"SOC_TEMPERATURES", 0x60},
+    {"CORE_TEMPERATURES", 0x6c}};
+
 class SysmanDevicePowerFixture : public SysmanDeviceFixture {
   protected:
+    std::unique_ptr<PublicLinuxPowerImp> pPublicLinuxPowerImp;
     std::unique_ptr<Mock<PowerPmt>> pPmt;
-    PlatformMonitoringTech *pPmtOld = nullptr;
+    std::unique_ptr<Mock<PowerFsAccess>> pFsAccess;
+    FsAccess *pFsAccessOriginal = nullptr;
+    OsPower *pOsPowerOriginal = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
-        pPmtOld = pLinuxSysmanImp->pPmt;
-        pPmt = std::make_unique<NiceMock<Mock<PowerPmt>>>();
-        pPmt->init(deviceName, pFsAccess);
-        pLinuxSysmanImp->pPmt = pPmt.get();
+        pFsAccess = std::make_unique<NiceMock<Mock<PowerFsAccess>>>();
+        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+        ON_CALL(*pFsAccess.get(), listDirectory(_, _))
+            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<PowerFsAccess>::listDirectorySuccess));
+        ON_CALL(*pFsAccess.get(), getRealPath(_, _))
+            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<PowerFsAccess>::getRealPathSuccess));
+
+        uint32_t subDeviceCount = 0;
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+
+        for (auto &deviceHandle : deviceHandles) {
+            ze_device_properties_t deviceProperties = {};
+            Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+            auto pPmt = new NiceMock<Mock<PowerPmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                                     deviceProperties.subdeviceId);
+            pPmt->mockedInit(pFsAccess.get());
+            pPmt->keyOffsetMap = deviceKeyOffsetMapPower;
+            pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
+        }
+
         pSysmanDeviceImp->pPowerHandleContext->init();
     }
     void TearDown() override {
         SysmanDeviceFixture::TearDown();
-        pLinuxSysmanImp->pPmt = pPmtOld;
+        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
     }
 
     std::vector<zes_pwr_handle_t> get_power_handles(uint32_t count) {

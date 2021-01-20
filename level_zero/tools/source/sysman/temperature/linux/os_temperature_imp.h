@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/temperature/os_temperature.h"
+
+#include <memory>
 
 namespace L0 {
 
@@ -20,12 +22,23 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass
     ze_result_t getSensorTemperature(double *pTemperature) override;
     bool isTempModuleSupported() override;
     void setSensorType(zes_temp_sensors_t sensorType);
-    LinuxTemperatureImp(OsSysman *pOsSysman);
+    LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxTemperatureImp() = default;
     ~LinuxTemperatureImp() override = default;
 
   protected:
     PlatformMonitoringTech *pPmt = nullptr;
     zes_temp_sensors_t type = ZES_TEMP_SENSORS_GLOBAL;
+
+  private:
+    ze_result_t getGlobalMaxTemperature(double *pTemperature);
+    ze_result_t getGlobalMinTemperature(double *pTemperature);
+    ze_result_t getGpuMaxTemperature(double *pTemperature);
+    ze_result_t getGpuMinTemperature(double *pTemperature);
+    ze_result_t getMemoryMaxTemperature(double *pTemperature);
+    ze_result_t getGlobalMaxTemperatureNoSubDevice(double *pTemperature);
+    ze_result_t getGpuMaxTemperatureNoSubDevice(double *pTemperature);
+    uint32_t subdeviceId = 0;
+    ze_bool_t isSubdevice = 0;
 };
 } // namespace L0

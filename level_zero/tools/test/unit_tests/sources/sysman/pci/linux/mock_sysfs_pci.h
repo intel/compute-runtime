@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -136,7 +136,6 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
 
 class PublicLinuxPciImp : public L0::LinuxPciImp {
   public:
-    using LinuxPciImp::changeDirNLevelsUp;
     using LinuxPciImp::pfsAccess;
     using LinuxPciImp::pSysfsAccess;
 };

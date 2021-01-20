@@ -25,6 +25,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     void init();
 
     ze_device_handle_t hCoreDevice = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles; // handles of all subdevices
     OsSysman *pOsSysman = nullptr;
     Pci *pPci = nullptr;
     GlobalOperations *pGlobalOperations = nullptr;

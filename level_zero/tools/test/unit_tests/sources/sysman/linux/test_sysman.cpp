@@ -88,16 +88,6 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPidWhenCallingProcfsAccessIsAliveThenErr
     EXPECT_FALSE(ProcfsAccess.isAlive(reinterpret_cast<::pid_t>(-1)));
 }
 
-TEST_F(SysmanDeviceFixture, GivenPmtHandleWhenCallinggetPlatformMonitoringTechAccessThenCreatedPmtHandleWillBeRetrieved) {
-    if (pLinuxSysmanImp->pPmt != nullptr) {
-        //delete previously allocated pPmt
-        delete pLinuxSysmanImp->pPmt;
-        pLinuxSysmanImp->pPmt = nullptr;
-    }
-    pLinuxSysmanImp->pPmt = new PlatformMonitoringTech();
-    EXPECT_EQ(&pLinuxSysmanImp->getPlatformMonitoringTechAccess(), pLinuxSysmanImp->pPmt);
-}
-
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleThenSameHandleIsRetrievedFromOsSpecificCode) {
     EXPECT_EQ(pLinuxSysmanImp->getDeviceHandle(), device);
 }
@@ -110,6 +100,18 @@ TEST_F(SysmanDeviceFixture, GivenPmuInterfaceHandleWhenCallinggetPmuInterfaceThe
     }
     pLinuxSysmanImp->pPmuInterface = PmuInterface::create(pLinuxSysmanImp);
     EXPECT_EQ(pLinuxSysmanImp->getPmuInterface(), pLinuxSysmanImp->pPmuInterface);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturnedPathIs2LevelUpThenTheCurrentPath) {
+    const std::string mockBdf = "0000:00:02.0";
+    const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;
+    const std::string mockRealPath2LevelsUp = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0";
+
+    std::string pciRootPort1 = pLinuxSysmanImp->getPciRootPortDirectoryPath(mockRealPath);
+    EXPECT_EQ(pciRootPort1, mockRealPath2LevelsUp);
+
+    std::string pciRootPort2 = pLinuxSysmanImp->getPciRootPortDirectoryPath("device");
+    EXPECT_EQ(pciRootPort2, "device");
 }
 
 TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValidatingSysmanHandlesForSubdevicesThenSysmanHandleForSubdeviceWillBeSameAsSysmanHandleForDevice) {
