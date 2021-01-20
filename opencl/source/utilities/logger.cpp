@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,6 +97,7 @@ void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
         ss << " ThreadID: " << thisThread;
         ss << " AllocationType: " << getAllocationTypeString(graphicsAllocation);
         ss << " MemoryPool: " << graphicsAllocation->getMemoryPool();
+        ss << " GPU address: 0x" << std::hex << graphicsAllocation->getGpuAddress();
         ss << graphicsAllocation->getAllocationInfoString();
         ss << std::endl;
 

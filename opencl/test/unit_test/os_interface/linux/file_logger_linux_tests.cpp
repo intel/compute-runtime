@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,8 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
 
     MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System64KBPages);
 
+    allocation.setCpuPtrAndGpuAddress(&allocation, 0x12345);
+
     MockBufferObject bo(&drm);
     bo.handle = 4;
 
@@ -44,10 +46,14 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     std::stringstream memoryPoolCheck;
     memoryPoolCheck << " MemoryPool: " << allocation.getMemoryPool();
 
+    std::stringstream gpuAddressCheck;
+    gpuAddressCheck << " GPU address: 0x" << std::hex << allocation.getGpuAddress();
+
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());
         EXPECT_TRUE(str.find(threadIDCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find(memoryPoolCheck.str()) != std::string::npos);
+        EXPECT_TRUE(str.find(gpuAddressCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find("AllocationType: BUFFER") != std::string::npos);
         EXPECT_TRUE(str.find("Handle: 4") != std::string::npos);
     }
