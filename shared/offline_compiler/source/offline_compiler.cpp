@@ -393,6 +393,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     }
     if (deviceName.empty()) {
         internalOptions = CompilerOptions::concatenate("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes", internalOptions);
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
     } else {
         std::string extensionsList = getExtensionsList(hwInfo);
         if (requiresAdditionalExtensions(options)) {

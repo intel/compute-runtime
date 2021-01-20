@@ -1437,7 +1437,7 @@ TEST(OclocCompile, givenCommandLineWithoutDeviceWhenCompilingToSpirvThenSucceeds
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    EXPECT_THAT(ocloc.internalOptions.c_str(), testing::HasSubstr("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes"));
+    EXPECT_THAT(ocloc.internalOptions.c_str(), testing::HasSubstr("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes -D__IMAGE_SUPPORT__=1"));
 }
 
 TEST(OclocCompile, givenDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenInternalOptionsAreSetCorrectly) {
