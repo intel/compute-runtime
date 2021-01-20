@@ -142,6 +142,21 @@ TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToGreaterSubDeviceThanAvailableW
     EXPECT_EQ(devices[0]->getNumAvailableDevices(), 4u);
 }
 
+TEST_F(DeviceFactoryTest, givenEmptyAffintyMaskWhenCreateDeviceThenAllDevicesAreReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    DebugManager.flags.ZE_AFFINITY_MASK.set("");
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
+    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+
+    EXPECT_EQ(devices.size(), 2u);
+    EXPECT_EQ(devices[0]->getNumAvailableDevices(), 4u);
+    EXPECT_EQ(devices[0]->getNumAvailableDevices(), 4u);
+}
+
 TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetToRootDevicesOnlyWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(2);

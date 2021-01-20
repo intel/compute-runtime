@@ -82,7 +82,7 @@ void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices
 void ExecutionEnvironment::parseAffinityMask() {
     auto affinityMaskString = DebugManager.flags.ZE_AFFINITY_MASK.get();
 
-    if (affinityMaskString.compare("default") == 0) {
+    if (affinityMaskString.compare("default") == 0 || affinityMaskString.empty()) {
         return;
     }
 
