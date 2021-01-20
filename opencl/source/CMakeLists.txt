@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -135,6 +135,18 @@ if(${GENERATE_EXECUTABLE})
   )
 
   if(UNIX)
+    get_filename_component(lib_file_name $<TARGET_FILE:${NEO_DYNAMIC_LIB_NAME}> NAME_WE)
+    set(symbols_file_name ${lib_file_name}.debug)
+    set(debug_symbols_target_name "${STRIP_SYMBOLS_TARGET}_${NEO_DYNAMIC_LIB_NAME}")
+    add_custom_target(${debug_symbols_target_name}
+                      COMMAND sh -c "objcopy --only-keep-debug ${lib_file_name} ${symbols_file_name}"
+                      COMMAND sh -c "strip -g ${lib_file_name}"
+                      COMMAND sh -c "objcopy --add-gnu-debuglink=${symbols_file_name} ${lib_file_name}"
+    )
+    add_dependencies(${debug_symbols_target_name} ${NEO_DYNAMIC_LIB_NAME})
+    add_dependencies(${STRIP_SYMBOLS_TARGET} ${debug_symbols_target_name})
+    set_property(GLOBAL PROPERTY IGDRCL_SYMBOL_FILE "${symbols_file_name}")
+
     install(FILES
             $<TARGET_FILE:${NEO_DYNAMIC_LIB_NAME}>
             PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE

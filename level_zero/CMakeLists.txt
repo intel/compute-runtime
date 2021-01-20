@@ -491,6 +491,18 @@ if(BUILD_WITH_L0)
   )
 
   if(UNIX)
+    get_filename_component(lib_file_name $<TARGET_FILE:${TARGET_NAME_L0}> NAME_WE)
+    set(symbols_file_name ${lib_file_name}.debug)
+    set(debug_symbols_target_name "${STRIP_SYMBOLS_TARGET}_${TARGET_NAME_L0}")
+    add_custom_target(${debug_symbols_target_name}
+                      COMMAND sh -c "objcopy --only-keep-debug ${lib_file_name} ${symbols_file_name}"
+                      COMMAND sh -c "strip -g ${lib_file_name}"
+                      COMMAND sh -c "objcopy --add-gnu-debuglink=${symbols_file_name} ${lib_file_name}"
+    )
+    add_dependencies(${debug_symbols_target_name} ${TARGET_NAME_L0})
+    add_dependencies(${STRIP_SYMBOLS_TARGET} ${debug_symbols_target_name})
+    set_property(GLOBAL APPEND PROPERTY DEBUG_SYMBOL_FILES "${symbols_file_name}")
+
     install(TARGETS ${TARGET_NAME_L0}
             LIBRARY
             PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE

@@ -191,6 +191,18 @@ else()
 endif()
 
 if(UNIX)
+  get_filename_component(lib_file_name $<TARGET_FILE:${OCLOC_NAME}_lib> NAME_WE)
+  set(symbols_file_name ${lib_file_name}.debug)
+  set(debug_symbols_target_name "${STRIP_SYMBOLS_TARGET}_${OCLOC_NAME}_lib")
+  add_custom_target(${debug_symbols_target_name}
+                    COMMAND sh -c "objcopy --only-keep-debug ${lib_file_name} ${symbols_file_name}"
+                    COMMAND sh -c "strip -g ${lib_file_name}"
+                    COMMAND sh -c "objcopy --add-gnu-debuglink=${symbols_file_name} ${lib_file_name}"
+  )
+  add_dependencies(${debug_symbols_target_name} ${OCLOC_NAME}_lib)
+  add_dependencies(${STRIP_SYMBOLS_TARGET} ${debug_symbols_target_name})
+  set_property(GLOBAL APPEND PROPERTY DEBUG_SYMBOL_FILES "${symbols_file_name}")
+
   set_property(GLOBAL APPEND PROPERTY NEO_OCL_COMPONENTS_LIST ${OCLOC_NAME})
   install(FILES $<TARGET_FILE:${OCLOC_NAME}>
           DESTINATION ${CMAKE_INSTALL_BINDIR}
