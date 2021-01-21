@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,8 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/windows/os_interface.h"
-#include "shared/test/unit_test/fixtures/device_fixture.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_memory_manager.h"

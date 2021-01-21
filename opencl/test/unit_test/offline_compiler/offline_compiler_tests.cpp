@@ -11,8 +11,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/platform/extensions.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/offline_compiler/source/decoder/binary_decoder.h"
 #include "shared/source/helpers/array_count.h"
-#include "shared/test/unit_test/helpers/test_files.h"
+#include "shared/test/common/helpers/test_files.h"
 
 #include "gmock/gmock.h"
 #include "mock/mock_encoder.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
-#include "shared/test/unit_test/mocks/ult_device_factory.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/program/kernel_arg_info.h"
 #include "opencl/source/program/kernel_info.h"

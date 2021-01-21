@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/command_stream/scratch_space_controller_base.h"
-#include "shared/test/unit_test/fixtures/device_fixture.h"
-#include "shared/test/unit_test/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 
 #include "test.h"
 

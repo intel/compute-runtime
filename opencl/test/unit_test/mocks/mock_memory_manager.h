@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/test/unit_test/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_host_ptr_manager.h"
@@ -23,7 +23,7 @@ class MemoryManagerCreate : public T {
     using T::T;
 
     template <class... U>
-    MemoryManagerCreate(bool enable64kbPages, bool enableLocalMemory, U &&... args) : T(std::forward<U>(args)...) {
+    MemoryManagerCreate(bool enable64kbPages, bool enableLocalMemory, U &&...args) : T(std::forward<U>(args)...) {
         std::fill(this->enable64kbpages.begin(), this->enable64kbpages.end(), enable64kbPages);
         std::fill(this->localMemorySupported.begin(), this->localMemorySupported.end(), enableLocalMemory);
     }

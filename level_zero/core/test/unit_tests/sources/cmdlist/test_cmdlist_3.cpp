@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"

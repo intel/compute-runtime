@@ -13,7 +13,7 @@ macro(macro_for_each_gen)
         )
       endif()
       list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
-           ${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
+           ${NEO_SHARED_TEST_DIRECTORY}/common/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
            ${NEO_SHARED_TEST_DIRECTORY}/unit_test/libult/${GEN_TYPE_LOWER}.cpp
       )
 
@@ -35,9 +35,9 @@ macro(macro_for_each_gen)
       endforeach()
     endforeach()
   endforeach()
-  if(EXISTS "${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
-    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
-    include_directories(${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/)
+  if(EXISTS "${NEO_SHARED_TEST_DIRECTORY}/common/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
+    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${NEO_SHARED_TEST_DIRECTORY}/common/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
+    include_directories(${NEO_SHARED_TEST_DIRECTORY}/common/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/)
   endif()
 endmacro()
 
@@ -62,13 +62,13 @@ set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/built_ins_helper.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.h
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_management.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_management.h
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/test_files.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/test_files.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/built_ins_helper.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
 )
 
 get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE)

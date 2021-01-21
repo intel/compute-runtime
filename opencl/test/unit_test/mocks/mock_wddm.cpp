@@ -13,7 +13,7 @@
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
-#include "shared/test/unit_test/mock_gdi/mock_gdi.h"
+#include "shared/test/common/mock_gdi/mock_gdi.h"
 
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_allocations_container.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_logger.h"

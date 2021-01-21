@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/local_id_gen.h"
-#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/program/kernel_info.h"

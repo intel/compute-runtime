@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/sharings/va/va_sharing_functions.h"
 #include "test.h"

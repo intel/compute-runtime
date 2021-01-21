@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2020 Intel Corporation
+# Copyright (C) 2017-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -49,8 +49,8 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/validator_tests.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/aligned_memory_tests.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/debug_manager_state_restore.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/aligned_memory_tests.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_manager_state_restore.h
 )
 
 get_property(NEO_CORE_PREAMBLE_TESTS GLOBAL PROPERTY NEO_CORE_PREAMBLE_TESTS)

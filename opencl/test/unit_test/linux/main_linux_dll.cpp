@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,10 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/os_interface.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/helpers/default_hw_info.inl"
-#include "shared/test/unit_test/helpers/ult_hw_config.inl"
-#include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.inl"
+#include "shared/test/common/helpers/ult_hw_config.inl"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/test/unit_test/custom_event_listener.h"
 #include "opencl/test/unit_test/linux/drm_wrap.h"

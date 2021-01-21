@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2020 Intel Corporation
+# Copyright (C) 2017-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -22,7 +22,7 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
                ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
-               ${NEO_SOURCE_DIR}/shared/test/unit_test/test_macros/test_checks_shared.cpp
+               ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
                $<TARGET_OBJECTS:igdrcl_libult>
                $<TARGET_OBJECTS:igdrcl_libult_cs>
@@ -33,7 +33,7 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
 
 target_include_directories(igdrcl_mt_tests PRIVATE
                            ${CMAKE_CURRENT_SOURCE_DIR}
-                           ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                            ${NEO_SOURCE_DIR}/opencl/source/gen_common
 )
 

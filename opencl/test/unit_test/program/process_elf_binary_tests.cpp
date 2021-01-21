@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
+#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
-#include "shared/test/unit_test/helpers/test_files.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

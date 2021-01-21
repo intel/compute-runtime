@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -22,7 +22,8 @@ struct WorkGroupSizeBase {
 
         // Compute the SIMD lane mask
         size_t simd =
-            pCmd.getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD32 ? 32 : pCmd.getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD16 ? 16 : 8;
+            pCmd.getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD32 ? 32 : pCmd.getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD16 ? 16
+                                                                                                                             : 8;
         uint64_t simdMask = maxNBitValue(simd);
 
         // Mask off lanes based on the execution masks

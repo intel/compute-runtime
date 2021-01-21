@@ -8,8 +8,8 @@
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
-#include "shared/test/unit_test/helpers/ult_hw_config.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"

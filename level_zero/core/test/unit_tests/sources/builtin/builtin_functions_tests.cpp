@@ -7,8 +7,8 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/mocks/mock_compiler_interface_spirv.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_compiler_interface_spirv.h"
 
 #include "test.h"
 

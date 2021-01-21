@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/mocks/mock_device.h"
-#include "shared/test/unit_test/test_macros/test_checks_shared.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/program/printf_handler.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"

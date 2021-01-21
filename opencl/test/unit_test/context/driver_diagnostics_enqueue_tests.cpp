@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/context/driver_diagnostics_tests.h"
@@ -768,7 +768,8 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
 TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
     size_t localWorkGroupSize[3];
     int badSizeDimension;
-    uint32_t workDim = globalWorkGroupSize[1] == 1 ? 1 : globalWorkGroupSize[2] == 1 ? 2 : 3;
+    uint32_t workDim = globalWorkGroupSize[1] == 1 ? 1 : globalWorkGroupSize[2] == 1 ? 2
+                                                                                     : 3;
 
     DispatchInfo dispatchInfo(&pCmdQ->getClDevice(), kernel, workDim, Vec3<size_t>(globalWorkGroupSize), Vec3<size_t>(0u, 0u, 0u), Vec3<size_t>(0u, 0u, 0u));
 

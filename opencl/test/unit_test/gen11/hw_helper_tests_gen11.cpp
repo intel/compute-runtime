@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
 #include "opencl/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"

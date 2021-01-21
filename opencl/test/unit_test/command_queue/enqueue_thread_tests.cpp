@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/test/unit_test/test_macros/test_checks_shared.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/memory_properties_helpers.h"

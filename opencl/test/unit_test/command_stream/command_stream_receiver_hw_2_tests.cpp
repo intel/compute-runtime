@@ -7,8 +7,8 @@
 
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
-#include "shared/test/unit_test/helpers/ult_hw_config.h"
-#include "shared/test/unit_test/mocks/mock_direct_submission_hw.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/unit_test/helpers/memory_management.h"
+#include "shared/test/common/helpers/memory_management.h"
 
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 

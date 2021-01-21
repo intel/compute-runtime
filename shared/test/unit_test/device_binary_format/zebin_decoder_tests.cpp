@@ -10,8 +10,8 @@
 #include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/program/program_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/program/kernel_info.h"
 #include "test.h"

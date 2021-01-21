@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "test.h"
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2020 Intel Corporation
+# Copyright (C) 2017-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,7 +13,7 @@ list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
      ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
      ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
      ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
-     ${NEO_SOURCE_DIR}/shared/test/unit_test/test_macros/test_checks_shared.cpp
+     ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
      $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
      $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
      $<TARGET_OBJECTS:igdrcl_libult>
@@ -84,6 +84,6 @@ else()
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
   )
 endif()
-target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros/header${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX})
 
 create_project_source_tree(igdrcl_aub_tests)

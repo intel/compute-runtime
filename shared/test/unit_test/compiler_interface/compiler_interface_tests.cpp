@@ -9,9 +9,9 @@
 #include "shared/source/compiler_interface/compiler_interface.inl"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/helpers/test_files.h"
-#include "shared/test/unit_test/mocks/mock_compiler_interface.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_compiler_interface.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/global_environment.h"

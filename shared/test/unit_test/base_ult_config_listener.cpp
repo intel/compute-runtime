@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "base_ult_config_listener.h"
 
-#include "shared/test/unit_test/helpers/default_hw_info.h"
-#include "shared/test/unit_test/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
 
 void NEO::BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
     debugVarSnapshot = DebugManager.flags;

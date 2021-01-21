@@ -173,6 +173,7 @@ endif()
 
 if(SKIP_UNIT_TESTS)
   set(SKIP_NEO_UNIT_TESTS TRUE)
+  set(SKIP_SHARED_UNIT_TESTS TRUE)
 endif()
 
 # Set our build directory

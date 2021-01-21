@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/sharings/va/enable_va.h"
 #include "opencl/source/sharings/va/va_sharing_functions.h"

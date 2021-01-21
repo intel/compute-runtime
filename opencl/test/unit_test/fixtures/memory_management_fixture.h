@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/test/unit_test/helpers/memory_management.h"
+#include "shared/test/common/helpers/memory_management.h"
 
 #include "gtest/gtest.h"
 

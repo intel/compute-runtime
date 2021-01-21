@@ -61,10 +61,10 @@ if(NOT SKIP_UNIT_TESTS)
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
                  ${NEO_SOURCE_DIR}/shared/source/helpers/allow_deferred_deleter.cpp
-                 ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/api_specific_config_shared_tests.cpp
-                 ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.cpp
-                 ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.cpp
-                 ${NEO_SOURCE_DIR}/shared/test/unit_test/test_macros/test_checks_shared.cpp
+                 ${NEO_SOURCE_DIR}/shared/test/common/helpers/api_specific_config_shared_tests.cpp
+                 ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_leak_listener.cpp
+                 ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_management.cpp
+                 ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
                  $<TARGET_OBJECTS:mock_gmm>
   )
 
@@ -75,8 +75,8 @@ if(NOT SKIP_UNIT_TESTS)
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-                   ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/linux/mock_drm_memory_manager.cpp
-                   ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/linux/mock_drm_memory_manager.h
+                   ${NEO_SOURCE_DIR}/shared/test/common/mocks/linux/mock_drm_memory_manager.cpp
+                   ${NEO_SOURCE_DIR}/shared/test/common/mocks/linux/mock_drm_memory_manager.h
     )
   else()
     target_sources(${TARGET_NAME} PRIVATE
@@ -95,8 +95,8 @@ if(NOT SKIP_UNIT_TESTS)
   target_include_directories(${TARGET_NAME} PRIVATE
                              ${CMAKE_CURRENT_SOURCE_DIR}
                              ${ENGINE_NODE_DIR}
-                             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros/header${BRANCH_DIR_SUFFIX}
-                             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/includes${BRANCH_DIR_SUFFIX}
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
   )
 
   if(UNIX)
@@ -118,7 +118,12 @@ if(NOT SKIP_UNIT_TESTS)
     )
   endif()
 
-  add_subdirectories()
+  add_subdirectory(${NEO_SHARED_TEST_DIRECTORY}/common "${NEO_BUILD_DIR}/shared/test/common")
+
+  if(NOT SKIP_SHARED_UNIT_TESTS)
+    add_subdirectories()
+  endif()
+
   get_property(NEO_CORE_tests_mocks GLOBAL PROPERTY NEO_CORE_tests_mocks)
   target_sources(${TARGET_NAME} PRIVATE ${NEO_CORE_tests_mocks})
   add_dependencies(${TARGET_NAME} prepare_test_kernel_for_shared)

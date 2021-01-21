@@ -23,12 +23,12 @@ ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 add_executable(${TARGET_NAME}
                ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
                ${NEO_SOURCE_DIR}/shared/test/unit_test/base_ult_config_listener.cpp
-               ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.h
-               ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.cpp
-               ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.h
-               ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.cpp
-               ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/ult_device_factory.cpp
-               ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/ult_device_factory.h
+               ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_management.h
+               ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_management.cpp
+               ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_leak_listener.h
+               ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_leak_listener.cpp
+               ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.cpp
+               ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.h
                ${L0_CORE_ENABLERS}
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp
@@ -84,7 +84,7 @@ target_include_directories(${TARGET_NAME}
                            $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools
                            $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/../../../../instrumentation/inc/common/instrumentation/api/
                            $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/core/os_interface
-                           ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
 )
 
 if(UNIX)

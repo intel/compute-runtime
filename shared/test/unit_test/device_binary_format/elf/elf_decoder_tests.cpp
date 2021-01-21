@@ -10,7 +10,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/unit_test/mocks/mock_elf.h"
+#include "shared/test/common/mocks/mock_elf.h"
 
 #include "test.h"
 

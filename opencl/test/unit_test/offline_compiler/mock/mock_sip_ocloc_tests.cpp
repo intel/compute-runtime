@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/unit_test/mocks/mock_sip.h"
+#include "shared/test/common/mocks/mock_sip.h"
 
 #include <vector>
 

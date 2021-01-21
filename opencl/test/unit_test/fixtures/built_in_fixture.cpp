@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,8 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/device/device.h"
-#include "shared/test/unit_test/helpers/test_files.h"
-#include "shared/test/unit_test/test_macros/test_checks_shared.h"
+#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"

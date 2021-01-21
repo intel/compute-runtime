@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/unit_test/helpers/test_files.h"
+#include "shared/test/common/helpers/test_files.h"
 
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"

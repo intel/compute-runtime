@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device_for_spirv.h"
 
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/unit_test/helpers/test_files.h"
+#include "shared/test/common/helpers/test_files.h"
 
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"

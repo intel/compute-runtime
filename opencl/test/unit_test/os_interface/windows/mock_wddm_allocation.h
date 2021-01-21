@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/os_interface/windows/wddm_allocation.h"
-#include "shared/test/unit_test/mock_gdi/mock_gdi.h"
+#include "shared/test/common/mock_gdi/mock_gdi.h"
 
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 

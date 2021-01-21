@@ -9,7 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
-#include "shared/test/unit_test/cmd_parse/hw_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"

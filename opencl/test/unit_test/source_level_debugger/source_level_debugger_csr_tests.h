@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/unit_test/mocks/mock_os_library.h"
+#include "shared/test/common/mocks/mock_os_library.h"
 
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"

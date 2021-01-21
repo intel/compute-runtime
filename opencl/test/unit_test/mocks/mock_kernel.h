@@ -10,7 +10,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/grf_config.h"
-#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/kernel/kernel.h"

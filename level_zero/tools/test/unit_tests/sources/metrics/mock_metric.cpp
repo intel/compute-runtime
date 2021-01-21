@@ -7,7 +7,7 @@
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
 
-#include "shared/test/unit_test/mocks/mock_os_library.h"
+#include "shared/test/common/mocks/mock_os_library.h"
 
 using namespace MetricsLibraryApi;
 

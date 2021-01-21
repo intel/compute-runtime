@@ -9,9 +9,9 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/tag_allocator.h"
-#include "shared/test/unit_test/cmd_parse/hw_parse.h"
-#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"

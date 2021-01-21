@@ -9,7 +9,7 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
-#include "shared/test/unit_test/mocks/mock_sip.h"
+#include "shared/test/common/mocks/mock_sip.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 

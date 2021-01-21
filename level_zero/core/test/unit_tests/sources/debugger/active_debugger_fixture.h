@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "shared/test/unit_test/mocks/mock_compiler_interface.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
-#include "shared/test/unit_test/mocks/mock_os_library.h"
+#include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_os_library.h"
 
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 
