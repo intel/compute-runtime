@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,10 +17,12 @@
 using namespace NEO;
 
 const size_t sizeThreshold = 16 * 4096;
+const size_t allocationAlignment = MemoryConstants::pageSize;
 
 class HeapAllocatorUnderTest : public HeapAllocator {
   public:
-    HeapAllocatorUnderTest(uint64_t address, uint64_t size, size_t threshold) : HeapAllocator(address, size, threshold) {}
+    HeapAllocatorUnderTest(uint64_t address, uint64_t size, size_t alignment, size_t threshold) : HeapAllocator(address, size, alignment, threshold) {}
+    HeapAllocatorUnderTest(uint64_t address, uint64_t size, size_t alignment) : HeapAllocator(address, size, alignment) {}
     HeapAllocatorUnderTest(uint64_t address, uint64_t size) : HeapAllocator(address, size) {}
 
     uint64_t getLeftBound() const { return this->pLeftBound; }
@@ -41,7 +43,14 @@ class HeapAllocatorUnderTest : public HeapAllocator {
     using HeapAllocator::allocationAlignment;
 };
 
-TEST(HeapAllocatorTest, WhenHeapAllocatorIsCreatedThenThresholdIsSet) {
+TEST(HeapAllocatorTest, WhenHeapAllocatorIsCreatedWithAlignmentThenAlignmentIsSet) {
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment);
+    EXPECT_EQ(MemoryConstants::pageSize, heapAllocator->allocationAlignment);
+}
+
+TEST(HeapAllocatorTest, WhenHeapAllocatorIsCreatedThenThresholdAndAlignmentIsSet) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size);
@@ -68,7 +77,7 @@ TEST(HeapAllocatorTest, WhenAllocatingThenUsageStatisticsAreUpdated) {
 TEST(HeapAllocatorTest, GivenExactSizeChunkInFreedChunksWhenGetIsCalledThenChunkIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
     uint64_t ptrFreed = 0x101000llu;
@@ -84,7 +93,7 @@ TEST(HeapAllocatorTest, GivenExactSizeChunkInFreedChunksWhenGetIsCalledThenChunk
 TEST(HeapAllocatorTest, GivenOnlySmallerSizeChunksInFreedChunksWhenGetIsCalledThenNullptrIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
 
@@ -109,7 +118,7 @@ TEST(HeapAllocatorTest, GivenOnlyBiggerSizeChunksInFreedChunksWhenGetIsCalledThe
     size_t size = 1024 * 4096;
     auto pUpperBound = ptrBase + size;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
     uint64_t ptrExpected = 0llu;
@@ -140,7 +149,7 @@ TEST(HeapAllocatorTest, GivenOnlyMoreThanTwiceBiggerSizeChunksInFreedChunksWhenG
     size_t size = 1024 * 4096;
     auto pLowerBound = ptrBase;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
     uint64_t ptrExpected = 0llu;
@@ -171,7 +180,7 @@ TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToLeftBoundaryOfIncomingChunkWhe
     size_t size = 1024 * 4096;
     auto pLowerBound = ptrBase;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
     uint64_t ptrExpected = 0llu;
@@ -206,7 +215,7 @@ TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToRightBoundaryOfIncomingChunkWh
     size_t size = 1024 * 4096;
     auto pLowerBound = ptrBase;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
     uint64_t ptrExpected = 0llu;
@@ -244,7 +253,7 @@ TEST(HeapAllocatorTest, GivenStoredChunkNotAdjacentToIncomingChunkWhenStoreIsCal
     size_t size = 1024 * 4096;
     auto pLowerBound = ptrBase;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
 
@@ -271,7 +280,7 @@ TEST(HeapAllocatorTest, GivenStoredChunkNotAdjacentToIncomingChunkWhenStoreIsCal
 TEST(HeapAllocatorTest, WhenAllocatingThenEntryIsAddedToMap) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     size_t ptrSize = 4096;
     uint64_t ptr = heapAllocator->allocate(ptrSize);
@@ -292,7 +301,7 @@ TEST(HeapAllocatorTest, WhenFreeingThenEntryIsRemovedFromMapAndSpaceMadeAvailabl
     auto pLeftBound = ptrBase;
     auto pRightBound = pLeftBound + size;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     size_t ptrSize = 4096;
     uint64_t ptr = heapAllocator->allocate(ptrSize);
@@ -325,7 +334,7 @@ TEST(HeapAllocatorTest, WhenAllocatingMultipleThenEachAllocationIsDistinct) {
     size_t doubleAllocSize = 4096 * 2;
 
     for (uint32_t i = 0u; i < 2u; i++) {
-        auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+        auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
         doubleAllocSize = allocSize * 2;
         auto pLeftBound = ptrBase;
         auto pRightBound = pLeftBound + size;
@@ -366,7 +375,7 @@ TEST(HeapAllocatorTest, WhenAllocatingMultipleThenEachAllocationIsDistinct) {
 TEST(HeapAllocatorTest, GivenNoSpaceLeftWhenAllocatingThenZeroIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     size_t ptrSize = 4096;
     uint64_t ptr1 = heapAllocator->allocate(ptrSize);
@@ -388,7 +397,7 @@ TEST(HeapAllocatorTest, GivenNoSpaceLeftWhenAllocatingThenZeroIsReturned) {
 TEST(HeapAllocatorTest, GivenReverseOrderWhenFreeingThenHeapAllocatorStateIsCorrect) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     auto pLeftBound = ptrBase;
     auto pRightBound = pLeftBound + size;
@@ -422,7 +431,7 @@ TEST(HeapAllocatorTest, GivenReverseOrderWhenFreeingThenHeapAllocatorStateIsCorr
 TEST(HeapAllocatorTest, GivenNoMemoryLeftWhenAllocatingThenZeroIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 0;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     size_t ptrSize = 4096;
     uint64_t ptr = heapAllocator->allocate(ptrSize);
@@ -434,7 +443,7 @@ TEST(HeapAllocatorTest, GivenNoMemoryLeftWhenAllocatingThenZeroIsReturned) {
 TEST(HeapAllocatorTest, GivenSizeGreaterThanMemoryLeftWhenAllocatingThenZeroIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 11 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, 3 * 4096);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, 3 * 4096);
     size_t remainingSize = size;
 
     // first small succeeds
@@ -477,7 +486,7 @@ TEST(HeapAllocatorTest, GivenSizeGreaterThanMemoryLeftWhenAllocatingThenZeroIsRe
 
 TEST(HeapAllocatorTest, GivenNullWhenFreeingThenNothingHappens) {
     uint64_t ptrBase = 0x100000llu;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, sizeThreshold, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, sizeThreshold, allocationAlignment, sizeThreshold);
 
     heapAllocator->free(0llu, 0);
 
@@ -488,7 +497,7 @@ TEST(HeapAllocatorTest, GivenNullWhenFreeingThenNothingHappens) {
 TEST(HeapAllocatorTest, WhenFreeingThenMemoryAvailableForAllocation) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     auto pLeftBound = ptrBase;
     auto pRightBound = pLeftBound + size;
@@ -538,7 +547,7 @@ TEST(HeapAllocatorTest, WhenFreeingThenMemoryAvailableForAllocation) {
 TEST(HeapAllocatorTest, WhenFreeingChunkThenMemoryAvailableForAllocation) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     auto pLeftBound = ptrBase;
     auto pRightBound = pLeftBound + size;
@@ -604,7 +613,7 @@ TEST(HeapAllocatorTest, WhenFreeingChunkThenMemoryAvailableForAllocation) {
 TEST(HeapAllocatorTest, GivenSmallAllocationGreaterThanAvailableSizeWhenAllocatingThenZeroIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     size_t ptrSize1 = size - 4096;
     uint64_t ptr1 = heapAllocator->allocate(ptrSize1);
@@ -621,7 +630,7 @@ TEST(HeapAllocatorTest, GivenSmallAllocationGreaterThanAvailableSizeWhenAllocati
 TEST(HeapAllocatorTest, GivenBigAllocationGreaterThanAvailableSizeWhenAllocatingThenZeroIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 
     size_t ptrSize1 = 8192;
     uint64_t ptr1 = heapAllocator->allocate(ptrSize1);
@@ -669,7 +678,7 @@ TEST(HeapAllocatorTest, WhenMemoryIsAllocatedThenAllocationsDoNotOverlap) {
     size_t bigAllocationThreshold = (512 + 256) * reqAlignment;
 
     memset(pBasePtr, 0, static_cast<size_t>(allocatorSize));
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(basePtr, allocatorSize, bigAllocationThreshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(basePtr, allocatorSize, allocationAlignment, bigAllocationThreshold);
     heapAllocator->allocationAlignment = reqAlignment;
 
     for (uint32_t i = 0; i < maxIndex; i++) {
@@ -732,7 +741,7 @@ TEST(HeapAllocatorTest, GivenLargeAllocationsWhenFreeingThenSpaceIsDefragmented)
     size_t doubleallocSize = 2 * allocSize;
     size_t tripleallocSize = 3 * allocSize;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, threshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, threshold);
 
     std::vector<HeapChunk> &freedChunks = heapAllocator->getFreedChunksBig();
 
@@ -789,7 +798,7 @@ TEST(HeapAllocatorTest, GivenSmallAllocationsWhenFreeingThenSpaceIsDefragmented)
     size_t allocSize = MemoryConstants::pageSize;
     size_t doubleallocSize = 2 * allocSize;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, threshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, threshold);
 
     std::vector<HeapChunk> &freedChunks = heapAllocator->getFreedChunksSmall();
 
@@ -840,7 +849,7 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenFreedInTheSameOrderThenLastCh
     size_t size = 1024 * 4096;
     size_t threshold = 2 * 4096;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, threshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, threshold);
 
     std::vector<HeapChunk> &freedChunks = heapAllocator->getFreedChunksSmall();
 
@@ -876,7 +885,7 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallSp
 
     size_t threshold = 4 * 4096;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, threshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, threshold);
 
     std::vector<HeapChunk> &freedChunksSmall = heapAllocator->getFreedChunksSmall();
     std::vector<HeapChunk> &freedChunksBig = heapAllocator->getFreedChunksBig();
@@ -937,7 +946,7 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallNo
 
     size_t threshold = 4 * 4096;
 
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, threshold);
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, threshold);
 
     std::vector<HeapChunk> &freedChunksSmall = heapAllocator->getFreedChunksSmall();
     std::vector<HeapChunk> &freedChunksBig = heapAllocator->getFreedChunksBig();

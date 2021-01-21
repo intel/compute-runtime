@@ -45,7 +45,11 @@ class GfxPartition {
     MOCKABLE_VIRTUAL bool init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool);
 
     void heapInit(HeapIndex heapIndex, uint64_t base, uint64_t size) {
-        getHeap(heapIndex).init(base, size);
+        getHeap(heapIndex).init(base, size, MemoryConstants::pageSize);
+    }
+
+    void heapInitWithAllocationAlignment(HeapIndex heapIndex, uint64_t base, uint64_t size, size_t allocationAlignment) {
+        getHeap(heapIndex).init(base, size, allocationAlignment);
     }
 
     void heapInitExternalWithFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size) {
@@ -112,7 +116,7 @@ class GfxPartition {
     class Heap {
       public:
         Heap() = default;
-        void init(uint64_t base, uint64_t size);
+        void init(uint64_t base, uint64_t size, size_t allocationAlignment);
         void initExternalWithFrontWindow(uint64_t base, uint64_t size);
         void initWithFrontWindow(uint64_t base, uint64_t size, uint64_t frontWindowSize);
         void initFrontWindow(uint64_t base, uint64_t size);

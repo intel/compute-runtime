@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1946,7 +1946,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
     ASSERT_NE(nullptr, graphicsAllocation);
 
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(size, graphicsAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(size, 2 * MemoryConstants::megaByte), graphicsAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, graphicsAllocation->getMemoryPool());
     EXPECT_EQ(this->mock->inputFd, static_cast<int32_t>(handle));
 
@@ -1958,7 +1958,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
     auto bo = drmAllocation->getBO();
     EXPECT_EQ(this->mock->outputHandle, static_cast<uint32_t>(bo->peekHandle()));
     EXPECT_EQ(gpuAddress, bo->peekAddress());
-    EXPECT_EQ(size, bo->peekSize());
+    EXPECT_EQ(alignUp(size, 2 * MemoryConstants::megaByte), bo->peekSize());
 
     EXPECT_EQ(handle, graphicsAllocation->peekSharedHandle());
 

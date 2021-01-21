@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -577,15 +577,17 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenNotSetUseSystemMemoryWhenGraphicsAl
     EXPECT_NE(0u, gpuAddress);
 
     auto heap = HeapIndex::HEAP_STANDARD64KB;
+    auto sizeReserved = alignUp(sizeAligned, 2 * MemoryConstants::megaByte);
     if (memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED)) {
         heap = HeapIndex::HEAP_EXTENDED;
+        sizeReserved = alignUp(sizeAligned, MemoryConstants::pageSize);
     }
     EXPECT_LT(GmmHelper::canonize(memoryManager->getGfxPartition(0)->getHeapBase(heap)), gpuAddress);
     EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(0)->getHeapLimit(heap)), gpuAddress);
     EXPECT_EQ(0u, allocation->getGpuBaseAddress());
     EXPECT_EQ(sizeAligned, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(gpuAddress, reinterpret_cast<uint64_t>(allocation->getReservedAddressPtr()));
-    EXPECT_EQ(sizeAligned, allocation->getReservedAddressSize());
+    EXPECT_EQ(sizeReserved, allocation->getReservedAddressSize());
 
     EXPECT_EQ(1u, allocation->storageInfo.getNumBanks());
     EXPECT_EQ(allocData.storageInfo.getMemoryBanks(), allocation->storageInfo.getMemoryBanks());
@@ -636,7 +638,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenNotSetUseSystemMemoryWhenGraphicsAl
     EXPECT_EQ(0u, allocation->getGpuBaseAddress());
     EXPECT_EQ(sizeAligned, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(gpuAddress, reinterpret_cast<uint64_t>(allocation->getReservedAddressPtr()));
-    EXPECT_EQ(sizeAligned, allocation->getReservedAddressSize());
+    EXPECT_EQ(alignUp(sizeAligned, 2 * MemoryConstants::megaByte), allocation->getReservedAddressSize());
 
     EXPECT_EQ(1u, allocation->storageInfo.getNumBanks());
     EXPECT_EQ(allocData.storageInfo.getMemoryBanks(), allocation->storageInfo.getMemoryBanks());
@@ -925,18 +927,18 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenOversizedAllocationWhenGraphicsAllo
     if (memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED)) {
         heap = HeapIndex::HEAP_EXTENDED;
     }
-    auto largerSize = 3 * MemoryConstants::pageSize64k;
+    auto largerSize = 6 * MemoryConstants::megaByte;
     auto gpuAddress1 = memoryManager->getGfxPartition(0)->heapAllocate(heap, largerSize);
     EXPECT_NE(0u, gpuAddress1);
-    EXPECT_EQ(3 * MemoryConstants::pageSize64k, largerSize);
+    EXPECT_EQ(6 * MemoryConstants::megaByte, largerSize);
     auto gpuAddress2 = memoryManager->getGfxPartition(0)->heapAllocate(heap, largerSize);
     EXPECT_NE(0u, gpuAddress2);
-    EXPECT_EQ(3 * MemoryConstants::pageSize64k, largerSize);
+    EXPECT_EQ(6 * MemoryConstants::megaByte, largerSize);
     memoryManager->getGfxPartition(0)->heapFree(heap, gpuAddress1, largerSize);
 
     auto status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
-    allocData.size = 2 * MemoryConstants::pageSize64k;
+    allocData.size = 5 * MemoryConstants::megaByte;
     allocData.type = GraphicsAllocation::AllocationType::BUFFER;
     allocData.rootDeviceIndex = rootDeviceIndex;
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
@@ -1248,7 +1250,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenGraphicsAllocationInDevicePoolIsAll
     EXPECT_NE(0u, gpuAddress);
     EXPECT_EQ(sizeAlignedTo64KB, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(gpuAddress, reinterpret_cast<uint64_t>(allocation->getReservedAddressPtr()));
-    EXPECT_EQ(sizeAlignedTo64KB, allocation->getReservedAddressSize());
+    EXPECT_EQ(alignUp(sizeAlignedTo64KB, 2 * MemoryConstants::megaByte), allocation->getReservedAddressSize());
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     auto bo = drmAllocation->getBO();

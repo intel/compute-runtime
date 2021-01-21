@@ -34,7 +34,7 @@ GfxPartition::~GfxPartition() {
     reservedCpuAddressRange = {0};
 }
 
-void GfxPartition::Heap::init(uint64_t base, uint64_t size) {
+void GfxPartition::Heap::init(uint64_t base, uint64_t size, size_t allocationAlignment) {
     this->base = base;
     this->size = size;
 
@@ -43,7 +43,7 @@ void GfxPartition::Heap::init(uint64_t base, uint64_t size) {
         size -= 2 * GfxPartition::heapGranularity;
     }
 
-    alloc = std::make_unique<HeapAllocator>(base + GfxPartition::heapGranularity, size);
+    alloc = std::make_unique<HeapAllocator>(base + GfxPartition::heapGranularity, size, allocationAlignment);
 }
 
 void GfxPartition::Heap::initExternalWithFrontWindow(uint64_t base, uint64_t size) {
@@ -52,7 +52,7 @@ void GfxPartition::Heap::initExternalWithFrontWindow(uint64_t base, uint64_t siz
 
     size -= GfxPartition::heapGranularity;
 
-    alloc = std::make_unique<HeapAllocator>(base, size, 0u);
+    alloc = std::make_unique<HeapAllocator>(base, size, MemoryConstants::pageSize, 0u);
 }
 
 void GfxPartition::Heap::initWithFrontWindow(uint64_t base, uint64_t size, uint64_t frontWindowSize) {
@@ -63,14 +63,14 @@ void GfxPartition::Heap::initWithFrontWindow(uint64_t base, uint64_t size, uint6
     size -= GfxPartition::heapGranularity;
     size -= frontWindowSize;
 
-    alloc = std::make_unique<HeapAllocator>(base + frontWindowSize, size);
+    alloc = std::make_unique<HeapAllocator>(base + frontWindowSize, size, MemoryConstants::pageSize);
 }
 
 void GfxPartition::Heap::initFrontWindow(uint64_t base, uint64_t size) {
     this->base = base;
     this->size = size;
 
-    alloc = std::make_unique<HeapAllocator>(base, size, 0u);
+    alloc = std::make_unique<HeapAllocator>(base, size, MemoryConstants::pageSize, 0u);
 }
 
 void GfxPartition::freeGpuAddressRange(uint64_t ptr, size_t size) {
@@ -191,7 +191,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
 
     // Split HEAP_STANDARD64K among root devices
     auto gfxStandard64KBSize = alignDown(gfxStandardSize / numRootDevices, GfxPartition::heapGranularity);
-    heapInit(HeapIndex::HEAP_STANDARD64KB, gfxBase + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize);
+    heapInitWithAllocationAlignment(HeapIndex::HEAP_STANDARD64KB, gfxBase + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize, 2 * MemoryConstants::megaByte);
 
     return true;
 }
