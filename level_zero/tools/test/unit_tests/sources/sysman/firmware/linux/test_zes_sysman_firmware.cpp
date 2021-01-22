@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,8 @@ class ZesFirmwareFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwGetVersion));
         ON_CALL(*pMockFwInterface.get(), getFirstDevice(_))
             .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockGetFirstDevice));
+        ON_CALL(*pMockFwInterface.get(), fwFlashGSC(_, _))
+            .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwFlashGSC));
         for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
             delete handle;
         }
@@ -124,5 +126,20 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareProperties
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
     delete ptestFirmwareImp;
 }
+
+TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareSuccessIsReturned) {
+    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
+
+    auto handles = get_firmware_handles(mockHandleCount);
+    uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+    memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+    for (auto handle : handles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareFlash(handle, (void *)testImage, ZES_STRING_PROPERTY_SIZE));
+    }
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
+    delete ptestFirmwareImp;
+}
+
 } // namespace ult
 } // namespace L0

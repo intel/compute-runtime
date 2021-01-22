@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ typedef int (*pIgscDeviceIteratorCreate)(struct igsc_device_iterator **iter);
 typedef int (*pIgscDeviceIteratorNext)(struct igsc_device_iterator *iter,
                                        struct igsc_device_info *info);
 typedef void (*pIgscDeviceIteratorDestroy)(struct igsc_device_iterator *iter);
+typedef int (*pIgscDeviceFwUpdate)(struct igsc_device_handle *handle, const uint8_t *buffer, const uint32_t buffer_len, igsc_progress_func_t progress_f, void *ctx);
 
 class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
   public:
@@ -34,6 +35,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t fwDeviceInit() override;
     ze_result_t getFirstDevice(igsc_device_info *) override;
     ze_result_t fwGetVersion(std::string &fwVersion) override;
+    ze_result_t fwFlashGSC(void *pImage, uint32_t size) override;
 
     template <class T>
     bool getSymbolAddr(const std::string name, T &proc);
@@ -50,6 +52,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     static const std::string fwDeviceIteratorCreate;
     static const std::string fwDeviceIteratorNext;
     static const std::string fwDeviceIteratorDestroy;
+    static const std::string fwDeviceFwUpdate;
 
     pIgscDeviceInitByDevice deviceInitByDevice = nullptr;
     pIgscDeviceGetDeviceInfo deviceGetDeviceInfo = nullptr;
@@ -57,5 +60,6 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     pIgscDeviceIteratorCreate deviceIteratorCreate = nullptr;
     pIgscDeviceIteratorNext deviceItreatorNext = nullptr;
     pIgscDeviceIteratorDestroy deviceItreatorDestroy = nullptr;
+    pIgscDeviceFwUpdate deviceFwUpdate = nullptr;
 };
 } // namespace L0

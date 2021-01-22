@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ const std::string FirmwareUtilImp::fwDeviceFwVersion = "igsc_device_fw_version";
 const std::string FirmwareUtilImp::fwDeviceIteratorCreate = "igsc_device_iterator_create";
 const std::string FirmwareUtilImp::fwDeviceIteratorNext = "igsc_device_iterator_next";
 const std::string FirmwareUtilImp::fwDeviceIteratorDestroy = "igsc_device_iterator_destroy";
+const std::string FirmwareUtilImp::fwDeviceFwUpdate = "igsc_device_fw_update";
 
 template <class T>
 bool FirmwareUtilImp::getSymbolAddr(const std::string name, T &proc) {
@@ -30,7 +31,13 @@ bool FirmwareUtilImp::loadEntryPoints() {
     ok = ok && getSymbolAddr(fwDeviceIteratorCreate, deviceIteratorCreate);
     ok = ok && getSymbolAddr(fwDeviceIteratorNext, deviceItreatorNext);
     ok = ok && getSymbolAddr(fwDeviceIteratorDestroy, deviceItreatorDestroy);
+    ok = ok && getSymbolAddr(fwDeviceFwUpdate, deviceFwUpdate);
     return ok;
+}
+
+static void progressFunc(uint32_t done, uint32_t total, void *ctx) {
+    uint32_t percent = (done * 100) / total;
+    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout, "Progess: %d/%d:%d/%\n", done, total, percent);
 }
 
 ze_result_t FirmwareUtilImp::getFirstDevice(igsc_device_info *info) {
@@ -80,6 +87,14 @@ ze_result_t FirmwareUtilImp::fwGetVersion(std::string &fwVersion) {
     fwVersion.append(std::to_string(deviceFwVersion.hotfix));
     fwVersion.append(".");
     fwVersion.append(std::to_string(deviceFwVersion.build));
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t FirmwareUtilImp::fwFlashGSC(void *pImage, uint32_t size) {
+    int ret = deviceFwUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, progressFunc, nullptr);
+    if (ret != IGSC_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
     return ZE_RESULT_SUCCESS;
 }
 FirmwareUtilImp::FirmwareUtilImp(){};

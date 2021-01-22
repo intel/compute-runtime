@@ -27,6 +27,11 @@ void LinuxFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties)
         strncpy_s(pProperties->version, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
     }
 }
+
+ze_result_t LinuxFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
+    return pFwInterface->fwFlashGSC(pImage, size);
+}
+
 void LinuxFirmwareImp::getFirmwareVersion(char *firmwareVersion) {
     std::string fwVersion;
     pFwInterface->fwGetVersion(fwVersion);

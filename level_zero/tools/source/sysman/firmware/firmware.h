@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ class Firmware : _zes_firmware_handle_t {
   public:
     virtual ~Firmware() {}
     virtual ze_result_t firmwareGetProperties(zes_firmware_properties_t *pProperties) = 0;
+    virtual ze_result_t firmwareFlash(void *pImage, uint32_t size) = 0;
 
     inline zes_firmware_handle_t toHandle() { return this; }
 

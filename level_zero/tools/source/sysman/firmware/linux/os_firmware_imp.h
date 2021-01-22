@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableOrMovableClass {
   public:
     bool isFirmwareSupported(void) override;
     void osGetFwProperties(zes_firmware_properties_t *pProperties) override;
+    ze_result_t osFirmwareFlash(void *pImage, uint32_t size) override;
     LinuxFirmwareImp() = default;
     LinuxFirmwareImp(OsSysman *pOsSysman);
     ~LinuxFirmwareImp() override = default;

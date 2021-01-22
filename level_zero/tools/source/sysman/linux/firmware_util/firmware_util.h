@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ class FirmwareUtil {
     virtual ze_result_t fwDeviceInit() = 0;
     virtual ze_result_t getFirstDevice(igsc_device_info *) = 0;
     virtual ze_result_t fwGetVersion(std::string &fwVersion) = 0;
+    virtual ze_result_t fwFlashGSC(void *pImage, uint32_t size) = 0;
     virtual ~FirmwareUtil() = default;
 };
 } // namespace L0

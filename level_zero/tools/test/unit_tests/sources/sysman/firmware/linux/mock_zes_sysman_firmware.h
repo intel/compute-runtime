@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,11 +33,15 @@ struct Mock<FirmwareInterface> : public FirmwareUtil {
     ze_result_t mockGetFirstDevice(igsc_device_info *info) {
         return ZE_RESULT_SUCCESS;
     }
+    ze_result_t mockFwFlashGSC(void *pImage, uint32_t size) {
+        return ZE_RESULT_SUCCESS;
+    }
     Mock<FirmwareInterface>() = default;
 
     MOCK_METHOD(ze_result_t, fwDeviceInit, (), (override));
     MOCK_METHOD(ze_result_t, fwGetVersion, (std::string & fwVersion), (override));
     MOCK_METHOD(ze_result_t, getFirstDevice, (igsc_device_info * info), (override));
+    MOCK_METHOD(ze_result_t, fwFlashGSC, (void *pImage, uint32_t size), (override));
 };
 
 class PublicLinuxFirmwareImp : public L0::LinuxFirmwareImp {

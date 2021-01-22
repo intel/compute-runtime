@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,10 @@ namespace L0 {
 ze_result_t FirmwareImp::firmwareGetProperties(zes_firmware_properties_t *pProperties) {
     pOsFirmware->osGetFwProperties(pProperties);
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t FirmwareImp::firmwareFlash(void *pImage, uint32_t size) {
+    return pOsFirmware->osFirmwareFlash(pImage, size);
 }
 
 void FirmwareImp::init() {

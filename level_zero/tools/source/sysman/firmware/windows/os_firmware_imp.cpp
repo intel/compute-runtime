@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,9 @@ bool WddmFirmwareImp::isFirmwareSupported(void) {
 }
 
 void WddmFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties){};
+ze_result_t WddmFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+};
 
 OsFirmware *OsFirmware::create(OsSysman *pOsSysman) {
     WddmFirmwareImp *pWddmFirmwareImp = new WddmFirmwareImp();

@@ -388,7 +388,7 @@ zesFirmwareFlash(
     zes_firmware_handle_t hFirmware,
     void *pImage,
     uint32_t size) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Firmware::fromHandle(hFirmware)->firmwareFlash(pImage, size);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

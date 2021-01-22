@@ -8,10 +8,12 @@
 #include <level_zero/zes_api.h>
 
 #include <algorithm>
+#include <fstream>
 #include <getopt.h>
 #include <iostream>
 #include <map>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
 
@@ -92,6 +94,7 @@ void usage() {
                  "\n  -R,   --ras                   selectively run ras black box test"
                  "\n  -E,   --event                 set and listen to events black box test"
                  "\n  -r,   --reset force|noforce   selectively run device reset test"
+                 "\n  -i,   --firmware <image>      selectively run device firmware test <image> is the firmware binary needed to flash"
                  "\n  -h,   --help                  display help message"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
@@ -629,10 +632,20 @@ void testSysmanMemory(ze_device_handle_t &device) {
         }
     }
 }
-void testSysmanFirmware(ze_device_handle_t &device) {
+void testSysmanFirmware(ze_device_handle_t &device, std::string imagePath) {
     std::cout << std::endl
               << " ----  firmware tests ---- " << std::endl;
     uint32_t count = 0;
+    std::ifstream imageFile;
+    uint64_t imgSize = 0;
+    if (imagePath.size() != 0) {
+        struct stat statBuf;
+        auto status = stat(imagePath.c_str(), &statBuf);
+        if (!status) {
+            imageFile.open(imagePath.c_str(), std::ios::binary);
+            imgSize = statBuf.st_size;
+        }
+    }
     VALIDATECALL(zesDeviceEnumFirmwares(device, &count, nullptr));
     if (count == 0) {
         std::cout << "Could not retrieve Firmware domains" << std::endl;
@@ -650,6 +663,19 @@ void testSysmanFirmware(ze_device_handle_t &device) {
             std::cout << "On Subdevice = " << fwProperties.onSubdevice << std::endl;
             std::cout << "Subdevice Id = " << fwProperties.subdeviceId << std::endl;
             std::cout << "firmware version = " << fwProperties.version << std::endl;
+        }
+        if (imagePath.size() != 0 && imgSize > 0) {
+            char img[imgSize];
+            imageFile.read(img, imgSize);
+            VALIDATECALL(zesFirmwareFlash(handle, img, static_cast<uint32_t>(imgSize)));
+
+            VALIDATECALL(zesFirmwareGetProperties(handle, &fwProperties));
+            if (verbose) {
+                std::cout << "firmware name = " << fwProperties.name << std::endl;
+                std::cout << "On Subdevice = " << fwProperties.onSubdevice << std::endl;
+                std::cout << "Subdevice Id = " << fwProperties.subdeviceId << std::endl;
+                std::cout << "firmware version = " << fwProperties.version << std::endl;
+            }
         }
     }
 }
@@ -836,6 +862,7 @@ int main(int argc, char *argv[]) {
     }
     getDeviceHandles(driver, devices, argc, argv);
     int opt;
+
     static struct option long_opts[] = {
         {"help", no_argument, nullptr, 'h'},
         {"pci", no_argument, nullptr, 'p'},
@@ -851,7 +878,7 @@ int main(int argc, char *argv[]) {
         {"event", no_argument, nullptr, 'E'},
         {"reset", required_argument, nullptr, 'r'},
         {"fabricport", no_argument, nullptr, 'F'},
-        {"firmware", no_argument, nullptr, 'i'},
+        {"firmware", optional_argument, nullptr, 'i'},
         {0, 0, 0, 0},
     };
     bool force = false;
@@ -911,11 +938,14 @@ int main(int argc, char *argv[]) {
                 testSysmanRas(device);
             });
             break;
-        case 'i':
+        case 'i': {
+            std::string filePathFirmware;
+            filePathFirmware = optarg;
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
-                testSysmanFirmware(device);
+                testSysmanFirmware(device, filePathFirmware);
             });
             break;
+        }
         case 'r':
             if (!strcmp(optarg, "force")) {
                 force = true;
