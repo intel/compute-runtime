@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2074,9 +2074,9 @@ TEST(PatchTokenDumper, GivenAnyTokenThenDumpingIsHandled) {
 
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
-    std::unordered_set<int> tokensWhitelist{50, 52};
+    std::unordered_set<int> tokensPasslist{50, 52};
     for (int i = 0; i < iOpenCL::NUM_PATCH_TOKENS; ++i) {
-        if (tokensWhitelist.count(i) != 0) {
+        if (tokensPasslist.count(i) != 0) {
             continue;
         }
         kernelToken->Token = i;
@@ -2105,9 +2105,9 @@ TEST(PatchTokenDumper, GivenAnyTokenThenDumpingIsHandled) {
     auto kernelDataParamToken = static_cast<iOpenCL::SPatchDataParameterBuffer *>(kernelToken);
     *kernelDataParamToken = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_BUFFER_OFFSET);
     kernelDataParamToken->Size = maxTokenSize;
-    std::unordered_set<int> dataParamTokensWhitelist{6, 7, 17, 19, 36, 37, 39, 40, 41};
+    std::unordered_set<int> dataParamTokensPasslist{6, 7, 17, 19, 36, 37, 39, 40, 41};
     for (int i = 0; i < iOpenCL::NUM_DATA_PARAMETER_TOKENS; ++i) {
-        if (dataParamTokensWhitelist.count(i) != 0) {
+        if (dataParamTokensPasslist.count(i) != 0) {
             continue;
         }
         kernelDataParamToken->Type = i;

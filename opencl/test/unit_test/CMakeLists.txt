@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2020 Intel Corporation
+# Copyright (C) 2017-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -463,7 +463,7 @@ macro(macro_for_each_gen)
         list(REMOVE_ITEM PLATFORM_TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/copy_buffer_to_image.cl")
       endif()
 
-      foreach(KERNEL_TO_REMOVE ${${GEN_TYPE}_TEST_KERNELS_BLACKLIST})
+      foreach(KERNEL_TO_REMOVE ${${GEN_TYPE}_TEST_KERNELS_BLOCKLIST})
         set(KERNEL_TO_REMOVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/test_files/${KERNEL_TO_REMOVE}")
         list(REMOVE_ITEM PLATFORM_TEST_KERNELS ${KERNEL_TO_REMOVE_PATH})
       endforeach()
