@@ -50,7 +50,7 @@ struct TwoOOQsTwoDependentWalkers : public HelloWorldTest<OOQFixtureFactory>,
         cl_event event1 = nullptr;
         cl_event event2 = nullptr;
 
-        auto &commandStream = pCmdQ->getGpgpuCommandStreamReceiver().getCS(1024);
+        auto &commandStream = pCmdQ->getGpgpuCommandStreamReceiver().getCS(2048);
         auto pCommandStreamBuffer = reinterpret_cast<char *>(commandStream.getCpuBase());
         std::fill(pCommandStreamBuffer + commandStream.getUsed(), pCommandStreamBuffer + commandStream.getMaxAvailableSpace(), 0);
 
@@ -71,7 +71,7 @@ struct TwoOOQsTwoDependentWalkers : public HelloWorldTest<OOQFixtureFactory>,
         pCmdQ2 = createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
         ASSERT_NE(nullptr, pCmdQ2);
 
-        auto &commandStream2 = pCmdQ2->getGpgpuCommandStreamReceiver().getCS(1024);
+        auto &commandStream2 = pCmdQ2->getGpgpuCommandStreamReceiver().getCS(2048);
         auto pCommandStreamBuffer2 = reinterpret_cast<char *>(commandStream2.getCpuBase());
         std::fill(pCommandStreamBuffer2 + commandStream2.getUsed(), pCommandStreamBuffer2 + commandStream2.getMaxAvailableSpace(), 0);
 
