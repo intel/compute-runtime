@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -367,11 +367,15 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithStatelessObjectArgWhenAddressingM
     std::vector<uint8_t> storage;
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
+    auto surfaceStateHeapOffset = 0x40;
+    auto dataParamOffset = 0x32;
+
     iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument globalMemArg = {};
     globalMemArg.Token = iOpenCL::PATCH_TOKEN_STATELESS_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
     globalMemArg.Size = sizeof(iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument);
     globalMemArg.ArgumentNumber = 0;
-    globalMemArg.SurfaceStateHeapOffset = 0x40;
+    globalMemArg.SurfaceStateHeapOffset = surfaceStateHeapOffset;
+    globalMemArg.DataParamOffset = dataParamOffset;
 
     kernelTokens.tokens.kernelArgs.resize(1);
     kernelTokens.tokens.kernelArgs[0].objectArg = &globalMemArg;
@@ -379,7 +383,11 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithStatelessObjectArgWhenAddressingM
     NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
     auto &argPointer = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>(true);
     EXPECT_TRUE(NEO::isValidOffset(argPointer.bindless));
+    EXPECT_TRUE(NEO::isValidOffset(argPointer.stateless));
     EXPECT_FALSE(NEO::isValidOffset(argPointer.bindful));
+
+    EXPECT_EQ(argPointer.bindless, surfaceStateHeapOffset);
+    EXPECT_EQ(argPointer.stateless, dataParamOffset);
 }
 
 TEST(KernelInfoFromPatchTokens, GivenKernelWithStatelessObjectArgWhenAddressingModeIsBindfulThenBindlessOffsetIsSetProperly) {

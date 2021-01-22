@@ -140,8 +140,8 @@ void populatePointerKernelArg(ArgDescPointer &dst,
 
     case KernelDescriptor::BindlessAndStateless:
         dst.bindful = undefined<SurfaceStateHeapOffset>;
-        dst.stateless = undefined<CrossThreadDataOffset>;
-        dst.bindless = stateless;
+        dst.stateless = stateless;
+        dst.bindless = bindless;
         dst.pointerSize = pointerSize;
         break;
     }
