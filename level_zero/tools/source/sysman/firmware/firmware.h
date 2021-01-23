@@ -8,6 +8,7 @@
 #pragma once
 #include <level_zero/zes_api.h>
 
+#include <string>
 #include <vector>
 
 struct _zes_firmware_handle_t {
@@ -42,6 +43,9 @@ struct FirmwareHandleContext {
 
     OsSysman *pOsSysman = nullptr;
     std::vector<Firmware *> handleList = {};
+
+  private:
+    void createHandle(const std::string &fwType);
 };
 
 } // namespace L0

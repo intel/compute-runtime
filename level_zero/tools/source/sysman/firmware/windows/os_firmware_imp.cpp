@@ -18,9 +18,13 @@ ze_result_t WddmFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 };
 
-OsFirmware *OsFirmware::create(OsSysman *pOsSysman) {
-    WddmFirmwareImp *pWddmFirmwareImp = new WddmFirmwareImp();
-    return static_cast<OsFirmware *>(pWddmFirmwareImp);
+std::unique_ptr<OsFirmware> OsFirmware::create(OsSysman *pOsSysman, const std::string &fwType) {
+    std::unique_ptr<WddmFirmwareImp> pWddmFirmwareImp = std::make_unique<WddmFirmwareImp>();
+    return pWddmFirmwareImp;
+}
+
+ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace L0

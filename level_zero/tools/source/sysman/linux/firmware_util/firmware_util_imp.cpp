@@ -16,6 +16,10 @@ const std::string FirmwareUtilImp::fwDeviceIteratorCreate = "igsc_device_iterato
 const std::string FirmwareUtilImp::fwDeviceIteratorNext = "igsc_device_iterator_next";
 const std::string FirmwareUtilImp::fwDeviceIteratorDestroy = "igsc_device_iterator_destroy";
 const std::string FirmwareUtilImp::fwDeviceFwUpdate = "igsc_device_fw_update";
+const std::string FirmwareUtilImp::fwImageOpromInit = "igsc_image_oprom_init";
+const std::string FirmwareUtilImp::fwImageOpromType = "igsc_image_oprom_type";
+const std::string FirmwareUtilImp::fwDeviceOpromUpdate = "igsc_device_oprom_update";
+const std::string FirmwareUtilImp::fwDeviceOpromVersion = "igsc_device_oprom_version";
 
 template <class T>
 bool FirmwareUtilImp::getSymbolAddr(const std::string name, T &proc) {
@@ -32,6 +36,10 @@ bool FirmwareUtilImp::loadEntryPoints() {
     ok = ok && getSymbolAddr(fwDeviceIteratorNext, deviceItreatorNext);
     ok = ok && getSymbolAddr(fwDeviceIteratorDestroy, deviceItreatorDestroy);
     ok = ok && getSymbolAddr(fwDeviceFwUpdate, deviceFwUpdate);
+    ok = ok && getSymbolAddr(fwImageOpromInit, imageOpromInit);
+    ok = ok && getSymbolAddr(fwImageOpromType, imageOpromType);
+    ok = ok && getSymbolAddr(fwDeviceOpromUpdate, deviceOpromUpdate);
+    ok = ok && getSymbolAddr(fwDeviceOpromVersion, deviceOpromVersion);
     return ok;
 }
 
@@ -90,6 +98,30 @@ ze_result_t FirmwareUtilImp::fwGetVersion(std::string &fwVersion) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
+    igsc_oprom_version opromVersion;
+    memset(&opromVersion, 0, sizeof(opromVersion));
+    int ret = deviceOpromVersion(&fwDeviceHandle, IGSC_OPROM_CODE, &opromVersion);
+    if (ret != IGSC_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    fwVersion.append("OPROM CODE VERSION:");
+    for (int i = 0; i < IGSC_OPROM_VER_SIZE; i++) {
+        fwVersion.append(std::to_string(static_cast<unsigned int>(opromVersion.version[i])));
+    }
+    fwVersion.append("_");
+    memset(&opromVersion, 0, sizeof(opromVersion));
+    ret = deviceOpromVersion(&fwDeviceHandle, IGSC_OPROM_DATA, &opromVersion);
+    if (ret != IGSC_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    fwVersion.append("OPROM DATA VERSION:");
+    for (int i = 0; i < IGSC_OPROM_VER_SIZE; i++) {
+        fwVersion.append(std::to_string(static_cast<unsigned int>(opromVersion.version[i])));
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t FirmwareUtilImp::fwFlashGSC(void *pImage, uint32_t size) {
     int ret = deviceFwUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, progressFunc, nullptr);
     if (ret != IGSC_SUCCESS) {
@@ -97,6 +129,31 @@ ze_result_t FirmwareUtilImp::fwFlashGSC(void *pImage, uint32_t size) {
     }
     return ZE_RESULT_SUCCESS;
 }
+
+ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
+    struct igsc_oprom_image *opromImg = nullptr;
+    uint32_t opromImgType = 0;
+    int retData = 0, retCode = 0;
+    int ret = imageOpromInit(&opromImg, static_cast<const uint8_t *>(pImage), size);
+    if (ret != IGSC_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    ret = imageOpromType(opromImg, &opromImgType);
+    if (ret != IGSC_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (opromImgType & IGSC_OPROM_DATA) {
+        retData = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_DATA, opromImg, progressFunc, nullptr);
+    }
+    if (opromImgType & IGSC_OPROM_CODE) {
+        retCode = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_CODE, opromImg, progressFunc, nullptr);
+    }
+    if ((retData != IGSC_SUCCESS) && (retCode != IGSC_SUCCESS)) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 FirmwareUtilImp::FirmwareUtilImp(){};
 
 FirmwareUtilImp::~FirmwareUtilImp() {

@@ -16,9 +16,15 @@ class ZesFirmwareFixture : public SysmanDeviceFixture {
     zes_firmware_handle_t hSysmanFirmware = {};
     std::unique_ptr<Mock<FirmwareInterface>> pMockFwInterface;
     FirmwareUtil *pFwUtilInterfaceOld = nullptr;
+    std::unique_ptr<Mock<FirmwareFsAccess>> pFsAccess;
+    FsAccess *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
+        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
+        pFsAccess = std::make_unique<NiceMock<Mock<FirmwareFsAccess>>>();
+        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
         pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
         pMockFwInterface = std::make_unique<NiceMock<Mock<FirmwareInterface>>>();
         pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface.get();
@@ -26,10 +32,16 @@ class ZesFirmwareFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwDeviceInit));
         ON_CALL(*pMockFwInterface.get(), fwGetVersion(_))
             .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwGetVersion));
+        ON_CALL(*pMockFwInterface.get(), opromGetVersion(_))
+            .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockOpromGetVersion));
         ON_CALL(*pMockFwInterface.get(), getFirstDevice(_))
             .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockGetFirstDevice));
         ON_CALL(*pMockFwInterface.get(), fwFlashGSC(_, _))
-            .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwFlashGSC));
+            .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwFlash));
+        ON_CALL(*pMockFwInterface.get(), fwFlashOprom(_, _))
+            .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwFlash));
+        ON_CALL(*pFsAccess.get(), read(_, _))
+            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<FirmwareFsAccess>::readValSuccess));
         for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
             delete handle;
         }
@@ -39,6 +51,7 @@ class ZesFirmwareFixture : public SysmanDeviceFixture {
     void TearDown() override {
         SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
+        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
     }
 
     std::vector<zes_firmware_handle_t> get_firmware_handles(uint32_t count) {
@@ -70,7 +83,7 @@ TEST_F(ZesFirmwareFixture, GivenComponentCountZeroWhenCallingzesFirmwareGetThenZ
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockHandleCount);
 
-    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman);
+    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFwTypes[0]);
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
     result = zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr);
 
@@ -91,44 +104,50 @@ TEST_F(ZesFirmwareFixture, GivenComponentCountZeroWhenCallingzesFirmwareGetThenZ
 }
 
 TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwarePropertiesThenVersionIsReturned) {
-    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman);
+    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFwTypes[0]);
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
 
     auto handles = get_firmware_handles(mockHandleCount);
 
-    for (auto handle : handles) {
-        zes_firmware_properties_t properties = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handle, &properties));
-        EXPECT_STREQ(mockFwVersion.c_str(), properties.name);
-        EXPECT_STREQ(mockFwVersion.c_str(), properties.version);
-    }
+    zes_firmware_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[0], &properties));
+    EXPECT_STREQ(mockSupportedFwTypes[0].c_str(), properties.name);
+    EXPECT_STREQ(mockFwVersion.c_str(), properties.version);
+
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
     delete ptestFirmwareImp;
 }
-TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwarePropertiesThenUnknownIsReturned) {
+
+TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingOpromPropertiesThenVersionIsReturned) {
+    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFwTypes[1]);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
+
+    auto handles = get_firmware_handles(mockHandleCount);
+
+    zes_firmware_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[1], &properties));
+    EXPECT_STREQ(mockSupportedFwTypes[1].c_str(), properties.name);
+    EXPECT_STREQ(mockOpromVersion.c_str(), properties.version);
+
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
+    delete ptestFirmwareImp;
+}
+
+TEST_F(ZesFirmwareFixture, GivenFailedFirmwareInitializationWhenInitializingFirmwareContextThenexpectNoHandles) {
     for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
     ON_CALL(*pMockFwInterface.get(), fwDeviceInit())
         .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwDeviceInitFail));
-    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
 
-    auto handles = get_firmware_handles(mockHandleCount);
+    pSysmanDeviceImp->pFirmwareHandleContext->init();
 
-    for (auto handle : handles) {
-        zes_firmware_properties_t properties = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handle, &properties));
-        EXPECT_STREQ("Unknown", properties.name);
-        EXPECT_STREQ("Unknown", properties.version);
-    }
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
-    delete ptestFirmwareImp;
+    EXPECT_EQ(0u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
 }
 
 TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareSuccessIsReturned) {
-    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman);
+    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFwTypes[0]);
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
 
     auto handles = get_firmware_handles(mockHandleCount);
@@ -141,5 +160,54 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareSucces
     delete ptestFirmwareImp;
 }
 
+TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingUnkownFirmwareFailureIsReturned) {
+    for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
+    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockUnsupportedFwTypes[0]);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
+
+    uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+    memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+    auto handle = pSysmanDeviceImp->pFirmwareHandleContext->handleList[0]->toHandle();
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFirmwareFlash(handle, (void *)testImage, ZES_STRING_PROPERTY_SIZE));
+
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
+    delete ptestFirmwareImp;
+}
+
+TEST_F(ZesFirmwareFixture, GivenFirmwareInitializationFailureCreateHandleMustFail) {
+    for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
+    ON_CALL(*pMockFwInterface.get(), fwDeviceInit())
+        .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwDeviceInitFail));
+    pSysmanDeviceImp->pFirmwareHandleContext->init();
+    EXPECT_EQ(0u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
+}
+
+TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleFirmwareLibraryCallFailureWhenGettingFirmwarePropertiesThenUnknownIsReturned) {
+    for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
+    ON_CALL(*pMockFwInterface.get(), fwGetVersion(_))
+        .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwGetVersionFailed));
+    ON_CALL(*pMockFwInterface.get(), opromGetVersion(_))
+        .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockFwGetVersionFailed));
+    pSysmanDeviceImp->pFirmwareHandleContext->init();
+    auto handles = get_firmware_handles(mockHandleCount);
+
+    zes_firmware_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[0], &properties));
+    EXPECT_STREQ(mockSupportedFwTypes[0].c_str(), properties.name);
+    EXPECT_STREQ("Unknown", properties.version);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[1], &properties));
+    EXPECT_STREQ(mockSupportedFwTypes[1].c_str(), properties.name);
+    EXPECT_STREQ("Unknown", properties.version);
+}
 } // namespace ult
 } // namespace L0

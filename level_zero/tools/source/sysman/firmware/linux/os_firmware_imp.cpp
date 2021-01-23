@@ -11,41 +11,77 @@
 
 namespace L0 {
 
-bool LinuxFirmwareImp::isFirmwareSupported(void) {
-    if (pFwInterface != nullptr) {
-        isFWInitalized = ((ZE_RESULT_SUCCESS == pFwInterface->fwDeviceInit()) ? true : false);
+static const std::string mtdDescriptor("/proc/mtd");
+
+std::vector<std ::string> deviceSupportedFwTypes = {"GSC", "OptionROM"};
+
+ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman) {
+    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+
+    FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    std::vector<std::string> mtdDescriptorStrings;
+    ze_result_t result = pFsAccess->read(mtdDescriptor, mtdDescriptorStrings);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
-    return isFWInitalized;
+    for (std::string readByteLine : mtdDescriptorStrings) {
+        for (std::string fwType : deviceSupportedFwTypes) {
+            if (std::string::npos != readByteLine.find(fwType)) {
+                supportedFwTypes.push_back(fwType);
+            }
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+bool LinuxFirmwareImp::isFirmwareSupported(void) {
+    isFWInitalized = ((ZE_RESULT_SUCCESS == pFwInterface->fwDeviceInit()) ? true : false);
+    return this->isFWInitalized;
 }
 
 void LinuxFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties) {
-    if (isFWInitalized) {
-        getFirmwareVersion(pProperties->name);
+    if (osFwType == deviceSupportedFwTypes[0]) { //GSC
         getFirmwareVersion(pProperties->version);
-    } else {
-        strncpy_s(pProperties->name, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
-        strncpy_s(pProperties->version, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+    }
+    if (osFwType == deviceSupportedFwTypes[1]) { //oprom
+        getOpromVersion(pProperties->version);
     }
 }
-
 ze_result_t LinuxFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
-    return pFwInterface->fwFlashGSC(pImage, size);
+    if (osFwType == deviceSupportedFwTypes[0]) { //GSC
+        return pFwInterface->fwFlashGSC(pImage, size);
+    }
+    if (osFwType == deviceSupportedFwTypes[1]) { //oprom
+        return pFwInterface->fwFlashOprom(pImage, size);
+    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 void LinuxFirmwareImp::getFirmwareVersion(char *firmwareVersion) {
     std::string fwVersion;
-    pFwInterface->fwGetVersion(fwVersion);
-    strncpy_s(firmwareVersion, ZES_STRING_PROPERTY_SIZE, fwVersion.c_str(), ZES_STRING_PROPERTY_SIZE);
+    if (ZE_RESULT_SUCCESS == pFwInterface->fwGetVersion(fwVersion)) {
+        strncpy_s(firmwareVersion, ZES_STRING_PROPERTY_SIZE, fwVersion.c_str(), ZES_STRING_PROPERTY_SIZE);
+    } else {
+        strncpy_s(firmwareVersion, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+    }
 }
 
-LinuxFirmwareImp::LinuxFirmwareImp(OsSysman *pOsSysman) {
+void LinuxFirmwareImp::getOpromVersion(char *firmwareVersion) {
+    std::string fwVersion;
+    if (ZE_RESULT_SUCCESS == pFwInterface->opromGetVersion(fwVersion)) {
+        strncpy_s(firmwareVersion, ZES_STRING_PROPERTY_SIZE, fwVersion.c_str(), ZES_STRING_PROPERTY_SIZE);
+    } else {
+        strncpy_s(firmwareVersion, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+    }
+}
+
+LinuxFirmwareImp::LinuxFirmwareImp(OsSysman *pOsSysman, const std::string &fwType) : osFwType(fwType) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
 }
 
-OsFirmware *OsFirmware::create(OsSysman *pOsSysman) {
-    LinuxFirmwareImp *pLinuxFirmwareImp = new LinuxFirmwareImp(pOsSysman);
-    return static_cast<OsFirmware *>(pLinuxFirmwareImp);
+std::unique_ptr<OsFirmware> OsFirmware::create(OsSysman *pOsSysman, const std::string &fwType) {
+    std::unique_ptr<LinuxFirmwareImp> pLinuxFirmwareImp = std::make_unique<LinuxFirmwareImp>(pOsSysman, fwType);
+    return pLinuxFirmwareImp;
 }
 
 } // namespace L0

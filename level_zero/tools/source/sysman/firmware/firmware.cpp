@@ -1,18 +1,16 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "firmware.h"
-
 #include "shared/source/helpers/basic_math.h"
 
-#include "firmware_imp.h"
+#include "level_zero/tools/source/sysman/firmware/firmware_imp.h"
 
 namespace L0 {
-
+class OsFirmware;
 FirmwareHandleContext::~FirmwareHandleContext() {
     for (Firmware *pFirmware : handleList) {
         delete pFirmware;
@@ -20,12 +18,20 @@ FirmwareHandleContext::~FirmwareHandleContext() {
     handleList.clear();
 }
 
-void FirmwareHandleContext::init() {
-    Firmware *pFirmware = new FirmwareImp(pOsSysman);
+void FirmwareHandleContext::createHandle(const std::string &fwType) {
+    Firmware *pFirmware = new FirmwareImp(pOsSysman, fwType);
     if (pFirmware->isFirmwareEnabled == true) {
         handleList.push_back(pFirmware);
     } else {
         delete pFirmware;
+    }
+}
+
+void FirmwareHandleContext::init() {
+    std::vector<std::string> supportedFwTypes = {};
+    OsFirmware::getSupportedFwTypes(supportedFwTypes, pOsSysman);
+    for (const std::string &fwType : supportedFwTypes) {
+        createHandle(fwType);
     }
 }
 
