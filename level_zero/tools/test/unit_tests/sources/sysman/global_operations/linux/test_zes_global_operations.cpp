@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -189,7 +189,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileReadingNonExist
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysfsAccess->scanDirEntries("clients/7/busy", engineEntries));
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetDeviceStatewhenDeviceIsWedged) {
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsWedgedWhenCallingGetDeviceStateThenZesResetReasonFlagWedgedIsReturned) {
     ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
         .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValWedgedFileTrue));
     zes_device_state_t deviceState;
@@ -197,7 +197,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetDevice
     EXPECT_EQ(ZES_RESET_REASON_FLAG_WEDGED, deviceState.reset);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetDeviceStatewhenDeviceIsNotWedged) {
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsNotWedgedWhenCallingGetDeviceStateThenZeroIsReturned) {
     ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
         .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValWedgedFileFalse));
     zes_device_state_t deviceState;
@@ -205,21 +205,21 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetDevice
     EXPECT_EQ(0u, deviceState.reset);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetDeviceStatewhenDeviceWdegedFileIsNotFound) {
+TEST_F(SysmanGlobalOperationsFixture, GivenWedgedFileNotFoundWhenCallingGetDeviceStateThenZeResultErrorUnsupportedFeatureIsReturned) {
     ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
         .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValWedgedFileNotFound));
     zes_device_state_t deviceState;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetState(device, &deviceState));
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetDeviceStatewhenDeviceWdegedFileHasInsufficientPermissions) {
+TEST_F(SysmanGlobalOperationsFixture, GivenWedgedFileInsufficientPermissionsWhenCallingGetDeviceStateThenZeResultErrorInsufficientPermissionsIsReturned) {
     ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
         .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValWedgedFileInsufficientPermissions));
     zes_device_state_t deviceState;
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesDeviceGetState(device, &deviceState));
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingResetVerifyPermissionDenied) {
+TEST_F(SysmanGlobalOperationsFixture, GivenPermissionDeniedWhenCallingGetDeviceStateThenZeResultErrorInsufficientPermissionsIsReturned) {
     ON_CALL(*pSysfsAccess.get(), getRealPath(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getRealPathVal));
     ON_CALL(*pFsAccess.get(), canWrite(Matcher<std::string>(mockFunctionResetPath)))
@@ -229,7 +229,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingResetVeri
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenForceFalseCallingAndInUseResetVerifyInUseError) {
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingResetThenZeResultErrorHandleObjectInUseIsReturned) {
     pProcfsAccess->ourDevicePid = pProcfsAccess->extraPid;
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
     ON_CALL(*pSysfsAccess.get(), getRealPath(_, Matcher<std::string &>(_)))
@@ -249,7 +249,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenForceFalseCallin
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenForceFalseAndNotInUseCallingResetVerifySuccess) {
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceNotInUseWhenCallingResetThenSuccessIsReturned) {
     // Pretend we have the device open
     pProcfsAccess->ourDevicePid = getpid();
     pProcfsAccess->ourDeviceFd = ::open("/dev/null", 0);
@@ -287,7 +287,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenForceFalseAndNot
     EXPECT_EQ(errno, EBADF);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenForceTrueAndInUseCallingResetVerifySuccessAndKillProcess) {
+TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -321,7 +321,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenForceTrueAndInUs
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenForceFalseAndProcessStartsMidResetCallingResetVerifySuccessAndProcessKilled) {
+TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetThenSuccessIsReturned) {
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
@@ -357,7 +357,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenForceFalseAndPro
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenForceTrueAndInUseButProcessWontDieCallingResetVerifyFailureInUse) {
+TEST_F(SysmanGlobalOperationsFixture, GivenProcessWontDieWhenCallingResetThenZeResultErrorHandleObjectInUseErrorIsReturned) {
     // Pretend another process has the device open
     pProcfsAccess->ourDevicePid = getpid() + 1; // make sure it isn't our process id
     pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
