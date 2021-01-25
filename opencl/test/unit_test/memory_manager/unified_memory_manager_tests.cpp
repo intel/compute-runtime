@@ -1004,3 +1004,57 @@ HWTEST_F(UnfiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenReadBufferThenCpu
     delete buffer;
     clMemFreeINTEL(&mockContext, deviceMemory);
 }
+
+HWTEST_F(UnfiedSharedMemoryHWTest, givenSharedUsmAllocationWhenWriteBufferThenCpuPtrIsNotUsed) {
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY,
+                                                                      mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
+    auto sharedMemory = mockContext.getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(sharedMemory);
+    GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+
+    char *cpuPtr = static_cast<char *>(gpuAllocation->getUnderlyingBuffer());
+    auto gpuAddress = gpuAllocation->getGpuAddress();
+    void *gpuPtr = reinterpret_cast<void *>(gpuAddress);
+    char *shiftedPtr = cpuPtr + 0x10;
+    gpuAllocation->setCpuPtrAndGpuAddress(shiftedPtr, reinterpret_cast<uint64_t>(shiftedPtr));
+
+    cl_mem_flags flags = 0;
+    auto status = CL_INVALID_PLATFORM;
+    auto buffer = Buffer::create(&mockContext, flags, 4096u, nullptr, status);
+    ASSERT_EQ(CL_SUCCESS, status);
+
+    TestCommandQueueHw<FamilyType> myCmdQ(&mockContext, mockContext.getDevice(0u), 0);
+    myCmdQ.enqueueWriteBuffer(buffer, false, 0u, 4096u, sharedMemory, nullptr, 0u, nullptr, nullptr);
+    EXPECT_EQ(gpuPtr, myCmdQ.srcPtr);
+
+    gpuAllocation->setCpuPtrAndGpuAddress(cpuPtr, gpuAddress);
+    delete buffer;
+    clMemFreeINTEL(&mockContext, sharedMemory);
+}
+
+HWTEST_F(UnfiedSharedMemoryHWTest, givenSharedUsmAllocationWhenReadBufferThenCpuPtrIsNotUsed) {
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY,
+                                                                      mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
+    auto sharedMemory = mockContext.getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(sharedMemory);
+    GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+
+    char *cpuPtr = static_cast<char *>(gpuAllocation->getUnderlyingBuffer());
+    auto gpuAddress = gpuAllocation->getGpuAddress();
+    void *gpuPtr = reinterpret_cast<void *>(gpuAddress);
+    char *shiftedPtr = cpuPtr + 0x10;
+    gpuAllocation->setCpuPtrAndGpuAddress(shiftedPtr, reinterpret_cast<uint64_t>(shiftedPtr));
+
+    cl_mem_flags flags = 0;
+    auto status = CL_INVALID_PLATFORM;
+    auto buffer = Buffer::create(&mockContext, flags, 4096u, nullptr, status);
+    ASSERT_EQ(CL_SUCCESS, status);
+
+    TestCommandQueueHw<FamilyType> myCmdQ(&mockContext, mockContext.getDevice(0u), 0);
+    myCmdQ.enqueueReadBuffer(buffer, false, 0u, 4096u, sharedMemory, nullptr, 0u, nullptr, nullptr);
+    EXPECT_EQ(gpuPtr, myCmdQ.dstPtr);
+
+    gpuAllocation->setCpuPtrAndGpuAddress(cpuPtr, gpuAddress);
+    delete buffer;
+    clMemFreeINTEL(&mockContext, sharedMemory);
+}

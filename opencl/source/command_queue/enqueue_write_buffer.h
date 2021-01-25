@@ -56,7 +56,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
                     isCpuCopyAllowed = false;
                 }
             }
-
             mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
         }
     }
@@ -91,7 +90,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
         //get offset between base cpu ptr of map allocation and dst ptr
-        if (memoryType != DEVICE_UNIFIED_MEMORY) {
+        if ((memoryType != DEVICE_UNIFIED_MEMORY) && (memoryType != SHARED_UNIFIED_MEMORY)) {
             size_t srcOffset = ptrDiff(srcPtr, mapAllocation->getUnderlyingBuffer());
             srcPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + srcOffset);
         }
