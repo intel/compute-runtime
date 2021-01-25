@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,6 +191,42 @@ TEST_F(clSVMAllocTests, GivenZeroAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
         auto SVMPtr = clSVMAlloc(pContext /* cl_context */, flags, 4096 /* Size*/, 0 /* alignment */);
         EXPECT_NE(nullptr, SVMPtr);
         clSVMFree(pContext, SVMPtr);
+    }
+}
+
+TEST_F(clSVMAllocTests, givenUnrestrictedFlagWhenCreatingSvmAllocThenAllowSizeBiggerThanMaxMemAllocSize) {
+    REQUIRE_SVM_OR_SKIP(pDevice);
+
+    const size_t maxMemAllocSize = 128;
+
+    static_cast<MockDevice &>(pDevice->getDevice()).deviceInfo.maxMemAllocSize = maxMemAllocSize;
+
+    size_t allowedSize = maxMemAllocSize;
+    size_t notAllowedSize = maxMemAllocSize + 1;
+
+    cl_mem_flags flags = 0;
+    void *svmPtr = nullptr;
+
+    {
+        // no flag + not allowed size
+        svmPtr = clSVMAlloc(pContext, flags, notAllowedSize, 0);
+        EXPECT_EQ(nullptr, svmPtr);
+    }
+
+    flags = CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
+
+    {
+        // unrestricted size flag + not allowed size
+        svmPtr = clSVMAlloc(pContext, flags, notAllowedSize, 0);
+        EXPECT_NE(nullptr, svmPtr);
+        clSVMFree(pContext, svmPtr);
+    }
+
+    {
+        // unrestricted size flag + allowed size
+        svmPtr = clSVMAlloc(pContext, flags, allowedSize, 0);
+        EXPECT_NE(nullptr, svmPtr);
+        clSVMFree(pContext, svmPtr);
     }
 }
 

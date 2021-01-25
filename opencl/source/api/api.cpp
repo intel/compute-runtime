@@ -4387,27 +4387,36 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
         return pAlloc;
     }
 
-    if (flags == 0) {
-        flags = CL_MEM_READ_WRITE;
-    }
+    {
+        // allow CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL with every combination
+        cl_svm_mem_flags tempFlags = flags & (~CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL);
 
-    if (!((flags == CL_MEM_READ_WRITE) ||
-          (flags == CL_MEM_WRITE_ONLY) ||
-          (flags == CL_MEM_READ_ONLY) ||
-          (flags == CL_MEM_SVM_FINE_GRAIN_BUFFER) ||
-          (flags == (CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)) ||
-          (flags == (CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER)) ||
-          (flags == (CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)) ||
-          (flags == (CL_MEM_WRITE_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER)) ||
-          (flags == (CL_MEM_WRITE_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)) ||
-          (flags == (CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER)) ||
-          (flags == (CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)))) {
-        TRACING_EXIT(clSVMAlloc, &pAlloc);
-        return pAlloc;
+        if (tempFlags == 0) {
+            tempFlags = CL_MEM_READ_WRITE;
+        }
+
+        if (!((tempFlags == CL_MEM_READ_WRITE) ||
+              (tempFlags == CL_MEM_WRITE_ONLY) ||
+              (tempFlags == CL_MEM_READ_ONLY) ||
+              (tempFlags == CL_MEM_SVM_FINE_GRAIN_BUFFER) ||
+              (tempFlags == (CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)) ||
+              (tempFlags == (CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER)) ||
+              (tempFlags == (CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)) ||
+              (tempFlags == (CL_MEM_WRITE_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER)) ||
+              (tempFlags == (CL_MEM_WRITE_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)) ||
+              (tempFlags == (CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER)) ||
+              (tempFlags == (CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)))) {
+
+            TRACING_EXIT(clSVMAlloc, &pAlloc);
+            return pAlloc;
+        }
     }
 
     auto pDevice = pContext->getDevice(0);
-    if ((size == 0) || (size > pDevice->getSharedDeviceInfo().maxMemAllocSize)) {
+    bool allowUnrestrictedSize = (flags & CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL);
+
+    if ((size == 0) ||
+        (!allowUnrestrictedSize && (size > pDevice->getSharedDeviceInfo().maxMemAllocSize))) {
         TRACING_EXIT(clSVMAlloc, &pAlloc);
         return pAlloc;
     }
