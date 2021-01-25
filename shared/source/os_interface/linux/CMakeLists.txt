@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -31,6 +31,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_operations_handler_create.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_query_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp
