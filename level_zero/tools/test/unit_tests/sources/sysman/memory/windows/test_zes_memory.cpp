@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,7 +167,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryMo
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetPropertiesWithLocalMemoryThenVerifySysmanMemoryGetPropertiesCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGettingPropertiesWithLocalMemoryThenCallSucceeds) {
     pKmdSysManager->mockMemoryLocation = KmdSysman::MemoryLocationsType::DeviceMemory;
     setLocalSupportedAndReinit(true);
 
@@ -189,7 +189,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemo
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetStatehenVerifySysmanMemoryGetStateCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingStateThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
     auto handles = get_memory_handles(memoryHandleComponentCount);
 
@@ -205,7 +205,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemo
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetBandwidthhenVerifySysmanMemoryGetBandwidthCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingBandwidthThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
     auto handles = get_memory_handles(memoryHandleComponentCount);
 
