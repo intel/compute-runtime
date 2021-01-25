@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/linux/os_context_linux.h"
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/os_context.h"
@@ -36,6 +38,11 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
             if (drm.areNonPersistentContextsSupported()) {
                 drm.setNonPersistentContext(drmContextId);
             }
+
+            if (drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled() && !internalEngine) {
+                drm.setContextDebugFlag(drmContextId);
+            }
+
             if (drm.isPreemptionSupported() && lowPriority) {
                 drm.setLowPriorityContextParam(drmContextId);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,5 +41,15 @@ TEST(DrmTest, whenRegisterIsaCookieCalledThenImplementationIsEmpty) {
     const uint32_t isaHandle = 2;
     auto handle = drmMock.registerIsaCookie(isaHandle);
     EXPECT_EQ(0u, handle);
+    EXPECT_EQ(0u, drmMock.ioctlCallsCount);
+}
+
+TEST(DrmTest, WhenCheckingContextDebugSupportThenNoIoctlIsCalled) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock.checkContextDebugSupport();
+    EXPECT_FALSE(drmMock.isContextDebugSupported());
+
     EXPECT_EQ(0u, drmMock.ioctlCallsCount);
 }

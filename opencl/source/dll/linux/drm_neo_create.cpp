@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,8 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
             printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
         }
     }
+
+    drmObject->checkContextDebugSupport();
 
     if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
         if (drmObject->isVmBindAvailable()) {

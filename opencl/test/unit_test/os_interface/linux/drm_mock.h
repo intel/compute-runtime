@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ class DrmMock : public Drm {
     using Drm::bindAvailable;
     using Drm::checkQueueSliceSupport;
     using Drm::classHandles;
+    using Drm::contextDebugSupported;
     using Drm::engineInfo;
     using Drm::generateElfUUID;
     using Drm::generateUUID;
@@ -97,6 +98,10 @@ class DrmMock : public Drm {
     void setBindAvailable() {
         this->bindAvailable = true;
     }
+    void setContextDebugFlag(uint32_t drmContextId) override {
+        passedContextDebugId = drmContextId;
+        return Drm::setContextDebugFlag(drmContextId);
+    }
 
     static const int mockFd = 33;
 
@@ -130,6 +135,7 @@ class DrmMock : public Drm {
     int StoredRetValForVmId = 1;
 
     bool disableSomeTopology = false;
+    uint32_t passedContextDebugId = uint32_t(-1);
 
     uint32_t receivedCreateContextId = 0;
     uint32_t receivedDestroyContextId = 0;

@@ -119,6 +119,10 @@ class Drm {
         requirePerContextVM = required;
     }
 
+    void checkContextDebugSupport();
+    bool isContextDebugSupported() { return contextDebugSupported; }
+    MOCKABLE_VIRTUAL void setContextDebugFlag(uint32_t drmContextId);
+
     MOCKABLE_VIRTUAL bool isVmBindAvailable();
     MOCKABLE_VIRTUAL bool registerResourceClasses();
 
@@ -170,6 +174,7 @@ class Drm {
     bool nonPersistentContextsSupported = false;
     bool requirePerContextVM = false;
     bool bindAvailable = false;
+    bool contextDebugSupported = false;
     std::once_flag checkBindOnce;
     std::unique_ptr<HwDeviceId> hwDeviceId;
     int deviceId = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -467,4 +467,37 @@ TEST(DrmTest, givenNoPerContextVmsDrmWhenCreatingOsContextsThenVmIdIsNotQueriedA
 
     auto &drmVmIds = osContext.getDrmVmIds();
     EXPECT_EQ(0u, drmVmIds.size());
+}
+
+TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextThenSetContextDebugFlagIsCalled) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    DrmMockNonFailing drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock.contextDebugSupported = true;
+
+    OsContextLinux osContext(drmMock, 5u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+
+    // drmMock returns ctxId == 0
+    EXPECT_EQ(0u, drmMock.passedContextDebugId);
+}
+
+TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextForInternalEngineThenSetContextDebugFlagIsNotCalled) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    DrmMockNonFailing drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock.contextDebugSupported = true;
+
+    OsContextLinux osContext(drmMock, 5u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, true, false);
+
+    EXPECT_EQ(static_cast<uint32_t>(-1), drmMock.passedContextDebugId);
 }
