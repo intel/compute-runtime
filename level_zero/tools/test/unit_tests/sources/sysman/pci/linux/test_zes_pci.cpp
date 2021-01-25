@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -218,7 +218,7 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStateThenV
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetState(device, &state));
 }
 
-TEST_F(ZesPciFixture, TestLinkSpeedToGenAndBack) {
+TEST_F(ZesPciFixture, WhenConvertingLinkSpeedThenResultIsCorrect) {
     for (int32_t i = PciGenerations::PciGen1; i <= PciGenerations::PciGen5; i++) {
         double speed = convertPciGenToLinkSpeed(i);
         int32_t gen = convertLinkSpeedToPciGen(speed);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -132,7 +132,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetS
     EXPECT_EQ(state.speed.width, pKmdSysManager->mockCurrentLinkWidth[KmdSysman::PciDomainsType::PciCurrentDevice]);
 }
 
-TEST_F(SysmanDevicePciFixture, TestLinkSpeedToGenAndBack) {
+TEST_F(SysmanDevicePciFixture, WhenConvertingLinkSpeedThenResultIsCorrect) {
     for (int32_t i = PciGenerations::PciGen1; i <= PciGenerations::PciGen5; i++) {
         double speed = convertPciGenToLinkSpeed(i);
         int32_t gen = convertLinkSpeedToPciGen(speed);
