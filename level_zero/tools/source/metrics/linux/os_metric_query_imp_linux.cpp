@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ using namespace MetricsLibraryApi;
 
 namespace L0 {
 
-const char *MetricsLibrary::getFilename() { return "libigdml.so"; }
+const char *MetricsLibrary::getFilename() { return "libigdml.so.1"; }
 
 bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &contextData) {
 

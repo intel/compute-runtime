@@ -15,7 +15,7 @@
 
 namespace L0 {
 
-const char *MetricEnumeration::getMetricsDiscoveryFilename() { return "libmd.so"; }
+const char *MetricEnumeration::getMetricsDiscoveryFilename() { return "libmd.so.1"; }
 
 bool MetricEnumeration::getAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor) {
 
