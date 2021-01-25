@@ -34,7 +34,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     MemoryCompressionState memoryCompressionState) {
 
     *stateBaseAddress = GfxFamily::cmdInitStateBaseAddress;
-
+    bool overrideBindlessSurfaceStateBase = true;
     if (useGlobalHeapsBaseAddress) {
         stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
         stateBaseAddress->setDynamicStateBufferSizeModifyEnable(true);
@@ -52,6 +52,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         stateBaseAddress->setBindlessSurfaceStateBaseAddress(globalHeapsBaseAddress);
         stateBaseAddress->setBindlessSurfaceStateSize(MemoryConstants::sizeOf4GBinPageEntities);
+
+        overrideBindlessSurfaceStateBase = false;
     } else {
         if (dsh) {
             stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
@@ -97,7 +99,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
 
-    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper, isMultiOsContextCapable, memoryCompressionState);
+    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper, isMultiOsContextCapable, memoryCompressionState, overrideBindlessSurfaceStateBase);
 }
 
 template <typename GfxFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,8 @@ BDWTEST_F(SBATest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersI
         0,
         nullptr,
         false,
-        MemoryCompressionState::NotApplicable);
+        MemoryCompressionState::NotApplicable,
+        true);
 
     EXPECT_EQ(0u, ssh.getUsed());
     EXPECT_EQ(0, memcmp(&stateBaseAddressReference, &stateBaseAddress, sizeof(STATE_BASE_ADDRESS)));

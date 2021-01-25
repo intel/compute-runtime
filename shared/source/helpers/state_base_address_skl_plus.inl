@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,10 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     uint64_t indirectObjectHeapBaseAddress,
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable,
-    MemoryCompressionState memoryCompressionState) {
+    MemoryCompressionState memoryCompressionState,
+    bool overrideBindlessSurfaceStateBase) {
 
-    if (ssh) {
+    if (overrideBindlessSurfaceStateBase && ssh) {
         stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         stateBaseAddress->setBindlessSurfaceStateBaseAddress(ssh->getHeapGpuBase());
         uint32_t size = uint32_t(ssh->getMaxAvailableSpace() / 64) - 1;

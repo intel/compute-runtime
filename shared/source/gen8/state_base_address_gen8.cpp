@@ -74,7 +74,7 @@ void StateBaseAddressHelper<BDWFamily>::programStateBaseAddress(
 
     stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
 
-    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper, isMultiOsContextCapable, memoryCompressionState);
+    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper, isMultiOsContextCapable, memoryCompressionState, true);
 }
 template struct StateBaseAddressHelper<BDWFamily>;
 } // namespace NEO

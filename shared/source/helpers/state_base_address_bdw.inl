@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,8 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     uint64_t indirectObjectHeapBaseAddress,
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable,
-    MemoryCompressionState memoryCompressionState) {
+    MemoryCompressionState memoryCompressionState,
+    bool overrideBindlessSurfaceStateBase) {
     appendExtraCacheSettings(stateBaseAddress, gmmHelper);
 }
 

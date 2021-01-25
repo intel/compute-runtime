@@ -45,7 +45,8 @@ struct StateBaseAddressHelper {
         uint64_t indirectObjectHeapBaseAddress,
         GmmHelper *gmmHelper,
         bool isMultiOsContextCapable,
-        MemoryCompressionState memoryCompressionState);
+        MemoryCompressionState memoryCompressionState,
+        bool overrideBindlessSurfaceStateBase);
 
     static void appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, GmmHelper *gmmHelper);
 
