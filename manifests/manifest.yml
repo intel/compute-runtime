@@ -30,7 +30,7 @@ components:
     branch: master
     dest_dir: level_zero
     repository: https://github.com/oneapi-src/level-zero
-    revision: v1.0.26
+    revision: v1.1.0
     type: git
   libva:
     dest_dir: libva
