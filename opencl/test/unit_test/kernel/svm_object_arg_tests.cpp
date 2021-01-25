@@ -39,3 +39,18 @@ TEST(SvmObjectArgTest, givenMultiGraphicsAllocationWhenCreatingSvmObjectArgThenP
     EXPECT_EQ(multiGraphicsAllocation.getAllocationType(), svmObjectArg.getAllocationType());
     EXPECT_EQ(&multiGraphicsAllocation, svmObjectArg.getMultiDeviceSvmAlloc());
 }
+
+TEST(SvmObjectArgTest, givenNullPtrAllocationWhenGettingGraphicsAllocationFromSvmObjectArgThenNullptrIsReturned) {
+    {
+        GraphicsAllocation *nullGraphicsAllocation = nullptr;
+        SvmObjectArg svmObjectArg(nullGraphicsAllocation);
+
+        EXPECT_EQ(nullptr, svmObjectArg.getGraphicsAllocation(0u));
+    }
+    {
+        MultiGraphicsAllocation *nullMultiGraphicsAllocation = nullptr;
+        SvmObjectArg svmObjectArg(nullMultiGraphicsAllocation);
+
+        EXPECT_EQ(nullptr, svmObjectArg.getGraphicsAllocation(0u));
+    }
+}

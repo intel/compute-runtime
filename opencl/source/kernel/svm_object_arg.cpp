@@ -18,8 +18,10 @@ GraphicsAllocation *SvmObjectArg::getGraphicsAllocation(uint32_t rootDeviceIndex
         DEBUG_BREAK_IF(singleDeviceSvmAlloc && rootDeviceIndex != singleDeviceSvmAlloc->getRootDeviceIndex());
         return singleDeviceSvmAlloc;
     }
-    UNRECOVERABLE_IF(!multiDeviceSvmAlloc);
-    return multiDeviceSvmAlloc->getGraphicsAllocation(rootDeviceIndex);
+    if (multiDeviceSvmAlloc) {
+        return multiDeviceSvmAlloc->getGraphicsAllocation(rootDeviceIndex);
+    }
+    return nullptr;
 }
 
 bool SvmObjectArg::isCoherent() const {
