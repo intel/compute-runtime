@@ -33,7 +33,7 @@ RootDevice::~RootDevice() {
 }
 
 uint32_t RootDevice::getNumSubDevices() const {
-    return static_cast<uint32_t>(subdevices.size());
+    return this->numSubDevices;
 }
 
 BindlessHeapsHelper *RootDevice::getBindlessHeapsHelper() const {
@@ -51,10 +51,10 @@ uint32_t RootDevice::getNumAvailableDevices() const {
 }
 
 Device *RootDevice::getDeviceById(uint32_t deviceId) const {
-    UNRECOVERABLE_IF(deviceId >= getNumAvailableDevices());
     if (subdevices.empty()) {
         return const_cast<RootDevice *>(this);
     }
+    UNRECOVERABLE_IF(deviceId >= subdevices.size());
     return subdevices[deviceId];
 }
 
@@ -67,19 +67,26 @@ SubDevice *RootDevice::createSubDevice(uint32_t subDeviceIndex) {
 }
 
 bool RootDevice::createDeviceImpl() {
-    auto numSubDevices = HwHelper::getSubDevicesCount(&getHardwareInfo());
+    auto deviceMask = executionEnvironment->rootDeviceEnvironments[this->rootDeviceIndex]->deviceAffinityMask;
+    deviceBitfield = maxNBitValue(HwHelper::getSubDevicesCount(&getHardwareInfo()));
+    deviceBitfield &= deviceMask;
+    numSubDevices = static_cast<uint32_t>(deviceBitfield.count());
     if (numSubDevices == 1) {
         numSubDevices = 0;
     }
     UNRECOVERABLE_IF(!subdevices.empty());
-    subdevices.resize(numSubDevices, nullptr);
-    for (auto i = 0u; i < numSubDevices; i++) {
-
-        auto subDevice = createSubDevice(i);
-        if (!subDevice) {
-            return false;
+    if (numSubDevices) {
+        subdevices.resize(HwHelper::getSubDevicesCount(&getHardwareInfo()), nullptr);
+        for (auto i = 0u; i < HwHelper::getSubDevicesCount(&getHardwareInfo()); i++) {
+            if (!deviceBitfield.test(i)) {
+                continue;
+            }
+            auto subDevice = createSubDevice(i);
+            if (!subDevice) {
+                return false;
+            }
+            subdevices[i] = subDevice;
         }
-        subdevices[i] = subDevice;
     }
     auto status = Device::createDeviceImpl();
     if (!status) {
@@ -90,8 +97,8 @@ bool RootDevice::createDeviceImpl() {
     }
     return true;
 }
+
 DeviceBitfield RootDevice::getDeviceBitfield() const {
-    DeviceBitfield deviceBitfield{static_cast<uint32_t>(maxNBitValue(getNumAvailableDevices()))};
     return deviceBitfield;
 }
 

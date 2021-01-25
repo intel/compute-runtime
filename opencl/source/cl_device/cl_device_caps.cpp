@@ -230,7 +230,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.deviceAvailable = CL_TRUE;
     deviceInfo.compilerAvailable = CL_TRUE;
     deviceInfo.parentDevice = nullptr;
-    deviceInfo.partitionMaxSubDevices = HwHelper::getSubDevicesCount(&hwInfo);
+    deviceInfo.partitionMaxSubDevices = device.getNumAvailableDevices();
     if (deviceInfo.partitionMaxSubDevices > 1) {
         deviceInfo.partitionProperties[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
         deviceInfo.partitionProperties[1] = 0;

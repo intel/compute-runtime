@@ -78,4 +78,77 @@ void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices
         }
     }
 }
+void ExecutionEnvironment::parseAffinityMask() {
+    auto affinityMaskString = DebugManager.flags.ZE_AFFINITY_MASK.get();
+
+    if (affinityMaskString.compare("default") == 0 ||
+        affinityMaskString.empty()) {
+        return;
+    }
+
+    std::vector<std::vector<bool>> affinityMaskBitSet(rootDeviceEnvironments.size());
+    for (uint32_t i = 0; i < affinityMaskBitSet.size(); i++) {
+        auto hwInfo = rootDeviceEnvironments[i]->getHardwareInfo();
+        affinityMaskBitSet[i].resize(HwHelper::getSubDevicesCount(hwInfo));
+    }
+
+    size_t pos = 0;
+    while (pos < affinityMaskString.size()) {
+        size_t posNextDot = affinityMaskString.find_first_of(".", pos);
+        size_t posNextComma = affinityMaskString.find_first_of(",", pos);
+        std::string rootDeviceString = affinityMaskString.substr(pos, std::min(posNextDot, posNextComma) - pos);
+        uint32_t rootDeviceIndex = static_cast<uint32_t>(std::stoul(rootDeviceString, nullptr, 0));
+        if (rootDeviceIndex < rootDeviceEnvironments.size()) {
+            pos += rootDeviceString.size();
+            if (posNextDot != std::string::npos &&
+                affinityMaskString.at(pos) == '.' && posNextDot < posNextComma) {
+                pos++;
+                std::string subDeviceString = affinityMaskString.substr(pos, posNextComma - pos);
+                uint32_t subDeviceIndex = static_cast<uint32_t>(std::stoul(subDeviceString, nullptr, 0));
+                auto hwInfo = rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+                if (subDeviceIndex < HwHelper::getSubDevicesCount(hwInfo)) {
+                    affinityMaskBitSet[rootDeviceIndex][subDeviceIndex] = true;
+                }
+            } else {
+                std::fill(affinityMaskBitSet[rootDeviceIndex].begin(),
+                          affinityMaskBitSet[rootDeviceIndex].end(),
+                          true);
+            }
+        }
+        if (posNextComma == std::string::npos) {
+            break;
+        }
+        pos = posNextComma + 1;
+    }
+
+    uint32_t offset = 0;
+    uint32_t affinityMask = 0;
+    for (uint32_t i = 0; i < affinityMaskBitSet.size(); i++) {
+        for (uint32_t j = 0; j < affinityMaskBitSet[i].size(); j++) {
+            if (affinityMaskBitSet[i][j] == true) {
+                affinityMask |= (1UL << offset);
+            }
+            offset++;
+        }
+    }
+
+    uint32_t currentMaskOffset = 0;
+    std::vector<std::unique_ptr<RootDeviceEnvironment>> filteredEnvironments;
+    for (size_t i = 0u; i < this->rootDeviceEnvironments.size(); i++) {
+        auto hwInfo = rootDeviceEnvironments[i]->getHardwareInfo();
+
+        uint32_t currentDeviceMask = (affinityMask >> currentMaskOffset) & ((1UL << HwHelper::getSubDevicesCount(hwInfo)) - 1);
+        bool isDeviceExposed = currentDeviceMask > 0;
+
+        currentMaskOffset += HwHelper::getSubDevicesCount(hwInfo);
+        if (!isDeviceExposed) {
+            continue;
+        }
+
+        rootDeviceEnvironments[i]->deviceAffinityMask = currentDeviceMask;
+        filteredEnvironments.emplace_back(rootDeviceEnvironments[i].release());
+    }
+
+    rootDeviceEnvironments.swap(filteredEnvironments);
+}
 } // namespace NEO

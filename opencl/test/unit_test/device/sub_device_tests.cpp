@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -201,7 +201,6 @@ TEST(SubDevicesTest, givenDeviceWithoutSubDevicesWhenGettingDeviceByIdZeroThenGe
 
     EXPECT_EQ(1u, device->getNumAvailableDevices());
     EXPECT_EQ(device.get(), device->getDeviceById(0u));
-    EXPECT_THROW(device->getDeviceById(1), std::exception);
 }
 
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenGettingDeviceByIdThenGetCorrectSubDevice) {
@@ -245,7 +244,7 @@ TEST(RootDevicesTest, givenRootDeviceWithSubdevicesWhenCreateEnginesThenDeviceCr
 
     auto executionEnvironment = new MockExecutionEnvironment;
     MockDevice device(executionEnvironment, 0);
-    device.subdevices.resize(2u);
+    device.numSubDevices = 2;
     EXPECT_EQ(0u, device.engines.size());
     device.createEngines();
     EXPECT_EQ(1u, device.engines.size());

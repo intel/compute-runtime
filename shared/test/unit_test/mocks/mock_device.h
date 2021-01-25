@@ -54,6 +54,7 @@ class MockDevice : public RootDevice {
     using RootDevice::defaultEngineIndex;
     using RootDevice::getDeviceBitfield;
     using RootDevice::initializeRootCommandStreamReceiver;
+    using RootDevice::numSubDevices;
     using RootDevice::subdevices;
 
     void setOSTime(OSTime *osTime);

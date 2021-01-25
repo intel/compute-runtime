@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,8 @@ class RootDevice : public Device {
 
     std::vector<SubDevice *> subdevices;
     const uint32_t rootDeviceIndex;
+    DeviceBitfield deviceBitfield = DeviceBitfield{1u};
+    uint32_t numSubDevices = 0;
     std::unique_ptr<BindlessHeapsHelper> bindlessHeapHelper;
 };
 } // namespace NEO

@@ -28,6 +28,8 @@ class MemoryOperationsHandler;
 class OSInterface;
 struct HardwareInfo;
 
+constexpr uint32_t allSubDevicesActive = std::numeric_limits<uint32_t>::max();
+
 struct RootDeviceEnvironment {
   protected:
     std::unique_ptr<HardwareInfo> hwInfo;
@@ -61,6 +63,8 @@ struct RootDeviceEnvironment {
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<Debugger> debugger;
     ExecutionEnvironment &executionEnvironment;
+
+    uint32_t deviceAffinityMask = allSubDevicesActive;
 
   private:
     std::mutex mtx;
