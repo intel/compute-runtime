@@ -9,6 +9,7 @@
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
 #include "test.h"
@@ -33,6 +34,55 @@ struct DualStorageModuleFixture : public ModuleFixture {
 };
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 using CommandListDualStroage = Test<DualStorageModuleFixture>;
+
+struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
+    void SetUp() override {
+        NEO::DebugManager.flags.EnableSWTags.set(true);
+        ModuleFixture::SetUp();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+};
+
+HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchKernelThenTagIsInserted) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+
+    createKernel();
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    auto usedSpaceBefore = cmdStream->getUsed();
+
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
+    ASSERT_LE(2u, noops.size());
+
+    bool tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::KernelName) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+}
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
     createKernel();

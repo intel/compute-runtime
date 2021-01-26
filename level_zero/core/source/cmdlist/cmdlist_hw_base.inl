@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/software_tags_manager.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
@@ -80,20 +81,29 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
     uint32_t partitionCount = 0;
+
+    NEO::Device *neoDevice = device->getNEODevice();
+
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::KernelNameTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            kernel->getKernelDescriptor().kernelMetadata.kernelName.c_str());
+    }
+
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,
                                                  reinterpret_cast<const void *>(pThreadGroupDimensions),
                                                  isIndirect,
                                                  isPredicate,
                                                  kernel,
                                                  0,
-                                                 device->getNEODevice(),
+                                                 neoDevice,
                                                  commandListPreemptionMode,
                                                  this->containsStatelessUncachedResource,
                                                  partitionCount);
 
-    if (device->getNEODevice()->getDebugger()) {
+    if (neoDevice->getDebugger()) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
-        NEO::Device *neoDevice = device->getNEODevice();
         auto surfaceState = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
         auto debugSurface = device->getDebugSurface();
         auto mocs = device->getMOCS(true, false);

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -28,6 +28,10 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/range.h
     ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/software_tags.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/software_tags.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/software_tags_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/software_tags_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/spinlock.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stackvec.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator.h

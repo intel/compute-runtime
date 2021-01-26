@@ -19,11 +19,16 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
 
 RootDeviceEnvironment::RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment) {
     hwInfo = std::make_unique<HardwareInfo>();
+
+    if (DebugManager.flags.EnableSWTags.get()) {
+        tagsManager = std::make_unique<SWTagsManager>();
+    }
 }
 
 RootDeviceEnvironment::~RootDeviceEnvironment() = default;

@@ -19,6 +19,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
+#include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
 
@@ -34,6 +35,7 @@ Device::Device(ExecutionEnvironment *executionEnvironment)
 
 Device::~Device() {
     DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());
+
     if (performanceCounters) {
         performanceCounters->shutdown();
     }
@@ -97,6 +99,10 @@ bool Device::createDeviceImpl() {
             auto csr = engine.commandStreamReceiver;
             csr->setExperimentalCmdBuffer(std::make_unique<ExperimentalCommandBuffer>(csr, getDeviceInfo().profilingTimerResolution));
         }
+    }
+
+    if (DebugManager.flags.EnableSWTags.get() && !getRootDeviceEnvironment().tagsManager->isInitialized()) {
+        getRootDeviceEnvironment().tagsManager->initialize(*this);
     }
 
     return true;

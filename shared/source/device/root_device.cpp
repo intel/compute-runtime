@@ -15,6 +15,7 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
@@ -24,6 +25,10 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {}
 
 RootDevice::~RootDevice() {
+    if (getRootDeviceEnvironment().tagsManager) {
+        getRootDeviceEnvironment().tagsManager->shutdown();
+    }
+
     for (auto subdevice : subdevices) {
         if (subdevice) {
             delete subdevice;
@@ -94,6 +99,7 @@ bool RootDevice::createDeviceImpl() {
     if (ApiSpecificConfig::getBindlessConfiguration()) {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->createBindlessHeapsHelper(getMemoryManager(), getNumAvailableDevices() > 1, rootDeviceIndex);
     }
+
     return true;
 }
 

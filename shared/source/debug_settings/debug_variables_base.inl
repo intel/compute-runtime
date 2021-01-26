@@ -36,6 +36,8 @@ DECLARE_DEBUG_VARIABLE(bool, AUBDumpAllocsOnEnqueueSVMMemcpyOnly, false, "Force 
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpForceAllToLocalMemory, false, "Force placing every allocation in local memory address space")
 
 /*DEBUG FLAGS*/
+DECLARE_DEBUG_VARIABLE(bool, EnableSWTags, false, "Enable software tagging in batch buffer")
+DECLARE_DEBUG_VARIABLE(bool, DumpSWTagsBXML, false, "Dump software tags BXML into a file")
 DECLARE_DEBUG_VARIABLE(bool, DisableTimestampPacketOptimizations, false, "Allocate new allocation per node + dont reuse old nodes")
 DECLARE_DEBUG_VARIABLE(bool, DisableCachingForStatefulBufferAccess, false, "Disable caching for stateful buffer access")
 DECLARE_DEBUG_VARIABLE(bool, EnableDebugBreak, true, "Enable DEBUG_BREAKs")

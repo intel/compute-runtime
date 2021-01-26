@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
 #include "test.h"
@@ -504,6 +505,107 @@ HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionM
     commandListDisabled->destroy();
     commandListThreadGroup->destroy();
     commandQueue->destroy();
+}
+
+struct CommandQueueExecuteCommandListSWTagsTests : public Test<DeviceFixture> {
+    void SetUp() override {
+        DebugManager.flags.EnableSWTags.set(true);
+        DeviceFixture::SetUp();
+
+        ze_result_t returnValue;
+        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle();
+        ASSERT_NE(nullptr, commandLists[0]);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+        ze_command_queue_desc_t desc = {};
+        commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        ASSERT_NE(nullptr, commandQueue->commandStream);
+    }
+
+    void TearDown() override {
+        commandQueue->destroy();
+
+        for (auto i = 0u; i < numCommandLists; i++) {
+            auto commandList = CommandList::fromHandle(commandLists[i]);
+            commandList->destroy();
+        }
+
+        DeviceFixture::TearDown();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    const static uint32_t numCommandLists = 1;
+    ze_command_list_handle_t commandLists[numCommandLists];
+    L0::ult::CommandQueue *commandQueue;
+};
+
+HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsWhenExecutingCommandListThenHeapAddressesAreInserted) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PARSE = typename FamilyType::PARSE;
+
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+
+    auto result = commandQueue->executeCommandLists(1, commandLists, nullptr, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+    auto sdis = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_LE(2u, sdis.size());
+
+    auto dbgdocSDI = genCmdCast<MI_STORE_DATA_IMM *>(*sdis[0]);
+    auto dbgddiSDI = genCmdCast<MI_STORE_DATA_IMM *>(*sdis[1]);
+
+    EXPECT_EQ(dbgdocSDI->getAddress(), neoDevice->getRootDeviceEnvironment().tagsManager->getBXMLHeapAllocation()->getGpuAddress());
+    EXPECT_EQ(dbgddiSDI->getAddress(), neoDevice->getRootDeviceEnvironment().tagsManager->getSWTagHeapAllocation()->getGpuAddress());
+}
+
+HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandListWithDifferentPreemtpionWhenExecutingCommandListThenPipeControlReasonTagIsInserted) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+    using PARSE = typename FamilyType::PARSE;
+
+    whitebox_cast(CommandList::fromHandle(commandLists[0]))->commandListPreemptionMode = PreemptionMode::Disabled;
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+
+    auto result = commandQueue->executeCommandLists(1, commandLists, nullptr, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+    auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
+    ASSERT_LE(2u, noops.size());
+
+    bool tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::PipeControlReason) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
 }
 
 } // namespace ult

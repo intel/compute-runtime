@@ -18,6 +18,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/numeric_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/software_tags_manager_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/spinlock_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/timer_util_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/vec_tests.cpp

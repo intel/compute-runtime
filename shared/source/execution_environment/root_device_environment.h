@@ -28,6 +28,7 @@ class HwDeviceId;
 class MemoryManager;
 class MemoryOperationsHandler;
 class OSInterface;
+class SWTagsManager;
 struct HardwareInfo;
 
 constexpr uint32_t allSubDevicesActive = std::numeric_limits<uint32_t>::max();
@@ -67,6 +68,7 @@ struct RootDeviceEnvironment {
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<Debugger> debugger;
+    std::unique_ptr<SWTagsManager> tagsManager;
     ExecutionEnvironment &executionEnvironment;
 
     uint32_t deviceAffinityMask = allSubDevicesActive;
