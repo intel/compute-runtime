@@ -173,7 +173,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, GivenTwoCommandQueuesWhe
     }
 }
 
-HWTEST_F(TwoOOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeControlIsInsertedBetweenWalkers) {
+HWTEST_F(TwoOOQsTwoDependentWalkers, DISABLED_GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeControlIsInsertedBetweenWalkers) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
