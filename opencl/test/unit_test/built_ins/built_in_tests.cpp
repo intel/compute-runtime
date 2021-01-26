@@ -900,7 +900,7 @@ TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedTh
     BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
-    builtinOpsParams.srcOffset.x = 1;
+    builtinOpsParams.srcOffset.x = 5; // causes misalignment from 4-byte boundary by 1 byte (8 bits)
     builtinOpsParams.dstMemObj = &dst;
     builtinOpsParams.size = {src.getSize(), 0, 0};
 
@@ -909,9 +909,13 @@ TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedTh
 
     EXPECT_EQ(1u, multiDispatchInfo.size());
 
-    const DispatchInfo *dispatchInfo = multiDispatchInfo.begin();
+    const Kernel *kernel = multiDispatchInfo.begin()->getKernel();
 
-    EXPECT_EQ(dispatchInfo->getKernel()->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName, "CopyBufferToBufferLeftLeftover");
+    EXPECT_EQ(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName, "CopyBufferToBufferMiddleMisaligned");
+
+    const auto crossThreadData = kernel->getCrossThreadData(rootDeviceIndex);
+    const auto crossThreadOffset = kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[4].kernelArgPatchInfoVector[0].crossthreadOffset;
+    EXPECT_EQ(8u, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, crossThreadOffset)));
 
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }

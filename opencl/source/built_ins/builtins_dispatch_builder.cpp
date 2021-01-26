@@ -54,17 +54,20 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
 
         uintptr_t middleSizeBytes = operationParams.size.x - leftSize - rightSize; // calc middle size
 
-        if (!isAligned<4>(reinterpret_cast<uintptr_t>(operationParams.srcPtr) + operationParams.srcOffset.x + leftSize)) {
-            //corner case - src relative to dst does not have DWORD alignment
-            leftSize += middleSizeBytes;
-            middleSizeBytes = 0;
-        }
+        // corner case - fully optimized kernel requires DWORD alignment. If we don't have it, run slower, misaligned kernel
+        const auto srcMiddleStart = reinterpret_cast<uintptr_t>(operationParams.srcPtr) + operationParams.srcOffset.x + leftSize;
+        const auto srcMisalignment = srcMiddleStart % sizeof(uint32_t);
+        const auto isSrcMisaligned = srcMisalignment != 0u;
 
         auto middleSizeEls = middleSizeBytes / middleElSize; // num work items in middle walker
 
         // Set-up ISA
         kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Left, kernLeftLeftover);
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddle);
+        if (isSrcMisaligned) {
+            kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddleMisaligned);
+        } else {
+            kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddle);
+        }
         kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Right, kernRightLeftover);
 
         // Set-up common kernel args
@@ -95,6 +98,10 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
         kernelSplit1DBuilder.setArg(SplitDispatch::RegionCoordX::Middle, 3, static_cast<OffsetType>(operationParams.dstOffset.x + leftSize));
         kernelSplit1DBuilder.setArg(SplitDispatch::RegionCoordX::Right, 3, static_cast<OffsetType>(operationParams.dstOffset.x + leftSize + middleSizeBytes));
 
+        if (isSrcMisaligned) {
+            kernelSplit1DBuilder.setArg(SplitDispatch::RegionCoordX::Middle, 4, static_cast<uint32_t>(srcMisalignment * 8));
+        }
+
         // Set-up work sizes
         // Note for split walker, it would be just builder.SetDipatchGeometry(GWS, ELWS, OFFSET)
         kernelSplit1DBuilder.setDispatchGeometry(SplitDispatch::RegionCoordX::Left, Vec3<size_t>{leftSize, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
@@ -112,6 +119,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
   protected:
     Kernel *kernLeftLeftover = nullptr;
     Kernel *kernMiddle = nullptr;
+    Kernel *kernMiddleMisaligned = nullptr;
     Kernel *kernRightLeftover = nullptr;
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
         : BuiltinDispatchInfoBuilder(kernelsLib, device) {
@@ -120,6 +128,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
                      "",
                      "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
                      "CopyBufferToBufferMiddle", kernMiddle,
+                     "CopyBufferToBufferMiddleMisaligned", kernMiddleMisaligned,
                      "CopyBufferToBufferRightLeftover", kernRightLeftover);
         }
     }
@@ -134,6 +143,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBufferStateless> : public BuiltInOp<EBu
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
                  "CopyBufferToBufferMiddle", kernMiddle,
+                 "CopyBufferToBufferMiddleMisaligned", kernMiddleMisaligned,
                  "CopyBufferToBufferRightLeftover", kernRightLeftover);
     }
 
