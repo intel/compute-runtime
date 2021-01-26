@@ -12,7 +12,7 @@ extern bool verbose;
 bool verbose = false;
 
 const char *module = R"===(
-__kernel void kernel_copy(__global int *dst, __global char *src){
+__kernel void kernel_copy(__global char *dst, __global char *src){
     uint gid = get_global_id(0);
     dst[gid] = src[gid];
 }
