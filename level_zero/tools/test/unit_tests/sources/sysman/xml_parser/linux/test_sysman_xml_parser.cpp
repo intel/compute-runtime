@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ class SysmanXmlParserFixture : public ::testing::Test {
         }
     }
 };
-TEST_F(SysmanXmlParserFixture, GivenValidXPathWhenCallingXmlDocXPathWithValidXmlDocVerifyXPathReturnsCorrectXmlNodes) {
+TEST_F(SysmanXmlParserFixture, GivenValidXPathWhenCallingXmlDocXPathWithValidXmlDocThenVerifyXPathReturnsCorrectXmlNodes) {
 
     std::vector<XmlNode *> xmlNodes = pXmlDoc->xPath(std::string("/testElement/testSubElement"));
     EXPECT_EQ(xmlNodes.size(), 2U);
@@ -50,7 +50,7 @@ TEST_F(SysmanXmlParserFixture, GivenValidXPathWhenCallingXmlDocXPathWithValidXml
         delete pXmlNode;
     }
 }
-TEST_F(SysmanXmlParserFixture, GivenValidXPathWhenCallingXmlNodeXPathWithValidXmlNodeVerifyXPathReturnsCorrectXmlNodes) {
+TEST_F(SysmanXmlParserFixture, GivenValidXPathWhenCallingXmlNodeXPathWithValidXmlNodeThenVerifyXPathReturnsCorrectXmlNodes) {
 
     std::vector<XmlNode *> xmlNodes = pXmlDoc->xPath(std::string("/testElement/testSubElement[@prop='A']"));
     EXPECT_EQ(xmlNodes.size(), 1U);
@@ -63,7 +63,7 @@ TEST_F(SysmanXmlParserFixture, GivenValidXPathWhenCallingXmlNodeXPathWithValidXm
         delete pXmlNode;
     }
 }
-TEST_F(SysmanXmlParserFixture, GivenValidXmlodeWhenCallingXmlNodeGetTextVerifyGetTextReturnsCorrectText) {
+TEST_F(SysmanXmlParserFixture, GivenValidXmlodeWhenCallingXmlNodeGetTextThenVerifyGetTextReturnsCorrectText) {
 
     std::vector<XmlNode *> xmlNodes = pXmlDoc->xPath(std::string("/testElement/testSubElement[@prop='A']"));
     EXPECT_EQ(xmlNodes.size(), 1U);
@@ -78,7 +78,7 @@ TEST_F(SysmanXmlParserFixture, GivenValidXmlodeWhenCallingXmlNodeGetTextVerifyGe
         delete pXmlNode;
     }
 }
-TEST_F(SysmanXmlParserFixture, GivenEmptyXmlNodeWhenCallingXmlNodeGetTextVerifyGetTextReturnsEmptyString) {
+TEST_F(SysmanXmlParserFixture, GivenEmptyXmlNodeWhenCallingXmlNodeGetTextThenVerifyGetTextReturnsEmptyString) {
 
     std::vector<XmlNode *> xmlNodes = pXmlDoc->xPath(std::string("//testSubSubElement[@id='one']/testEmptyElement"));
     EXPECT_EQ(xmlNodes.size(), 1U);
@@ -88,7 +88,7 @@ TEST_F(SysmanXmlParserFixture, GivenEmptyXmlNodeWhenCallingXmlNodeGetTextVerifyG
         delete pXmlNode;
     }
 }
-TEST_F(SysmanXmlParserFixture, GivenValidAttributeWhenCallingXmlNodeGetAttributeWithValidNodeVerifyXmlNodeGetAttributeReturnsCorrectString) {
+TEST_F(SysmanXmlParserFixture, GivenValidAttributeWhenCallingXmlNodeGetAttributeWithValidNodeThenVerifyXmlNodeGetAttributeReturnsCorrectString) {
 
     std::vector<XmlNode *> xmlNodes = pXmlDoc->xPath(std::string("//testSubSubElement[@id='one']/testEmptyElement"));
     EXPECT_EQ(xmlNodes.size(), 1U);
@@ -101,7 +101,7 @@ TEST_F(SysmanXmlParserFixture, GivenValidAttributeWhenCallingXmlNodeGetAttribute
         delete pXmlNode;
     }
 }
-TEST_F(SysmanXmlParserFixture, GivenValidXmlNodeWhenCallingXmlNodeGetNameVerifyXmlNodeGetNameReturnsCorrectString) {
+TEST_F(SysmanXmlParserFixture, GivenValidXmlNodeWhenCallingXmlNodeGetNameThenVerifyXmlNodeGetNameReturnsCorrectString) {
 
     std::vector<XmlNode *> xmlNodes = pXmlDoc->xPath(std::string("//testSubSubElement[@id='one']/testEmptyElement"));
     EXPECT_EQ(xmlNodes.size(), 1U);
@@ -112,7 +112,7 @@ TEST_F(SysmanXmlParserFixture, GivenValidXmlNodeWhenCallingXmlNodeGetNameVerifyX
         delete pXmlNode;
     }
 }
-TEST_F(SysmanXmlParserFixture, GivenValidXmlNodeWhenCallingXmlNodeGetPathVerifyXmlNodeGetPathReturnsCorrectString) {
+TEST_F(SysmanXmlParserFixture, GivenValidXmlNodeWhenCallingXmlNodeGetPathThenVerifyXmlNodeGetPathReturnsCorrectString) {
 
     std::vector<XmlNode *> xmlNodes = pXmlDoc->xPath(std::string("//testSubSubElement[@id='one']/testEmptyElement"));
     EXPECT_EQ(xmlNodes.size(), 1U);
@@ -123,7 +123,7 @@ TEST_F(SysmanXmlParserFixture, GivenValidXmlNodeWhenCallingXmlNodeGetPathVerifyX
         delete pXmlNode;
     }
 }
-TEST_F(SysmanXmlParserFixture, GivenMissingAttributeWhenCallingXmlNodeGetAttributeWithValidNodeVerifyXmlNodeGetAttributeReturnsEmptyString) {
+TEST_F(SysmanXmlParserFixture, GivenMissingAttributeWhenCallingXmlNodeGetAttributeWithValidNodeThenVerifyXmlNodeGetAttributeReturnsEmptyString) {
 
     std::vector<XmlNode *> xmlNodes = pXmlDoc->xPath(std::string("//testSubSubElement[@id='one']/testEmptyElement"));
     EXPECT_EQ(xmlNodes.size(), 1U);
@@ -134,7 +134,7 @@ TEST_F(SysmanXmlParserFixture, GivenMissingAttributeWhenCallingXmlNodeGetAttribu
         delete pXmlNode;
     }
 }
-TEST_F(SysmanXmlParserFixture, GivenNonExistentFileWhenCallingParseFileVerifyParseFileRetursNullptr) {
+TEST_F(SysmanXmlParserFixture, GivenNonExistentFileWhenCallingParseFileThenVerifyParseFileRetursNullptr) {
 
     XmlDoc *pNoXmlDoc = pXmlParser->parseFile(std::string("NoSuchFile.xml"));
     EXPECT_EQ(pNoXmlDoc, nullptr);
@@ -153,7 +153,7 @@ TEST_F(SysmanXmlParserFixture, GivenNonExistentXPathWhenCallingXmlDocXPathWithVa
         delete pXmlNode;
     }
 }
-TEST_F(SysmanXmlParserFixture, GivenNonExistentXPathWhenCallingXmlNodeXPathWithValidXmlNodeVerifyXmlNodeXPathReturnsEmptyVector) {
+TEST_F(SysmanXmlParserFixture, GivenNonExistentXPathWhenCallingXmlNodeXPathWithValidXmlNodeThenVerifyXmlNodeXPathReturnsEmptyVector) {
 
     std::vector<XmlNode *> xmlNodes = pXmlDoc->xPath(std::string("//testSubSubElement[@id='one']/testEmptyElement"));
     EXPECT_EQ(xmlNodes.size(), 1U);
