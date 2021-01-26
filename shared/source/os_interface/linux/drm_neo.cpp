@@ -280,7 +280,7 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     int subSliceTotal;
     int euTotal;
 
-    bool status = queryTopology(sliceTotal, subSliceTotal, euTotal);
+    bool status = queryTopology(*hwInfo, sliceTotal, subSliceTotal, euTotal);
 
     if (!status) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");

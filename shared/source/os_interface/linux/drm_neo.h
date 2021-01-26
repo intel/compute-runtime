@@ -100,7 +100,7 @@ class Drm {
     MOCKABLE_VIRTUAL bool querySystemInfo();
     MOCKABLE_VIRTUAL bool queryEngineInfo();
     MOCKABLE_VIRTUAL bool queryMemoryInfo();
-    bool queryTopology(int &sliceCount, int &subSliceCount, int &euCount);
+    bool queryTopology(const HardwareInfo &hwInfo, int &sliceCount, int &subSliceCount, int &euCount);
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
     void destroyVirtualMemoryAddressSpace();
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId);
