@@ -472,10 +472,9 @@ HWTEST_F(CommandQueueCommandStreamTest, givenMultiDispatchInfoWithSingleKernelWi
     pDevice->getUltCommandStreamReceiver<FamilyType>().multiOsContextCapable = true;
     MockKernelWithInternals mockKernelWithInternals(*pClDevice, context.get());
 
-    auto &kernelArgRequiresCacheFlush = mockKernelWithInternals.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush;
-    kernelArgRequiresCacheFlush.resize(1);
+    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush.resize(1);
     MockGraphicsAllocation cacheRequiringAllocation;
-    kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({mockKernelWithInternals.mockKernel}));
 
@@ -489,11 +488,10 @@ HWTEST_F(CommandQueueCommandStreamTest, givenMultiDispatchInfoWithSingleKernelWi
 
     MockCommandQueueHw<FamilyType> cmdQ(context.get(), pClDevice, nullptr);
     MockKernelWithInternals mockKernelWithInternals(*pClDevice, context.get());
-    auto &kernelArgRequiresCacheFlush = mockKernelWithInternals.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush;
 
-    kernelArgRequiresCacheFlush.resize(1);
+    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush.resize(1);
     MockGraphicsAllocation cacheRequiringAllocation;
-    kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({mockKernelWithInternals.mockKernel}));
 

@@ -320,7 +320,7 @@ TEST_F(KernelImageArgTest, givenWritableImageWhenSettingAsArgThenDoNotExpectAllo
 
     pKernel->setArg(0, sizeof(imageObj), &imageObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(nullptr, pKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0]);
+    EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 }
 
 TEST_F(KernelImageArgTest, givenCacheFlushImageWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
@@ -332,7 +332,7 @@ TEST_F(KernelImageArgTest, givenCacheFlushImageWhenSettingAsArgThenExpectAllocat
 
     pKernel->setArg(0, sizeof(imageObj), &imageObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(image.graphicsAllocation, pKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0]);
+    EXPECT_EQ(image.graphicsAllocation, pKernel->kernelArgRequiresCacheFlush[0]);
 }
 
 TEST_F(KernelImageArgTest, givenNoCacheFlushImageWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
@@ -344,7 +344,7 @@ TEST_F(KernelImageArgTest, givenNoCacheFlushImageWhenSettingAsArgThenExpectAlloc
 
     pKernel->setArg(0, sizeof(imageObj), &imageObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(nullptr, pKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0]);
+    EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 }
 
 class KernelImageArgTestBindless : public KernelImageArgTest {

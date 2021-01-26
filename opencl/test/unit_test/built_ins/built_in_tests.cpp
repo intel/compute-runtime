@@ -22,7 +22,6 @@
 #include "opencl/source/built_ins/vme_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/source/kernel/svm_object_arg.h"
 #include "opencl/test/unit_test/built_ins/built_ins_file_names.h"
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -279,16 +278,14 @@ HWTEST_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTr
             Vec3<size_t> gws = {xGws, 1, 1};
             EXPECT_EQ(gws, dispatchInfo.getGWS());
         } else {
-            auto gfxAllocation = reinterpret_cast<SvmObjectArg *>(kernel->getKernelArguments().at(0).object)->getGraphicsAllocation(rootDeviceIndex);
+            auto gfxAllocation = static_cast<GraphicsAllocation *>(kernel->getKernelArguments().at(0).object);
             auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
             EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
             kernelObjsForAuxTranslation.erase(kernelObj);
 
-            auto svmArg0 = reinterpret_cast<SvmObjectArg *>(kernel->getKernelArguments().at(0).object);
-            auto svmArg1 = reinterpret_cast<SvmObjectArg *>(kernel->getKernelArguments().at(1).object);
-            EXPECT_EQ(gfxAllocation, svmArg0->getGraphicsAllocation(rootDeviceIndex));
-            EXPECT_EQ(gfxAllocation, svmArg1->getGraphicsAllocation(rootDeviceIndex));
+            EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(0).object);
+            EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(1).object);
 
             EXPECT_EQ(1u, dispatchInfo.getDim());
             size_t xGws = alignUp(gfxAllocation->getUnderlyingBufferSize(), 512) / 16;
@@ -347,16 +344,14 @@ HWTEST_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTrans
             Vec3<size_t> gws = {xGws, 1, 1};
             EXPECT_EQ(gws, dispatchInfo.getGWS());
         } else {
-            auto gfxAllocation = reinterpret_cast<SvmObjectArg *>(kernel->getKernelArguments().at(0).object)->getGraphicsAllocation(rootDeviceIndex);
+            auto gfxAllocation = static_cast<GraphicsAllocation *>(kernel->getKernelArguments().at(0).object);
             auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
             EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
             kernelObjsForAuxTranslation.erase(kernelObj);
 
-            auto svmArg0 = reinterpret_cast<SvmObjectArg *>(kernel->getKernelArguments().at(0).object);
-            auto svmArg1 = reinterpret_cast<SvmObjectArg *>(kernel->getKernelArguments().at(1).object);
-            EXPECT_EQ(gfxAllocation, svmArg0->getGraphicsAllocation(rootDeviceIndex));
-            EXPECT_EQ(gfxAllocation, svmArg1->getGraphicsAllocation(rootDeviceIndex));
+            EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(0).object);
+            EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(1).object);
 
             EXPECT_EQ(1u, dispatchInfo.getDim());
             size_t xGws = alignUp(gfxAllocation->getUnderlyingBufferSize(), 512) / 16;

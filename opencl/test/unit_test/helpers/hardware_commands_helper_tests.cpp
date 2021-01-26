@@ -57,7 +57,7 @@ void HardwareCommandsTest::addSpaceForSingleKernelArg() {
     mockKernelWithInternal->kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0;
     mockKernelWithInternal->kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(uintptr_t);
     mockKernelWithInternal->mockKernel->setKernelArguments(kernelArguments);
-    mockKernelWithInternal->mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush.resize(1);
+    mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush.resize(1);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptorDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated) {
@@ -1278,9 +1278,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
 
     addSpaceForSingleKernelArg();
     MockGraphicsAllocation cacheRequiringAllocation;
-    auto &kernelArgRequiresCacheFlush = mockKernelWithInternal->mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush;
-    kernelArgRequiresCacheFlush.resize(2);
-    kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+    mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush.resize(2);
+    mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
 
     Kernel::CacheFlushAllocationsVec allocs;
     mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs, rootDeviceIndex);

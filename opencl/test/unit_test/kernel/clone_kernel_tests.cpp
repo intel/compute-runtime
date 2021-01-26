@@ -12,7 +12,6 @@
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/helpers/sampler_helpers.h"
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/source/kernel/svm_object_arg.h"
 #include "opencl/source/mem_obj/pipe.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
@@ -459,10 +458,8 @@ TEST_F(CloneKernelTest, GivenArgSvmWhenCloningKernelThenKernelInfoIsCorrect) {
 TEST_F(CloneKernelTest, GivenArgSvmAllocWhenCloningKernelThenKernelInfoIsCorrect) {
     char *svmPtr = new char[256];
     MockGraphicsAllocation svmAlloc(svmPtr, 256);
-    MultiGraphicsAllocation multiGraphicsAllocation(svmAlloc.getRootDeviceIndex());
-    multiGraphicsAllocation.addAllocation(&svmAlloc);
 
-    retVal = pSourceKernel->setArgMultiDeviceSvmAlloc(0, svmPtr, &multiGraphicsAllocation);
+    retVal = pSourceKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
@@ -476,10 +473,7 @@ TEST_F(CloneKernelTest, GivenArgSvmAllocWhenCloningKernelThenKernelInfoIsCorrect
 
     EXPECT_EQ(pSourceKernel->getKernelArguments().size(), pClonedKernel->getKernelArguments().size());
     EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).type, pClonedKernel->getKernelArgInfo(0).type);
-    EXPECT_NE(nullptr, pSourceKernel->getKernelArgInfo(0).object);
-    auto srcSvm = reinterpret_cast<SvmObjectArg *>(pSourceKernel->getKernelArgInfo(0).object);
-    auto clonedSvm = reinterpret_cast<SvmObjectArg *>(pClonedKernel->getKernelArgInfo(0).object);
-    EXPECT_EQ(srcSvm->getMultiDeviceSvmAlloc(), clonedSvm->getMultiDeviceSvmAlloc());
+    EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).object, pClonedKernel->getKernelArgInfo(0).object);
     EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).value, pClonedKernel->getKernelArgInfo(0).value);
     EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).size, pClonedKernel->getKernelArgInfo(0).size);
     EXPECT_EQ(pSourceKernel->getPatchedArgumentsNum(), pClonedKernel->getPatchedArgumentsNum());

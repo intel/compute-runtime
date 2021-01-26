@@ -10,7 +10,6 @@
 #include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
-#include "opencl/source/kernel/svm_object_arg.h"
 #include "opencl/source/scheduler/scheduler_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -152,8 +151,7 @@ TEST(SchedulerKernelTest, WhenSettingArgsForSchedulerKernelThenAllocationsAreCor
                        allocs[8].get());
 
     for (uint32_t i = 0; i < 9; i++) {
-        auto graphicsAllocation = reinterpret_cast<const SvmObjectArg *>(scheduler->getKernelArg(i))->getGraphicsAllocation(device->getRootDeviceIndex());
-        EXPECT_EQ(allocs[i].get(), graphicsAllocation);
+        EXPECT_EQ(allocs[i].get(), scheduler->getKernelArg(i));
     }
 }
 
@@ -182,8 +180,7 @@ TEST(SchedulerKernelTest, GivenNullDebugQueueWhenSettingArgsForSchedulerKernelTh
                        allocs[7].get());
 
     for (uint32_t i = 0; i < 8; i++) {
-        auto graphicsAllocation = reinterpret_cast<const SvmObjectArg *>(scheduler->getKernelArg(i))->getGraphicsAllocation(device->getRootDeviceIndex());
-        EXPECT_EQ(allocs[i].get(), graphicsAllocation);
+        EXPECT_EQ(allocs[i].get(), scheduler->getKernelArg(i));
     }
     EXPECT_EQ(nullptr, scheduler->getKernelArg(8));
 }

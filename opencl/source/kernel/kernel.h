@@ -70,7 +70,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         void *object;
         const void *value;
         size_t size;
-        const MultiGraphicsAllocation *pSvmAllocs;
+        GraphicsAllocation *pSvmAlloc;
         cl_mem_flags svmFlags;
         bool isPatched = false;
         bool isStatelessUncacheable = false;
@@ -148,9 +148,8 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     // API entry points
     cl_int setArg(uint32_t argIndex, size_t argSize, const void *argVal);
-    cl_int setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, const MultiGraphicsAllocation *svmAlloc, cl_mem_flags svmFlags);
+    cl_int setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, GraphicsAllocation *svmAlloc, cl_mem_flags svmFlags);
     cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc);
-    cl_int setArgMultiDeviceSvmAlloc(uint32_t argIndex, void *svmPtr, MultiGraphicsAllocation *svmAlloc);
 
     void setSvmKernelExecInfo(GraphicsAllocation *argValue);
     void clearSvmKernelExecInfo();
@@ -294,7 +293,7 @@ class Kernel : public BaseObject<_cl_kernel> {
                         void *argObject,
                         const void *argValue,
                         size_t argSize,
-                        const MultiGraphicsAllocation *argSvmAllocs = nullptr,
+                        GraphicsAllocation *argSvmAlloc = nullptr,
                         cl_mem_flags argSvmFlags = 0);
     const void *getKernelArg(uint32_t argIndex) const;
     const SimpleKernelArgInfo &getKernelArgInfo(uint32_t argIndex) const;
@@ -510,10 +509,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool hasDirectStatelessAccessToHostMemory() const;
     bool hasIndirectStatelessAccessToHostMemory() const;
 
-    void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation, uint32_t rootDeviceIndex);
+    void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
-
-    void setArgSvmAllocForSingleDevice(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc, const Device &device);
 
     const HardwareInfo &getHardwareInfo(uint32_t rootDeviceIndex) const;
 
@@ -550,6 +547,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     bool specialPipelineSelectMode = false;
     bool svmAllocationsRequireCacheFlush = false;
+    std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
     UnifiedMemoryControls unifiedMemoryControls{};
     bool isUnifiedMemorySyncRequired = true;
     bool debugEnabled = false;
@@ -600,7 +598,6 @@ class Kernel : public BaseObject<_cl_kernel> {
 
         GraphicsAllocation *privateSurface = nullptr;
         uint64_t privateSurfaceSize = 0u;
-        std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
     };
     std::vector<KernelDeviceInfo> kernelDeviceInfos;
     const uint32_t defaultRootDeviceIndex;

@@ -9,7 +9,6 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -340,7 +339,7 @@ class KernelArgSvmTestTyped : public KernelArgSvmTest {
 };
 
 struct SetArgHandlerSetArgSvm {
-    static void setArg(Kernel &kernel, uint32_t argNum, void *ptrToPatch, size_t allocSize, MultiGraphicsAllocation &alloc) {
+    static void setArg(Kernel &kernel, uint32_t argNum, void *ptrToPatch, size_t allocSize, GraphicsAllocation &alloc) {
         kernel.setArgSvm(argNum, allocSize, ptrToPatch, &alloc, 0u);
     }
 
@@ -350,8 +349,8 @@ struct SetArgHandlerSetArgSvm {
 };
 
 struct SetArgHandlerSetArgSvmAlloc {
-    static void setArg(Kernel &kernel, uint32_t argNum, void *ptrToPatch, size_t allocSize, MultiGraphicsAllocation &alloc) {
-        kernel.setArgMultiDeviceSvmAlloc(argNum, ptrToPatch, &alloc);
+    static void setArg(Kernel &kernel, uint32_t argNum, void *ptrToPatch, size_t allocSize, GraphicsAllocation &alloc) {
+        kernel.setArgSvmAlloc(argNum, ptrToPatch, &alloc);
     }
 
     static constexpr bool supportsOffsets() {
@@ -360,8 +359,8 @@ struct SetArgHandlerSetArgSvmAlloc {
 };
 
 struct SetArgHandlerSetArgBuffer {
-    static void setArg(Kernel &kernel, uint32_t argNum, void *ptrToPatch, size_t allocSize, MultiGraphicsAllocation &alloc) {
-        MockBuffer mb{*alloc.getDefaultGraphicsAllocation()};
+    static void setArg(Kernel &kernel, uint32_t argNum, void *ptrToPatch, size_t allocSize, GraphicsAllocation &alloc) {
+        MockBuffer mb{alloc};
         cl_mem memObj = &mb;
         kernel.setArgBuffer(argNum, sizeof(cl_mem), &memObj);
     }
@@ -411,10 +410,7 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
         RENDER_SURFACE_STATE *surfState = reinterpret_cast<RENDER_SURFACE_STATE *>(this->pKernel->getSurfaceStateHeap(rootDeviceIndex));
         memset(surfState, 0, rendSurfSize);
 
-        MultiGraphicsAllocation multiGraphicsAllocation(svmAlloc.getRootDeviceIndex());
-        multiGraphicsAllocation.addAllocation(&svmAlloc);
-
-        TypeParam::setArg(*this->pKernel, 0U, ptrToPatch, sizeToPatch, multiGraphicsAllocation);
+        TypeParam::setArg(*this->pKernel, 0U, ptrToPatch, sizeToPatch, svmAlloc);
 
         // surface state for comparison
         RENDER_SURFACE_STATE expectedSurfaceState;
@@ -451,7 +447,7 @@ TEST_F(KernelArgSvmTest, givenWritableSvmAllocationWhenSettingAsArgThenDoNotExpe
 
     auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(nullptr, pKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0]);
+    EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 
     alignedFree(svmPtr);
 }
@@ -466,7 +462,7 @@ TEST_F(KernelArgSvmTest, givenCacheFlushSvmAllocationWhenSettingAsArgThenExpectA
 
     auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(&svmAlloc, pKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0]);
+    EXPECT_EQ(&svmAlloc, pKernel->kernelArgRequiresCacheFlush[0]);
 
     alignedFree(svmPtr);
 }
@@ -481,7 +477,7 @@ TEST_F(KernelArgSvmTest, givenNoCacheFlushSvmAllocationWhenSettingAsArgThenNotEx
 
     auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(nullptr, pKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0]);
+    EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 
     alignedFree(svmPtr);
 }
@@ -562,141 +558,4 @@ TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidThenPatchBuff
     returnedPtr = pKernel->patchBufferOffset(kai, svmPtr.data(), &svmAlloc, rootDeviceIndex);
     EXPECT_EQ(svmPtr.data(), returnedPtr);
     EXPECT_EQ(0U, *expectedPatchPtr);
-}
-struct KernelArgSvmMultiDeviceTest : public MultiRootDeviceWithSubDevicesFixture {
-    void SetUp() override {
-        MultiRootDeviceWithSubDevicesFixture::SetUp();
-        program = std::make_unique<MockProgram>(context.get(), false, context->getDevices());
-
-        KernelInfoContainer kernelInfos;
-        kernelInfos.resize(3);
-        for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-            pKernelInfo[rootDeviceIndex] = std::make_unique<KernelInfo>();
-            pKernelInfo[rootDeviceIndex]->kernelDescriptor.kernelAttributes.simdSize = 1;
-
-            // setup kernel arg offsets
-            KernelArgPatchInfo kernelArgPatchInfo;
-
-            pKernelInfo[rootDeviceIndex]->heapInfo.pSsh = pSshLocal[rootDeviceIndex];
-            pKernelInfo[rootDeviceIndex]->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal[rootDeviceIndex]);
-            pKernelInfo[rootDeviceIndex]->usesSsh = true;
-            pKernelInfo[rootDeviceIndex]->requiresSshForBuffers = true;
-
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo.resize(1);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
-
-            kernelInfos[rootDeviceIndex] = pKernelInfo[rootDeviceIndex].get();
-        }
-
-        pKernel = new MockKernel(program.get(), kernelInfos);
-        ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-        pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
-
-        for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-            pKernel->setCrossThreadDataForRootDeviceIndex(rootDeviceIndex, &pCrossThreadData[rootDeviceIndex], sizeof(pCrossThreadData[rootDeviceIndex]));
-        }
-    }
-
-    void TearDown() override {
-        delete pKernel;
-
-        MultiRootDeviceWithSubDevicesFixture::TearDown();
-    }
-
-    cl_int retVal = CL_SUCCESS;
-    std::unique_ptr<MockProgram> program;
-    MockKernel *pKernel = nullptr;
-    SKernelBinaryHeaderCommon kernelHeader;
-    std::unique_ptr<KernelInfo> pKernelInfo[3];
-    char pCrossThreadData[3][0x60];
-    char pSshLocal[3][64];
-};
-
-TEST_F(KernelArgSvmMultiDeviceTest, GivenValidSvmPtrWhenSettingKernelArgThenSvmPtrIsCorrect) {
-    char svmPtr[256] = {};
-
-    auto retVal = pKernel->setArgSvm(0, 256, &svmPtr, nullptr, 0u);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-        auto pKernelArg = (void **)(pKernel->getCrossThreadData(rootDeviceIndex) +
-                                    pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
-        EXPECT_EQ(svmPtr, *pKernelArg);
-    }
-}
-TEST_F(KernelArgSvmMultiDeviceTest, GivenValidSvmAllocWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
-    char svmPtr[256] = {};
-
-    GraphicsAllocation graphicsAllocation1{1u, GraphicsAllocation::AllocationType::BUFFER, &svmPtr, sizeof(svmPtr), 0, MemoryPool::MemoryNull, 1u};
-    GraphicsAllocation graphicsAllocation2{2u, GraphicsAllocation::AllocationType::BUFFER, &svmPtr, sizeof(svmPtr), 0, MemoryPool::MemoryNull, 1u};
-
-    MultiGraphicsAllocation multiGraphicsAllocation(2);
-    multiGraphicsAllocation.addAllocation(&graphicsAllocation1);
-    multiGraphicsAllocation.addAllocation(&graphicsAllocation2);
-
-    auto retVal = pKernel->setArgMultiDeviceSvmAlloc(0, svmPtr, &multiGraphicsAllocation);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-        auto pKernelArg = (void **)(pKernel->getCrossThreadData(rootDeviceIndex) +
-                                    pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
-        EXPECT_EQ(svmPtr, *pKernelArg);
-    }
-}
-
-TEST_F(KernelArgSvmMultiDeviceTest, whenSettingArgTwiceThenOverrideWithCorrectValue) {
-    char svmPtr[256] = {};
-    char svmPtr2[256] = {};
-
-    GraphicsAllocation graphicsAllocation1{1u, GraphicsAllocation::AllocationType::BUFFER, &svmPtr, sizeof(svmPtr), 0, MemoryPool::MemoryNull, 1u};
-    GraphicsAllocation graphicsAllocation2{2u, GraphicsAllocation::AllocationType::BUFFER, &svmPtr, sizeof(svmPtr), 0, MemoryPool::MemoryNull, 1u};
-
-    MultiGraphicsAllocation multiGraphicsAllocation(2);
-    multiGraphicsAllocation.addAllocation(&graphicsAllocation1);
-    multiGraphicsAllocation.addAllocation(&graphicsAllocation2);
-
-    auto retVal = pKernel->setArgMultiDeviceSvmAlloc(0, svmPtr, &multiGraphicsAllocation);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = pKernel->setArgMultiDeviceSvmAlloc(0, svmPtr2, &multiGraphicsAllocation);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-        auto pKernelArg = (void **)(pKernel->getCrossThreadData(rootDeviceIndex) +
-                                    pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
-        EXPECT_EQ(svmPtr2, *pKernelArg);
-    }
-}
-
-HWTEST_F(KernelArgSvmMultiDeviceTest, GivenValidSvmAllocStatefulWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
-    char svmPtr[256] = {};
-
-    GraphicsAllocation graphicsAllocation1{1u, GraphicsAllocation::AllocationType::BUFFER, &svmPtr, sizeof(svmPtr), 0, MemoryPool::MemoryNull, 1u};
-    GraphicsAllocation graphicsAllocation2{2u, GraphicsAllocation::AllocationType::BUFFER, &svmPtr, sizeof(svmPtr), 0, MemoryPool::MemoryNull, 1u};
-
-    MultiGraphicsAllocation multiGraphicsAllocation(2);
-    multiGraphicsAllocation.addAllocation(&graphicsAllocation1);
-    multiGraphicsAllocation.addAllocation(&graphicsAllocation2);
-
-    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-        pKernelInfo[rootDeviceIndex]->usesSsh = true;
-        pKernelInfo[rootDeviceIndex]->requiresSshForBuffers = true;
-    }
-
-    auto retVal = pKernel->setArgMultiDeviceSvmAlloc(0, svmPtr, &multiGraphicsAllocation);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
-
-    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-        EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize(rootDeviceIndex));
-        auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
-            ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
-                      pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].offsetHeap));
-
-        void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
-        EXPECT_EQ(svmPtr, surfaceAddress);
-    }
 }

@@ -24,7 +24,6 @@
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/source/kernel/svm_object_arg.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
@@ -1768,8 +1767,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndNotRequiredMemSyncWhenM
 
     EXPECT_EQ(mockPageFaultManager->transferToCpuCalled, 0);
     auto gpuAllocation = unifiedMemoryGraphicsAllocation->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
-    SvmObjectArg svmObjectArg{gpuAllocation};
-    mockKernel.mockKernel->kernelArguments[0] = {Kernel::kernelArgType::SVM_ALLOC_OBJ, &svmObjectArg, unifiedMemoryAllocation, 4096u, nullptr, sizeof(uintptr_t)};
+    mockKernel.mockKernel->kernelArguments[0] = {Kernel::kernelArgType::SVM_ALLOC_OBJ, gpuAllocation, unifiedMemoryAllocation, 4096u, gpuAllocation, sizeof(uintptr_t)};
     mockKernel.mockKernel->setUnifiedMemorySyncRequirement(false);
 
     mockKernel.mockKernel->makeResident(commandStreamReceiver);
@@ -1797,8 +1795,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryRequiredMemSyncWhenMakeRes
 
     auto gpuAllocation = unifiedMemoryGraphicsAllocation->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
     EXPECT_EQ(mockPageFaultManager->transferToCpuCalled, 0);
-    SvmObjectArg svmObjectArg{gpuAllocation};
-    mockKernel.mockKernel->kernelArguments[0] = {Kernel::kernelArgType::SVM_ALLOC_OBJ, &svmObjectArg, unifiedMemoryAllocation, 4096u, nullptr, sizeof(uintptr_t)};
+    mockKernel.mockKernel->kernelArguments[0] = {Kernel::kernelArgType::SVM_ALLOC_OBJ, gpuAllocation, unifiedMemoryAllocation, 4096u, gpuAllocation, sizeof(uintptr_t)};
     mockKernel.mockKernel->setUnifiedMemorySyncRequirement(true);
 
     mockKernel.mockKernel->makeResident(commandStreamReceiver);
@@ -2776,13 +2773,12 @@ TEST(KernelTest, givenKernelWithPairArgumentWhenItIsInitializedThenPatchImmediat
 
 TEST(KernelTest, whenNullAllocationThenAssignNullPointerToCacheFlushVector) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto rootDeviceIndex = device->getRootDeviceIndex();
     MockKernelWithInternals kernel(*device);
-    kernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush.resize(1);
-    kernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0] = reinterpret_cast<GraphicsAllocation *>(0x1);
+    kernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
+    kernel.mockKernel->kernelArgRequiresCacheFlush[0] = reinterpret_cast<GraphicsAllocation *>(0x1);
 
-    kernel.mockKernel->addAllocationToCacheFlushVector(0, nullptr, rootDeviceIndex);
-    EXPECT_EQ(nullptr, kernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0]);
+    kernel.mockKernel->addAllocationToCacheFlushVector(0, nullptr);
+    EXPECT_EQ(nullptr, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
 }
 
 TEST(KernelTest, givenKernelCompiledWithSimdSizeLowerThanExpectedWhenInitializingThenReturnError) {
@@ -2813,15 +2809,14 @@ TEST(KernelTest, givenKernelCompiledWithSimdOneWhenInitializingThenReturnError) 
 TEST(KernelTest, whenAllocationRequiringCacheFlushThenAssignAllocationPointerToCacheFlushVector) {
     MockGraphicsAllocation mockAllocation;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto rootDeviceIndex = device->getRootDeviceIndex();
     MockKernelWithInternals kernel(*device);
-    kernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush.resize(1);
+    kernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
 
     mockAllocation.setMemObjectsAllocationWithWritableFlags(false);
     mockAllocation.setFlushL3Required(true);
 
-    kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation, rootDeviceIndex);
-    EXPECT_EQ(&mockAllocation, kernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0]);
+    kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
+    EXPECT_EQ(&mockAllocation, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
 }
 
 TEST(KernelTest, whenKernelRequireCacheFlushAfterWalkerThenRequireCacheFlushAfterWalker) {
@@ -2845,30 +2840,28 @@ TEST(KernelTest, whenKernelRequireCacheFlushAfterWalkerThenRequireCacheFlushAfte
 TEST(KernelTest, whenAllocationWriteableThenDoNotAssignAllocationPointerToCacheFlushVector) {
     MockGraphicsAllocation mockAllocation;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto rootDeviceIndex = device->getRootDeviceIndex();
     MockKernelWithInternals kernel(*device);
-    kernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush.resize(1);
+    kernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
 
     mockAllocation.setMemObjectsAllocationWithWritableFlags(true);
     mockAllocation.setFlushL3Required(false);
 
-    kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation, rootDeviceIndex);
-    EXPECT_EQ(nullptr, kernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0]);
+    kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
+    EXPECT_EQ(nullptr, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
 }
 
 TEST(KernelTest, whenAllocationReadOnlyNonFlushRequiredThenAssignNullPointerToCacheFlushVector) {
     MockGraphicsAllocation mockAllocation;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto rootDeviceIndex = device->getRootDeviceIndex();
     MockKernelWithInternals kernel(*device);
-    kernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush.resize(1);
-    kernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0] = reinterpret_cast<GraphicsAllocation *>(0x1);
+    kernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
+    kernel.mockKernel->kernelArgRequiresCacheFlush[0] = reinterpret_cast<GraphicsAllocation *>(0x1);
 
     mockAllocation.setMemObjectsAllocationWithWritableFlags(false);
     mockAllocation.setFlushL3Required(false);
 
-    kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation, rootDeviceIndex);
-    EXPECT_EQ(nullptr, kernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush[0]);
+    kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
+    EXPECT_EQ(nullptr, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
 }
 
 TEST(KernelTest, givenKernelUsesPrivateMemoryWhenDeviceReleasedBeforeKernelThenKernelUsesMemoryManagerFromEnvironment) {

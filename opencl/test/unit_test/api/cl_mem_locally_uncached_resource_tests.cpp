@@ -376,19 +376,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
     retVal = clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferUncacheableInSurfaceState);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &kernelArgRequiresCacheFlush = kernel->kernelDeviceInfos[rootDeviceIndex].kernelArgRequiresCacheFlush;
-
-    EXPECT_EQ(nullptr, kernelArgRequiresCacheFlush[0]);
+    EXPECT_EQ(nullptr, kernel->kernelArgRequiresCacheFlush[0]);
 
     retVal = clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferCacheable);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_NE(nullptr, kernelArgRequiresCacheFlush[0]);
+    EXPECT_NE(nullptr, kernel->kernelArgRequiresCacheFlush[0]);
 
     retVal = clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferUncacheable);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(nullptr, kernelArgRequiresCacheFlush[0]);
+    EXPECT_EQ(nullptr, kernel->kernelArgRequiresCacheFlush[0]);
 
     clReleaseMemObject(bufferUncacheableInSurfaceState);
     clReleaseMemObject(bufferUncacheable);

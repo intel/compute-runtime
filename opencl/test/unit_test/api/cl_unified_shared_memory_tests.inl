@@ -9,7 +9,6 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/api/api.h"
-#include "opencl/source/kernel/svm_object_arg.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -649,8 +648,8 @@ TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithVa
     retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockKernel, 0, unfiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto svmAlloc = mockContext->getSVMAllocsManager()->getSVMAlloc(unfiedMemoryDeviceAllocation);
-    auto multiGraphicsAllocation = reinterpret_cast<SvmObjectArg *>(mockKernel.mockKernel->kernelArguments[0].object)->getMultiDeviceSvmAlloc();
-    EXPECT_EQ(multiGraphicsAllocation, &svmAlloc->gpuAllocations);
+    EXPECT_EQ(mockKernel.mockKernel->kernelArguments[0].object,
+              svmAlloc->gpuAllocations.getGraphicsAllocation(mockContext->getDevice(0)->getRootDeviceIndex()));
 
     retVal = clMemFreeINTEL(mockContext.get(), unfiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
