@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,9 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         auto cpuBasePointer = cpuPointer;
         cpuPointer = alignUp(cpuPointer, alignment);
 
-        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&this->getDrm(allocationData.rootDeviceIndex), reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount));
+        auto pointerDiff = ptrDiff(cpuPointer, cpuBasePointer);
+        auto allocSize = totalSizeToAlloc - pointerDiff;
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&this->getDrm(allocationData.rootDeviceIndex), reinterpret_cast<uintptr_t>(cpuPointer), allocSize, 0u, maxOsContextCount));
 
         if (!bo) {
             this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
@@ -99,15 +101,20 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
             return nullptr;
         }
 
-        this->mmapFunction(cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, getDrm(allocationData.rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(gemMmap.offset));
+        [[maybe_unused]] auto retPtr = this->mmapFunction(cpuPointer, allocSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, getDrm(allocationData.rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(gemMmap.offset));
+        DEBUG_BREAK_IF(retPtr != cpuPointer);
 
         obtainGpuAddress(allocationData, bo.get(), gpuAddress);
         emitPinningRequest(bo.get(), allocationData);
 
-        auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, bo->gpuAddress, alignedSize, MemoryPool::System4KBPages);
-        allocation->setMmapPtr(cpuBasePointer);
-        allocation->setMmapSize(totalSizeToAlloc);
-        allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSize);
+        auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, bo->gpuAddress, allocSize, MemoryPool::System4KBPages);
+        allocation->setMmapPtr(cpuPointer);
+        allocation->setMmapSize(allocSize);
+        if (pointerDiff != 0) {
+            [[maybe_unused]] auto retCode = this->munmapFunction(cpuBasePointer, pointerDiff);
+            DEBUG_BREAK_IF(retCode != 0);
+        }
+        allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), allocSize);
 
         bo.release();
 

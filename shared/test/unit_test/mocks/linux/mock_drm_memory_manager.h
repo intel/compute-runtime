@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,6 +64,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
     using DrmMemoryManager::allocateShareableMemory;
     using DrmMemoryManager::allocUserptr;
+    using DrmMemoryManager::createAllocWithAlignment;
     using DrmMemoryManager::createGraphicsAllocation;
     using DrmMemoryManager::createSharedBufferObject;
     using DrmMemoryManager::eraseSharedBufferObject;
@@ -75,6 +76,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::lockResourceInLocalMemoryImpl;
     using DrmMemoryManager::memoryForPinBBs;
     using DrmMemoryManager::mmapFunction;
+    using DrmMemoryManager::munmapFunction;
     using DrmMemoryManager::pinBBs;
     using DrmMemoryManager::pinThreshold;
     using DrmMemoryManager::pushSharedBufferObject;

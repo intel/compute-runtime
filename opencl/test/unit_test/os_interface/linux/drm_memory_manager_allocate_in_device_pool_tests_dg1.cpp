@@ -1261,4 +1261,80 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenGraphicsAllocationInDevicePoolIsAll
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+static bool munmapWasCalled = false;
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsUnalignedPointerThenCreateAllocWithAlignmentUnmapUnalignedPart) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBOMmapCreate.set(-1);
+
+    drm_i915_memory_region_info regionInfo[2] = {};
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+
+    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->ioctlCallsCount = 0;
+
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+
+    memoryManager->mmapFunction = [](void *addr, size_t len, int prot,
+                                     int flags, int fd, off_t offset) __THROW {
+        if (addr == 0) {
+            return reinterpret_cast<void *>(0x12345678);
+        } else {
+            return addr;
+        }
+    };
+
+    memoryManager->munmapFunction = [](void *addr, size_t len) __THROW {
+        munmapWasCalled = true;
+        return 0;
+    };
+
+    munmapWasCalled = false;
+    auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, 0u);
+
+    EXPECT_EQ(alignUp(reinterpret_cast<void *>(0x12345678), MemoryConstants::pageSize64k), allocation->getMmapPtr());
+    EXPECT_TRUE(munmapWasCalled);
+    munmapWasCalled = false;
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsAlignedThenCreateAllocWithAlignmentDoesntCallUnmap) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBOMmapCreate.set(-1);
+
+    drm_i915_memory_region_info regionInfo[2] = {};
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+
+    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->ioctlCallsCount = 0;
+
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+
+    memoryManager->mmapFunction = [](void *addr, size_t len, int prot,
+                                     int flags, int fd, __off_t offset) __THROW {
+        if (addr == 0) {
+            return reinterpret_cast<void *>(0x12345678);
+        } else {
+            return addr;
+        }
+    };
+
+    memoryManager->munmapFunction = [](void *addr, size_t len) __THROW {
+        munmapWasCalled = true;
+        return 0;
+    };
+
+    munmapWasCalled = false;
+    auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, 1u, MemoryConstants::pageSize64k, 0u);
+
+    EXPECT_EQ(reinterpret_cast<void *>(0x12345678), allocation->getMmapPtr());
+    EXPECT_FALSE(munmapWasCalled);
+    munmapWasCalled = false;
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 } // namespace NEO
