@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,6 +161,7 @@ class Drm {
 
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
+    bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, int &sliceCount, int &subSliceCount, int &euCount);
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
     bool sliceCountChangeSupported = false;

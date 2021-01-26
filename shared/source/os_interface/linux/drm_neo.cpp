@@ -465,6 +465,38 @@ uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) {
     return 0;
 }
 
+bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, int &sliceCount, int &subSliceCount, int &euCount) {
+    sliceCount = 0;
+    subSliceCount = 0;
+    euCount = 0;
+
+    for (int x = 0; x < queryTopologyInfo->max_slices; x++) {
+        bool isSliceEnable = (queryTopologyInfo->data[x / 8] >> (x % 8)) & 1;
+        if (!isSliceEnable) {
+            continue;
+        }
+        sliceCount++;
+        for (int y = 0; y < queryTopologyInfo->max_subslices; y++) {
+            size_t yOffset = (queryTopologyInfo->subslice_offset + x * queryTopologyInfo->subslice_stride + y / 8);
+            bool isSubSliceEnabled = (queryTopologyInfo->data[yOffset] >> (y % 8)) & 1;
+            if (!isSubSliceEnabled) {
+                continue;
+            }
+            subSliceCount++;
+            for (int z = 0; z < queryTopologyInfo->max_eus_per_subslice; z++) {
+                size_t zOffset = (queryTopologyInfo->eu_offset + (x * queryTopologyInfo->max_subslices + y) * queryTopologyInfo->eu_stride + z / 8);
+                bool isEUEnabled = (queryTopologyInfo->data[zOffset] >> (z % 8)) & 1;
+                if (!isEUEnabled) {
+                    continue;
+                }
+                euCount++;
+            }
+        }
+    }
+
+    return (sliceCount && subSliceCount && euCount);
+}
+
 Drm::~Drm() {
     destroyVirtualMemoryAddressSpace();
 }

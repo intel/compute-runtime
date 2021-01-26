@@ -20,33 +20,7 @@ bool Drm::queryTopology(int &sliceCount, int &subSliceCount, int &euCount) {
         return false;
     }
 
-    sliceCount = 0;
-    subSliceCount = 0;
-    euCount = 0;
-
-    for (int x = 0; x < data->max_slices; x++) {
-        bool isSliceEnable = (data->data[x / 8] >> (x % 8)) & 1;
-        if (!isSliceEnable) {
-            continue;
-        }
-        sliceCount++;
-        for (int y = 0; y < data->max_subslices; y++) {
-            bool isSubSliceEnabled = (data->data[data->subslice_offset + x * data->subslice_stride + y / 8] >> (y % 8)) & 1;
-            if (!isSubSliceEnabled) {
-                continue;
-            }
-            subSliceCount++;
-            for (int z = 0; z < data->max_eus_per_subslice; z++) {
-                bool isEUEnabled = (data->data[data->eu_offset + (x * data->max_subslices + y) * data->eu_stride + z / 8] >> (z % 8)) & 1;
-                if (!isEUEnabled) {
-                    continue;
-                }
-                euCount++;
-            }
-        }
-    }
-
-    return (sliceCount && subSliceCount && euCount);
+    return translateTopologyInfo(data, sliceCount, subSliceCount, euCount);
 }
 
 } // namespace NEO
