@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,24 +42,42 @@ HWTEST_F(CommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerate
     EXPECT_FALSE(cmd->getDcFlushEnable());
 }
 
-HWTEST_F(CommandListAppendBarrier, GivenEventWhenAppendingBarrierThenTwoPipeControlsAreAddedToCommandStream) {
+HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCorrectPipeControlsIsAddedToCommandStream) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    commandList->reset();
     auto result = commandList->appendBarrier(event->toHandle(), 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
-    // Ensure we have two pipe controls: one for barrier, one for signal
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    GenCmdList cmdList1, cmdList2;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList1,
                                                       ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
 
-    auto itor = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_FALSE(itor.empty());
-    ASSERT_LT(1, static_cast<int>(itor.size()));
+    auto itor1 = findAll<PIPE_CONTROL *>(cmdList1.begin(), cmdList1.end());
+    ASSERT_FALSE(itor1.empty());
+
+    commandList->reset();
+    usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    result = commandList->appendBarrier(nullptr, 0, nullptr);
+    usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList2,
+                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+                                                      usedSpaceAfter));
+    auto itor2 = findAll<PIPE_CONTROL *>(cmdList2.begin(), cmdList2.end());
+    ASSERT_FALSE(itor2.empty());
+
+    auto sizeWithoutEvent = itor2.size();
+    auto sizeWithEvent = itor1.size();
+
+    ASSERT_LE(sizeWithoutEvent, sizeWithEvent);
 }
 } // namespace ult
 } // namespace L0

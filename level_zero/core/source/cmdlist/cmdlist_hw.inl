@@ -254,14 +254,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     }
     appendEventForProfiling(hSignalEvent, true);
 
-    if (isCopyOnly()) {
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
+    if (!hSignalEvent) {
+        if (isCopyOnly()) {
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
+        } else {
+            NEO::PipeControlArgs args;
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        }
     } else {
-        NEO::PipeControlArgs args;
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        appendSignalEventPostWalker(hSignalEvent);
     }
-
-    appendSignalEventPostWalker(hSignalEvent);
 
     return ZE_RESULT_SUCCESS;
 }
