@@ -31,7 +31,9 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     bool useGlobalHeapsBaseAddress,
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable,
-    MemoryCompressionState memoryCompressionState) {
+    MemoryCompressionState memoryCompressionState,
+    bool useGlobalAtomics,
+    size_t numDevicesInContext) {
 
     *stateBaseAddress = GfxFamily::cmdInitStateBaseAddress;
     bool overrideBindlessSurfaceStateBase = true;
@@ -99,7 +101,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
 
-    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper, isMultiOsContextCapable, memoryCompressionState, overrideBindlessSurfaceStateBase);
+    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper,
+                                     isMultiOsContextCapable, memoryCompressionState, overrideBindlessSurfaceStateBase, useGlobalAtomics, numDevicesInContext);
 }
 
 template <typename GfxFamily>

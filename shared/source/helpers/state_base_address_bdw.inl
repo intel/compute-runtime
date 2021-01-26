@@ -18,7 +18,9 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable,
     MemoryCompressionState memoryCompressionState,
-    bool overrideBindlessSurfaceStateBase) {
+    bool overrideBindlessSurfaceStateBase,
+    bool useGlobalAtomics,
+    size_t numDevicesInContext) {
     appendExtraCacheSettings(stateBaseAddress, gmmHelper);
 }
 

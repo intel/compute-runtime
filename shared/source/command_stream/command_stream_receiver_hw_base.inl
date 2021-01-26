@@ -411,7 +411,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             false,
             device.getGmmHelper(),
             isMultiOsContextCapable(),
-            memoryCompressionState);
+            memoryCompressionState,
+            dispatchFlags.useGlobalAtomics,
+            dispatchFlags.numDevicesInContext);
         *pCmd = cmd;
 
         if (sshDirty) {

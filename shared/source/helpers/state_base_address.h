@@ -36,7 +36,9 @@ struct StateBaseAddressHelper {
         bool useGlobalHeapsBaseAddress,
         GmmHelper *gmmHelper,
         bool isMultiOsContextCapable,
-        MemoryCompressionState memoryCompressionState);
+        MemoryCompressionState memoryCompressionState,
+        bool useGlobalAtomics,
+        size_t numDevicesInContext);
 
     static void appendStateBaseAddressParameters(
         STATE_BASE_ADDRESS *stateBaseAddress,
@@ -46,7 +48,9 @@ struct StateBaseAddressHelper {
         GmmHelper *gmmHelper,
         bool isMultiOsContextCapable,
         MemoryCompressionState memoryCompressionState,
-        bool overrideBindlessSurfaceStateBase);
+        bool overrideBindlessSurfaceStateBase,
+        bool useGlobalAtomics,
+        size_t nnumDevicesInContext);
 
     static void appendExtraCacheSettings(STATE_BASE_ADDRESS *stateBaseAddress, GmmHelper *gmmHelper);
 

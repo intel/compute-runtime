@@ -746,6 +746,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     auto memoryCompressionState = getGpgpuCommandStreamReceiver().getMemoryCompressionState(auxTranslationRequired);
 
+    auto context = kernel->getProgram()->getContextPtr();
+    auto numDevicesInContext = context ? context->getNumDevices() : 1u;
+
     DispatchFlags dispatchFlags(
         {},                                                                                         //csrDependencies
         &timestampPacketDependencies.barrierNodes,                                                  //barrierTimestampPacketNodes
@@ -771,7 +774,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
         false,                                                                                      //epilogueRequired
         usePerDssBackedBuffer,                                                                      //usePerDssBackedBuffer
-        kernel->isSingleSubdevicePreferred()                                                        //useSingleSubdevice
+        kernel->isSingleSubdevicePreferred(),                                                       //useSingleSubdevice
+        kernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,    //useGlobalAtomics
+        numDevicesInContext                                                                         //numDevicesInContext
     );
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
@@ -987,7 +992,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
             false,                                                               //epilogueRequired
             false,                                                               //usePerDssBackedBuffer
-            false);
+            false,                                                               //useSingleSubdevice
+            false,                                                               //useGlobalAtomics
+            1u);                                                                 //numDevicesInContext
 
         if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             eventsRequest.fillCsrDependencies(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);

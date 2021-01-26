@@ -72,7 +72,9 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
                                                                     useGlobalSshAndDsh,
                                                                     neoDevice->getGmmHelper(),
                                                                     false,
-                                                                    NEO::MemoryCompressionState::NotApplicable);
+                                                                    NEO::MemoryCompressionState::NotApplicable,
+                                                                    false,
+                                                                    1u);
     *pSbaCmd = sbaCmd;
     gsbaInit = true;
 

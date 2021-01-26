@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ class MockContext : public Context {
   public:
     using Context::contextType;
     using Context::deviceBitfields;
+    using Context::devices;
     using Context::driverDiagnostics;
     using Context::maxRootDeviceIndex;
     using Context::memoryManager;
