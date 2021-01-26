@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
 
 NTSTATUS __stdcall D3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
     static int PerfTicks = 0;
+    ++PerfTicks;
     ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.RetCode = NEO::GTDI_RET_OK;
     ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.gpuPerfTicks = ++PerfTicks;
     ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.cpuPerfTicks = PerfTicks;

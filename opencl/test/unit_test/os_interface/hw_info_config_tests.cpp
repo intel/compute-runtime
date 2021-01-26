@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,4 +110,12 @@ TEST_F(HwInfoConfigTest, givenInvalidHwInfoWhenParsingHwInfoConfigThenErrorIsRet
 
     success = parseHwInfoConfigString("1x65535x65535", hwInfoConfig);
     EXPECT_FALSE(success);
+}
+
+HWTEST_F(HwInfoConfigTest, whenConvertingTimestampsToCsDomainThenNothingIsChanged) {
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    uint64_t timestampData = 0x1234;
+    uint64_t initialData = timestampData;
+    hwInfoConfig->convertTimestampsFromOaToCsDomain(timestampData);
+    EXPECT_EQ(initialData, timestampData);
 }

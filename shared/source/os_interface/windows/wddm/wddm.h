@@ -159,6 +159,8 @@ class Wddm {
         return residencyLogger.get();
     }
 
+    const RootDeviceEnvironment &getRootDeviceEnvironment() const { return rootDeviceEnvironment; }
+
   protected:
     std::unique_ptr<HwDeviceId> hwDeviceId;
     D3DKMT_HANDLE device = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/windows/os_time_win.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
@@ -54,6 +56,9 @@ bool OSTimeWin::getCpuGpuTime(TimeStampData *pGpuCpuTime) {
     TimeStampDataHeader escapeInfo = {0};
 
     if (runEscape(wddm, escapeInfo)) {
+        auto productFamily = wddm->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily;
+        auto *hwInfoConfig = HwInfoConfig::get(productFamily);
+        hwInfoConfig->convertTimestampsFromOaToCsDomain(escapeInfo.m_Data.m_Out.gpuPerfTicks);
         double cpuNanoseconds = escapeInfo.m_Data.m_Out.cpuPerfTicks *
                                 (1000000000.0 / escapeInfo.m_Data.m_Out.cpuPerfFreq);
 

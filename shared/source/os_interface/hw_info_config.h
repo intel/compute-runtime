@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,7 @@ class HwInfoConfig {
     virtual uint64_t getCrossDeviceSharedMemCapabilities() = 0;
     virtual uint64_t getSharedSystemMemCapabilities() = 0;
     virtual bool isEvenContextCountRequired() = 0;
+    virtual void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) = 0;
     uint32_t threadsPerEu;
 };
 
@@ -52,6 +53,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint64_t getCrossDeviceSharedMemCapabilities() override;
     uint64_t getSharedSystemMemCapabilities() override;
     bool isEvenContextCountRequired() override;
+    void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) override;
 
   protected:
     HwInfoConfigHw() = default;
