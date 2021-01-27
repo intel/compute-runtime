@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -169,6 +169,8 @@ HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUs
             cmdQ->destroy();
         }
     };
+
+    device->setPreemptionMode(NEO::PreemptionMode::Disabled);
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc));
     commandQueue->initialize(false, true);

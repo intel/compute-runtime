@@ -258,5 +258,124 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAreExecutedThenStateSipIsAdded) {
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    using PARSE = typename FamilyType::PARSE;
+
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    std::array<bool, 2> testedInternalFlags = {true, false};
+
+    for (auto flagInternal : testedInternalFlags) {
+        ze_result_t returnValue;
+        auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                               device,
+                                                               neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                               &desc,
+                                                               false,
+                                                               flagInternal,
+                                                               returnValue));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+        ASSERT_NE(nullptr, commandQueue->commandStream);
+
+        auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+
+        auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+        ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+        auto itorSip = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
+
+        auto preemptionMode = neoDevice->getPreemptionMode();
+        if (preemptionMode == NEO::PreemptionMode::MidThread) {
+            EXPECT_NE(cmdList.end(), itorSip);
+
+            auto sipAllocation = SipKernel::getSipKernelAllocation(*neoDevice);
+            STATE_SIP *stateSipCmd = reinterpret_cast<STATE_SIP *>(*itorSip);
+            EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
+        } else {
+            EXPECT_EQ(cmdList.end(), itorSip);
+        }
+        commandQueue->destroy();
+    }
+}
+
+HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAreExecutedTwoTimesThenStateSipIsAddedOnlyTheFirstTime) {
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    using PARSE = typename FamilyType::PARSE;
+
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    std::array<bool, 2> testedInternalFlags = {true, false};
+
+    for (auto flagInternal : testedInternalFlags) {
+        ze_result_t returnValue;
+        auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                               device,
+                                                               neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                               &desc,
+                                                               false,
+                                                               flagInternal,
+                                                               returnValue));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+        ASSERT_NE(nullptr, commandQueue->commandStream);
+
+        auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+
+        auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        result = commandQueue->synchronize(0);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+        ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+        auto itorSip = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
+
+        auto preemptionMode = neoDevice->getPreemptionMode();
+        if (preemptionMode == NEO::PreemptionMode::MidThread) {
+            EXPECT_NE(cmdList.end(), itorSip);
+
+            auto sipAllocation = SipKernel::getSipKernelAllocation(*neoDevice);
+            STATE_SIP *stateSipCmd = reinterpret_cast<STATE_SIP *>(*itorSip);
+            EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
+        } else {
+            EXPECT_EQ(cmdList.end(), itorSip);
+        }
+
+        result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        result = commandQueue->synchronize(0);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        auto usedSpaceAfterSecondExec = commandQueue->commandStream->getUsed();
+        GenCmdList cmdList2;
+        ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList2, ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceAfter), usedSpaceAfterSecondExec));
+
+        itorSip = find<STATE_SIP *>(cmdList2.begin(), cmdList2.end());
+        EXPECT_EQ(cmdList2.end(), itorSip);
+
+        commandQueue->destroy();
+    }
+}
+
 } // namespace ult
 } // namespace L0
