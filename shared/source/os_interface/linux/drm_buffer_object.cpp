@@ -120,6 +120,8 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, OsConte
     }
     execObject.rsvd1 = drmContextId;
     execObject.rsvd2 = 0;
+
+    this->fillExecObjectImpl(execObject, osContext, vmHandleId);
 }
 
 int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage) {

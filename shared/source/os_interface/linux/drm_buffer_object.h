@@ -94,6 +94,7 @@ class BufferObject {
 
     uint32_t getOsContextId(OsContext *osContext);
     MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
+    void fillExecObjectImpl(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId);
 
     uint64_t gpuAddress = 0llu;
 

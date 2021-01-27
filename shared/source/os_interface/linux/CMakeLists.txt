@@ -14,6 +14,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_allocation_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_buffer_object_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_debug.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.h
