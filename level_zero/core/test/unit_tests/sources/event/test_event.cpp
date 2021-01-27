@@ -128,6 +128,32 @@ TEST_F(EventPoolCreate, GivenNoDeviceThenEventPoolIsCreated) {
     eventPool->destroy();
 }
 
+TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAreSet) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event);
+
+    ze_result_t result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    event->hostSignal();
+    result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    event->reset();
+    result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
 TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -228,6 +254,28 @@ TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventF
 
 TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCorrectDataAreSet) {
     EXPECT_NE(nullptr, event->timestampsData);
+
+    for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
+        auto &packet = event->timestampsData->packets[i];
+        EXPECT_EQ(Event::State::STATE_INITIAL, packet.contextStart);
+        EXPECT_EQ(Event::State::STATE_INITIAL, packet.globalStart);
+        EXPECT_EQ(Event::State::STATE_INITIAL, packet.contextEnd);
+        EXPECT_EQ(Event::State::STATE_INITIAL, packet.globalEnd);
+    }
+
+    EXPECT_EQ(0u, event->getPacketsInUse());
+}
+
+TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAreSet) {
+    EXPECT_NE(nullptr, event->timestampsData);
+
+    event->hostSignal();
+    ze_result_t result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    event->reset();
+    result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 
     for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
         auto &packet = event->timestampsData->packets[i];
