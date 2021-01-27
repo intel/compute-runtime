@@ -16,6 +16,7 @@
 namespace NEO {
 
 class AubCenter;
+class BindlessHeapsHelper;
 class BuiltIns;
 class CompilerInterface;
 class Debugger;
@@ -24,6 +25,7 @@ class GmmClientContext;
 class GmmHelper;
 class GmmPageTableMngr;
 class HwDeviceId;
+class MemoryManager;
 class MemoryOperationsHandler;
 class OSInterface;
 struct HardwareInfo;
@@ -52,12 +54,15 @@ struct RootDeviceEnvironment {
     GmmClientContext *getGmmClientContext() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
     BuiltIns *getBuiltIns();
+    BindlessHeapsHelper *getBindlessHeapsHelper() const;
+    void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex);
 
     std::unique_ptr<GmmHelper> gmmHelper;
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<GmmPageTableMngr> pageTableManager;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<AubCenter> aubCenter;
+    std::unique_ptr<BindlessHeapsHelper> bindlessHeapsHelper;
 
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<BuiltIns> builtins;

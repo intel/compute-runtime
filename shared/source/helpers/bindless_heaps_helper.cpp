@@ -57,6 +57,15 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
         auto ssAllocatedInfo = surfaceStateInHeapAllocationMap.find(surfaceAllocation);
         if (ssAllocatedInfo != surfaceStateInHeapAllocationMap.end()) {
             return *ssAllocatedInfo->second.get();
+        } else {
+            std::lock_guard<std::mutex> autolock(this->mtx);
+            if (surfaceStateInHeapVectorReuse.size()) {
+                SurfaceStateInHeapInfo surfaceStateFromVector = *(surfaceStateInHeapVectorReuse.back());
+                surfaceStateInHeapVectorReuse.pop_back();
+                std::pair<GraphicsAllocation *, std::unique_ptr<SurfaceStateInHeapInfo>> pair(surfaceAllocation, std::make_unique<SurfaceStateInHeapInfo>(surfaceStateFromVector));
+                surfaceStateInHeapAllocationMap.insert(std::move(pair));
+                return surfaceStateFromVector;
+            }
         }
     }
     void *ptrInHeap = getSpaceInHeap(ssSize, heapType);
@@ -105,6 +114,16 @@ void BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {
     heap->replaceGraphicsAllocation(newAlloc);
     heap->replaceBuffer(newAlloc->getUnderlyingBuffer(),
                         newAlloc->getUnderlyingBufferSize());
+}
+
+void BindlessHeapsHelper::placeSSAllocationInReuseVectorOnFreeMemory(GraphicsAllocation *gfxAllocation) {
+    auto ssAllocatedInfo = surfaceStateInHeapAllocationMap.find(gfxAllocation);
+    if (ssAllocatedInfo != surfaceStateInHeapAllocationMap.end()) {
+        std::lock_guard<std::mutex> autolock(this->mtx);
+        surfaceStateInHeapVectorReuse.push_back(std::move(ssAllocatedInfo->second));
+        surfaceStateInHeapAllocationMap.erase(ssAllocatedInfo);
+    }
+    return;
 }
 
 } // namespace NEO

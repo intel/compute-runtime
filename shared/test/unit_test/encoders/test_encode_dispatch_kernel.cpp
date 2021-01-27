@@ -1033,7 +1033,7 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessKernelWhenBindlessModeE
     auto commandContainer = std::make_unique<CommandContainer>();
     commandContainer->initialize(pDevice);
     commandContainer->setDirtyStateForAllHeaps(false);
-    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState;
     bindingTableState.sInit();
@@ -1064,7 +1064,7 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindfulKernelWhenBindlessModeEn
     auto commandContainer = std::make_unique<CommandContainer>();
     commandContainer->initialize(pDevice);
     commandContainer->setDirtyStateForAllHeaps(false);
-    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState;
     bindingTableState.sInit();
@@ -1095,7 +1095,7 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessModeEnabledWhenDispatch
     auto commandContainer = std::make_unique<CommandContainer>();
     commandContainer->initialize(pDevice);
     commandContainer->setDirtyStateForAllHeaps(false);
-    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState;
     bindingTableState.sInit();
@@ -1133,7 +1133,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchin
     uint32_t numSamplers = 1;
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
-    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1159,7 +1159,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenBindlessModeDisabledelWithSampler
     uint32_t numSamplers = 1;
     SAMPLER_STATE samplerState;
     memset(&samplerState, 2, sizeof(SAMPLER_STATE));
-    pDevice->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex()));
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

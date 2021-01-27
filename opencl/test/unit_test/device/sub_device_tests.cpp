@@ -280,6 +280,6 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenBindlessHeapHelperC
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
-    device->bindlessHeapHelper.reset(new NEO::BindlessHeapsHelper(device->getMemoryManager(), device->getNumAvailableDevices() > 1, device->getRootDeviceIndex()));
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->createBindlessHeapsHelper(device->getMemoryManager(), device->getNumAvailableDevices() > 1, device->getRootDeviceIndex());
     EXPECT_EQ(device->getBindlessHeapsHelper(), device->subdevices.at(0)->getBindlessHeapsHelper());
 }

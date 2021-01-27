@@ -35,6 +35,5 @@ class RootDevice : public Device {
     const uint32_t rootDeviceIndex;
     DeviceBitfield deviceBitfield = DeviceBitfield{1u};
     uint32_t numSubDevices = 0;
-    std::unique_ptr<BindlessHeapsHelper> bindlessHeapHelper;
 };
 } // namespace NEO

@@ -33,13 +33,13 @@ TEST(BindlessHeapsHelper, givenBindlessModeFlagDisabledWhenCreatingRootDevicesTh
 
 using BindlessHeapsHelperTests = Test<MemManagerFixture>;
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenItsCreatedThenSpecialSshAllocatedAtHeapBegining) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenItsCreatedThenSpecialSshAllocatedAtHeapBegining) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     auto specialSshAllocation = bindlessHeapHelper->specialSsh->getGraphicsAllocation();
     EXPECT_EQ(specialSshAllocation->getGpuAddress(), specialSshAllocation->getGpuBaseAddress());
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocatSsInHeapThenHeapUsedSpaceGrow) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapThenHeapUsedSpaceGrow) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     auto usedBefore = bindlessHeapHelper->globalSsh->getUsed();
 
@@ -50,7 +50,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocatSsInHeapThenH
     EXPECT_GT(usedAfter, usedBefore);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocateSsInHeapThenMemoryAtReturnedOffsetIsCorrect) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapThenMemoryAtReturnedOffsetIsCorrect) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
 
     MockGraphicsAllocation alloc;
@@ -61,7 +61,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocateSsInHeapThen
     EXPECT_EQ(ssInHeapInfo.ssPtr, allocInHeapPtr);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocateSsInHeapTwiceForTheSameAllocationThenTheSameOffsetReturned) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapTwiceForTheSameAllocationThenTheSameOffsetReturned) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
 
     MockGraphicsAllocation alloc;
@@ -72,7 +72,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocateSsInHeapTwic
     EXPECT_EQ(ssInHeapInfo1.surfaceStateOffset, ssInHeapInfo2.surfaceStateOffset);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocateSsInHeapTwiceForDifferentAllocationThenDifferentOffsetsReturned) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapTwiceForDifferentAllocationThenDifferentOffsetsReturned) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
 
     MockGraphicsAllocation alloc1;
@@ -103,27 +103,27 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocatingMoreSsThen
     EXPECT_NE(ssAllocationBefore, ssAllocationAfter);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenCreatedThenAllocationsHaveTheSameBaseAddress) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenCreatedThenAllocationsHaveTheSameBaseAddress) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     for (auto allocation : bindlessHeapHelper->ssHeapsAllocations) {
         EXPECT_EQ(allocation->getGpuBaseAddress(), bindlessHeapHelper->getGlobalHeapsBase());
     }
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenGetDefaultBorderColorOffsetCalledThenCorrectOffsetReturned) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenGetDefaultBorderColorOffsetCalledThenCorrectOffsetReturned) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     auto expectedOffset = bindlessHeapHelper->borderColorStates->getGpuAddress() - bindlessHeapHelper->borderColorStates->getGpuBaseAddress();
     EXPECT_EQ(bindlessHeapHelper->getDefaultBorderColorOffset(), expectedOffset);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenGetAlphaBorderColorOffsetCalledThenCorrectOffsetReturned) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenGetAlphaBorderColorOffsetCalledThenCorrectOffsetReturned) {
     auto borderColorSize = 0x40;
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     auto expectedOffset = bindlessHeapHelper->borderColorStates->getGpuAddress() - bindlessHeapHelper->borderColorStates->getGpuBaseAddress() + borderColorSize;
     EXPECT_EQ(bindlessHeapHelper->getAlphaBorderColorOffset(), expectedOffset);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocatSsInSpecialHeapThenOffsetLessThanFrontWindowSize) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInSpecialHeapThenOffsetLessThanFrontWindowSize) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
@@ -131,7 +131,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocatSsInSpecialHe
     auto frontWindowSize = GfxPartition::externalFrontWindowPoolSize;
     EXPECT_LT(ssInHeapInfo.surfaceStateOffset, frontWindowSize);
 }
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocatSsInGlobalHeapThenOffsetLessThanFrontWindowSize) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalHeapThenOffsetLessThanFrontWindowSize) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
@@ -140,7 +140,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocatSsInGlobalHea
     EXPECT_LT(ssInHeapInfo.surfaceStateOffset, frontWindowSize);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocatSsInScratchHeapThenOffsetLessThanFrontWindowSize) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInScratchHeapThenOffsetLessThanFrontWindowSize) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
@@ -149,11 +149,46 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocatSsInScratchHe
     EXPECT_LT(ssInHeapInfo.surfaceStateOffset, frontWindowSize);
 }
 
-TEST_F(BindlessHeapsHelperTests, givenBindlessHepaHelperWhenAllocatSsInGlobalDshThenOffsetGreaterOrEqualFrontWindowSize) {
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalDshThenOffsetGreaterOrEqualFrontWindowSize) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
     auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
     auto frontWindowSize = GfxPartition::externalFrontWindowPoolSize;
     EXPECT_GE(ssInHeapInfo.surfaceStateOffset, frontWindowSize);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIsCalledThenSSinHeapInfoShouldBePlacedInReuseVector) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
+    MockBindlesHeapsHelper *bindlessHeapHelperPtr = bindlessHeapHelper.get();
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
+    MockGraphicsAllocation *alloc = new MockGraphicsAllocation;
+    size_t size = 0x40;
+    auto ssinHeapInfo = bindlessHeapHelperPtr->allocateSSInHeap(size, alloc, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    memManager->freeGraphicsMemory(alloc);
+    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse.size(), 1u);
+    auto ssInHeapInfoFromReuseVector = bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse.front().get();
+    EXPECT_EQ(ssInHeapInfoFromReuseVector->surfaceStateOffset, ssinHeapInfo.surfaceStateOffset);
+    EXPECT_EQ(ssInHeapInfoFromReuseVector->ssPtr, ssinHeapInfo.ssPtr);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperPreviousAllocationThenItShouldBeReused) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(), pDevice->getNumAvailableDevices() > 1, pDevice->getRootDeviceIndex());
+    MockBindlesHeapsHelper *bindlessHeapHelperPtr = bindlessHeapHelper.get();
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
+    MockGraphicsAllocation *alloc = new MockGraphicsAllocation;
+    size_t size = 0x40;
+    auto ssInHeapInfo = bindlessHeapHelperPtr->allocateSSInHeap(size, alloc, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    memManager->freeGraphicsMemory(alloc);
+    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse.size(), 1u);
+    MockGraphicsAllocation *alloc2 = new MockGraphicsAllocation;
+    auto reusedSSinHeapInfo = bindlessHeapHelperPtr->allocateSSInHeap(size, alloc2, BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    EXPECT_EQ(bindlessHeapHelperPtr->surfaceStateInHeapVectorReuse.size(), 0u);
+    EXPECT_EQ(ssInHeapInfo.surfaceStateOffset, reusedSSinHeapInfo.surfaceStateOffset);
+    EXPECT_EQ(ssInHeapInfo.ssPtr, reusedSSinHeapInfo.ssPtr);
+    memManager->freeGraphicsMemory(alloc2);
 }

@@ -356,7 +356,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     DebugManager.flags.UseBindlessMode.set(1);
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumAvailableDevices() > 1, neoDevice->getRootDeviceIndex());
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
-    neoDevice->bindlessHeapHelper.reset(bindlessHeapsHelper.release());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
     bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::GLOBAL_SSH].reset(new IndirectHeap(&baseAllocation, true));
     baseAllocation.setGpuBaseAddress(0x123000);
@@ -381,7 +381,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
 
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
     EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddressModifyEnable(), true);
-    EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddress(), neoDevice->bindlessHeapHelper->getGlobalHeapsBase());
+    EXPECT_EQ(cmdSba->getBindlessSurfaceStateBaseAddress(), neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper()->getGlobalHeapsBase());
     EXPECT_EQ(cmdSba->getBindlessSurfaceStateSize(), MemoryConstants::sizeOf4GBinPageEntities);
 
     commandQueue->destroy();
@@ -394,7 +394,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     DebugManager.flags.UseBindlessMode.set(0);
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumAvailableDevices() > 1, neoDevice->getRootDeviceIndex());
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
-    neoDevice->bindlessHeapHelper.reset(bindlessHeapsHelper.release());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
     bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::GLOBAL_SSH].reset(new IndirectHeap(&baseAllocation, true));
     baseAllocation.setGpuBaseAddress(0x123000);
@@ -418,7 +418,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     ASSERT_NE(cmdList.end(), itor);
 
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
-    EXPECT_NE(cmdSba->getBindlessSurfaceStateBaseAddress(), neoDevice->bindlessHeapHelper->getGlobalHeapsBase());
+    EXPECT_NE(cmdSba->getBindlessSurfaceStateBaseAddress(), neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper()->getGlobalHeapsBase());
 
     commandQueue->destroy();
 }
@@ -763,7 +763,8 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
 HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithWhenBindlessEnabledThenHeapContainerIsEmpty, CommandQueueExecuteTestSupport) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
-    neoDevice->bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumAvailableDevices() > 1, neoDevice->getRootDeviceIndex());
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumAvailableDevices() > 1, neoDevice->getRootDeviceIndex());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);

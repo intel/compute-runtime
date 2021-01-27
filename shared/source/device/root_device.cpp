@@ -24,7 +24,6 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {}
 
 RootDevice::~RootDevice() {
-    bindlessHeapHelper.reset();
     for (auto subdevice : subdevices) {
         if (subdevice) {
             delete subdevice;
@@ -37,7 +36,7 @@ uint32_t RootDevice::getNumSubDevices() const {
 }
 
 BindlessHeapsHelper *RootDevice::getBindlessHeapsHelper() const {
-    return bindlessHeapHelper.get();
+    return this->getRootDeviceEnvironment().getBindlessHeapsHelper();
 }
 uint32_t RootDevice::getRootDeviceIndex() const {
     return rootDeviceIndex;
@@ -93,7 +92,7 @@ bool RootDevice::createDeviceImpl() {
         return status;
     }
     if (ApiSpecificConfig::getBindlessConfiguration()) {
-        bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(getMemoryManager(), getNumAvailableDevices() > 1, rootDeviceIndex);
+        this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->createBindlessHeapsHelper(getMemoryManager(), getNumAvailableDevices() > 1, rootDeviceIndex);
     }
     return true;
 }

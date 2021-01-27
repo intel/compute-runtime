@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -182,7 +183,9 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
     if (!gfxAllocation) {
         return;
     }
-
+    if (ApiSpecificConfig::getBindlessConfiguration() && executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr) {
+        executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper()->placeSSAllocationInReuseVectorOnFreeMemory(gfxAllocation);
+    }
     const bool hasFragments = gfxAllocation->fragmentsStorage.fragmentCount != 0;
     const bool isLocked = gfxAllocation->isLocked();
     DEBUG_BREAK_IF(hasFragments && isLocked);

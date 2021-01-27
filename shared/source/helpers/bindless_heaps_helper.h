@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -46,6 +47,7 @@ class BindlessHeapsHelper {
     uint32_t getDefaultBorderColorOffset();
     uint32_t getAlphaBorderColorOffset();
     IndirectHeap *getHeap(BindlesHeapType heapType);
+    void placeSSAllocationInReuseVectorOnFreeMemory(GraphicsAllocation *gfxAllocation);
 
   protected:
     void growHeap(BindlesHeapType heapType);
@@ -55,6 +57,8 @@ class BindlessHeapsHelper {
     std::unique_ptr<IndirectHeap> surfaceStateHeaps[BindlesHeapType::NUM_HEAP_TYPES];
     GraphicsAllocation *borderColorStates;
     std::vector<GraphicsAllocation *> ssHeapsAllocations;
+    std::vector<std::unique_ptr<SurfaceStateInHeapInfo>> surfaceStateInHeapVectorReuse;
     std::unordered_map<GraphicsAllocation *, std::unique_ptr<SurfaceStateInHeapInfo>> surfaceStateInHeapAllocationMap;
+    std::mutex mtx;
 };
 } // namespace NEO
