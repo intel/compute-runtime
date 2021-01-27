@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,5 +14,7 @@ set(NEO_CORE_COMMAND_CONTAINER
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_compute_mode_bdw_plus.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_compute_mode_tgllp_plus.inl
 )
-add_subdirectories()
+
 set_property(GLOBAL PROPERTY NEO_CORE_COMMAND_CONTAINER ${NEO_CORE_COMMAND_CONTAINER})
+
+add_subdirectories()

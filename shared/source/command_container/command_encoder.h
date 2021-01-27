@@ -249,6 +249,8 @@ struct EncodeSurfaceState {
     static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, size_t bindingTableCount,
                                                    const void *srcKernelSsh, size_t srcKernelSshSize,
                                                    size_t numberOfBindingTableStates, size_t offsetOfBindingTable);
+
+    static void appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper, bool imageFromBuffer);
 };
 
 template <typename GfxFamily>

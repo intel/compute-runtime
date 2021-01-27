@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -91,6 +92,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         setAuxParamsForCCS<GfxFamily>(surfaceState, gmm);
     }
     appendSurfaceStateDepthParams(surfaceState, gmm);
+    EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(surfaceState, graphicsAllocation, gmmHelper, isImageFromBuffer());
     appendSurfaceStateParams(surfaceState, rootDeviceIndex);
     appendSurfaceStateExt(surfaceState);
 }
