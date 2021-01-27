@@ -25,8 +25,7 @@ class VASurface : VASharing {
 
     static bool validate(cl_mem_flags flags, cl_uint plane);
     static const ClSurfaceFormatInfo *getExtendedSurfaceFormatInfo(uint32_t formatFourCC);
-    static bool isSupportedFourCCTwoPlaneFormat(int fourcc);
-    static bool isSupportedFourCCThreePlaneFormat(int fourcc);
+    static bool isSupportedFourCC(int fourcc);
 
   protected:
     VASurface(VASharingFunctions *sharingFunctions, VAImageID imageId,

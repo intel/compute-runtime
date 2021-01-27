@@ -71,7 +71,6 @@ class VASharingFunctions : public SharingFunctions {
 
     cl_int getSupportedFormats(cl_mem_flags flags,
                                cl_mem_object_type imageType,
-                               cl_uint plane,
                                cl_uint numEntries,
                                VAImageFormat *formats,
                                cl_uint *numImageFormats);
@@ -95,7 +94,6 @@ class VASharingFunctions : public SharingFunctions {
     VAQueryImageFormatsPFN vaQueryImageFormatsPFN;
     VAMaxNumImageFormatsPFN vaMaxNumImageFormatsPFN;
 
-    std::vector<VAImageFormat> supported2PlaneFormats;
-    std::vector<VAImageFormat> supported3PlaneFormats;
+    std::vector<VAImageFormat> supportedFormats;
 };
 } // namespace NEO

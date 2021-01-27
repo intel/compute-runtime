@@ -210,20 +210,11 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
     return nullptr;
 }
 
-bool VASurface::isSupportedFourCCTwoPlaneFormat(int fourcc) {
+bool VASurface::isSupportedFourCC(int fourcc) {
     if ((fourcc == VA_FOURCC_NV12) ||
-        (fourcc == VA_FOURCC_P010) ||
-        (fourcc == VA_FOURCC_P016)) {
+        (DebugManager.flags.EnableExtendedVaFormats.get() && fourcc == VA_FOURCC_P010)) {
         return true;
     }
     return false;
 }
-
-bool VASurface::isSupportedFourCCThreePlaneFormat(int fourcc) {
-    if (DebugManager.flags.EnableExtendedVaFormats.get() && fourcc == VA_FOURCC_RGBP) {
-        return true;
-    }
-    return false;
-}
-
 } // namespace NEO
