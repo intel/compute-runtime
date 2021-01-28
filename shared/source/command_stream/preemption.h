@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,9 @@ class PreemptionHelper {
 
     template <typename GfxFamily>
     static void programStateSip(LinearStream &preambleCmdStream, Device &device);
+
+    template <typename GfxFamily>
+    static void programStateSipEndWa(LinearStream &cmdStream, Device &device);
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSize(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);

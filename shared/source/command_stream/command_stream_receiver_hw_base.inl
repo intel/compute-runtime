@@ -88,7 +88,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferEnd(LinearStream &
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &commandStream, void **patchLocation, bool directSubmissionEnabled) {
+inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &commandStream, Device &device, void **patchLocation, bool directSubmissionEnabled) {
     if (directSubmissionEnabled) {
         *patchLocation = commandStream.getSpace(sizeof(MI_BATCH_BUFFER_START));
         auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*patchLocation);
@@ -96,6 +96,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &c
         addBatchBufferStart(&cmd, 0ull, false);
         *bbStart = cmd;
     } else {
+        PreemptionHelper::programStateSipEndWa<GfxFamily>(commandStream, device);
         this->addBatchBufferEnd(commandStream, patchLocation);
     }
 }
@@ -515,7 +516,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     GraphicsAllocation *chainedBatchBuffer = nullptr;
     bool directSubmissionEnabled = isDirectSubmissionEnabled();
     if (submitTask) {
-        programEndingCmd(commandStreamTask, &bbEndLocation, directSubmissionEnabled);
+        programEndingCmd(commandStreamTask, device, &bbEndLocation, directSubmissionEnabled);
         this->emitNoop(commandStreamTask, bbEndPaddingSize);
         this->alignToCacheLine(commandStreamTask);
 
@@ -543,10 +544,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         } else if (dispatchFlags.epilogueRequired) {
             this->makeResident(*commandStreamCSR.getGraphicsAllocation());
         }
-        this->programEpilogue(commandStreamCSR, &bbEndLocation, dispatchFlags);
+        this->programEpilogue(commandStreamCSR, device, &bbEndLocation, dispatchFlags);
 
     } else if (submitCSR) {
-        programEndingCmd(commandStreamCSR, &bbEndLocation, directSubmissionEnabled);
+        programEndingCmd(commandStreamCSR, device, &bbEndLocation, directSubmissionEnabled);
         this->emitNoop(commandStreamCSR, bbEndPaddingSize);
         this->alignToCacheLine(commandStreamCSR);
         DEBUG_BREAK_IF(commandStreamCSR.getUsed() > commandStreamCSR.getMaxAvailableSpace());
@@ -1094,14 +1095,14 @@ inline bool CommandStreamReceiverHw<GfxFamily>::isPipelineSelectAlreadyProgramme
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programEpilogue(LinearStream &csr, void **batchBufferEndLocation, DispatchFlags &dispatchFlags) {
+inline void CommandStreamReceiverHw<GfxFamily>::programEpilogue(LinearStream &csr, Device &device, void **batchBufferEndLocation, DispatchFlags &dispatchFlags) {
     if (dispatchFlags.epilogueRequired) {
         auto currentOffset = ptrDiff(csr.getSpace(0u), csr.getCpuBase());
         auto gpuAddress = ptrOffset(csr.getGraphicsAllocation()->getGpuAddress(), currentOffset);
 
         addBatchBufferStart(reinterpret_cast<typename GfxFamily::MI_BATCH_BUFFER_START *>(*batchBufferEndLocation), gpuAddress, false);
         this->programEpliogueCommands(csr, dispatchFlags);
-        programEndingCmd(csr, batchBufferEndLocation, isDirectSubmissionEnabled());
+        programEndingCmd(csr, device, batchBufferEndLocation, isDirectSubmissionEnabled());
         this->alignToCacheLine(csr);
     }
 }

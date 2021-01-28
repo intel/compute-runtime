@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -865,7 +865,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAvailableWhenProgrammingEndi
     void *location = nullptr;
     uint8_t buffer[128];
     mockCsr->commandStream.replaceBuffer(&buffer[0], 128u);
-    mockCsr->programEndingCmd(mockCsr->commandStream, &location, ret);
+    auto &device = *pDevice;
+    mockCsr->programEndingCmd(mockCsr->commandStream, device, &location, ret);
     EXPECT_EQ(sizeof(MI_BATCH_BUFFER_START), mockCsr->commandStream.getUsed());
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();

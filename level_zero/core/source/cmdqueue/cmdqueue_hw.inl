@@ -87,18 +87,19 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     constexpr size_t residencyContainerSpaceForFence = 1;
     constexpr size_t residencyContainerSpaceForTagWrite = 1;
 
-    const bool initialPreemptionMode = commandQueuePreemptionMode == NEO::PreemptionMode::Initial;
-
     NEO::Device *neoDevice = device->getNEODevice();
     NEO::PreemptionMode statePreemption = commandQueuePreemptionMode;
     auto devicePreemption = device->getDevicePreemptionMode();
+
+    const bool initialPreemptionMode = commandQueuePreemptionMode == NEO::PreemptionMode::Initial;
+    const bool stateSipRequired = (initialPreemptionMode && devicePreemption == NEO::PreemptionMode::MidThread) ||
+                                  (neoDevice->getDebugger() && NEO::Debugger::isDebugEnabled(internalUsage));
 
     if (initialPreemptionMode) {
         preemptionSize += NEO::PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*neoDevice);
     }
 
-    if ((initialPreemptionMode && devicePreemption == NEO::PreemptionMode::MidThread) ||
-        (neoDevice->getDebugger() && NEO::Debugger::isDebugEnabled(internalUsage))) {
+    if (stateSipRequired) {
         preemptionSize += NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice);
     }
 
@@ -243,8 +244,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(child, *neoDevice, csr->getPreemptionAllocation());
         }
 
-        if ((initialPreemptionMode && devicePreemption == NEO::PreemptionMode::MidThread) ||
-            (neoDevice->getDebugger() && NEO::Debugger::isDebugEnabled(internalUsage))) {
+        if (stateSipRequired) {
             NEO::PreemptionHelper::programStateSip<GfxFamily>(child, *neoDevice);
         }
 
@@ -328,6 +328,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         for (auto alloc : driverHandleImp->sharedMakeResidentAllocations) {
             pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc.second->getGpuAddress()));
         }
+    }
+
+    if (stateSipRequired) {
+        NEO::PreemptionHelper::programStateSipEndWa<GfxFamily>(child, *neoDevice);
     }
 
     commandQueuePreemptionMode = statePreemption;

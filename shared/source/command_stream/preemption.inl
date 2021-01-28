@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,9 @@ void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &
         *sip = cmd;
     }
 }
+
+template <typename GfxFamily>
+void PreemptionHelper::programStateSipEndWa(LinearStream &cmdStream, Device &device) {}
 
 template <typename GfxFamily>
 void PreemptionHelper::programCmdStream(LinearStream &cmdStream, PreemptionMode newPreemptionMode,

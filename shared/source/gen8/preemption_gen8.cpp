@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,4 +108,5 @@ void PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(INTER
 }
 
 template size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);
+template void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, Device &device);
 } // namespace NEO

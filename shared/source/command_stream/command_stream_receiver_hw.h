@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdsSizeForHardwareContext() const override;
 
     static void addBatchBufferEnd(LinearStream &commandStream, void **patchLocation);
-    void programEndingCmd(LinearStream &commandStream, void **patchLocation, bool directSubmissionEnabled);
+    void programEndingCmd(LinearStream &commandStream, Device &device, void **patchLocation, bool directSubmissionEnabled);
     void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary);
     static void alignToCacheLine(LinearStream &commandStream);
 
@@ -118,7 +118,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programPreamble(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs);
     void programAdditionalPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs, bool is3DPipeline);
-    void programEpilogue(LinearStream &csr, void **batchBufferEndLocation, DispatchFlags &dispatchFlags);
+    void programEpilogue(LinearStream &csr, Device &device, void **batchBufferEndLocation, DispatchFlags &dispatchFlags);
     void programEpliogueCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programMediaSampler(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programPerDssBackedBuffer(LinearStream &scr, Device &device, DispatchFlags &dispatchFlags);
