@@ -17,6 +17,7 @@
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/platform/platform.h"
 
@@ -223,6 +224,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {
 
 cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineGroupType type) {
     auto &hwHelper = NEO::HwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
+    auto &clHwHelper = NEO::ClHwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
 
     cl_command_queue_capabilities_intel disabledProperties = 0u;
     if (hwHelper.isCopyOnlyEngineType(type)) {
@@ -233,6 +235,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
         disabledProperties |= static_cast<cl_command_queue_capabilities_intel>(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL); // clEnqueueCopyBufferToImage
         disabledProperties |= static_cast<cl_command_queue_capabilities_intel>(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL); // clEnqueueCopyImageToBuffer
     }
+    disabledProperties |= clHwHelper.getAdditionalDisabledQueueFamilyCapabilities(type);
 
     if (disabledProperties != 0) {
         return getQueueFamilyCapabilitiesAll() & ~disabledProperties;

@@ -513,7 +513,9 @@ TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupIndexThenRetur
     EXPECT_ANY_THROW(device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(5u)));
 }
 
-TEST(DeviceGenEngineTest, whenGettingQueueFamilyCapabilitiesAllThenReturnCorrectValue) {
+using DeviceQueueFamiliesTests = ::testing::Test;
+
+HWTEST_F(DeviceQueueFamiliesTests, whenGettingQueueFamilyCapabilitiesAllThenReturnCorrectValue) {
     const cl_command_queue_capabilities_intel expectedProperties = CL_QUEUE_CAPABILITY_CREATE_SINGLE_QUEUE_EVENTS_INTEL |
                                                                    CL_QUEUE_CAPABILITY_CREATE_CROSS_QUEUE_EVENTS_INTEL |
                                                                    CL_QUEUE_CAPABILITY_SINGLE_QUEUE_EVENT_WAIT_LIST_INTEL |
@@ -533,21 +535,21 @@ TEST(DeviceGenEngineTest, whenGettingQueueFamilyCapabilitiesAllThenReturnCorrect
     EXPECT_EQ(expectedProperties, MockClDevice::getQueueFamilyCapabilitiesAll());
 }
 
-TEST(DeviceGenEngineTest, givenComputeQueueWhenGettingQueueFamilyCapabilitiesThenDoNotReturnKernel) {
+HWTEST_F(DeviceQueueFamiliesTests, givenComputeQueueWhenGettingQueueFamilyCapabilitiesThenReturnDefaultCapabilities) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, device->getQueueFamilyCapabilities(NEO::EngineGroupType::Compute));
     EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, device->getQueueFamilyCapabilities(NEO::EngineGroupType::RenderCompute));
 }
 
-TEST(DeviceGenEngineTest, givenCopyQueueWhenGettingQueueFamilyCapabilitiesThenDoNotReturnKernel) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueFamiliesTests, givenCopyQueueWhenGettingQueueFamilyCapabilitiesThenDoNotReturnUnsupportedOperations) {
     const cl_command_queue_capabilities_intel capabilitiesNotSupportedOnBlitter = CL_QUEUE_CAPABILITY_KERNEL_INTEL |
                                                                                   CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL |
                                                                                   CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL |
                                                                                   CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL |
                                                                                   CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL |
-                                                                                  CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL;
+                                                                                  CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL |
+                                                                                  CL_QUEUE_CAPABILITY_CREATE_CROSS_QUEUE_EVENTS_INTEL;
     const cl_command_queue_capabilities_intel expectedBlitterCapabilities = setBits(MockClDevice::getQueueFamilyCapabilitiesAll(), false, capabilitiesNotSupportedOnBlitter);
-
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_EQ(expectedBlitterCapabilities, device->getQueueFamilyCapabilities(NEO::EngineGroupType::Copy));
 }
