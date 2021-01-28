@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
+std::vector<void *> mmapVector;
 
 TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInDevicePoolIsCalledThenNullptrAndStatusRetryIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
@@ -129,6 +130,9 @@ class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
 
         device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, rootDeviceIndex));
         memoryManager = std::make_unique<TestedDrmMemoryManager>(localMemoryEnabled, false, false, *executionEnvironment);
+    }
+    void TearDown() override {
+        mmapVector.clear();
     }
 
   protected:
@@ -1261,9 +1265,9 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenGraphicsAllocationInDevicePoolIsAll
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-static bool munmapWasCalled = false;
+static uint32_t munmapCalledCount = 0u;
 
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsUnalignedPointerThenCreateAllocWithAlignmentUnmapUnalignedPart) {
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsUnalignedPointerThenCreateAllocWithAlignmentUnmapTwoUnalignedPart) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
@@ -1287,20 +1291,20 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsUnal
     };
 
     memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
-        munmapWasCalled = true;
+        munmapCalledCount++;
         return 0;
     };
 
-    munmapWasCalled = false;
+    munmapCalledCount = 0;
     auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, 0u);
 
     EXPECT_EQ(alignUp(reinterpret_cast<void *>(0x12345678), MemoryConstants::pageSize64k), allocation->getMmapPtr());
-    EXPECT_TRUE(munmapWasCalled);
-    munmapWasCalled = false;
+    EXPECT_EQ(munmapCalledCount, 2u);
+    munmapCalledCount = 0u;
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsAlignedThenCreateAllocWithAlignmentDoesntCallUnmap) {
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsAlignedThenCreateAllocWithAlignmentUnmapOneUnalignedPart) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBOMmapCreate.set(-1);
 
@@ -1324,16 +1328,16 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsAlig
     };
 
     memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
-        munmapWasCalled = true;
+        munmapCalledCount++;
         return 0;
     };
 
-    munmapWasCalled = false;
+    munmapCalledCount = 0u;
     auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, 1u, MemoryConstants::pageSize64k, 0u);
 
     EXPECT_EQ(reinterpret_cast<void *>(0x12345678), allocation->getMmapPtr());
-    EXPECT_FALSE(munmapWasCalled);
-    munmapWasCalled = false;
+    EXPECT_EQ(munmapCalledCount, 1u);
+    munmapCalledCount = 0u;
     memoryManager->freeGraphicsMemory(allocation);
 }
 

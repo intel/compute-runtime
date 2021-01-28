@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
 int closeInputFd = 0;
 std::atomic<int> closeCalledCount(0);
+StackVec<void *, 10> mmapVector;
 
 TestedDrmMemoryManager::TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(gemCloseWorkerMode::gemCloseWorkerInactive,
                                                                                                                  false,

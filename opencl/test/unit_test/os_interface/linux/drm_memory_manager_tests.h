@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,8 @@
 #include <memory>
 
 namespace NEO {
+
+extern StackVec<void *, 10> mmapVector;
 
 class DrmMemoryManagerBasic : public ::testing::Test {
   public:
@@ -101,6 +103,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         mock->testIoctls();
         executionEnvironment->decRefInternal();
         MemoryManagementFixture::TearDown();
+        mmapVector.clear();
     }
 
   protected:

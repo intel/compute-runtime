@@ -17,6 +17,7 @@ extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;
 extern int closeInputFd;
 extern std::atomic<int> closeCalledCount;
+extern StackVec<void *, 10> mmapVector;
 
 inline void *mmapMock(void *addr, size_t length, int prot, int flags, int fd, off_t offset) noexcept {
     if (addr) {
@@ -25,13 +26,17 @@ inline void *mmapMock(void *addr, size_t length, int prot, int flags, int fd, of
     void *ptr = nullptr;
     if (length > 0) {
         ptr = alignedMalloc(length, MemoryConstants::pageSize64k);
+        mmapVector.push_back(ptr);
     }
     return ptr;
 }
 
 inline int munmapMock(void *addr, size_t length) noexcept {
     if (length > 0) {
-        alignedFree(addr);
+        auto ptrIt = std::find(mmapVector.begin(), mmapVector.end(), addr);
+        if (ptrIt != mmapVector.end()) {
+            alignedFree(addr);
+        }
     }
     return 0;
 }
