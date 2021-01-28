@@ -1278,7 +1278,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsUnal
     allocationData.size = MemoryConstants::pageSize64k;
 
     memoryManager->mmapFunction = [](void *addr, size_t len, int prot,
-                                     int flags, int fd, off_t offset) __THROW {
+                                     int flags, int fd, off_t offset) throw() {
         if (addr == 0) {
             return reinterpret_cast<void *>(0x12345678);
         } else {
@@ -1286,7 +1286,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsUnal
         }
     };
 
-    memoryManager->munmapFunction = [](void *addr, size_t len) __THROW {
+    memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
         munmapWasCalled = true;
         return 0;
     };
@@ -1315,7 +1315,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsAlig
     allocationData.size = MemoryConstants::pageSize64k;
 
     memoryManager->mmapFunction = [](void *addr, size_t len, int prot,
-                                     int flags, int fd, __off_t offset) __THROW {
+                                     int flags, int fd, off_t offset) throw() {
         if (addr == 0) {
             return reinterpret_cast<void *>(0x12345678);
         } else {
@@ -1323,7 +1323,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsAlig
         }
     };
 
-    memoryManager->munmapFunction = [](void *addr, size_t len) __THROW {
+    memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
         munmapWasCalled = true;
         return 0;
     };
