@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/fixtures/device_fixture.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
@@ -511,4 +512,28 @@ HWTEST2_F(BlitTests, givenAllocDimsLowerThanMaxSizesWhenCheckingIfOneCommandCanB
     Vec3<size_t> copySize = {BlitterConstants::maxBlitWidth - 1, BlitterConstants::maxBlitHeight - 1, 1};
     bool useOneCommand = NEO::BlitCommandsHelper<FamilyType>::useOneBlitCopyCommand(copySize, bytesPerPixel);
     EXPECT_TRUE(useOneCommand);
+}
+
+using WithoutGen12Lp = IsNotGfxCore<IGFX_GEN12LP_CORE>;
+
+HWTEST2_F(BlitTests, givenPlatformWhenCallingPreBlitCommandWARequiredThenReturnsFalse, WithoutGen12Lp) {
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::preBlitCommandWARequired());
+}
+
+HWTEST2_F(BlitTests, givenPlatformWhenCallingEstimatePreBlitCommandSizeThenZeroIsReturned, WithoutGen12Lp) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize());
+}
+
+HWTEST2_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlushDwIsProgramed, WithoutGen12Lp) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    auto miFlushBuffer = std::make_unique<MI_FLUSH_DW>();
+    LinearStream linearStream(miFlushBuffer.get(), EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite());
+
+    BlitCommandsHelper<FamilyType>::dispatchPreBlitCommand(linearStream);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(linearStream);
+    auto cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_EQ(hwParser.cmdList.end(), cmdIterator);
 }

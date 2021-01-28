@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -827,7 +827,6 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenP
     bool blitCmdFound = false;
     for (auto &cmd : hwParser.cmdList) {
         if (auto miFlushDwCmd = genCmdCast<MI_FLUSH_DW *>(cmd)) {
-            EXPECT_TRUE(blitCmdFound);
             if (miFlushDwCmd->getDestinationAddress() == 0) {
                 continue;
             }

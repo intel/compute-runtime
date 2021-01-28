@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,6 +152,11 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForFillBuffer(NEO::GraphicsAl
 }
 template <>
 void BlitCommandsHelper<Family>::appendTilingEnable(typename Family::XY_COLOR_BLT &blitCmd) {}
+
+template <>
+bool BlitCommandsHelper<Family>::preBlitCommandWARequired() {
+    return true;
+}
 
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;

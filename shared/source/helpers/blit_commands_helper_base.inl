@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,22 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(const RootDeviceEnviron
         return maxBlitHeightOverride;
     }
     return BlitterConstants::maxBlitHeight;
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::dispatchPreBlitCommand(LinearStream &linearStream) {
+    if (BlitCommandsHelper<GfxFamily>::preBlitCommandWARequired()) {
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, false, false);
+    }
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::estimatePreBlitCommandSize() {
+    if (BlitCommandsHelper<GfxFamily>::preBlitCommandWARequired()) {
+        return EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+    }
+
+    return 0u;
 }
 
 template <typename GfxFamily>
@@ -100,7 +116,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const Vec3<size_t
 
     auto sizePerBlit = (sizeof(typename GfxFamily::XY_COPY_BLT) + estimatePostBlitCommandSize());
 
-    return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) + (sizePerBlit * nBlits) + timestampCmdSize;
+    return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) + (sizePerBlit * nBlits) + timestampCmdSize + estimatePreBlitCommandSize();
 }
 
 template <typename GfxFamily>
@@ -155,6 +171,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
 
     PRINT_DEBUG_STRING(DebugManager.flags.PrintBlitDispatchDetails.get(), stdout,
                        "\nBlit dispatch with AuxTranslationDirection %u ", static_cast<uint32_t>(blitProperties.auxTranslationDirection));
+
+    dispatchPreBlitCommand(linearStream);
 
     for (uint64_t slice = 0; slice < blitProperties.copySize.z; slice++) {
         for (uint64_t row = 0; row < blitProperties.copySize.y; row++) {
@@ -267,6 +285,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsRegion(const BlitPropert
     appendBlitCommandsForImages(blitProperties, bltCmd, rootDeviceEnvironment, srcSlicePitch, dstSlicePitch);
     appendColorDepth(blitProperties, bltCmd);
     appendSurfaceType(blitProperties, bltCmd);
+    dispatchPreBlitCommand(linearStream);
     for (uint32_t i = 0; i < blitProperties.copySize.z; i++) {
         appendSliceOffsets(blitProperties, bltCmd, i, rootDeviceEnvironment, srcSlicePitch, dstSlicePitch);
         auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
@@ -340,6 +359,8 @@ template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto maxWidthToCopy = getMaxBlitWidth(rootDeviceEnvironment);
     const auto maxHeightToCopy = getMaxBlitHeight(rootDeviceEnvironment);
+
+    dispatchPreBlitCommand(linearStream);
 
     for (size_t slice = 0u; slice < blitProperties.copySize.z; ++slice) {
         auto srcAddress = calculateBlitCommandSourceBaseAddressCopyRegion(blitProperties, slice);
@@ -426,6 +447,11 @@ size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(const Vec3<s
     auto nBlits = xBlits * yBlits * zBlits;
 
     return nBlits;
+}
+
+template <typename GfxFamily>
+bool BlitCommandsHelper<GfxFamily>::preBlitCommandWARequired() {
+    return false;
 }
 
 template <typename GfxFamily>

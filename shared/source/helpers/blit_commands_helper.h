@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,6 +114,8 @@ struct BlitCommandsHelper {
     static uint64_t getMaxBlitWidthOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint64_t getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint64_t getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void dispatchPreBlitCommand(LinearStream &linearStream);
+    static size_t estimatePreBlitCommandSize();
     static void dispatchPostBlitCommand(LinearStream &linearStream);
     static size_t estimatePostBlitCommandSize();
     static size_t estimateBlitCommandsSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket,
@@ -152,6 +154,7 @@ struct BlitCommandsHelper {
     static void programGlobalSequencerFlush(LinearStream &commandStream);
     static size_t getSizeForGlobalSequencerFlush();
     static bool miArbCheckWaRequired();
+    static bool preBlitCommandWARequired();
     static void appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd);
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1022,6 +1022,14 @@ struct AreNotGfxCores {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
         return NEO::ToGfxCoreFamily<productFamily>::get() != gfxCoreFamily && NEO::ToGfxCoreFamily<productFamily>::get() != gfxCoreFamily2;
+    }
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct IsNotGfxCore {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() != gfxCoreFamily;
     }
 };
 

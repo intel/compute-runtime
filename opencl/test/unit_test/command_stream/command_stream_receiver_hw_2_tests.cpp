@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,12 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredComman
 
     auto expectedAlignedSize = cmdsSizePerBlit * alignedNumberOfBlts;
     auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
+
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedAlignedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+        expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    }
+
     auto alignedCopySize = Vec3<size_t>{alignedBltSize, 1, 1};
     auto notAlignedCopySize = Vec3<size_t>{notAlignedBltSize, 1, 1};
 
@@ -103,6 +109,11 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeForReadBufferRectThenAdd
     auto expectedAlignedSize = cmdsSizePerBlit * alignedNumberOfBlts;
     auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
 
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedAlignedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+        expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    }
+
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
         alignedBltSize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
     auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
@@ -135,6 +146,11 @@ HWTEST_F(BcsTests, givenBltWithBigCopySizeWhenEstimatingCommandSizeForReadBuffer
 
     auto expectedAlignedSize = cmdsSizePerBlit * alignedNumberOfBlts;
     auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
+
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedAlignedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+        expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    }
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
         alignedBltSize, csrDependencies, false, false, rootDeviceEnvironment);

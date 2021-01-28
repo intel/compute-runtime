@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -601,6 +601,10 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCal
 
     auto expectedBlitInstructionsSize = cmdsSizePerBlit * numberOfBlts;
 
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedBlitInstructionsSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    }
+
     auto expectedAlignedSize = baseSize + MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getHardwareInfo());
 
     BlitPropertiesContainer blitPropertiesContainer;
@@ -635,6 +639,10 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstima
 
     auto expectedBlitInstructionsSize = cmdsSizePerBlit * numberOfBlts;
 
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedBlitInstructionsSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    }
+
     auto expectedAlignedSize = baseSize + MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getHardwareInfo());
 
     BlitPropertiesContainer blitPropertiesContainer;
@@ -667,6 +675,10 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWrit
 
     auto baseSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     auto expectedBlitInstructionsSize = cmdsSizePerBlit * numberOfBlts;
+
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedBlitInstructionsSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    }
 
     auto expectedAlignedSize = baseSize + MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getHardwareInfo());
 
@@ -701,6 +713,10 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstima
     auto baseSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename FamilyType::MI_BATCH_BUFFER_START);
     auto expectedBlitInstructionsSize = cmdsSizePerBlit * numberOfBlts;
 
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedBlitInstructionsSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    }
+
     auto expectedAlignedSize = baseSize + MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getHardwareInfo());
 
     BlitPropertiesContainer blitPropertiesContainer;
@@ -726,6 +742,9 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         expectedBaseSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     }
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedBaseSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    }
 
     auto expectedSizeWithTimestampPacketWrite = expectedBaseSize + EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     auto expectedSizeWithoutTimestampPacketWrite = expectedBaseSize;
@@ -744,6 +763,10 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
                               EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+        expectedBaseSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    }
+
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
         expectedBaseSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     }
 
@@ -776,6 +799,10 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
 
     size_t expectedSize = (cmdsSizePerBlit * numberOfBlts) +
                           TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDependencies);
+
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    }
 
     auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
         {1, 1, 1}, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());

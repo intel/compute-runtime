@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/fixtures/device_fixture.h"
 #include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
@@ -239,4 +240,26 @@ HWTEST2_F(BlitTests, givenBlitCommandWhenAppendClearColorCalledThenNothingHappen
     BlitProperties properties = {};
     BlitCommandsHelper<FamilyType>::appendClearColor(properties, bltCmd);
     EXPECT_EQ(0, std::memcmp(&expectedBlitCmd, &bltCmd, sizeof(bltCmd)));
+}
+
+HWTEST2_F(BlitTests, givenGen12LpPlatformWhenPreBlitCommandWARequiredThenReturnsTrue, IsGen12LP) {
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::preBlitCommandWARequired());
+}
+
+HWTEST2_F(BlitTests, givenGen12LpPlatformWhenEstimatePreBlitCommandSizeThenSizeOfFlushIsReturned, IsGen12LP) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite(), BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize());
+}
+
+HWTEST2_F(BlitTests, givenGen12LpPlatformWhenDispatchPreBlitCommandThenMiFlushDwIsProgramed, IsGen12LP) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    auto miFlushBuffer = std::make_unique<MI_FLUSH_DW>();
+    LinearStream linearStream(miFlushBuffer.get(), EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite());
+
+    BlitCommandsHelper<FamilyType>::dispatchPreBlitCommand(linearStream);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(linearStream);
+    auto cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
 }
