@@ -529,4 +529,9 @@ bool HwHelperHw<GfxFamily>::isSipWANeeded(const HardwareInfo &hwInfo) const {
     return false;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const {
+    return false;
+}
+
 } // namespace NEO

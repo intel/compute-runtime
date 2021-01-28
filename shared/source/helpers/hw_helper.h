@@ -102,6 +102,7 @@ class HwHelper {
 
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) = 0;
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
+    virtual bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const = 0;
     virtual uint32_t getMinimalSIMDSize() = 0;
     virtual uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getSteppingFromHwRevId(uint32_t hwRevId, const HardwareInfo &hwInfo) const = 0;
@@ -280,6 +281,8 @@ class HwHelperHw : public HwHelper {
     bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) override;
 
     bool isWaDisableRccRhwoOptimizationRequired() const override;
+
+    bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const override;
 
     uint32_t getMinimalSIMDSize() override;
 
