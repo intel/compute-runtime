@@ -3568,6 +3568,12 @@ cl_int CL_API_CALL clEnqueueWaitForEvents(cl_command_queue commandQueue,
         return retVal;
     }
 
+    if (!pCommandQueue->validateCapabilitiesForEventWaitList(numEvents, eventList)) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueWaitForEvents, &retVal);
+        return retVal;
+    }
+
     retVal = Event::waitForEvents(numEvents, eventList);
 
     TRACING_EXIT(clEnqueueWaitForEvents, &retVal);
