@@ -990,7 +990,7 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushTheP
     EXPECT_NE(cmdList.end(), itor);
 }
 
-HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushThePipeControlIsProgrammedOnlyOnce) {
+HWTEST_F(CommandListCreate, givenCommandListWhenAppendWaitEventsWithDcFlushThePipeControlIsProgrammedOnlyOnce) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t returnValue;
@@ -1007,14 +1007,11 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushTheP
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
-    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     itor++;
-    auto itor2 = find<PIPE_CONTROL *>(itor, cmdList.end());
+    auto itor2 = find<SEMAPHORE_WAIT *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor2);
-    itor2++;
-    auto itor3 = find<PIPE_CONTROL *>(itor2, cmdList.end());
-    EXPECT_EQ(cmdList.end(), itor3);
 }
 
 using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;

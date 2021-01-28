@@ -1474,17 +1474,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
-        commandContainer.addToResidencyContainer(&event->getAllocation());
-
-        gpuAddr = event->getGpuAddress();
-        if (event->isTimestampEvent) {
-            gpuAddr += offsetof(TimestampPacketStorage::Packet, contextEnd);
-        }
-        NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
-                                                                   gpuAddr,
-                                                                   eventStateClear,
-                                                                   COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-
         dcFlushRequired |= (!event->waitScope) ? false : true;
     }
 
@@ -1495,6 +1484,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             NEO::PipeControlArgs args(true);
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
         }
+    }
+
+    for (uint32_t i = 0; i < numEvents; i++) {
+        auto event = Event::fromHandle(phEvent[i]);
+        commandContainer.addToResidencyContainer(&event->getAllocation());
+
+        gpuAddr = event->getGpuAddress();
+        if (event->isTimestampEvent) {
+            gpuAddr += offsetof(TimestampPacketStorage::Packet, contextEnd);
+        }
+        NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
+                                                                   gpuAddr,
+                                                                   eventStateClear,
+                                                                   COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
     }
 
     return ZE_RESULT_SUCCESS;
