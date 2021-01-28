@@ -928,6 +928,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     appendEventForProfilingAllWalkers(hSignalEvent, false);
 
+    auto event = Event::fromHandle(hSignalEvent);
+    if (event) {
+        dstAllocationStruct.needsFlush &= !event->signalScope;
+    }
+
     if (dstAllocationStruct.needsFlush && !isCopyOnly()) {
         NEO::PipeControlArgs args(true);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);

@@ -502,6 +502,103 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventsThenS
     EXPECT_NE(cmdList.end(), itor);
 }
 
+using platformSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+
+HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToDeviceThenSinglePipeControlIsAddedWithDcFlush, platformSupport) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, result));
+    auto &commandContainer = commandList->commandContainer;
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+
+    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, event.get(), 0u, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto iterator = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    bool postSyncFound = false;
+    ASSERT_NE(0u, iterator.size());
+    uint32_t numPCs = 0;
+    for (auto it : iterator) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        numPCs++;
+        if ((cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) &&
+            (cmd->getImmediateData() == Event::STATE_SIGNALED) &&
+            (cmd->getDcFlushEnable())) {
+            postSyncFound = true;
+            break;
+        }
+    }
+
+    ASSERT_TRUE(postSyncFound);
+    EXPECT_EQ(numPCs, iterator.size());
+}
+
+HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushForLastPC, platformSupport) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, result));
+    auto &commandContainer = commandList->commandContainer;
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+
+    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, event.get(), 0u, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto iterator = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    bool postSyncFound = false;
+    ASSERT_NE(0u, iterator.size());
+    uint32_t numPCs = 0;
+    for (auto it : iterator) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        numPCs++;
+        if ((cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) &&
+            (cmd->getImmediateData() == Event::STATE_SIGNALED) &&
+            (!cmd->getDcFlushEnable())) {
+            postSyncFound = true;
+            break;
+        }
+    }
+
+    ASSERT_TRUE(postSyncFound);
+    EXPECT_EQ(numPCs, iterator.size() - 1);
+
+    auto it = *(iterator.end() - 1);
+    auto cmd1 = genCmdCast<PIPE_CONTROL *>(*it);
+    EXPECT_TRUE(cmd1->getDcFlushEnable());
+}
+
 using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyFromMemoryToImageThenBlitImageCopyCalled, ImageSupport) {
@@ -1102,9 +1199,11 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThen
     cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
     EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
 
+    itor++;
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
 
+    itor++;
     itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
@@ -1115,6 +1214,16 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThen
     EXPECT_NE(cmdList.end(), itor);
     cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
     EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+
+    auto temp = itor;
+    auto numPCs = findAll<PIPE_CONTROL *>(temp, cmdList.end());
+    //we should have only one PC with dcFlush added
+    ASSERT_EQ(1u, numPCs.size());
+
+    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd1 = genCmdCast<PIPE_CONTROL *>(*itor);
+    EXPECT_TRUE(cmd1->getDcFlushEnable());
 }
 } // namespace ult
 } // namespace L0

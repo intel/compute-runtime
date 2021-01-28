@@ -296,6 +296,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
@@ -354,6 +355,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     {
         auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
         EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmd->getSourceRegisterAddress());
+    }
+    itor++;
+
+    auto temp = itor;
+    auto numPCs = findAll<PIPE_CONTROL *>(temp, cmdList.end());
+    //we should have only one PC with dcFlush added
+    ASSERT_EQ(1u, numPCs.size());
+
+    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
+        EXPECT_TRUE(cmd->getDcFlushEnable());
     }
 
     {
