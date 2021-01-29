@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,7 @@ struct MetricsLibrary {
     // Initialization.
     virtual bool load();
     bool isInitialized();
+    ze_result_t getInitializationState();
     static const char *getFilename();
 
     // Deinitialization.

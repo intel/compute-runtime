@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -164,6 +164,13 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
     // (oa buffer cannot be shared).
     if (metricContext.getMetricsLibrary().getMetricQueryCount() > 0) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    // Unload metrics library if there are no active queries.
+    // It will allow to open metric streamer. Query and streamer cannot be used
+    // simultaneously since they use the same exclusive resource (oa buffer).
+    if (metricContext.getMetricsLibrary().getInitializationState() == ZE_RESULT_SUCCESS) {
+        metricContext.getMetricsLibrary().release();
     }
 
     // Check metric group sampling type.

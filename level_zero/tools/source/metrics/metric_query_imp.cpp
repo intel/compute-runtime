@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,10 @@ MetricsLibrary::MetricsLibrary(MetricContext &metricContextInput)
 
 MetricsLibrary::~MetricsLibrary() {
     release();
+}
+
+ze_result_t MetricsLibrary::getInitializationState() {
+    return initializationState;
 }
 
 bool MetricsLibrary::isInitialized() {
@@ -109,13 +113,6 @@ bool MetricsLibrary::destroyMetricQuery(QueryHandle_1_0 &query) {
     // Unregister query.
     if (iter != queries.end()) {
         queries.erase(iter);
-    }
-
-    // Unload metrics library if there are no active queries.
-    // It will allow to open metric streamer. Query and streamer cannot be used
-    // simultaneously since they use the same exclusive resource (oa buffer).
-    if (queries.size() == 0) {
-        release();
     }
 
     return result;
