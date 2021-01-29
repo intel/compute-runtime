@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -448,29 +448,33 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
-        zes_oc_mode_t mode = ZES_OC_MODE_OVERRIDE;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
-        zes_oc_mode_t newmode = ZES_OC_MODE_OFF;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
-        EXPECT_EQ(mode, newmode);
 
-        mode = ZES_OC_MODE_INTERPOLATIVE;
+        zes_oc_mode_t mode = ZES_OC_MODE_INTERPOLATIVE;
+        zes_oc_mode_t newmode;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
-        newmode = ZES_OC_MODE_OFF;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
-        EXPECT_EQ(mode, newmode);
-
-        mode = ZES_OC_MODE_FIXED;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
-        newmode = ZES_OC_MODE_OFF;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
-        EXPECT_EQ(mode, newmode);
+        EXPECT_EQ(mode, ZES_OC_MODE_INTERPOLATIVE);
 
         mode = ZES_OC_MODE_OFF;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
-        newmode = ZES_OC_MODE_OVERRIDE;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
-        EXPECT_EQ(ZES_OC_MODE_INTERPOLATIVE, newmode);
+        EXPECT_EQ(mode, ZES_OC_MODE_OFF);
+
+        mode = ZES_OC_MODE_FIXED;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
+        EXPECT_EQ(mode, ZES_OC_MODE_FIXED);
+
+        mode = ZES_OC_MODE_OFF;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
+        EXPECT_EQ(mode, ZES_OC_MODE_OFF);
+
+        mode = ZES_OC_MODE_OVERRIDE;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
+        EXPECT_EQ(mode, ZES_OC_MODE_OVERRIDE);
+
         domainIndex++;
     }
 }

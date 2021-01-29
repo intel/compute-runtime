@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,6 +123,7 @@ bool WddmTemperatureImp::isTempModuleSupported() {
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
+    request.paramInfo = static_cast<uint32_t>(type);
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::TemperatureComponent;
     request.requestId = KmdSysman::Requests::Temperature::CurrentTemperature;

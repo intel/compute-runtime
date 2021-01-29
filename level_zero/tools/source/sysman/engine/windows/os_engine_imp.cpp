@@ -12,7 +12,6 @@ namespace L0 {
 ze_result_t WddmEngineImp::getActivity(zes_engine_stats_t *pStats) {
     uint64_t activeTime = 0;
     uint64_t timeStamp = 0;
-    uint32_t timestampFrequency = 0;
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
@@ -45,24 +44,8 @@ ze_result_t WddmEngineImp::getActivity(zes_engine_stats_t *pStats) {
     memcpy_s(&activeTime, sizeof(uint64_t), response.dataBuffer, sizeof(uint64_t));
     memcpy_s(&timeStamp, sizeof(uint64_t), (response.dataBuffer + sizeof(uint64_t)), sizeof(uint64_t));
 
-    request.requestId = KmdSysman::Requests::Activity::TimestampFrequency;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&timestampFrequency, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    double timeFactor = 1.0 / static_cast<double>(timestampFrequency);
-
-    double elapsedTime = static_cast<double>(activeTime) * timeFactor;
-    elapsedTime *= static_cast<double>(microFacor);
-    pStats->activeTime = static_cast<uint64_t>(elapsedTime);
-
-    elapsedTime = static_cast<double>(timeStamp) * timeFactor;
-    elapsedTime *= static_cast<double>(microFacor);
-    pStats->timestamp = static_cast<uint64_t>(elapsedTime);
+    pStats->activeTime = activeTime;
+    pStats->timestamp = timeStamp;
 
     return status;
 }

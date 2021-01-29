@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,16 +41,12 @@ ze_result_t FrequencyImp::frequencyGetRange(zes_freq_range_t *pLimits) {
 ze_result_t FrequencyImp::frequencySetRange(const zes_freq_range_t *pLimits) {
     double newMin = round(pLimits->min);
     double newMax = round(pLimits->max);
-    bool newMinValid = false, newMaxValid = false;
-    for (unsigned int i = 0; i < numClocks; i++) {
-        if (newMin == pClocks[i]) {
-            newMinValid = true;
-        }
-        if (newMax == pClocks[i]) {
-            newMaxValid = true;
-        }
-    }
-    if (newMin > newMax || !newMinValid || !newMaxValid) {
+    // No need to check if the frequency is inside the clocks array:
+    // 1. GuC will cap this, GuC has an internal range. Hw too rounds to the next step, no need to do that check.
+    // 2. For Overclocking, Oc frequency will be higher than the zesFrequencyProperties.max frequency, so it would be outside
+    //    the clocks array too. Pcode at the end will decide the granted frequency, no need for the check.
+
+    if (newMin > newMax) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

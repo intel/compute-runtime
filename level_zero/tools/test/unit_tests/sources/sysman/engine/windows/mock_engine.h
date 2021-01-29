@@ -22,6 +22,7 @@ struct Mock<EngineKmdSysManager> : public EngineKmdSysManager {
     uint64_t mockActivityTimeStamps[3] = {4465421, 2566851, 1226621};
     uint32_t mockNumSupportedEngineGroups = 3;
     uint32_t mockFrequencyTimeStamp = 38400000;
+    uint32_t mockFrequencyActivity = 1200000;
 
     void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
@@ -53,6 +54,12 @@ struct Mock<EngineKmdSysManager> : public EngineKmdSysManager {
         case KmdSysman::Requests::Activity::TimestampFrequency: {
             uint32_t *pValueFrequency = reinterpret_cast<uint32_t *>(pBuffer);
             *pValueFrequency = mockFrequencyTimeStamp;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
+        case KmdSysman::Requests::Activity::ActivityCounterFrequency: {
+            uint32_t *pValueFrequency = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValueFrequency = mockFrequencyActivity;
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;

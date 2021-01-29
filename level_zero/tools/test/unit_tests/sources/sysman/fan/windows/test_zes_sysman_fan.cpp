@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,8 +101,8 @@ TEST_F(SysmanDeviceFanFixture, GivenValidPowerHandleWhenGettingFanPropertiesAllo
         EXPECT_TRUE(properties.canControl);
         EXPECT_EQ(properties.maxPoints, pKmdSysManager->mockFanMaxPoints);
         EXPECT_EQ(properties.maxRPM, -1);
-        EXPECT_EQ(properties.supportedModes, 1);
-        EXPECT_EQ(properties.supportedUnits, 1);
+        EXPECT_EQ(properties.supportedModes, zes_fan_speed_mode_t::ZES_FAN_SPEED_MODE_TABLE);
+        EXPECT_EQ(properties.supportedUnits, zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_PERCENT);
     }
 }
 
@@ -123,8 +123,8 @@ TEST_F(SysmanDeviceFanFixture, GivenValidPowerHandleWhenGettingFanPropertiesAllo
         EXPECT_FALSE(properties.canControl);
         EXPECT_EQ(properties.maxPoints, pKmdSysManager->mockFanMaxPoints);
         EXPECT_EQ(properties.maxRPM, -1);
-        EXPECT_EQ(properties.supportedModes, 1);
-        EXPECT_EQ(properties.supportedUnits, 1);
+        EXPECT_EQ(properties.supportedModes, zes_fan_speed_mode_t::ZES_FAN_SPEED_MODE_TABLE);
+        EXPECT_EQ(properties.supportedUnits, zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_PERCENT);
     }
 }
 
@@ -171,7 +171,7 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingTheSpeedTableModeTh
 
     for (auto handle : handles) {
         zes_fan_speed_table_t fanSpeedTable = {0};
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFanSetSpeedTableMode(handle, &fanSpeedTable));
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesFanSetSpeedTableMode(handle, &fanSpeedTable));
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,7 @@ class WddmFanImp : public OsFan, NEO::NonCopyableOrMovableClass {
   private:
     uint64_t prevTS = 0;
     uint32_t prevPulses = 0;
+    int32_t maxPoints = 0;
 };
 
 } // namespace L0

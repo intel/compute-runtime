@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,15 @@
 
 namespace L0 {
 
-void GetOsTimestamp(uint64_t &timestamp) {
-    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
-    timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
-}
+struct FanPoint {
+    union {
+        struct {
+            int32_t temperatureDegreesCelsius : 16;
+            int32_t fanSpeedPercent : 16;
+        };
+        int32_t data;
+    };
+};
 
 ze_result_t WddmFanImp::getProperties(zes_fan_properties_t *pProperties) {
     pProperties->onSubdevice = false;
@@ -45,10 +50,10 @@ ze_result_t WddmFanImp::getProperties(zes_fan_properties_t *pProperties) {
     }
 
     memcpy_s(&FanPoints, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    pProperties->maxPoints = static_cast<int32_t>(FanPoints);
+    pProperties->maxPoints = maxPoints = static_cast<int32_t>(FanPoints);
     pProperties->maxRPM = -1;
-    pProperties->supportedModes = 1;
-    pProperties->supportedUnits = 1;
+    pProperties->supportedModes = zes_fan_speed_mode_t::ZES_FAN_SPEED_MODE_TABLE;
+    pProperties->supportedUnits = zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_PERCENT;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -65,7 +70,48 @@ ze_result_t WddmFanImp::setFixedSpeedMode(const zes_fan_speed_t *pSpeed) {
 }
 
 ze_result_t WddmFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTable) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (pSpeedTable->numPoints == 0 || pSpeedTable->numPoints >= maxPoints) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    for (int32_t i = 0; i < pSpeedTable->numPoints; i++) {
+        if (pSpeedTable->table[i].speed.units == zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_RPM) {
+            return ze_result_t::ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
+
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+    uint32_t value = pSpeedTable->numPoints;
+
+    request.commandId = KmdSysman::Command::Set;
+    request.componentId = KmdSysman::Component::FanComponent;
+    request.requestId = KmdSysman::Requests::Fans::CurrentNumOfControlPoints;
+    request.dataSize = sizeof(uint32_t);
+
+    memcpy_s(request.dataBuffer, sizeof(uint32_t), &value, sizeof(uint32_t));
+
+    ze_result_t status = pKmdSysManager->requestSingle(request, response);
+
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+
+    request.requestId = KmdSysman::Requests::Fans::CurrentFanPoint;
+
+    for (int32_t i = 0; i < pSpeedTable->numPoints; i++) {
+        FanPoint point;
+        point.fanSpeedPercent = pSpeedTable->table[i].speed.speed;
+        point.temperatureDegreesCelsius = pSpeedTable->table[i].temperature;
+        value = point.data;
+        memcpy_s(request.dataBuffer, sizeof(uint32_t), &value, sizeof(uint32_t));
+        status = pKmdSysManager->requestSingle(request, response);
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t WddmFanImp::getState(zes_fan_speed_units_t units, int32_t *pSpeed) {
@@ -73,8 +119,6 @@ ze_result_t WddmFanImp::getState(zes_fan_speed_units_t units, int32_t *pSpeed) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    ze_result_t status = ZE_RESULT_SUCCESS;
-    uint64_t currentTS = 0;
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
@@ -82,7 +126,7 @@ ze_result_t WddmFanImp::getState(zes_fan_speed_units_t units, int32_t *pSpeed) {
     request.componentId = KmdSysman::Component::FanComponent;
     request.requestId = KmdSysman::Requests::Fans::CurrentFanSpeed;
 
-    status = pKmdSysManager->requestSingle(request, response);
+    ze_result_t status = pKmdSysManager->requestSingle(request, response);
 
     if (status != ZE_RESULT_SUCCESS) {
         return status;
@@ -91,18 +135,7 @@ ze_result_t WddmFanImp::getState(zes_fan_speed_units_t units, int32_t *pSpeed) {
     uint32_t value = 0;
     memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
 
-    GetOsTimestamp(currentTS);
-    uint64_t diffTime = currentTS - prevTS;
-    uint32_t diffPulses = value - prevPulses;
-
-    double pulsesPerTime = static_cast<double>(diffPulses) / static_cast<double>(diffTime);
-    pulsesPerTime *= 1000000.0;
-    pulsesPerTime *= 60.0;
-
-    prevTS = currentTS;
-    prevPulses = value;
-
-    *pSpeed = static_cast<int32_t>(pulsesPerTime);
+    *pSpeed = static_cast<int32_t>(value);
 
     return status;
 }

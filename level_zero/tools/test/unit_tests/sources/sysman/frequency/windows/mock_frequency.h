@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,6 +77,12 @@ struct Mock<FrequencyKmdSysManager> : public FrequencyKmdSysManager {
         case KmdSysman::Requests::Frequency::ExtendedOcSupported: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockIsExtendedModeSupported[domain];
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
+        case KmdSysman::Requests::Frequency::CanControlFrequency: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = allowSetCalls ? mockGPUCanControl[domain] : mockGPUCannotControl[domain];
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
