@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -700,35 +700,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenP
     EXPECT_EQ(flags, this->mock->execBuffer.flags);
 
     mm->freeGraphicsMemory(dummyAllocation);
-    mm->freeGraphicsMemory(commandBuffer);
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenDebugFlagSetWhenCallingExecIoctlThenPassAsyncFlag) {
-    DebugManagerStateRestore restore;
-
-    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    LinearStream cs(commandBuffer);
-
-    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
-    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
-
-    uint64_t baseFlags = static_cast<OsContextLinux &>(csr->getOsContext()).getEngineFlag() | I915_EXEC_NO_RELOC;
-
-    {
-        DebugManager.flags.UseAsyncDrmExec.set(0);
-        csr->flush(batchBuffer, csr->getResidencyAllocations());
-
-        EXPECT_EQ(baseFlags, this->mock->execBuffer.flags);
-    }
-
-    {
-        DebugManager.flags.UseAsyncDrmExec.set(1);
-        csr->flush(batchBuffer, csr->getResidencyAllocations());
-
-        EXPECT_EQ((baseFlags | EXEC_OBJECT_ASYNC), this->mock->execBuffer.flags);
-    }
-
     mm->freeGraphicsMemory(commandBuffer);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -441,4 +441,17 @@ TEST_F(DrmBufferObjectTest, givenBoMarkedForCaptureWhenFillingExecObjectThenCapt
     bo->fillExecObject(execObject, osContext.get(), 0, 1);
 
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_CAPTURE);
+}
+
+TEST_F(DrmBufferObjectTest, givenAsyncDebugFlagWhenFillingExecObjectThenFlagIsSet) {
+    drm_i915_gem_exec_object2 execObject;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseAsyncDrmExec.set(1);
+
+    memset(&execObject, 0, sizeof(execObject));
+    bo->setAddress(0x45000);
+    bo->setSize(0x1000);
+    bo->fillExecObject(execObject, osContext.get(), 0, 1);
+
+    EXPECT_TRUE(execObject.flags & EXEC_OBJECT_ASYNC);
 }

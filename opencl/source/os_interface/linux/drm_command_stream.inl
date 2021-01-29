@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,9 +108,6 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
     DEBUG_BREAK_IF(!bb);
 
     auto execFlags = static_cast<OsContextLinux *>(osContext)->getEngineFlag() | I915_EXEC_NO_RELOC;
-    if (DebugManager.flags.UseAsyncDrmExec.get() != -1) {
-        execFlags |= (EXEC_OBJECT_ASYNC * DebugManager.flags.UseAsyncDrmExec.get());
-    }
 
     // Residency hold all allocation except command buffer, hence + 1
     auto requiredSize = this->residency.size() + 1;
