@@ -524,6 +524,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &functionArgs,
                                                                         hEvent, numWaitEvents, phWaitEvents);
 
+    auto event = Event::fromHandle(hEvent);
+    if (event) {
+        allocationStruct.needsFlush &= !event->signalScope;
+    }
+
     if (allocationStruct.needsFlush) {
         NEO::PipeControlArgs args(true);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
@@ -1017,6 +1022,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         return result;
     }
 
+    auto event = Event::fromHandle(hSignalEvent);
+    if (event) {
+        dstAllocationStruct.needsFlush &= !event->signalScope;
+    }
+
     if (dstAllocationStruct.needsFlush && !isCopyOnly()) {
         NEO::PipeControlArgs args(true);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
@@ -1309,6 +1319,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     appendEventForProfilingAllWalkers(hSignalEvent, false);
 
+    auto event = Event::fromHandle(hSignalEvent);
+    if (event) {
+        hostPointerNeedsFlush &= !event->signalScope;
+    }
+
     if (hostPointerNeedsFlush) {
         NEO::PipeControlArgs args(true);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
@@ -1567,15 +1582,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
         } else {
 
             NEO::PipeControlArgs args = {};
-            args.dcFlushEnable = true;
+            args.dcFlushEnable = (!event->signalScope) ? false : true;
 
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
             appendWriteKernelTimestamp(hEvent, beforeWalker, true);
-
-            args.dcFlushEnable = (!event->signalScope) ? false : true;
-            if (args.dcFlushEnable) {
-                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
-            }
         }
     }
 }
@@ -1712,10 +1722,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
                                            phWaitEvents);
     if (appendResult != ZE_RESULT_SUCCESS) {
         return appendResult;
-    }
-
-    if (hSignalEvent) {
-        CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent);
     }
 
     return ZE_RESULT_SUCCESS;

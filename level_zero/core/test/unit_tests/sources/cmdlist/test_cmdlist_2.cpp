@@ -1190,30 +1190,42 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThen
         commandList.commandContainer.getCommandStream()->getUsed()));
     auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    }
 
     itor++;
     itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    }
 
     itor++;
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
+    {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
+        EXPECT_FALSE(cmd->getDcFlushEnable());
+    }
 
     itor++;
     itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    }
 
     itor++;
     itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    }
 
     auto temp = itor;
     auto numPCs = findAll<PIPE_CONTROL *>(temp, cmdList.end());
@@ -1222,8 +1234,10 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThen
 
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    auto cmd1 = genCmdCast<PIPE_CONTROL *>(*itor);
-    EXPECT_TRUE(cmd1->getDcFlushEnable());
+    {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
+        EXPECT_TRUE(cmd->getDcFlushEnable());
+    }
 }
 } // namespace ult
 } // namespace L0

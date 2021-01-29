@@ -358,17 +358,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     }
     itor++;
 
-    auto temp = itor;
-    auto numPCs = findAll<PIPE_CONTROL *>(temp, cmdList.end());
-    //we should have only one PC with dcFlush added
-    ASSERT_EQ(1u, numPCs.size());
-
-    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    ASSERT_NE(cmdList.end(), itor);
-    {
-        auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
-        EXPECT_TRUE(cmd->getDcFlushEnable());
-    }
+    auto numPCs = findAll<PIPE_CONTROL *>(itor, cmdList.end());
+    //we should not have PC when signal scope is device
+    ASSERT_EQ(0u, numPCs.size());
 
     {
         auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
