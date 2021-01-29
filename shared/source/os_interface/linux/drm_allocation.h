@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@ namespace NEO {
 class BufferObject;
 class OsContext;
 class Drm;
+enum class CacheRegion : uint16_t;
 
 struct OsHandle {
     BufferObject *bo = nullptr;
@@ -62,6 +63,8 @@ class DrmAllocation : public GraphicsAllocation {
     }
 
     uint64_t peekInternalHandle(MemoryManager *memoryManager) override;
+
+    bool setCacheRegion(Drm *drm, size_t regionSize, CacheRegion regionIndex);
 
     void *getMmapPtr() { return this->mmapPtr; }
     void setMmapPtr(void *ptr) { this->mmapPtr = ptr; }

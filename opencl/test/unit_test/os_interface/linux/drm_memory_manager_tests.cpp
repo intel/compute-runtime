@@ -40,6 +40,7 @@
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock_cache_info.h"
 #include "test.h"
 
 #include "drm/i915_drm.h"
@@ -4182,5 +4183,49 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenIsaIsRegisteredThenC
 
     allocation.freeRegisteredBOBindExtHandles(&drm);
     EXPECT_EQ(2u, drm.unregisterCalledCount);
+}
+
+TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFalse) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.cacheInfo.reset(new MockCacheInfo());
+
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+
+    EXPECT_FALSE(allocation.setCacheRegion(&drm, 1024, CacheRegion::None));
+}
+
+TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenReturnTrue) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.cacheInfo.reset(new MockCacheInfo());
+
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+
+    EXPECT_TRUE(allocation.setCacheRegion(&drm, 1024, CacheRegion::Region1));
+}
+
+TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenSetRegionInBufferObject) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.cacheInfo.reset(new MockCacheInfo());
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    EXPECT_TRUE(allocation.setCacheRegion(&drm, 1024, CacheRegion::Region1));
+
+    for (auto bo : allocation.bufferObjects) {
+        if (bo != nullptr) {
+            EXPECT_EQ(CacheRegion::Region1, bo->peekCacheRegion());
+        }
+    }
 }
 } // namespace NEO

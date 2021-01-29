@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "drm/i915_drm.h"
@@ -78,6 +79,8 @@ class BufferObject {
     bool isMarkedForCapture() {
         return allowCapture;
     }
+    void setCacheRegion(CacheRegion regionIndex) { cacheRegion = regionIndex; }
+    CacheRegion peekCacheRegion() const { return cacheRegion; }
 
   protected:
     Drm *drm = nullptr;
@@ -101,6 +104,8 @@ class BufferObject {
     void *lockedAddress; // CPU side virtual address
 
     uint64_t unmapSize = 0;
+
+    CacheRegion cacheRegion = CacheRegion::Default;
 
     std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
     StackVec<uint32_t, 2> bindExtHandles;

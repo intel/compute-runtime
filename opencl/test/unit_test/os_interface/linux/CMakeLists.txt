@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/device_os_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_cache_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_mm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_debug_tests.cpp

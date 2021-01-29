@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,19 @@ std::string DrmAllocation::getAllocationInfoString() const {
 
 uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager) {
     return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBO()->peekHandle(), this->rootDeviceIndex));
+}
+
+bool DrmAllocation::setCacheRegion(Drm *drm, size_t regionSize, CacheRegion regionIndex) {
+    if (!drm->getCacheInfo()->getCacheRegion(regionSize, regionIndex)) {
+        return false;
+    }
+
+    for (auto bo : bufferObjects) {
+        if (bo != nullptr) {
+            bo->setCacheRegion(regionIndex);
+        }
+    }
+    return true;
 }
 
 void DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {

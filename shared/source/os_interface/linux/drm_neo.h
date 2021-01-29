@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/memory_info.h"
@@ -108,6 +109,7 @@ class Drm {
     int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     int setupHardwareInfo(DeviceDescriptor *, bool);
     void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo &sysInfo);
+    void setupCacheInfo(const HardwareInfo &hwInfo);
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
     void checkNonPersistentContextsSupport();
@@ -132,6 +134,10 @@ class Drm {
 
     SystemInfo *getSystemInfo() const {
         return systemInfo.get();
+    }
+
+    CacheInfo *getCacheInfo() const {
+        return cacheInfo.get();
     }
 
     MemoryInfo *getMemoryInfo() const {
@@ -185,6 +191,7 @@ class Drm {
 
     Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
     std::unique_ptr<SystemInfo> systemInfo;
+    std::unique_ptr<CacheInfo> cacheInfo;
     std::unique_ptr<EngineInfo> engineInfo;
     std::unique_ptr<MemoryInfo> memoryInfo;
     std::vector<uint32_t> virtualMemoryIds;

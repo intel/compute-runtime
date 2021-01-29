@@ -30,6 +30,7 @@ using namespace NEO;
 class DrmMock : public Drm {
   public:
     using Drm::bindAvailable;
+    using Drm::cacheInfo;
     using Drm::checkQueueSliceSupport;
     using Drm::classHandles;
     using Drm::contextDebugSupported;

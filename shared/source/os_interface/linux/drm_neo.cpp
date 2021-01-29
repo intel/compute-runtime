@@ -314,6 +314,8 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
 
     device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
 
+    setupCacheInfo(*hwInfo);
+
     return 0;
 }
 

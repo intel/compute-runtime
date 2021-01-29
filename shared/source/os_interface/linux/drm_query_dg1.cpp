@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/os_interface/linux/cache_info_impl.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/engine_info_impl.h"
 #include "shared/source/os_interface/linux/memory_info_impl.h"
@@ -73,6 +74,10 @@ int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObj
 
 bool Drm::isVmBindAvailable() {
     return this->bindAvailable;
+}
+
+void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
+    this->cacheInfo.reset(new CacheInfoImpl());
 }
 
 } // namespace NEO

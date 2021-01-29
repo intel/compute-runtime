@@ -7,6 +7,8 @@
 set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/cache_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/cache_info_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.cpp
