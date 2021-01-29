@@ -660,6 +660,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
+                                                                          const ze_group_count_t *pThreadGroupDimensions,
+                                                                          ze_event_handle_t hEvent) {
+    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, nullptr, false, false);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(ze_event_handle_t hEvent, bool beforeWalker) {
+    if (beforeWalker) {
+        appendEventForProfiling(hEvent, true);
+    } else {
+        appendSignalEventPostWalker(hEvent);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(void *dstPtr,
                                                                                NEO::GraphicsAllocation *dstPtrAlloc,
                                                                                uint64_t dstOffset,
