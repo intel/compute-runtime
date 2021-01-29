@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1592,67 +1592,6 @@ HWTEST_F(ImageTransformTest, givenSurfaceBaseAddressAndUnifiedSurfaceWhenSetUnif
     uint64_t offset = gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_SURF);
 
     EXPECT_EQ(surfBsaseAddress + offset, surfaceState.getAuxiliarySurfaceBaseAddress());
-}
-
-template <typename FamilyName>
-class MockImageHw : public ImageHw<FamilyName> {
-  public:
-    MockImageHw(Context *context, const cl_image_format &format, const cl_image_desc &desc, ClSurfaceFormatInfo &surfaceFormatInfo, GraphicsAllocation *graphicsAllocation) : ImageHw<FamilyName>(context, {}, 0, 0, 0, nullptr, nullptr, format, desc, false, GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAllocation), false, 0, 0, surfaceFormatInfo) {
-    }
-
-    void setAuxParamsForMCSCCS(typename FamilyName::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) override;
-    bool setAuxParamsForMCSCCSCalled = false;
-};
-
-template <typename FamilyName>
-void MockImageHw<FamilyName>::setAuxParamsForMCSCCS(typename FamilyName::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
-    this->setAuxParamsForMCSCCSCalled = true;
-}
-
-using HwImageTest = ::testing::Test;
-HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMultisampleImageThenSetParamsForCcsMcsIsCalled) {
-
-    MockContext context;
-    OsAgnosticMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    context.memoryManager = &memoryManager;
-
-    cl_image_desc imgDesc = {};
-    imgDesc.image_height = 1;
-    imgDesc.image_width = 4;
-    imgDesc.image_depth = 1;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
-    imgDesc.num_samples = 8;
-    cl_image_format format = {};
-
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.getDevice(0)->getDevice());
-    AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(0, imgInfo, true, memoryProperties, context.getDevice(0)->getHardwareInfo(), context.getDeviceBitfieldForAllocation(0));
-
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
-
-    ClSurfaceFormatInfo formatInfo = {};
-    std::unique_ptr<MockImageHw<FamilyType>> mockImage(new MockImageHw<FamilyType>(&context, format, imgDesc, formatInfo, graphicsAllocation));
-
-    McsSurfaceInfo msi = {10, 20, 3};
-    auto mcsAlloc = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
-    mcsAlloc->setDefaultGmm(new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, false));
-
-    auto mockMcsGmmResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
-    mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
-    mockMcsGmmResInfo->setMultisampleControlSurface();
-    EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
-    EXPECT_TRUE(mcsAlloc->getDefaultGmm()->hasMultisampleControlSurface());
-
-    mockImage->setMcsSurfaceInfo(msi);
-    mockImage->setMcsAllocation(mcsAlloc);
-
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-
-    EXPECT_FALSE(mockImage->setAuxParamsForMCSCCSCalled);
-    mockImage->setAuxParamsForMultisamples(&surfaceState);
-
-    EXPECT_TRUE(mockImage->setAuxParamsForMCSCCSCalled);
 }
 
 using ImageMultiRootDeviceTests = MultiRootDeviceFixture;

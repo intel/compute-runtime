@@ -17,6 +17,21 @@ using Family = NEO::SKLFamily;
 #include "shared/source/command_container/image_surface_state/compression_params_bdw_plus.inl"
 
 namespace NEO {
+template <>
+void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState) {
+}
+
+template <>
+void EncodeSurfaceState<Family>::setClearColorParams(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
+}
+
+template <>
+void EncodeSurfaceState<Family>::setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
+    if (gmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
+        surfaceState->setAuxiliarySurfaceMode(Family::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+    }
+}
+
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;
 template struct EncodeMath<Family>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,11 +18,11 @@ GEN12LPTEST_F(ImageSurfaceStateTestsGen12LP, givenGmmWithMediaCompressedWhenSetF
     castSurfaceState->setAuxiliarySurfaceMode(TGLLPFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 
     mockGmm.gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = false;
-    setFlagsForMediaCompression<TGLLPFamily>(castSurfaceState, &mockGmm);
+    EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, &mockGmm);
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), TGLLPFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     EXPECT_EQ(castSurfaceState->getMemoryCompressionEnable(), false);
     mockGmm.gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
-    setFlagsForMediaCompression<TGLLPFamily>(castSurfaceState, &mockGmm);
+    EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, &mockGmm);
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), TGLLPFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     EXPECT_EQ(castSurfaceState->getMemoryCompressionEnable(), true);
 }
@@ -33,7 +33,7 @@ GEN12LPTEST_F(ImageSurfaceStateTestsGen12LP, givenGmmWhenSetClearColorParamsThen
     auto castSurfaceState = reinterpret_cast<typename TGLLPFamily::RENDER_SURFACE_STATE *>(surfaceState.get());
 
     mockGmm.gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = true;
-    setClearColorParams<TGLLPFamily>(castSurfaceState, &mockGmm);
+    EncodeSurfaceState<TGLLPFamily>::setClearColorParams(castSurfaceState, &mockGmm);
     EXPECT_EQ(castSurfaceState->getClearValueAddressEnable(), true);
 }
 

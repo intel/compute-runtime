@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,22 +124,6 @@ inline void setUnifiedAuxBaseAddress(typename GfxFamily::RENDER_SURFACE_STATE *s
 }
 
 template <typename GfxFamily>
-void setFlagsForMediaCompression(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
-
-template <typename GfxFamily>
-void setClearColorParams(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm);
-
-template <typename GfxFamily>
 void setMipTailStartLod(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
 
-template <typename GfxFamily>
-inline void setAuxParamsForCCS(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
-    using AUXILIARY_SURFACE_MODE = typename GfxFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
-    // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
-    surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    setFlagsForMediaCompression<GfxFamily>(surfaceState, gmm);
-
-    setClearColorParams<GfxFamily>(surfaceState, gmm);
-    setUnifiedAuxBaseAddress<GfxFamily>(surfaceState, gmm);
-}
 } // namespace NEO

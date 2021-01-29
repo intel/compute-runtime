@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,10 +18,10 @@ GEN8TEST_F(ImageSurfaceStateTestsGen8, givenGmmWithMediaCompressedWhenSetFlagsFo
     castSurfaceState->setAuxiliarySurfaceMode(FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 
     mockGmm.gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = false;
-    setFlagsForMediaCompression<FamilyType>(castSurfaceState, &mockGmm);
+    EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, &mockGmm);
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     mockGmm.gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
-    setFlagsForMediaCompression<FamilyType>(castSurfaceState, &mockGmm);
+    EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, &mockGmm);
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 }
 

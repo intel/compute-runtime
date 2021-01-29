@@ -89,7 +89,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     if (imageDesc.num_samples > 1) {
         setAuxParamsForMultisamples(surfaceState);
     } else if (gmm && gmm->isRenderCompressed) {
-        setAuxParamsForCCS<GfxFamily>(surfaceState, gmm);
+        EncodeSurfaceState<GfxFamily>::setAuxParamsForCCS(surfaceState, gmm);
     }
     appendSurfaceStateDepthParams(surfaceState, gmm);
     EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(surfaceState, graphicsAllocation, gmmHelper, isImageFromBuffer());
@@ -105,13 +105,13 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
         auto mcsGmm = getMcsAllocation()->getDefaultGmm();
 
         if (mcsGmm->unifiedAuxTranslationCapable() && mcsGmm->hasMultisampleControlSurface()) {
-            setAuxParamsForMCSCCS(surfaceState, mcsGmm);
+            EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState);
             surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
             surfaceState->setAuxiliarySurfaceQpitch(mcsGmm->getAuxQPitch());
-            setClearColorParams<GfxFamily>(surfaceState, mcsGmm);
+            EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);
             setUnifiedAuxBaseAddress<GfxFamily>(surfaceState, mcsGmm);
         } else if (mcsGmm->unifiedAuxTranslationCapable()) {
-            setAuxParamsForCCS<GfxFamily>(surfaceState, mcsGmm);
+            EncodeSurfaceState<GfxFamily>::setAuxParamsForCCS(surfaceState, mcsGmm);
         } else {
             surfaceState->setAuxiliarySurfaceMode((typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)1);
             surfaceState->setAuxiliarySurfacePitch(mcsSurfaceInfo.pitch);
@@ -199,7 +199,4 @@ void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
     surfaceState->setSurfaceArray(true);
 }
 
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::setAuxParamsForMCSCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
-}
 } // namespace NEO

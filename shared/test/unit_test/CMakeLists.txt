@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -96,6 +96,7 @@ if(NOT SKIP_UNIT_TESTS)
                              ${CMAKE_CURRENT_SOURCE_DIR}
                              ${ENGINE_NODE_DIR}
                              ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros/header${BRANCH_DIR_SUFFIX}
+                             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/includes${BRANCH_DIR_SUFFIX}
   )
 
   if(UNIX)

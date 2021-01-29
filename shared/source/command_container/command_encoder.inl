@@ -20,6 +20,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/image/image_surface_state.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 
@@ -424,6 +425,17 @@ size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap
 
 template <typename Family>
 void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {}
+
+template <typename Family>
+void EncodeSurfaceState<Family>::setAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
+    using AUXILIARY_SURFACE_MODE = typename Family::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+    // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
+    surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+    setFlagsForMediaCompression(surfaceState, gmm);
+
+    setClearColorParams(surfaceState, gmm);
+    setUnifiedAuxBaseAddress<Family>(surfaceState, gmm);
+}
 
 template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
