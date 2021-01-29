@@ -10,4 +10,5 @@
 
 template <>
 struct TestTraits<IGFX_GEN11_CORE> {
+    static constexpr bool auxBuiltinsSupported = true;
 };

@@ -349,7 +349,7 @@ void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_
     if (gmm && gmm->isRenderCompressed && !forceNonAuxMode) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
         surfaceState->setCoherencyType(R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
-        surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        setBufferAuxParamsForCCS(surfaceState);
     }
 
     if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
@@ -427,7 +427,7 @@ template <typename Family>
 void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
-void EncodeSurfaceState<Family>::setAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
+void EncodeSurfaceState<Family>::setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
     using AUXILIARY_SURFACE_MODE = typename Family::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
     // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
     surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
@@ -435,6 +435,20 @@ void EncodeSurfaceState<Family>::setAuxParamsForCCS(R_SURFACE_STATE *surfaceStat
 
     setClearColorParams(surfaceState, gmm);
     setUnifiedAuxBaseAddress<Family>(surfaceState, gmm);
+}
+
+template <typename Family>
+void EncodeSurfaceState<Family>::setBufferAuxParamsForCCS(R_SURFACE_STATE *surfaceState) {
+    using AUXILIARY_SURFACE_MODE = typename R_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+
+    surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+}
+
+template <typename Family>
+bool EncodeSurfaceState<Family>::isAuxModeEnabled(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
+    using AUXILIARY_SURFACE_MODE = typename R_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+
+    return (surfaceState->getAuxiliarySurfaceMode() == AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }
 
 template <typename Family>

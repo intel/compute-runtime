@@ -120,7 +120,7 @@ GEN12LPTEST_F(gen12LpImageTests, givenRenderCompressionThenSurfaceStateParamsAre
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
-    EncodeSurfaceState<FamilyType>::setAuxParamsForCCS(&surfaceState, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
+    EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(&surfaceState, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
 
     EXPECT_FALSE(surfaceState.getMemoryCompressionEnable());
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
@@ -136,7 +136,7 @@ GEN12LPTEST_F(gen12LpImageTests, givenMediaCompressionThenSurfaceStateParamsAreS
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
     surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    EncodeSurfaceState<FamilyType>::setAuxParamsForCCS(&surfaceState, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
+    EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(&surfaceState, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
 
     EXPECT_TRUE(surfaceState.getMemoryCompressionEnable());
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);

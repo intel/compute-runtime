@@ -251,7 +251,9 @@ struct EncodeSurfaceState {
                                                    size_t numberOfBindingTableStates, size_t offsetOfBindingTable);
 
     static void appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper, bool imageFromBuffer);
-    static void setAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm);
+    static void setBufferAuxParamsForCCS(R_SURFACE_STATE *surfaceState);
+    static void setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm);
+    static bool isAuxModeEnabled(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static void setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState);
     static void setClearColorParams(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static void setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm);

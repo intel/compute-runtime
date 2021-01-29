@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -199,7 +199,7 @@ HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenRenderCompressedBufferIsSe
     pKernelInfo->kernelArgInfo.at(0).pureStatefulBufferAccess = true;
     ret = pKernel->setArgBuffer(0, sizeof(cl_mem), &clMem);
     EXPECT_EQ(CL_SUCCESS, ret);
-    EXPECT_TRUE(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E == surfaceState->getAuxiliarySurfaceMode());
+    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(surfaceState, graphicsAllocation->getDefaultGmm()));
 }
 
 TEST_F(BufferSetArgTest, Given32BitAddressingWhenSettingArgStatelessThenGpuAddressIsSetCorrectly) {

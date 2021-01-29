@@ -41,6 +41,7 @@
 #include "compiler_options.h"
 #include "gtest/gtest.h"
 #include "os_inc.h"
+#include "test_traits_common.h"
 
 #include <string>
 
@@ -128,6 +129,13 @@ struct AuxBuiltInTests : BuiltInTests, public ::testing::WithParamInterface<Kern
         kernelObjType = GetParam();
     }
     KernelObjForAuxTranslation::Type kernelObjType;
+};
+
+struct AuxBuiltinsMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::auxBuiltinsSupported;
+    }
 };
 
 INSTANTIATE_TEST_CASE_P(,
@@ -235,7 +243,7 @@ TEST_F(BuiltInTests, GivenCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsA
     delete dstPtr;
 }
 
-HWTEST_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels) {
+HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels, AuxBuiltinsMatcher) {
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
@@ -301,7 +309,7 @@ HWTEST_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTr
     EXPECT_NE(builtinKernels[1], builtinKernels[2]);
 }
 
-HWTEST_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels) {
+HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels, AuxBuiltinsMatcher) {
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
@@ -367,7 +375,7 @@ HWTEST_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTrans
     EXPECT_NE(builtinKernels[1], builtinKernels[2]);
 }
 
-HWTEST_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickDifferentKernelsDependingOnRequest) {
+HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickDifferentKernelsDependingOnRequest, AuxBuiltinsMatcher) {
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
@@ -405,7 +413,7 @@ HWTEST_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThen
     EXPECT_NE(builtinKernels[2], builtinKernels[5]);
 }
 
-HWTEST_P(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchInfosThenAbort) {
+HWTEST2_P(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchInfosThenAbort, AuxBuiltinsMatcher) {
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
@@ -441,7 +449,7 @@ TEST_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5) {
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 }
 
-HWTEST_P(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInstancesWhenDispatchingThenResize) {
+HWTEST2_P(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInstancesWhenDispatchingThenResize, AuxBuiltinsMatcher) {
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
@@ -482,7 +490,7 @@ TEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesF
     }
 }
 
-HWTEST_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin) {
+HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin, AuxBuiltinsMatcher) {
     BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pBuiltIns, *pClDevice);
     pBuiltIns->BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::AuxTranslation)].first.reset(mockAuxBuiltInOp);
@@ -585,7 +593,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettin
     }
 }
 
-HWTEST_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode) {
+HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
     if (this->pDevice->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();
     }
@@ -643,7 +651,7 @@ HWTEST_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThen
     }
 }
 
-HWTEST_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode) {
+HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode, AuxBuiltinsMatcher) {
     if (this->pDevice->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();
     }

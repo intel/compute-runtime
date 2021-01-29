@@ -148,7 +148,7 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironm
     if (gmm && gmm->isRenderCompressed && !forceNonAuxMode) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
         state.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
-        state.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        EncodeSurfaceState<Family>::setBufferAuxParamsForCCS(&state);
     } else {
         state.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
         state.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);

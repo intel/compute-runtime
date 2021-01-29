@@ -1553,7 +1553,7 @@ HWTEST_F(BufferSetSurfaceTests, givenRenderCompressedGmmResourceWhenSurfaceState
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice());
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
-    EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E == surfaceState.getAuxiliarySurfaceMode());
+    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, gmm));
     EXPECT_TRUE(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT == surfaceState.getCoherencyType());
 }
 

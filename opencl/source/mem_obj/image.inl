@@ -89,7 +89,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     if (imageDesc.num_samples > 1) {
         setAuxParamsForMultisamples(surfaceState);
     } else if (gmm && gmm->isRenderCompressed) {
-        EncodeSurfaceState<GfxFamily>::setAuxParamsForCCS(surfaceState, gmm);
+        EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(surfaceState, gmm);
     }
     appendSurfaceStateDepthParams(surfaceState, gmm);
     EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(surfaceState, graphicsAllocation, gmmHelper, isImageFromBuffer());
@@ -111,7 +111,7 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
             EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);
             setUnifiedAuxBaseAddress<GfxFamily>(surfaceState, mcsGmm);
         } else if (mcsGmm->unifiedAuxTranslationCapable()) {
-            EncodeSurfaceState<GfxFamily>::setAuxParamsForCCS(surfaceState, mcsGmm);
+            EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(surfaceState, mcsGmm);
         } else {
             surfaceState->setAuxiliarySurfaceMode((typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)1);
             surfaceState->setAuxiliarySurfacePitch(mcsSurfaceInfo.pitch);

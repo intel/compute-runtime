@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -690,13 +690,15 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
     EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
 
+    mcsAlloc->getDefaultGmm()->isRenderCompressed = true;
+
     retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
-                                                                                 pKernelInfo->kernelArgInfo[0].offsetHeap));
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
+                                                                           pKernelInfo->kernelArgInfo[0].offsetHeap));
 
-    EXPECT_TRUE(surfaceState->getAuxiliarySurfaceMode() == AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(surfaceState, mcsAlloc->getDefaultGmm()));
     EXPECT_EQ(1u, surfaceState->getAuxiliarySurfacePitch());
     EXPECT_EQ(0u, surfaceState->getAuxiliarySurfaceQpitch());
 }
@@ -885,7 +887,7 @@ HWTEST_F(ImageSetArgTest, givenRenderCompressedResourceWhenSettingImgArgThenSetC
 
     srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
 
-    EXPECT_TRUE(surfaceState.getAuxiliarySurfaceMode() == AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, srcAllocation->getDefaultGmm()));
     EXPECT_EQ(1u, surfaceState.getAuxiliarySurfacePitch());
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceQpitch());
 }
