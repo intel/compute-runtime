@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
 #include "test.h"
 
 #include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_l0_debugger.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include "active_debugger_fixture.h"
@@ -101,6 +103,70 @@ TEST_F(DeviceWithDebuggerEnabledTest, GivenNonDebuggeableKernelWhenModuleIsIniti
     module->initialize(&moduleDesc, device);
 
     EXPECT_FALSE(module->isDebugEnabled());
+}
+
+using KernelDebugSurfaceTest = Test<ModuleFixture>;
+
+HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKernelToCommandListThenBindfulSurfaceStateForDebugSurfaceIsProgrammed) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
+
+    auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), true,
+         NEO::SipKernel::maxDbgSurfaceSize,
+         NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
+         false,
+         false,
+         device->getNEODevice()->getDeviceBitfield()});
+    static_cast<L0::DeviceImp *>(device)->setDebugSurface(debugSurface);
+
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
+                                                                      moduleBuildLog,
+                                                                      ModuleType::User);
+
+    module->debugEnabled = true;
+
+    uint32_t kernelHeap = 0;
+    KernelInfo kernelInfo;
+    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+
+    Mock<::L0::Kernel> kernel;
+    kernel.module = module.get();
+    kernel.immutableData.kernelInfo = &kernelInfo;
+
+    ze_kernel_desc_t desc = {};
+
+    kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = sizeof(RENDER_SURFACE_STATE);
+    kernel.immutableData.surfaceStateHeapSize = 2 * sizeof(RENDER_SURFACE_STATE);
+    kernel.immutableData.surfaceStateHeapTemplate.reset(new uint8_t[2 * sizeof(RENDER_SURFACE_STATE)]);
+    module->kernelImmData = &kernel.immutableData;
+
+    kernel.initialize(&desc);
+
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
+    debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
+
+    SURFACE_STATE_BUFFER_LENGTH length;
+    length.Length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
+
+    EXPECT_EQ(length.SurfaceState.Depth + 1u, debugSurfaceState->getDepth());
+    EXPECT_EQ(length.SurfaceState.Width + 1u, debugSurfaceState->getWidth());
+    EXPECT_EQ(length.SurfaceState.Height + 1u, debugSurfaceState->getHeight());
+    EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
+
+    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());
+    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, debugSurfaceState->getCoherencyType());
 }
 
 } // namespace ult

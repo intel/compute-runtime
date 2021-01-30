@@ -723,7 +723,7 @@ void KernelImp::printPrintfOutput() {
 
 void KernelImp::setDebugSurface() {
     auto device = module->getDevice();
-    if (module->isDebugEnabled() && device->getNEODevice()->isDebuggerActive()) {
+    if (module->isDebugEnabled() && device->getNEODevice()->getDebugger()) {
 
         auto surfaceStateHeapRef = ArrayRef<uint8_t>(surfaceStateHeapData.get(), surfaceStateHeapDataSize);
 

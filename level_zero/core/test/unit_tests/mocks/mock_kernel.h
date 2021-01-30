@@ -27,7 +27,10 @@ struct WhiteBox<::L0::KernelImmutableData> : public ::L0::KernelImmutableData {
     using ::L0::KernelImmutableData::isaGraphicsAllocation;
     using ::L0::KernelImmutableData::kernelDescriptor;
     using ::L0::KernelImmutableData::KernelImmutableData;
+    using ::L0::KernelImmutableData::kernelInfo;
     using ::L0::KernelImmutableData::residencyContainer;
+    using ::L0::KernelImmutableData::surfaceStateHeapSize;
+    using ::L0::KernelImmutableData::surfaceStateHeapTemplate;
 
     WhiteBox() : ::L0::KernelImmutableData() {}
 };
@@ -51,6 +54,8 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
     using ::L0::KernelImp::printfBuffer;
     using ::L0::KernelImp::requiredWorkgroupOrder;
     using ::L0::KernelImp::residencyContainer;
+    using ::L0::KernelImp::surfaceStateHeapData;
+    using ::L0::KernelImp::surfaceStateHeapDataSize;
     using ::L0::KernelImp::unifiedMemoryControls;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address,

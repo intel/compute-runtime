@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,23 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
     bool processUnpackedBinary() override {
         return true;
     }
+};
+
+struct MockModule : public L0::ModuleImp {
+    using ModuleImp::debugEnabled;
+
+    MockModule(L0::Device *device,
+               L0::ModuleBuildLog *moduleBuildLog,
+               L0::ModuleType type) : ModuleImp(device, moduleBuildLog, type) {
+        maxGroupSize = 32;
+    };
+
+    ~MockModule() = default;
+
+    const KernelImmutableData *getKernelImmutableData(const char *functionName) const override {
+        return kernelImmData;
+    }
+    KernelImmutableData *kernelImmData = nullptr;
 };
 
 struct MockCompilerInterface : public NEO::CompilerInterface {
