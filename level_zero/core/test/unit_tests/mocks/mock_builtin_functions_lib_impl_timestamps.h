@@ -23,11 +23,24 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
 
     using BuiltinFunctionsLibImpl::BuiltinFunctionsLibImpl;
 
-    void initFunctions() override {
-        builtins[0] = loadBuiltIn(NEO::EBuiltInOps::QueryKernelTimestamps, "QueryKernelTimestamps");
-        builtins[1] = loadBuiltIn(NEO::EBuiltInOps::QueryKernelTimestamps, "QueryKernelTimestampsWithOffsets");
+    void initBuiltinKernel(Builtin func) override {
+        switch (static_cast<Builtin>(func)) {
+        case Builtin::QueryKernelTimestamps:
+            if (builtins[0].get() == nullptr) {
+                builtins[0] = loadBuiltIn(NEO::EBuiltInOps::QueryKernelTimestamps, "QueryKernelTimestamps");
+            }
+            break;
+        case Builtin::QueryKernelTimestampsWithOffsets:
+            if (builtins[1].get() == nullptr) {
+                builtins[1] = loadBuiltIn(NEO::EBuiltInOps::QueryKernelTimestamps, "QueryKernelTimestampsWithOffsets");
+            }
+            break;
+        default:
+            break;
+        };
     }
-    void initImageFunctions() override {}
+    void initBuiltinImageKernel(ImageBuiltin func) override {
+    }
 
     void initPageFaultFunction() override {}
 
