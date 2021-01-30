@@ -15,128 +15,138 @@ std::unique_lock<BuiltinFunctionsLib::MutexType> BuiltinFunctionsLib::obtainUniq
     return std::unique_lock<BuiltinFunctionsLib::MutexType>(this->ownershipMutex);
 }
 
-void BuiltinFunctionsLibImpl::initFunctions() {
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
-        const char *builtinName = nullptr;
-        NEO::EBuiltInOps::Type builtin;
+void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
+    auto builtId = static_cast<uint32_t>(func);
 
-        switch (static_cast<Builtin>(builtId)) {
-        case Builtin::CopyBufferBytes:
-            builtinName = "copyBufferToBufferBytesSingle";
-            builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
-            break;
-        case Builtin::CopyBufferRectBytes2d:
-            builtinName = "CopyBufferRectBytes2d";
-            builtin = NEO::EBuiltInOps::CopyBufferRect;
-            break;
-        case Builtin::CopyBufferRectBytes3d:
-            builtinName = "CopyBufferRectBytes3d";
-            builtin = NEO::EBuiltInOps::CopyBufferRect;
-            break;
-        case Builtin::CopyBufferToBufferMiddle:
-            builtinName = "CopyBufferToBufferMiddleRegion";
-            builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
-            break;
-        case Builtin::CopyBufferToBufferSide:
-            builtinName = "CopyBufferToBufferSideRegion";
-            builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
-            break;
-        case Builtin::FillBufferImmediate:
-            builtinName = "FillBufferImmediate";
-            builtin = NEO::EBuiltInOps::FillBuffer;
-            break;
-        case Builtin::FillBufferSSHOffset:
-            builtinName = "FillBufferSSHOffset";
-            builtin = NEO::EBuiltInOps::FillBuffer;
-            break;
-        case Builtin::FillBufferMiddle:
-            builtinName = "FillBufferMiddle";
-            builtin = NEO::EBuiltInOps::FillBuffer;
-            break;
-        case Builtin::FillBufferRightLeftover:
-            builtinName = "FillBufferRightLeftover";
-            builtin = NEO::EBuiltInOps::FillBuffer;
-            break;
-        case Builtin::QueryKernelTimestamps:
-            builtinName = "QueryKernelTimestamps";
-            builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
-            break;
-        case Builtin::QueryKernelTimestampsWithOffsets:
-            builtinName = "QueryKernelTimestampsWithOffsets";
-            builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
-            break;
-        default:
-            continue;
-        };
+    const char *builtinName = nullptr;
+    NEO::EBuiltInOps::Type builtin;
 
-        builtins[builtId] = loadBuiltIn(builtin, builtinName);
-    }
+    switch (static_cast<Builtin>(builtId)) {
+    case Builtin::CopyBufferBytes:
+        builtinName = "copyBufferToBufferBytesSingle";
+        builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
+        break;
+    case Builtin::CopyBufferRectBytes2d:
+        builtinName = "CopyBufferRectBytes2d";
+        builtin = NEO::EBuiltInOps::CopyBufferRect;
+        break;
+    case Builtin::CopyBufferRectBytes3d:
+        builtinName = "CopyBufferRectBytes3d";
+        builtin = NEO::EBuiltInOps::CopyBufferRect;
+        break;
+    case Builtin::CopyBufferToBufferMiddle:
+        builtinName = "CopyBufferToBufferMiddleRegion";
+        builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
+        break;
+    case Builtin::CopyBufferToBufferSide:
+        builtinName = "CopyBufferToBufferSideRegion";
+        builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
+        break;
+    case Builtin::FillBufferImmediate:
+        builtinName = "FillBufferImmediate";
+        builtin = NEO::EBuiltInOps::FillBuffer;
+        break;
+    case Builtin::FillBufferSSHOffset:
+        builtinName = "FillBufferSSHOffset";
+        builtin = NEO::EBuiltInOps::FillBuffer;
+        break;
+    case Builtin::FillBufferMiddle:
+        builtinName = "FillBufferMiddle";
+        builtin = NEO::EBuiltInOps::FillBuffer;
+        break;
+    case Builtin::FillBufferRightLeftover:
+        builtinName = "FillBufferRightLeftover";
+        builtin = NEO::EBuiltInOps::FillBuffer;
+        break;
+    case Builtin::QueryKernelTimestamps:
+        builtinName = "QueryKernelTimestamps";
+        builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
+        break;
+    case Builtin::QueryKernelTimestampsWithOffsets:
+        builtinName = "QueryKernelTimestampsWithOffsets";
+        builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
+        break;
+    default:
+        UNRECOVERABLE_IF(true);
+    };
+
+    builtins[builtId] = loadBuiltIn(builtin, builtinName);
 }
 
-void BuiltinFunctionsLibImpl::initImageFunctions() {
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
-        const char *builtinName = nullptr;
-        NEO::EBuiltInOps::Type builtin;
+void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
+    auto builtId = static_cast<uint32_t>(func);
 
-        switch (static_cast<ImageBuiltin>(builtId)) {
-        case ImageBuiltin::CopyBufferToImage3d16Bytes:
-            builtinName = "CopyBufferToImage3d16Bytes";
-            builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
-            break;
-        case ImageBuiltin::CopyBufferToImage3d2Bytes:
-            builtinName = "CopyBufferToImage3d2Bytes";
-            builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
-            break;
-        case ImageBuiltin::CopyBufferToImage3d4Bytes:
-            builtinName = "CopyBufferToImage3d4Bytes";
-            builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
-            break;
-        case ImageBuiltin::CopyBufferToImage3d8Bytes:
-            builtinName = "CopyBufferToImage3d8Bytes";
-            builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
-            break;
-        case ImageBuiltin::CopyBufferToImage3dBytes:
-            builtinName = "CopyBufferToImage3dBytes";
-            builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
-            break;
-        case ImageBuiltin::CopyImage3dToBuffer16Bytes:
-            builtinName = "CopyImage3dToBuffer16Bytes";
-            builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
-            break;
-        case ImageBuiltin::CopyImage3dToBuffer2Bytes:
-            builtinName = "CopyImage3dToBuffer2Bytes";
-            builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
-            break;
-        case ImageBuiltin::CopyImage3dToBuffer4Bytes:
-            builtinName = "CopyImage3dToBuffer4Bytes";
-            builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
-            break;
-        case ImageBuiltin::CopyImage3dToBuffer8Bytes:
-            builtinName = "CopyImage3dToBuffer8Bytes";
-            builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
-            break;
-        case ImageBuiltin::CopyImage3dToBufferBytes:
-            builtinName = "CopyImage3dToBufferBytes";
-            builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
-            break;
-        case ImageBuiltin::CopyImageRegion:
-            builtinName = "CopyImageToImage3d";
-            builtin = NEO::EBuiltInOps::CopyImageToImage3d;
-            break;
-        default:
-            continue;
-        };
+    const char *builtinName = nullptr;
+    NEO::EBuiltInOps::Type builtin;
 
-        imageBuiltins[builtId] = loadBuiltIn(builtin, builtinName);
-    }
+    switch (static_cast<ImageBuiltin>(builtId)) {
+    case ImageBuiltin::CopyBufferToImage3d16Bytes:
+        builtinName = "CopyBufferToImage3d16Bytes";
+        builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
+        break;
+    case ImageBuiltin::CopyBufferToImage3d2Bytes:
+        builtinName = "CopyBufferToImage3d2Bytes";
+        builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
+        break;
+    case ImageBuiltin::CopyBufferToImage3d4Bytes:
+        builtinName = "CopyBufferToImage3d4Bytes";
+        builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
+        break;
+    case ImageBuiltin::CopyBufferToImage3d8Bytes:
+        builtinName = "CopyBufferToImage3d8Bytes";
+        builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
+        break;
+    case ImageBuiltin::CopyBufferToImage3dBytes:
+        builtinName = "CopyBufferToImage3dBytes";
+        builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
+        break;
+    case ImageBuiltin::CopyImage3dToBuffer16Bytes:
+        builtinName = "CopyImage3dToBuffer16Bytes";
+        builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+        break;
+    case ImageBuiltin::CopyImage3dToBuffer2Bytes:
+        builtinName = "CopyImage3dToBuffer2Bytes";
+        builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+        break;
+    case ImageBuiltin::CopyImage3dToBuffer4Bytes:
+        builtinName = "CopyImage3dToBuffer4Bytes";
+        builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+        break;
+    case ImageBuiltin::CopyImage3dToBuffer8Bytes:
+        builtinName = "CopyImage3dToBuffer8Bytes";
+        builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+        break;
+    case ImageBuiltin::CopyImage3dToBufferBytes:
+        builtinName = "CopyImage3dToBufferBytes";
+        builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+        break;
+    case ImageBuiltin::CopyImageRegion:
+        builtinName = "CopyImageToImage3d";
+        builtin = NEO::EBuiltInOps::CopyImageToImage3d;
+        break;
+    default:
+        UNRECOVERABLE_IF(true);
+    };
+
+    imageBuiltins[builtId] = loadBuiltIn(builtin, builtinName);
 }
 
 Kernel *BuiltinFunctionsLibImpl::getFunction(Builtin func) {
     auto builtId = static_cast<uint32_t>(func);
+
+    if (builtins[builtId].get() == nullptr) {
+        initBuiltinKernel(func);
+    }
+
     return builtins[builtId]->func.get();
 }
 Kernel *BuiltinFunctionsLibImpl::getImageFunction(ImageBuiltin func) {
     auto builtId = static_cast<uint32_t>(func);
+
+    if (imageBuiltins[builtId].get() == nullptr) {
+        initBuiltinImageKernel(func);
+    }
+
     return imageBuiltins[builtId]->func.get();
 }
 
@@ -145,6 +155,10 @@ void BuiltinFunctionsLibImpl::initPageFaultFunction() {
 }
 
 Kernel *BuiltinFunctionsLibImpl::getPageFaultFunction() {
+    if (pageFaultBuiltin.get() == nullptr) {
+        initPageFaultFunction();
+    }
+
     return pageFaultBuiltin->func.get();
 }
 

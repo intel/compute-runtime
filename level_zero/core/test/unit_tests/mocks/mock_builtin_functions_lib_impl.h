@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,16 +22,19 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
         dummyModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
         dummyKernel->module = dummyModule.get();
     }
-    void initFunctions() override {
-        for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
+    void initBuiltinKernel(L0::Builtin func) override {
+        auto builtId = static_cast<uint32_t>(func);
+        if (builtins[builtId].get() == nullptr) {
             builtins[builtId] = loadBuiltIn(NEO::EBuiltInOps::CopyBufferToBuffer, "copyBufferToBufferBytesSingle");
         }
     }
-    void initImageFunctions() override {
-        for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
+    void initBuiltinImageKernel(L0::ImageBuiltin func) override {
+        auto builtId = static_cast<uint32_t>(func);
+        if (imageBuiltins[builtId].get() == nullptr) {
             imageBuiltins[builtId] = loadBuiltIn(NEO::EBuiltInOps::CopyImage3dToBuffer, "CopyImage3dToBuffer16Bytes");
         }
     }
+
     void initPageFaultFunction() override {
         pageFaultBuiltin = loadBuiltIn(NEO::EBuiltInOps::CopyBufferToBuffer, "CopyBufferToBufferSideRegion");
     }

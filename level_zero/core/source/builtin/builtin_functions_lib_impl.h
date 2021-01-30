@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,8 +33,8 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     Kernel *getFunction(Builtin func) override;
     Kernel *getImageFunction(ImageBuiltin func) override;
     Kernel *getPageFaultFunction() override;
-    void initFunctions() override;
-    void initImageFunctions() override;
+    void initBuiltinKernel(Builtin builtId) override;
+    void initBuiltinImageKernel(ImageBuiltin func) override;
     void initPageFaultFunction() override;
     MOCKABLE_VIRTUAL std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName);
 
