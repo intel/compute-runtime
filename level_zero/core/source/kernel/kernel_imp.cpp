@@ -98,6 +98,7 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
                                      NEO::GraphicsAllocation *globalVarBuffer, bool internalKernel) {
 
     UNRECOVERABLE_IF(kernelInfo == nullptr);
+    this->kernelInfo = kernelInfo;
     this->kernelDescriptor = &kernelInfo->kernelDescriptor;
 
     auto neoDevice = device->getNEODevice();
@@ -109,15 +110,6 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(
         {neoDevice->getRootDeviceIndex(), kernelIsaSize, allocType, neoDevice->getDeviceBitfield()});
     UNRECOVERABLE_IF(allocation == nullptr);
-
-    auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-    if (kernelInfo->heapInfo.pKernelHeap != nullptr) {
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
-                                                              *neoDevice, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
-                                                              static_cast<size_t>(kernelIsaSize));
-    }
 
     isaGraphicsAllocation.reset(allocation);
     if (device->getL0Debugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
@@ -602,6 +594,19 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     this->kernelImmData = module->getKernelImmutableData(desc->pKernelName);
     if (this->kernelImmData == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap != nullptr) {
+        auto neoDevice = module->getDevice()->getNEODevice();
+        auto &hwInfo = neoDevice->getHardwareInfo();
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto isaAllocation = this->kernelImmData->getIsaGraphicsAllocation();
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *isaAllocation),
+                                                              *neoDevice,
+                                                              isaAllocation,
+                                                              0,
+                                                              this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap,
+                                                              static_cast<size_t>(this->kernelImmData->getKernelInfo()->heapInfo.KernelHeapSize));
     }
 
     for (const auto &argT : kernelImmData->getDescriptor().payloadMappings.explicitArgs) {

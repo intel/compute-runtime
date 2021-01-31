@@ -8,29 +8,76 @@
 #pragma once
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/test_files.h"
+#include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
+
+#include "opencl/source/program/kernel_info.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 namespace L0 {
 namespace ult {
 
 struct ModuleImmutableDataFixture : public DeviceFixture {
+    struct MockImmutableMemoryManager : public NEO::MockMemoryManager {
+        MockImmutableMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
+        bool copyMemoryToAllocation(NEO::GraphicsAllocation *graphicsAllocation,
+                                    size_t destinationOffset,
+                                    const void *memoryToCopy,
+                                    size_t sizeToCopy) override {
+
+            copyMemoryToAllocationCalledTimes++;
+            return true;
+        }
+        uint32_t copyMemoryToAllocationCalledTimes = 0;
+    };
+
     struct MockImmutableData : KernelImmutableData {
+        using KernelImmutableData::kernelDescriptor;
+        using KernelImmutableData::kernelInfo;
         MockImmutableData(uint32_t perHwThreadPrivateMemorySize) {
             mockKernelDescriptor = new NEO::KernelDescriptor;
             mockKernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize = perHwThreadPrivateMemorySize;
             kernelDescriptor = mockKernelDescriptor;
-            return;
+
+            mockKernelInfo = new NEO::KernelInfo;
+            mockKernelInfo->heapInfo.pKernelHeap = kernelHeap;
+            mockKernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+            kernelInfo = mockKernelInfo;
+
+            if (getIsaGraphicsAllocation() != nullptr) {
+                device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(&*isaGraphicsAllocation);
+                isaGraphicsAllocation.release();
+            }
+            isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
+                                                                        NEO::GraphicsAllocation::AllocationType::KERNEL_ISA,
+                                                                        reinterpret_cast<void *>(0x1234),
+                                                                        0x1000,
+                                                                        0,
+                                                                        sizeof(uint32_t),
+                                                                        MemoryPool::System4KBPages));
         }
+
+        void setDevice(L0::Device *inDevice) {
+            device = inDevice;
+        }
+
         ~MockImmutableData() override {
+            delete mockKernelInfo;
             delete mockKernelDescriptor;
         }
         NEO::KernelDescriptor *mockKernelDescriptor = nullptr;
+        char kernelHeap[MemoryConstants::pageSize] = {};
+        NEO::KernelInfo *mockKernelInfo = nullptr;
     };
 
     struct MockModule : public L0::ModuleImp {
@@ -39,6 +86,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
                    L0::ModuleType type,
                    uint32_t perHwThreadPrivateMemorySize) : ModuleImp(device, moduleBuildLog, type) {
             mockKernelImmData = new MockImmutableData(perHwThreadPrivateMemorySize);
+            mockKernelImmData->setDevice(device);
         }
 
         ~MockModule() {
@@ -69,6 +117,8 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     void SetUp() override {
         DeviceFixture::SetUp();
+        memoryManager = new MockImmutableMemoryManager(*neoDevice->executionEnvironment);
+        neoDevice->executionEnvironment->memoryManager.reset(memoryManager);
     }
 
     void createModuleFromBinary(uint32_t perHwThreadPrivateMemorySize) {
@@ -113,6 +163,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::unique_ptr<MockModule> module;
+    MockImmutableMemoryManager *memoryManager;
 };
 
 struct ModuleFixture : public DeviceFixture {

@@ -294,6 +294,51 @@ HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPr
     EXPECT_EQ(expectedSize, kernel->privateMemoryGraphicsAllocation->getUnderlyingBufferSize());
 }
 
+HWTEST_F(KernelImmutableDataTests, givenCallToCreateKernelThenIsaIsCopied) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested);
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    MockImmutableMemoryManager *mockMemoryManager =
+        static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
+
+    uint32_t previouscopyMemoryToAllocationCalledTimes =
+        mockMemoryManager->copyMemoryToAllocationCalledTimes;
+
+    createKernel(kernel.get());
+
+    EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes + 1u,
+              mockMemoryManager->copyMemoryToAllocationCalledTimes);
+}
+
+HWTEST_F(KernelImmutableDataTests, givenCallToCreateKernelWithNullKernelHeapThenIsaIsNotCopied) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested);
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    MockModule *mockModule = static_cast<MockModule *>(module.get());
+    MockImmutableData *mockData = static_cast<MockImmutableData *>(mockModule->mockKernelImmData);
+    auto previousKernelHeap = mockData->kernelInfo->heapInfo.pKernelHeap;
+    mockData->kernelInfo->heapInfo.pKernelHeap = nullptr;
+
+    MockImmutableMemoryManager *mockMemoryManager =
+        static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
+
+    uint32_t previouscopyMemoryToAllocationCalledTimes =
+        mockMemoryManager->copyMemoryToAllocationCalledTimes;
+
+    createKernel(kernel.get());
+
+    EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
+              mockMemoryManager->copyMemoryToAllocationCalledTimes);
+
+    mockData->kernelInfo->heapInfo.pKernelHeap = previousKernelHeap;
+}
+
 HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenContainerHasOneExtraSpaceForAllocation) {
     std::string testFile;
     retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");

@@ -60,8 +60,11 @@ struct KernelImmutableData {
 
     Device *getDevice() { return this->device; }
 
+    const NEO::KernelInfo *getKernelInfo() const { return kernelInfo; }
+
   protected:
     Device *device = nullptr;
+    NEO::KernelInfo *kernelInfo = nullptr;
     NEO::KernelDescriptor *kernelDescriptor = nullptr;
     std::unique_ptr<NEO::GraphicsAllocation> isaGraphicsAllocation = nullptr;
 
