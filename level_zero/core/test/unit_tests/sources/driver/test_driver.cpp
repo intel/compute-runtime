@@ -61,7 +61,7 @@ TEST_F(DriverVersionTest,
     delete[] extensionProperties;
 }
 
-TEST_F(DriverVersionTest, returnsExpectedDriverVersion) {
+TEST_F(DriverVersionTest, WhenGettingDriverVersionThenExpectedDriverVersionIsReturned) {
     ze_driver_properties_t properties;
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

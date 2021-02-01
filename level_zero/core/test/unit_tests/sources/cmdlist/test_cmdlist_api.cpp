@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,7 +94,7 @@ TEST(zeCommandListAppendExecutionBarrier, whenCalledThenRedirectedToObject) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zeCommandListAppendSignalEvent, redirectsToObject) {
+TEST(zeCommandListAppendSignalEvent, WhenAppendingSignalEventThenSuccessIsReturned) {
     MockCommandList commandList;
     ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
 

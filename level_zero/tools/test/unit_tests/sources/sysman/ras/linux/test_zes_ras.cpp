@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasZeroHandlesInReturn) {
+TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRasErrorSetsThenCorrectCountIsReported) {
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

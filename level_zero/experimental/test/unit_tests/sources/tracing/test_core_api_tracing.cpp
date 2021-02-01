@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -302,7 +302,7 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsWithRecursionHandledAndSuccessIsReturned) {
+TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsWithRecursionHandledThenSuccessIsReturned) {
     MockCommandList commandList;
     ze_result_t result;
     int user_data = 5;

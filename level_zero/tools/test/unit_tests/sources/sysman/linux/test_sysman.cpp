@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,7 +98,7 @@ TEST_F(SysmanDeviceFixture, GivenPmtHandleWhenCallinggetPlatformMonitoringTechAc
     EXPECT_EQ(&pLinuxSysmanImp->getPlatformMonitoringTechAccess(), pLinuxSysmanImp->pPmt);
 }
 
-TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleVerifyThatSameHandleIsRetrievedFromOsSpecificCode) {
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleThenSameHandleIsRetrievedFromOsSpecificCode) {
     EXPECT_EQ(pLinuxSysmanImp->getDeviceHandle(), device);
 }
 

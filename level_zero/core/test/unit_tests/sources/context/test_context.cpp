@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,7 @@ namespace L0 {
 namespace ult {
 
 using ContextGetStatusTest = Test<DeviceFixture>;
-TEST_F(ContextGetStatusTest,
-       givenCallToContextGetStatusThenCorrectErrorCodeIsReturnedWhenResourcesHaveBeenReleased) {
+TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsReturnedWhenResourcesHaveBeenReleased) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
     ze_result_t res = driverHandle->createContext(&desc, &hContext);
