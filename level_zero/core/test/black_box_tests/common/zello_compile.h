@@ -14,9 +14,11 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
 
     const char *mainFileName = "main.cl";
     const char *argv[] = {"ocloc", "-q", "-device", "skl", "-file", mainFileName, "", ""};
+    uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 2;
     if (options.size() > 0) {
         argv[6] = "-options";
         argv[7] = options.c_str();
+        numArgs += 2;
     }
     const unsigned char *sources[] = {reinterpret_cast<const unsigned char *>(src.c_str())};
     size_t sourcesLengths[] = {src.size() + 1};
@@ -26,7 +28,7 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
     size_t *ouputLengths = nullptr;
     char **outputNames = nullptr;
 
-    int result = oclocInvoke(sizeof(argv) / sizeof(argv[0]), argv,
+    int result = oclocInvoke(numArgs, argv,
                              1, sources, sourcesLengths, sourcesNames,
                              0, nullptr, nullptr, nullptr,
                              &numOutputs, &outputs, &ouputLengths, &outputNames);
