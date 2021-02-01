@@ -436,22 +436,18 @@ Image *Image::create(Context *context,
                                                              hostPtr, allocationInfo[rootDeviceIndex].mapAllocation, 0, nullptr, nullptr);
                     }
                 } else {
+                    void *pDestinationAddress = allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer();
                     auto isNotInSystemMemory = !MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
-                    auto &allocations = image->getMultiGraphicsAllocation().getGraphicsAllocations();
                     if (isNotInSystemMemory) {
-                        for (auto &pAllocation : allocations) {
-                            context->getMemoryManager()->lockResource(pAllocation);
-                        }
+                        pDestinationAddress = context->getMemoryManager()->lockResource(allocationInfo[rootDeviceIndex].memory);
                     }
 
-                    image->transferData(allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer(), imgInfo.rowPitch, imgInfo.slicePitch,
+                    image->transferData(pDestinationAddress, imgInfo.rowPitch, imgInfo.slicePitch,
                                         const_cast<void *>(hostPtr), hostPtrRowPitch, hostPtrSlicePitch,
                                         copyRegion, copyOrigin);
 
                     if (isNotInSystemMemory) {
-                        for (auto &pAllocation : allocations) {
-                            context->getMemoryManager()->unlockResource(pAllocation);
-                        }
+                        context->getMemoryManager()->unlockResource(allocationInfo[rootDeviceIndex].memory);
                     }
                 }
             }

@@ -496,6 +496,11 @@ bool HwHelperHw<GfxFamily>::useSystemMemoryPlacementForISA(const HardwareInfo &h
 }
 
 template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <typename GfxFamily>
 bool MemorySynchronizationCommands<GfxFamily>::isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo) {
     return false;
 }

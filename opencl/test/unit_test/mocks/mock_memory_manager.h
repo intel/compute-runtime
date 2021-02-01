@@ -83,7 +83,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override {
         lockResourceCalled++;
-        return OsAgnosticMemoryManager::lockResourceImpl(gfxAllocation);
+        auto pLockedMemory = OsAgnosticMemoryManager::lockResourceImpl(gfxAllocation);
+        lockResourcePointers.push_back(pLockedMemory);
+        return pLockedMemory;
     }
 
     void unlockResourceImpl(GraphicsAllocation &gfxAllocation) override {
@@ -121,6 +123,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
+    std::vector<void *> lockResourcePointers;
     uint32_t handleFenceCompletionCalled = 0u;
     uint32_t waitForEnginesCompletionCalled = 0u;
     bool allocationCreated = false;
