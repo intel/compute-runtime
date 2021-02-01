@@ -498,8 +498,15 @@ ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal
         setBufferSurfaceState(argIndex, reinterpret_cast<void *>(val), allocation);
     } else {
         auto allocData = this->module->getDevice()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(allocation->getGpuAddress()));
-        if (allocData && allocData->allocationFlagsProperty.flags.locallyUncachedResource) {
-            kernelRequiresUncachedMocs = true;
+        if (allocData) {
+            bool argWasUncacheable = isArgUncached[argIndex];
+            bool argIsUncacheable = allocData->allocationFlagsProperty.flags.locallyUncachedResource;
+            if (argWasUncacheable == false && argIsUncacheable) {
+                kernelRequiresUncachedMocsCount++;
+            } else if (argWasUncacheable && argIsUncacheable == false) {
+                kernelRequiresUncachedMocsCount--;
+            }
+            this->setKernelArgUncached(argIndex, argIsUncacheable);
         }
     }
     residencyContainer[argIndex] = allocation;
@@ -681,6 +688,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
 
     slmArgSizes.resize(this->kernelArgHandlers.size(), 0);
+
+    isArgUncached.resize(this->kernelArgHandlers.size(), 0);
 
     if (kernelImmData->getSurfaceStateHeapSize() > 0) {
         this->surfaceStateHeapData.reset(new uint8_t[kernelImmData->getSurfaceStateHeapSize()]);

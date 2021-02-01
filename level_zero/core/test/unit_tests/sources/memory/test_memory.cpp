@@ -294,7 +294,7 @@ TEST_F(MemoryRelaxedSizeTests,
 }
 
 struct DriverHandleGetFdMock : public DriverHandleImp {
-    void *importFdHandle(ze_device_handle_t hDevice, uint64_t handle) override {
+    void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle) override {
         if (mockFd == allocationMap.second) {
             return allocationMap.first;
         }
@@ -635,7 +635,7 @@ TEST_F(MemoryIPCTests,
     result = driverHandle->getIpcMemHandle(ptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_ipc_memory_flag_t flags = {};
+    ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
     result = driverHandle->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -673,7 +673,7 @@ TEST_F(MemoryIPCTests,
     result = contextImp->getIpcMemHandle(ptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_ipc_memory_flag_t flags = {};
+    ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
     result = contextImp->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -724,14 +724,14 @@ TEST_F(MemoryIPCTests,
 TEST_F(MemoryIPCTests,
        whenCallingOpenIpcHandleWithIncorrectHandleThenInvalidArgumentIsReturned) {
     ze_ipc_mem_handle_t ipcHandle = {};
-    ze_ipc_memory_flag_t flags = {};
+    ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
     ze_result_t res = driverHandle->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
 struct DriverHandleGetIpcHandleMock : public DriverHandleImp {
-    void *importFdHandle(ze_device_handle_t hDevice, uint64_t handle) override {
+    void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle) override {
         EXPECT_EQ(handle, static_cast<uint64_t>(mockFd));
         if (mockFd == allocationMap.second) {
             return allocationMap.first;
@@ -801,7 +801,7 @@ TEST_F(MemoryGetIpcHandleTest,
     result = driverHandle->getIpcMemHandle(ptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_ipc_memory_flag_t flags = {};
+    ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
     result = driverHandle->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -918,7 +918,7 @@ TEST_F(MemoryOpenIpcHandleTest,
     result = driverHandle->getIpcMemHandle(ptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_ipc_memory_flag_t flags = {};
+    ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
     result = driverHandle->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -976,7 +976,7 @@ TEST_F(MemoryFailedOpenIpcHandleTest,
     result = driverHandle->getIpcMemHandle(ptr, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_ipc_memory_flag_t flags = {};
+    ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
     result = driverHandle->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
@@ -1528,6 +1528,34 @@ TEST_F(ContextMemoryTest, givenCallTochangeMemoryOperationStatusToL0ResultTypeTh
     status = static_cast<NEO::MemoryOperationsStatus>(static_cast<uint32_t>(NEO::MemoryOperationsStatus::DEVICE_UNINITIALIZED) + 1);
     res = changeMemoryOperationStatusToL0ResultType(status);
     EXPECT_EQ(res, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+using ImportFdUncachedTests = MemoryOpenIpcHandleTest;
+
+TEST_F(ImportFdUncachedTests,
+       givenCallToImportFdHandleWithUncachedFlagsThenLocallyUncachedResourceIsSet) {
+    ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+    uint64_t handle = 1;
+    void *ptr = driverHandle->importFdHandle(device->toHandle(), flags, handle);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
+
+    driverHandle->freeMem(ptr);
+}
+
+TEST_F(ImportFdUncachedTests,
+       givenCallToImportFdHandleWithoutUncachedFlagsThenLocallyUncachedResourceIsNotSet) {
+    ze_ipc_memory_flags_t flags = {};
+    uint64_t handle = 1;
+    void *ptr = driverHandle->importFdHandle(device->toHandle(), flags, handle);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 0u);
+
+    driverHandle->freeMem(ptr);
 }
 
 } // namespace ult

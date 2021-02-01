@@ -141,7 +141,8 @@ HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, 
 
 using ModuleUncachedBufferTest = Test<ModuleFixture>;
 
-HWTEST2_F(ModuleUncachedBufferTest, givenKernelWithNonUncachedArgumentThenUncachedMocsNotRequired, ModuleTestSupport) {
+HWTEST2_F(ModuleUncachedBufferTest,
+          givenKernelWithNonUncachedArgumentAndPreviouslyNotSetUncachedThenUncachedMocsNotSet, ModuleTestSupport) {
     ze_kernel_handle_t kernelHandle;
 
     ze_kernel_desc_t kernelDesc = {};
@@ -174,7 +175,78 @@ HWTEST2_F(ModuleUncachedBufferTest, givenKernelWithNonUncachedArgumentThenUncach
     device->getDriverHandle()->freeMem(devicePtr);
 }
 
-HWTEST2_F(ModuleUncachedBufferTest, givenKernelWithUncachedArgumentThenCorrectMocsAreSet, ModuleTestSupport) {
+HWTEST2_F(ModuleUncachedBufferTest,
+          givenKernelWithNonUncachedArgumentAndPreviouslySetUncachedArgumentThenUncachedMocsNotSet, ModuleTestSupport) {
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = kernelName.c_str();
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
+
+    void *devicePtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
+                                                    &deviceDesc,
+                                                    16384u,
+                                                    0u,
+                                                    &devicePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    EXPECT_NE(nullptr, gpuAlloc);
+
+    uint32_t argIndex = 0u;
+    kernelImp->setKernelArgUncached(argIndex, true);
+    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
+    EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+
+    device->getDriverHandle()->freeMem(devicePtr);
+}
+
+HWTEST2_F(ModuleUncachedBufferTest,
+          givenKernelWithUncachedArgumentAndPreviouslyNotSetUncachedArgumentThenUncachedMocsIsSet, ModuleTestSupport) {
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = kernelName.c_str();
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
+
+    void *devicePtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+    res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
+                                                    &deviceDesc,
+                                                    16384u,
+                                                    0u,
+                                                    &devicePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    EXPECT_NE(nullptr, gpuAlloc);
+
+    uint32_t argIndex = 0u;
+    kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
+    EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+
+    device->getDriverHandle()->freeMem(devicePtr);
+}
+
+HWTEST2_F(ModuleUncachedBufferTest,
+          givenKernelWithUncachedArgumentAndPreviouslySetUncachedArgumentThenUncachedMocsIsSet, ModuleTestSupport) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     ze_kernel_handle_t kernelHandle;
 
@@ -201,6 +273,7 @@ HWTEST2_F(ModuleUncachedBufferTest, givenKernelWithUncachedArgumentThenCorrectMo
     EXPECT_NE(nullptr, gpuAlloc);
 
     uint32_t argIndex = 0u;
+    kernelImp->setKernelArgUncached(argIndex, true);
     kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
     EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
 

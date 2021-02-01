@@ -190,7 +190,7 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
     DEBUG_BREAK_IF(nullptr == this->driverHandle);
     return this->driverHandle->openIpcMemHandle(hDevice,
                                                 handle,
-                                                ZE_IPC_MEMORY_FLAG_TBD,
+                                                flags,
                                                 ptr);
 }
 

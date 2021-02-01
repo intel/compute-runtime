@@ -187,6 +187,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
+    unifiedMemoryProperties.flags.uncacheable = memoryProperties.allocationFlags.flags.locallyUncachedResource;
 
     if (memoryProperties.memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
         unifiedMemoryProperties.flags.isUSMHostAllocation = true;

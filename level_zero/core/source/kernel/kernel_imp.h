@@ -115,7 +115,8 @@ struct KernelImp : Kernel {
 
     uint32_t getRequiredWorkgroupOrder() const override { return requiredWorkgroupOrder; }
     bool requiresGenerationOfLocalIdsByRuntime() const override { return kernelRequiresGenerationOfLocalIdsByRuntime; }
-    bool getKernelRequiresUncachedMocs() { return kernelRequiresUncachedMocs; }
+    bool getKernelRequiresUncachedMocs() { return (kernelRequiresUncachedMocsCount > 0); }
+    void setKernelArgUncached(uint32_t index, bool val) { isArgUncached[index] = val; }
 
     uint32_t *getGlobalOffsets() override {
         return this->globalOffsets;
@@ -180,7 +181,8 @@ struct KernelImp : Kernel {
     uint32_t requiredWorkgroupOrder = 0u;
 
     bool kernelRequiresGenerationOfLocalIdsByRuntime = true;
-    bool kernelRequiresUncachedMocs = false;
+    uint32_t kernelRequiresUncachedMocsCount = false;
+    std::vector<bool> isArgUncached;
 
     uint32_t globalOffsets[3] = {};
 

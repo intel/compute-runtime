@@ -53,7 +53,7 @@ struct DriverHandle : _ze_driver_handle_t {
     virtual ze_result_t closeIpcMemHandle(const void *ptr) = 0;
     virtual ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) = 0;
     virtual ze_result_t openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc_mem_handle_t handle,
-                                         ze_ipc_memory_flag_t flags, void **ptr) = 0;
+                                         ze_ipc_memory_flags_t flags, void **ptr) = 0;
     virtual ze_result_t createEventPool(const ze_event_pool_desc_t *desc,
                                         uint32_t numDevices,
                                         ze_device_handle_t *phDevices,
