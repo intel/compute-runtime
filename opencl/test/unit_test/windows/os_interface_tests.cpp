@@ -26,7 +26,7 @@ TEST(osInterfaceTests, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     wddm->init();
     EXPECT_NE(nullptr, rootDeviceEnvironment.osInterface.get());
 
-    wddm->deviceRegistryPath = "registyPath";
+    wddm->deviceRegistryPath = "registryPath";
     auto expectedRegistryPath = wddm->deviceRegistryPath.c_str();
     auto &adapterBDF = wddm->adapterBDF;
     adapterBDF.Bus = 0x12;
