@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,8 @@ void D3DSharingFunctions<D3DTypesHelper::D3D9>::createTexture3d(D3DTexture3d **t
 }
 
 template <>
-void D3DSharingFunctions<D3DTypesHelper::D3D9>::checkFormatSupport(DXGI_FORMAT format, UINT *pFormat) {
+bool D3DSharingFunctions<D3DTypesHelper::D3D9>::checkFormatSupport(DXGI_FORMAT format, UINT *pFormat) {
+    return false;
 }
 
 template <>

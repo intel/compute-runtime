@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -158,6 +158,9 @@ struct clIntelSharingFormatQueryDX1X : public PlatformFixture, public ::testing:
         mockSharingFcns = new NiceMock<MockD3DSharingFunctions<T>>();
         context->setSharingFunctions(mockSharingFcns);
 
+        auto checkFormat = [](DXGI_FORMAT format, UINT *pFormat) -> bool { *pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D; return true; };
+        ON_CALL(*mockSharingFcns, checkFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(checkFormat));
+
         availableFormats = ArrayRef<const DXGI_FORMAT>(DXGIformats);
         retrievedFormats.assign(availableFormats.size(), DXGI_FORMAT_UNKNOWN);
     }
@@ -265,11 +268,7 @@ TEST_F(clIntelSharingFormatQueryDX11, givenValidParametersWhenRequestedDX11Textu
     ASSERT_EQ(memcmp(&retrievedFormats[0], &formatsRetrievedForTheSecondTime[0], numImageFormats * sizeof(DXGI_FORMAT)), 0);
 }
 
-TEST_F(clIntelSharingFormatQueryDX11, givenValidParametersWhenRequestingDX11TextureFormatsForPlane1ThenPlanarFormatsAeReturned) {
-
-    auto checkFormat = [](DXGI_FORMAT format, UINT *pFormat) -> void { *pFormat = D3D11_FORMAT_SUPPORT_TEXTURE2D; };
-
-    ON_CALL(*mockSharingFcns, checkFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(checkFormat));
+TEST_F(clIntelSharingFormatQueryDX11, givenValidParametersWhenRequestingDX11TextureFormatsForPlane1ThenPlanarFormatsAreReturned) {
     ON_CALL(*mockSharingFcns, memObjectFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Return(true));
 
     retVal = clGetSupportedD3D11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 1,
@@ -284,4 +283,20 @@ TEST_F(clIntelSharingFormatQueryDX11, givenValidParametersWhenRequestingDX11Text
         auto found = std::find(retrievedFormats.begin(), retrievedFormats.end(), format);
         EXPECT_NE(found, retrievedFormats.end());
     }
+}
+
+TEST_F(clIntelSharingFormatQueryDX11, givenValidParametersWhenRequestingDX11TextureFormatsForPlane2AndAboveThenZeroFormatsIsReturned) {
+    retVal = clGetSupportedD3D11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 2,
+                                                    static_cast<cl_uint>(retrievedFormats.size()),
+                                                    &retrievedFormats[0], &numImageFormats);
+
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(0, numImageFormats);
+
+    retVal = clGetSupportedD3D11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 3,
+                                                    static_cast<cl_uint>(retrievedFormats.size()),
+                                                    &retrievedFormats[0], &numImageFormats);
+
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(0, numImageFormats);
 }

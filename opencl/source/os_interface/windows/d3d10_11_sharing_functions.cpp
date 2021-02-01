@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -211,8 +211,9 @@ void D3DSharingFunctions<D3D>::createTexture3d(D3DTexture3d **texture, D3DTextur
 }
 
 template <typename D3D>
-void D3DSharingFunctions<D3D>::checkFormatSupport(DXGI_FORMAT format, UINT *pFormat) {
-    d3dDevice->CheckFormatSupport(format, pFormat);
+bool D3DSharingFunctions<D3D>::checkFormatSupport(DXGI_FORMAT format, UINT *pFormat) {
+    auto errorCode = d3dDevice->CheckFormatSupport(format, pFormat);
+    return errorCode == S_OK;
 }
 
 template <typename D3D>
@@ -230,11 +231,12 @@ std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3D>::retrieveTextureFormats(cl_me
         cached_formats.reserve(arrayCount(DXGIFormats));
         for (auto DXGIFormat : DXGIFormats) {
             UINT format = 0;
-            checkFormatSupport(DXGIFormat, &format);
-            if (memObjectFormatSupport(imageType, format)) {
-                cached_formats.push_back(DXGIFormat);
-                if (D3DSharing<D3D>::isFormatWithPlane1(DXGIFormat)) {
-                    planarFormats.push_back(DXGIFormat);
+            if (checkFormatSupport(DXGIFormat, &format)) {
+                if (memObjectFormatSupport(imageType, format)) {
+                    cached_formats.push_back(DXGIFormat);
+                    if (D3DSharing<D3D>::isFormatWithPlane1(DXGIFormat)) {
+                        planarFormats.push_back(DXGIFormat);
+                    }
                 }
             }
         }
