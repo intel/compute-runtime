@@ -291,6 +291,7 @@ NTSTATUS __stdcall D3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *quer
         adapterInfo->GfxMemorySize = 2181038080;
         adapterInfo->SystemSharedMemory = 4249540608;
         adapterInfo->SystemVideoMemory = 0;
+        adapterInfo->GfxTimeStampFreq = 1;
 
         adapterInfo->GfxPartition.Standard.Base = gAdapterInfo.GfxPartition.Standard.Base;
         adapterInfo->GfxPartition.Standard.Limit = gAdapterInfo.GfxPartition.Standard.Limit;

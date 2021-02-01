@@ -161,6 +161,8 @@ class Wddm {
 
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return rootDeviceEnvironment; }
 
+    const uint32_t getTimestampFrequency() const { return timestampFrequency; }
+
   protected:
     std::unique_ptr<HwDeviceId> hwDeviceId;
     D3DKMT_HANDLE device = 0;
@@ -180,6 +182,7 @@ class Wddm {
     uint64_t systemSharedMemory = 0;
     uint64_t dedicatedVideoMemory = 0;
     uint32_t maxRenderFrequency = 0;
+    uint32_t timestampFrequency = 0u;
     bool instrumentationEnabled = false;
     std::string deviceRegistryPath;
     RootDeviceEnvironment &rootDeviceEnvironment;

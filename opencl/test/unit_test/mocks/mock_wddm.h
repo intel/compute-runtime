@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,7 @@ class WddmMock : public Wddm {
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
     using Wddm::temporaryResources;
+    using Wddm::timestampFrequency;
     using Wddm::wddmInterface;
 
     WddmMock(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceId), rootDeviceEnvironment) {}

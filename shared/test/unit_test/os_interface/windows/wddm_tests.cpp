@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,12 @@ TEST_F(WddmTests, whenInitializingWddmThenSetMinAddressToCorrectValue) {
     const bool obtainFromGmm = defaultHwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
     const auto expectedMinAddress = obtainFromGmm ? mockedInternalGpuVaRange : windowsMinAddress;
     ASSERT_EQ(expectedMinAddress, wddm->getWddmMinAddress());
+}
+
+TEST_F(WddmTests, whenInitializingWddmThenSetTimestampFrequencyToCorrectValue) {
+    EXPECT_EQ(0u, wddm->timestampFrequency);
+    init();
+    EXPECT_EQ(1u, wddm->timestampFrequency);
 }
 
 TEST_F(WddmTests, givenWddmWhenPassesCorrectHandleToVerifySharedHandleThenReturnTrue) {

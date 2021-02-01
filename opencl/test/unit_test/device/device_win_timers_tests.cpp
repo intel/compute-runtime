@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,11 +30,13 @@ TEST_F(MockOSTimeWinTest, WhenCreatingTimerThenResolutionIsSetCorrectly) {
 
     wddmMock->init();
 
+    wddmMock->timestampFrequency = 1000;
+
     std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock));
 
     double res = 0.0;
     res = timeWin->getDynamicDeviceTimerResolution(device->getHardwareInfo());
-    EXPECT_EQ(res, 1e+09);
+    EXPECT_EQ(res, 1e+06);
 }
 
 } // namespace ULT

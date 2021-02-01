@@ -99,11 +99,9 @@ double OSTimeWin::getHostTimerResolution() const {
 }
 
 double OSTimeWin::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const {
-    double retVal = 0;
-    TimeStampDataHeader escapeInfo = {0};
-
-    if (runEscape(wddm, escapeInfo)) {
-        retVal = 1000000000.0 / (double)escapeInfo.m_Data.m_Out.gpuPerfFreq;
+    double retVal = 0u;
+    if (wddm) {
+        retVal = 1000000000.0 / static_cast<double>(wddm->getTimestampFrequency());
     }
 
     return retVal;
