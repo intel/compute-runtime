@@ -30,6 +30,7 @@ set(IGDRCL_SRCS_tests_fixtures
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_data_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_data_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_work_group_info_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/media_kernel_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_allocator_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_allocator_multi_device_fixture.h
