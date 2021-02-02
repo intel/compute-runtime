@@ -14,6 +14,7 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -1855,4 +1856,88 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenGpuIsIdleWhenCsrIsEnabledToFl
     EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissionsCalled);
 
     *commandStreamReceiver.getTagAddress() = 2u;
+}
+
+TEST(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToMarkerThenCsrsAreWaitingForEventsFromPreviousDevices) {
+    auto deviceFactory = std::make_unique<UltClDeviceFactory>(4, 0);
+    auto device1 = deviceFactory->rootDevices[1];
+    auto device2 = deviceFactory->rootDevices[2];
+    auto device3 = deviceFactory->rootDevices[3];
+
+    auto mockCsr1 = new MockCommandStreamReceiver(*device1->executionEnvironment, device1->getRootDeviceIndex(), device1->getDeviceBitfield());
+    auto mockCsr2 = new MockCommandStreamReceiver(*device2->executionEnvironment, device2->getRootDeviceIndex(), device2->getDeviceBitfield());
+    auto mockCsr3 = new MockCommandStreamReceiver(*device3->executionEnvironment, device3->getRootDeviceIndex(), device3->getDeviceBitfield());
+
+    device1->resetCommandStreamReceiver(mockCsr1);
+    device2->resetCommandStreamReceiver(mockCsr2);
+    device3->resetCommandStreamReceiver(mockCsr3);
+
+    cl_device_id devices[] = {device1, device2, device3};
+
+    auto context = std::make_unique<MockContext>(ClDeviceVector(devices, 3), false);
+
+    auto pCmdQ1 = context.get()->getSpecialQueue(1u);
+    auto pCmdQ2 = context.get()->getSpecialQueue(2u);
+    auto pCmdQ3 = context.get()->getSpecialQueue(3u);
+
+    Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
+    Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
+    Event event3(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 1, 6);
+    Event event4(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 4, 20);
+    Event event5(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
+    Event event6(pCmdQ3, CL_COMMAND_NDRANGE_KERNEL, 7, 21);
+    Event event7(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 2, 7);
+    UserEvent userEvent1(&pCmdQ1->getContext());
+    UserEvent userEvent2(&pCmdQ2->getContext());
+
+    userEvent1.setStatus(CL_COMPLETE);
+    userEvent2.setStatus(CL_COMPLETE);
+
+    cl_event eventWaitList[] =
+        {
+            &event1,
+            &event2,
+            &event3,
+            &event4,
+            &event5,
+            &event6,
+            &event7,
+            &userEvent1,
+            &userEvent2,
+        };
+
+    cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+
+    {
+        pCmdQ1->enqueueMarkerWithWaitList(
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        EXPECT_EQ(0u, mockCsr1->waitForCompletionWithTimeoutCalled);
+        EXPECT_EQ(1u, mockCsr2->waitForCompletionWithTimeoutCalled);
+        EXPECT_EQ(1u, mockCsr3->waitForCompletionWithTimeoutCalled);
+    }
+
+    {
+        pCmdQ2->enqueueMarkerWithWaitList(
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        EXPECT_EQ(1u, mockCsr1->waitForCompletionWithTimeoutCalled);
+        EXPECT_EQ(1u, mockCsr2->waitForCompletionWithTimeoutCalled);
+        EXPECT_EQ(2u, mockCsr3->waitForCompletionWithTimeoutCalled);
+    }
+
+    {
+        pCmdQ3->enqueueMarkerWithWaitList(
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        EXPECT_EQ(2u, mockCsr1->waitForCompletionWithTimeoutCalled);
+        EXPECT_EQ(2u, mockCsr2->waitForCompletionWithTimeoutCalled);
+        EXPECT_EQ(2u, mockCsr3->waitForCompletionWithTimeoutCalled);
+    }
 }

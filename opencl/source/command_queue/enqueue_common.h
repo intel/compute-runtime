@@ -147,6 +147,16 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         return;
     }
 
+    StackVec<cl_event, 8> waitListCurrentRootDeviceIndex;
+    bool isEventWaitListFromPreviousRootDevice = false;
+
+    if (context->getRootDeviceIndices().size() > 1u) {
+        waitForEventsFromDifferentRootDeviceIndex(numEventsInWaitList, eventWaitList, waitListCurrentRootDeviceIndex, isEventWaitListFromPreviousRootDevice);
+    }
+
+    const cl_event *eventWaitListCurrentRootDevice = isEventWaitListFromPreviousRootDevice ? waitListCurrentRootDeviceIndex.data() : eventWaitList;
+    cl_uint numEventsInWaitListCurrentRootDevice = isEventWaitListFromPreviousRootDevice ? static_cast<cl_uint>(waitListCurrentRootDeviceIndex.size()) : numEventsInWaitList;
+
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     auto devQueue = this->getContext().getDefaultDeviceQueue();
     DeviceQueueHw<GfxFamily> *devQueueHw = castToObject<DeviceQueueHw<GfxFamily>>(devQueue);
@@ -165,7 +175,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     auto blockQueue = false;
     auto taskLevel = 0u;
-    obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitList, eventWaitList, blockQueue, commandType);
+    obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitListCurrentRootDevice, eventWaitListCurrentRootDevice, blockQueue, commandType);
 
     if (parentKernel && !blockQueue) {
         while (!devQueueHw->isEMCriticalSectionFree())
@@ -181,7 +191,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     TimestampPacketDependencies timestampPacketDependencies;
-    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+    EventsRequest eventsRequest(numEventsInWaitListCurrentRootDevice, eventWaitListCurrentRootDevice, event);
     CsrDependencies csrDeps;
     BlitPropertiesContainer blitPropertiesContainer;
 
@@ -300,17 +310,20 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 taskLevel);
         } else {
             UNRECOVERABLE_IF(enqueueProperties.operation != EnqueueProperties::Operation::EnqueueWithoutSubmission);
-            auto maxTaskCount = this->taskCount;
-            for (auto eventId = 0u; eventId < numEventsInWaitList; eventId++) {
-                auto event = castToObject<Event>(eventWaitList[eventId]);
+
+            auto maxTaskCountCurrentRootDevice = this->taskCount;
+
+            for (auto eventId = 0u; eventId < numEventsInWaitListCurrentRootDevice; eventId++) {
+                auto event = castToObject<Event>(eventWaitListCurrentRootDevice[eventId]);
+
                 if (!event->isUserEvent() && !event->isExternallySynchronized()) {
-                    maxTaskCount = std::max(maxTaskCount, event->peekTaskCount());
+                    maxTaskCountCurrentRootDevice = std::max(maxTaskCountCurrentRootDevice, event->peekTaskCount());
                 }
             }
 
             //inherit data from event_wait_list and previous packets
             completionStamp.flushStamp = this->flushStamp->peekStamp();
-            completionStamp.taskCount = maxTaskCount;
+            completionStamp.taskCount = maxTaskCountCurrentRootDevice;
             completionStamp.taskLevel = taskLevel;
 
             if (eventBuilder.getEvent() && isProfilingEnabled()) {
