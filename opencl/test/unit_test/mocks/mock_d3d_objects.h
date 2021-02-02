@@ -58,7 +58,11 @@ class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
     MOCK_METHOD1_T(updateDevice, void(D3DResource *resource));
     MOCK_METHOD2_T(checkFormatSupport, bool(DXGI_FORMAT format, UINT *pFormat));
     MOCK_METHOD2_T(memObjectFormatSupport, bool(cl_mem_object_type object, UINT format));
+    MOCK_METHOD2_T(validateFormatSupport, cl_int(DXGI_FORMAT format, cl_mem_object_type type));
 
+    cl_int validateFormatSupportBase(DXGI_FORMAT format, cl_mem_object_type type) {
+        return D3DSharingFunctions<D3D>::validateFormatSupport(format, type);
+    }
     std::vector<std::pair<D3DResource *, cl_uint>> *getTrackedResourcesVector() { return &this->trackedResources; }
 
     D3DBufferDesc mockBufferDesc = {};

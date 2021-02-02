@@ -60,6 +60,10 @@ bool D3DSharingFunctions<D3DTypesHelper::D3D9>::checkFormatSupport(DXGI_FORMAT f
     return false;
 }
 
+cl_int D3DSharingFunctions<D3DTypesHelper::D3D9>::validateFormatSupport(DXGI_FORMAT format, cl_mem_object_type type) {
+    return CL_SUCCESS;
+}
+
 template <>
 bool D3DSharingFunctions<D3DTypesHelper::D3D9>::memObjectFormatSupport(cl_mem_object_type object, UINT format) {
     return false;

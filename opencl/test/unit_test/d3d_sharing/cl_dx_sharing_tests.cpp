@@ -180,7 +180,7 @@ TEST_F(clIntelSharingFormatQueryDX10, givenInvalidContextWhenDX10TextureFormatsR
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clIntelSharingFormatQueryDX10, givenValidParametersWhenRequestedDX10TextureFormatsThenTheResultIsASubsetOfKnownFormats) {
+TEST_F(clIntelSharingFormatQueryDX10, givenValidParametersWhenRequestedDX10TextureFormatsThenTheResultIsASubsetOfKnownFormatsWithoutUnsupportedPlanars) {
     retVal = clGetSupportedD3D10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
                                                     static_cast<cl_uint>(retrievedFormats.size()),
                                                     &retrievedFormats[0], &numImageFormats);
@@ -191,6 +191,10 @@ TEST_F(clIntelSharingFormatQueryDX10, givenValidParametersWhenRequestedDX10Textu
                             retrievedFormats[i]),
                   availableFormats.end());
     }
+
+    EXPECT_EQ(std::find(retrievedFormats.begin(), retrievedFormats.end(), DXGI_FORMAT_420_OPAQUE), retrievedFormats.end());
+    EXPECT_EQ(std::find(retrievedFormats.begin(), retrievedFormats.end(), DXGI_FORMAT_NV11), retrievedFormats.end());
+    EXPECT_EQ(std::find(retrievedFormats.begin(), retrievedFormats.end(), DXGI_FORMAT_P208), retrievedFormats.end());
 }
 
 TEST_F(clIntelSharingFormatQueryDX10, givenValidParametersWhenRequestedDX10TextureFormatsTwiceThenTheResultsAreTheSame) {

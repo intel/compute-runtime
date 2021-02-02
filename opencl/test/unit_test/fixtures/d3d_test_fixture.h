@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,6 +102,9 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         mockMM = std::make_unique<MockMM>(*context->getDevice(0)->getExecutionEnvironment());
 
         mockSharingFcns = new NiceMock<MockD3DSharingFunctions<T>>();
+        auto checkFormat = [](DXGI_FORMAT format, UINT *pFormat) -> bool { *pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D; return true; };
+        ON_CALL(*mockSharingFcns, checkFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(checkFormat));
+
         context->setSharingFunctions(mockSharingFcns);
         context->memoryManager = mockMM.get();
         cmdQ = new MockCommandQueue(context, context->getDevice(0), 0);

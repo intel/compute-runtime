@@ -124,17 +124,14 @@ static const DXGI_FORMAT DXGIFormats[] = {
     DXGI_FORMAT_NV12,
     DXGI_FORMAT_P010,
     DXGI_FORMAT_P016,
-    DXGI_FORMAT_420_OPAQUE,
     DXGI_FORMAT_YUY2,
     DXGI_FORMAT_Y210,
     DXGI_FORMAT_Y216,
-    DXGI_FORMAT_NV11,
     DXGI_FORMAT_AI44,
     DXGI_FORMAT_IA44,
     DXGI_FORMAT_P8,
     DXGI_FORMAT_A8P8,
     DXGI_FORMAT_B4G4R4A4_UNORM,
-    DXGI_FORMAT_P208,
     DXGI_FORMAT_V208,
     DXGI_FORMAT_V408,
     DXGI_FORMAT_FORCE_UINT};
@@ -214,6 +211,18 @@ template <typename D3D>
 bool D3DSharingFunctions<D3D>::checkFormatSupport(DXGI_FORMAT format, UINT *pFormat) {
     auto errorCode = d3dDevice->CheckFormatSupport(format, pFormat);
     return errorCode == S_OK;
+}
+
+template <typename D3D>
+cl_int D3DSharingFunctions<D3D>::validateFormatSupport(DXGI_FORMAT format, cl_mem_object_type type) {
+    auto &formats = retrieveTextureFormats(type, 0);
+    auto iter = std::find(formats.begin(), formats.end(), format);
+
+    if (iter != formats.end()) {
+        return CL_SUCCESS;
+    }
+
+    return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
 }
 
 template <typename D3D>

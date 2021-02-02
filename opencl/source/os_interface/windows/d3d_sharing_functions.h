@@ -120,6 +120,8 @@ class D3DSharingFunctions : public SharingFunctions {
     MOCKABLE_VIRTUAL bool checkFormatSupport(DXGI_FORMAT format, UINT *pFormat);
     MOCKABLE_VIRTUAL bool memObjectFormatSupport(cl_mem_object_type object, UINT format);
 
+    MOCKABLE_VIRTUAL cl_int validateFormatSupport(DXGI_FORMAT format, cl_mem_object_type type);
+
     GetDxgiDescFcn getDxgiDescFcn = nullptr;
 
     bool isTracked(D3DResource *resource, cl_uint subresource) {

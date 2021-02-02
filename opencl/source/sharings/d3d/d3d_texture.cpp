@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,13 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     D3DTexture2dDesc textureDesc = {};
     sharingFcns->getTexture2dDesc(&textureDesc, d3dTexture);
 
-    if ((textureDesc.Format == DXGI_FORMAT_NV12) || (textureDesc.Format == DXGI_FORMAT_P010) || (textureDesc.Format == DXGI_FORMAT_P016)) {
+    cl_int formatSupportError = sharingFcns->validateFormatSupport(textureDesc.Format, CL_MEM_OBJECT_IMAGE2D);
+    if (formatSupportError != CL_SUCCESS) {
+        err.set(formatSupportError);
+        return nullptr;
+    }
+
+    if (D3DSharing<D3D>::isFormatWithPlane1(textureDesc.Format)) {
         if ((subresource % 2) == 0) {
             imagePlane = ImagePlane::PLANE_Y;
         } else {
@@ -132,6 +138,12 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
 
     D3DTexture3dDesc textureDesc = {};
     sharingFcns->getTexture3dDesc(&textureDesc, d3dTexture);
+
+    cl_int formatSupportError = sharingFcns->validateFormatSupport(textureDesc.Format, CL_MEM_OBJECT_IMAGE3D);
+    if (formatSupportError != CL_SUCCESS) {
+        err.set(formatSupportError);
+        return nullptr;
+    }
 
     if (subresource >= textureDesc.MipLevels) {
         err.set(CL_INVALID_VALUE);

@@ -595,6 +595,72 @@ TYPED_TEST_P(D3DTests, givenFormatNotSupportedByDxWhenGettingSupportedFormatsThe
     EXPECT_FALSE(foundUnsupported);
 }
 
+TYPED_TEST_P(D3DTests, givenUnsupportedFormatWhenCreatingTexture2dThenInvalidImageFormatDescriptorIsReturned) {
+
+    auto checkFormat = [](DXGI_FORMAT format, UINT *pFormat) -> bool {
+        if (format == DXGI_FORMAT_R32_FLOAT) {
+            return false;
+        }
+        *pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
+        return true;
+    };
+
+    auto validate = [&](DXGI_FORMAT format, cl_mem_object_type type) -> cl_int {
+        return mockSharingFcns->validateFormatSupportBase(format, type);
+    };
+
+    ON_CALL(*mockSharingFcns, checkFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(checkFormat));
+    ON_CALL(*mockSharingFcns, memObjectFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Return(true));
+
+    ON_CALL(*mockSharingFcns, validateFormatSupport(::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(validate));
+
+    this->mockSharingFcns->mockTexture2dDesc.Format = DXGI_FORMAT_R32_FLOAT;
+
+    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
+
+    cl_int retCode = CL_SUCCESS;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 0, &retCode));
+    EXPECT_EQ(nullptr, image.get());
+
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retCode);
+}
+
+TYPED_TEST_P(D3DTests, givenUnsupportedFormatWhenCreatingTexture3dThenInvalidImageFormatDescriptorIsReturned) {
+
+    auto checkFormat = [](DXGI_FORMAT format, UINT *pFormat) -> bool {
+        if (format == DXGI_FORMAT_R32_FLOAT) {
+            return false;
+        }
+        *pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
+        return true;
+    };
+
+    auto validate = [&](DXGI_FORMAT format, cl_mem_object_type type) -> cl_int {
+        return mockSharingFcns->validateFormatSupportBase(format, type);
+    };
+
+    ON_CALL(*mockSharingFcns, checkFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(checkFormat));
+    ON_CALL(*mockSharingFcns, memObjectFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Return(true));
+
+    ON_CALL(*mockSharingFcns, validateFormatSupport(::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(validate));
+
+    this->mockSharingFcns->mockTexture3dDesc.Format = DXGI_FORMAT_R32_FLOAT;
+
+    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+
+    cl_int retCode = CL_SUCCESS;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 0, &retCode));
+    EXPECT_EQ(nullptr, image.get());
+
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retCode);
+}
+
 REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            givenSharedResourceBufferAndInteropUserSyncEnabledWhenReleaseIsCalledThenDontDoExplicitFinish,
                            givenNonSharedResourceBufferAndInteropUserSyncDisabledWhenReleaseIsCalledThenDoExplicitFinishTwice,
@@ -618,7 +684,9 @@ REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreatedThenReturnCorrectCode,
                            givenSharedObjectAndAlocationFailedWhen3dCreatedThenReturnCorrectCode,
                            givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCreatedThenReturnCorrectCode,
-                           givenFormatNotSupportedByDxWhenGettingSupportedFormatsThenOnlySupportedFormatsAreReturned);
+                           givenFormatNotSupportedByDxWhenGettingSupportedFormatsThenOnlySupportedFormatsAreReturned,
+                           givenUnsupportedFormatWhenCreatingTexture2dThenInvalidImageFormatDescriptorIsReturned,
+                           givenUnsupportedFormatWhenCreatingTexture3dThenInvalidImageFormatDescriptorIsReturned);
 
 INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DTests, D3DTypes);
 
@@ -647,4 +715,24 @@ TEST_F(D3D11Test, givenIncompatibleAdapterLuidWhenGettingDeviceIdsThenNoDevicesA
     EXPECT_EQ(CL_DEVICE_NOT_FOUND, retVal);
     EXPECT_EQ(0, numDevices);
 }
+
+TEST(D3D11, GivenPlanarFormatsWhenCallingIsFormatWithPlane1ThenTrueIsReturned) {
+    std::array<DXGI_FORMAT, 6> planarFormats = {DXGI_FORMAT_NV12, DXGI_FORMAT_P010, DXGI_FORMAT_P016,
+                                                DXGI_FORMAT_420_OPAQUE, DXGI_FORMAT_NV11, DXGI_FORMAT_P208};
+
+    for (auto format : planarFormats) {
+        EXPECT_TRUE(D3DSharing<D3DTypesHelper::D3D11>::isFormatWithPlane1(format));
+    }
+}
+
+TEST(D3D11, GivenNonPlanarFormatsWhenCallingIsFormatWithPlane1ThenFalseIsReturned) {
+    std::array<DXGI_FORMAT, 6> planarFormats = {DXGI_FORMAT_R32G32B32_FLOAT,
+                                                DXGI_FORMAT_R32G32B32_UINT,
+                                                DXGI_FORMAT_R32G32B32_SINT};
+
+    for (auto format : planarFormats) {
+        EXPECT_FALSE(D3DSharing<D3DTypesHelper::D3D11>::isFormatWithPlane1(format));
+    }
+}
+
 } // namespace NEO

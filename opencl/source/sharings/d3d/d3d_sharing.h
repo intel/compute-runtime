@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "opencl/source/sharings/d3d/d3d_sharing.h"
-
 #include "d3d_sharing_functions.h"
 
 enum GMM_RESOURCE_FORMAT_ENUM;

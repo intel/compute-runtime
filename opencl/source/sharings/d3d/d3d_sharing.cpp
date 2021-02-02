@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,9 @@ bool D3DSharing<D3D>::isFormatWithPlane1(DXGI_FORMAT format) {
     case DXGI_FORMAT_NV12:
     case DXGI_FORMAT_P010:
     case DXGI_FORMAT_P016:
+    case DXGI_FORMAT_420_OPAQUE:
+    case DXGI_FORMAT_NV11:
+    case DXGI_FORMAT_P208:
         return true;
     }
     return false;
