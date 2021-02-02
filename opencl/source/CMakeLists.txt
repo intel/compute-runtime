@@ -135,17 +135,19 @@ if(${GENERATE_EXECUTABLE})
   )
 
   if(UNIX)
-    get_filename_component(lib_file_name $<TARGET_FILE:${NEO_DYNAMIC_LIB_NAME}> NAME_WE)
-    set(symbols_file_name ${lib_file_name}.debug)
-    set(debug_symbols_target_name "${STRIP_SYMBOLS_TARGET}_${NEO_DYNAMIC_LIB_NAME}")
-    add_custom_target(${debug_symbols_target_name}
-                      COMMAND sh -c "objcopy --only-keep-debug ${lib_file_name} ${symbols_file_name}"
-                      COMMAND sh -c "strip -g ${lib_file_name}"
-                      COMMAND sh -c "objcopy --add-gnu-debuglink=${symbols_file_name} ${lib_file_name}"
-    )
-    add_dependencies(${debug_symbols_target_name} ${NEO_DYNAMIC_LIB_NAME})
-    add_dependencies(${STRIP_SYMBOLS_TARGET} ${debug_symbols_target_name})
-    set_property(GLOBAL PROPERTY IGDRCL_SYMBOL_FILE "${symbols_file_name}")
+    if(NEO_BUILD_DEBUG_SYMBOLS_PACKAGE)
+      get_filename_component(lib_file_name $<TARGET_FILE:${NEO_DYNAMIC_LIB_NAME}> NAME_WE)
+      set(symbols_file_name ${lib_file_name}.debug)
+      set(debug_symbols_target_name "${STRIP_SYMBOLS_TARGET}_${NEO_DYNAMIC_LIB_NAME}")
+      add_custom_target(${debug_symbols_target_name}
+                        COMMAND sh -c "objcopy --only-keep-debug ${lib_file_name} ${symbols_file_name}"
+                        COMMAND sh -c "strip -g ${lib_file_name}"
+                        COMMAND sh -c "objcopy --add-gnu-debuglink=${symbols_file_name} ${lib_file_name}"
+      )
+      add_dependencies(${debug_symbols_target_name} ${NEO_DYNAMIC_LIB_NAME})
+      add_dependencies(${STRIP_SYMBOLS_TARGET} ${debug_symbols_target_name})
+      set_property(GLOBAL PROPERTY IGDRCL_SYMBOL_FILE "${symbols_file_name}")
+    endif()
 
     install(FILES
             $<TARGET_FILE:${NEO_DYNAMIC_LIB_NAME}>
