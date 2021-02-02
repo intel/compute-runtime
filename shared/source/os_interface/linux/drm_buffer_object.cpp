@@ -201,13 +201,13 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
         logger << "Buffer Object = { handle: BO-" << execObjectsStorage[i].handle
                << ", address range: 0x" << (void *)execObjectsStorage[i].offset
                << " - 0x" << (void *)ptrOffset(execObjectsStorage[i].offset, residency[i]->peekSize())
-               << ", flags: " << execObjectsStorage[i].flags
+               << ", flags: " << std::hex << execObjectsStorage[i].flags << std::dec
                << ", size: " << residency[i]->peekSize() << " }\n";
     }
     logger << "Command Buffer Object = { handle: BO-" << execObjectsStorage[i].handle
            << ", address range: 0x" << (void *)execObjectsStorage[i].offset
            << " - 0x" << (void *)ptrOffset(execObjectsStorage[i].offset, this->peekSize())
-           << ", flags: " << execObjectsStorage[i].flags
+           << ", flags: " << std::hex << execObjectsStorage[i].flags << std::dec
            << ", size: " << this->peekSize() << " }\n";
 
     std::cout << logger.str() << std::endl;
