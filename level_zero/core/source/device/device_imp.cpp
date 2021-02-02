@@ -130,11 +130,8 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
 
 ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
                                                       ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
-    NEO::Device *neoDevice = this->neoDevice;
-    if (this->getNEODevice()->getNumAvailableDevices() > 1) {
-        neoDevice = this->neoDevice->getDeviceById(0);
-    }
-    auto engines = neoDevice->getEngineGroups();
+    NEO::Device *activeDevice = getActiveDevice();
+    auto engines = activeDevice->getEngineGroups();
 
     uint32_t numEngineGroups = 0;
     for (uint32_t i = 0; i < engines.size(); i++) {
@@ -527,10 +524,6 @@ uint32_t DeviceImp::getMaxNumHwThreads() const { return maxNumHwThreads; }
 
 const NEO::HardwareInfo &DeviceImp::getHwInfo() const { return neoDevice->getHardwareInfo(); }
 
-bool DeviceImp::isMultiDeviceCapable() const {
-    return neoDevice->getNumAvailableDevices() > 1u;
-}
-
 Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask, bool isSubDevice) {
     auto device = new DeviceImp;
     UNRECOVERABLE_IF(device == nullptr);
@@ -769,34 +762,20 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
-    if (this->getNEODevice()->getNumAvailableDevices() > 1) {
-        if (index >= this->neoDevice->getDeviceById(0)->getEngineGroups()[engineGroupIndex].size()) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
-        *csr = this->neoDevice->getDeviceById(0)->getEngineGroups()[engineGroupIndex][index].commandStreamReceiver;
-    } else {
-        if (index >= this->neoDevice->getEngineGroups()[engineGroupIndex].size()) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
-        *csr = this->neoDevice->getEngineGroups()[engineGroupIndex][index].commandStreamReceiver;
+    NEO::Device *activeDevice = getActiveDevice();
+    if (index >= activeDevice->getEngineGroups()[engineGroupIndex].size()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+    *csr = activeDevice->getEngineGroups()[engineGroupIndex][index].commandStreamReceiver;
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
-    if (this->getNEODevice()->getNumAvailableDevices() > 1) {
-        for (auto &it : neoDevice->getDeviceById(0)->getEngines()) {
-            if (it.osContext->isLowPriority()) {
-                *csr = it.commandStreamReceiver;
-                return ZE_RESULT_SUCCESS;
-            }
-        }
-    } else {
-        for (auto &it : neoDevice->getEngines()) {
-            if (it.osContext->isLowPriority()) {
-                *csr = it.commandStreamReceiver;
-                return ZE_RESULT_SUCCESS;
-            }
+    NEO::Device *activeDevice = getActiveDevice();
+    for (auto &it : activeDevice->getEngines()) {
+        if (it.osContext->isLowPriority()) {
+            *csr = it.commandStreamReceiver;
+            return ZE_RESULT_SUCCESS;
         }
     }
     // if the code falls through, we have no low priority context created by neoDevice.
@@ -805,11 +784,8 @@ ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
 }
 
 ze_result_t DeviceImp::mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) {
-    NEO::Device *neoDevice = this->neoDevice;
-    if (this->getNEODevice()->getNumAvailableDevices() > 1) {
-        neoDevice = this->neoDevice->getDeviceById(0);
-    }
-    auto engines = neoDevice->getEngineGroups();
+    NEO::Device *activeDevice = getActiveDevice();
+    auto engines = activeDevice->getEngineGroups();
     uint32_t numNonEmptyGroups = 0;
     uint32_t i = 0;
     for (; i < engines.size() && numNonEmptyGroups <= *ordinal; i++) {

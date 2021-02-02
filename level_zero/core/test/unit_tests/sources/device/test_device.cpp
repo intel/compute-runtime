@@ -467,14 +467,6 @@ struct MultipleDevicesTest : public ::testing::Test {
     const uint32_t numSubDevices = 2u;
 };
 
-TEST_F(MultipleDevicesTest, whenDeviceContainsSubDevicesThenItIsMultiDeviceCapable) {
-    L0::Device *device0 = driverHandle->devices[0];
-    EXPECT_TRUE(device0->isMultiDeviceCapable());
-
-    L0::Device *device1 = driverHandle->devices[1];
-    EXPECT_TRUE(device1->isMultiDeviceCapable());
-}
-
 TEST_F(MultipleDevicesTest, whenRetrievingNumberOfSubdevicesThenCorrectNumberIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
 
