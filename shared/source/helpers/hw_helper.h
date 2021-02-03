@@ -129,6 +129,7 @@ class HwHelper {
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
     virtual bool additionalKernelExecInfoSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -317,6 +318,8 @@ class HwHelperHw : public HwHelper {
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 
     bool isMediaBlockIOSupported(const HardwareInfo &hwInfo) const override;
+
+    bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const override;
 
     bool isCopyOnlyEngineType(EngineGroupType type) const override;
 

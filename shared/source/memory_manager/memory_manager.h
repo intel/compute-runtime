@@ -145,6 +145,8 @@ class MemoryManager {
     bool isLocalMemorySupported(uint32_t rootDeviceIndex) const;
     virtual bool isMemoryBudgetExhausted() const;
 
+    virtual bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) { return false; }
+
     virtual AlignedMallocRestrictions *getAlignedMallocRestrictions() {
         return nullptr;
     }

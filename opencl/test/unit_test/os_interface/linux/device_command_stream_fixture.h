@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,7 @@ class DrmMockTime : public DrmMockSuccess {
 
 class DrmMockCustom : public Drm {
   public:
+    using Drm::bindAvailable;
     using Drm::memoryInfo;
 
     struct IoctlResExt {

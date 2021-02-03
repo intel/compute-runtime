@@ -220,13 +220,9 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
     }
 
     if (supportDualStorageSharedMemory) {
-        bool useKmdMigration = false;
-
-        if (DebugManager.flags.UseKmdMigration.get() != -1) {
-            useKmdMigration = DebugManager.flags.UseKmdMigration.get();
-        }
-
+        bool useKmdMigration = memoryManager->isKmdMigrationAvailable(*memoryProperties.rootDeviceIndices.begin());
         void *unifiedMemoryPointer = nullptr;
+
         if (useKmdMigration) {
             unifiedMemoryPointer = createUnifiedKmdMigratedAllocation(size, {}, memoryProperties);
             if (!unifiedMemoryPointer) {

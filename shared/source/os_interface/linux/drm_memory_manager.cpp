@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -173,6 +173,20 @@ void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t
     graphicsAddress = GmmHelper::decanonize(graphicsAddress);
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     gfxPartition->freeGpuAddressRange(graphicsAddress, unmapSize);
+}
+
+bool DrmMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+
+    auto useKmdMigration = hwHelper.isKmdMigrationSupported(*hwInfo) &&
+                           this->getDrm(rootDeviceIndex).isVmBindAvailable();
+
+    if (DebugManager.flags.UseKmdMigration.get() != -1) {
+        useKmdMigration = DebugManager.flags.UseKmdMigration.get();
+    }
+
+    return useKmdMigration;
 }
 
 NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint64_t flags, uint32_t rootDeviceIndex) {
