@@ -70,7 +70,7 @@ ze_result_t WddmFanImp::setFixedSpeedMode(const zes_fan_speed_t *pSpeed) {
 }
 
 ze_result_t WddmFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTable) {
-    if (pSpeedTable->numPoints == 0 || pSpeedTable->numPoints >= maxPoints) {
+    if (pSpeedTable->numPoints == 0 || pSpeedTable->numPoints > maxPoints) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
