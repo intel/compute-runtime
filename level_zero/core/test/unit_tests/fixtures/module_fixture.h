@@ -34,7 +34,6 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
                                     size_t destinationOffset,
                                     const void *memoryToCopy,
                                     size_t sizeToCopy) override {
-
             copyMemoryToAllocationCalledTimes++;
             return true;
         }
@@ -81,16 +80,17 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     };
 
     struct MockModule : public L0::ModuleImp {
+        using ModuleImp::translationUnit;
+        using ModuleImp::type;
         MockModule(L0::Device *device,
                    L0::ModuleBuildLog *moduleBuildLog,
                    L0::ModuleType type,
-                   uint32_t perHwThreadPrivateMemorySize) : ModuleImp(device, moduleBuildLog, type) {
-            mockKernelImmData = new MockImmutableData(perHwThreadPrivateMemorySize);
+                   uint32_t perHwThreadPrivateMemorySize,
+                   MockImmutableData *inMockKernelImmData) : ModuleImp(device, moduleBuildLog, type), mockKernelImmData(inMockKernelImmData) {
             mockKernelImmData->setDevice(device);
         }
 
         ~MockModule() {
-            delete mockKernelImmData;
         }
 
         const KernelImmutableData *getKernelImmutableData(const char *functionName) const override {
@@ -121,7 +121,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         neoDevice->executionEnvironment->memoryManager.reset(memoryManager);
     }
 
-    void createModuleFromBinary(uint32_t perHwThreadPrivateMemorySize) {
+    void createModuleFromBinary(uint32_t perHwThreadPrivateMemorySize, bool isInternal, MockImmutableData *mockKernelImmData) {
         std::string testFile;
         retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
 
@@ -143,8 +143,10 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         module = std::make_unique<MockModule>(device,
                                               moduleBuildLog,
                                               ModuleType::User,
-                                              perHwThreadPrivateMemorySize);
+                                              perHwThreadPrivateMemorySize,
+                                              mockKernelImmData);
 
+        module->type = isInternal ? ModuleType::Builtin : ModuleType::User;
         bool result = module->initialize(&moduleDesc, device->getNEODevice());
         EXPECT_TRUE(result);
     }

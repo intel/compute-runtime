@@ -111,6 +111,15 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
         {neoDevice->getRootDeviceIndex(), kernelIsaSize, allocType, neoDevice->getDeviceBitfield()});
     UNRECOVERABLE_IF(allocation == nullptr);
 
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (kernelInfo->heapInfo.pKernelHeap != nullptr && internalKernel == false) {
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
+                                                              *neoDevice, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
+                                                              static_cast<size_t>(kernelIsaSize));
+    }
+
     isaGraphicsAllocation.reset(allocation);
     if (device->getL0Debugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
         device->getL0Debugger()->registerElf(kernelInfo->kernelDescriptor.external.debugData.get(), allocation);
@@ -596,11 +605,12 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap != nullptr) {
+    auto isaAllocation = this->kernelImmData->getIsaGraphicsAllocation();
+    if (this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap != nullptr &&
+        isaAllocation->getAllocationType() == NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL) {
         auto neoDevice = module->getDevice()->getNEODevice();
         auto &hwInfo = neoDevice->getHardwareInfo();
         auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        auto isaAllocation = this->kernelImmData->getIsaGraphicsAllocation();
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *isaAllocation),
                                                               *neoDevice,
                                                               isaAllocation,
