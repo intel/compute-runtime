@@ -400,7 +400,7 @@ inline size_t EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(Device &devic
 
 template <typename GfxFamily>
 void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                                            bool isReadOnly, uint32_t numAvailableDevices) {
+                                                            bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, size_t numDevicesInContext) {
     encodeExtraCacheSettings(surfaceState, *gmmHelper->getHardwareInfo());
 }
 

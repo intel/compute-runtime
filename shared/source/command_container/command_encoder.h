@@ -230,9 +230,9 @@ struct EncodeSurfaceState {
 
     static void encodeBuffer(void *dst, uint64_t address, size_t size, uint32_t mocs,
                              bool cpuCoherent, bool forceNonAuxMode, bool isReadOnly, uint32_t numAvailableDevices,
-                             GraphicsAllocation *allocation, GmmHelper *gmmHelper);
+                             GraphicsAllocation *allocation, GmmHelper *gmmHelper, bool useGlobalAtomics, size_t numDevicesInContext);
     static void encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                        bool isReadOnly, uint32_t numAvailableDevices);
+                                        bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, size_t numDevicesInContext);
     static void encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo);
 
     static constexpr uintptr_t getSurfaceBaseAddressAlignmentMask() {

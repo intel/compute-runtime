@@ -318,7 +318,7 @@ void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_
 template <typename Family>
 void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_t size, uint32_t mocs,
                                               bool cpuCoherent, bool forceNonAuxMode, bool isReadOnly, uint32_t numAvailableDevices,
-                                              GraphicsAllocation *allocation, GmmHelper *gmmHelper) {
+                                              GraphicsAllocation *allocation, GmmHelper *gmmHelper, bool useGlobalAtomics, size_t numDevicesInContext) {
     auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(dst);
     UNRECOVERABLE_IF(!isAligned<getSurfaceBaseAddressMinimumAlignment()>(size));
 
@@ -356,7 +356,7 @@ void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_
         surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 
-    EncodeSurfaceState<Family>::encodeExtraBufferParams(surfaceState, allocation, gmmHelper, isReadOnly, numAvailableDevices);
+    EncodeSurfaceState<Family>::encodeExtraBufferParams(surfaceState, allocation, gmmHelper, isReadOnly, numAvailableDevices, useGlobalAtomics, numDevicesInContext);
 }
 
 template <typename Family>

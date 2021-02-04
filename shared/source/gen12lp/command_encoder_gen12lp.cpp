@@ -52,7 +52,7 @@ void EncodeWA<Family>::encodeAdditionalPipelineSelect(Device &device, LinearStre
 
 template <>
 void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                                         bool isReadOnly, uint32_t numAvailableDevices) {
+                                                         bool isReadOnly, uint32_t numAvailableDevices, bool useGlobalAtomics, size_t numDevicesInContext) {
     const bool isL3Allowed = surfaceState->getMemoryObjectControlState() == gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     if (isL3Allowed) {
         const bool isConstantSurface = allocation && allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE;

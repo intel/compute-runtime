@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,8 @@ struct KernelHw : public KernelImp {
         NEO::Device *neoDevice = module->getDevice()->getNEODevice();
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(surfaceStateAddress, bufferAddressForSsh, bufferSizeForSsh, mocs,
                                                          false, false, false, neoDevice->getNumAvailableDevices(),
-                                                         alloc, neoDevice->getGmmHelper());
+                                                         alloc, neoDevice->getGmmHelper(),
+                                                         kernelImmData->getDescriptor().kernelAttributes.flags.useGlobalAtomics, 1u);
     }
 
     std::unique_ptr<Kernel> clone() const override {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,7 +142,8 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI, rootDeviceIndex);
         cl_mem buffer = (cl_mem)resource;
         auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
-        pBuffer->setArgStateful(pSurfaceState, false, false, false, false, device);
+        pBuffer->setArgStateful(pSurfaceState, false, false, false, false, device,
+                                pKernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
     }
 }
 

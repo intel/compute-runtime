@@ -1489,7 +1489,7 @@ class DrmMockBuffer : public MockBufferStorage, public Buffer {
           gfxAllocation(alloc) {
     }
 
-    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device) override {
+    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device, bool useGlobalAtomics, size_t numDevicesInContext) override {
     }
 
   protected:

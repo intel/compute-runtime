@@ -752,7 +752,7 @@ void Buffer::setSurfaceState(const Device *device,
         multiGraphicsAllocation.addAllocation(gfxAlloc);
     }
     auto buffer = Buffer::createBufferHwFromDevice(device, flags, flagsIntel, svmSize, svmPtr, svmPtr, std::move(multiGraphicsAllocation), offset, true, false, false);
-    buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, false, false, *device);
+    buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, false, false, *device, false, 1u);
     delete buffer;
 }
 

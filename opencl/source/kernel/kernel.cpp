@@ -1490,7 +1490,10 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
             if (requiresSshForBuffers(rootDeviceIndex)) {
                 auto surfaceState = ptrOffset(getSurfaceStateHeap(rootDeviceIndex), kernelArgInfo.offsetHeap);
-                buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, isAuxTranslationKernel, kernelArgInfo.isReadOnly, pClDevice->getDevice());
+                auto context = program->getContextPtr();
+                size_t numDevicesInContext = context ? context->getNumDevices() : 1u;
+                buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, isAuxTranslationKernel, kernelArgInfo.isReadOnly, pClDevice->getDevice(),
+                                       getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, numDevicesInContext);
             }
 
             kernelArguments[argIndex].isStatelessUncacheable = kernelArgInfo.pureStatefulBufferAccess ? false : buffer->isMemObjUncacheable();

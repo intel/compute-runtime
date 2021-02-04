@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -155,7 +155,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationPr
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1);
     EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
                                                  false, false, false, 1u,
-                                                 &allocation, pDevice->getGmmHelper());
+                                                 &allocation, pDevice->getGmmHelper(), false, 1u);
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
     EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
     EXPECT_EQ(length.SurfaceState.Height + 1u, state->getHeight());
@@ -182,7 +182,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationNo
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
                                                  true, false, false, 1u,
-                                                 nullptr, pDevice->getGmmHelper());
+                                                 nullptr, pDevice->getGmmHelper(), false, 1u);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, state->getSurfaceType());
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, state->getCoherencyType());
@@ -208,7 +208,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherency
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
                                                  false, false, false, 1u,
-                                                 nullptr, pDevice->getGmmHelper());
+                                                 nullptr, pDevice->getGmmHelper(), false, 1u);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, state->getCoherencyType());
 
