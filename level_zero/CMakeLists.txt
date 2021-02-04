@@ -467,6 +467,11 @@ if(BUILD_WITH_L0)
   append_sources_from_properties(L0_SHARED_LIB_SRCS L0_SRCS_DLL NEO_CORE_SRCS_LINK)
   target_sources(${TARGET_NAME_L0} PRIVATE $<TARGET_OBJECTS:${L0_RELEASE_LIB_NAME}> ${L0_SHARED_LIB_SRCS})
 
+  target_link_libraries(${TARGET_NAME_L0}
+                        ${NEO_STATICALLY_LINKED_LIBRARIES}
+                        ${OS_SPECIFIC_LIBS} ${ASAN_LIBS} ${TSAN_LIBS}
+  )
+
   if(UNIX)
     target_link_libraries(${TARGET_NAME_L0} ${GMM_LINK_NAME})
 
@@ -474,11 +479,6 @@ if(BUILD_WITH_L0)
                  APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze.exports"
     )
   endif()
-
-  target_link_libraries(${TARGET_NAME_L0}
-                        ${NEO_STATICALLY_LINKED_LIBRARIES}
-                        ${OS_SPECIFIC_LIBS} ${ASAN_LIBS} ${TSAN_LIBS}
-  )
 
   create_source_tree(${TARGET_NAME_L0} ${L0_ROOT_DIR}/..)
 
