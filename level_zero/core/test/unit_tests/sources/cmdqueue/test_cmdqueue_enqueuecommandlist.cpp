@@ -198,6 +198,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenExecutingCommandListsThenEndingPip
 using CommandQueueExecuteSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsThenMVSIsProgrammedWithMaxPTSS, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PARSE = typename FamilyType::PARSE;
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -228,8 +229,10 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
                                           usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
+    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
+    ASSERT_EQ(1u, GSBAStates.size());
 
     CommandList::fromHandle(commandLists[0])->reset();
     CommandList::fromHandle(commandLists[1])->reset();
@@ -252,8 +255,10 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
                                           usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
+    GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have 2 states added
     ASSERT_EQ(2u, mediaVfeStates.size());
+    ASSERT_EQ(2u, GSBAStates.size());
 
     commandQueue->destroy();
 }

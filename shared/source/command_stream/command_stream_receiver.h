@@ -133,6 +133,9 @@ class CommandStreamReceiver {
     void setMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
     bool getMediaVFEStateDirty() { return mediaVfeStateDirty; }
 
+    void setGSBAStateDirty(bool dirty) { GSBAStateDirty = dirty; }
+    bool getGSBAStateDirty() { return GSBAStateDirty; }
+
     void setRequiredScratchSizes(uint32_t newRequiredScratchSize, uint32_t newRequiredPrivateScratchSize);
     GraphicsAllocation *getScratchAllocation();
     GraphicsAllocation *getDebugSurfaceAllocation() const { return debugSurface; }
@@ -309,6 +312,7 @@ class CommandStreamReceiver {
     bool isEnginePrologueSent = false;
     bool isPerDssBackedBufferSent = false;
     bool GSBAFor32BitProgrammed = false;
+    bool GSBAStateDirty = true;
     bool bindingTableBaseAddressRequired = false;
     bool mediaVfeStateDirty = true;
     bool lastVmeSubslicesConfig = false;

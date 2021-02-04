@@ -76,7 +76,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
                                                                     false,
                                                                     1u);
     *pSbaCmd = sbaCmd;
-    gsbaInit = true;
+    csr->setGSBAStateDirty(false);
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
 

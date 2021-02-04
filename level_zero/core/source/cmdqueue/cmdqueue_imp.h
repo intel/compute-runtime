@@ -93,7 +93,6 @@ struct CommandQueueImp : public CommandQueue {
     NEO::LinearStream *commandStream = nullptr;
     std::atomic<uint32_t> taskCount{0};
     std::vector<Kernel *> printfFunctionContainer;
-    bool gsbaInit = false;
     bool gpgpuEnabled = false;
     CommandBufferManager buffers;
     NEO::ResidencyContainer residencyContainer;

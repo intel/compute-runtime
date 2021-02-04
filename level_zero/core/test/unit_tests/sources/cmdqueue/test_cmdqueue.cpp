@@ -810,7 +810,7 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     alignedFree(alloc);
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenMVSDirtyFlagIsSetOnlyOnce, CommandQueueExecuteTestSupport) {
+HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenMVSDirtyFlagAndGSBADirtyFlagAreSetOnlyOnce, CommandQueueExecuteTestSupport) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -832,10 +832,13 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
     auto commandListHandle1 = commandList1->toHandle();
 
     EXPECT_EQ(true, csr->getMediaVFEStateDirty());
+    EXPECT_EQ(true, csr->getGSBAStateDirty());
     commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false);
     EXPECT_EQ(false, csr->getMediaVFEStateDirty());
+    EXPECT_EQ(false, csr->getGSBAStateDirty());
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
     EXPECT_EQ(false, csr->getMediaVFEStateDirty());
+    EXPECT_EQ(false, csr->getGSBAStateDirty());
 
     commandQueue->destroy();
     commandList0->destroy();
@@ -845,6 +848,7 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
 using CommandQueueExecuteSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenMVSIsProgrammedOnlyOnce, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -875,14 +879,17 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
         cmdList1, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
+    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
+    ASSERT_EQ(1u, GSBAStates.size());
 
     commandQueue->destroy();
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsWithPTSSsetForFirstCmdListThenMVSIsProgrammedOnlyOnce, CommandQueueExecuteSupport) {
+HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsWithPTSSsetForFirstCmdListThenMVSAndGSBAAreProgrammedOnlyOnce, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -913,8 +920,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
+    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
+    ASSERT_EQ(1u, GSBAStates.size());
 
     commandList0->reset();
     commandList0->setCommandListPerThreadScratchSize(0u);
@@ -941,15 +950,18 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
+    GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have no state added
     ASSERT_EQ(0u, mediaVfeStates.size());
+    ASSERT_EQ(0u, GSBAStates.size());
 
     commandQueue->destroy();
     commandQueue1->destroy();
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSsetForSecondCmdListThenMVSIsProgrammedTwice, CommandQueueExecuteSupport) {
+HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSsetForSecondCmdListThenMVSandGSBAAreProgrammedTwice, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -980,8 +992,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
+    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     // We should have 2 states added
     ASSERT_EQ(2u, mediaVfeStates.size());
+    ASSERT_EQ(2u, GSBAStates.size());
 
     commandList0->reset();
     commandList0->setCommandListPerThreadScratchSize(512u);
@@ -1008,15 +1022,18 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
+    GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have no state added
     ASSERT_EQ(0u, mediaVfeStates.size());
+    ASSERT_EQ(0u, GSBAStates.size());
 
     commandQueue->destroy();
     commandQueue1->destroy();
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSGrowingThenMVSIsProgrammedTwice, CommandQueueExecuteSupport) {
+HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSGrowingThenMVSAndGSBAAreProgrammedTwice, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -1047,8 +1064,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
+    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
+    ASSERT_EQ(1u, GSBAStates.size());
 
     commandList0->reset();
     commandList0->setCommandListPerThreadScratchSize(1024u);
@@ -1075,15 +1094,18 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
+    GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
+    ASSERT_EQ(1u, GSBAStates.size());
 
     commandQueue->destroy();
     commandQueue1->destroy();
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSUniquePerCmdListThenMVSIsProgrammedOncePerSubmission, CommandQueueExecuteSupport) {
+HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPTSSUniquePerCmdListThenMVSAndGSBAAreProgrammedOncePerSubmission, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -1114,8 +1136,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
+    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     // We should have 2 states added
     ASSERT_EQ(2u, mediaVfeStates.size());
+    ASSERT_EQ(2u, GSBAStates.size());
 
     commandList0->reset();
     commandList0->setCommandListPerThreadScratchSize(1024u);
@@ -1141,8 +1165,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
+    GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have 2 states added
     ASSERT_EQ(2u, mediaVfeStates.size());
+    ASSERT_EQ(2u, GSBAStates.size());
 
     commandQueue->destroy();
     commandQueue1->destroy();

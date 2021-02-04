@@ -186,7 +186,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                        gsbaStateDirty, frontEndStateDirty,
                        perThreadScratchSpaceSize);
 
-    gsbaStateDirty |= !gsbaInit;
+    gsbaStateDirty |= csr->getGSBAStateDirty();
     frontEndStateDirty |= csr->getMediaVFEStateDirty();
     if (!isCopyOnlyCommandQueue) {
 
