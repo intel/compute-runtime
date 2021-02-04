@@ -33,8 +33,8 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     Kernel *getFunction(Builtin func) override;
     Kernel *getImageFunction(ImageBuiltin func) override;
     Kernel *getPageFaultFunction() override;
-    void initBuiltinKernel(Builtin builtId) override;
-    void initBuiltinImageKernel(ImageBuiltin func) override;
+    void initFunctions() override;
+    void initImageFunctions() override;
     void initPageFaultFunction() override;
     MOCKABLE_VIRTUAL std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName);
 
