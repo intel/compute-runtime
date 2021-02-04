@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ const char *deviceExtensionsList = "cl_khr_byte_addressable_store "
                                    "cl_khr_icd "
                                    "cl_khr_local_int32_base_atomics "
                                    "cl_khr_local_int32_extended_atomics "
+                                   "cl_intel_command_queue_families "
                                    "cl_intel_subgroups "
                                    "cl_intel_required_subgroup_size "
                                    "cl_intel_subgroups_short "

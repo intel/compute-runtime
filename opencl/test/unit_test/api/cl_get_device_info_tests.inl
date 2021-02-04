@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -222,6 +222,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_icd ",
         "cl_khr_local_int32_base_atomics ",
         "cl_khr_local_int32_extended_atomics ",
+        "cl_intel_command_queue_families",
         "cl_intel_subgroups ",
         "cl_intel_required_subgroup_size ",
         "cl_intel_subgroups_short ",
