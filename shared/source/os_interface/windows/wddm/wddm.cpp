@@ -763,8 +763,7 @@ bool Wddm::createContext(OsContextWin &osContext) {
     PrivateData.pHwContextId = &hwContextId;
     PrivateData.IsMediaUsage = false;
     PrivateData.NoRingFlushes = DebugManager.flags.UseNoRingFlushesKmdMode.get();
-    auto &rootDeviceEnvironment = this->getRootDeviceEnvironment();
-    applyAdditionalContextFlags(PrivateData, osContext, *rootDeviceEnvironment.getHardwareInfo());
+    applyAdditionalContextFlags(PrivateData, osContext);
 
     CreateContext.EngineAffinity = 0;
     CreateContext.Flags.NullRendering = static_cast<UINT>(DebugManager.flags.EnableNullHardware.get());

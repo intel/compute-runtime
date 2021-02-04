@@ -1191,11 +1191,3 @@ TEST_F(HwHelperTest, WhenGettingIsCpuImageTransferPreferredThenFalseIsReturned) 
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(hwHelper.isCpuImageTransferPreferred(*defaultHwInfo));
 }
-
-TEST_F(HwHelperTest, whenFtrGpGpuMidThreadLevelPreemptFeatureDisabledThenFalseIsReturned) {
-    HwHelper &hwHelper = HwHelper::get(renderCoreFamily);
-    FeatureTable featureTable = {};
-    featureTable.ftrGpGpuMidThreadLevelPreempt = false;
-    bool result = hwHelper.isAdditionalFeatureFlagRequired(&featureTable);
-    EXPECT_FALSE(result);
-}
