@@ -91,6 +91,10 @@ bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
     }
 
+    if (device->getL0Debugger()) {
+        internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
+    }
+
     if (NEO::DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     }
@@ -349,7 +353,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     verifyDebugCapabilities();
 
     this->updateBuildLog(neoDevice);
-    if (debugEnabled) {
+    if (debugEnabled && device->getSourceLevelDebugger()) {
         for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
             device->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo->kernelDescriptor.external.debugData.get(),
                                                                     kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
@@ -589,7 +593,7 @@ bool ModuleImp::isDebugEnabled() const {
 }
 
 void ModuleImp::verifyDebugCapabilities() {
-    bool debugCapabilities = device->getNEODevice()->isDebuggerActive();
+    bool debugCapabilities = device->getNEODevice()->getDebugger() != nullptr;
 
     if (debugCapabilities) {
         //verify all kernels are debuggable

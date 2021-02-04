@@ -584,8 +584,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
             device->getBuiltinFunctionsLib()->initImageFunctions();
         }
         auto hwInfo = neoDevice->getHardwareInfo();
-        if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread || neoDevice->isDebuggerActive()) {
-            auto sipType = NEO::SipKernel::getSipKernelType(hwInfo.platform.eRenderCoreFamily, neoDevice->isDebuggerActive());
+        if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread || neoDevice->getDebugger()) {
+            auto sipType = NEO::SipKernel::getSipKernelType(hwInfo.platform.eRenderCoreFamily, neoDevice->getDebugger());
             NEO::initSipKernel(sipType, *neoDevice);
         }
     }

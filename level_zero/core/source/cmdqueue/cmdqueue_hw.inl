@@ -107,7 +107,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     statePreemption = devicePreemption;
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed) {
-        debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(neoDevice->isDebuggerActive());
+        debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(neoDevice->getSourceLevelDebugger() != nullptr);
     }
 
     if (devicePreemption == NEO::PreemptionMode::MidThread) {
@@ -227,7 +227,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             programPipelineSelect(child);
         }
 
-        if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed && neoDevice->isDebuggerActive()) {
+        if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed && neoDevice->getSourceLevelDebugger()) {
             NEO::PreambleHelper<GfxFamily>::programKernelDebugging(&child);
             commandQueueDebugCmdsProgrammed = true;
         }
