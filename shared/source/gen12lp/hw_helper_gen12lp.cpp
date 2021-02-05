@@ -52,6 +52,11 @@ bool HwHelperHw<Family>::isWaDisableRccRhwoOptimizationRequired() const {
 }
 
 template <>
+bool HwHelperHw<Family>::isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const {
+    return featureTable->ftrGpGpuMidThreadLevelPreempt;
+}
+
+template <>
 uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
     /* For ICL+ maxThreadCount equals (EUCount * 8).
      ThreadCount/EUCount=7 is no longer valid, so we have to force 8 in below formula.

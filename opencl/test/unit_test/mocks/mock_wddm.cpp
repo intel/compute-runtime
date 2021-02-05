@@ -153,9 +153,9 @@ bool WddmMock::createContext(OsContextWin &osContext) {
     return createContextResult.success = Wddm::createContext(osContext);
 }
 
-void WddmMock::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext) {
+void WddmMock::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext, const HardwareInfo &hwInfo) {
     applyAdditionalContextFlagsResult.called++;
-    Wddm::applyAdditionalContextFlags(privateData, osContext);
+    Wddm::applyAdditionalContextFlags(privateData, osContext, hwInfo);
 }
 
 bool WddmMock::destroyContext(D3DKMT_HANDLE context) {
