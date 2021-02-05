@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -592,7 +592,7 @@ HWTEST_P(FilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect) {
         ptrOffset(pKernel->getDynamicStateHeap(rootDeviceIndex),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
-    sampler->setArg(const_cast<SAMPLER_STATE *>(samplerState));
+    sampler->setArg(const_cast<SAMPLER_STATE *>(samplerState), *defaultHwInfo);
 
     if (CL_FILTER_NEAREST == filterMode) {
         EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST, samplerState->getMinModeFilter());

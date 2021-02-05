@@ -80,6 +80,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvenContextCountRequired() {
 }
 
 template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler){};
+
+template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData){};
 } // namespace NEO
 

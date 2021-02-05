@@ -27,7 +27,7 @@ HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenUsingDefaultFilteringAndAppen
     auto sampler = clUniquePtr(new SamplerHw<FamilyType>(context.get(), CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST));
     auto state = FamilyType::cmdInitSamplerState;
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    sampler->appendSamplerStateParams(&state);
+    sampler->appendSamplerStateParams(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
 }
 
@@ -40,7 +40,7 @@ HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenForcingLowQualityFilteringAnd
     auto sampler = clUniquePtr(new SamplerHw<FamilyType>(context.get(), CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST));
     auto state = FamilyType::cmdInitSamplerState;
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    sampler->appendSamplerStateParams(&state);
+    sampler->appendSamplerStateParams(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
 }
 

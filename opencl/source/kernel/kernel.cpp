@@ -1731,7 +1731,7 @@ cl_int Kernel::setArgSampler(uint32_t argIndex,
         auto dsh = getDynamicStateHeap(rootDeviceIndex);
         auto samplerState = ptrOffset(dsh, kernelArgInfo.offsetHeap);
 
-        pSampler->setArg(const_cast<void *>(samplerState));
+        pSampler->setArg(const_cast<void *>(samplerState), getProgram()->getDevices()[0]->getHardwareInfo());
 
         auto crossThreadData = reinterpret_cast<uint32_t *>(getCrossThreadData(rootDeviceIndex));
         patch<uint32_t, unsigned int>(pSampler->getSnapWaValue(), crossThreadData, kernelArgInfo.offsetSamplerSnapWa);

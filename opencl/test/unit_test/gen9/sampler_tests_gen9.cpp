@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,6 @@ GEN9TEST_F(Gen9SamplerTest, WhenAppendingSamplerStateParamsThenStateIsNotChanged
     auto stateWithoutAppendedParams = FamilyType::cmdInitSamplerState;
     auto stateWithAppendedParams = FamilyType::cmdInitSamplerState;
     EXPECT_TRUE(memcmp(&stateWithoutAppendedParams, &stateWithAppendedParams, sizeof(SAMPLER_STATE)) == 0);
-    sampler->appendSamplerStateParams(&stateWithAppendedParams);
+    sampler->appendSamplerStateParams(&stateWithAppendedParams, *defaultHwInfo);
     EXPECT_TRUE(memcmp(&stateWithoutAppendedParams, &stateWithAppendedParams, sizeof(SAMPLER_STATE)) == 0);
 }

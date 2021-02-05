@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ class Sampler : public BaseObject<_cl_sampler> {
     cl_int getInfo(cl_sampler_info paramName, size_t paramValueSize,
                    void *paramValue, size_t *paramValueSizeRet);
 
-    virtual void setArg(void *memory) = 0;
+    virtual void setArg(void *memory, const HardwareInfo &hwInfo) = 0;
 
     static size_t getSamplerStateSize(const HardwareInfo &hwInfo);
     bool isTransformable() const;
@@ -86,8 +86,8 @@ class Sampler : public BaseObject<_cl_sampler> {
 
 template <typename GfxFamily>
 struct SamplerHw : public Sampler {
-    void setArg(void *memory) override;
-    void appendSamplerStateParams(typename GfxFamily::SAMPLER_STATE *state);
+    void setArg(void *memory, const HardwareInfo &hwInfo) override;
+    void appendSamplerStateParams(typename GfxFamily::SAMPLER_STATE *state, const HardwareInfo &hwInfo);
     static constexpr float getGenSamplerMaxLod() {
         return 14.0f;
     }

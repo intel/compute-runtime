@@ -36,6 +36,9 @@ template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {}
 
 template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler) {}
+
+template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::enableRenderCompression(HardwareInfo *hwInfo) {
     hwInfo->capabilityTable.ftrRenderCompressedImages = hwInfo->featureTable.ftrE2ECompression;
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = hwInfo->featureTable.ftrE2ECompression;

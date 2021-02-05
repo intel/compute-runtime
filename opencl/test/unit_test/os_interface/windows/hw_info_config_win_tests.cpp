@@ -60,6 +60,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvenContextCountRequired() {
 template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData){};
 
+template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler){};
+
 HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
     this->executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     this->rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);

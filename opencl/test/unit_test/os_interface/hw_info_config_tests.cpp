@@ -10,8 +10,11 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/sampler/sampler.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
 
@@ -118,4 +121,16 @@ HWTEST_F(HwInfoConfigTest, whenConvertingTimestampsToCsDomainThenNothingIsChange
     uint64_t initialData = timestampData;
     hwInfoConfig->convertTimestampsFromOaToCsDomain(timestampData);
     EXPECT_EQ(initialData, timestampData);
+}
+
+HWTEST_F(HwInfoConfigTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsChanged) {
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    auto context = clUniquePtr(new MockContext());
+    auto sampler = clUniquePtr(new SamplerHw<FamilyType>(context.get(), CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST));
+    auto state = FamilyType::cmdInitSamplerState;
+    auto initialState = state;
+    hwInfoConfig->adjustSamplerState(&state);
+
+    EXPECT_EQ(0, memcmp(&initialState, &state, sizeof(SAMPLER_STATE)));
 }

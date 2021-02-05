@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace NEO {
 using SAMPLER_STATE = typename Family::SAMPLER_STATE;
 
 template <>
-void SamplerHw<Family>::appendSamplerStateParams(SAMPLER_STATE *state) {
+void SamplerHw<Family>::appendSamplerStateParams(SAMPLER_STATE *state, const HardwareInfo &hwInfo) {
     if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
         state->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
     }
