@@ -215,35 +215,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_handle_t hEvent) {
-    using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
-    auto event = Event::fromHandle(hEvent);
-
-    uint64_t baseAddr = event->getGpuAddress();
-    size_t eventOffset = 0;
-    if (event->isTimestampEvent) {
-        eventOffset = offsetof(TimestampPacketStorage::Packet, contextEnd);
-        event->resetPackets();
-    }
-    commandContainer.addToResidencyContainer(&event->getAllocation());
-    if (isCopyOnly()) {
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), event->getGpuAddress(), Event::STATE_CLEARED, false, true);
-    } else {
-        NEO::PipeControlArgs args;
-        args.dcFlushEnable = (!event->signalScope) ? false : true;
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-            *commandContainer.getCommandStream(),
-            POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-            ptrOffset(baseAddr, eventOffset),
-            Event::STATE_CLEARED,
-            commandContainer.getDevice()->getHardwareInfo(),
-            args);
-    }
-
-    return ZE_RESULT_SUCCESS;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent,
                                                                 uint32_t numWaitEvents,
                                                                 ze_event_handle_t *phWaitEvents) {
@@ -1493,6 +1464,34 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
             commandContainer.getDevice()->getHardwareInfo(),
             args);
     }
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_handle_t hEvent) {
+    using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
+    auto event = Event::fromHandle(hEvent);
+
+    uint64_t baseAddr = event->getGpuAddress();
+    size_t eventOffset = 0;
+    if (event->isTimestampEvent) {
+        eventOffset = offsetof(TimestampPacketStorage::Packet, contextEnd);
+    }
+    commandContainer.addToResidencyContainer(&event->getAllocation());
+    if (isCopyOnly()) {
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), event->getGpuAddress(), Event::STATE_CLEARED, false, true);
+    } else {
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = (!event->signalScope) ? false : true;
+        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+            *commandContainer.getCommandStream(),
+            POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            ptrOffset(baseAddr, eventOffset),
+            Event::STATE_CLEARED,
+            commandContainer.getDevice()->getHardwareInfo(),
+            args);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
