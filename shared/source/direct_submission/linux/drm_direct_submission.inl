@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,11 @@ inline std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> DirectSubmissi
 template <typename GfxFamily, typename Dispatcher>
 DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
                                                                 OsContext &osContext)
-    : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext){};
+    : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext) {
+
+    auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
+    osContextLinux->getDrm().setDirectSubmissionActive(true);
+};
 
 template <typename GfxFamily, typename Dispatcher>
 inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
@@ -55,6 +59,8 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
 
     drm_i915_gem_exec_object2 execObject{};
 
+    this->handleResidency();
+
     bool ret = false;
     uint32_t drmContextId = 0u;
     for (auto drmIterator = 0u; drmIterator < osContextLinux->getDeviceBitfield().size(); drmIterator++) {
@@ -78,6 +84,8 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
 
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
+    auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
+    osContextLinux->waitForPagingFence();
     return true;
 }
 

@@ -88,9 +88,9 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenDestructObjectThen
     auto drmDirectSubmission = std::make_unique<MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>>(*device.get(),
                                                                                                                    *osContext.get());
     auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
-    drm->ioctlCallsCount = 0u;
     drmDirectSubmission->initialize(true);
+    drm->ioctlCallsCount = 0u;
     drmDirectSubmission.reset();
 
-    EXPECT_EQ(drm->ioctlCallsCount, 11u);
+    EXPECT_EQ(drm->ioctlCallsCount, 7u);
 }

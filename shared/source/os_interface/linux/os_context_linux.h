@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ class OsContextLinux : public OsContext {
     const std::vector<uint32_t> &getDrmContextIds() const { return drmContextIds; }
     const std::vector<uint32_t> &getDrmVmIds() const { return drmVmIds; }
     Drm &getDrm() const;
+    void waitForPagingFence();
 
   protected:
     unsigned int engineFlag = 0;

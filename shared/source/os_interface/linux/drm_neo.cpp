@@ -60,6 +60,8 @@ constexpr const char *getIoctlParamString(int param) {
 } // namespace IoctlHelper
 
 Drm::Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
+    pagingFence.fill(0u);
+    fenceVal.fill(0u);
 }
 
 int Drm::ioctl(unsigned long request, void *arg) {

@@ -15,6 +15,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "drm/i915_drm.h"
+#include "engine_limits.h"
 #include "engine_node.h"
 #include "igfxfmid.h"
 
@@ -125,6 +126,9 @@ class Drm {
     bool isContextDebugSupported() { return contextDebugSupported; }
     MOCKABLE_VIRTUAL void setContextDebugFlag(uint32_t drmContextId);
 
+    void setDirectSubmissionActive(bool value) { this->directSubmissionActive = value; }
+    bool isDirectSubmissionActive() { return this->directSubmissionActive; }
+
     MOCKABLE_VIRTUAL bool isVmBindAvailable();
     MOCKABLE_VIRTUAL bool registerResourceClasses();
 
@@ -169,6 +173,10 @@ class Drm {
         return hwDeviceId->getPciPath();
     }
 
+    void waitForBind(uint32_t vmHandleId);
+    uint64_t getNextFenceVal(uint32_t vmHandleId) { return ++fenceVal[vmHandleId]; }
+    uint64_t *getFenceAddr(uint32_t vmHandleId) { return &pagingFence[vmHandleId]; }
+
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
     bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, int &sliceCount, int &subSliceCount, int &euCount);
@@ -180,6 +188,7 @@ class Drm {
     bool nonPersistentContextsSupported = false;
     bool requirePerContextVM = false;
     bool bindAvailable = false;
+    bool directSubmissionActive = false;
     bool contextDebugSupported = false;
     std::once_flag checkBindOnce;
     std::unique_ptr<HwDeviceId> hwDeviceId;
@@ -195,6 +204,9 @@ class Drm {
     std::unique_ptr<EngineInfo> engineInfo;
     std::unique_ptr<MemoryInfo> memoryInfo;
     std::vector<uint32_t> virtualMemoryIds;
+
+    std::array<uint64_t, EngineLimits::maxHandleCount> pagingFence;
+    std::array<uint64_t, EngineLimits::maxHandleCount> fenceVal;
 
     std::string getSysFsPciPath();
     std::unique_ptr<uint8_t[]> query(uint32_t queryId, uint32_t queryItemFlags, int32_t &length);

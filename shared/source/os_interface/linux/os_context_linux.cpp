@@ -64,6 +64,14 @@ Drm &OsContextLinux::getDrm() const {
     return this->drm;
 }
 
+void OsContextLinux::waitForPagingFence() {
+    for (auto drmIterator = 0u; drmIterator < this->deviceBitfield.size(); drmIterator++) {
+        if (this->deviceBitfield.test(drmIterator)) {
+            drm.waitForBind(drmIterator);
+        }
+    }
+}
+
 OsContextLinux::~OsContextLinux() {
     for (auto drmContextId : drmContextIds) {
         drm.destroyDrmContext(drmContextId);

@@ -63,6 +63,9 @@ int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObj
     return 0;
 }
 
+void Drm::waitForBind(uint32_t vmHandleId) {
+}
+
 bool Drm::isVmBindAvailable() {
     return this->bindAvailable;
 }
