@@ -17,6 +17,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -417,48 +418,50 @@ void CommandStreamReceiver::setExperimentalCmdBuffer(std::unique_ptr<Experimenta
 void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {
     auto self = reinterpret_cast<CommandStreamReceiver *>(arg);
 
-    auto debugPauseStateValue = DebugPauseState::waitingForUserStartConfirmation;
-
     do {
-        {
-            std::unique_lock<SpinLock> lock{self->debugPauseStateLock};
-            debugPauseStateValue = *self->debugPauseStateAddress;
+        auto debugPauseStateValue = DebugPauseState::waitingForUserStartConfirmation;
+        if (DebugManager.flags.PauseOnGpuMode.get() != PauseOnGpuProperties::PauseMode::AfterWorkload) {
+            do {
+                {
+                    std::unique_lock<SpinLock> lock{self->debugPauseStateLock};
+                    debugPauseStateValue = *self->debugPauseStateAddress;
+                }
+
+                if (debugPauseStateValue == DebugPauseState::terminate) {
+                    return nullptr;
+                }
+                std::this_thread::yield();
+            } while (debugPauseStateValue != DebugPauseState::waitingForUserStartConfirmation);
+            std::cout << "Debug break: Press enter to start workload" << std::endl;
+            self->debugConfirmationFunction();
+            debugPauseStateValue = DebugPauseState::hasUserStartConfirmation;
+            {
+                std::unique_lock<SpinLock> lock{self->debugPauseStateLock};
+                *self->debugPauseStateAddress = debugPauseStateValue;
+            }
         }
 
-        if (debugPauseStateValue == DebugPauseState::terminate) {
-            return nullptr;
+        if (DebugManager.flags.PauseOnGpuMode.get() != PauseOnGpuProperties::PauseMode::BeforeWorkload) {
+            do {
+                {
+                    std::unique_lock<SpinLock> lock{self->debugPauseStateLock};
+                    debugPauseStateValue = *self->debugPauseStateAddress;
+                }
+                if (debugPauseStateValue == DebugPauseState::terminate) {
+                    return nullptr;
+                }
+                std::this_thread::yield();
+            } while (debugPauseStateValue != DebugPauseState::waitingForUserEndConfirmation);
+
+            std::cout << "Debug break: Workload ended, press enter to continue" << std::endl;
+            self->debugConfirmationFunction();
+
+            {
+                std::unique_lock<SpinLock> lock{self->debugPauseStateLock};
+                *self->debugPauseStateAddress = DebugPauseState::hasUserEndConfirmation;
+            }
         }
-        std::this_thread::yield();
-    } while (debugPauseStateValue != DebugPauseState::waitingForUserStartConfirmation);
-
-    std::cout << "Debug break: Press enter to start workload" << std::endl;
-    self->debugConfirmationFunction();
-
-    debugPauseStateValue = DebugPauseState::hasUserStartConfirmation;
-    {
-        std::unique_lock<SpinLock> lock{self->debugPauseStateLock};
-        *self->debugPauseStateAddress = debugPauseStateValue;
-    }
-
-    do {
-        {
-            std::unique_lock<SpinLock> lock{self->debugPauseStateLock};
-            debugPauseStateValue = *self->debugPauseStateAddress;
-        }
-        if (debugPauseStateValue == DebugPauseState::terminate) {
-            return nullptr;
-        }
-        std::this_thread::yield();
-    } while (debugPauseStateValue != DebugPauseState::waitingForUserEndConfirmation);
-
-    std::cout << "Debug break: Workload ended, press enter to continue" << std::endl;
-    self->debugConfirmationFunction();
-
-    {
-        std::unique_lock<SpinLock> lock{self->debugPauseStateLock};
-        *self->debugPauseStateAddress = DebugPauseState::hasUserEndConfirmation;
-    }
-
+    } while (DebugManager.flags.PauseOnEnqueue.get() == PauseOnGpuProperties::DebugFlagValues::OnEachEnqueue || DebugManager.flags.PauseOnBlitCopy.get() == PauseOnGpuProperties::DebugFlagValues::OnEachEnqueue);
     return nullptr;
 }
 

@@ -1139,98 +1139,10 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndNoSuitableReu
     memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenDebugPauseThreadWhenSettingFlagProgressThenFunctionAsksTwiceForConfirmation) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.PauseOnEnqueue.set(0);
-    testing::internal::CaptureStdout();
-    int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-
-    uint32_t confirmationCounter = 0;
-
-    mockCSR->debugConfirmationFunction = [&confirmationCounter, &mockCSR]() {
-        if (confirmationCounter == 0) {
-            EXPECT_TRUE(DebugPauseState::waitingForUserStartConfirmation == *mockCSR->debugPauseStateAddress);
-            confirmationCounter++;
-        } else if (confirmationCounter == 1) {
-            EXPECT_TRUE(DebugPauseState::waitingForUserEndConfirmation == *mockCSR->debugPauseStateAddress);
-            confirmationCounter++;
-        }
-    };
-
-    pDevice->resetCommandStreamReceiver(mockCSR);
-
-    *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserStartConfirmation;
-
-    while (*mockCSR->debugPauseStateAddress != DebugPauseState::hasUserStartConfirmation)
-        ;
-
-    *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserEndConfirmation;
-
-    while (*mockCSR->debugPauseStateAddress != DebugPauseState::hasUserEndConfirmation)
-        ;
-
-    EXPECT_EQ(2u, confirmationCounter);
-
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr(std::string("Debug break: Press enter to start workload")));
-    EXPECT_THAT(output, testing::HasSubstr(std::string("Debug break: Workload ended, press enter to continue")));
-}
-
-HWTEST_F(CommandStreamReceiverTest, givenDebugPauseThreadWhenTerminatingAtFirstStageThenFunctionEndsCorrectly) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.PauseOnEnqueue.set(0);
-    testing::internal::CaptureStdout();
-    int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-
-    uint32_t confirmationCounter = 0;
-
-    mockCSR->debugConfirmationFunction = [&confirmationCounter]() {
-        confirmationCounter++;
-    };
-
-    pDevice->resetCommandStreamReceiver(mockCSR);
-
-    *mockCSR->debugPauseStateAddress = DebugPauseState::terminate;
-
-    EXPECT_EQ(0u, confirmationCounter);
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(0u, output.length());
-}
-
 HWTEST_F(CommandStreamReceiverTest, whenCreatingCommandStreamReceiverThenLastAddtionalKernelExecInfoValueIsCorrect) {
     int32_t executionStamp = 0;
     std::unique_ptr<MockCsr<FamilyType>> mockCSR(new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     EXPECT_EQ(AdditionalKernelExecInfo::NotSet, mockCSR->lastAdditionalKernelExecInfo);
-}
-
-HWTEST_F(CommandStreamReceiverTest, givenDebugPauseThreadWhenTerminatingAtSecondStageThenFunctionEndsCorrectly) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.PauseOnEnqueue.set(0);
-    testing::internal::CaptureStdout();
-    int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-
-    uint32_t confirmationCounter = 0;
-
-    mockCSR->debugConfirmationFunction = [&confirmationCounter]() {
-        confirmationCounter++;
-    };
-
-    pDevice->resetCommandStreamReceiver(mockCSR);
-
-    *mockCSR->debugPauseStateAddress = DebugPauseState::waitingForUserStartConfirmation;
-
-    while (*mockCSR->debugPauseStateAddress != DebugPauseState::hasUserStartConfirmation)
-        ;
-
-    *mockCSR->debugPauseStateAddress = DebugPauseState::terminate;
-
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr(std::string("Debug break: Press enter to start workload")));
-    EXPECT_THAT(output, testing::Not(testing::HasSubstr(std::string("Debug break: Workload ended, press enter to continue"))));
-    EXPECT_EQ(1u, confirmationCounter);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenDebugFlagWhenCreatingCsrThenSetEnableStaticPartitioningAccordingly) {
