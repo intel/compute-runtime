@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,7 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrMemTypeMocsDeferPAT = 1;
         refFtrTable.FtrLocalMemory = 1;
         refFtrTable.FtrLocalMemoryAllows4KB = 1;
+        refFtrTable.FtrSVM = 1;
     }
 
     static void fillReferenceWaForTransfer(_WA_TABLE &refWaTable) {
