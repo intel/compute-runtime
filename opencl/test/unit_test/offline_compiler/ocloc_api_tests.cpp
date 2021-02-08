@@ -67,6 +67,7 @@ TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
 TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {
     const char *argv[] = {
         "ocloc",
+        "-q",
         "-file",
         "test_files/IDoNotExist.cl",
         "-device",
@@ -81,7 +82,7 @@ TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, NEO::OfflineCompiler::ErrorCode::INVALID_FILE);
-    EXPECT_NE(std::string::npos, output.find("Command was: ocloc -file test_files/IDoNotExist.cl -device "s + argv[4]));
+    EXPECT_NE(std::string::npos, output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device "s + argv[5]));
 }
 
 TEST(OclocApiTests, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPackedAsElf) {

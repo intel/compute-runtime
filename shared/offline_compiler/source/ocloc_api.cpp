@@ -59,10 +59,10 @@ Examples:
 
 extern "C" {
 void printOclocCmdLine(unsigned int numArgs, const char *argv[], std::unique_ptr<OclocArgHelper> &helper) {
-    helper->printf("Command was:");
+    printf("Command was:");
     for (auto i = 0u; i < numArgs; ++i)
-        helper->printf(" %s", argv[i]);
-    helper->printf("\n");
+        printf(" %s", argv[i]);
+    printf("\n");
 }
 
 int oclocInvoke(unsigned int numArgs, const char *argv[],
