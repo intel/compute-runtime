@@ -99,6 +99,11 @@ uint64_t HwHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double f
 }
 
 template <typename GfxFamily>
+aub_stream::MMIOList HwHelperHw<GfxFamily>::getExtraMmioList() const {
+    return {};
+}
+
+template <typename GfxFamily>
 inline void MemorySynchronizationCommands<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
 }
 

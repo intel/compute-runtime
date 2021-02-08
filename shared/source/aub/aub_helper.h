@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,6 @@ class AubHelper : public NonCopyableOrMovableClass {
     static uint32_t getMemType(uint32_t addressSpace);
     static uint64_t getMemBankSize(const HardwareInfo *pHwInfo);
     static MMIOList getAdditionalMmioList();
-    static void setAdditionalMmioList();
     static void setTbxConfiguration();
 
     virtual int getDataHintForPml4Entry() const = 0;
@@ -57,7 +56,6 @@ class AubHelper : public NonCopyableOrMovableClass {
     virtual int getMemTraceForPdEntry() const = 0;
     virtual int getMemTraceForPtEntry() const = 0;
 
-  protected:
     static MMIOList splitMMIORegisters(const std::string &registers, char delimiter);
 };
 

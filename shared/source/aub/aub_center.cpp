@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,10 +29,14 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
 
         aubStreamMode = getAubStreamMode(aubFileName, type);
 
-        AubHelper::setAdditionalMmioList();
-        if (DebugManager.flags.AubDumpAddMmioRegistersList.get() != "unk") {
-            aub_stream::injectMMIOList(AubHelper::getAdditionalMmioList());
-        }
+        auto &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
+
+        aub_stream::MMIOList extraMmioList = hwHelper.getExtraMmioList();
+        aub_stream::MMIOList debugMmioList = AubHelper::getAdditionalMmioList();
+
+        extraMmioList.insert(extraMmioList.end(), debugMmioList.begin(), debugMmioList.end());
+
+        aub_stream::injectMMIOList(extraMmioList);
 
         AubHelper::setTbxConfiguration();
 
