@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -866,7 +866,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 using AUBBindlessKernel = Test<KernelAUBFixture<BindlessKernelFixture>>;
 using IsSklPlus = IsAtLeastProduct<IGFX_SKYLAKE>;
 
-HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsSklPlus) {
+HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsSklPlus) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
 
     createKernel(std::string("bindless_stateful_copy_buffer"), std::string("StatefulCopyBuffer"));
