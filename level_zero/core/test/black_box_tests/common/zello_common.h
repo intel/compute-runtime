@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,19 @@ inline bool isVerbose(int argc, char *argv[]) {
         return false;
     }
 
-    std::cerr << "Verbose mode detected";
+    std::cerr << "Verbose mode detected" << std::endl;
+
+    return true;
+}
+
+inline bool isSyncQueueEnabled(int argc, char *argv[]) {
+    bool enabled = isParamEnabled(argc, argv, "-s", "--sync");
+    if (enabled == false) {
+        std::cerr << "Async Queue detected" << std::endl;
+        return false;
+    }
+
+    std::cerr << "Sync Queue detected" << std::endl;
 
     return true;
 }

@@ -13,6 +13,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       zello_ipc_copy_dma_buf
       zello_ipc_copy_dma_buf_p2p
       zello_copy
+      zello_world_usm
       zello_world_global_work_offset
       zello_scratch
   )
