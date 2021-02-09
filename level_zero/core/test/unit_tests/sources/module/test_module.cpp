@@ -42,7 +42,7 @@ HWTEST_F(ModuleTest, givenBinaryWithDebugDataWhenModuleCreatedFromNativeBinaryTh
     EXPECT_NE(0u, size);
 }
 
-HWTEST_F(ModuleTest, givenKernelCreateReturnsSuccess) {
+HWTEST_F(ModuleTest, WhenCreatingKernelThenSuccessIsReturned) {
     ze_kernel_handle_t kernelHandle;
 
     ze_kernel_desc_t kernelDesc = {};
@@ -218,7 +218,7 @@ HWTEST2_F(ModuleUncachedBufferTest, givenKernelWithUncachedArgumentThenCorrectMo
     device->getDriverHandle()->freeMem(devicePtr);
 }
 
-HWTEST_F(ModuleTest, givenKernelCreateWithIncorrectKernelNameReturnsFailure) {
+HWTEST_F(ModuleTest, GivenIncorrectNameWhenCreatingKernelThenResultErrorInvalidArgumentErrorIsReturned) {
     ze_kernel_handle_t kernelHandle;
 
     ze_kernel_desc_t kernelDesc = {};
@@ -255,7 +255,7 @@ struct ModuleSpecConstantsTests : public DeviceFixture,
     MockModuleTranslationUnit *mockTranslationUnit;
 };
 
-HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorTheModuleCorrectlyPassesThemToTheCompiler) {
+HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorThenModuleCorrectlyPassesThemToTheCompiler) {
     std::string testFile;
     retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
 
