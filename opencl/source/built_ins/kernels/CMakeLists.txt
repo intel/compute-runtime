@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2020 Intel Corporation
+# Copyright (C) 2017-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -90,13 +90,11 @@ macro(macro_for_each_gen)
       foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
         compile_builtin(${GEN_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}")
         list(APPEND BUILTINS_COMMANDS ${TargetDir}/${BUILTIN_CPP})
-        set(RUNTIME_GENERATED_${GENERATED_BUILTIN}_${family_name_with_type} ${BUILTIN_CPP} PARENT_SCOPE)
       endforeach()
       get_bits_for_stateless(${GEN_TYPE} ${PLATFORM_TYPE})
       foreach(GENERATED_BUILTIN_STATELESS ${GENERATED_BUILTINS_STATELESS})
         compile_builtin(${GEN_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN_STATELESS}.builtin_kernel ${BITS} "${BUILTIN_OPTIONS_STATELESS}")
         list(APPEND BUILTINS_COMMANDS ${TargetDir}/${BUILTIN_CPP})
-        set(RUNTIME_GENERATED_${GENERATED_BUILTIN_STATELESS}_${family_name_with_type} ${BUILTIN_CPP} PARENT_SCOPE)
       endforeach()
       set(target_name builtins_${family_name_with_type}_vme)
       add_custom_target(${target_name} DEPENDS ${BUILTINS_COMMANDS})

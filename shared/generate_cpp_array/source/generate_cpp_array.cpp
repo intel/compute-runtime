@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,13 +20,13 @@ static void show_usage(std::string name) {
               << "\t -p, --platform\t\tOPTIONAL - Family name with type\n"
               << "\t -a, --array\t\tName of an uin32_t type array containing parsed input file" << std::endl;
 }
-std::string parseToCharArray(std::unique_ptr<uint8_t[]> binary, size_t size, std::string &builtinName, std::string &platform, bool isSpirV) {
+std::string parseToCharArray(std::unique_ptr<uint8_t[]> binary, size_t size, std::string &builtinName, std::string &platform, std::string revisionId, bool isSpirV) {
     std::ostringstream out;
 
     out << "#include <cstddef>\n";
     out << "#include <cstdint>\n\n";
-    out << "size_t " << builtinName << "BinarySize_" << platform << " = " << size << ";\n";
-    out << "uint32_t " << builtinName << "Binary_" << platform << "[" << (size + 3) / 4 << "] = {"
+    out << "size_t " << builtinName << "BinarySize_" << platform << "_" << revisionId << " = " << size << ";\n";
+    out << "uint32_t " << builtinName << "Binary_" << platform << "_" << revisionId << "[" << (size + 3) / 4 << "] = {"
         << std::endl
         << "    ";
     uint32_t *binaryUint = reinterpret_cast<uint32_t *>(binary.get());
@@ -60,11 +60,11 @@ std::string parseToCharArray(std::unique_ptr<uint8_t[]> binary, size_t size, std
     isSpirV ? out << "Ir(" : out << "Bin(";
     out << std::endl;
     out << "    \"";
-    platform != "" ? out << platform << "_0_" << builtinName : out << builtinName;
+    platform != "" ? out << platform << "_" << revisionId << "_" << builtinName : out << builtinName;
     isSpirV ? out << ".builtin_kernel.bc\"," : out << ".builtin_kernel.bin\",";
     out << std::endl;
-    out << "    (const char *)" << builtinName << "Binary_" << platform << "," << std::endl;
-    out << "    " << builtinName << "BinarySize_" << platform << ");" << std::endl;
+    out << "    (const char *)" << builtinName << "Binary_" << platform << "_" << revisionId << "," << std::endl;
+    out << "    " << builtinName << "BinarySize_" << platform << "_" << revisionId << ");" << std::endl;
     out << "}" << std::endl;
 
     return out.str();
@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
     std::string cppOutputName;
     std::string arrayName;
     std::string platform = "";
+    std::string revisionId = "0";
     size_t size = 0;
     std::fstream inputFile;
     bool isSpirV;
@@ -92,6 +93,8 @@ int main(int argc, char *argv[]) {
             arrayName = argv[++i];
         } else if ((arg == "-p") || (arg == "--platform")) {
             platform = argv[++i];
+        } else if ((arg == "-r") || (arg == "--revision_id")) {
+            revisionId = argv[++i];
         } else {
             return 1;
         }
@@ -110,7 +113,7 @@ int main(int argc, char *argv[]) {
         inputFile.read(reinterpret_cast<char *>(memblock.get()), size);
         inputFile.close();
         isSpirV = fileName.find(".spv") != std::string::npos;
-        std::string cpp = parseToCharArray(move(memblock), size, arrayName, platform, isSpirV);
+        std::string cpp = parseToCharArray(move(memblock), size, arrayName, platform, revisionId, isSpirV);
         std::fstream(cppOutputName.c_str(), std::ios::out | std::ios::binary).write(cpp.c_str(), cpp.size());
     } else {
         std::cerr << "File cannot be opened!" << std::endl;

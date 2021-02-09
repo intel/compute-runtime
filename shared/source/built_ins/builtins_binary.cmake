@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -50,28 +50,10 @@ if(COMPILE_BUILT_INS)
   add_subdirectory(kernels)
 endif()
 
-macro(macro_for_each_gen)
-  foreach(MODE ${BIND_MODES})
-    foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
-      get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
-      foreach(GENERATED_BUILTIN_IMAGES ${GENERATED_BUILTINS_IMAGES})
-        list(APPEND GENERATED_BUILTINS_CPPS_${MODE} ${BUILTINS_INCLUDE_DIR}/${RUNTIME_GENERATED_${GENERATED_BUILTIN_IMAGES}_${family_name_with_type}_${MODE}})
-      endforeach()
-      foreach(GENERATED_BUILTIN_IMAGES_STATELESS ${GENERATED_BUILTINS_IMAGES_STATELESS})
-        list(APPEND GENERATED_BUILTINS_CPPS_${MODE} ${BUILTINS_INCLUDE_DIR}/${RUNTIME_GENERATED_${GENERATED_BUILTIN_IMAGES_STATELESS}_${family_name_with_type}_${MODE}})
-      endforeach()
-      foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
-        list(APPEND GENERATED_BUILTINS_CPPS_${MODE} ${BUILTINS_INCLUDE_DIR}/${RUNTIME_GENERATED_${GENERATED_BUILTIN}_${family_name_with_type}_${MODE}})
-      endforeach()
-      foreach(GENERATED_BUILTIN_STATELESS ${GENERATED_BUILTINS_STATELESS})
-        list(APPEND GENERATED_BUILTINS_CPPS_${MODE} ${BUILTINS_INCLUDE_DIR}/${RUNTIME_GENERATED_${GENERATED_BUILTIN_STATELESS}_${family_name_with_type}_${MODE}})
-      endforeach()
-    endforeach()
-    source_group("generated files\\${GEN_TYPE_LOWER}" FILES ${GENERATED_BUILTINS_CPPS_${MODE}})
-  endforeach()
-endmacro()
-
-apply_macro_for_each_gen("SUPPORTED")
+foreach(MODE ${BIND_MODES})
+  get_property(GENERATED_BUILTINS_CPPS_${MODE} GLOBAL PROPERTY GENERATED_BUILTINS_CPPS_${MODE})
+  source_group("generated files\\${GEN_TYPE_LOWER}" FILES GENERATED_BUILTINS_CPPS_${MODE})
+endforeach()
 
 if(COMPILE_BUILT_INS)
   target_sources(${BUILTINS_BINARIES_BINDFUL_LIB_NAME} PUBLIC ${GENERATED_BUILTINS_CPPS_bindful})

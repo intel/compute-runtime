@@ -539,4 +539,9 @@ bool HwHelperHw<GfxFamily>::isAdditionalFeatureFlagRequired(const FeatureTable *
     return false;
 }
 
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::getDefaultRevisionId(const HardwareInfo &hwInfo) const {
+    return 0u;
+}
+
 } // namespace NEO

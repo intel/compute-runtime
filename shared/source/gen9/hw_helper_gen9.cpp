@@ -11,6 +11,8 @@
 #include "shared/source/helpers/hw_helper_bdw_plus.inl"
 #include "shared/source/helpers/hw_helper_bdw_to_icllp.inl"
 
+#include <cstring>
+
 namespace NEO {
 typedef SKLFamily Family;
 
@@ -40,6 +42,14 @@ uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
 template <>
 uint32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
     return ThreadArbitrationPolicy::RoundRobin;
+}
+
+template <>
+uint32_t HwHelperHw<Family>::getDefaultRevisionId(const HardwareInfo &hwInfo) const {
+    if (std::strcmp(hwInfo.capabilityTable.platformType, "core") == 0) {
+        return 9u;
+    }
+    return 0u;
 }
 
 template <>
