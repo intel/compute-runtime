@@ -1734,3 +1734,138 @@ TEST(RelocationsDebugMessageTests, givenListOfRelocatedSymbolsThenReturnProperDe
     }
     EXPECT_STREQ(expected.str().c_str(), message.c_str());
 }
+
+TEST(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocationsAreAppliedInMemory) {
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+    header.shOff = header.ehSize;
+    header.shNum = 4;
+    header.shStrNdx = 0;
+
+    NEO::Elf::ElfSectionHeader<NEO::Elf::EI_CLASS_64> sectionHeader0;
+    sectionHeader0.size = 80;
+    sectionHeader0.offset = 80;
+
+    NEO::Elf::ElfSectionHeader<NEO::Elf::EI_CLASS_64> sectionHeader1;
+    sectionHeader1.size = 80;
+    sectionHeader1.offset = 160;
+
+    NEO::Elf::ElfSectionHeader<NEO::Elf::EI_CLASS_64> sectionHeader2;
+    sectionHeader2.size = 80;
+    sectionHeader2.offset = 240;
+
+    NEO::Elf::ElfSectionHeader<NEO::Elf::EI_CLASS_64> sectionHeader3;
+    sectionHeader3.size = 80;
+    sectionHeader3.offset = 320;
+
+    NEO::Elf::ElfSectionHeader<NEO::Elf::EI_CLASS_64> sectionHeader4;
+    sectionHeader4.size = 80;
+    sectionHeader4.offset = 400;
+
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    elf64.elfFileHeader = &header;
+
+    uint64_t dummyData[100];
+    uint8_t *storage = reinterpret_cast<uint8_t *>(dummyData);
+
+    elf64.sectionHeaders.push_back({&sectionHeader0, {&storage[80], 80}});
+    elf64.sectionHeaders.push_back({&sectionHeader1, {&storage[160], 80}});
+    elf64.sectionHeaders.push_back({&sectionHeader2, {&storage[240], 80}});
+    elf64.sectionHeaders.push_back({&sectionHeader3, {&storage[320], 80}});
+    elf64.sectionHeaders.push_back({&sectionHeader4, {&storage[400], 80}});
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text";
+    sectionNames[1] = ".data.global";
+    sectionNames[2] = ".debug_info";
+    sectionNames[3] = ".debug_abbrev";
+    sectionNames[4] = ".debug_line";
+
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc0 = {};
+    reloc0.offset = 64;
+    reloc0.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc0.symbolName = ".debug_abbrev";
+    reloc0.symbolSectionIndex = 3;
+    reloc0.symbolTableIndex = 0;
+    reloc0.targetSectionIndex = 2;
+    reloc0.addend = 0;
+
+    elf64.debugInfoRelocations.emplace_back(reloc0);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc1 = {};
+    reloc1.offset = 32;
+    reloc1.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_32);
+    reloc1.symbolName = ".debug_line";
+    reloc1.symbolSectionIndex = 4;
+    reloc1.symbolTableIndex = 0;
+    reloc1.targetSectionIndex = 2;
+    reloc1.addend = 4;
+
+    elf64.debugInfoRelocations.emplace_back(reloc1);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2 = {};
+    reloc2.offset = 32;
+    reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc2.symbolName = ".text";
+    reloc2.symbolSectionIndex = 0;
+    reloc2.symbolTableIndex = 0;
+    reloc2.targetSectionIndex = 4;
+    reloc2.addend = 18;
+
+    elf64.debugInfoRelocations.emplace_back(reloc2);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc3 = {};
+    reloc3.offset = 0;
+    reloc3.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc3.symbolName = ".data";
+    reloc3.symbolSectionIndex = 1;
+    reloc3.symbolTableIndex = 0;
+    reloc3.targetSectionIndex = 4;
+    reloc3.addend = 55;
+
+    elf64.debugInfoRelocations.emplace_back(reloc3);
+
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc4 = {};
+    reloc4.offset = 8;
+    reloc4.relocType = static_cast<uint32_t>(0);
+    reloc4.symbolName = ".text";
+    reloc4.symbolSectionIndex = 0;
+    reloc4.symbolTableIndex = 0;
+    reloc4.targetSectionIndex = 4;
+    reloc4.addend = 77;
+
+    elf64.debugInfoRelocations.emplace_back(reloc4);
+
+    uint64_t *relocInDebugLine = reinterpret_cast<uint64_t *>(&storage[400]);
+    *relocInDebugLine = 0;
+    uint64_t *relocInDebugLine2 = reinterpret_cast<uint64_t *>(&storage[408]);
+    *relocInDebugLine2 = 0;
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
+    symbol.value = 0;
+    elf64.symbolTable.push_back(symbol);
+
+    NEO::Linker::SegmentInfo text = {static_cast<uintptr_t>(0x80001000), 0x10000};
+    NEO::Linker::SegmentInfo dataGlobal = {static_cast<uintptr_t>(0x123000), 0x10000};
+    NEO::Linker::SegmentInfo dataConst = {static_cast<uintptr_t>(0xabc000), 0x10000};
+
+    NEO::Linker::applyDebugDataRelocations(elf64, {storage, sizeof(dummyData)}, text, dataGlobal, dataConst);
+
+    auto reloc0Location = reinterpret_cast<const uint64_t *>(&elf64.sectionHeaders[reloc0.targetSectionIndex].data[static_cast<size_t>(reloc0.offset)]);
+    auto reloc1Location = reinterpret_cast<const uint32_t *>(&elf64.sectionHeaders[reloc1.targetSectionIndex].data[static_cast<size_t>(reloc1.offset)]);
+    auto reloc2Location = reinterpret_cast<const uint64_t *>(&elf64.sectionHeaders[reloc2.targetSectionIndex].data[static_cast<size_t>(reloc2.offset)]);
+    auto reloc3Location = reinterpret_cast<const uint64_t *>(&elf64.sectionHeaders[reloc3.targetSectionIndex].data[static_cast<size_t>(reloc3.offset)]);
+    auto reloc4Location = reinterpret_cast<const uint64_t *>(&elf64.sectionHeaders[reloc4.targetSectionIndex].data[static_cast<size_t>(reloc4.offset)]);
+
+    auto expectedValue0 = reinterpret_cast<uint64_t>(&elf64.sectionHeaders[reloc0.symbolSectionIndex].data[0]) + reloc0.addend;
+    auto expectedValue1 = static_cast<uint32_t>(reinterpret_cast<uint64_t>(&elf64.sectionHeaders[reloc1.symbolSectionIndex].data[0]) + reloc1.addend);
+    auto expectedValue2 = uint64_t(0x80001000) + reloc2.addend;
+    uint64_t expectedValue3 = 0; // skip relocation from .data
+
+    EXPECT_EQ(expectedValue0, *reloc0Location);
+    EXPECT_EQ(expectedValue1, *reloc1Location);
+    EXPECT_EQ(expectedValue2, *reloc2Location);
+    EXPECT_EQ(expectedValue3, *reloc3Location);
+    EXPECT_EQ(0u, *reloc4Location);
+}

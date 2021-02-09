@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,6 +120,7 @@ struct ModuleImp : public Module {
   protected:
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
     void verifyDebugCapabilities();
+
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};
     std::unique_ptr<ModuleTranslationUnit> translationUnit;

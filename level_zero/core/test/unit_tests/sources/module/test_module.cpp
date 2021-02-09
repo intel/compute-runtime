@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
@@ -855,6 +856,57 @@ TEST_F(ModuleTest, givenInternalOptionsWhenBindlessDisabledThenBindlesOptionsNot
     module->createBuildOptions("", buildOptions, internalBuildOptions);
 
     EXPECT_FALSE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessMode));
+}
+
+using ModuleDebugDataTest = Test<DeviceFixture>;
+TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDebugDataThenRelocationsAreApplied) {
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
+                                                                      moduleBuildLog,
+                                                                      ModuleType::User);
+    module->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+
+    module->translationUnit->globalVarBuffer = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::BUFFER, neoDevice->getDeviceBitfield()});
+    module->translationUnit->globalConstBuffer = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::BUFFER, neoDevice->getDeviceBitfield()});
+
+    uint32_t kernelHeap = 0;
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+
+    kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
+    kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
+
+    auto debugData = MockElfEncoder<>::createRelocateableDebugDataElf();
+
+    kernelInfo->kernelDescriptor.external.debugData->vIsaSize = static_cast<uint32_t>(debugData.size());
+    kernelInfo->kernelDescriptor.external.debugData->vIsa = reinterpret_cast<char *>(debugData.data());
+
+    // pass kernelInfo ownership to programInfo
+    module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->initialize(kernelInfo, device, 0, module->translationUnit->globalConstBuffer, module->translationUnit->globalVarBuffer, false);
+    kernelImmData->createRelocatedDebugData(module->translationUnit->globalConstBuffer, module->translationUnit->globalVarBuffer);
+
+    module->kernelImmDatas.push_back(std::move(kernelImmData));
+
+    EXPECT_NE(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData);
+
+    uint64_t *relocAddress = reinterpret_cast<uint64_t *>(kernelInfo->kernelDescriptor.external.relocatedDebugData.get() + 600);
+    auto expectedValue = module->kernelImmDatas[0]->getIsaGraphicsAllocation()->getGpuAddress() + 0x1a8;
+    EXPECT_EQ(expectedValue, *relocAddress);
 }
 
 } // namespace ult

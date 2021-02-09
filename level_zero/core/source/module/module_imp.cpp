@@ -353,14 +353,6 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     verifyDebugCapabilities();
 
     this->updateBuildLog(neoDevice);
-    if (debugEnabled && device->getSourceLevelDebugger()) {
-        for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
-            device->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo->kernelDescriptor.external.debugData.get(),
-                                                                    kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
-                                                                    kernelInfo->heapInfo.pKernelHeap,
-                                                                    kernelInfo->heapInfo.KernelHeapSize);
-        }
-    }
 
     if (false == success) {
         return false;
@@ -375,6 +367,28 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         kernelImmDatas.push_back(std::move(kernelImmData));
     }
     this->maxGroupSize = static_cast<uint32_t>(this->translationUnit->device->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
+
+    if (debugEnabled) {
+        if (device->getSourceLevelDebugger()) {
+            for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
+                NEO::DebugData *notifyDebugData = kernelInfo->kernelDescriptor.external.debugData.get();
+                NEO::DebugData relocatedDebugData;
+
+                if (kernelInfo->kernelDescriptor.external.relocatedDebugData.get()) {
+                    relocatedDebugData.genIsa = kernelInfo->kernelDescriptor.external.debugData->genIsa;
+                    relocatedDebugData.genIsaSize = kernelInfo->kernelDescriptor.external.debugData->genIsaSize;
+                    relocatedDebugData.vIsa = reinterpret_cast<char *>(kernelInfo->kernelDescriptor.external.relocatedDebugData.get());
+                    relocatedDebugData.vIsaSize = kernelInfo->kernelDescriptor.external.debugData->vIsaSize;
+                    notifyDebugData = &relocatedDebugData;
+                }
+
+                device->getSourceLevelDebugger()->notifyKernelDebugData(notifyDebugData,
+                                                                        kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
+                                                                        kernelInfo->heapInfo.pKernelHeap,
+                                                                        kernelInfo->heapInfo.KernelHeapSize);
+            }
+        }
+    }
 
     return this->linkBinary();
 }

@@ -65,6 +65,8 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
 
 struct MockModule : public L0::ModuleImp {
     using ModuleImp::debugEnabled;
+    using ModuleImp::kernelImmDatas;
+    using ModuleImp::translationUnit;
 
     MockModule(L0::Device *device,
                L0::ModuleBuildLog *moduleBuildLog,
@@ -77,6 +79,7 @@ struct MockModule : public L0::ModuleImp {
     const KernelImmutableData *getKernelImmutableData(const char *functionName) const override {
         return kernelImmData;
     }
+
     KernelImmutableData *kernelImmData = nullptr;
 };
 

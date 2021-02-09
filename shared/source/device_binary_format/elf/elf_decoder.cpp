@@ -115,15 +115,18 @@ bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
             return false;
         }
         size_t numberOfEntries = static_cast<size_t>(sectionHeaderData.header->size / sectionHeaderData.header->entsize);
+        auto sectionHeaderNamesData = sectionHeaders[elfFileHeader->shStrNdx].data;
+        int targetSectionIndex = sectionHeaderData.header->info;
+        auto sectionName = getSectionName(targetSectionIndex);
+        auto debugDataRelocation = isDebugDataRelocation(ConstStringRef(sectionName.c_str()));
+        Relocations &relocs = debugDataRelocation ? debugInfoRelocations : relocations;
+
         auto rela = reinterpret_cast<const ElfRela<NumBits> *>(sectionHeaderData.data.begin());
 
         // there may be multiple rela sections, reserve additional size
         auto previousEntries = relocations.size();
         auto allEntries = previousEntries + numberOfEntries;
-        relocations.reserve(allEntries);
-
-        int targetSectionIndex = sectionHeaderData.header->info;
-        auto sectionHeaderNamesData = sectionHeaders[elfFileHeader->shStrNdx].data;
+        relocs.reserve(allEntries);
 
         for (auto i = previousEntries; i < allEntries; i++) {
 
@@ -134,7 +137,7 @@ bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
 
             RelocationInfo relocInfo = {symbolSectionIndex, symbolIndex, targetSectionIndex, rela->addend, rela->offset, relocType, name};
 
-            relocations.push_back(relocInfo);
+            relocs.push_back(relocInfo);
             rela++;
         }
     }
@@ -146,15 +149,19 @@ bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
             return false;
         }
         auto numberOfEntries = static_cast<size_t>(sectionHeaderData.header->size / sectionHeaderData.header->entsize);
+
+        auto sectionHeaderNamesData = sectionHeaders[elfFileHeader->shStrNdx].data;
+        int targetSectionIndex = sectionHeaderData.header->info;
+        auto sectionName = getSectionName(targetSectionIndex);
+        auto debugDataRelocation = isDebugDataRelocation(ConstStringRef(sectionName.c_str()));
+        Relocations &relocs = debugDataRelocation ? debugInfoRelocations : relocations;
+
         auto reloc = reinterpret_cast<const ElfRel<NumBits> *>(sectionHeaderData.data.begin());
 
         // there may be multiple rel sections, reserve additional size
         auto previousEntries = relocations.size();
         auto allEntries = previousEntries + numberOfEntries;
-        relocations.reserve(allEntries);
-
-        int targetSectionIndex = sectionHeaderData.header->info;
-        auto sectionHeaderNamesData = sectionHeaders[elfFileHeader->shStrNdx].data;
+        relocs.reserve(allEntries);
 
         for (auto i = previousEntries; i < allEntries; i++) {
             int symbolIndex = extractSymbolIndex<ElfRel<NumBits>>(*reloc);
@@ -164,7 +171,7 @@ bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
 
             RelocationInfo relocInfo = {symbolSectionIndex, symbolIndex, targetSectionIndex, 0, reloc->offset, relocType, name};
 
-            relocations.push_back(relocInfo);
+            relocs.push_back(relocInfo);
             reloc++;
         }
     }
@@ -185,6 +192,14 @@ bool Elf<NumBits>::decodeSections(std::string &outError) {
         }
     }
     return success;
+}
+
+template <ELF_IDENTIFIER_CLASS NumBits>
+bool Elf<NumBits>::isDebugDataRelocation(ConstStringRef sectionName) {
+    if (sectionName.startsWith(NEO::Elf::SpecialSectionNames::debug.data())) {
+        return true;
+    }
+    return false;
 }
 
 template <>

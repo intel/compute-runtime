@@ -63,6 +63,9 @@ struct KernelImmutableData {
     const NEO::KernelInfo *getKernelInfo() const { return kernelInfo; }
 
   protected:
+    MOCKABLE_VIRTUAL void createRelocatedDebugData(NEO::GraphicsAllocation *globalConstBuffer,
+                                                   NEO::GraphicsAllocation *globalVarBuffer);
+
     Device *device = nullptr;
     NEO::KernelInfo *kernelInfo = nullptr;
     NEO::KernelDescriptor *kernelDescriptor = nullptr;

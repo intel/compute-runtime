@@ -54,19 +54,29 @@ class TestElf {
         auto relaDebugSection = elfEncoder.getSectionHeader(relaDebugSectionIndex);
         relaDebugSection->info = debugSectionIndex;
 
-        ElfRel<ELF_CLASS::EI_CLASS_64> relocation;
-        relocation.info = relSymbolIndex << 32 | uint64_t(RELOCATION_X8664_TYPE::R_X8664_64);
-        relocation.offset = relOffset;
+        ElfRel<ELF_CLASS::EI_CLASS_64> relocations[2];
+        relocations[0].info = relSymbolIndex << 32 | uint64_t(RELOCATION_X8664_TYPE::R_X8664_64);
+        relocations[0].offset = relOffsets[0];
+
+        relocations[1].info = relSymbolIndex << 32 | uint64_t(RELOCATION_X8664_TYPE::R_X8664_64);
+        relocations[1].offset = relOffsets[1];
 
         elfEncoder.appendSection(SHT_PROGBITS, SpecialSectionNames::line, std::string{"dummy_line_data______________________"});
         auto lineSectionIndex = elfEncoder.getLastSectionHeaderIndex();
 
         elfEncoder.appendSection(SHT_REL, SpecialSectionNames::relPrefix.str() + SpecialSectionNames::line.str(),
-                                 ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(&relocation), sizeof(relocation)));
+                                 ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(&relocations[0]), sizeof(relocations[0])));
         auto relLineSectionIndex = elfEncoder.getLastSectionHeaderIndex();
 
         auto relLineSection = elfEncoder.getSectionHeader(relLineSectionIndex);
         relLineSection->info = lineSectionIndex;
+
+        elfEncoder.appendSection(SHT_REL, SpecialSectionNames::relPrefix.str() + SpecialSectionNames::debug.str(),
+                                 ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(&relocations[1]), sizeof(relocations[1])));
+        auto relDebugSectionIndex = elfEncoder.getLastSectionHeaderIndex();
+
+        auto relDebugSection = elfEncoder.getSectionHeader(relDebugSectionIndex);
+        relDebugSection->info = debugSectionIndex;
 
         elfEncoder.appendSection(SHT_PROGBITS, SpecialSectionNames::data, std::string{"global_data_memory"});
         auto dataSectionIndex = elfEncoder.getLastSectionHeaderIndex();
@@ -106,6 +116,7 @@ class TestElf {
 
         relaDebugSection->link = symTabSectionIndex;
         relLineSection->link = symTabSectionIndex;
+        relDebugSection->link = symTabSectionIndex;
 
         auto symTabSectionHeader = elfEncoder.getSectionHeader(symTabSectionIndex);
         symTabSectionHeader->info = 4;                                          // one greater than last LOCAL symbol
@@ -117,7 +128,7 @@ class TestElf {
     const uint64_t relaOffsets[2] = {8, 24};
 
     const uint64_t relSymbolIndex = 2;
-    const uint64_t relOffset = 16;
+    const uint64_t relOffsets[2] = {16, 32};
     uint8_t dummyData[8 * 10];
 
     std::vector<uint8_t> symbolTable;
@@ -676,31 +687,41 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
     EXPECT_NE(nullptr, elf64.elfFileHeader);
 
     auto relocations = elf64.getRelocations();
-    ASSERT_EQ(3u, relocations.size());
+    auto debugRelocations = elf64.getDebugInfoRelocations();
+    ASSERT_EQ(1u, relocations.size());
+    ASSERT_EQ(3u, debugRelocations.size());
 
-    EXPECT_EQ(testElf.relaAddend, relocations[0].addend);
-    EXPECT_EQ(testElf.relaOffsets[0], relocations[0].offset);
+    EXPECT_EQ(testElf.relaAddend, debugRelocations[0].addend);
+    EXPECT_EQ(testElf.relaOffsets[0], debugRelocations[0].offset);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_64), debugRelocations[0].relocType);
+    EXPECT_STREQ("global_object_symbol_0", debugRelocations[0].symbolName.c_str());
+    EXPECT_EQ(7, debugRelocations[0].symbolSectionIndex);
+    EXPECT_EQ(3, debugRelocations[0].symbolTableIndex);
+    EXPECT_EQ(2, debugRelocations[0].targetSectionIndex);
+
+    EXPECT_EQ(testElf.relaAddend, debugRelocations[1].addend);
+    EXPECT_EQ(testElf.relaOffsets[1], debugRelocations[1].offset);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_32), debugRelocations[1].relocType);
+    EXPECT_STREQ("local_function_symbol_1", debugRelocations[1].symbolName.c_str());
+    EXPECT_EQ(1, debugRelocations[1].symbolSectionIndex);
+    EXPECT_EQ(1, debugRelocations[1].symbolTableIndex);
+    EXPECT_EQ(2, debugRelocations[1].targetSectionIndex);
+
+    EXPECT_EQ(0u, debugRelocations[2].addend);
+    EXPECT_EQ(testElf.relOffsets[1], debugRelocations[2].offset);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_64), debugRelocations[2].relocType);
+    EXPECT_STREQ("section_symbol_2", debugRelocations[2].symbolName.c_str());
+    EXPECT_EQ(1, debugRelocations[2].symbolSectionIndex);
+    EXPECT_EQ(2, debugRelocations[2].symbolTableIndex);
+    EXPECT_EQ(2, debugRelocations[2].targetSectionIndex);
+
+    EXPECT_EQ(0u, relocations[0].addend);
+    EXPECT_EQ(testElf.relOffsets[0], relocations[0].offset);
     EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_64), relocations[0].relocType);
-    EXPECT_STREQ("global_object_symbol_0", relocations[0].symbolName.c_str());
-    EXPECT_EQ(6, relocations[0].symbolSectionIndex);
-    EXPECT_EQ(3, relocations[0].symbolTableIndex);
-    EXPECT_EQ(2, relocations[0].targetSectionIndex);
-
-    EXPECT_EQ(testElf.relaAddend, relocations[1].addend);
-    EXPECT_EQ(testElf.relaOffsets[1], relocations[1].offset);
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_32), relocations[1].relocType);
-    EXPECT_STREQ("local_function_symbol_1", relocations[1].symbolName.c_str());
-    EXPECT_EQ(1, relocations[1].symbolSectionIndex);
-    EXPECT_EQ(1, relocations[1].symbolTableIndex);
-    EXPECT_EQ(2, relocations[1].targetSectionIndex);
-
-    EXPECT_EQ(0u, relocations[2].addend);
-    EXPECT_EQ(testElf.relOffset, relocations[2].offset);
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_64), relocations[2].relocType);
-    EXPECT_STREQ("section_symbol_2", relocations[2].symbolName.c_str());
-    EXPECT_EQ(1, relocations[2].symbolSectionIndex);
-    EXPECT_EQ(2, relocations[2].symbolTableIndex);
-    EXPECT_EQ(4, relocations[2].targetSectionIndex);
+    EXPECT_STREQ("section_symbol_2", relocations[0].symbolName.c_str());
+    EXPECT_EQ(1, relocations[0].symbolSectionIndex);
+    EXPECT_EQ(2, relocations[0].symbolTableIndex);
+    EXPECT_EQ(4, relocations[0].targetSectionIndex);
 
     auto symbolTable = elf64.getSymbols();
     ASSERT_EQ(4u, symbolTable.size());

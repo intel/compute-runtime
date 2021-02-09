@@ -408,6 +408,7 @@ static constexpr ConstStringRef comment = ".comment";            // version cont
 static constexpr ConstStringRef data = ".data";                  // initialized memory
 static constexpr ConstStringRef data1 = ".data1";                // initialized memory
 static constexpr ConstStringRef debug = ".debug";                // debug symbols
+static constexpr ConstStringRef debugInfo = ".debug_info";       // debug info
 static constexpr ConstStringRef dynamic = ".dynamic";            // dynamic linking information
 static constexpr ConstStringRef dynstr = ".dynstr";              // strings for dynamic linking
 static constexpr ConstStringRef dynsym = ".dynsym";              // dynamic linking symbol table

@@ -121,8 +121,12 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     }
 
     isaGraphicsAllocation.reset(allocation);
-    if (device->getL0Debugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
-        device->getL0Debugger()->registerElf(kernelInfo->kernelDescriptor.external.debugData.get(), allocation);
+
+    if (neoDevice->getDebugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
+        createRelocatedDebugData(globalConstBuffer, globalVarBuffer);
+        if (device->getL0Debugger()) {
+            device->getL0Debugger()->registerElf(kernelInfo->kernelDescriptor.external.debugData.get(), allocation);
+        }
     }
 
     this->crossThreadDataSize = this->kernelDescriptor->kernelAttributes.crossThreadDataSize;
@@ -182,6 +186,41 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
         this->residencyContainer.push_back(globalVarBuffer);
     } else if (nullptr != globalVarBuffer) {
         this->residencyContainer.push_back(globalVarBuffer);
+    }
+}
+
+void KernelImmutableData::createRelocatedDebugData(NEO::GraphicsAllocation *globalConstBuffer,
+                                                   NEO::GraphicsAllocation *globalVarBuffer) {
+    NEO::Linker::SegmentInfo globalData;
+    NEO::Linker::SegmentInfo constData;
+    if (globalVarBuffer) {
+        globalData.gpuAddress = globalVarBuffer->getGpuAddress();
+        globalData.segmentSize = globalVarBuffer->getUnderlyingBufferSize();
+    }
+    if (globalConstBuffer) {
+        constData.gpuAddress = globalConstBuffer->getGpuAddress();
+        constData.segmentSize = globalConstBuffer->getUnderlyingBufferSize();
+    }
+
+    if (kernelInfo->kernelDescriptor.external.debugData.get()) {
+        std::string outErrReason;
+        std::string outWarning;
+        auto decodedElf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(kernelInfo->kernelDescriptor.external.debugData->vIsa),
+                                                                                             kernelInfo->kernelDescriptor.external.debugData->vIsaSize),
+                                                                     outErrReason, outWarning);
+
+        if (decodedElf.getDebugInfoRelocations().size() > 1) {
+            auto size = kernelInfo->kernelDescriptor.external.debugData->vIsaSize;
+            kernelInfo->kernelDescriptor.external.relocatedDebugData = std::make_unique<uint8_t[]>(size);
+
+            memcpy_s(kernelInfo->kernelDescriptor.external.relocatedDebugData.get(), size, kernelInfo->kernelDescriptor.external.debugData->vIsa, kernelInfo->kernelDescriptor.external.debugData->vIsaSize);
+
+            NEO::Linker::SegmentInfo textSegment = {getIsaGraphicsAllocation()->getGpuAddress(),
+                                                    getIsaGraphicsAllocation()->getUnderlyingBufferSize()};
+
+            NEO::Linker::applyDebugDataRelocations(decodedElf, ArrayRef<uint8_t>(kernelInfo->kernelDescriptor.external.relocatedDebugData.get(), size),
+                                                   textSegment, globalData, constData);
+        }
     }
 }
 

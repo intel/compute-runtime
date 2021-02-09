@@ -77,11 +77,15 @@ struct Elf {
         return symbolTable[idx].value;
     }
 
-    const Relocations &getRelocations() {
+    const Relocations &getRelocations() const {
         return relocations;
     }
 
-    const SymbolsTable &getSymbols() {
+    const Relocations &getDebugInfoRelocations() const {
+        return debugInfoRelocations;
+    }
+
+    const SymbolsTable &getSymbols() const {
         return symbolTable;
     }
 
@@ -92,9 +96,11 @@ struct Elf {
   protected:
     bool decodeSymTab(SectionHeaderAndData &sectionHeaderData, std::string &outError);
     bool decodeRelocations(SectionHeaderAndData &sectionHeaderData, std::string &outError);
+    bool isDebugDataRelocation(ConstStringRef sectionName);
 
     SymbolsTable symbolTable;
     Relocations relocations;
+    Relocations debugInfoRelocations;
 };
 
 template <ELF_IDENTIFIER_CLASS NumBits = EI_CLASS_64>

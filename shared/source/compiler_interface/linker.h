@@ -198,6 +198,11 @@ struct Linker {
         return RelocatedSymbolsMap(std::move(relocatedSymbols));
     }
 
+    static void applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> &decodedElf, ArrayRef<uint8_t> inputOutputElf,
+                                          const SegmentInfo &text,
+                                          const SegmentInfo &globalData,
+                                          const SegmentInfo &constData);
+
   protected:
     const LinkerInput &data;
     RelocatedSymbolsMap relocatedSymbols;
