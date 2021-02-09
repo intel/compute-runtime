@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,11 +101,12 @@ AllocationProperties MemoryPropertiesHelper::getAllocationProperties(
 }
 
 void MemoryPropertiesHelper::fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly,
-                                                         bool deviceOnlyVisibilty) {
+                                                         bool deviceOnlyVisibilty, uint32_t cacheRegion) {
     allocationProperties.flags.uncacheable = uncached;
     auto cacheFlushRequired = !uncached && !readOnly && !deviceOnlyVisibilty;
     allocationProperties.flags.flushL3RequiredForRead = cacheFlushRequired;
     allocationProperties.flags.flushL3RequiredForWrite = cacheFlushRequired;
+    allocationProperties.cacheRegion = cacheRegion;
 }
 
 } // namespace NEO

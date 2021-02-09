@@ -64,7 +64,8 @@ class DrmAllocation : public GraphicsAllocation {
 
     uint64_t peekInternalHandle(MemoryManager *memoryManager) override;
 
-    bool setCacheRegion(Drm *drm, size_t regionSize, CacheRegion regionIndex);
+    bool setCacheRegion(Drm *drm, CacheRegion regionIndex);
+    bool setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex);
 
     void *getMmapPtr() { return this->mmapPtr; }
     void setMmapPtr(void *ptr) { this->mmapPtr = ptr; }

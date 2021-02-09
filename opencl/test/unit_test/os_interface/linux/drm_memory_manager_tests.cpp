@@ -4185,6 +4185,29 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenIsaIsRegisteredThenC
     EXPECT_EQ(2u, drm.unregisterCalledCount);
 }
 
+TEST(DrmAllocationTest, givenDrmAllocationWhenCacheInfoIsNotAvailableThenCacheRegionIsNotSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+
+    EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::None));
+}
+
+TEST(DrmAllocationTest, givenDrmAllocationWhenCacheInfoIsAvailableThenCacheRegionIsNotSetForTheDefault) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.setupCacheInfo(*defaultHwInfo.get());
+
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+
+    EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::Default));
+}
+
 TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFalse) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -4194,7 +4217,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFalse
 
     MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
 
-    EXPECT_FALSE(allocation.setCacheRegion(&drm, 1024, CacheRegion::None));
+    EXPECT_FALSE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::None));
 }
 
 TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenReturnTrue) {
@@ -4206,7 +4229,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenRe
 
     MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
 
-    EXPECT_TRUE(allocation.setCacheRegion(&drm, 1024, CacheRegion::Region1));
+    EXPECT_TRUE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1));
 }
 
 TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenSetRegionInBufferObject) {
@@ -4220,7 +4243,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenSe
     MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
-    EXPECT_TRUE(allocation.setCacheRegion(&drm, 1024, CacheRegion::Region1));
+    EXPECT_TRUE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1));
 
     for (auto bo : allocation.bufferObjects) {
         if (bo != nullptr) {

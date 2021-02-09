@@ -29,7 +29,7 @@ uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager) {
     return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBO()->peekHandle(), this->rootDeviceIndex));
 }
 
-bool DrmAllocation::setCacheRegion(Drm *drm, size_t regionSize, CacheRegion regionIndex) {
+bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex) {
     if (!drm->getCacheInfo()->getCacheRegion(regionSize, regionIndex)) {
         return false;
     }

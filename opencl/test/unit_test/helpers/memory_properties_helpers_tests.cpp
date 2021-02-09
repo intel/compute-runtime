@@ -294,13 +294,13 @@ TEST_F(MemoryPropertiesHelperTests, givenDifferentParametersWhenCallingFillCache
                 if (uncached || readOnly || deviceOnlyVisibilty) {
                     allocationProperties.flags.flushL3RequiredForRead = true;
                     allocationProperties.flags.flushL3RequiredForWrite = true;
-                    MemoryPropertiesHelper::fillCachePolicyInProperties(allocationProperties, uncached, readOnly, deviceOnlyVisibilty);
+                    MemoryPropertiesHelper::fillCachePolicyInProperties(allocationProperties, uncached, readOnly, deviceOnlyVisibilty, 0);
                     EXPECT_FALSE(allocationProperties.flags.flushL3RequiredForRead);
                     EXPECT_FALSE(allocationProperties.flags.flushL3RequiredForWrite);
                 } else {
                     allocationProperties.flags.flushL3RequiredForRead = false;
                     allocationProperties.flags.flushL3RequiredForWrite = false;
-                    MemoryPropertiesHelper::fillCachePolicyInProperties(allocationProperties, uncached, readOnly, deviceOnlyVisibilty);
+                    MemoryPropertiesHelper::fillCachePolicyInProperties(allocationProperties, uncached, readOnly, deviceOnlyVisibilty, 0);
                     EXPECT_TRUE(allocationProperties.flags.flushL3RequiredForRead);
                     EXPECT_TRUE(allocationProperties.flags.flushL3RequiredForWrite);
                 }
