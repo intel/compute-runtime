@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,16 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device
 
 void DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
     this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer), true);
-    residencyContainer.clear();
+
+    auto clearContainer = true;
+
+    if (DebugManager.flags.PassBoundBOToExec.get() != -1) {
+        clearContainer = !DebugManager.flags.PassBoundBOToExec.get();
+    }
+
+    if (clearContainer) {
+        residencyContainer.clear();
+    }
 }
 
 std::unique_lock<std::mutex> DrmMemoryOperationsHandlerBind::lockHandlerIfUsed() {
