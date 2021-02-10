@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,6 +85,7 @@ enum Component {
     SchedulerComponent,
     MemoryComponent,
     PciComponent,
+    GlobalOperationsComponent,
 
     MaxComponents,
 };
@@ -304,6 +305,13 @@ enum Pci {
 
     MaxPciRequests,
 };
+
+enum GlobalOperation {
+    NumGlobalOperationDomains = 0,
+
+    TriggerDeviceLevelReset
+};
+
 } // namespace Requests
 
 enum FlipType {

@@ -159,6 +159,16 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
     }
 
+    MOCKABLE_VIRTUAL void getGlobalOperationsProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
+        pResponse->outDataSize = 0;
+        pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+    }
+
+    MOCKABLE_VIRTUAL void setGlobalOperationsProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
+        pResponse->outDataSize = 0;
+        pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+    }
+
     void retrieveCorrectVersion(KmdSysman::GfxSysmanMainHeaderOut *pHeaderOut) {
         pHeaderOut->outNumElements = 1;
         pHeaderOut->outTotalSize = 0;
@@ -317,6 +327,9 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         case KmdSysman::Component::PciComponent: {
             setPciProperty(pRequest, pResponse);
         } break;
+        case KmdSysman::Component::GlobalOperationsComponent: {
+            setGlobalOperationsProperty(pRequest, pResponse);
+        } break;
         default: {
             pResponse->outDataSize = 0;
             pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
@@ -355,6 +368,9 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         } break;
         case KmdSysman::Component::PciComponent: {
             getPciProperty(pRequest, pResponse);
+        } break;
+        case KmdSysman::Component::GlobalOperationsComponent: {
+            getGlobalOperationsProperty(pRequest, pResponse);
         } break;
         default: {
             pResponse->outDataSize = 0;

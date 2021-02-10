@@ -1,38 +1,13 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/tools/source/sysman/global_operations/os_global_operations.h"
-#include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/global_operations/windows/os_global_operations_imp.h"
 
 namespace L0 {
-
-class WddmGlobalOperationsImp : public OsGlobalOperations {
-  public:
-    void getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
-    Device *getDevice() override;
-    ze_result_t reset(ze_bool_t force) override;
-    ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) override;
-    ze_result_t deviceGetState(zes_device_state_t *pState) override;
-
-    WddmGlobalOperationsImp(OsSysman *pOsSysman);
-    ~WddmGlobalOperationsImp() = default;
-
-    // Don't allow copies of the WddmGlobalOperationsImp object
-    WddmGlobalOperationsImp(const WddmGlobalOperationsImp &obj) = delete;
-    WddmGlobalOperationsImp &operator=(const WddmGlobalOperationsImp &obj) = delete;
-
-  private:
-    Device *pDevice = nullptr;
-};
 
 Device *WddmGlobalOperationsImp::getDevice() {
     return pDevice;
@@ -57,7 +32,16 @@ void WddmGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING_
 }
 
 ze_result_t WddmGlobalOperationsImp::reset(ze_bool_t force) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    uint32_t value = 0;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+    request.commandId = KmdSysman::Command::Set;
+    request.componentId = KmdSysman::Component::GlobalOperationsComponent;
+    request.requestId = KmdSysman::Requests::GlobalOperation::TriggerDeviceLevelReset;
+    request.dataSize = sizeof(uint32_t);
+    value = static_cast<uint32_t>(force);
+    memcpy_s(request.dataBuffer, sizeof(uint32_t), &value, sizeof(uint32_t));
+    return pKmdSysManager->requestSingle(request, response);
 }
 
 ze_result_t WddmGlobalOperationsImp::scanProcessesState(std::vector<zes_process_state_t> &pProcessList) {
@@ -71,6 +55,7 @@ ze_result_t WddmGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) 
 WddmGlobalOperationsImp::WddmGlobalOperationsImp(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pDevice = pWddmSysmanImp->getDeviceHandle();
+    pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
 OsGlobalOperations *OsGlobalOperations::create(OsSysman *pOsSysman) {
