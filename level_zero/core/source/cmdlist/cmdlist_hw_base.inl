@@ -79,7 +79,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
-
+    uint32_t partitionCount = 0;
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,
                                                  reinterpret_cast<const void *>(pThreadGroupDimensions),
                                                  isIndirect,
@@ -88,7 +88,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                  0,
                                                  device->getNEODevice(),
                                                  commandListPreemptionMode,
-                                                 this->containsStatelessUncachedResource);
+                                                 this->containsStatelessUncachedResource,
+                                                 partitionCount);
 
     if (device->getNEODevice()->getDebugger()) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);

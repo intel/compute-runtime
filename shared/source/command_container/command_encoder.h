@@ -37,7 +37,8 @@ struct EncodeDispatchKernel {
                        uint64_t eventAddress,
                        Device *device,
                        PreemptionMode preemptionMode,
-                       bool &requiresUncachedMocs);
+                       bool &requiresUncachedMocs,
+                       uint32_t &partitionCount);
 
     static void encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd);
 

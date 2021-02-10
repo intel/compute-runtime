@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1002,6 +1002,7 @@ typedef struct tagMI_ATOMIC {
         MEMORYADDRESS_INDEX = 0x1,
     } PATCH_CONSTANTS;
     typedef enum tagATOMIC_OPCODES {
+        ATOMIC_4B_MOVE = 0x4,
         ATOMIC_4B_INCREMENT = 0x5,
         ATOMIC_4B_DECREMENT = 0x6,
         ATOMIC_8B_INCREMENT = 0x25,

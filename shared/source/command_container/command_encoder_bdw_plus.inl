@@ -25,7 +25,8 @@ namespace NEO {
 template <typename Family>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                           const void *pThreadGroupDimensions, bool isIndirect, bool isPredicate, DispatchKernelEncoderI *dispatchInterface,
-                                          uint64_t eventAddress, Device *device, PreemptionMode preemptionMode, bool &requiresUncachedMocs) {
+                                          uint64_t eventAddress, Device *device, PreemptionMode preemptionMode, bool &requiresUncachedMocs,
+                                          uint32_t &partitionCount) {
 
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -215,6 +216,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         auto mediaStateFlush = listCmdBufferStream->getSpace(sizeof(MEDIA_STATE_FLUSH));
         *reinterpret_cast<MEDIA_STATE_FLUSH *>(mediaStateFlush) = Family::cmdInitMediaStateFlush;
     }
+
+    partitionCount = 1;
 }
 
 template <typename Family>

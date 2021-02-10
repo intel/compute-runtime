@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -904,6 +904,7 @@ typedef struct tagMI_ATOMIC {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
     typedef enum tagATOMIC_OPCODES {
+        ATOMIC_4B_MOVE = 0x4,
         ATOMIC_4B_INCREMENT = 0x5,
         ATOMIC_4B_DECREMENT = 0x6,
         ATOMIC_8B_INCREMENT = 0x25,

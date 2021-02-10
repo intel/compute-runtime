@@ -47,7 +47,9 @@ HWTEST_F(CommandEncodeStatesTest, givenenDispatchInterfaceWhenDispatchKernelThen
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -67,6 +69,7 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithUnc
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     cmdContainer->setDirtyStateForAllHeaps(true);
     bool requiresUncachedMocs = true;
+    uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(),
                                              dims,
                                              false,
@@ -75,7 +78,8 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithUnc
                                              0,
                                              pDevice,
                                              NEO::PreemptionMode::Disabled,
-                                             requiresUncachedMocs);
+                                             requiresUncachedMocs,
+                                             partitionCount);
     EXPECT_FALSE(requiresUncachedMocs);
 
     GenCmdList commands;
@@ -101,6 +105,7 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithUnc
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     cmdContainer->setDirtyStateForAllHeaps(false);
     bool requiresUncachedMocs = true;
+    uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(),
                                              dims,
                                              false,
@@ -109,7 +114,8 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithUnc
                                              0,
                                              pDevice,
                                              NEO::PreemptionMode::Disabled,
-                                             requiresUncachedMocs);
+                                             requiresUncachedMocs,
+                                             partitionCount);
     EXPECT_FALSE(requiresUncachedMocs);
 
     GenCmdList commands;
@@ -135,6 +141,7 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNon
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     cmdContainer->setDirtyStateForAllHeaps(true);
     bool requiresUncachedMocs = false;
+    uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(),
                                              dims,
                                              false,
@@ -143,7 +150,8 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNon
                                              0,
                                              pDevice,
                                              NEO::PreemptionMode::Disabled,
-                                             requiresUncachedMocs);
+                                             requiresUncachedMocs,
+                                             partitionCount);
     EXPECT_FALSE(requiresUncachedMocs);
 
     GenCmdList commands;
@@ -169,6 +177,7 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNon
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     cmdContainer->setDirtyStateForAllHeaps(false);
     bool requiresUncachedMocs = false;
+    uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(),
                                              dims,
                                              false,
@@ -177,7 +186,8 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNon
                                              0,
                                              pDevice,
                                              NEO::PreemptionMode::Disabled,
-                                             requiresUncachedMocs);
+                                             requiresUncachedMocs,
+                                             partitionCount);
     EXPECT_FALSE(requiresUncachedMocs);
 
     GenCmdList commands;
@@ -201,6 +211,7 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNon
 
     cmdContainer->setDirtyStateForAllHeaps(false);
     bool requiresUncachedMocs = false;
+    uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(),
                                              dims,
                                              false,
@@ -209,7 +220,8 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNon
                                              0,
                                              pDevice,
                                              NEO::PreemptionMode::Disabled,
-                                             requiresUncachedMocs);
+                                             requiresUncachedMocs,
+                                             partitionCount);
     EXPECT_FALSE(requiresUncachedMocs);
 
     GenCmdList commands;
@@ -231,7 +243,9 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWithUsedAvailableSizeWhen
     cmdContainer->getCommandStream()->getSpace(cmdContainer->getCommandStream()->getAvailableSpace() - sizeof(typename FamilyType::MI_BATCH_BUFFER_END));
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     auto cmdBuffersCountAfter = cmdContainer->getCmdBufferAllocations().size();
 
@@ -246,7 +260,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterThan
     EXPECT_CALL(*dispatchInterface.get(), getSlmTotalSize()).WillRepeatedly(::testing::Return(slmTotalSize));
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
@@ -264,7 +280,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZeroW
     EXPECT_CALL(*dispatchInterface.get(), getSlmTotalSize()).WillRepeatedly(::testing::Return(slmTotalSize));
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
@@ -297,7 +315,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenOneBindingTableEntryWh
     EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapDataSize()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
     EXPECT_EQ(interfaceDescriptorData->getBindingTablePointer(), expectedOffset);
@@ -325,7 +345,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhen
     EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapDataSize()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
     EXPECT_EQ(interfaceDescriptorData->getBindingTablePointer(), 0u);
@@ -351,7 +373,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDispa
     EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(dshData));
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
     auto borderColorOffsetInDsh = usedBefore;
@@ -383,7 +407,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersZeroWhenDisp
     EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(dshData));
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
     auto borderColorOffsetInDsh = usedBefore;
@@ -405,7 +431,9 @@ HWTEST_F(CommandEncodeStatesTest, givenIndirectOffsetsCountsWhenDispatchingKerne
     dispatchInterface->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[2] = offsets[2];
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, true, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, true, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -431,7 +459,9 @@ HWTEST_F(CommandEncodeStatesTest, givenIndarectOffsetsSizeWhenDispatchingKernelT
     dispatchInterface->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[2] = offsets[2];
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, true, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, true, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -469,7 +499,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice);
         bool requiresUncachedMocs = false;
-        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+        uint32_t partitionCount = 0;
+        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                                 NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
         auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
 
@@ -499,7 +531,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
         cmdContainer->initialize(pDevice);
 
         bool requiresUncachedMocs = false;
-        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+        uint32_t partitionCount = 0;
+        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                                 NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
         auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
 
@@ -524,7 +558,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
         cmdContainer->initialize(pDevice);
 
         bool requiresUncachedMocs = false;
-        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+        uint32_t partitionCount = 0;
+        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                                 NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
         auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
 
@@ -553,7 +589,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotCha
     cmdContainer->setDirtyStateForAllHeaps(false);
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -575,7 +613,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotCha
     cmdContainer->setDirtyStateForAllHeaps(false);
 
     bool requiresUncachedMocs = true;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -600,7 +640,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDirtyHeapsAndSlmNotCha
     cmdContainer->setDirtyStateForAllHeaps(true);
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -621,7 +663,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDirtyHeapsWhenDispatch
     cmdContainer->setDirtyStateForAllHeaps(true);
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     GenCmdList cmdList;
     CmdParse<FamilyType>::parseCommandBuffer(cmdList, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -659,7 +703,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmChange
     auto slmSizeBefore = cmdContainer->slmSize;
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -681,7 +727,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeorWhenD
     cmdContainer->nextIddInBlock = 0;
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -715,7 +763,9 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenS
 
     auto usedBefore = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     auto usedAfter = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
 
     EXPECT_NE(usedAfter, usedBefore);
@@ -742,7 +792,9 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThen
 
     bool requiresUncachedMocs = false;
     auto usedBefore = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     auto usedAfter = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
 
     EXPECT_EQ(usedAfter, usedBefore);
@@ -799,7 +851,9 @@ HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatching
     EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapDataSize()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     EXPECT_EQ(pattern, *patchLocation);
 
     iOpenCL::SPatchSamplerKernelArgument samplerArg = {};
@@ -823,8 +877,8 @@ HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatching
 
     ioh->replaceBuffer(ioh->getCpuBase(), ioh->getMaxAvailableSpace());
     memset(ioh->getCpuBase(), 0, ioh->getMaxAvailableSpace());
-
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     EXPECT_THAT(ptrOffset(ioh->getCpuBase(), iohOffset), MemoryZeroed(ioh->getMaxAvailableSpace() - iohOffset));
 }
 
@@ -1051,7 +1105,9 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessKernelWhenBindlessModeE
 
     bool requiresUncachedMocs = false;
     EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
 }
 
@@ -1082,7 +1138,9 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindfulKernelWhenBindlessModeEn
 
     bool requiresUncachedMocs = false;
     EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     EXPECT_NE(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
 }
 
@@ -1113,12 +1171,17 @@ HWTEST_F(BindlessCommandEncodeStatesTesttt, givenBindlessModeEnabledWhenDispatch
 
     bool requiresUncachedMocs = false;
     EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::SURFACE_STATE), nullptr);
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     auto sshBefore = commandContainer->getIndirectHeap(HeapType::SURFACE_STATE);
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
+    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     auto sshAfter = commandContainer->getIndirectHeap(HeapType::SURFACE_STATE);
-    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    EncodeDispatchKernel<FamilyType>::encode(*commandContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     EXPECT_EQ(sshBefore, sshAfter);
 }
 
@@ -1145,7 +1208,9 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchin
     EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(dshData));
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     EXPECT_NE(std::find(cmdContainer->getResidencyContainer().begin(), cmdContainer->getResidencyContainer().end(), pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()), cmdContainer->getResidencyContainer().end());
 }
 
@@ -1171,6 +1236,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenBindlessModeDisabledelWithSampler
     EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(dshData));
 
     bool requiresUncachedMocs = false;
-    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs);
+    uint32_t partitionCount = 0;
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice,
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, partitionCount);
     EXPECT_EQ(std::find(cmdContainer->getResidencyContainer().begin(), cmdContainer->getResidencyContainer().end(), pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()), cmdContainer->getResidencyContainer().end());
 }
