@@ -10,6 +10,7 @@ set(NEO_SHARED_TESTS_CMD_PARSE
     ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_base_mi_arb.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_mode.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_gpgpu_walker.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_l3_control.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_mi_arb.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_sip.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gen_cmd_parse.h

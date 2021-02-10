@@ -1098,6 +1098,7 @@ using IsAtLeastGen12lp = IsAtLeastGfxCore<IGFX_GEN12LP_CORE>;
 
 using IsBXT = IsProduct<IGFX_BROXTON>;
 using IsCFL = IsProduct<IGFX_COFFEELAKE>;
+using IsDG1 = IsProduct<IGFX_DG1>;
 using IsEHL = IsProduct<IGFX_ELKHARTLAKE>;
 using IsGLK = IsProduct<IGFX_GEMINILAKE>;
 using IsICLLP = IsProduct<IGFX_ICELAKE_LP>;

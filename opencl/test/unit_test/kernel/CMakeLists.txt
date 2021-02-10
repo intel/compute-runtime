@@ -6,6 +6,7 @@
 
 set(IGDRCL_SRCS_tests_kernel
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/clone_kernel_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_transformer_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_accelerator_arg_tests.cpp

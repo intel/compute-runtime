@@ -21,6 +21,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/blit_commands_helper_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/common_types.h
@@ -66,6 +67,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/l3_range.h
     ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.h
     ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.inl
