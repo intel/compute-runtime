@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -176,7 +176,7 @@ int drmGetContextParam(drm_i915_gem_context_param *param) {
     return ret;
 }
 
-int drmContextCreate(drm_i915_gem_context_create *create) {
+int drmContextCreate(drm_i915_gem_context_create_ext *create) {
     assert(create);
 
     create->ctx_id = 1;
@@ -253,8 +253,8 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
             case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM:
                 res = drmGetContextParam(va_arg(vl, drm_i915_gem_context_param *));
                 break;
-            case DRM_IOCTL_I915_GEM_CONTEXT_CREATE:
-                res = drmContextCreate(va_arg(vl, drm_i915_gem_context_create *));
+            case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT:
+                res = drmContextCreate(va_arg(vl, drm_i915_gem_context_create_ext *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY:
                 res = drmContextDestroy(va_arg(vl, drm_i915_gem_context_destroy *));

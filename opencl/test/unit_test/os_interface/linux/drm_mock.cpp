@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,8 +66,8 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         }
     }
 
-    if ((request == DRM_IOCTL_I915_GEM_CONTEXT_CREATE) && (arg != nullptr)) {
-        auto create = static_cast<drm_i915_gem_context_create *>(arg);
+    if ((request == DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT) && (arg != nullptr)) {
+        auto create = static_cast<drm_i915_gem_context_create_ext *>(arg);
         this->receivedCreateContextId = create->ctx_id;
         return this->StoredRetVal;
     }

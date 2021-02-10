@@ -208,8 +208,8 @@ void Drm::setNonPersistentContext(uint32_t drmContextId) {
 }
 
 uint32_t Drm::createDrmContext(uint32_t drmVmId) {
-    drm_i915_gem_context_create gcc = {};
-    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &gcc);
+    drm_i915_gem_context_create_ext gcc = {};
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
     UNRECOVERABLE_IF(retVal != 0);
 
     if (drmVmId > 0) {

@@ -301,8 +301,8 @@ class DrmMockCustom : public Drm {
             getContextParam->value = getContextParamRetValue;
         } break;
 
-        case DRM_IOCTL_I915_GEM_CONTEXT_CREATE: {
-            auto contextCreateParam = reinterpret_cast<drm_i915_gem_context_create *>(arg);
+        case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT: {
+            auto contextCreateParam = reinterpret_cast<drm_i915_gem_context_create_ext *>(arg);
             contextCreateParam->ctx_id = ++ioctl_cnt.contextCreate;
         } break;
         case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY: {
