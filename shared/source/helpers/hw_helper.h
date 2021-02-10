@@ -131,7 +131,7 @@ class HwHelper {
     virtual bool additionalKernelExecInfoSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual aub_stream::MMIOList getExtraMmioList() const = 0;
+    virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -333,7 +333,7 @@ class HwHelperHw : public HwHelper {
 
     bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const override;
 
-    aub_stream::MMIOList getExtraMmioList() const override;
+    aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo) const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

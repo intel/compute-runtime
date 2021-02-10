@@ -31,7 +31,7 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
 
         auto &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
 
-        aub_stream::MMIOList extraMmioList = hwHelper.getExtraMmioList();
+        aub_stream::MMIOList extraMmioList = hwHelper.getExtraMmioList(*pHwInfo);
         aub_stream::MMIOList debugMmioList = AubHelper::getAdditionalMmioList();
 
         extraMmioList.insert(extraMmioList.end(), debugMmioList.begin(), debugMmioList.end());
