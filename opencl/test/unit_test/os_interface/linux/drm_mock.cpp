@@ -69,6 +69,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT) && (arg != nullptr)) {
         auto create = static_cast<drm_i915_gem_context_create_ext *>(arg);
         this->receivedCreateContextId = create->ctx_id;
+        this->receivedContextCreateFlags = create->flags;
         return this->StoredRetVal;
     }
 

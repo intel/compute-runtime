@@ -106,10 +106,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     }
 
     bool initDirectSubmission(Device &device, OsContext &osContext) override;
-    bool checkDirectSubmissionSupportsEngine(const DirectSubmissionProperties &directSubmissionProperty,
-                                             aub_stream::EngineType contextEngineType,
-                                             bool &startOnInit,
-                                             bool &startInContext);
     GraphicsAllocation *getClearColorAllocation() override;
 
   protected:

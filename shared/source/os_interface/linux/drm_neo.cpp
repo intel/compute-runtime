@@ -207,8 +207,11 @@ void Drm::setNonPersistentContext(uint32_t drmContextId) {
     ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
 }
 
-uint32_t Drm::createDrmContext(uint32_t drmVmId) {
+uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmission) {
     drm_i915_gem_context_create_ext gcc = {};
+
+    this->appendDrmContextFlags(gcc, isDirectSubmission);
+
     auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
     UNRECOVERABLE_IF(retVal != 0);
 

@@ -138,6 +138,7 @@ class DrmMock : public Drm {
     bool disableSomeTopology = false;
     uint32_t passedContextDebugId = uint32_t(-1);
 
+    uint32_t receivedContextCreateFlags = 0;
     uint32_t receivedCreateContextId = 0;
     uint32_t receivedDestroyContextId = 0;
     uint32_t ioctlCallsCount = 0;

@@ -86,7 +86,8 @@ class Drm {
     inline int getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
     int createDrmVirtualMemory(uint32_t &drmVmId);
     void destroyDrmVirtualMemory(uint32_t drmVmId);
-    uint32_t createDrmContext(uint32_t drmVmId);
+    uint32_t createDrmContext(uint32_t drmVmId, bool isDirectSubmission);
+    void appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isDirectSubmission);
     void destroyDrmContext(uint32_t drmContextId);
     int queryVmId(uint32_t drmContextId, uint32_t &vmId);
     void setLowPriorityContextParam(uint32_t drmContextId);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,8 @@
 namespace NEO {
 class MockOsContext : public OsContext {
   public:
+    using OsContext::checkDirectSubmissionSupportsEngine;
+    using OsContext::engineType;
     using OsContext::getDeviceBitfield;
 
     MockOsContext(uint32_t contextId, DeviceBitfield deviceBitfield,

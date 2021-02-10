@@ -386,7 +386,7 @@ TEST_F(DrmTests, GivenFailOnContextCreateWhenCreatingDrmThenDrmIsCreated) {
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
     failOnContextCreate = -1;
-    EXPECT_THROW(drm->createDrmContext(1), std::exception);
+    EXPECT_THROW(drm->createDrmContext(1, false), std::exception);
     EXPECT_FALSE(drm->isPreemptionSupported());
     failOnContextCreate = 0;
 }
@@ -397,7 +397,7 @@ TEST_F(DrmTests, GivenFailOnSetPriorityWhenCreatingDrmThenDrmIsCreated) {
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
     failOnSetPriority = -1;
-    auto drmContext = drm->createDrmContext(1);
+    auto drmContext = drm->createDrmContext(1, false);
     EXPECT_THROW(drm->setLowPriorityContextParam(drmContext), std::exception);
     EXPECT_FALSE(drm->isPreemptionSupported());
     failOnSetPriority = 0;

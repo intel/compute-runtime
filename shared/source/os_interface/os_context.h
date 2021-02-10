@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,9 @@
 
 namespace NEO {
 class OSInterface;
+
+struct DirectSubmissionProperties;
+struct HardwareInfo;
 
 class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
@@ -37,6 +40,12 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     void setDefaultContext(bool value) { defaultContext = value; }
     bool isDirectSubmissionActive() { return directSubmissionActive; }
     void setDirectSubmissionActive() { directSubmissionActive = true; }
+
+    bool isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &submitOnInit);
+    bool checkDirectSubmissionSupportsEngine(const DirectSubmissionProperties &directSubmissionProperty,
+                                             aub_stream::EngineType contextEngineType,
+                                             bool &startOnInit,
+                                             bool &startInContext);
 
   protected:
     OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, aub_stream::EngineType engineType, PreemptionMode preemptionMode,

@@ -9,6 +9,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/os_context.h"
@@ -31,10 +32,20 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
                                bool lowPriority, bool internalEngine, bool rootDevice)
     : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority, internalEngine, rootDevice),
       drm(drm) {
+    auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
+    auto defaultEngineType = getChosenEngineType(*hwInfo);
+
+    if (engineType == defaultEngineType && !lowPriority && !internalEngine) {
+        this->setDefaultContext(true);
+    }
+
+    bool submitDirect = false;
+    this->isDirectSubmissionAvailable(*drm.getRootDeviceEnvironment().getHardwareInfo(), submitDirect);
+
     for (auto deviceIndex = 0u; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
             auto drmVmId = drm.getVirtualMemoryAddressSpace(deviceIndex);
-            auto drmContextId = drm.createDrmContext(drmVmId);
+            auto drmContextId = drm.createDrmContext(drmVmId, this->isDirectSubmissionActive());
             if (drm.areNonPersistentContextsSupported()) {
                 drm.setNonPersistentContext(drmContextId);
             }

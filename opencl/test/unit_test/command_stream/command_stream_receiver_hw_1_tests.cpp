@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "test.h"
 
@@ -199,26 +200,28 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndForceSemaphoreDelayBe
 
 HWTEST_F(UltCommandStreamReceiverTest, givenNoBlitterOverrideWhenBlitterNotSupportedThenExpectFalseReturned) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = false;
     properties.submitOnInit = false;
     bool startOnInit = true;
     bool startInContext = false;
-    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS, startOnInit, startInContext));
+    EXPECT_FALSE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS, startOnInit, startInContext));
     EXPECT_FALSE(startOnInit);
     EXPECT_FALSE(startInContext);
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, givenNoBlitterOverrideWhenBlitterSupportedThenExpectTrueReturned) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = true;
     properties.submitOnInit = true;
     bool startOnInit = false;
     bool startInContext = false;
-    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS, startOnInit, startInContext));
+    EXPECT_TRUE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS, startOnInit, startInContext));
     EXPECT_TRUE(startOnInit);
     EXPECT_FALSE(startInContext);
 }
@@ -227,13 +230,14 @@ HWTEST_F(UltCommandStreamReceiverTest, givenBlitterOverrideEnableWhenBlitterNotS
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = false;
     properties.submitOnInit = false;
     bool startOnInit = false;
     bool startInContext = false;
-    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS, startOnInit, startInContext));
+    EXPECT_TRUE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS, startOnInit, startInContext));
     EXPECT_TRUE(startOnInit);
     EXPECT_TRUE(startInContext);
 }
@@ -242,13 +246,14 @@ HWTEST_F(UltCommandStreamReceiverTest, givenBlitterOverrideEnableAndNoStartWhenB
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(2);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = false;
     properties.submitOnInit = true;
     bool startOnInit = true;
     bool startInContext = false;
-    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS, startOnInit, startInContext));
+    EXPECT_TRUE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS, startOnInit, startInContext));
     EXPECT_FALSE(startOnInit);
     EXPECT_TRUE(startInContext);
 }
@@ -257,39 +262,42 @@ HWTEST_F(UltCommandStreamReceiverTest, givenBlitterOverrideDisableWhenBlitterSup
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = true;
     properties.submitOnInit = false;
     bool startOnInit = true;
     bool startInContext = false;
-    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS, startOnInit, startInContext));
+    EXPECT_FALSE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS, startOnInit, startInContext));
     EXPECT_FALSE(startOnInit);
     EXPECT_FALSE(startInContext);
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, givenNoRenderOverrideWhenRenderNotSupportedThenExpectFalseReturned) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = false;
     properties.submitOnInit = false;
     bool startOnInit = true;
     bool startInContext = false;
-    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS, startOnInit, startInContext));
+    EXPECT_FALSE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS, startOnInit, startInContext));
     EXPECT_FALSE(startOnInit);
     EXPECT_FALSE(startInContext);
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, givenNoRenderOverrideWhenRenderSupportedThenExpectTrueReturned) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = true;
     properties.submitOnInit = true;
     bool startOnInit = false;
     bool startInContext = false;
-    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS, startOnInit, startInContext));
+    EXPECT_TRUE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS, startOnInit, startInContext));
     EXPECT_TRUE(startOnInit);
     EXPECT_FALSE(startInContext);
 }
@@ -298,13 +306,14 @@ HWTEST_F(UltCommandStreamReceiverTest, givenRenderOverrideEnableWhenRenderNotSup
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(1);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = false;
     properties.submitOnInit = false;
     bool startOnInit = false;
     bool startInContext = false;
-    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS, startOnInit, startInContext));
+    EXPECT_TRUE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS, startOnInit, startInContext));
     EXPECT_TRUE(startOnInit);
     EXPECT_TRUE(startInContext);
 }
@@ -313,13 +322,14 @@ HWTEST_F(UltCommandStreamReceiverTest, givenRenderOverrideEnableAndNoStartWhenRe
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(2);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = false;
     properties.submitOnInit = true;
     bool startOnInit = true;
     bool startInContext = false;
-    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS, startOnInit, startInContext));
+    EXPECT_TRUE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS, startOnInit, startInContext));
     EXPECT_FALSE(startOnInit);
     EXPECT_TRUE(startInContext);
 }
@@ -328,39 +338,42 @@ HWTEST_F(UltCommandStreamReceiverTest, givenRenderOverrideDisableWhenRenderSuppo
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = true;
     properties.submitOnInit = false;
     bool startOnInit = true;
     bool startInContext = false;
-    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS, startOnInit, startInContext));
+    EXPECT_FALSE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS, startOnInit, startInContext));
     EXPECT_FALSE(startOnInit);
     EXPECT_FALSE(startInContext);
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, givenNoComputeOverrideWhenComputeNotSupportedThenExpectFalseReturned) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = false;
     properties.submitOnInit = false;
     bool startOnInit = true;
     bool startInContext = false;
-    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS, startOnInit, startInContext));
+    EXPECT_FALSE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS, startOnInit, startInContext));
     EXPECT_FALSE(startOnInit);
     EXPECT_FALSE(startInContext);
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, givenNoComputeOverrideWhenComputeSupportedThenExpectTrueReturned) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = true;
     properties.submitOnInit = true;
     bool startOnInit = false;
     bool startInContext = false;
-    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS, startOnInit, startInContext));
+    EXPECT_TRUE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS, startOnInit, startInContext));
     EXPECT_TRUE(startOnInit);
     EXPECT_FALSE(startInContext);
 }
@@ -369,13 +382,14 @@ HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideEnableWhenComputeNotS
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(1);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = false;
     properties.submitOnInit = false;
     bool startOnInit = false;
     bool startInContext = false;
-    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS, startOnInit, startInContext));
+    EXPECT_TRUE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS, startOnInit, startInContext));
     EXPECT_TRUE(startOnInit);
     EXPECT_TRUE(startInContext);
 }
@@ -384,13 +398,14 @@ HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideEnableAndNoStartWhenC
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(2);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = false;
     properties.submitOnInit = true;
     bool startOnInit = true;
     bool startInContext = false;
-    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS, startOnInit, startInContext));
+    EXPECT_TRUE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS, startOnInit, startInContext));
     EXPECT_FALSE(startOnInit);
     EXPECT_TRUE(startInContext);
 }
@@ -399,13 +414,14 @@ HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideDisableWhenComputeSup
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
     DirectSubmissionProperties properties;
     properties.engineSupported = true;
     properties.submitOnInit = false;
     bool startOnInit = true;
     bool startInContext = false;
-    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS, startOnInit, startInContext));
+    EXPECT_FALSE(osContext->checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS, startOnInit, startInContext));
     EXPECT_FALSE(startOnInit);
     EXPECT_FALSE(startInContext);
 }

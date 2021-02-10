@@ -159,6 +159,15 @@ HWTEST_F(DeviceTest, WhenDeviceIsCreatedThenActualEngineTypeIsSameAsDefault) {
 
     EXPECT_EQ(&device->getDefaultEngine().commandStreamReceiver->getOsContext(), device->getDefaultEngine().osContext);
     EXPECT_EQ(defaultEngineType, actualEngineType);
+
+    int defaultCounter = 0;
+    const auto &engines = device->getEngines();
+    for (const auto &engine : engines) {
+        if (engine.osContext->isDefaultContext()) {
+            defaultCounter++;
+        }
+    }
+    EXPECT_EQ(defaultCounter, 1);
 }
 
 HWTEST_F(DeviceTest, givenNoHwCsrTypeAndModifiedDefaultEngineIndexWhenIsSimulationIsCalledThenTrueIsReturned) {
