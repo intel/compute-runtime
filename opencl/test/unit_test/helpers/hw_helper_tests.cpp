@@ -1210,3 +1210,8 @@ TEST_F(HwHelperTest, whenGettingDefaultRevisionIdThenCorrectValueIsReturned) {
         EXPECT_EQ(0u, revisionId);
     }
 }
+
+TEST_F(HwHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(0u, hwHelper.getNumCacheRegions(*defaultHwInfo));
+}
