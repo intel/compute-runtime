@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,18 +65,10 @@ void getIntelQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, Get
 inline void getHostQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, GetInfoHelper &getInfoHelper, cl_int &retVal) {
     switch (paramName) {
     case CL_QUEUE_FAMILY_INTEL:
-        if (queue->isQueueFamilySelected()) {
-            retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(queue->getQueueFamilyIndex()));
-        } else {
-            retVal = CL_INVALID_VALUE;
-        }
+        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(queue->getQueueFamilyIndex()));
         break;
     case CL_QUEUE_INDEX_INTEL:
-        if (queue->isQueueFamilySelected()) {
-            retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(queue->getQueueIndexWithinFamily()));
-        } else {
-            retVal = CL_INVALID_VALUE;
-        }
+        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(queue->getQueueIndexWithinFamily()));
         break;
     default:
         getIntelQueueInfo(queue, paramName, getInfoHelper, retVal);

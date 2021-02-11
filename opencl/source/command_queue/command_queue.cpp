@@ -575,6 +575,18 @@ bool CommandQueue::validateCapabilityForOperation(cl_command_queue_capabilities_
     return operationValid && waitListValid && outEventValid;
 }
 
+cl_uint CommandQueue::getQueueFamilyIndex() const {
+    if (isQueueFamilySelected()) {
+        return queueFamilyIndex;
+    } else {
+        const auto &hwInfo = device->getHardwareInfo();
+        const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        const auto engineGroupType = hwHelper.getEngineGroupType(gpgpuEngine->getEngineType(), hwInfo);
+        const auto familyIndex = device->getDevice().getIndexOfNonEmptyEngineGroup(engineGroupType);
+        return static_cast<cl_uint>(familyIndex);
+    }
+}
+
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {
     return getGpgpuCommandStreamReceiver().getIndirectHeap(heapType, minRequiredSize);
 }

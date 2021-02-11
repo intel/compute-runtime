@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,9 +123,16 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::ValuesIn(DefaultCommandQueueProperties));
 
 TEST(GetCommandQueueFamilyInfoTest, givenQueueFamilyNotSelectedWhenGettingFamilyAndQueueIndexThenInvalidValueueIsReturned) {
-    MockCommandQueue queue;
+    MockContext context{};
+    MockCommandQueue queue{context};
     queue.queueFamilySelected = false;
+    queue.queueFamilyIndex = 12u;
     cl_int retVal{};
+
+    const auto &hwInfo = context.getDevice(0)->getHardwareInfo();
+    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto engineGroupType = hwHelper.getEngineGroupType(context.getDevice(0)->getDefaultEngine().getEngineType(), hwInfo);
+    const auto expectedFamilyIndex = context.getDevice(0)->getDevice().getIndexOfNonEmptyEngineGroup(engineGroupType);
 
     cl_uint familyIndex{};
     retVal = queue.getCommandQueueInfo(
@@ -133,7 +140,8 @@ TEST(GetCommandQueueFamilyInfoTest, givenQueueFamilyNotSelectedWhenGettingFamily
         sizeof(cl_uint),
         &familyIndex,
         nullptr);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(expectedFamilyIndex, familyIndex);
 
     cl_uint queueIndex{};
     retVal = queue.getCommandQueueInfo(
@@ -141,7 +149,8 @@ TEST(GetCommandQueueFamilyInfoTest, givenQueueFamilyNotSelectedWhenGettingFamily
         sizeof(cl_uint),
         &queueIndex,
         nullptr);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, queueIndex);
 }
 
 TEST(GetCommandQueueFamilyInfoTest, givenQueueFamilySelectedWhenGettingFamilyAndQueueIndexThenValuesAreReturned) {
