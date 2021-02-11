@@ -710,8 +710,13 @@ bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
     }
 }
 
-bool CommandQueue::blitEnqueuePreferred(cl_command_type cmdType) const {
+bool CommandQueue::blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOpParams &builtinOpParams) const {
     if (cmdType == CL_COMMAND_COPY_BUFFER) {
+        return DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get() == 1;
+    }
+    if (cmdType == CL_COMMAND_SVM_MEMCPY &&
+        builtinOpParams.srcSvmAlloc->isAllocatedInLocalMemoryPool() &&
+        builtinOpParams.dstSvmAlloc->isAllocatedInLocalMemoryPool()) {
         return DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get() == 1;
     }
     return true;

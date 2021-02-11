@@ -1165,7 +1165,7 @@ TEST(CommandQueue, givenCopyOnlyQueueWhenCallingBlitEnqueueAllowedThenReturnTrue
     EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
 }
 
-TEST(CommandQueue, giveClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
+TEST(CommandQueue, givenClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
     MockContext context{};
     HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
     MockCommandQueue queue(&context, context.getDevice(0), 0);
@@ -1194,6 +1194,84 @@ TEST(CommandQueue, giveClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectVa
         EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE));
         EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
     }
+}
+
+TEST(CommandQueue, givenRegularClCommandWhenCallingBlitEnqueuePreferredThenReturnCorrectValue) {
+    MockContext context{};
+    MockCommandQueue queue{context};
+    BuiltinOpParams builtinOpParams{};
+
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_READ_BUFFER, builtinOpParams));
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_WRITE_BUFFER, builtinOpParams));
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_READ_BUFFER_RECT, builtinOpParams));
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_WRITE_BUFFER_RECT, builtinOpParams));
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_COPY_BUFFER_RECT, builtinOpParams));
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_READ_IMAGE, builtinOpParams));
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_WRITE_IMAGE, builtinOpParams));
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_COPY_IMAGE, builtinOpParams));
+}
+
+TEST(CommandQueue, givenCopyBufferCommandWhenCallingBlitEnqueuePreferredThenReturnValueBasedOnDebugFlag) {
+    DebugManagerStateRestore restore{};
+    MockContext context{};
+    MockCommandQueue queue{context};
+    BuiltinOpParams builtinOpParams{};
+
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
+    EXPECT_FALSE(queue.blitEnqueuePreferred(CL_COMMAND_COPY_BUFFER, builtinOpParams));
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
+    EXPECT_FALSE(queue.blitEnqueuePreferred(CL_COMMAND_COPY_BUFFER, builtinOpParams));
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_COPY_BUFFER, builtinOpParams));
+}
+
+TEST(CommandQueue, givenLocalToLocalSvmCopyCommandWhenCallingBlitEnqueuePreferredThenReturnValueBasedOnDebugFlag) {
+    DebugManagerStateRestore restore{};
+    MockContext context{};
+    MockCommandQueue queue{context};
+    BuiltinOpParams builtinOpParams{};
+    MockGraphicsAllocation srcSvmAlloc{};
+    MockGraphicsAllocation dstSvmAlloc{};
+    builtinOpParams.srcSvmAlloc = &srcSvmAlloc;
+    builtinOpParams.dstSvmAlloc = &dstSvmAlloc;
+
+    srcSvmAlloc.memoryPool = MemoryPool::LocalMemory;
+    dstSvmAlloc.memoryPool = MemoryPool::LocalMemory;
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
+    EXPECT_FALSE(queue.blitEnqueuePreferred(CL_COMMAND_SVM_MEMCPY, builtinOpParams));
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
+    EXPECT_FALSE(queue.blitEnqueuePreferred(CL_COMMAND_SVM_MEMCPY, builtinOpParams));
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_SVM_MEMCPY, builtinOpParams));
+}
+
+TEST(CommandQueue, givenNotLocalToLocalSvmCopyCommandWhenCallingBlitEnqueuePreferredThenReturnTrueRegardlessOfDebugFlag) {
+    DebugManagerStateRestore restore{};
+    MockContext context{};
+    MockCommandQueue queue{context};
+    BuiltinOpParams builtinOpParams{};
+    MockGraphicsAllocation srcSvmAlloc{};
+    MockGraphicsAllocation dstSvmAlloc{};
+    builtinOpParams.srcSvmAlloc = &srcSvmAlloc;
+    builtinOpParams.dstSvmAlloc = &dstSvmAlloc;
+
+    srcSvmAlloc.memoryPool = MemoryPool::System4KBPages;
+    dstSvmAlloc.memoryPool = MemoryPool::LocalMemory;
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_SVM_MEMCPY, builtinOpParams));
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_SVM_MEMCPY, builtinOpParams));
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_SVM_MEMCPY, builtinOpParams));
+
+    srcSvmAlloc.memoryPool = MemoryPool::LocalMemory;
+    dstSvmAlloc.memoryPool = MemoryPool::System4KBPages;
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_SVM_MEMCPY, builtinOpParams));
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_SVM_MEMCPY, builtinOpParams));
+    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+    EXPECT_TRUE(queue.blitEnqueuePreferred(CL_COMMAND_SVM_MEMCPY, builtinOpParams));
 }
 
 TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenReturnCorrectValue) {

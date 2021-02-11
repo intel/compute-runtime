@@ -1136,7 +1136,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
 template <typename GfxFamily>
 template <uint32_t cmdType, size_t surfaceCount>
 void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], EBuiltInOps::Type builtInOperation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, bool blitAllowed) {
-    const bool blitPreferred = blitEnqueuePreferred(cmdType);
+    const bool blitPreferred = blitEnqueuePreferred(cmdType, dispatchInfo.peekBuiltinOpParams());
     const bool blitRequired = isCopyOnly;
     const bool blit = blitAllowed && (blitPreferred || blitRequired);
 

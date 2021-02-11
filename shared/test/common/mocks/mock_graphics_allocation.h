@@ -20,6 +20,7 @@ class MockGraphicsAllocation : public MemoryAllocation {
   public:
     using MemoryAllocation::aubInfo;
     using MemoryAllocation::MemoryAllocation;
+    using MemoryAllocation::memoryPool;
     using MemoryAllocation::objectNotResident;
     using MemoryAllocation::objectNotUsed;
     using MemoryAllocation::usageInfos;
