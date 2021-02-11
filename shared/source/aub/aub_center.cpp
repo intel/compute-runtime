@@ -30,6 +30,7 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
         aubStreamMode = getAubStreamMode(aubFileName, type);
 
         auto &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
+        stepping = hwHelper.getAubStreamSteppingFromHwRevId(*pHwInfo);
 
         aub_stream::MMIOList extraMmioList = hwHelper.getExtraMmioList(*pHwInfo);
         aub_stream::MMIOList debugMmioList = AubHelper::getAdditionalMmioList();
@@ -40,7 +41,8 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
 
         AubHelper::setTbxConfiguration();
 
-        aubManager.reset(createAubManager(pHwInfo->platform.eProductFamily, devicesCount, memoryBankSize, pHwInfo->platform.usRevId, localMemoryEnabled, aubStreamMode, pHwInfo->capabilityTable.gpuAddressSpace));
+        aubManager.reset(createAubManager(pHwInfo->platform.eProductFamily, devicesCount, memoryBankSize, stepping, localMemoryEnabled,
+                                          aubStreamMode, pHwInfo->capabilityTable.gpuAddressSpace));
     }
     addressMapper = std::make_unique<AddressMapper>();
     streamProvider = std::make_unique<AubFileStreamProvider>();

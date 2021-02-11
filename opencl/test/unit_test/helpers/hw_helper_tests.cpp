@@ -875,11 +875,23 @@ HWTEST_F(HwHelperTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenCon
     for (uint32_t testValue = 0; testValue < 0x10; testValue++) {
         auto hwRevIdFromStepping = helper.getHwRevIdFromStepping(testValue, hardwareInfo);
         if (hwRevIdFromStepping != CommonConstants::invalidStepping) {
-            EXPECT_EQ(testValue, helper.getSteppingFromHwRevId(hwRevIdFromStepping, hardwareInfo));
+            hardwareInfo.platform.usRevId = hwRevIdFromStepping;
+            EXPECT_EQ(testValue, helper.getSteppingFromHwRevId(hardwareInfo));
         }
-        auto steppingFromHwRevId = helper.getSteppingFromHwRevId(testValue, hardwareInfo);
+        hardwareInfo.platform.usRevId = testValue;
+        auto steppingFromHwRevId = helper.getSteppingFromHwRevId(hardwareInfo);
         if (steppingFromHwRevId != CommonConstants::invalidStepping) {
             EXPECT_EQ(testValue, helper.getHwRevIdFromStepping(steppingFromHwRevId, hardwareInfo));
+        } else {
+            EXPECT_EQ(AubMemDump::SteppingValues::A, helper.getAubStreamSteppingFromHwRevId(hardwareInfo));
+        }
+    }
+
+    for (auto &steppingPair : steppingPairsToTest) {
+        auto hwRevIdFromStepping = helper.getHwRevIdFromStepping(steppingPair.stepping, hardwareInfo);
+        if (hwRevIdFromStepping != CommonConstants::invalidStepping) {
+            hardwareInfo.platform.usRevId = hwRevIdFromStepping;
+            EXPECT_EQ(steppingPair.aubStreamStepping, helper.getAubStreamSteppingFromHwRevId(hardwareInfo));
         }
     }
 }
@@ -889,7 +901,9 @@ HWTEST_F(HwHelperTest, givenInvalidProductFamilyWhenConvertingHwRevIdAndStepping
     hardwareInfo.platform.eProductFamily = IGFX_UNKNOWN;
     for (uint32_t testValue = 0; testValue < 0x10; testValue++) {
         EXPECT_EQ(CommonConstants::invalidStepping, helper.getHwRevIdFromStepping(testValue, hardwareInfo));
-        EXPECT_EQ(CommonConstants::invalidStepping, helper.getSteppingFromHwRevId(testValue, hardwareInfo));
+        hardwareInfo.platform.usRevId = testValue;
+        EXPECT_EQ(CommonConstants::invalidStepping, helper.getSteppingFromHwRevId(hardwareInfo));
+        EXPECT_EQ(AubMemDump::SteppingValues::A, helper.getAubStreamSteppingFromHwRevId(hardwareInfo));
     }
 }
 

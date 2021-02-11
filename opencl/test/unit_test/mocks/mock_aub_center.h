@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ class MockAubCenter : public AubCenter {
     using AubCenter::AubCenter;
     using AubCenter::aubManager;
     using AubCenter::aubStreamMode;
+    using AubCenter::stepping;
 
     MockAubCenter() {
         streamProvider.reset(new MockAubStreamProvider());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,8 +23,12 @@ uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) {
     return CommonConstants::invalidStepping;
 }
 
-uint32_t getSteppingFromHwRevId(uint32_t hwRevId, const HardwareInfo &hwInfo) {
+uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) {
     return CommonConstants::invalidStepping;
+}
+
+uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) {
+    return AubMemDump::SteppingValues::A;
 }
 
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily) {

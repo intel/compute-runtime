@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,11 +160,11 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
                                                                      uint32_t rootDeviceIndex,
                                                                      const DeviceBitfield deviceBitfield) {
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
+    auto &hwInfo = *(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo());
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     if (withAubDump) {
-        auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-        auto localMemoryEnabled = hwHelper.getEnableLocalMemory(*hwInfo);
-        auto fullName = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName);
+        auto localMemoryEnabled = hwHelper.getEnableLocalMemory(hwInfo);
+        auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, baseName);
         if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
             fullName.assign(DebugManager.flags.AUBDumpCaptureFileName.get());
         }
@@ -197,7 +197,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
         csr->stream->open(nullptr);
 
         // Add the file header.
-        bool streamInitialized = csr->stream->init(AubMemDump::SteppingValues::A, csr->aubDeviceId);
+        bool streamInitialized = csr->stream->init(hwHelper.getAubStreamSteppingFromHwRevId(hwInfo), csr->aubDeviceId);
         csr->streamInitialized = streamInitialized;
     }
     return csr;

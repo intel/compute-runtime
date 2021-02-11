@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -146,7 +146,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName
             UNRECOVERABLE_IF(true);
         }
         // Add the file header
-        stream->init(AubMemDump::SteppingValues::A, aubDeviceId);
+        auto &hwInfo = this->peekHwInfo();
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        stream->init(hwHelper.getAubStreamSteppingFromHwRevId(hwInfo), aubDeviceId);
     }
 }
 

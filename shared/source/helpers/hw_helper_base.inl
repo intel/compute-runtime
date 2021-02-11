@@ -351,8 +351,13 @@ uint32_t HwHelperHw<GfxFamily>::getHwRevIdFromStepping(uint32_t stepping, const 
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getSteppingFromHwRevId(uint32_t hwRevId, const HardwareInfo &hwInfo) const {
+uint32_t HwHelperHw<GfxFamily>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
+}
+
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+    return AubMemDump::SteppingValues::A;
 }
 
 template <typename GfxFamily>

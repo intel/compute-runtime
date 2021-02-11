@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,5 +58,6 @@ class AubCenter {
     std::unique_ptr<AubSubCaptureCommon> subCaptureCommon;
     std::unique_ptr<aub_stream::AubManager> aubManager;
     uint32_t aubStreamMode = 0;
+    uint32_t stepping = 0;
 };
 } // namespace NEO
