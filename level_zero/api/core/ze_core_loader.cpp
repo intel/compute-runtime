@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,9 @@ zeGetDriverProcAddrTable(
     ze_driver_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
     ze_result_t result = ZE_RESULT_SUCCESS;
     pDdiTable->pfnGet = zeDriverGet;
@@ -48,8 +49,9 @@ zeGetMemProcAddrTable(
     ze_mem_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -83,8 +85,9 @@ zeGetContextProcAddrTable(
     ze_context_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
@@ -118,8 +121,9 @@ zeGetPhysicalMemProcAddrTable(
     ze_physical_mem_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
@@ -141,8 +145,9 @@ zeGetVirtualMemProcAddrTable(
     ze_virtual_mem_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -173,8 +178,9 @@ zeGetGlobalProcAddrTable(
     ze_global_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -192,8 +198,9 @@ zeGetDeviceProcAddrTable(
     ze_device_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -237,8 +244,9 @@ zeGetCommandQueueProcAddrTable(
     ze_command_queue_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -262,8 +270,9 @@ zeGetCommandListProcAddrTable(
     ze_command_list_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -331,8 +340,9 @@ zeGetFenceProcAddrTable(
     ze_fence_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -358,8 +368,9 @@ zeGetEventPoolProcAddrTable(
     ze_event_pool_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -385,8 +396,9 @@ zeGetEventProcAddrTable(
     ze_event_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -416,8 +428,9 @@ zeGetImageProcAddrTable(
     ze_image_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -439,8 +452,9 @@ zeGetModuleProcAddrTable(
     ze_module_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -472,8 +486,9 @@ zeGetModuleBuildLogProcAddrTable(
     ze_module_build_log_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -493,8 +508,9 @@ zeGetKernelProcAddrTable(
     ze_kernel_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -534,8 +550,9 @@ zeGetSamplerProcAddrTable(
     ze_sampler_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (driver_ddiTable.version < version)
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driver_ddiTable.enableTracing = getenv_tobool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
