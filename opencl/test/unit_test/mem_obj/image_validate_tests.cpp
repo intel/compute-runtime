@@ -770,7 +770,7 @@ struct NullImage : public Image {
     ~NullImage() override {
         delete this->multiGraphicsAllocation.getGraphicsAllocation(0);
     }
-    void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) override {}
+    void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex, bool useGlobalAtomics) override {}
     void setMediaImageArg(void *memory, uint32_t rootDeviceIndex) override {}
     void setMediaSurfaceRotation(void *memory) override {}
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override {}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,10 +37,10 @@ HWTEST2_F(ImageTestsTgllPlus, givenDepthResourceWhenSettingImageArgThenSetDepthS
     auto &gpuFlags = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Gpu;
 
     gpuFlags.Depth = 0;
-    srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
+    srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex(), false);
     EXPECT_FALSE(surfaceState.getDepthStencilResource());
 
     gpuFlags.Depth = 1;
-    srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
+    srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex(), false);
     EXPECT_TRUE(surfaceState.getDepthStencilResource());
 }

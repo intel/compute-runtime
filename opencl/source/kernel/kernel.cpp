@@ -1557,7 +1557,8 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
             DEBUG_BREAK_IF(!kernelInfo.isVmeWorkload);
             pImage->setMediaImageArg(surfaceState, rootDeviceIndex);
         } else {
-            pImage->setImageArg(surfaceState, kernelArgInfo.isMediaBlockImage, mipLevel, rootDeviceIndex);
+            pImage->setImageArg(surfaceState, kernelArgInfo.isMediaBlockImage, mipLevel, rootDeviceIndex,
+                                getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics);
         }
 
         auto &imageDesc = pImage->getImageDesc();
