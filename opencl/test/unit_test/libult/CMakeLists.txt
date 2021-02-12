@@ -12,10 +12,14 @@ macro(macro_for_each_gen)
              ${NEO_SOURCE_DIR}/opencl/source${BRANCH_DIR}${GEN_TYPE_LOWER}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp
         )
       endif()
-      list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
-           ${NEO_SHARED_TEST_DIRECTORY}/common/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
-           ${NEO_SHARED_TEST_DIRECTORY}/unit_test/libult/${GEN_TYPE_LOWER}.cpp
-      )
+      set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/common/${BRANCH}${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+      endif()
+      set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/unit_test/libult/${BRANCH}${GEN_TYPE_LOWER}.cpp)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+      endif()
 
       string(REGEX REPLACE "/$" "" _BRANCH_FILENAME_SUFFIX "${BRANCH_DIR}")
       string(REGEX REPLACE "^/" "_" _BRANCH_FILENAME_SUFFIX "${_BRANCH_FILENAME_SUFFIX}")
