@@ -43,7 +43,7 @@ class HeapAllocator {
         sizeToAllocate = alignUp(sizeToAllocate, allocationAlignment);
 
         std::lock_guard<std::mutex> lock(mtx);
-        DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
+        DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
         if (availableSize < sizeToAllocate) {
             return 0llu;
         }
@@ -91,7 +91,7 @@ class HeapAllocator {
             return;
 
         std::lock_guard<std::mutex> lock(mtx);
-        DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
+        DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
 
         if (ptr == pRightBound) {
             pRightBound = ptr + size;
@@ -246,7 +246,7 @@ class HeapAllocator {
             }
         }
         mergeLastFreedBig();
-        DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
+        DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
     }
 };
 } // namespace NEO

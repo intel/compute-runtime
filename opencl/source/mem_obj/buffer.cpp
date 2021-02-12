@@ -352,9 +352,10 @@ Buffer *Buffer::create(Context *context,
         return nullptr;
     }
 
-    PRINT_DEBUG_STRING(DebugManager.flags.LogMemoryObject.get(), stdout,
-                       "\nCreated Buffer: Handle %p, hostPtr %p, size %llu, memoryStorage %p, GPU address %#llx, memoryPool:%du\n",
-                       pBuffer, hostPtr, size, allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer(), allocationInfo[rootDeviceIndex].memory->getGpuAddress(), allocationInfo[rootDeviceIndex].memory->getMemoryPool());
+    DBG_LOG(LogMemoryObject, __FUNCTION__, "Created Buffer: Handle: ", pBuffer, ", hostPtr: ", hostPtr, ", size: ", size,
+            ", memoryStorage: ", allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer(),
+            ", GPU address: ", allocationInfo[rootDeviceIndex].memory->getGpuAddress(),
+            ", memoryPool: ", allocationInfo[rootDeviceIndex].memory->getMemoryPool());
 
     for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
         if (memoryProperties.flags.useHostPtr) {
