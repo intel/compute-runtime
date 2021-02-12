@@ -14,8 +14,6 @@
 
 namespace L0 {
 
-const double FrequencyImp::step = 50.0 / 3; // Step of 16.6666667 Mhz (GEN9 Hardcode)
-
 ze_result_t FrequencyImp::frequencyGetProperties(zes_freq_properties_t *pProperties) {
     *pProperties = zesFrequencyProperties;
     return ZE_RESULT_SUCCESS;
@@ -107,6 +105,7 @@ ze_result_t FrequencyImp::frequencyOcSetTjMax(double ocTjMax) {
 
 void FrequencyImp::init() {
     pOsFrequency->osFrequencyGetProperties(zesFrequencyProperties);
+    double step = pOsFrequency->osFrequencyGetStepSize();
     double freqRange = zesFrequencyProperties.max - zesFrequencyProperties.min;
     numClocks = static_cast<uint32_t>(round(freqRange / step)) + 1;
     pClocks = new double[numClocks];

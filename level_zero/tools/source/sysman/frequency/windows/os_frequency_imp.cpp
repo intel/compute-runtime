@@ -65,6 +65,10 @@ ze_result_t WddmFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &pr
     return ZE_RESULT_SUCCESS;
 }
 
+double WddmFrequencyImp::osFrequencyGetStepSize() {
+    return 50.0 / 3; // Step of 16.6666667 Mhz (GEN9 Hardcode);
+}
+
 ze_result_t WddmFrequencyImp::osFrequencyGetRange(zes_freq_range_t *pLimits) {
     return getRange(&pLimits->min, &pLimits->max);
 }

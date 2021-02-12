@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@ namespace L0 {
 class OsFrequency {
   public:
     virtual ze_result_t osFrequencyGetProperties(zes_freq_properties_t &properties) = 0;
+    virtual double osFrequencyGetStepSize() = 0;
     virtual ze_result_t osFrequencyGetRange(zes_freq_range_t *pLimits) = 0;
     virtual ze_result_t osFrequencySetRange(const zes_freq_range_t *pLimits) = 0;
     virtual ze_result_t osFrequencyGetState(zes_freq_state_t *pState) = 0;

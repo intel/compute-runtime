@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,8 +44,6 @@ class FrequencyImp : public Frequency, NEO::NonCopyableOrMovableClass {
     void init();
 
   private:
-    static const double step;
-
     zes_freq_properties_t zesFrequencyProperties = {};
     double *pClocks = nullptr;
     uint32_t numClocks = 0;

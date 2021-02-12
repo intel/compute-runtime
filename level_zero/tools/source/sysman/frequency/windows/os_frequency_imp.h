@@ -35,6 +35,7 @@ class KmdSysManager;
 class WddmFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t osFrequencyGetProperties(zes_freq_properties_t &properties) override;
+    double osFrequencyGetStepSize() override;
     ze_result_t osFrequencyGetRange(zes_freq_range_t *pLimits) override;
     ze_result_t osFrequencySetRange(const zes_freq_range_t *pLimits) override;
     ze_result_t osFrequencyGetState(zes_freq_state_t *pState) override;

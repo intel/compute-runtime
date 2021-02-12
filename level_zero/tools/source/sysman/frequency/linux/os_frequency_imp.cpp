@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,10 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &p
     properties.onSubdevice = isSubdevice;
     properties.subdeviceId = subdeviceId;
     return ZE_RESULT_SUCCESS;
+}
+
+double LinuxFrequencyImp::osFrequencyGetStepSize() {
+    return 50.0 / 3; // Step of 16.6666667 Mhz (GEN9 Hardcode);
 }
 
 ze_result_t LinuxFrequencyImp::osFrequencyGetRange(zes_freq_range_t *pLimits) {
