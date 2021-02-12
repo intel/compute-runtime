@@ -27,6 +27,7 @@
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/convert_color.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/mipmap.h"
@@ -711,14 +712,27 @@ bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
 }
 
 bool CommandQueue::blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOpParams &builtinOpParams) const {
-    if (cmdType == CL_COMMAND_COPY_BUFFER) {
-        return DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get() == 1;
+    bool isLocalToLocal = false;
+
+    if (cmdType == CL_COMMAND_COPY_BUFFER &&
+        builtinOpParams.srcMemObj->getGraphicsAllocation(device->getRootDeviceIndex())->isAllocatedInLocalMemoryPool() &&
+        builtinOpParams.dstMemObj->getGraphicsAllocation(device->getRootDeviceIndex())->isAllocatedInLocalMemoryPool()) {
+        isLocalToLocal = true;
     }
     if (cmdType == CL_COMMAND_SVM_MEMCPY &&
         builtinOpParams.srcSvmAlloc->isAllocatedInLocalMemoryPool() &&
         builtinOpParams.dstSvmAlloc->isAllocatedInLocalMemoryPool()) {
-        return DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get() == 1;
+        isLocalToLocal = true;
     }
+
+    if (isLocalToLocal) {
+        if (DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get() != -1) {
+            return static_cast<bool>(DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get());
+        }
+        const auto &clHwHelper = ClHwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+        return clHwHelper.preferBlitterForLocalToLocalTransfers();
+    }
+
     return true;
 }
 

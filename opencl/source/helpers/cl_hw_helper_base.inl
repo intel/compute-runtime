@@ -47,4 +47,9 @@ inline bool ClHwHelperHw<GfxFamily>::getQueueFamilyName(std::string &name, Engin
     return false;
 }
 
+template <typename GfxFamily>
+inline bool ClHwHelperHw<GfxFamily>::preferBlitterForLocalToLocalTransfers() const {
+    return false;
+}
+
 } // namespace NEO
