@@ -34,8 +34,11 @@ ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedF
     return ZE_RESULT_SUCCESS;
 }
 bool LinuxFirmwareImp::isFirmwareSupported(void) {
-    isFWInitalized = ((ZE_RESULT_SUCCESS == pFwInterface->fwDeviceInit()) ? true : false);
-    return this->isFWInitalized;
+    if (pFwInterface != nullptr) {
+        isFWInitalized = ((ZE_RESULT_SUCCESS == pFwInterface->fwDeviceInit()) ? true : false);
+        return this->isFWInitalized;
+    }
+    return false;
 }
 
 void LinuxFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties) {
