@@ -27,10 +27,6 @@ uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) {
     return CommonConstants::invalidStepping;
 }
 
-uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) {
-    return AubMemDump::SteppingValues::A;
-}
-
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP);
 }

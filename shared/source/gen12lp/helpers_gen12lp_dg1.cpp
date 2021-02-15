@@ -43,18 +43,6 @@ uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) {
     return CommonConstants::invalidStepping;
 }
 
-uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) {
-    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_DG1) {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return AubMemDump::SteppingValues::A;
-        case 0x1:
-            return AubMemDump::SteppingValues::B;
-        }
-    }
-    return AubMemDump::SteppingValues::A;
-}
-
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == IGFX_TIGERLAKE_LP) || (productFamily == IGFX_DG1);
 }

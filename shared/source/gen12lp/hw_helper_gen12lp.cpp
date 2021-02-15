@@ -137,37 +137,6 @@ uint32_t HwHelperHw<Family>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) 
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
-    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP) {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return AubMemDump::SteppingValues::A;
-        case 0x1:
-            return AubMemDump::SteppingValues::B;
-        case 0x3:
-            return AubMemDump::SteppingValues::C;
-        }
-    } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ROCKETLAKE) {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return AubMemDump::SteppingValues::A;
-        case 0x1:
-            return AubMemDump::SteppingValues::B;
-        case 0x4:
-            return AubMemDump::SteppingValues::C;
-        }
-    } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ALDERLAKE_S) {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return AubMemDump::SteppingValues::A;
-        case 0x4:
-            return AubMemDump::SteppingValues::B;
-        }
-    }
-    return Gen12LPHelpers::getAubStreamSteppingFromHwRevId(hwInfo);
-}
-
-template <>
 bool HwHelperHw<Family>::isBufferSizeSuitableForRenderCompression(const size_t size) const {
     return false;
 }

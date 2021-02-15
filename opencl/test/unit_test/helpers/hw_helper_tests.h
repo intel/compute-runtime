@@ -18,15 +18,3 @@ using namespace NEO;
 using HwHelperTest = Test<ClDeviceFixture>;
 
 void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, const HardwareInfo &hwInfo);
-
-constexpr struct {
-    __REVID stepping;
-    uint32_t aubStreamStepping;
-} steppingPairsToTest[] = {
-    {REVISION_A0, AubMemDump::SteppingValues::A},
-    {REVISION_A1, AubMemDump::SteppingValues::A},
-    {REVISION_A3, AubMemDump::SteppingValues::A},
-    {REVISION_B, AubMemDump::SteppingValues::B},
-    {REVISION_C, AubMemDump::SteppingValues::C},
-    {REVISION_D, AubMemDump::SteppingValues::D},
-    {REVISION_K, AubMemDump::SteppingValues::K}};

@@ -77,6 +77,18 @@ TEST(AubCenter, GivenCsrHwAndNotEmptyAubFileNameWhenGettingAubStreamModeThenMode
 }
 
 TEST(AubCenter, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
+    struct {
+        __REVID stepping;
+        uint32_t expectedAubStreamStepping;
+    } steppingPairsToTest[] = {
+        {REVISION_A0, AubMemDump::SteppingValues::A},
+        {REVISION_A1, AubMemDump::SteppingValues::A},
+        {REVISION_A3, AubMemDump::SteppingValues::A},
+        {REVISION_B, AubMemDump::SteppingValues::B},
+        {REVISION_C, AubMemDump::SteppingValues::C},
+        {REVISION_D, AubMemDump::SteppingValues::D},
+        {REVISION_K, AubMemDump::SteppingValues::K}};
+
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(true);
 
@@ -90,7 +102,7 @@ TEST(AubCenter, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
 
         hwInfo.platform.usRevId = hwRevId;
         MockAubCenter aubCenter(&hwInfo, false, "", CommandStreamReceiverType::CSR_AUB);
-        EXPECT_EQ(steppingPair.aubStreamStepping, aubCenter.stepping);
+        EXPECT_EQ(steppingPair.expectedAubStreamStepping, aubCenter.stepping);
     }
 }
 

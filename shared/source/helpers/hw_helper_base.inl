@@ -357,7 +357,21 @@ uint32_t HwHelperHw<GfxFamily>::getSteppingFromHwRevId(const HardwareInfo &hwInf
 
 template <typename GfxFamily>
 uint32_t HwHelperHw<GfxFamily>::getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
-    return AubMemDump::SteppingValues::A;
+    switch (getSteppingFromHwRevId(hwInfo)) {
+    default:
+    case REVISION_A0:
+    case REVISION_A1:
+    case REVISION_A3:
+        return AubMemDump::SteppingValues::A;
+    case REVISION_B:
+        return AubMemDump::SteppingValues::B;
+    case REVISION_C:
+        return AubMemDump::SteppingValues::C;
+    case REVISION_D:
+        return AubMemDump::SteppingValues::D;
+    case REVISION_K:
+        return AubMemDump::SteppingValues::K;
+    }
 }
 
 template <typename GfxFamily>

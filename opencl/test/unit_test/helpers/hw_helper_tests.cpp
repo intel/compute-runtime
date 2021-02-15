@@ -882,16 +882,6 @@ HWTEST_F(HwHelperTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenCon
         auto steppingFromHwRevId = helper.getSteppingFromHwRevId(hardwareInfo);
         if (steppingFromHwRevId != CommonConstants::invalidStepping) {
             EXPECT_EQ(testValue, helper.getHwRevIdFromStepping(steppingFromHwRevId, hardwareInfo));
-        } else {
-            EXPECT_EQ(AubMemDump::SteppingValues::A, helper.getAubStreamSteppingFromHwRevId(hardwareInfo));
-        }
-    }
-
-    for (auto &steppingPair : steppingPairsToTest) {
-        auto hwRevIdFromStepping = helper.getHwRevIdFromStepping(steppingPair.stepping, hardwareInfo);
-        if (hwRevIdFromStepping != CommonConstants::invalidStepping) {
-            hardwareInfo.platform.usRevId = hwRevIdFromStepping;
-            EXPECT_EQ(steppingPair.aubStreamStepping, helper.getAubStreamSteppingFromHwRevId(hardwareInfo));
         }
     }
 }
@@ -903,8 +893,33 @@ HWTEST_F(HwHelperTest, givenInvalidProductFamilyWhenConvertingHwRevIdAndStepping
         EXPECT_EQ(CommonConstants::invalidStepping, helper.getHwRevIdFromStepping(testValue, hardwareInfo));
         hardwareInfo.platform.usRevId = testValue;
         EXPECT_EQ(CommonConstants::invalidStepping, helper.getSteppingFromHwRevId(hardwareInfo));
-        EXPECT_EQ(AubMemDump::SteppingValues::A, helper.getAubStreamSteppingFromHwRevId(hardwareInfo));
     }
+}
+
+HWTEST_F(HwHelperTest, givenVariousValuesWhenGettingAubStreamSteppingFromHwRevIdThenReturnValuesAreCorrect) {
+    struct MockHwHelper : HwHelperHw<FamilyType> {
+        uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override {
+            return returnedStepping;
+        }
+        uint32_t returnedStepping = 0;
+    };
+    MockHwHelper mockHwHelper;
+    mockHwHelper.returnedStepping = REVISION_A0;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
+    mockHwHelper.returnedStepping = REVISION_A1;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
+    mockHwHelper.returnedStepping = REVISION_A3;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
+    mockHwHelper.returnedStepping = REVISION_B;
+    EXPECT_EQ(AubMemDump::SteppingValues::B, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
+    mockHwHelper.returnedStepping = REVISION_C;
+    EXPECT_EQ(AubMemDump::SteppingValues::C, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
+    mockHwHelper.returnedStepping = REVISION_D;
+    EXPECT_EQ(AubMemDump::SteppingValues::D, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
+    mockHwHelper.returnedStepping = REVISION_K;
+    EXPECT_EQ(AubMemDump::SteppingValues::K, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
+    mockHwHelper.returnedStepping = CommonConstants::invalidStepping;
+    EXPECT_EQ(AubMemDump::SteppingValues::A, mockHwHelper.getAubStreamSteppingFromHwRevId(hardwareInfo));
 }
 
 HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenIsForceEmuInt32DivRemSPWARequiredCalledThenFalseIsReturned) {
