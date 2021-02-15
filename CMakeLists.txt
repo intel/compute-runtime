@@ -692,6 +692,9 @@ if(MSVC)
   # Disable generating manifest
   set(LINKER_FLAGS "/MANIFEST:NO")
 
+  # Disable COMDAT folding optimization
+  set(LINKER_FLAGS "${LINKER_FLAGS} /OPT:NOICF")
+
   # Use legacy float rounding
   set(LINKER_FLAGS "${LINKER_FLAGS} legacy_stdio_float_rounding.obj")
 
