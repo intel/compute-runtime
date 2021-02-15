@@ -16,8 +16,7 @@
 #include <sys/mman.h>
 
 namespace L0 {
-const std::string PlatformMonitoringTech::devfs("/dev/");
-const std::string PlatformMonitoringTech::baseTelemSysFS("/sys/class/pmt_telemetry");
+const std::string PlatformMonitoringTech::baseTelemSysFS("/sys/class/intel_pmt");
 const std::string PlatformMonitoringTech::telem("telem");
 uint32_t PlatformMonitoringTech::rootDeviceTelemNodeIndex = 0;
 
@@ -35,7 +34,7 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
     }
 
     // Exmaple: For below directory
-    // # /sys/class/pmt_telemetry$ ls
+    // # /sys/class/intel_pmt$ ls
     // telem1  telem2  telem3
     // Then listOfTelemNodes would contain telem1, telem2, telem3
     std::sort(listOfTelemNodes.begin(), listOfTelemNodes.end()); // sort listOfTelemNodes, to arange telem nodes in ascending order
@@ -49,7 +48,7 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
         if (realPathOfTelemNode.compare(0, rootPciPathOfGpuDevice.size(), rootPciPathOfGpuDevice) == 0) {
             // Example: If
             // rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
-            // realPathOfTelemNode = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry/telem1";
+            // realPathOfTelemNode = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
             // Thus As realPathOfTelemNode consists of rootPciPathOfGpuDevice, hence both telemNode and GPU device share same PCI Root.
             auto indexString = telemNode.substr(telem.size(), telemNode.size());
             rootDeviceTelemNodeIndex = stoi(indexString); // if telemNode is telemN, then rootDeviceTelemNodeIndex = N
@@ -80,7 +79,7 @@ void PlatformMonitoringTech::init(FsAccess *pFsAccess) {
         telemNode = telem + std::to_string(telemNodeIndex);
     }
     std::string baseTelemSysFSNode = baseTelemSysFS + "/" + telemNode;
-    std::string telemetryDeviceEntry = devfs + telemNode;
+    std::string telemetryDeviceEntry = baseTelemSysFSNode + "/" + telem;
     if (!pFsAccess->fileExists(telemetryDeviceEntry)) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                               "Telemetry support not available. No file %s\n", telemetryDeviceEntry.c_str());

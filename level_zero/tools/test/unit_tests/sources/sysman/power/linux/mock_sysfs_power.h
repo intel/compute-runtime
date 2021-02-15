@@ -21,7 +21,7 @@ constexpr uint64_t setEnergyCounter = 83456;
 constexpr uint64_t offset = 0x400;
 constexpr uint64_t mappedLength = 2048;
 const std::string deviceName("device");
-const std::string baseTelemSysFS("/sys/class/pmt_telemetry");
+const std::string baseTelemSysFS("/sys/class/intel_pmt");
 
 class PowerPmt : public PlatformMonitoringTech {
   public:
@@ -76,16 +76,16 @@ struct Mock<PowerFsAccess> : public PowerFsAccess {
     }
 
     ze_result_t getRealPathSuccess(const std::string path, std::string &buf) {
-        if (path.compare("/sys/class/pmt_telemetry/telem1") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry/telem1";
-        } else if (path.compare("/sys/class/pmt_telemetry/telem2") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry/telem2";
-        } else if (path.compare("/sys/class/pmt_telemetry/telem3") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry/telem3";
-        } else if (path.compare("/sys/class/pmt_telemetry/telem4") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry/telem4";
-        } else if (path.compare("/sys/class/pmt_telemetry/telem5") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry/telem5";
+        if (path.compare("/sys/class/intel_pmt/telem1") == 0) {
+            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
+        } else if (path.compare("/sys/class/intel_pmt/telem2") == 0) {
+            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem2";
+        } else if (path.compare("/sys/class/intel_pmt/telem3") == 0) {
+            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem3";
+        } else if (path.compare("/sys/class/intel_pmt/telem4") == 0) {
+            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem4";
+        } else if (path.compare("/sys/class/intel_pmt/telem5") == 0) {
+            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem5";
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }

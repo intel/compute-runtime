@@ -35,7 +35,6 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
 
   private:
     void init(FsAccess *pFsAccess);
-    static const std::string devfs;
     static const std::string baseTelemSysFS;
     static const std::string telem;
     uint64_t size = 0;
