@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,9 +28,12 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdS
     PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
                        "Debugger: SBA stored ssh = %" SCNx64
                        " gsba = %" SCNx64
-                       " bsurfsba =  %" SCNx64 "\n",
-                       sba.SurfaceStateBaseAddress, sba.GeneralStateBaseAddress,
-                       sba.BindlessSurfaceStateBaseAddress);
+                       " dsba = %" SCNx64
+                       " ioba = %" SCNx64
+                       " iba = %" SCNx64
+                       " bsurfsba = %" SCNx64 "\n",
+                       sba.SurfaceStateBaseAddress, sba.GeneralStateBaseAddress, sba.DynamicStateBaseAddress,
+                       sba.IndirectObjectBaseAddress, sba.InstructionBaseAddress, sba.BindlessSurfaceStateBaseAddress);
 
     if (sba.GeneralStateBaseAddress) {
         MI_STORE_DATA_IMM storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
@@ -50,6 +53,39 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdS
         storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD);
         storeDataImmediate.setDataDword0(static_cast<uint32_t>(sba.SurfaceStateBaseAddress & 0x0000FFFFFFFFULL));
         storeDataImmediate.setDataDword1(static_cast<uint32_t>(sba.SurfaceStateBaseAddress >> 32));
+
+        auto storeDataImmediateSpace = cmdStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
+        *storeDataImmediateSpace = storeDataImmediate;
+    }
+    if (sba.DynamicStateBaseAddress) {
+        MI_STORE_DATA_IMM storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
+        storeDataImmediate.setAddress(gpuAddress + offsetof(SbaTrackedAddresses, DynamicStateBaseAddress));
+        storeDataImmediate.setStoreQword(true);
+        storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD);
+        storeDataImmediate.setDataDword0(static_cast<uint32_t>(sba.DynamicStateBaseAddress & 0x0000FFFFFFFFULL));
+        storeDataImmediate.setDataDword1(static_cast<uint32_t>(sba.DynamicStateBaseAddress >> 32));
+
+        auto storeDataImmediateSpace = cmdStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
+        *storeDataImmediateSpace = storeDataImmediate;
+    }
+    if (sba.IndirectObjectBaseAddress) {
+        MI_STORE_DATA_IMM storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
+        storeDataImmediate.setAddress(gpuAddress + offsetof(SbaTrackedAddresses, IndirectObjectBaseAddress));
+        storeDataImmediate.setStoreQword(true);
+        storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD);
+        storeDataImmediate.setDataDword0(static_cast<uint32_t>(sba.IndirectObjectBaseAddress & 0x0000FFFFFFFFULL));
+        storeDataImmediate.setDataDword1(static_cast<uint32_t>(sba.IndirectObjectBaseAddress >> 32));
+
+        auto storeDataImmediateSpace = cmdStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
+        *storeDataImmediateSpace = storeDataImmediate;
+    }
+    if (sba.InstructionBaseAddress) {
+        MI_STORE_DATA_IMM storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
+        storeDataImmediate.setAddress(gpuAddress + offsetof(SbaTrackedAddresses, InstructionBaseAddress));
+        storeDataImmediate.setStoreQword(true);
+        storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD);
+        storeDataImmediate.setDataDword0(static_cast<uint32_t>(sba.InstructionBaseAddress & 0x0000FFFFFFFFULL));
+        storeDataImmediate.setDataDword1(static_cast<uint32_t>(sba.InstructionBaseAddress >> 32));
 
         auto storeDataImmediateSpace = cmdStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
         *storeDataImmediateSpace = storeDataImmediate;

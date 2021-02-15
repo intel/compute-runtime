@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,9 +79,12 @@ void DebuggerL0::printTrackedAddresses(uint32_t contextId) {
     PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
                        "Debugger: SBA ssh = %" SCNx64
                        " gsba = %" SCNx64
+                       " dsba =  %" SCNx64
+                       " ioba =  %" SCNx64
+                       " iba =  %" SCNx64
                        " bsurfsba =  %" SCNx64 "\n",
-                       sba->SurfaceStateBaseAddress, sba->GeneralStateBaseAddress,
-                       sba->BindlessSurfaceStateBaseAddress);
+                       sba->SurfaceStateBaseAddress, sba->GeneralStateBaseAddress, sba->DynamicStateBaseAddress,
+                       sba->IndirectObjectBaseAddress, sba->InstructionBaseAddress, sba->BindlessSurfaceStateBaseAddress);
 }
 
 DebuggerL0 ::~DebuggerL0() {

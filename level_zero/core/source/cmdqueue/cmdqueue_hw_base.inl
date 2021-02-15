@@ -103,7 +103,8 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     size_t size = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + NEO::EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(*device->getNEODevice());
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() != nullptr) {
-        size += device->getL0Debugger()->getSbaTrackingCommandsSize(1);
+        const size_t trackedAddressesCount = 6;
+        size += device->getL0Debugger()->getSbaTrackingCommandsSize(trackedAddressesCount);
     }
     return size;
 }
