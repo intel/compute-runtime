@@ -331,6 +331,48 @@ HWTEST_F(DeviceTest, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) 
     EXPECT_FALSE(osContext->isLowPriority());
 }
 
+HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithSubDevicesThenWorkPartitionAllocationIsCreatedForRootDevice) {
+    DebugManagerStateRestore restore{};
+    {
+        UltDeviceFactory deviceFactory{1, 2};
+        EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_EQ(nullptr, deviceFactory.subDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_EQ(nullptr, deviceFactory.subDevices[1]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+    }
+    {
+        DebugManager.flags.EnableStaticPartitioning.set(0);
+        UltDeviceFactory deviceFactory{1, 2};
+        EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_EQ(nullptr, deviceFactory.subDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_EQ(nullptr, deviceFactory.subDevices[1]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+    }
+    {
+        DebugManager.flags.EnableStaticPartitioning.set(1);
+        UltDeviceFactory deviceFactory{1, 2};
+        EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_EQ(nullptr, deviceFactory.subDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_EQ(nullptr, deviceFactory.subDevices[1]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+    }
+}
+
+HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithoutSubDevicesThenWorkPartitionAllocationIsNotCreated) {
+    DebugManagerStateRestore restore{};
+    {
+        UltDeviceFactory deviceFactory{1, 1};
+        EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+    }
+    {
+        DebugManager.flags.EnableStaticPartitioning.set(0);
+        UltDeviceFactory deviceFactory{1, 1};
+        EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+    }
+    {
+        DebugManager.flags.EnableStaticPartitioning.set(1);
+        UltDeviceFactory deviceFactory{1, 1};
+        EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+    }
+}
+
 TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrSimulationMode = true;

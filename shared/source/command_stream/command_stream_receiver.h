@@ -142,6 +142,7 @@ class CommandStreamReceiver {
     GraphicsAllocation *allocateDebugSurface(size_t size);
     GraphicsAllocation *getPreemptionAllocation() const { return preemptionAllocation; }
     GraphicsAllocation *getGlobalFenceAllocation() const { return globalFenceAllocation; }
+    GraphicsAllocation *getWorkPartitionAllocation() const { return workPartitionAllocation; }
 
     void requestStallingPipeControlOnNextFlush() { stallingPipeControlOnNextFlushRequired = true; }
     bool isStallingPipeControlOnNextFlushRequired() const { return stallingPipeControlOnNextFlushRequired; }
@@ -168,6 +169,7 @@ class CommandStreamReceiver {
     void setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer);
 
     bool initializeTagAllocation();
+    MOCKABLE_VIRTUAL bool createWorkPartitionAllocation(const Device &device);
     MOCKABLE_VIRTUAL bool createGlobalFenceAllocation();
     MOCKABLE_VIRTUAL bool createPreemptionAllocation();
     MOCKABLE_VIRTUAL bool createPerDssBackedBuffer(Device &device);
@@ -273,6 +275,7 @@ class CommandStreamReceiver {
     GraphicsAllocation *debugSurface = nullptr;
     GraphicsAllocation *perDssBackedBuffer = nullptr;
     GraphicsAllocation *clearColorAllocation = nullptr;
+    GraphicsAllocation *workPartitionAllocation = nullptr;
 
     IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];
     OsContext *osContext = nullptr;
@@ -318,6 +321,7 @@ class CommandStreamReceiver {
     bool lastVmeSubslicesConfig = false;
     bool stallingPipeControlOnNextFlushRequired = false;
     bool timestampPacketWriteEnabled = false;
+    bool staticWorkPartitioningEnabled = false;
     bool nTo1SubmissionModelEnabled = false;
     bool lastSpecialPipelineSelectMode = false;
     bool requiresInstructionCacheFlush = false;

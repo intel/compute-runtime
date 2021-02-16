@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         DEBUG_CONTEXT_SAVE_AREA,
         DEBUG_SBA_TRACKING_BUFFER,
         DEBUG_MODULE_AREA,
-        UNIFIED_SHARED_MEMORY
+        UNIFIED_SHARED_MEMORY,
+        WORK_PARTITION_SURFACE,
     };
 
     ~GraphicsAllocation() override;

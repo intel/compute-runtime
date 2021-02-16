@@ -282,6 +282,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
     case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
     case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+    case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
     case GraphicsAllocation::AllocationType::WRITE_COMBINED:
         allow64KbPages = true;
         allow32Bit = true;
@@ -368,6 +369,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::LINEAR_STREAM:
     case GraphicsAllocation::AllocationType::MCS:
     case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+    case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
     case GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE:
     case GraphicsAllocation::AllocationType::SHARED_IMAGE:
     case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:

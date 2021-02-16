@@ -927,6 +927,7 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::PRIVATE_SURFACE, "PRIVATE_SURFACE"},
     {GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER, "PROFILING_TAG_BUFFER"},
     {GraphicsAllocation::AllocationType::SCRATCH_SURFACE, "SCRATCH_SURFACE"},
+    {GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE, "WORK_PARTITION_SURFACE"},
     {GraphicsAllocation::AllocationType::SHARED_BUFFER, "SHARED_BUFFER"},
     {GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE, "SHARED_CONTEXT_IMAGE"},
     {GraphicsAllocation::AllocationType::SHARED_IMAGE, "SHARED_IMAGE"},

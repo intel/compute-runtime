@@ -21,6 +21,8 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"
@@ -1229,6 +1231,78 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugPauseThreadWhenTerminatingAtSecond
     EXPECT_THAT(output, testing::HasSubstr(std::string("Debug break: Press enter to start workload")));
     EXPECT_THAT(output, testing::Not(testing::HasSubstr(std::string("Debug break: Workload ended, press enter to continue"))));
     EXPECT_EQ(1u, confirmationCounter);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenDebugFlagWhenCreatingCsrThenSetEnableStaticPartitioningAccordingly) {
+    DebugManagerStateRestore restore{};
+    {
+        MockDevice device{};
+        EXPECT_FALSE(device.getUltCommandStreamReceiver<FamilyType>().staticWorkPartitioningEnabled);
+    }
+    {
+        DebugManager.flags.EnableStaticPartitioning.set(0);
+        MockDevice device{};
+        EXPECT_FALSE(device.getUltCommandStreamReceiver<FamilyType>().staticWorkPartitioningEnabled);
+    }
+    {
+        DebugManager.flags.EnableStaticPartitioning.set(1);
+        MockDevice device{};
+        EXPECT_TRUE(device.getUltCommandStreamReceiver<FamilyType>().staticWorkPartitioningEnabled);
+    }
+}
+
+HWTEST_F(CommandStreamReceiverTest, whenCreatingWorkPartitionAllocationThenInitializeContentsWithCopyEngine) {
+    REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableStaticPartitioning.set(0);
+
+    constexpr size_t subDeviceCount = 3;
+    UltDeviceFactory deviceFactory{1, subDeviceCount};
+    MockDevice &rootDevice = *deviceFactory.rootDevices[0];
+    rootDevice.getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+    rootDevice.getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.ftrBcsInfo = 1;
+    UltCommandStreamReceiver<FamilyType> &csr = rootDevice.getUltCommandStreamReceiver<FamilyType>();
+    UltCommandStreamReceiver<FamilyType> *bcsCsrs[] = {
+        reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice.getDeviceById(0)->getEngine(aub_stream::ENGINE_BCS, false, false).commandStreamReceiver),
+        reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice.getDeviceById(1)->getEngine(aub_stream::ENGINE_BCS, false, false).commandStreamReceiver),
+        reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice.getDeviceById(2)->getEngine(aub_stream::ENGINE_BCS, false, false).commandStreamReceiver),
+    };
+    const size_t bcsStarts[] = {
+        bcsCsrs[0]->commandStream.getUsed(),
+        bcsCsrs[1]->commandStream.getUsed(),
+        bcsCsrs[2]->commandStream.getUsed(),
+    };
+
+    csr.staticWorkPartitioningEnabled = true;
+    EXPECT_TRUE(csr.createWorkPartitionAllocation(rootDevice));
+    EXPECT_NE(nullptr, csr.getWorkPartitionAllocation());
+
+    EXPECT_LT(bcsStarts[0], bcsCsrs[0]->commandStream.getUsed());
+    EXPECT_LT(bcsStarts[1], bcsCsrs[1]->commandStream.getUsed());
+    EXPECT_LT(bcsStarts[2], bcsCsrs[2]->commandStream.getUsed());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenFailingMemoryManagerWhenCreatingWorkPartitionAllocationThenReturnFalse) {
+    struct FailingMemoryManager : OsAgnosticMemoryManager {
+        using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+        GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+            return nullptr;
+        }
+    };
+
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableStaticPartitioning.set(0);
+    UltDeviceFactory deviceFactory{1, 2};
+    MockDevice &rootDevice = *deviceFactory.rootDevices[0];
+    UltCommandStreamReceiver<FamilyType> &csr = rootDevice.getUltCommandStreamReceiver<FamilyType>();
+
+    ExecutionEnvironment &executionEnvironment = *deviceFactory.rootDevices[0]->executionEnvironment;
+    executionEnvironment.memoryManager = std::make_unique<FailingMemoryManager>(executionEnvironment);
+
+    csr.staticWorkPartitioningEnabled = true;
+    DebugManager.flags.EnableStaticPartitioning.set(1);
+    EXPECT_FALSE(csr.createWorkPartitionAllocation(rootDevice));
+    EXPECT_EQ(nullptr, csr.getWorkPartitionAllocation());
 }
 
 class CommandStreamReceiverWithAubSubCaptureTest : public CommandStreamReceiverTest,

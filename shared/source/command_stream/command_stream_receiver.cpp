@@ -48,6 +48,10 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
         indirectHeap[i] = nullptr;
     }
     internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*this);
+
+    if (DebugManager.flags.EnableStaticPartitioning.get() == 1) {
+        this->staticWorkPartitioningEnabled = true;
+    }
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
@@ -225,6 +229,11 @@ void CommandStreamReceiver::cleanupResources() {
     if (clearColorAllocation) {
         getMemoryManager()->freeGraphicsMemory(clearColorAllocation);
         clearColorAllocation = nullptr;
+    }
+
+    if (workPartitionAllocation) {
+        getMemoryManager()->freeGraphicsMemory(workPartitionAllocation);
+        workPartitionAllocation = nullptr;
     }
 }
 
@@ -469,6 +478,37 @@ bool CommandStreamReceiver::initializeTagAllocation() {
 
     if (DebugManager.flags.PauseOnEnqueue.get() != -1 || DebugManager.flags.PauseOnBlitCopy.get() != -1) {
         userPauseConfirmation = Thread::create(CommandStreamReceiver::asyncDebugBreakConfirmation, reinterpret_cast<void *>(this));
+    }
+
+    return true;
+}
+
+bool CommandStreamReceiver::createWorkPartitionAllocation(const Device &device) {
+    if (!staticWorkPartitioningEnabled) {
+        return false;
+    }
+    UNRECOVERABLE_IF(device.getNumAvailableDevices() < 2);
+
+    AllocationProperties properties{this->rootDeviceIndex, true, 4096u, GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE, true, false, deviceBitfield};
+    this->workPartitionAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    if (this->workPartitionAllocation == nullptr) {
+        return false;
+    }
+
+    for (uint32_t deviceIndex = 0; deviceIndex < deviceBitfield.size(); deviceIndex++) {
+        if (!deviceBitfield.test(deviceIndex)) {
+            continue;
+        }
+
+        const uint32_t copySrc = deviceIndex;
+        const Vec3<size_t> copySrcSize = {sizeof(copySrc), 1, 1};
+        DeviceBitfield copyBitfield{};
+        copyBitfield.set(deviceIndex);
+        BlitOperationResult blitResult = BlitHelper::blitMemoryToAllocationBanks(device, workPartitionAllocation, 0, &copySrc, copySrcSize, copyBitfield);
+
+        if (blitResult != BlitOperationResult::Success) {
+            return false;
+        }
     }
 
     return true;

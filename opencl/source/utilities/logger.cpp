@@ -335,6 +335,8 @@ const char *FileLogger<DebugLevel>::getAllocationTypeString(GraphicsAllocation c
         return "DEBUG_SBA_TRACKING_BUFFER";
     case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA:
         return "DEBUG_MODULE_AREA";
+    case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
+        return "WORK_PARTITION_SURFACE";
     default:
         return "ILLEGAL_VALUE";
     }

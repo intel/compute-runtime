@@ -24,6 +24,7 @@ class AubHelper : public NonCopyableOrMovableClass {
         case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
         case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
         case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+        case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
         case GraphicsAllocation::AllocationType::BUFFER:
         case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
         case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:

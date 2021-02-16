@@ -50,6 +50,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::requiresInstructionCacheFlush;
     using BaseClass::rootDeviceIndex;
     using BaseClass::sshState;
+    using BaseClass::staticWorkPartitioningEnabled;
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
     using BaseClass::CommandStreamReceiver::checkForNewResources;
