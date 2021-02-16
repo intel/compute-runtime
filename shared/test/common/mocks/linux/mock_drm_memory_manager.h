@@ -70,6 +70,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocateShareableMemory;
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::createAllocWithAlignment;
+    using DrmMemoryManager::createAllocWithAlignmentFromUserptr;
     using DrmMemoryManager::createGraphicsAllocation;
     using DrmMemoryManager::createSharedBufferObject;
     using DrmMemoryManager::eraseSharedBufferObject;

@@ -112,6 +112,10 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const Alloc
     auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr, allocationData.rootDeviceIndex);
     if (osStorage.fragmentCount > 0) {
         graphicsAllocation = createGraphicsAllocation(osStorage, allocationData);
+        if (graphicsAllocation == nullptr) {
+            hostPtrManager->releaseHandleStorage(allocationData.rootDeviceIndex, osStorage);
+            cleanOsHandles(osStorage, allocationData.rootDeviceIndex);
+        }
     }
     return graphicsAllocation;
 }

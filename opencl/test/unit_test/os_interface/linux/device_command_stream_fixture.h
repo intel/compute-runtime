@@ -73,6 +73,7 @@ class DrmMockTime : public DrmMockSuccess {
 class DrmMockCustom : public Drm {
   public:
     using Drm::bindAvailable;
+    using Drm::cacheInfo;
     using Drm::memoryInfo;
 
     struct IoctlResExt {

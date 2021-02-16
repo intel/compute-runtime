@@ -4194,6 +4194,17 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenIsaIsRegisteredThenC
     EXPECT_EQ(2u, drm.unregisterCalledCount);
 }
 
+TEST(DrmAllocationTest, givenDrmAllocationWhenSetCacheRegionIsCalledForDefaultRegionThenReturnTrue) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+
+    EXPECT_TRUE(allocation.setCacheRegion(&drm, CacheRegion::Default));
+}
+
 TEST(DrmAllocationTest, givenDrmAllocationWhenCacheInfoIsNotAvailableThenCacheRegionIsNotSet) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -4202,10 +4213,10 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheInfoIsNotAvailableThenCacheRe
 
     MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
 
-    EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::None));
+    EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::Region1));
 }
 
-TEST(DrmAllocationTest, givenDrmAllocationWhenCacheInfoIsAvailableThenCacheRegionIsNotSetForTheDefault) {
+TEST(DrmAllocationTest, givenDrmAllocationWhenDefaultCacheInfoIsAvailableThenCacheRegionIsNotSet) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
@@ -4214,7 +4225,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheInfoIsAvailableThenCacheRegio
 
     MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
 
-    EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::Default));
+    EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::Region1));
 }
 
 TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFalse) {
@@ -4259,5 +4270,64 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenSe
             EXPECT_EQ(CacheRegion::Region1, bo->peekCacheRegion());
         }
     }
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCacheRegionThenSetRegionInBufferObject) {
+    mock->ioctl_expected.total = -1;
+    auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm());
+    drm->cacheInfo.reset(new MockCacheInfo());
+
+    auto ptr = reinterpret_cast<void *>(0x1000);
+    auto size = MemoryConstants::pageSize;
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = ptr;
+    storage.fragmentStorageData[0].fragmentSize = 1;
+    storage.fragmentCount = 1;
+
+    memoryManager->populateOsHandles(storage, rootDeviceIndex);
+
+    auto allocation = std::make_unique<DrmAllocation>(rootDeviceIndex, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+                                                      nullptr, ptr, castToUint64(ptr), size, MemoryPool::System4KBPages);
+    allocation->fragmentsStorage = storage;
+
+    allocation->setCacheAdvice(drm, 1024, CacheRegion::Region1);
+
+    for (uint32_t i = 0; i < storage.fragmentCount; i++) {
+        auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+        EXPECT_EQ(CacheRegion::Region1, bo->peekCacheRegion());
+    }
+
+    storage.fragmentStorageData[0].freeTheFragment = true;
+    memoryManager->cleanOsHandles(storage, rootDeviceIndex);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithIncorrectCacheRegionThenReturnNull) {
+    mock->ioctl_expected.total = -1;
+    auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm());
+    drm->setupCacheInfo(*defaultHwInfo.get());
+
+    auto ptr = reinterpret_cast<void *>(0x1000);
+    auto size = MemoryConstants::pageSize;
+
+    allocationData.size = size;
+    allocationData.hostPtr = ptr;
+    allocationData.cacheRegion = 0xFFFF;
+
+    auto allocation = std::unique_ptr<GraphicsAllocation>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
+    EXPECT_EQ(allocation, nullptr);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithWithAlignmentFromUserptrWhenItIsCreatedWithIncorrectCacheRegionThenReturnNull) {
+    mock->ioctl_expected.total = -1;
+    auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm());
+    drm->setupCacheInfo(*defaultHwInfo.get());
+
+    auto size = MemoryConstants::pageSize;
+    allocationData.size = size;
+    allocationData.cacheRegion = 0xFFFF;
+
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->createAllocWithAlignmentFromUserptr(allocationData, size, 0, 0, 0x1000));
+    EXPECT_EQ(allocation, nullptr);
 }
 } // namespace NEO

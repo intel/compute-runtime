@@ -223,10 +223,12 @@ void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData
 
 DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
     auto hostPtr = const_cast<void *>(allocationData.hostPtr);
-    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, nullptr, hostPtr, castToUint64(hostPtr), allocationData.size, MemoryPool::System4KBPages);
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, nullptr, hostPtr, castToUint64(hostPtr), allocationData.size, MemoryPool::System4KBPages);
     allocation->fragmentsStorage = handleStorage;
-    allocation->setCacheRegion(&this->getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion));
-    return allocation;
+    if (!allocation->setCacheRegion(&this->getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
+        return nullptr;
+    }
+    return allocation.release();
 }
 
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
@@ -265,22 +267,26 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
         return nullptr;
     }
 
-    auto bo = allocUserptr(reinterpret_cast<uintptr_t>(res), size, 0, allocationData.rootDeviceIndex);
-
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(reinterpret_cast<uintptr_t>(res), size, 0, allocationData.rootDeviceIndex));
     if (!bo) {
         alignedFreeWrapper(res);
         return nullptr;
     }
 
-    obtainGpuAddress(allocationData, bo, gpuAddress);
-    emitPinningRequest(bo, allocationData);
+    obtainGpuAddress(allocationData, bo.get(), gpuAddress);
+    emitPinningRequest(bo.get(), allocationData);
 
-    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo, res, bo->gpuAddress, size, MemoryPool::System4KBPages);
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->gpuAddress, size, MemoryPool::System4KBPages);
     allocation->setDriverAllocatedCpuPtr(res);
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSVMSize);
-    allocation->setCacheRegion(&this->getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion));
+    if (!allocation->setCacheRegion(&this->getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
+        alignedFreeWrapper(res);
+        return nullptr;
+    }
 
-    return allocation;
+    bo.release();
+
+    return allocation.release();
 }
 
 void DrmMemoryManager::obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress) {

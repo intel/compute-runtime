@@ -19,6 +19,10 @@ void DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vect
 }
 
 bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {
+    if (regionIndex == CacheRegion::Default) {
+        return true;
+    }
+
     auto cacheInfo = static_cast<CacheInfoImpl *>(drm->getCacheInfo());
     if (cacheInfo == nullptr) {
         return false;

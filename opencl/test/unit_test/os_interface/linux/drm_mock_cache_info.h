@@ -17,7 +17,7 @@ struct MockCacheInfo : public CacheInfo {
     ~MockCacheInfo() override = default;
 
     bool getCacheRegion(size_t regionSize, CacheRegion regionIndex) override {
-        return (regionIndex > CacheRegion::None) ? true : false;
+        return (regionIndex < CacheRegion::Count) ? true : false;
     }
 };
 

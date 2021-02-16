@@ -34,6 +34,14 @@ bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regi
         return false;
     }
 
+    if (fragmentsStorage.fragmentCount > 0) {
+        for (uint32_t i = 0; i < fragmentsStorage.fragmentCount; i++) {
+            auto bo = fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+            bo->setCacheRegion(regionIndex);
+        }
+        return true;
+    }
+
     for (auto bo : bufferObjects) {
         if (bo != nullptr) {
             bo->setCacheRegion(regionIndex);

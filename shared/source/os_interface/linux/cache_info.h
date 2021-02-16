@@ -13,10 +13,11 @@
 namespace NEO {
 
 enum class CacheRegion : uint16_t {
-    None = 0,
+    Default = 0,
     Region1,
     Region2,
-    Default = None
+    Count,
+    None = 0xFFFF
 };
 
 struct CacheInfo {
