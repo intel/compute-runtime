@@ -1877,12 +1877,10 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenPrintfHandlerWhenPatchingRefl
 
     parentKernel->patchReflectionSurface<true>(&devQueue, printfHandler);
 
-    uint64_t printfBufferOffset = parentKernel->getProgram()->getBlockKernelManager()->getBlockKernelInfo(0)->patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset;
-    uint64_t printfBufferPatchSize = parentKernel->getProgram()->getBlockKernelManager()->getBlockKernelInfo(0)->patchInfo.pAllocateStatelessPrintfSurface->DataParamSize;
-
-    EXPECT_EQ(printfBufferOffset, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.offset);
+    const auto &printfSurfaceArg = parentKernel->getProgram()->getBlockKernelManager()->getBlockKernelInfo(0)->kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
+    EXPECT_EQ(printfSurfaceArg.stateless, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.offset);
     EXPECT_EQ(printfHandler->getSurface()->getGpuAddress(), MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.address);
-    EXPECT_EQ(printfBufferPatchSize, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.size);
+    EXPECT_EQ(printfSurfaceArg.pointerSize, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.size);
 
     delete printfHandler;
     delete parentKernel;
@@ -1904,12 +1902,10 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenNoPrintfSurfaceWhenPatchingRe
 
     parentKernel->patchReflectionSurface<true>(&devQueue, printfHandler);
 
-    uint64_t printfBufferOffset = parentKernel->getProgram()->getBlockKernelManager()->getBlockKernelInfo(0)->patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset;
-    uint64_t printfBufferPatchSize = parentKernel->getProgram()->getBlockKernelManager()->getBlockKernelInfo(0)->patchInfo.pAllocateStatelessPrintfSurface->DataParamSize;
-
-    EXPECT_EQ(printfBufferOffset, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.offset);
-    EXPECT_EQ(0u, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.address);
-    EXPECT_EQ(printfBufferPatchSize, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.size);
+    const auto &printfSurfaceArg = parentKernel->getProgram()->getBlockKernelManager()->getBlockKernelInfo(0)->kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
+    EXPECT_EQ(printfSurfaceArg.stateless, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.offset);
+    EXPECT_EQ(0U, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.address);
+    EXPECT_EQ(printfSurfaceArg.pointerSize, MockKernel::ReflectionSurfaceHelperPublic::printfBuffer.size);
 
     delete printfHandler;
     delete parentKernel;

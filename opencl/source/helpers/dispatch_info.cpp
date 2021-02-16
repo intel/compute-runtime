@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ bool DispatchInfo::usesSlm() const {
 }
 
 bool DispatchInfo::usesStatelessPrintfSurface() const {
-    return (kernel == nullptr) ? false : (kernel->getKernelInfo(pClDevice->getRootDeviceIndex()).patchInfo.pAllocateStatelessPrintfSurface != nullptr);
+    return (kernel == nullptr) ? false : kernel->hasPrintfOutput(pClDevice->getRootDeviceIndex());
 }
 
 uint32_t DispatchInfo::getRequiredScratchSize() const {

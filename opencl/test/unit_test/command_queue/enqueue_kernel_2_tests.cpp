@@ -538,17 +538,17 @@ TestParam TestParamPrintf[] = {
 
 typedef EnqueueKernelTypeTest<TestParam> EnqueueKernelPrintfTest;
 
-HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfThenPatchCrossTHreadData) {
+HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfThenPatchCrossThreadData) {
     typedef typename FamilyType::PARSE PARSE;
 
+    MockKernelWithInternals mockKernel(*pClDevice);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+    mockKernel.crossThreadData[64] = 0;
+
     SPatchAllocateStatelessPrintfSurface patchData;
-    patchData.SurfaceStateHeapOffset = 0;
     patchData.Size = 256;
     patchData.DataParamOffset = 64;
-
-    MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.crossThreadData[64] = 0;
-    mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, patchData);
 
     enqueueKernel<FamilyType, false>(mockKernel);
 
@@ -558,15 +558,16 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfThenPatchCrossTHreadData)
 HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3CacheIsFlushed) {
     typedef typename FamilyType::PARSE PARSE;
 
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
+    MockKernelWithInternals mockKernel(*pClDevice);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+    mockKernel.crossThreadData[64] = 0;
+
     SPatchAllocateStatelessPrintfSurface patchData;
     patchData.Size = 256;
     patchData.DataParamOffset = 64;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, patchData);
 
-    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
-    MockKernelWithInternals mockKernel(*pClDevice);
-
-    mockKernel.crossThreadData[64] = 0;
-    mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
     auto &csr = mockCmdQueue.getGpgpuCommandStreamReceiver();
     auto latestSentTaskCount = csr.peekTaskCount();
 
@@ -605,14 +606,15 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
 
     UserEvent userEvent(context);
 
+    MockCommandQueueHw<FamilyType> mockCommandQueue(context, pClDevice, nullptr);
+    MockKernelWithInternals mockKernel(*pClDevice);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+    mockKernel.crossThreadData[64] = 0;
+
     SPatchAllocateStatelessPrintfSurface patchData;
     patchData.Size = 256;
     patchData.DataParamOffset = 64;
-
-    MockCommandQueueHw<FamilyType> mockCommandQueue(context, pClDevice, nullptr);
-    MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.crossThreadData[64] = 0;
-    mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, patchData);
     auto &csr = mockCommandQueue.getGpgpuCommandStreamReceiver();
     auto latestSentDcFlushTaskCount = csr.peekTaskCount();
 
@@ -653,19 +655,21 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
 
         auto userEvent = make_releaseable<UserEvent>(context);
 
+        MockKernelWithInternals mockKernel(*pClDevice);
+        mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+
         SPatchAllocateStatelessPrintfSurface patchData;
+        patchData.SurfaceStateHeapOffset = undefined<uint32_t>;
         patchData.Size = 256;
         patchData.DataParamSize = 8;
         patchData.DataParamOffset = 0;
-
-        MockKernelWithInternals mockKernel(*pClDevice);
-        mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
+        populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, patchData);
 
         auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData(rootDeviceIndex));
 
         std::string testString = "test";
 
-        mockKernel.kernelInfo.patchInfo.stringDataMap.insert(std::make_pair(0, testString));
+        mockKernel.kernelInfo.kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(0, testString));
 
         cl_uint workDim = 1;
         size_t globalWorkOffset[3] = {0, 0, 0};

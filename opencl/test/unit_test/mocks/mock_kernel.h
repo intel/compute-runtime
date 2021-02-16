@@ -25,8 +25,10 @@
 #include <cassert>
 
 namespace NEO {
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrintfSurface &token);
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnvironment &execEnv);
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessEventPoolSurface &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchString &token);
 
 struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
     MockKernelObjForAuxTranslation(Type type) : KernelObjForAuxTranslation(type, nullptr) {
@@ -459,14 +461,13 @@ class MockParentKernel : public Kernel {
 
         crossThreadOffset += 8;
         if (addPrintfForParent) {
-            SPatchAllocateStatelessPrintfSurface *printfBuffer = new SPatchAllocateStatelessPrintfSurface;
-            printfBuffer->DataParamOffset = crossThreadOffset;
-            printfBuffer->DataParamSize = 8;
-            printfBuffer->PrintfSurfaceIndex = 0;
-            printfBuffer->Size = 8;
-            printfBuffer->SurfaceStateHeapOffset = 0;
-            printfBuffer->Token = 0;
-            info->patchInfo.pAllocateStatelessPrintfSurface = printfBuffer;
+            SPatchAllocateStatelessPrintfSurface printfBuffer = {};
+            printfBuffer.DataParamOffset = crossThreadOffset;
+            printfBuffer.DataParamSize = 8;
+            printfBuffer.PrintfSurfaceIndex = 0;
+            printfBuffer.Size = 8;
+            printfBuffer.Token = 0;
+            populateKernelDescriptor(info->kernelDescriptor, printfBuffer);
 
             crossThreadOffset += 8;
         }
@@ -489,6 +490,9 @@ class MockParentKernel : public Kernel {
         parent->mockKernelInfo = info;
 
         auto infoBlock = new KernelInfo();
+
+        infoBlock->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+
         SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateDeviceQueueBlock = new SPatchAllocateStatelessDefaultDeviceQueueSurface;
         allocateDeviceQueueBlock->DataParamOffset = crossThreadOffsetBlock;
         allocateDeviceQueueBlock->DataParamSize = 8;
@@ -507,14 +511,13 @@ class MockParentKernel : public Kernel {
 
         crossThreadOffsetBlock += 8;
         if (addPrintfForBlock) {
-            SPatchAllocateStatelessPrintfSurface *printfBufferBlock = new SPatchAllocateStatelessPrintfSurface;
-            printfBufferBlock->DataParamOffset = crossThreadOffsetBlock;
-            printfBufferBlock->DataParamSize = 8;
-            printfBufferBlock->PrintfSurfaceIndex = 0;
-            printfBufferBlock->Size = 8;
-            printfBufferBlock->SurfaceStateHeapOffset = 0;
-            printfBufferBlock->Token = 0;
-            infoBlock->patchInfo.pAllocateStatelessPrintfSurface = printfBufferBlock;
+            SPatchAllocateStatelessPrintfSurface printfBufferBlock = {};
+            printfBufferBlock.DataParamOffset = crossThreadOffsetBlock;
+            printfBufferBlock.DataParamSize = 8;
+            printfBufferBlock.PrintfSurfaceIndex = 0;
+            printfBufferBlock.Size = 8;
+            printfBufferBlock.Token = 0;
+            populateKernelDescriptor(infoBlock->kernelDescriptor, printfBufferBlock);
 
             crossThreadOffsetBlock += 8;
         }
@@ -596,7 +599,6 @@ class MockParentKernel : public Kernel {
             }
             auto &kernelInfo = *pKernelInfo;
             delete kernelInfo.patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
-            delete kernelInfo.patchInfo.pAllocateStatelessPrintfSurface;
             delete kernelInfo.patchInfo.threadPayload;
             delete &kernelInfo;
             BlockKernelManager *blockManager = program->getBlockKernelManager();
@@ -604,7 +606,6 @@ class MockParentKernel : public Kernel {
             for (uint32_t i = 0; i < blockManager->getCount(); i++) {
                 const KernelInfo *blockInfo = blockManager->getBlockKernelInfo(i);
                 delete blockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
-                delete blockInfo->patchInfo.pAllocateStatelessPrintfSurface;
                 delete blockInfo->patchInfo.threadPayload;
                 delete blockInfo->patchInfo.dataParameterStream;
                 delete blockInfo->patchInfo.bindingTableState;

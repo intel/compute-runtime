@@ -517,20 +517,19 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
     auto rootDeviceIndex = device->getRootDeviceIndex();
     MockKernelWithInternals kernel(*device);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
-    SPatchAllocateStatelessPrintfSurface printfSurface;
-    printfSurface.Token = iOpenCL::PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE;
-    printfSurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateStatelessPrintfSurface));
-
-    printfSurface.PrintfSurfaceIndex = 11;
-    printfSurface.SurfaceStateHeapOffset = 0;
-    printfSurface.DataParamOffset = 8;
-    printfSurface.DataParamSize = sizeof(void *);
-
-    kernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &printfSurface;
 
     // define stateless path
     kernel.kernelInfo.usesSsh = false;
     kernel.kernelInfo.requiresSshForBuffers = false;
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+
+    SPatchAllocateStatelessPrintfSurface printfSurface = {};
+    printfSurface.Token = iOpenCL::PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE;
+    printfSurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateStatelessPrintfSurface));
+    printfSurface.PrintfSurfaceIndex = 11;
+    printfSurface.DataParamOffset = 8;
+    printfSurface.DataParamSize = sizeof(void *);
+    populateKernelDescriptor(kernel.kernelInfo.kernelDescriptor, printfSurface);
 
     auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device.get());
 
@@ -540,7 +539,7 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
     auto allocationAddress = printfAllocation->getGpuAddressToPatch();
 
     auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel.mockKernel->getCrossThreadData(rootDeviceIndex)),
-                                        kernel.mockKernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);
+                                        kernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.stateless);
 
     EXPECT_EQ(allocationAddress, *(uintptr_t *)printfPatchAddress);
 
@@ -554,16 +553,15 @@ HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCr
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), rootDeviceIndex));
     MockKernelWithInternals kernel(*device);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
-    SPatchAllocateStatelessPrintfSurface printfSurface;
+
+    SPatchAllocateStatelessPrintfSurface printfSurface = {};
     printfSurface.Token = iOpenCL::PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE;
     printfSurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateStatelessPrintfSurface));
-
     printfSurface.PrintfSurfaceIndex = 22;
     printfSurface.SurfaceStateHeapOffset = 16;
     printfSurface.DataParamOffset = 8;
     printfSurface.DataParamSize = sizeof(void *);
-
-    kernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &printfSurface;
+    populateKernelDescriptor(kernel.kernelInfo.kernelDescriptor, printfSurface);
 
     // define stateful path
     kernel.kernelInfo.usesSsh = true;
@@ -581,7 +579,7 @@ HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCr
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(kernel.mockKernel->getSurfaceStateHeap(device->getRootDeviceIndex()),
-                  kernel.mockKernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface->SurfaceStateHeapOffset));
+                  kernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(allocationAddress, surfaceAddress);
@@ -596,17 +594,17 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         auto rootDeviceIndex = device->getRootDeviceIndex();
         MockKernelWithInternals kernel(*device);
+        kernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+
         MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
-        SPatchAllocateStatelessPrintfSurface printfSurface;
+
+        SPatchAllocateStatelessPrintfSurface printfSurface = {};
         printfSurface.Token = iOpenCL::PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE;
         printfSurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateStatelessPrintfSurface));
-
         printfSurface.PrintfSurfaceIndex = 33;
-        printfSurface.SurfaceStateHeapOffset = 0x1FF0;
         printfSurface.DataParamOffset = 0;
         printfSurface.DataParamSize = 4;
-
-        kernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &printfSurface;
+        populateKernelDescriptor(kernel.kernelInfo.kernelDescriptor, printfSurface);
 
         auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device.get());
 

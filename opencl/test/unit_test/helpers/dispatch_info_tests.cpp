@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,12 +31,16 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
         ContextFixture::SetUp(1, &device);
         pKernelInfo = std::make_unique<KernelInfo>();
 
+        pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+
         pMediaVFEstate = new SPatchMediaVFEState();
         pMediaVFEstate->PerThreadScratchSpace = 1024;
         pMediaVFEstate->ScratchSpaceOffset = 0;
         pKernelInfo->patchInfo.mediavfestate = pMediaVFEstate;
-        pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
-        pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
+
+        SPatchAllocateStatelessPrintfSurface printfSurface = {};
+        populateKernelDescriptor(pKernelInfo->kernelDescriptor, printfSurface);
+
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
         pKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
@@ -44,7 +48,6 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
     }
     void TearDown() override {
         delete pKernel;
-        delete pPrintfSurface;
         delete pMediaVFEstate;
         delete pProgram;
 
@@ -54,7 +57,6 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
 
     std::unique_ptr<KernelInfo> pKernelInfo;
     SPatchMediaVFEState *pMediaVFEstate = nullptr;
-    SPatchAllocateStatelessPrintfSurface *pPrintfSurface = nullptr;
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;
 };

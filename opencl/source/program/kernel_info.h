@@ -115,9 +115,7 @@ struct KernelInfo {
     void storePatchToken(const SPatchAllocateStatelessPrivateSurface *pStatelessPrivateSurfaceArg);
     void storePatchToken(const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization *pStatelessConstantMemorySurfaceWithInitializationArg);
     void storePatchToken(const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization *pStatelessGlobalMemorySurfaceWithInitializationArg);
-    void storePatchToken(const SPatchAllocateStatelessPrintfSurface *pStatelessPrintfSurfaceArg);
     void storePatchToken(const SPatchAllocateStatelessDefaultDeviceQueueSurface *pStatelessDefaultDeviceQueueSurfaceArg);
-    void storePatchToken(const SPatchString *pStringArg);
     void storePatchToken(const SPatchKernelAttributesInfo *pKernelAttributesInfo);
     void storePatchToken(const SPatchAllocateSystemThreadSurface *pSystemThreadSurface);
     void storePatchToken(const SPatchAllocateSyncBuffer *pAllocateSyncBuffer);

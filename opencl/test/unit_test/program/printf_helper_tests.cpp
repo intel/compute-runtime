@@ -55,7 +55,7 @@ class PrintFormatterTest : public testing::Test {
         program = std::make_unique<MockProgram>(toClDeviceVector(*device));
         kernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex));
 
-        printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, is32bit, kernelInfo->patchInfo.stringDataMap));
+        printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, is32bit, kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
 
         underlyingBuffer[0] = 0;
         underlyingBuffer[1] = 0;
@@ -141,7 +141,7 @@ class PrintFormatterTest : public testing::Test {
         memcpy_s(pPrintfString, sizeof(SPatchString), &printfString, sizeof(SPatchString));
         memcpy_s((cl_char *)pPrintfString + sizeof(printfString), strSize, str.c_str(), strSize);
 
-        kernelInfo->storePatchToken(reinterpret_cast<SPatchString *>(pPrintfString));
+        populateKernelDescriptor(kernelInfo->kernelDescriptor, *reinterpret_cast<SPatchString *>(pPrintfString));
 
         delete[] pPrintfString;
         return printfString.Index;
@@ -274,7 +274,7 @@ TEST_P(PrintfUint32Test, GivenFormatContainingUintWhenPrintingThenValueIsInserte
 
 TEST_P(PrintfUint32Test, GivenBufferSizeGreaterThanPrintBufferWhenPrintingThenBufferIsTrimmed) {
     auto input = GetParam();
-    printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), 0, is32bit, kernelInfo->patchInfo.stringDataMap));
+    printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), 0, is32bit, kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
 
     auto stringIndex = injectFormatString(input.format);
     storeData(stringIndex);
@@ -822,7 +822,7 @@ TEST_F(PrintFormatterTest, GivenPointerWhenPrintingThenValueIsInserted) {
 }
 
 TEST_F(PrintFormatterTest, GivenPointerWith32BitKernelWhenPrintingThen32BitPointerIsPrinted) {
-    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true, kernelInfo->patchInfo.stringDataMap));
+    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true, kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
     auto stringIndex = injectFormatString("%p");
     storeData(stringIndex);
     kernelInfo->gpuPointerSize = 4;

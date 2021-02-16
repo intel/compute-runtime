@@ -1996,7 +1996,7 @@ void Kernel::getParentObjectCounts(ObjectCounts &objectCount) {
 }
 
 bool Kernel::hasPrintfOutput(uint32_t rootDeviceIndex) const {
-    return getKernelInfo(rootDeviceIndex).patchInfo.pAllocateStatelessPrintfSurface != nullptr;
+    return getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.flags.usesPrintf;
 }
 
 size_t Kernel::getInstructionHeapSizeForExecutionModel() const {

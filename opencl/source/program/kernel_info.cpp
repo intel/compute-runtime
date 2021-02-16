@@ -179,7 +179,6 @@ void WorkSizeInfo::checkRatio(const size_t workItems[3]) {
 KernelInfo::~KernelInfo() {
     kernelArgInfo.clear();
 
-    patchInfo.stringDataMap.clear();
     delete[] crossThreadData;
 }
 
@@ -315,22 +314,9 @@ void KernelInfo::storePatchToken(const SPatchAllocateStatelessGlobalMemorySurfac
     patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization = pStatelessGlobalMemorySurfaceWithInitializationArg;
 }
 
-void KernelInfo::storePatchToken(const SPatchAllocateStatelessPrintfSurface *pStatelessPrintfSurfaceArg) {
-    usesSsh |= true;
-    patchInfo.pAllocateStatelessPrintfSurface = pStatelessPrintfSurfaceArg;
-}
-
 void KernelInfo::storePatchToken(const SPatchAllocateStatelessDefaultDeviceQueueSurface *pStatelessDefaultDeviceQueueSurfaceArg) {
     usesSsh |= true;
     patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = pStatelessDefaultDeviceQueueSurfaceArg;
-}
-
-void KernelInfo::storePatchToken(const SPatchString *pStringArg) {
-    uint32_t stringIndex = pStringArg->Index;
-    if (pStringArg->StringSize > 0) {
-        const char *stringData = reinterpret_cast<const char *>(pStringArg + 1);
-        patchInfo.stringDataMap.emplace(stringIndex, std::string(stringData, stringData + pStringArg->StringSize));
-    }
 }
 
 void KernelInfo::storePatchToken(const SPatchKernelAttributesInfo *pKernelAttributesInfo) {

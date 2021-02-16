@@ -67,10 +67,8 @@ struct PatchInfo {
     const SPatchAllocateSyncBuffer *pAllocateSyncBuffer = nullptr;
     const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization *pAllocateStatelessConstantMemorySurfaceWithInitialization = nullptr;
     const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization *pAllocateStatelessGlobalMemorySurfaceWithInitialization = nullptr;
-    const SPatchAllocateStatelessPrintfSurface *pAllocateStatelessPrintfSurface = nullptr;
     const SPatchAllocateStatelessDefaultDeviceQueueSurface *pAllocateStatelessDefaultDeviceQueueSurface = nullptr;
     const SPatchAllocateSystemThreadSurface *pAllocateSystemThreadSurface = nullptr;
-    ::std::unordered_map<uint32_t, std::string> stringDataMap;
 };
 
 } // namespace NEO

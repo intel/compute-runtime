@@ -437,7 +437,6 @@ TEST(PatchInfo, WhenPatchInfoIsCreatedThenMembersAreNullptr) {
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessPrivateSurface);
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization);
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization);
-    EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessPrintfSurface);
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessDefaultDeviceQueueSurface);
 }
 

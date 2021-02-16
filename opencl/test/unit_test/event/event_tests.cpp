@@ -560,17 +560,19 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
-    SPatchAllocateStatelessPrintfSurface *pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
-    pPrintfSurface->DataParamOffset = 0;
-    pPrintfSurface->DataParamSize = 8;
-
     std::string testString = "test";
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
     KernelInfo *kernelInfo = const_cast<KernelInfo *>(&pKernel->getKernelInfo(rootDeviceIndex));
-    kernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
-    kernelInfo->patchInfo.stringDataMap.insert(std::make_pair(0, testString));
+    kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+
+    SPatchAllocateStatelessPrintfSurface sPatchPrintfSurface = {};
+    sPatchPrintfSurface.DataParamOffset = 0;
+    sPatchPrintfSurface.DataParamSize = 8;
+    populateKernelDescriptor(kernelInfo->kernelDescriptor, sPatchPrintfSurface);
+    kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(0, testString));
+
     uint64_t crossThread[10];
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
@@ -595,8 +597,6 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ("test", output.c_str());
     EXPECT_FALSE(surface->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
-
-    delete pPrintfSurface;
 }
 
 TEST_F(InternalsEventTest, GivenMapOperationWhenSubmittingCommandsThenTaskLevelIsIncremented) {

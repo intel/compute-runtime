@@ -32,13 +32,16 @@ void Kernel::patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printf
         uint32_t defaultQueueSize = pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface ? 
             pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamSize : 0;
         uint32_t deviceQueueSize = 0;
-
-        uint64_t printfBufferOffset = pBlockInfo->patchInfo.pAllocateStatelessPrintfSurface ?
-            pBlockInfo->patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset : ReflectionSurfaceHelper::undefinedOffset;
-        uint32_t printfBufferPatchSize = pBlockInfo->patchInfo.pAllocateStatelessPrintfSurface ?
-            pBlockInfo->patchInfo.pAllocateStatelessPrintfSurface->DataParamSize : 0;
-        uint64_t printfGpuAddress = 0;
         // clang-format on
+
+        uint64_t printfBufferOffset = ReflectionSurfaceHelper::undefinedOffset;
+        uint32_t printfBufferPatchSize = 0U;
+        const auto &printfSurface = pBlockInfo->kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
+        if (isValidOffset(printfSurface.stateless)) {
+            printfBufferOffset = printfSurface.stateless;
+            printfBufferPatchSize = printfSurface.pointerSize;
+        }
+        uint64_t printfGpuAddress = 0;
 
         uint64_t eventPoolOffset = ReflectionSurfaceHelper::undefinedOffset;
         uint32_t eventPoolSize = 0U;

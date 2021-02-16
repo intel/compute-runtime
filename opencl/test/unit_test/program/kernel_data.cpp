@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,7 @@ TEST_F(KernelDataTest, GivenPrintfStringWhenBuildingThenProgramIsCorrect) {
 
     buildAndDecode();
 
-    EXPECT_EQ_VAL(0, strcmp(stringValue, pKernelInfo->patchInfo.stringDataMap.find(0)->second.c_str()));
+    EXPECT_EQ_VAL(0, strcmp(stringValue, pKernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap.find(0)->second.c_str()));
     delete[] pPrintfString;
 }
 
@@ -1243,19 +1243,17 @@ TEST_F(KernelDataTest, GivenPatchTokenAllocateStatelessPrintfSurfaceWhenBuilding
     printfSurface.PrintfSurfaceIndex = 33;
     printfSurface.SurfaceStateHeapOffset = 0x1FF0;
     printfSurface.DataParamOffset = 0x3FF0;
-    printfSurface.DataParamSize = 0x1000;
+    printfSurface.DataParamSize = 0xFF;
 
     pPatchList = &printfSurface;
     patchListSize = printfSurface.Size;
 
     buildAndDecode();
 
-    ASSERT_NE(nullptr, pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface);
-
-    EXPECT_EQ(printfSurface.PrintfSurfaceIndex, pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface->PrintfSurfaceIndex);
-    EXPECT_EQ(printfSurface.SurfaceStateHeapOffset, pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface->SurfaceStateHeapOffset);
-    EXPECT_EQ(printfSurface.DataParamOffset, pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);
-    EXPECT_EQ(printfSurface.DataParamSize, pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface->DataParamSize);
+    EXPECT_TRUE(pKernelInfo->kernelDescriptor.kernelAttributes.flags.usesPrintf);
+    EXPECT_EQ(printfSurface.SurfaceStateHeapOffset, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.bindful);
+    EXPECT_EQ(printfSurface.DataParamOffset, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.stateless);
+    EXPECT_EQ(printfSurface.DataParamSize, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.pointerSize);
 }
 
 TEST_F(KernelDataTest, GivenPatchTokenSamplerStateArrayWhenBuildingThenProgramIsCorrect) {
