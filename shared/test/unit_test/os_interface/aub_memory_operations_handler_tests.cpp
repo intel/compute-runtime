@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThe
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     auto result = memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
-    EXPECT_TRUE(aubManager.writeMemoryCalled);
+    EXPECT_TRUE(aubManager.writeMemory2Called);
 }
 
 TEST_F(AubMemoryOperationsHandlerTests, givenAllocationWhenMakeResidentCalledThenTraceNotypeHintReturned) {

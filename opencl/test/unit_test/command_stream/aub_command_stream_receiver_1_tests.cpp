@@ -1269,7 +1269,7 @@ HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithC
     aubCsr->setupContext(*osContext);
 
     aubCsr->writeMemoryWithAubManager(*allocation);
-    EXPECT_TRUE(aubManager.writeMemoryCalled);
+    EXPECT_TRUE(aubManager.writeMemory2Called);
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceBatchBuffer, aubManager.hintToWriteMemory);
 
     aubManager.writeMemoryCalled = false;
@@ -1277,7 +1277,7 @@ HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithC
     auto allocation2 = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
 
     aubCsr->writeMemoryWithAubManager(*allocation2);
-    EXPECT_TRUE(aubManager.writeMemoryCalled);
+    EXPECT_TRUE(aubManager.writeMemory2Called);
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceNotype, aubManager.hintToWriteMemory);
 
     executionEnvironment->memoryManager->freeGraphicsMemory(allocation);
@@ -1310,13 +1310,13 @@ TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenSubmitMethodIsCall
     auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
 
     EXPECT_FALSE(mockHwContext0->writeAndSubmitCalled);
-    EXPECT_FALSE(mockHwContext0->writeMemoryCalled);
+    EXPECT_FALSE(mockHwContext0->writeMemory2Called);
 
     hwContextContainer.submit(1, reinterpret_cast<const void *>(0x123), 2, 0, 1, false);
 
     EXPECT_TRUE(mockHwContext0->submitCalled);
     EXPECT_FALSE(mockHwContext0->writeAndSubmitCalled);
-    EXPECT_FALSE(mockHwContext0->writeMemoryCalled);
+    EXPECT_FALSE(mockHwContext0->writeMemory2Called);
 }
 
 TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenWriteMemoryIsCalledThenWholeMemoryBanksArePassed) {
@@ -1328,9 +1328,10 @@ TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenWriteMemoryIsCalle
 
     auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
 
-    hwContextContainer.writeMemory(1, reinterpret_cast<const void *>(0x123), 2, 3u, 4, 5);
+    aub_stream::AllocationParams params(1, reinterpret_cast<const void *>(0x123), 2, 3u, 4, 5);
+    hwContextContainer.writeMemory(params);
 
-    EXPECT_TRUE(mockHwContext0->writeMemoryCalled);
+    EXPECT_TRUE(mockHwContext0->writeMemory2Called);
     EXPECT_EQ(3u, mockHwContext0->memoryBanksPassed);
 }
 
@@ -1353,13 +1354,17 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     EXPECT_FALSE(mockHwContext0->submitCalled);
     EXPECT_FALSE(mockHwContext1->submitCalled);
     EXPECT_FALSE(mockHwContext0->writeMemoryCalled);
+    EXPECT_FALSE(mockHwContext0->writeMemory2Called);
     EXPECT_FALSE(mockHwContext1->writeMemoryCalled);
+    EXPECT_FALSE(mockHwContext1->writeMemory2Called);
+
+    aub_stream::AllocationParams params(1, reinterpret_cast<const void *>(0x123), 2, 3u, 4, 5);
 
     hwContextContainer.initialize();
     hwContextContainer.pollForCompletion();
     hwContextContainer.expectMemory(1, reinterpret_cast<const void *>(0x123), 2, 0);
     hwContextContainer.submit(1, reinterpret_cast<const void *>(0x123), 2, 0, 1, false);
-    hwContextContainer.writeMemory(1, reinterpret_cast<const void *>(0x123), 2, 3u, 4, 5);
+    hwContextContainer.writeMemory(params);
 
     EXPECT_TRUE(mockHwContext0->initializeCalled);
     EXPECT_TRUE(mockHwContext1->initializeCalled);
@@ -1369,8 +1374,10 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     EXPECT_TRUE(mockHwContext1->expectMemoryCalled);
     EXPECT_TRUE(mockHwContext0->submitCalled);
     EXPECT_TRUE(mockHwContext1->submitCalled);
-    EXPECT_TRUE(mockHwContext0->writeMemoryCalled);
-    EXPECT_TRUE(mockHwContext1->writeMemoryCalled);
+    EXPECT_FALSE(mockHwContext0->writeMemoryCalled);
+    EXPECT_TRUE(mockHwContext0->writeMemory2Called);
+    EXPECT_FALSE(mockHwContext1->writeMemoryCalled);
+    EXPECT_TRUE(mockHwContext1->writeMemory2Called);
     EXPECT_EQ(1u, mockHwContext0->memoryBanksPassed);
     EXPECT_EQ(2u, mockHwContext1->memoryBanksPassed);
 }

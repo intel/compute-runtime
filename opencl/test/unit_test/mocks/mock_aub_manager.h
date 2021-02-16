@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "third_party/aub_stream/headers/allocation_params.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 #include "third_party/aub_stream/headers/hardware_context.h"
@@ -26,6 +27,11 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
         writeMemoryPageSizePassed = pageSize;
         memoryBanksPassed = memoryBanks;
     }
+    void writeMemory2(aub_stream::AllocationParams allocationParams) override {
+        writeMemory2Called = true;
+        writeMemoryPageSizePassed = allocationParams.pageSize;
+        memoryBanksPassed = allocationParams.memoryBanks;
+    }
     void freeMemory(uint64_t gfxAddress, size_t size) override { freeMemoryCalled = true; }
     void expectMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t compareOperation) override { expectMemoryCalled = true; }
     void readMemory(uint64_t gfxAddress, void *memory, size_t size, uint32_t memoryBank, size_t pageSize) override { readMemoryCalled = true; }
@@ -37,6 +43,7 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     bool writeAndSubmitCalled = false;
     bool submitCalled = false;
     bool writeMemoryCalled = false;
+    bool writeMemory2Called = false;
     bool freeMemoryCalled = false;
     bool expectMemoryCalled = false;
     bool readMemoryCalled = false;
@@ -103,6 +110,12 @@ class MockAubManager : public aub_stream::AubManager {
         writeMemoryPageSizePassed = pageSize;
     }
 
+    void writeMemory2(aub_stream::AllocationParams allocationParams) override {
+        writeMemory2Called = true;
+        hintToWriteMemory = allocationParams.hint;
+        writeMemoryPageSizePassed = allocationParams.pageSize;
+    }
+
     void writePageTableEntries(uint64_t gfxAddress, size_t size, uint32_t memoryBanks, int hint,
                                std::vector<PageInfo> &lastLevelPages, size_t pageSize) override {
         writePageTableEntriesCalled = true;
@@ -125,6 +138,7 @@ class MockAubManager : public aub_stream::AubManager {
     bool addCommentCalled = false;
     std::string receivedComment = "";
     bool writeMemoryCalled = false;
+    bool writeMemory2Called = false;
     bool writePageTableEntriesCalled = false;
     bool writePhysicalMemoryPagesCalled = false;
     bool freeMemoryCalled = false;

@@ -6,11 +6,12 @@
  */
 
 #pragma once
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 namespace aub_stream {
 
+struct AllocationParams;
 struct SurfaceInfo;
 
 struct HardwareContext {
@@ -25,6 +26,7 @@ struct HardwareContext {
     virtual void dumpBufferBIN(uint64_t gfxAddress, size_t size) = 0;
     virtual void dumpSurface(const SurfaceInfo &surfaceInfo) = 0;
     virtual ~HardwareContext() = default;
+    virtual void writeMemory2(AllocationParams allocationParams) = 0;
 };
 
 } // namespace aub_stream

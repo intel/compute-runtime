@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "shared/source/memory_manager/physical_address_allocator.h"
 
 #include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"
+
+#include "third_party/aub_stream/headers/allocation_params.h"
 
 namespace NEO {
 class GraphicsAllocation;
@@ -55,8 +57,10 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
                        ? AubMemDump::DataTypeHintValues::TraceBatchBuffer
                        : AubMemDump::DataTypeHintValues::TraceNotype;
 
-        auto pageSize = graphicsAllocation.getUsedPageSize();
-        this->aubManager->writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&graphicsAllocation), hint, pageSize);
+        aub_stream::AllocationParams allocationParams(gpuAddress, cpuAddress, size, this->getMemoryBank(&graphicsAllocation),
+                                                      hint, graphicsAllocation.getUsedPageSize());
+
+        this->aubManager->writeMemory2(allocationParams);
     }
 
     void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation) override {
