@@ -959,10 +959,20 @@ VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, Wd
     }
     return nullptr;
 }
+bool Wddm::isShutdownInProgress() {
+    auto handle = GetModuleHandleA("ntdll.dll");
+
+    if (!handle) {
+        return true;
+    }
+
+    auto RtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
+    return RtlDllShutdownInProgress();
+}
 
 void Wddm::unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, VOID *trimCallbackHandle) {
     DEBUG_BREAK_IF(callback == nullptr);
-    if (trimCallbackHandle == nullptr) {
+    if (trimCallbackHandle == nullptr || isShutdownInProgress()) {
         return;
     }
     D3DKMT_UNREGISTERTRIMNOTIFICATION unregisterTrimNotification;

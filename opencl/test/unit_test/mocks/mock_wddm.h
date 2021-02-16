@@ -118,6 +118,10 @@ class WddmMock : public Wddm {
         return Wddm::verifySharedHandle(osHandle);
     }
 
+    bool isShutdownInProgress() override {
+        return shutdownStatus;
+    };
+
     void resetGdi(Gdi *gdi);
 
     WddmMockHelpers::MakeResidentCall makeResidentResult;
@@ -158,6 +162,7 @@ class WddmMock : public Wddm {
     bool makeResidentStatus = true;
     bool callBaseMakeResident = true;
     bool callBaseCreatePagingLogger = true;
+    bool shutdownStatus = false;
 };
 
 struct GmockWddm : WddmMock {

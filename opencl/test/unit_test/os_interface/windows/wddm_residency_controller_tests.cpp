@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -260,6 +260,16 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenWddmResidencyControllerWhenItIsD
 
     EXPECT_EQ(trimCallbackAddress, gdi->getUnregisterTrimNotificationArg().Callback);
     EXPECT_EQ(trimCallbackHandle, gdi->getUnregisterTrimNotificationArg().Handle);
+}
+
+TEST_F(WddmResidencyControllerWithGdiTest, givenWddmResidencyControllerWhenItIsDestructedDuringProcessShutdownThenDontUnregisterTrimCallback) {
+    wddm->shutdownStatus = true;
+
+    std::memset(&gdi->getUnregisterTrimNotificationArg(), 0, sizeof(D3DKMT_UNREGISTERTRIMNOTIFICATION));
+    mockOsContextWin.reset();
+
+    EXPECT_EQ(nullptr, gdi->getUnregisterTrimNotificationArg().Callback);
+    EXPECT_EQ(nullptr, gdi->getUnregisterTrimNotificationArg().Handle);
 }
 
 TEST_F(WddmResidencyControllerTest, givenUsedAllocationWhenCallingRemoveFromTrimCandidateListIfUsedThenRemoveIt) {

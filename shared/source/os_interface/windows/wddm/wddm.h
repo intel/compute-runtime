@@ -90,6 +90,8 @@ class Wddm {
     MOCKABLE_VIRTUAL void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type);
     MOCKABLE_VIRTUAL int virtualFree(void *ptr, size_t size, unsigned long flags);
 
+    MOCKABLE_VIRTUAL bool isShutdownInProgress();
+
     bool configureDeviceAddressSpace();
 
     GT_SYSTEM_INFO *getGtSysInfo() const {
