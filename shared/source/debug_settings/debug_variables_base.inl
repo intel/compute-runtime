@@ -222,7 +222,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PreferCopyEngineForCopyBufferToBuffer, -1, "-1: 
 DECLARE_DEBUG_VARIABLE(int64_t, ForceSystemMemoryPlacement, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force system memory placement")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceNonSystemMemoryPlacement, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force non-system memory placement")
 DECLARE_DEBUG_VARIABLE(int64_t, DisableIndirectAccess, -1, "0: default,  0: Indirect access for L0 kernels is enabled, 1: Read IGC experimental properties to determine whether indirect access is required")
-DECLARE_DEBUG_VARIABLE(int32_t, UseVmBind, -1, "Use new residency model on Linux (requires kernel support), -1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, UseVmBind, 0, "Use new residency model on Linux (requires kernel support), -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "With this flag on, max workgroup size is deduced using SIMD32 instead of SIMD8, this causes the max wkg size to be 4 times bigger")
 DECLARE_DEBUG_VARIABLE(bool, ReturnRawGpuTimestamps, false, "Driver returns raw GPU tiemstamps instead of calculated ones.")
 DECLARE_DEBUG_VARIABLE(bool, ForcePerDssBackedBufferProgramming, false, "Always program per-DSS memory backed buffer in preamble")
