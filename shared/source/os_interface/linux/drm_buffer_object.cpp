@@ -71,6 +71,10 @@ bool BufferObject::close() {
 }
 
 int BufferObject::wait(int64_t timeoutNs) {
+    if (this->drm->isDirectSubmissionActive()) {
+        return 0;
+    }
+
     drm_i915_gem_wait wait = {};
     wait.bo_handle = this->handle;
     wait.timeout_ns = -1;

@@ -92,5 +92,5 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenDestructObjectThen
     drm->ioctlCallsCount = 0u;
     drmDirectSubmission.reset();
 
-    EXPECT_EQ(drm->ioctlCallsCount, 7u);
+    EXPECT_EQ(drm->ioctlCallsCount, 3u);
 }

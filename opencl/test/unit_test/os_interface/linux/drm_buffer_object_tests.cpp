@@ -111,6 +111,13 @@ TEST_F(DrmBufferObjectTest, GivenInvalidTilingWhenSettingTilingThenCallFails) {
     EXPECT_FALSE(ret);
 }
 
+TEST_F(DrmBufferObjectTest, givenDirectSubmissionActiveWhenCallWaitThenNoIoctlIsCalled) {
+    mock->setDirectSubmissionActive(true);
+    mock->ioctl_expected.total = 0;
+    auto ret = bo->wait(-1);
+    EXPECT_FALSE(ret);
+}
+
 TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedCrosses32BitBoundaryWhenExecIsCalledThen48BitFlagIsSet) {
     drm_i915_gem_exec_object2 execObject;
 
