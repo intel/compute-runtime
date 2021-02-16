@@ -29,7 +29,7 @@ bool requestedFatBinary(const std::vector<std::string> &args) {
         const bool hasMoreArgs = (argIndex + 1 < args.size());
         if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
             ConstStringRef deviceArg(args[argIndex + 1]);
-            return deviceArg.contains("*") || deviceArg.contains("-") || deviceArg.contains(",") || deviceArg.containsCaseInsensitive("gen");
+            return deviceArg.contains("*") || deviceArg.contains("-") || deviceArg.contains(",") || deviceArg.containsCaseInsensitive("gen") || deviceArg.startsWith("XE_");
         }
     }
     return false;
@@ -197,7 +197,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
                     requestedPlatforms.insert(requestedPlatforms.end(), from, to);
                 }
             }
-        } else if (set.containsCaseInsensitive("gen")) {
+        } else if (set.containsCaseInsensitive("gen") || deviceArg.startsWith("XE_")) {
             if (set.size() == genArg.size()) {
                 argHelper->printf("Invalid gen-based device : %s - gen should be followed by a number\n", set.str().c_str());
             } else {
