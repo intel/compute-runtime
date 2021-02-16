@@ -1272,7 +1272,7 @@ HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithC
     EXPECT_TRUE(aubManager.writeMemory2Called);
     EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceBatchBuffer, aubManager.hintToWriteMemory);
 
-    aubManager.writeMemoryCalled = false;
+    aubManager.writeMemory2Called = false;
 
     auto allocation2 = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
 
@@ -1353,9 +1353,7 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     EXPECT_FALSE(mockHwContext1->expectMemoryCalled);
     EXPECT_FALSE(mockHwContext0->submitCalled);
     EXPECT_FALSE(mockHwContext1->submitCalled);
-    EXPECT_FALSE(mockHwContext0->writeMemoryCalled);
     EXPECT_FALSE(mockHwContext0->writeMemory2Called);
-    EXPECT_FALSE(mockHwContext1->writeMemoryCalled);
     EXPECT_FALSE(mockHwContext1->writeMemory2Called);
 
     aub_stream::AllocationParams params(1, reinterpret_cast<const void *>(0x123), 2, 3u, 4, 5);
@@ -1374,9 +1372,7 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     EXPECT_TRUE(mockHwContext1->expectMemoryCalled);
     EXPECT_TRUE(mockHwContext0->submitCalled);
     EXPECT_TRUE(mockHwContext1->submitCalled);
-    EXPECT_FALSE(mockHwContext0->writeMemoryCalled);
     EXPECT_TRUE(mockHwContext0->writeMemory2Called);
-    EXPECT_FALSE(mockHwContext1->writeMemoryCalled);
     EXPECT_TRUE(mockHwContext1->writeMemory2Called);
     EXPECT_EQ(1u, mockHwContext0->memoryBanksPassed);
     EXPECT_EQ(2u, mockHwContext1->memoryBanksPassed);
