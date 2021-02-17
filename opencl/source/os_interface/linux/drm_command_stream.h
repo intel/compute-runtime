@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     MOCKABLE_VIRTUAL void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
+    bool isAnyDirectSubmissionActive() override;
 
     DrmMemoryManager *getMemoryManager() const;
     GmmPageTableMngr *createPageTableManager() override;

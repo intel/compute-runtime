@@ -175,4 +175,9 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSta
     return true;
 }
 
+template <typename GfxFamily>
+bool DrmCommandStreamReceiver<GfxFamily>::isAnyDirectSubmissionActive() {
+    return this->drm->isDirectSubmissionActive();
+}
+
 } // namespace NEO

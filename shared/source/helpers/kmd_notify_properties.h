@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,8 @@ class KmdNotifyHelper {
                              uint32_t currentHwTag,
                              uint32_t taskCountToWait,
                              FlushStamp flushStampToWait,
-                             bool forcePowerSavingMode);
+                             bool forcePowerSavingMode,
+                             bool directSubmissionActive);
 
     bool quickKmdSleepForSporadicWaitsEnabled() const { return properties->enableQuickKmdSleepForSporadicWaits; }
     MOCKABLE_VIRTUAL void updateLastWaitForCompletionTimestamp();

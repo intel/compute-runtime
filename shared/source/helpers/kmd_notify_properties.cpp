@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,13 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
                                           uint32_t currentHwTag,
                                           uint32_t taskCountToWait,
                                           FlushStamp flushStampToWait,
-                                          bool forcePowerSavingMode) {
+                                          bool forcePowerSavingMode,
+                                          bool directSubmissionActive) {
     if (flushStampToWait == 0) {
+        return false;
+    }
+
+    if (directSubmissionActive) {
         return false;
     }
 

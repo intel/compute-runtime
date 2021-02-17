@@ -298,7 +298,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffLowerThanMinimumToCheckAcLineWhenObtain
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
     int64_t timeout = 0;
-    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false);
+    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, false);
 
     EXPECT_EQ(0u, helper.updateAcLineStatusCalled);
 }
@@ -313,9 +313,19 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndDisab
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
     int64_t timeout = 0;
-    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false);
+    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, false);
 
     EXPECT_EQ(1u, helper.updateAcLineStatusCalled);
+}
+
+TEST_F(KmdNotifyTests, givenEnableDirectSubmissionWhenObtainTimeoutParamsThenFalseIsReturned) {
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
+
+    int64_t timeout = 0;
+    auto enableTimeout = helper.obtainTimeoutParams(timeout, false, 1, 1, 1, false, true);
+
+    EXPECT_FALSE(enableTimeout);
+    EXPECT_FALSE(timeout);
 }
 
 TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndEnabledKmdNotifyWhenObtainingTimeoutPropertiesThenDontCheck) {
@@ -328,7 +338,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndEnabl
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
     int64_t timeout = 0;
-    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false);
+    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, false);
 
     EXPECT_EQ(0u, helper.updateAcLineStatusCalled);
 }
@@ -339,7 +349,7 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenAcLineIsDisconnectedTh
     helper.acLineConnected = false;
 
     int64_t timeout = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false, false);
 
     EXPECT_TRUE(timeoutEnabled);
     EXPECT_EQ(KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine, timeout);
@@ -353,7 +363,7 @@ TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenAcLineIsDisconnectedThe
     helper.acLineConnected = false;
 
     int64_t timeout = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false, false);
 
     EXPECT_TRUE(timeoutEnabled);
     EXPECT_EQ(hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, timeout);
@@ -366,7 +376,7 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismAndFlushStampIsZeroWhenAcL
 
     int64_t timeout = 0;
     FlushStamp flushStampToWait = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, false);
 
     EXPECT_FALSE(timeoutEnabled);
 }
@@ -380,7 +390,7 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsSetTh
 
     int64_t timeout = 0;
     FlushStamp flushStampToWait = 1;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, false);
     EXPECT_TRUE(timeoutEnabled);
     EXPECT_EQ(1, timeout);
 }
@@ -391,7 +401,7 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsReque
 
     int64_t timeout = 0;
     FlushStamp flushStampToWait = 1;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, true);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, true, false);
     EXPECT_TRUE(timeoutEnabled);
     EXPECT_EQ(1, timeout);
 }
@@ -405,7 +415,7 @@ TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenPowerSavingModeIsSetAnd
 
     int64_t timeout = 0;
     FlushStamp flushStampToWait = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false);
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, false);
     EXPECT_FALSE(timeoutEnabled);
     EXPECT_EQ(0, timeout);
 }
