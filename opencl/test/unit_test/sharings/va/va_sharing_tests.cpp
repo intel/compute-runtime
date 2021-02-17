@@ -5,15 +5,21 @@
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/va/cl_va_api.h"
+#include "opencl/source/sharings/va/va_device.h"
 #include "opencl/source/sharings/va/va_sharing.h"
 #include "opencl/source/sharings/va/va_surface.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
@@ -22,9 +28,13 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
+#include "test.h"
 
 #include "gtest/gtest.h"
+
+#include <va/va_backend.h>
 
 using namespace NEO;
 
@@ -554,19 +564,6 @@ TEST_F(VaSharingTests, givenContextWhenSharingTableEmptyThenReturnsNullptr) {
     context.clearSharingFunctions();
     VASharingFunctions *sharingF = context.getSharing<VASharingFunctions>();
     EXPECT_EQ(sharingF, nullptr);
-}
-
-TEST_F(VaSharingTests, givenValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCalledThenReturnFirstDevice) {
-    cl_device_id devices = 0;
-    cl_uint numDevices = 0;
-
-    cl_platform_id platformId = this->pPlatform;
-
-    auto errCode = clGetDeviceIDsFromVA_APIMediaAdapterINTEL(platformId, 0u, nullptr, 0u, 1, &devices, &numDevices);
-    EXPECT_EQ(CL_SUCCESS, errCode);
-    EXPECT_EQ(1u, numDevices);
-    EXPECT_NE(nullptr, platform()->getClDevice(0));
-    EXPECT_EQ(platform()->getClDevice(0), devices);
 }
 
 TEST_F(VaSharingTests, givenInValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCalledThenReturnFirstDevice) {
@@ -1226,4 +1223,173 @@ TEST_F(VaSharingTests, givenPlaneArgumentEquals2WithoutNoProperFormatsThenReturn
         &numImageFormats);
 
     EXPECT_EQ(result, CL_SUCCESS);
+}
+
+class VaDeviceTests : public Test<PlatformFixture> {
+  public:
+    VaDeviceTests() {
+        ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    }
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
+};
+
+TEST_F(VaDeviceTests, givenVADeviceWhenGetDeviceFromVAIsCalledThenRootDeviceIsReturned) {
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *(int *)contextPtr->drm_state = 1;
+
+    auto device = pPlatform->getClDevice(0);
+    NEO::Device *neoDevice = &device->getDevice();
+
+    auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->get()->getDrm());
+    mockDrm->setPciPath("00:02.0");
+
+    VADevice vaDevice{};
+    auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
+    EXPECT_NE(clDevice, nullptr);
+}
+
+TEST_F(VaDeviceTests, givenVADeviceAndInvalidPciPathOfClDeviceWhenGetDeviceFromVAIsCalledThenNullptrIsReturned) {
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *(int *)contextPtr->drm_state = 1;
+
+    auto device = pPlatform->getClDevice(0);
+    NEO::Device *neoDevice = &device->getDevice();
+
+    auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->get()->getDrm());
+    mockDrm->setPciPath("00:00.0");
+
+    VADevice vaDevice{};
+    auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
+    EXPECT_EQ(clDevice, nullptr);
+}
+
+TEST_F(VaDeviceTests, givenVADeviceAndInvalidFDWhenGetDeviceFromVAIsCalledThenNullptrIsReturned) {
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *(int *)contextPtr->drm_state = 0;
+
+    VADevice vaDevice{};
+    auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
+    EXPECT_EQ(clDevice, nullptr);
+}
+
+TEST_F(VaDeviceTests, givenVADeviceAndInvalidMagicNumberWhenGetDeviceFromVAIsCalledThenUnrecoverableIsCalled) {
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x0;
+
+    VADevice vaDevice{};
+    EXPECT_ANY_THROW(vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get()));
+}
+
+TEST_F(VaDeviceTests, givenVADeviceAndNegativeFdWhenGetDeviceFromVAIsCalledThenUnrecoverableIsCalled) {
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *(int *)contextPtr->drm_state = -1;
+
+    VADevice vaDevice{};
+    EXPECT_ANY_THROW(vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get()));
+}
+
+namespace NEO {
+namespace SysCalls {
+extern bool makeFakeDevicePath;
+extern bool allowFakeDevicePath;
+} // namespace SysCalls
+} // namespace NEO
+
+TEST_F(VaDeviceTests, givenVADeviceAndFakeDevicePathWhenGetDeviceFromVAIsCalledThenNullptrIsReturned) {
+    VariableBackup<bool> makeFakePathBackup(&SysCalls::makeFakeDevicePath, true);
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *(int *)contextPtr->drm_state = 1;
+
+    VADevice vaDevice{};
+    auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
+    EXPECT_EQ(clDevice, nullptr);
+}
+
+TEST_F(VaDeviceTests, givenVADeviceAndAbsolutePathWhenGetDeviceFromVAIsCalledThenNullptrIsReturned) {
+    VariableBackup<bool> makeFakePathBackup(&SysCalls::makeFakeDevicePath, true);
+    VariableBackup<bool> allowFakeDevicePathBackup(&SysCalls::allowFakeDevicePath, true);
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *(int *)contextPtr->drm_state = 1;
+
+    VADevice vaDevice{};
+    auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
+    EXPECT_EQ(clDevice, nullptr);
+}
+
+TEST_F(VaDeviceTests, givenValidPlatformWithInvalidVaDisplayWhenGetDeviceIdsFromVaApiMediaAdapterCalledThenReturnNullptrAndZeroDevices) {
+    cl_device_id devices = 0;
+    cl_uint numDevices = 0;
+    cl_platform_id platformId = pPlatform;
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *(int *)contextPtr->drm_state = 1;
+
+    auto device = pPlatform->getClDevice(0);
+    NEO::Device *neoDevice = &device->getDevice();
+
+    auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->get()->getDrm());
+    mockDrm->setPciPath("00:00.0");
+
+    auto errCode = clGetDeviceIDsFromVA_APIMediaAdapterINTEL(platformId, 0u, vaDisplay.get(), 0u, 1, &devices, &numDevices);
+    EXPECT_EQ(CL_DEVICE_NOT_FOUND, errCode);
+    EXPECT_EQ(0u, numDevices);
+    EXPECT_EQ(nullptr, devices);
+}
+
+TEST_F(VaDeviceTests, givenValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCalledThenReturnFirstDevice) {
+    cl_device_id devices = 0;
+    cl_uint numDevices = 0;
+    cl_platform_id platformId = pPlatform;
+    auto vaDisplay = std::make_unique<VADisplayContext>();
+    vaDisplay->vadpy_magic = 0x56414430;
+    auto contextPtr = std::make_unique<VADriverContext>();
+    auto drmState = std::make_unique<int>();
+    vaDisplay->pDriverContext = contextPtr.get();
+    contextPtr->drm_state = drmState.get();
+    *(int *)contextPtr->drm_state = 1;
+
+    auto device = pPlatform->getClDevice(0);
+    NEO::Device *neoDevice = &device->getDevice();
+
+    auto mockDrm = static_cast<DrmMock *>(neoDevice->getRootDeviceEnvironment().osInterface->get()->getDrm());
+    mockDrm->setPciPath("00:02.0");
+
+    auto errCode = clGetDeviceIDsFromVA_APIMediaAdapterINTEL(platformId, 0u, vaDisplay.get(), 0u, 1, &devices, &numDevices);
+    EXPECT_EQ(CL_SUCCESS, errCode);
+    EXPECT_EQ(1u, numDevices);
+    EXPECT_EQ(pPlatform->getClDevice(0), devices);
 }

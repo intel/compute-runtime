@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ VADevice::VADevice() {
 }
 
 ClDevice *VADevice::getDeviceFromVA(Platform *pPlatform, VADisplay vaDisplay) {
-    return pPlatform->getClDevice(0);
+    return getRootDeviceFromVaDisplay(pPlatform, vaDisplay);
 }
 
 VADevice::~VADevice() {

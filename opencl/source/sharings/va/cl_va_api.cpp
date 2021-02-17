@@ -75,7 +75,12 @@ clGetDeviceIDsFromVA_APIMediaAdapterINTEL(cl_platform_id platform, cl_va_api_dev
         VADevice vaDevice{};
         cl_device_id device = vaDevice.getDeviceFromVA(pPlatform, mediaAdapter);
         GetInfoHelper::set(devices, device);
-        GetInfoHelper::set(numDevices, 1u);
+        if (device == nullptr) {
+            GetInfoHelper::set(numDevices, 0u);
+            status = CL_DEVICE_NOT_FOUND;
+        } else {
+            GetInfoHelper::set(numDevices, 1u);
+        }
     }
     return status;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ class VADevice {
     VADevice();
     virtual ~VADevice();
 
+    ClDevice *getRootDeviceFromVaDisplay(Platform *pPlatform, VADisplay vaDisplay);
     ClDevice *getDeviceFromVA(Platform *pPlatform, VADisplay vaDisplay);
 
     static std::function<void *(const char *, int)> fdlopen;
