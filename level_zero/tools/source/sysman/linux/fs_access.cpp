@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -271,6 +271,10 @@ std::string FsAccess::getDirName(const std::string path) {
     }
     // Include trailing slash
     return path.substr(0, pos);
+}
+
+bool FsAccess::isRootUser() {
+    return (geteuid() == 0);
 }
 
 // Procfs Access

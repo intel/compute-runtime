@@ -20,11 +20,11 @@ ze_result_t RasImp::rasGetProperties(zes_ras_properties_t *pProperties) {
 }
 
 ze_result_t RasImp::rasGetConfig(zes_ras_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pOsRas->osRasGetConfig(pConfig);
 }
 
 ze_result_t RasImp::rasSetConfig(const zes_ras_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pOsRas->osRasSetConfig(pConfig);
 }
 
 ze_result_t RasImp::rasGetState(zes_ras_state_t *pState, ze_bool_t clear) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,7 @@ class FsAccess {
     virtual ze_result_t readSymLink(const std::string path, std::string &buf);
     virtual ze_result_t getRealPath(const std::string path, std::string &buf);
     virtual ze_result_t listDirectory(const std::string path, std::vector<std::string> &list);
+    virtual bool isRootUser();
     std::string getBaseName(const std::string path);
     std::string getDirName(const std::string path);
     virtual bool fileExists(const std::string file);

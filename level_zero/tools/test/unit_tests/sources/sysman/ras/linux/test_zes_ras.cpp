@@ -19,9 +19,16 @@ namespace ult {
 constexpr uint32_t mockHandleCount = 0;
 struct SysmanRasFixture : public SysmanDeviceFixture {
   protected:
+    std::unique_ptr<Mock<RasFsAccess>> pFsAccess;
     std::vector<ze_device_handle_t> deviceHandles;
+    FsAccess *pFsAccessOriginal = nullptr;
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
+        pFsAccess = std::make_unique<NiceMock<Mock<RasFsAccess>>>();
+        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+        ON_CALL(*pFsAccess.get(), isRootUser())
+            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<RasFsAccess>::userIsRoot));
         pSysmanDeviceImp->pRasHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
@@ -35,6 +42,7 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
     }
     void TearDown() override {
         SysmanDeviceFixture::TearDown();
+        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
     }
 
     std::vector<zes_ras_handle_t> get_ras_handles(uint32_t count) {
@@ -103,6 +111,45 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhileCallingZesRasGetStateThenFailur
     for (auto handle : handles) {
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.pop_back();
+    delete pTestRasImp;
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetConfigAfterzesRasSetConfigThenSuccessIsReturned) {
+    RasImp *pTestRasImp = new RasImp(pSysmanDeviceImp->pRasHandleContext->pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
+    pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pTestRasImp);
+
+    auto handles = get_ras_handles(mockHandleCount + 1);
+
+    for (auto handle : handles) {
+        zes_ras_config_t setConfig = {};
+        zes_ras_config_t getConfig = {};
+        setConfig.totalThreshold = 50;
+        memset(setConfig.detailedThresholds.category, 1, sizeof(setConfig.detailedThresholds.category));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasSetConfig(handle, &setConfig));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetConfig(handle, &getConfig));
+        EXPECT_EQ(setConfig.totalThreshold, getConfig.totalThreshold);
+        int compare = std::memcmp(setConfig.detailedThresholds.category, getConfig.detailedThresholds.category, sizeof(setConfig.detailedThresholds.category));
+        EXPECT_EQ(0, compare);
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.pop_back();
+    delete pTestRasImp;
+}
+
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPermissionThenFailureIsReturned) {
+    ON_CALL(*pFsAccess.get(), isRootUser())
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<RasFsAccess>::userIsNotRoot));
+    RasImp *pTestRasImp = new RasImp(pSysmanDeviceImp->pRasHandleContext->pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
+    pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pTestRasImp);
+
+    auto handles = get_ras_handles(mockHandleCount + 1);
+
+    for (auto handle : handles) {
+        zes_ras_config_t setConfig = {};
+        setConfig.totalThreshold = 50;
+        memset(setConfig.detailedThresholds.category, 1, sizeof(setConfig.detailedThresholds.category));
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesRasSetConfig(handle, &setConfig));
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.pop_back();
     delete pTestRasImp;

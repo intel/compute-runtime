@@ -125,5 +125,15 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValid
     }
 }
 
+TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermissionsReturnedByIsRootUserAreCorrect) {
+    int euid = geteuid();
+    auto pFsAccess = pLinuxSysmanImp->getFsAccess();
+    if (euid == 0) {
+        EXPECT_EQ(true, pFsAccess.isRootUser());
+    } else {
+        EXPECT_EQ(false, pFsAccess.isRootUser());
+    }
+}
+
 } // namespace ult
 } // namespace L0

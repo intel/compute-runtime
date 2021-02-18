@@ -357,6 +357,7 @@ void testSysmanRas(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Ras tests ---- " << std::endl;
     uint32_t count = 0;
+    bool iamroot = (geteuid() == 0);
     VALIDATECALL(zesDeviceEnumRasErrorSets(device, &count, nullptr));
     if (count == 0) {
         std::cout << "Could not retrieve Ras Error Sets" << std::endl;
@@ -395,6 +396,34 @@ void testSysmanRas(ze_device_handle_t &device) {
                 std::cout << "Number of correctable compute errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_COMPUTE_ERRORS] << std::endl;
                 std::cout << "Number of correctable non compute errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS] << std::endl;
                 std::cout << "Number of correctable display errors that have occurred  = " << rasState.category[ZES_RAS_ERROR_CAT_DISPLAY_ERRORS] << std::endl;
+            }
+        }
+        if (iamroot) {
+            zes_ras_config_t getConfig = {};
+            zes_ras_config_t setConfig = {};
+            setConfig.totalThreshold = 14;
+            memset(setConfig.detailedThresholds.category, 0, sizeof(setConfig.detailedThresholds.category));
+            VALIDATECALL(zesRasSetConfig(handle, &setConfig));
+            if (verbose) {
+                std::cout << "Setting Total threshold = " << setConfig.totalThreshold << std::endl;
+                std::cout << "Setting Threshold for Engine Resets = " << setConfig.detailedThresholds.category[0] << std::endl;
+                std::cout << "Setting Threshold for Programming Errors = " << setConfig.detailedThresholds.category[1] << std::endl;
+                std::cout << "Setting Threshold for Driver Errors = " << setConfig.detailedThresholds.category[2] << std::endl;
+                std::cout << "Setting Threshold for Compute Errors = " << setConfig.detailedThresholds.category[3] << std::endl;
+                std::cout << "Setting Threshold for Non Compute Errors = " << setConfig.detailedThresholds.category[4] << std::endl;
+                std::cout << "Setting Threshold for Cache Errors = " << setConfig.detailedThresholds.category[5] << std::endl;
+                std::cout << "Setting Threshold for Display Errors = " << setConfig.detailedThresholds.category[6] << std::endl;
+            }
+            VALIDATECALL(zesRasGetConfig(handle, &getConfig));
+            if (verbose) {
+                std::cout << "Getting Total threshold = " << getConfig.totalThreshold << std::endl;
+                std::cout << "Getting Threshold for Engine Resets = " << getConfig.detailedThresholds.category[0] << std::endl;
+                std::cout << "Getting Threshold for Programming Errors = " << getConfig.detailedThresholds.category[1] << std::endl;
+                std::cout << "Getting Threshold for Driver Errors = " << getConfig.detailedThresholds.category[2] << std::endl;
+                std::cout << "Getting Threshold for Compute Errors = " << getConfig.detailedThresholds.category[3] << std::endl;
+                std::cout << "Getting Threshold for Non Compute Errors = " << getConfig.detailedThresholds.category[4] << std::endl;
+                std::cout << "Getting Threshold for Cache Errors = " << getConfig.detailedThresholds.category[5] << std::endl;
+                std::cout << "Getting Threshold for Display Errors = " << getConfig.detailedThresholds.category[6] << std::endl;
             }
         }
     }
@@ -722,6 +751,12 @@ void testSysmanListenEvents(ze_driver_handle_t driver, std::vector<ze_device_han
                 if (pEvents[index] & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
                     std::cout << "Device " << index << "got DEVICE_ATTACH event" << std::endl;
                 }
+                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS) {
+                    std::cout << "Device " << index << "got RAS UNCORRECTABLE event" << std::endl;
+                }
+                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS) {
+                    std::cout << "Device " << index << "got RAS CORRECTABLE event" << std::endl;
+                }
             }
         }
     }
@@ -981,10 +1016,10 @@ int main(int argc, char *argv[]) {
         case 'E':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
                 zesDeviceEventRegister(device,
-                                       ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH);
+                                       ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS);
             });
             testSysmanListenEvents(driver, devices,
-                                   ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH);
+                                   ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS);
             break;
         case 'F':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
