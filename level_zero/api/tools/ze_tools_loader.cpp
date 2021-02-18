@@ -206,10 +206,14 @@ zetGetDebugProcAddrTable(
     pDdiTable->pfnAttach = zetDebugAttach;
     pDdiTable->pfnDetach = zetDebugDetach;
     pDdiTable->pfnReadEvent = zetDebugReadEvent;
+    pDdiTable->pfnAcknowledgeEvent = zetDebugAcknowledgeEvent;
     pDdiTable->pfnInterrupt = zetDebugInterrupt;
     pDdiTable->pfnResume = zetDebugResume;
     pDdiTable->pfnReadMemory = zetDebugReadMemory;
     pDdiTable->pfnWriteMemory = zetDebugWriteMemory;
+    pDdiTable->pfnGetRegisterSetProperties = zetDebugGetRegisterSetProperties;
+    pDdiTable->pfnReadRegisters = zetDebugReadRegisters;
+    pDdiTable->pfnWriteRegisters = zetDebugWriteRegisters;
 
     return result;
 }
