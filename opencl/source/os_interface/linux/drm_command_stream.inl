@@ -78,6 +78,8 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
         lock = memoryOperationsInterface->lockHandlerIfUsed();
     }
 
+    this->printBOsForSubmit(allocationsForResidency, *batchBuffer.commandBufferAllocation);
+
     memoryOperationsInterface->mergeWithResidencyContainer(this->osContext, allocationsForResidency);
 
     if (this->directSubmission.get()) {
@@ -98,6 +100,28 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
     }
 
     return true;
+}
+
+template <typename GfxFamily>
+void DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation) {
+    if (DebugManager.flags.PrintBOsForSubmit.get()) {
+        std::vector<BufferObject *> bosForSubmit;
+        for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
+            if (osContext->getDeviceBitfield().test(drmIterator)) {
+                for (auto gfxAllocation = allocationsForResidency.begin(); gfxAllocation != allocationsForResidency.end(); gfxAllocation++) {
+                    auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
+                    drmAllocation->makeBOsResident(osContext, drmIterator, &bosForSubmit, true);
+                }
+                auto drmCmdBufferAllocation = static_cast<DrmAllocation *>(&cmdBufferAllocation);
+                drmCmdBufferAllocation->makeBOsResident(osContext, drmIterator, &bosForSubmit, true);
+            }
+        }
+        printf("Buffer object for submit\n");
+        for (const auto &bo : bosForSubmit) {
+            printf("BO-%d, range: %lx - %lx, size: %ld\n", bo->peekHandle(), bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize());
+        }
+        printf("\n");
+    }
 }
 
 template <typename GfxFamily>
