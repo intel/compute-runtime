@@ -52,6 +52,10 @@ void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
     }
     MemoryManager::virtualPaddingAvailable = true;
 
+    if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
+        mode = gemCloseWorkerMode::gemCloseWorkerInactive;
+    }
+
     if (DebugManager.flags.EnableGemCloseWorker.get() != -1) {
         mode = DebugManager.flags.EnableGemCloseWorker.get() ? gemCloseWorkerMode::gemCloseWorkerActive : gemCloseWorkerMode::gemCloseWorkerInactive;
     }

@@ -63,6 +63,15 @@ typedef Test<DrmMemoryManagerFixture> DrmMemoryManagerTest;
 typedef Test<DrmMemoryManagerWithLocalMemoryFixture> DrmMemoryManagerWithLocalMemoryTest;
 typedef Test<DrmMemoryManagerFixtureWithoutQuietIoctlExpectation> DrmMemoryManagerWithExplicitExpectationsTest;
 
+TEST_F(DrmMemoryManagerTest, givenEnableDirectSubmissionWhenCreateDrmMemoryManagerThenGemCloseWorkerInactive) {
+    DebugManagerStateRestore dbgState;
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+
+    EXPECT_EQ(memoryManager.peekGemCloseWorker(), nullptr);
+}
+
 TEST_F(DrmMemoryManagerTest, givenDebugVariableWhenCreatingDrmMemoryManagerThenSetSupportForMultiStorageResources) {
     DebugManagerStateRestore dbgState;
 
