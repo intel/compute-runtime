@@ -522,5 +522,88 @@ TEST_F(EventPoolCreateNegativeTest, whenInitializingEventPoolButMemoryManagerFai
     delete[] devices;
 }
 
+class EventTests : public DeviceFixture,
+                   public testing::Test {
+  public:
+    void SetUp() override {
+        DeviceFixture::SetUp();
+
+        auto hDevice = device->toHandle();
+        eventPool = whitebox_cast(EventPool::create(device->getDriverHandle(), 1, &hDevice, &eventPoolDesc));
+    }
+
+    void TearDown() override {
+        eventPool->destroy();
+
+        DeviceFixture::TearDown();
+    }
+
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        4};
+
+    ze_event_desc_t eventDesc = {};
+    EventPool *eventPool;
+};
+
+TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
+    auto event = whitebox_cast(Event::create(eventPool, &eventDesc, device));
+    ASSERT_NE(event, nullptr);
+
+    auto result = event->hostSignal();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+
+    event->destroy();
+}
+
+TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
+    auto event = whitebox_cast(Event::create(eventPool, &eventDesc, device));
+    ASSERT_NE(event, nullptr);
+
+    auto result = event->hostSignal();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = event->reset();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
+
+    event->destroy();
+}
+
+TEST_F(EventTests, WhenDestroyingAnEventThenSuccessIsReturned) {
+    auto event = whitebox_cast(Event::create(eventPool, &eventDesc, device));
+    ASSERT_NE(event, nullptr);
+
+    auto result = event->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(EventTests, givenTwoEventsCreatedThenTheyHaveDifferentAddresses) {
+    ze_event_desc_t eventDesc0 = {};
+    eventDesc0.index = 0;
+    eventDesc.index = 0;
+
+    ze_event_desc_t eventDesc1 = {};
+    eventDesc1.index = 1;
+    eventDesc.index = 1;
+
+    auto event0 = whitebox_cast(Event::create(eventPool, &eventDesc0, device));
+    ASSERT_NE(event0, nullptr);
+
+    auto event1 = whitebox_cast(Event::create(eventPool, &eventDesc1, device));
+    ASSERT_NE(event1, nullptr);
+
+    EXPECT_NE(event0->hostAddress, event1->hostAddress);
+    EXPECT_NE(event0->gpuAddress, event1->gpuAddress);
+
+    event0->destroy();
+    event1->destroy();
+}
+
 } // namespace ult
 } // namespace L0
