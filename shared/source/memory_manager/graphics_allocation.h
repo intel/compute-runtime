@@ -98,7 +98,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         DEBUG_MODULE_AREA,
         UNIFIED_SHARED_MEMORY,
         WORK_PARTITION_SURFACE,
-        GPU_TIMESTAMP_TAG_BUFFER
+        GPU_TIMESTAMP_DEVICE_BUFFER
     };
 
     ~GraphicsAllocation() override;

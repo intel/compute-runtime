@@ -128,13 +128,13 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     std::vector<uint32_t> rootDeviceIndicesVector(memoryProperties.rootDeviceIndices.begin(), memoryProperties.rootDeviceIndices.end());
 
     uint32_t rootDeviceIndex = rootDeviceIndicesVector.at(0);
-    auto deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
+    auto &deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
 
     AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
                                                  true,
                                                  alignedSize,
                                                  allocationType,
-                                                 deviceBitfield.count() > 1,
+                                                 false,
                                                  deviceBitfield.count() > 1,
                                                  deviceBitfield};
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
@@ -167,7 +167,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     auto rootDeviceIndex = memoryProperties.device
                                ? memoryProperties.device->getRootDeviceIndex()
                                : *memoryProperties.rootDeviceIndices.begin();
-    auto deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
+    auto &deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
 
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
 
@@ -177,7 +177,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                                                  true,
                                                  alignedSize,
                                                  allocationType,
-                                                 deviceBitfield.count() > 1,
+                                                 false,
                                                  deviceBitfield.count() > 1,
                                                  deviceBitfield};
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
@@ -255,13 +255,13 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     auto rootDeviceIndex = unifiedMemoryProperties.device
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
-    auto deviceBitfield = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
+    auto &deviceBitfield = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        true,
                                        alignedSize,
                                        GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY,
-                                       deviceBitfield.count() > 1,
+                                       false,
                                        false,
                                        deviceBitfield};
 
@@ -340,7 +340,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
                                                     const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields) {
 
     auto rootDeviceIndex = *rootDeviceIndices.begin();
-    auto deviceBitfield = subdeviceBitfields.at(rootDeviceIndex);
+    auto &deviceBitfield = subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties properties{rootDeviceIndex,
                                     true, // allocateMemory
                                     size,
@@ -369,11 +369,12 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
     size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
+    const DeviceBitfield &subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties cpuProperties{rootDeviceIndex,
                                        true, // allocateMemory
                                        alignedSize, GraphicsAllocation::AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
-                                       unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex)};
+                                       subDevices};
     cpuProperties.alignment = 2 * MemoryConstants::megaByte;
     auto cacheRegion = MemoryPropertiesHelper::getCacheRegion(unifiedMemoryProperties.allocationFlags);
     MemoryPropertiesHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false, cacheRegion);
@@ -388,9 +389,9 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                        false,
                                        alignedSize,
                                        GraphicsAllocation::AllocationType::SVM_GPU,
-                                       unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex).count() > 1,
                                        false,
-                                       unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex)};
+                                       subDevices.count() > 1,
+                                       subDevices};
 
     gpuProperties.alignment = 2 * MemoryConstants::megaByte;
     MemoryPropertiesHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false, cacheRegion);

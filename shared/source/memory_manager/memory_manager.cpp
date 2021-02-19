@@ -297,7 +297,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::SVM_GPU:
     case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
-    case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
         allow64KbPages = true;
     default:
         break;
@@ -381,7 +381,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP:
     case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
     case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA:
-    case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
         allocationData.flags.resource48Bit = true;
         break;
     default:

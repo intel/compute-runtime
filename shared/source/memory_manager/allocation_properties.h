@@ -67,7 +67,7 @@ struct AllocationProperties {
                          bool allocateMemoryParam,
                          size_t sizeParam,
                          GraphicsAllocation::AllocationType allocationTypeParam,
-                         bool multiOsContextCapableParam,
+                         bool multiOsContextCapable,
                          bool isMultiStorageAllocationParam,
                          DeviceBitfield subDevicesBitfieldParam)
         : rootDeviceIndex(rootDeviceIndexParam),
@@ -79,7 +79,7 @@ struct AllocationProperties {
         flags.flushL3RequiredForRead = 1;
         flags.flushL3RequiredForWrite = 1;
         flags.allocateMemory = allocateMemoryParam;
-        flags.multiOsContextCapable = multiOsContextCapableParam;
+        flags.multiOsContextCapable = multiOsContextCapable;
     }
 };
 

@@ -154,7 +154,7 @@ TEST_F(EventPoolCreate, whenHostVisibleFlagNotSetThenEventAllocationIsOnDevice) 
 
     ASSERT_NE(nullptr, eventPool);
 
-    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_TAG_BUFFER, eventPool->getAllocation().getAllocationType());
+    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, eventPool->getAllocation().getAllocationType());
     eventPool->destroy();
 }
 

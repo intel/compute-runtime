@@ -90,7 +90,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, uint32_t numDevices, 
     auto deviceBitfield = devices[0]->getNEODevice()->getDeviceBitfield();
     auto allocationType = isEventPoolUsedForTimestamp ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     if (this->allocOnDevice) {
-        allocationType = NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_TAG_BUFFER;
+        allocationType = NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
     }
 
     NEO::AllocationProperties eventPoolAllocationProperties{rootDeviceIndex,
