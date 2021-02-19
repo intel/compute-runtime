@@ -228,6 +228,12 @@ class CommandStreamReceiver {
         return false;
     }
 
+    bool isStaticWorkPartitioningEnabled() const {
+        return staticWorkPartitioningEnabled;
+    }
+
+    uint64_t getWorkPartitionAllocationGpuAddress() const;
+
     bool isRcs() const;
 
     virtual void initializeDefaultsForInternalEngine(){};

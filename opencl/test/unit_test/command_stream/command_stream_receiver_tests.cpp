@@ -1147,19 +1147,28 @@ HWTEST_F(CommandStreamReceiverTest, whenCreatingCommandStreamReceiverThenLastAdd
 
 HWTEST_F(CommandStreamReceiverTest, givenDebugFlagWhenCreatingCsrThenSetEnableStaticPartitioningAccordingly) {
     DebugManagerStateRestore restore{};
+
     {
-        MockDevice device{};
-        EXPECT_FALSE(device.getUltCommandStreamReceiver<FamilyType>().staticWorkPartitioningEnabled);
+        UltDeviceFactory deviceFactory{1, 2};
+        MockDevice &device = *deviceFactory.rootDevices[0];
+        EXPECT_FALSE(device.getGpgpuCommandStreamReceiver().isStaticWorkPartitioningEnabled());
+        EXPECT_EQ(0u, device.getGpgpuCommandStreamReceiver().getWorkPartitionAllocationGpuAddress());
     }
     {
         DebugManager.flags.EnableStaticPartitioning.set(0);
-        MockDevice device{};
-        EXPECT_FALSE(device.getUltCommandStreamReceiver<FamilyType>().staticWorkPartitioningEnabled);
+        UltDeviceFactory deviceFactory{1, 2};
+        MockDevice &device = *deviceFactory.rootDevices[0];
+        EXPECT_FALSE(device.getGpgpuCommandStreamReceiver().isStaticWorkPartitioningEnabled());
+        EXPECT_EQ(0u, device.getGpgpuCommandStreamReceiver().getWorkPartitionAllocationGpuAddress());
     }
     {
         DebugManager.flags.EnableStaticPartitioning.set(1);
-        MockDevice device{};
-        EXPECT_TRUE(device.getUltCommandStreamReceiver<FamilyType>().staticWorkPartitioningEnabled);
+        UltDeviceFactory deviceFactory{1, 2};
+        MockDevice &device = *deviceFactory.rootDevices[0];
+        EXPECT_TRUE(device.getGpgpuCommandStreamReceiver().isStaticWorkPartitioningEnabled());
+        EXPECT_NE(0u, device.getGpgpuCommandStreamReceiver().getWorkPartitionAllocationGpuAddress());
+        const auto gpuVa = device.getGpgpuCommandStreamReceiver().getWorkPartitionAllocation()->getGpuAddress();
+        EXPECT_EQ(gpuVa, device.getGpgpuCommandStreamReceiver().getWorkPartitionAllocationGpuAddress());
     }
 }
 

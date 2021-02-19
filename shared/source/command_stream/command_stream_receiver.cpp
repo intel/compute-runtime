@@ -187,6 +187,13 @@ OSInterface *CommandStreamReceiver::getOSInterface() const {
     return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get();
 }
 
+uint64_t CommandStreamReceiver::getWorkPartitionAllocationGpuAddress() const {
+    if (isStaticWorkPartitioningEnabled()) {
+        return getWorkPartitionAllocation()->getGpuAddress();
+    }
+    return 0;
+}
+
 bool CommandStreamReceiver::isRcs() const {
     return this->osContext->getEngineType() == aub_stream::ENGINE_RCS;
 }
