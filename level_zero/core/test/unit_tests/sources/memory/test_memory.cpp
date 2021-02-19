@@ -763,6 +763,58 @@ TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForDeviceAllocationThenRange
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForDeviceAllocationWithNoBaseArgumentThenSizeIsCorrectAndSuccessIsReturned) {
+    size_t allocSize = 4096u;
+    size_t alignment = 1u;
+    void *allocPtr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 allocSize, alignment, &allocPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, allocPtr);
+
+    size_t size = 0u;
+    void *pPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(allocPtr) + 77);
+    result = context->getMemAddressRange(pPtr, nullptr, &size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_GE(size, allocSize);
+
+    result = context->freeMem(allocPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForDeviceAllocationWithNoSizeArgumentThenRangeIsCorrectAndSuccessIsReturned) {
+    size_t allocSize = 4096u;
+    size_t alignment = 1u;
+    void *allocPtr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 allocSize, alignment, &allocPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, allocPtr);
+
+    void *base = nullptr;
+    void *pPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(allocPtr) + 77);
+    result = context->getMemAddressRange(pPtr, &base, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(base, allocPtr);
+
+    result = context->freeMem(allocPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForUnknownDeviceAllocationThenResultUnknownIsReturned) {
+    void *base = nullptr;
+    size_t size = 0u;
+    uint64_t var = 0;
+    ze_result_t res = context->getMemAddressRange(&var, &base, &size);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+}
+
 TEST_F(ContextMemoryTest, givenSystemAllocatedPointerThenGetAllocPropertiesReturnsUnknownType) {
     size_t size = 10;
     int *ptr = new int[size];
