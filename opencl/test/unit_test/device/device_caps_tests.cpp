@@ -1261,10 +1261,41 @@ TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionTh
     EXPECT_STREQ(tempName.c_str(), caps.name);
     EXPECT_STREQ(expectedVersion.c_str(), caps.driverVersion);
 }
-
-TEST_F(DeviceGetCapsTest, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue) {
+TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryManagerThenReturnCorrectValue) {
     DebugManagerStateRestore dbgRestore;
     VariableBackup<bool> OsEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
+    class MockMemoryManager : public MemoryManager {
+      public:
+        MockMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment) {}
+        void addAllocationToHostPtrManager(GraphicsAllocation *memory) override{};
+        void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) override{};
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override { return nullptr; };
+        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override { return nullptr; };
+        AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override { return AllocationStatus::Success; };
+        void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
+        void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override{};
+        uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override {
+            return 0;
+        };
+        uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override { return 0; };
+        AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override {
+            return {};
+        }
+        void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
+        GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override { return nullptr; };
+        GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override { return nullptr; };
+        GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override { return nullptr; };
+        GraphicsAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override { return nullptr; };
+        GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override { return nullptr; };
+        GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override { return nullptr; };
+        GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
+        GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override { return nullptr; };
+
+        GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override { return nullptr; };
+        GraphicsAllocation *allocateShareableMemory(const AllocationData &allocationData) override { return nullptr; };
+        void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override { return nullptr; };
+        void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override{};
+    };
 
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
@@ -1275,21 +1306,48 @@ TEST_F(DeviceGetCapsTest, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue
 
     capabilityTable.ftr64KBpages = false;
     OSInterface::osEnabled64kbPages = false;
-    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    memoryManager.reset(new MockMemoryManager(executionEnvironment));
     EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
 
     capabilityTable.ftr64KBpages = false;
     OSInterface::osEnabled64kbPages = true;
-    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    memoryManager.reset(new MockMemoryManager(executionEnvironment));
     EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
 
     capabilityTable.ftr64KBpages = true;
     OSInterface::osEnabled64kbPages = false;
-    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    memoryManager.reset(new MockMemoryManager(executionEnvironment));
     EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
 
     capabilityTable.ftr64KBpages = true;
     OSInterface::osEnabled64kbPages = true;
+    memoryManager.reset(new MockMemoryManager(executionEnvironment));
+    EXPECT_TRUE(memoryManager->peek64kbPagesEnabled(0u));
+
+    DebugManager.flags.Enable64kbpages.set(0); // force false
+    memoryManager.reset(new MockMemoryManager(executionEnvironment));
+    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
+
+    DebugManager.flags.Enable64kbpages.set(1); // force true
+    memoryManager.reset(new MockMemoryManager(executionEnvironment));
+    EXPECT_TRUE(memoryManager->peek64kbPagesEnabled(0u));
+}
+
+TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorOsAgnosticMemoryManagerThenReturnCorrectValue) {
+    DebugManagerStateRestore dbgRestore;
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    auto &capabilityTable = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable;
+    std::unique_ptr<MemoryManager> memoryManager;
+
+    DebugManager.flags.Enable64kbpages.set(-1);
+
+    capabilityTable.ftr64KBpages = false;
+    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
+
+    capabilityTable.ftr64KBpages = true;
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_TRUE(memoryManager->peek64kbPagesEnabled(0u));
 

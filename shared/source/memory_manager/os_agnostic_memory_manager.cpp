@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,8 @@ void OsAgnosticMemoryManager::initialize(bool aubUsage) {
     size_t reservedCpuAddressRangeSize = (4 * 4 + 2 * (aubUsage ? 32 : 4)) * GB;
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+        this->enable64kbpages[rootDeviceIndex] = is64kbPagesEnabled(hwInfo);
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
         if (!getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, reservedCpuAddressRangeSize, rootDeviceIndex, gfxPartitions.size(), heapAssigner.apiAllowExternalHeapForSshAndDsh)) {
             initialized = false;
@@ -48,6 +50,10 @@ void OsAgnosticMemoryManager::initialize(bool aubUsage) {
 }
 
 OsAgnosticMemoryManager::~OsAgnosticMemoryManager() = default;
+
+bool OsAgnosticMemoryManager::is64kbPagesEnabled(const HardwareInfo *hwInfo) {
+    return hwInfo->capabilityTable.ftr64KBpages && !!DebugManager.flags.Enable64kbpages.get();
+}
 
 struct OsHandle {
 };
@@ -111,12 +117,24 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithGpuVa(con
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
-    AllocationData allocationData64kb = allocationData;
-    allocationData64kb.size = alignUp(allocationData.size, MemoryConstants::pageSize64k);
-    allocationData64kb.alignment = MemoryConstants::pageSize64k;
-    auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationData64kb);
+    AllocationData allocationDataAlign = allocationData;
+    allocationDataAlign.size = alignUp(allocationData.size, MemoryConstants::pageSize64k);
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    allocationDataAlign.alignment = hwHelper.is1MbAlignmentSupported(*hwInfo, allocationData.flags.preferRenderCompressed)
+                                        ? MemoryConstants::megaByte
+                                        : MemoryConstants::pageSize64k;
+    auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationDataAlign);
     if (memoryAllocation) {
         static_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::System64KBPages);
+        auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
+                                         allocationData.hostPtr,
+                                         allocationDataAlign.alignment,
+                                         allocationData.flags.uncacheable,
+                                         allocationData.flags.preferRenderCompressed,
+                                         allocationData.flags.useSystemMemory,
+                                         allocationData.storageInfo);
+        memoryAllocation->setDefaultGmm(gmm.release());
     }
     return memoryAllocation;
 }

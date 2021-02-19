@@ -34,6 +34,7 @@
 #include "opencl/test/unit_test/fixtures/memory_manager_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
@@ -632,6 +633,38 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
         DebugManager.flags.Force32bitAddressing.set(false);
     }
 }
+HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAligmentWhenAllocateGraphicsMemoryThenAligmentIsSetCorrect) {
+    class MockHwHelperHw : public HwHelperHw<FamilyType> {
+      public:
+        using HwHelperHw<FamilyType>::HwHelperHw;
+        bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isRenderCompressed) const override {
+            return isEnable;
+        }
+        bool isEnable = false;
+    };
+    auto raiiFactory = RAIIHwHelperFactory<MockHwHelperHw>(defaultHwInfo->platform.eRenderCoreFamily);
+    void *ptr = reinterpret_cast<void *>(0x1001);
+    auto size = MemoryConstants::pageSize;
+
+    raiiFactory.mockHwHelper.isEnable = true;
+
+    auto osAgnosticMemoryManager = std::make_unique<MemoryManagerCreate<MockMemoryManager>>(true, false, *executionEnvironment);
+    osAgnosticMemoryManager->failInDevicePool = true;
+    auto allocationWithEnabled1MbAlignment = osAgnosticMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, mockDeviceBitfield}, ptr);
+
+    ASSERT_NE(nullptr, allocationWithEnabled1MbAlignment);
+    EXPECT_EQ(MemoryConstants::megaByte, osAgnosticMemoryManager->alignAllocationData.alignment);
+
+    osAgnosticMemoryManager->freeGraphicsMemory(allocationWithEnabled1MbAlignment);
+
+    raiiFactory.mockHwHelper.isEnable = false;
+    auto allocationWithoutEnabled1MbAlignment = osAgnosticMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, mockDeviceBitfield}, ptr);
+
+    ASSERT_NE(nullptr, allocationWithoutEnabled1MbAlignment);
+    EXPECT_NE(MemoryConstants::megaByte, osAgnosticMemoryManager->alignAllocationData.alignment);
+
+    osAgnosticMemoryManager->freeGraphicsMemory(allocationWithoutEnabled1MbAlignment);
+}
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenItIsInitialized) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
@@ -900,6 +933,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryWithPt
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.initGmm();
     MockMemoryManager memoryManager(false, false, executionEnvironment);
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
@@ -927,6 +961,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryThenMemoryPoolIsSystem64KBPages) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.initGmm();
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(true, false, executionEnvironment);
     auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM_ZERO_COPY, mockDeviceBitfield});
     EXPECT_NE(nullptr, svmAllocation);
@@ -936,6 +971,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryThen4KBGraphicsAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.initGmm();
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
     auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM_ZERO_COPY, mockDeviceBitfield});
     EXPECT_EQ(MemoryPool::System4KBPages, svmAllocation->getMemoryPool());
@@ -1246,6 +1282,7 @@ TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCre
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.Enable64kbpages.set(true);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.initGmm();
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(true, false, executionEnvironment);
 
     GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
@@ -1430,6 +1467,50 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenGpuAddressIsSetThenAllocatio
     EXPECT_EQ(0x2000u, allocation->getGpuAddress());
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenOsEnabled64kbPagesFalseThenIs64kbPagesEnabledReturnTrue) {
+    MockExecutionEnvironment executionEnvironment;
+    VariableBackup<bool> OsEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    auto hwInfo = *defaultHwInfo;
+    OSInterface::osEnabled64kbPages = false;
+    hwInfo.capabilityTable.ftr64KBpages = true;
+    EXPECT_TRUE(memoryManager.is64kbPagesEnabled(&hwInfo));
+    OSInterface::osEnabled64kbPages = true;
+    EXPECT_TRUE(memoryManager.is64kbPagesEnabled(&hwInfo));
+}
+
+TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenCheckIs64kbPagesEnabledThenOsEnabled64PkbPagesIsNotAffectedReturnedValue) {
+    MockExecutionEnvironment executionEnvironment;
+    VariableBackup<bool> OsEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    auto hwInfo = *defaultHwInfo;
+    OSInterface::osEnabled64kbPages = true;
+    hwInfo.capabilityTable.ftr64KBpages = true;
+    EXPECT_TRUE(memoryManager.is64kbPagesEnabled(&hwInfo));
+    hwInfo.capabilityTable.ftr64KBpages = false;
+    EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
+}
+
+TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWithFlagEnable64kbpagesWhenCheckIs64kbPagesEnabledThenProperValueIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+
+    MockExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    auto hwInfo = *defaultHwInfo;
+    DebugManager.flags.Enable64kbpages.set(true);
+    hwInfo.capabilityTable.ftr64KBpages = true;
+    EXPECT_TRUE(memoryManager.is64kbPagesEnabled(&hwInfo));
+    DebugManager.flags.Enable64kbpages.set(true);
+    hwInfo.capabilityTable.ftr64KBpages = false;
+    EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
+    DebugManager.flags.Enable64kbpages.set(false);
+    hwInfo.capabilityTable.ftr64KBpages = false;
+    EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
+    DebugManager.flags.Enable64kbpages.set(false);
+    hwInfo.capabilityTable.ftr64KBpages = true;
+    EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
 }
 
 TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {

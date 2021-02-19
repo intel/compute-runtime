@@ -371,18 +371,17 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenHintI
     auto context = Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
 
     testing::internal::CaptureStdout();
-    auto buffer = Buffer::create(
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(
         context,
         CL_MEM_READ_ONLY,
         4096,
         nullptr,
-        retVal);
+        retVal));
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_EQ('\n', output[0]);
 
-    buffer->release();
     context->release();
 }
 
