@@ -67,6 +67,10 @@ void HardwareContextController::writeMemory(aub_stream::AllocationParams &alloca
     }
 }
 
+void HardwareContextController::writeMMIO(uint32_t offset, uint32_t value) {
+    hardwareContexts[0]->writeMMIO(offset, value);
+}
+
 void HardwareContextController::dumpBufferBIN(uint64_t gfxAddress, size_t size) {
     hardwareContexts[0]->dumpBufferBIN(gfxAddress, size);
 }

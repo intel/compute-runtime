@@ -27,6 +27,7 @@ struct HardwareContext {
     virtual void dumpSurface(const SurfaceInfo &surfaceInfo) = 0;
     virtual ~HardwareContext() = default;
     virtual void writeMemory2(AllocationParams allocationParams) = 0;
+    virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;
 };
 
 } // namespace aub_stream

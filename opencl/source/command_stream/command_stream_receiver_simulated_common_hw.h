@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,11 +51,13 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     void setupContext(OsContext &osContext) override;
     virtual bool expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
     virtual bool expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
+    virtual bool expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length);
     virtual void pollForCompletion() = 0;
     virtual void pollForCompletionImpl(){};
     virtual bool writeMemory(GraphicsAllocation &gfxAllocation) = 0;
     virtual void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) = 0;
     virtual void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) = 0;
+    virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;
 
     virtual void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool isAubWritable(GraphicsAllocation &graphicsAllocation) const = 0;

@@ -85,6 +85,14 @@ class AUBFixture : public CommandQueueHwFixture {
     }
 
     template <typename FamilyType>
+    void writeMMIO(uint32_t offset, uint32_t value) {
+        CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
+        if (csrSimulated) {
+            csrSimulated->writeMMIO(offset, value);
+        }
+    }
+
+    template <typename FamilyType>
     void expectNotEqualMemory(void *gfxAddress, const void *srcAddress, size_t length) {
         CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
 
@@ -97,6 +105,22 @@ class AUBFixture : public CommandQueueHwFixture {
 
         if (csrSimulated) {
             csrSimulated->expectMemoryNotEqual(gfxAddress, srcAddress, length);
+        }
+    }
+
+    template <typename FamilyType>
+    void expectCompressedMemory(void *gfxAddress, const void *srcAddress, size_t length) {
+        CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
+
+        if (testMode == TestMode::AubTestsWithTbx) {
+            auto tbxCsr = csrSimulated;
+            EXPECT_TRUE(tbxCsr->expectMemoryCompressed(gfxAddress, srcAddress, length));
+            csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
+                static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get());
+        }
+
+        if (csrSimulated) {
+            csrSimulated->expectMemoryCompressed(gfxAddress, srcAddress, length);
         }
     }
 

@@ -87,6 +87,10 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(gpuAddress, cpuAddress, size, memoryBank, entryBits);
         writeMemoryCalled = true;
     }
+    void writeMMIO(uint32_t offset, uint32_t value) override {
+        AUBCommandStreamReceiverHw<GfxFamily>::writeMMIO(offset, value);
+        writeMMIOCalled = true;
+    }
     void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) override {
         AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits);
         submitBatchBufferCalled = true;
@@ -109,6 +113,10 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         expectMemoryNotEqualCalled = true;
         return AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryNotEqual(gfxAddress, srcAddress, length);
     }
+    bool expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length) override {
+        expectMemoryCompressedCalled = true;
+        return AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryCompressed(gfxAddress, srcAddress, length);
+    }
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         return true;
     }
@@ -129,10 +137,12 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool initializeEngineCalled = false;
     bool writeMemoryCalled = false;
     bool writeMemoryWithAubManagerCalled = false;
+    bool writeMMIOCalled = false;
     bool submitBatchBufferCalled = false;
     bool pollForCompletionCalled = false;
     bool expectMemoryEqualCalled = false;
     bool expectMemoryNotEqualCalled = false;
+    bool expectMemoryCompressedCalled = false;
     bool addAubCommentCalled = false;
     bool dumpAllocationCalled = false;
 

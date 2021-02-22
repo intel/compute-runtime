@@ -443,6 +443,13 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
 }
 
 template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::writeMMIO(uint32_t offset, uint32_t value) {
+    if (hardwareContextController) {
+        hardwareContextController->writeMMIO(offset, value);
+    }
+}
+
+template <typename GfxFamily>
 bool TbxCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
                                                          size_t length, uint32_t compareOperation) {
     if (hardwareContextController) {

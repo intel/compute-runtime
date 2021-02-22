@@ -678,6 +678,15 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(AllocationView &allocati
 }
 
 template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::writeMMIO(uint32_t offset, uint32_t value) {
+    auto streamLocked = getAubStream()->lockStream();
+
+    if (hardwareContextController) {
+        return hardwareContextController->writeMMIO(offset, value);
+    }
+}
+
+template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
     if (hardwareContextController) {
         //Add support for expectMMIO to AubStream

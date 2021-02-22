@@ -1379,6 +1379,22 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     EXPECT_EQ(2u, mockHwContext1->memoryBanksPassed);
 }
 
+TEST_F(HardwareContextContainerTests, givenHwContextWhenWriteMMIOIsCalledThenUseFirstContext) {
+    MockAubManager aubManager;
+    MockOsContext osContext(1, 0b1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
+                            false, false, false);
+    HardwareContextController hwContextContainer(aubManager, osContext, 0);
+    EXPECT_EQ(1u, hwContextContainer.hardwareContexts.size());
+
+    auto mockHwContext = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
+
+    EXPECT_FALSE(mockHwContext->writeMMIOCalled);
+
+    hwContextContainer.writeMMIO(0x01234567, 0x89ABCDEF);
+
+    EXPECT_TRUE(mockHwContext->writeMMIOCalled);
+}
+
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseFirstContext) {
     MockAubManager aubManager;
     MockOsContext osContext(1, 0b11, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,

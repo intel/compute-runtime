@@ -26,6 +26,7 @@ class HardwareContextController {
     void expectMemory(uint64_t gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
     void submit(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead);
     void writeMemory(aub_stream::AllocationParams &allocationParams);
+    void writeMMIO(uint32_t offset, uint32_t value);
 
     void dumpBufferBIN(uint64_t gfxAddress, size_t size);
     void dumpSurface(const aub_stream::SurfaceInfo &surfaceInfo);

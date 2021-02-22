@@ -920,6 +920,31 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenPhysica
     ASSERT_NE(nullptr, allocator);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithoutHardwareContextControllerWhenCallingWriteMMIOThenDontRedirectToHardwareContextController) {
+    MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
+                            false, false, false);
+    EXPECT_EQ(nullptr, aubCsr.hardwareContextController);
+
+    aubCsr.writeMMIO(0x11111111, 0x22222222);
+
+    EXPECT_TRUE(aubCsr.writeMMIOCalled);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithHardwareContextControllerWhenCallingWriteMMIOThenRedirectToHardwareContextController) {
+    MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
+                            false, false, false);
+    aubCsr.setupContext(osContext);
+    EXPECT_NE(nullptr, aubCsr.hardwareContextController);
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
+
+    aubCsr.writeMMIO(0x11111111, 0x22222222);
+
+    EXPECT_TRUE(mockHardwareContext->writeMMIOCalled);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpAllocationIsCalledAndDumpFormatIsSpecifiedThenGraphicsAllocationShouldBeDumped) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpBufferFormat.set("BIN");
