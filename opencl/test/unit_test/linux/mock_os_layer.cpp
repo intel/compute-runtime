@@ -10,6 +10,8 @@
 #include <cassert>
 #include <dirent.h>
 #include <iostream>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
 
 int (*c_open)(const char *pathname, int flags, ...) = nullptr;
 int (*openFull)(const char *pathname, int flags, ...) = nullptr;
@@ -36,10 +38,29 @@ int failOnVirtualMemoryCreate = 0;
 int failOnSetPriority = 0;
 int failOnPreemption = 0;
 int failOnDrmVersion = 0;
+int accessCalledTimes = 0;
+int readLinkCalledTimes = 0;
+int fstatCalledTimes = 0;
 char providedDrmVersion[5] = {'i', '9', '1', '5', '\0'};
 uint64_t gpuTimestamp = 0;
 int ioctlSeq[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 size_t ioctlCnt = 0;
+
+int fstat(int fd, struct stat *buf) {
+    ++fstatCalledTimes;
+    buf->st_rdev = 0x0;
+    return 0;
+}
+
+int access(const char *pathname, int mode) {
+    ++accessCalledTimes;
+    return 0;
+}
+
+ssize_t readlink(const char *path, char *buf, size_t bufsiz) {
+    ++readLinkCalledTimes;
+    return -1;
+}
 
 int open(const char *pathname, int flags, ...) {
     if (openFull != nullptr) {

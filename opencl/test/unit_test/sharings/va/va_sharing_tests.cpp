@@ -1240,7 +1240,7 @@ TEST_F(VaDeviceTests, givenVADeviceWhenGetDeviceFromVAIsCalledThenRootDeviceIsRe
     auto drmState = std::make_unique<int>();
     vaDisplay->pDriverContext = contextPtr.get();
     contextPtr->drm_state = drmState.get();
-    *(int *)contextPtr->drm_state = 1;
+    *static_cast<int *>(contextPtr->drm_state) = 1;
 
     auto device = pPlatform->getClDevice(0);
     NEO::Device *neoDevice = &device->getDevice();
@@ -1260,7 +1260,7 @@ TEST_F(VaDeviceTests, givenVADeviceAndInvalidPciPathOfClDeviceWhenGetDeviceFromV
     auto drmState = std::make_unique<int>();
     vaDisplay->pDriverContext = contextPtr.get();
     contextPtr->drm_state = drmState.get();
-    *(int *)contextPtr->drm_state = 1;
+    *static_cast<int *>(contextPtr->drm_state) = 1;
 
     auto device = pPlatform->getClDevice(0);
     NEO::Device *neoDevice = &device->getDevice();
@@ -1280,7 +1280,7 @@ TEST_F(VaDeviceTests, givenVADeviceAndInvalidFDWhenGetDeviceFromVAIsCalledThenNu
     auto drmState = std::make_unique<int>();
     vaDisplay->pDriverContext = contextPtr.get();
     contextPtr->drm_state = drmState.get();
-    *(int *)contextPtr->drm_state = 0;
+    *static_cast<int *>(contextPtr->drm_state) = 0;
 
     VADevice vaDevice{};
     auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
@@ -1302,7 +1302,7 @@ TEST_F(VaDeviceTests, givenVADeviceAndNegativeFdWhenGetDeviceFromVAIsCalledThenU
     auto drmState = std::make_unique<int>();
     vaDisplay->pDriverContext = contextPtr.get();
     contextPtr->drm_state = drmState.get();
-    *(int *)contextPtr->drm_state = -1;
+    *static_cast<int *>(contextPtr->drm_state) = -1;
 
     VADevice vaDevice{};
     EXPECT_ANY_THROW(vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get()));
@@ -1323,7 +1323,7 @@ TEST_F(VaDeviceTests, givenVADeviceAndFakeDevicePathWhenGetDeviceFromVAIsCalledT
     auto drmState = std::make_unique<int>();
     vaDisplay->pDriverContext = contextPtr.get();
     contextPtr->drm_state = drmState.get();
-    *(int *)contextPtr->drm_state = 1;
+    *static_cast<int *>(contextPtr->drm_state) = 1;
 
     VADevice vaDevice{};
     auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
@@ -1339,7 +1339,7 @@ TEST_F(VaDeviceTests, givenVADeviceAndAbsolutePathWhenGetDeviceFromVAIsCalledThe
     auto drmState = std::make_unique<int>();
     vaDisplay->pDriverContext = contextPtr.get();
     contextPtr->drm_state = drmState.get();
-    *(int *)contextPtr->drm_state = 1;
+    *static_cast<int *>(contextPtr->drm_state) = 1;
 
     VADevice vaDevice{};
     auto clDevice = vaDevice.getDeviceFromVA(pPlatform, vaDisplay.get());
@@ -1356,7 +1356,7 @@ TEST_F(VaDeviceTests, givenValidPlatformWithInvalidVaDisplayWhenGetDeviceIdsFrom
     auto drmState = std::make_unique<int>();
     vaDisplay->pDriverContext = contextPtr.get();
     contextPtr->drm_state = drmState.get();
-    *(int *)contextPtr->drm_state = 1;
+    *static_cast<int *>(contextPtr->drm_state) = 1;
 
     auto device = pPlatform->getClDevice(0);
     NEO::Device *neoDevice = &device->getDevice();
@@ -1380,7 +1380,7 @@ TEST_F(VaDeviceTests, givenValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCal
     auto drmState = std::make_unique<int>();
     vaDisplay->pDriverContext = contextPtr.get();
     contextPtr->drm_state = drmState.get();
-    *(int *)contextPtr->drm_state = 1;
+    *static_cast<int *>(contextPtr->drm_state) = 1;
 
     auto device = pPlatform->getClDevice(0);
     NEO::Device *neoDevice = &device->getDevice();

@@ -24,7 +24,7 @@ ClDevice *VADevice::getRootDeviceFromVaDisplay(Platform *pPlatform, VADisplay va
     VADisplayContextP pDisplayContext_test = reinterpret_cast<VADisplayContextP>(vaDisplay);
     UNRECOVERABLE_IF(pDisplayContext_test->vadpy_magic != 0x56414430);
     VADriverContextP pDriverContext_test = pDisplayContext_test->pDriverContext;
-    int deviceFd = *(int *)pDriverContext_test->drm_state;
+    int deviceFd = *static_cast<int *>(pDriverContext_test->drm_state);
 
     UNRECOVERABLE_IF(deviceFd < 0);
 
