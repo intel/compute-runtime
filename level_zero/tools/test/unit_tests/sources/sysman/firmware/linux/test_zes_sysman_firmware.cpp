@@ -209,5 +209,42 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleFirmwareLibraryCallFailureWhe
     EXPECT_STREQ(mockSupportedFwTypes[1].c_str(), properties.name);
     EXPECT_STREQ("Unknown", properties.version);
 }
+
+class ZesFirmwareUninitializedFixture : public SysmanDeviceFixture {
+
+  protected:
+    zes_firmware_handle_t hSysmanFirmware = {};
+    std::unique_ptr<Mock<FirmwareInterface>> pMockFwInterface;
+    FirmwareUtil *pFwUtilInterfaceOld = nullptr;
+    std::unique_ptr<Mock<FirmwareFsAccess>> pFsAccess;
+    FsAccess *pFsAccessOriginal = nullptr;
+
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
+        pFsAccess = std::make_unique<NiceMock<Mock<FirmwareFsAccess>>>();
+        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+        pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
+        pLinuxSysmanImp->pFwUtilInterface = nullptr;
+        ON_CALL(*pFsAccess.get(), read(_, _))
+            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<FirmwareFsAccess>::readValSuccess));
+    }
+    void TearDown() override {
+        SysmanDeviceFixture::TearDown();
+        pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
+        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+    }
+};
+
+TEST_F(ZesFirmwareUninitializedFixture, GivenFirmwareLibraryMissingThenCreateHandleMustFail) {
+    for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
+    pSysmanDeviceImp->pFirmwareHandleContext->init();
+    EXPECT_EQ(0u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
+}
+
 } // namespace ult
 } // namespace L0
