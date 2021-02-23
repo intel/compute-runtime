@@ -227,6 +227,22 @@ int main(int argc, char **argv) {
     testFiles = testBinaryFiles;
     testFilesNoRev = testBinaryFilesNoRev;
 
+    std::string executionDirectory(hardwarePrefix[productFamily]);
+    executionDirectory += "/";
+    executionDirectory += std::to_string(revId);
+
+#ifdef WIN32
+#include <direct.h>
+    if (_chdir(executionDirectory.c_str())) {
+        std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
+    }
+#elif defined(__linux__)
+#include <unistd.h>
+    if (chdir(executionDirectory.c_str()) != 0) {
+        std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
+    }
+#endif
+
     NEO::GmmHelper::createGmmContextWrapperFunc =
         NEO::GmmClientContextBase::create<NEO::MockGmmClientContext>;
 
