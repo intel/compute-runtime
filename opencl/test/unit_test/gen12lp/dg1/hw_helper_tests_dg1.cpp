@@ -39,19 +39,19 @@ DG1TEST_F(HwHelperTestDg1, givenDg1PlatformWhenSetupHardwareCapabilitiesIsCalled
 }
 
 DG1TEST_F(HwHelperTestDg1, givenDg1A0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
-    hardwareInfo.featureTable.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = REVISION_A0;
-
     auto &helper = HwHelper::get(renderCoreFamily);
+    hardwareInfo.featureTable.ftrCCSNode = true;
+    hardwareInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+
     helper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
 DG1TEST_F(HwHelperTestDg1, givenDg1BWhenAdjustDefaultEngineTypeCalledThenCcsIsReturned) {
-    hardwareInfo.featureTable.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = REVISION_B;
-
     auto &helper = HwHelper::get(renderCoreFamily);
+    hardwareInfo.featureTable.ftrCCSNode = true;
+    hardwareInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
+
     helper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }

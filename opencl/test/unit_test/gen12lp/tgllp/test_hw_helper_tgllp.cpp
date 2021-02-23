@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,9 @@
 using HwHelperTestGen12Lp = HwHelperTest;
 
 TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     hardwareInfo.featureTable.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = REVISION_A0;
+    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
 
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
@@ -21,8 +22,9 @@ TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpA0WhenAdjustDefaultEngineTypeCalledTh
 }
 
 TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     hardwareInfo.featureTable.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = REVISION_A0 + 1;
+    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A1, hardwareInfo);
 
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
@@ -30,8 +32,9 @@ TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpBWhenAdjustDefaultEngineTypeCalledThe
 }
 
 TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllWhenWaForDefaultEngineIsNotAppliedThenCcsIsReturned) {
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     hardwareInfo.featureTable.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = REVISION_A0;
+    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
     hardwareInfo.platform.eProductFamily = IGFX_UNKNOWN;
 
     auto &helper = HwHelper::get(renderCoreFamily);
@@ -40,13 +43,15 @@ TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllWhenWaForDefaultEngineIsNotAppliedThen
 }
 
 TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenSteppingBellowBThenIntegerDivisionEmulationIsEnabled) {
-    hardwareInfo.platform.usRevId = REVISION_A0;
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_TRUE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
 }
 
 TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenSteppingBThenIntegerDivisionEmulationIsEnabled) {
-    hardwareInfo.platform.usRevId = REVISION_A0 + 1;
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A1, hardwareInfo);
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
 }

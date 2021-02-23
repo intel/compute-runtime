@@ -22,11 +22,12 @@ TGLLPTEST_F(KernelTgllpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenS
     SPatchThreadPayload threadPayload{};
     threadPayload.OffsetToSkipSetFFIDGP = additionalOffsetDueToFfid;
     auto hwInfo = *defaultHwInfo;
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    unsigned short steppings[] = {REVISION_A0, REVISION_A0 + 1};
+    unsigned short steppings[] = {REVISION_A0, REVISION_A1};
     for (auto stepping : steppings) {
 
-        hwInfo.platform.usRevId = stepping;
+        hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(stepping, hwInfo);
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
         auto rootDeviceIndex = device->getRootDeviceIndex();
         MockKernelWithInternals mockKernelWithInternals{*device};

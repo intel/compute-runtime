@@ -49,10 +49,10 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpSkuWhenGettingCapabilityCoherency
     }
 
     if (hardwareInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) {
-        hardwareInfo.platform.usRevId = 0x1;
+        hardwareInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A1, hardwareInfo);
         helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
         EXPECT_TRUE(coherency);
-        hardwareInfo.platform.usRevId = 0x0;
+        hardwareInfo.platform.usRevId = helper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
         helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
         EXPECT_FALSE(coherency);
     } else {
