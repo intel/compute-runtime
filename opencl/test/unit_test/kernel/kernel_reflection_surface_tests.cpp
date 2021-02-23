@@ -1052,13 +1052,14 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
 
         void *pCurbe = ptrOffset(reflectionSurfaceMemory, (size_t)(addressData[i].m_ConstantBufferOffset));
 
-        if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface) {
-            auto *patchedPointer = ptrOffset(pCurbe, pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamOffset);
-            if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint32_t)) {
+        const auto &eventPoolSurfaceAddress = pBlockInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
+        if (isValidOffset(eventPoolSurfaceAddress.stateless)) {
+            auto *patchedPointer = ptrOffset(pCurbe, eventPoolSurfaceAddress.stateless);
+            if (eventPoolSurfaceAddress.pointerSize == sizeof(uint32_t)) {
                 uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
                 uint64_t patchedValue64 = *patchedValue;
                 EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddress(), patchedValue64);
-            } else if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint64_t)) {
+            } else if (eventPoolSurfaceAddress.pointerSize == sizeof(uint64_t)) {
                 uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
                 EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddress(), *patchedValue);
             }
@@ -1066,11 +1067,11 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
 
         if (pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface) {
             auto *patchedPointer = ptrOffset(pCurbe, pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset);
-            if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint32_t)) {
+            if (pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamSize == sizeof(uint32_t)) {
                 uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
                 uint64_t patchedValue64 = *patchedValue;
                 EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), patchedValue64);
-            } else if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint64_t)) {
+            } else if (pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamSize == sizeof(uint64_t)) {
                 uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
                 EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), *patchedValue);
             }

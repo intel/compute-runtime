@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -185,7 +185,9 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
     storeTokenIfNotNull(dst, src.tokens.allocateStatelessConstantMemorySurfaceWithInitialization);
     storeTokenIfNotNull(dst, src.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization);
     storeTokenIfNotNull(dst, src.tokens.allocateStatelessPrintfSurface);
-    storeTokenIfNotNull(dst, src.tokens.allocateStatelessEventPoolSurface);
+    if (nullptr != src.tokens.allocateStatelessEventPoolSurface) {
+        dst.usesSsh = true;
+    }
     storeTokenIfNotNull(dst, src.tokens.allocateStatelessDefaultDeviceQueueSurface);
     storeTokenIfNotNull(dst, src.tokens.allocateSyncBuffer);
 

@@ -438,7 +438,6 @@ TEST(PatchInfo, WhenPatchInfoIsCreatedThenMembersAreNullptr) {
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization);
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization);
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessPrintfSurface);
-    EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessEventPoolSurface);
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessDefaultDeviceQueueSurface);
 }
 
@@ -1153,12 +1152,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatefulKernelWhenK
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup event pool surface
-    SPatchAllocateStatelessEventPoolSurface AllocateStatelessEventPoolSurface;
-    AllocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 0;
-    AllocateStatelessEventPoolSurface.DataParamOffset = 0;
-    AllocateStatelessEventPoolSurface.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface = &AllocateStatelessEventPoolSurface;
+    SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;
+    allocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 0;
+    allocateStatelessEventPoolSurface.DataParamOffset = 0;
+    allocateStatelessEventPoolSurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessEventPoolSurface);
 
     // create kernel
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
@@ -1180,7 +1178,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatefulKernelWhenK
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
-                  pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface->SurfaceStateHeapOffset));
+                  pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(0u, surfaceAddress);
@@ -1197,12 +1195,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatefulKernelWhenE
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup event pool surface
-    SPatchAllocateStatelessEventPoolSurface AllocateStatelessEventPoolSurface;
-    AllocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 0;
-    AllocateStatelessEventPoolSurface.DataParamOffset = 0;
-    AllocateStatelessEventPoolSurface.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface = &AllocateStatelessEventPoolSurface;
+    SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;
+    allocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 0;
+    allocateStatelessEventPoolSurface.DataParamOffset = 0;
+    allocateStatelessEventPoolSurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessEventPoolSurface);
 
     // create kernel
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
@@ -1224,7 +1221,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatefulKernelWhenE
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
-                  pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface->SurfaceStateHeapOffset));
+                  pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddress(), surfaceAddress);
@@ -1239,7 +1236,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenKernelWithNullEvent
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
-    pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface = nullptr;
 
     // create kernel
     MockProgram program(toClDeviceVector(*pClDevice));
@@ -1261,18 +1257,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenKernelWithNullEvent
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenEventPoolSurfaceStateIsNotPatched) {
-
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup event pool surface
-    SPatchAllocateStatelessEventPoolSurface AllocateStatelessEventPoolSurface;
-    AllocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 0;
-    AllocateStatelessEventPoolSurface.DataParamOffset = 0;
-    AllocateStatelessEventPoolSurface.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface = &AllocateStatelessEventPoolSurface;
+    SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;
+    allocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 0;
+    allocateStatelessEventPoolSurface.DataParamOffset = 0;
+    allocateStatelessEventPoolSurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessEventPoolSurface);
 
     // create kernel
     MockProgram program(toClDeviceVector(*pClDevice));
@@ -1292,18 +1287,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatelessKernelWhen
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatelessKernelWhenEventPoolIsPatchedThenCrossThreadDataIsPatched) {
-
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup event pool surface
-    SPatchAllocateStatelessEventPoolSurface AllocateStatelessEventPoolSurface;
-    AllocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 0;
-    AllocateStatelessEventPoolSurface.DataParamOffset = 0;
-    AllocateStatelessEventPoolSurface.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface = &AllocateStatelessEventPoolSurface;
+    SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;
+    allocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 0;
+    allocateStatelessEventPoolSurface.DataParamOffset = 0;
+    allocateStatelessEventPoolSurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessEventPoolSurface);
 
     // create kernel
     MockProgram program(toClDeviceVector(*pClDevice));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,14 +22,10 @@ TEST_F(KernelDataTest, GIVENpatchTokenAllocateStatelessEventPoolSurfaceWHENdecod
 
     buildAndDecode();
 
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.Token,
-                  pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface->Token);
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.DataParamOffset,
-                  pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamOffset);
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.DataParamSize,
-                  pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize);
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.SurfaceStateHeapOffset,
-                  pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface->SurfaceStateHeapOffset);
+    const auto &eventPoolArg = pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
+    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.DataParamOffset, eventPoolArg.stateless);
+    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.DataParamSize, eventPoolArg.pointerSize);
+    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.SurfaceStateHeapOffset, eventPoolArg.bindful);
 }
 
 TEST_F(KernelDataTest, GIVENpatchTokenAllocateStatelessDefaultDeviceQueueSurfaceWHENdecodeTokensTHENtokenLocatedInPatchInfo) {

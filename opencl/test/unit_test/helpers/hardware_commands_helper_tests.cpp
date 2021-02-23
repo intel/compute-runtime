@@ -713,12 +713,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
     AllocateStatelessPrivateMemorySurface.DataParamSize = 8;
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &AllocateStatelessPrivateMemorySurface;
 
-    SPatchAllocateStatelessEventPoolSurface AllocateStatelessEventPoolSurface;
-    AllocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 192;
-    AllocateStatelessEventPoolSurface.DataParamOffset = 24;
-    AllocateStatelessEventPoolSurface.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface = &AllocateStatelessEventPoolSurface;
+    SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;
+    allocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 192;
+    allocateStatelessEventPoolSurface.DataParamOffset = 24;
+    allocateStatelessEventPoolSurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessEventPoolSurface);
 
     SPatchAllocateStatelessDefaultDeviceQueueSurface AllocateStatelessDefaultDeviceQueueSurface;
     AllocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset = 256;

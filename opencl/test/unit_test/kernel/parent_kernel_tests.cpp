@@ -123,12 +123,12 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenPrivateMemoryForBlocksIsA
 
     crossThreadOffsetBlock += 8;
 
-    SPatchAllocateStatelessEventPoolSurface *eventPoolBlock = new SPatchAllocateStatelessEventPoolSurface;
-    eventPoolBlock->DataParamOffset = crossThreadOffsetBlock;
-    eventPoolBlock->DataParamSize = 8;
-    eventPoolBlock->EventPoolSurfaceIndex = 0;
-    eventPoolBlock->Size = 8;
-    infoBlock->patchInfo.pAllocateStatelessEventPoolSurface = eventPoolBlock;
+    SPatchAllocateStatelessEventPoolSurface allocateEventPoolSurface = {};
+    allocateEventPoolSurface.DataParamOffset = crossThreadOffsetBlock;
+    allocateEventPoolSurface.DataParamSize = 8;
+    allocateEventPoolSurface.EventPoolSurfaceIndex = 0;
+    allocateEventPoolSurface.Size = 8;
+    populateKernelDescriptor(infoBlock->kernelDescriptor, allocateEventPoolSurface);
 
     crossThreadOffsetBlock += 8;
 

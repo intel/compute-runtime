@@ -180,6 +180,7 @@ cl_int Kernel::initialize() {
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto &kernelDeviceInfo = kernelDeviceInfos[rootDeviceIndex];
         auto &kernelInfo = *kernelInfos[rootDeviceIndex];
+        auto &kernelDescriptor = kernelInfo.kernelDescriptor;
         auto maxSimdSize = kernelInfo.getMaxSimdSize();
         const auto &workloadInfo = kernelInfo.workloadInfo;
         const auto &heapInfo = kernelInfo.heapInfo;
@@ -335,12 +336,10 @@ cl_int Kernel::initialize() {
             patchWithImplicitSurface(reinterpret_cast<void *>(globalMemory), *program->getGlobalSurface(rootDeviceIndex), pClDevice->getDevice(), *patch);
         }
 
-        if (patchInfo.pAllocateStatelessEventPoolSurface) {
-            if (requiresSshForBuffers(rootDeviceIndex)) {
-                auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)),
-                                              patchInfo.pAllocateStatelessEventPoolSurface->SurfaceStateHeapOffset);
-                Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0);
-            }
+        if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.bindful)) {
+            auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)),
+                                          kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.bindful);
+            Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0);
         }
 
         if (patchInfo.pAllocateStatelessDefaultDeviceQueueSurface) {
@@ -2461,24 +2460,20 @@ void Kernel::patchDefaultDeviceQueue(DeviceQueue *devQueue) {
 }
 
 void Kernel::patchEventPool(DeviceQueue *devQueue) {
-
     auto rootDeviceIndex = devQueue->getDevice().getRootDeviceIndex();
-    const auto &patchInfo = kernelInfos[rootDeviceIndex]->patchInfo;
-    if (patchInfo.pAllocateStatelessEventPoolSurface) {
-        if (kernelDeviceInfos[rootDeviceIndex].crossThreadData) {
-            auto patchLocation = ptrOffset(reinterpret_cast<uint32_t *>(getCrossThreadData(rootDeviceIndex)),
-                                           patchInfo.pAllocateStatelessEventPoolSurface->DataParamOffset);
+    const auto &eventPoolSurfaceAddress = kernelInfos[rootDeviceIndex]->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
 
-            patchWithRequiredSize(patchLocation, patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize,
-                                  static_cast<uintptr_t>(devQueue->getEventPoolBuffer()->getGpuAddressToPatch()));
-        }
+    if (isValidOffset(eventPoolSurfaceAddress.stateless) && kernelDeviceInfos[rootDeviceIndex].crossThreadData) {
+        auto patchLocation = ptrOffset(reinterpret_cast<uint32_t *>(getCrossThreadData(rootDeviceIndex)), eventPoolSurfaceAddress.stateless);
+        patchWithRequiredSize(patchLocation, eventPoolSurfaceAddress.pointerSize,
+                              static_cast<uintptr_t>(devQueue->getEventPoolBuffer()->getGpuAddressToPatch()));
+    }
 
-        if (requiresSshForBuffers(rootDeviceIndex)) {
-            auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)),
-                                          patchInfo.pAllocateStatelessEventPoolSurface->SurfaceStateHeapOffset);
-            Buffer::setSurfaceState(&devQueue->getDevice(), surfaceState, false, false, devQueue->getEventPoolBuffer()->getUnderlyingBufferSize(),
-                                    (void *)devQueue->getEventPoolBuffer()->getGpuAddress(), 0, devQueue->getEventPoolBuffer(), 0, 0);
-        }
+    if (isValidOffset(eventPoolSurfaceAddress.bindful)) {
+        auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)), eventPoolSurfaceAddress.bindful);
+        auto eventPoolBuffer = devQueue->getEventPoolBuffer();
+        Buffer::setSurfaceState(&devQueue->getDevice(), surfaceState, false, false, eventPoolBuffer->getUnderlyingBufferSize(),
+                                (void *)eventPoolBuffer->getGpuAddress(), 0, eventPoolBuffer, 0, 0);
     }
 }
 

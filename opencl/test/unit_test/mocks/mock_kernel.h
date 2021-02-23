@@ -26,6 +26,7 @@
 
 namespace NEO {
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnvironment &execEnv);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessEventPoolSurface &token);
 
 struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
     MockKernelObjForAuxTranslation(Type type) : KernelObjForAuxTranslation(type, nullptr) {
@@ -435,6 +436,7 @@ class MockParentKernel : public Kernel {
 
         info->patchInfo.threadPayload = threadPayload;
 
+        info->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
         info->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
         info->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
         info->kernelDescriptor.kernelAttributes.simdSize = 32;
@@ -448,12 +450,12 @@ class MockParentKernel : public Kernel {
 
         crossThreadOffset += 8;
 
-        SPatchAllocateStatelessEventPoolSurface *eventPool = new SPatchAllocateStatelessEventPoolSurface;
-        eventPool->DataParamOffset = crossThreadOffset;
-        eventPool->DataParamSize = 8;
-        eventPool->EventPoolSurfaceIndex = 0;
-        eventPool->Size = 8;
-        info->patchInfo.pAllocateStatelessEventPoolSurface = eventPool;
+        SPatchAllocateStatelessEventPoolSurface allocateEventPoolSurface = {};
+        allocateEventPoolSurface.DataParamOffset = crossThreadOffset;
+        allocateEventPoolSurface.DataParamSize = 8;
+        allocateEventPoolSurface.EventPoolSurfaceIndex = 0;
+        allocateEventPoolSurface.Size = 8;
+        populateKernelDescriptor(info->kernelDescriptor, allocateEventPoolSurface);
 
         crossThreadOffset += 8;
         if (addPrintfForParent) {
@@ -496,12 +498,12 @@ class MockParentKernel : public Kernel {
 
         crossThreadOffsetBlock += 8;
 
-        SPatchAllocateStatelessEventPoolSurface *eventPoolBlock = new SPatchAllocateStatelessEventPoolSurface;
-        eventPoolBlock->DataParamOffset = crossThreadOffsetBlock;
-        eventPoolBlock->DataParamSize = 8;
-        eventPoolBlock->EventPoolSurfaceIndex = 0;
-        eventPoolBlock->Size = 8;
-        infoBlock->patchInfo.pAllocateStatelessEventPoolSurface = eventPoolBlock;
+        SPatchAllocateStatelessEventPoolSurface allocateEventPoolSurfaceBlock = {};
+        allocateEventPoolSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
+        allocateEventPoolSurfaceBlock.DataParamSize = 8;
+        allocateEventPoolSurfaceBlock.EventPoolSurfaceIndex = 0;
+        allocateEventPoolSurfaceBlock.Size = 8;
+        populateKernelDescriptor(infoBlock->kernelDescriptor, allocateEventPoolSurfaceBlock);
 
         crossThreadOffsetBlock += 8;
         if (addPrintfForBlock) {
@@ -594,7 +596,6 @@ class MockParentKernel : public Kernel {
             }
             auto &kernelInfo = *pKernelInfo;
             delete kernelInfo.patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
-            delete kernelInfo.patchInfo.pAllocateStatelessEventPoolSurface;
             delete kernelInfo.patchInfo.pAllocateStatelessPrintfSurface;
             delete kernelInfo.patchInfo.threadPayload;
             delete &kernelInfo;
@@ -603,7 +604,6 @@ class MockParentKernel : public Kernel {
             for (uint32_t i = 0; i < blockManager->getCount(); i++) {
                 const KernelInfo *blockInfo = blockManager->getBlockKernelInfo(i);
                 delete blockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
-                delete blockInfo->patchInfo.pAllocateStatelessEventPoolSurface;
                 delete blockInfo->patchInfo.pAllocateStatelessPrintfSurface;
                 delete blockInfo->patchInfo.threadPayload;
                 delete blockInfo->patchInfo.dataParameterStream;

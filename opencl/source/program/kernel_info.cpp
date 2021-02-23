@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -318,11 +318,6 @@ void KernelInfo::storePatchToken(const SPatchAllocateStatelessGlobalMemorySurfac
 void KernelInfo::storePatchToken(const SPatchAllocateStatelessPrintfSurface *pStatelessPrintfSurfaceArg) {
     usesSsh |= true;
     patchInfo.pAllocateStatelessPrintfSurface = pStatelessPrintfSurfaceArg;
-}
-
-void KernelInfo::storePatchToken(const SPatchAllocateStatelessEventPoolSurface *pStatelessEventPoolSurfaceArg) {
-    usesSsh |= true;
-    patchInfo.pAllocateStatelessEventPoolSurface = pStatelessEventPoolSurfaceArg;
 }
 
 void KernelInfo::storePatchToken(const SPatchAllocateStatelessDefaultDeviceQueueSurface *pStatelessDefaultDeviceQueueSurfaceArg) {
