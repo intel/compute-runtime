@@ -32,7 +32,6 @@ add_executable(igdrcl_${target_name}
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
 )
 if(NEO__LIBVA_FOUND)
-  include_directories("${NEO__LIBVA_INCLUDE_DIR}")
   target_sources(igdrcl_${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/va_tests.cpp)
 endif()
 
