@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/sys_calls.h"
 
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <iostream>
 #include <stdio.h>
@@ -25,6 +26,10 @@ int open(const char *file, int flags) {
 }
 int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
     return ::ioctl(fileDescriptor, request, arg);
+}
+
+void *dlopen(const char *filename, int flag) {
+    return ::dlopen(filename, flag);
 }
 
 int access(const char *pathName, int mode) {

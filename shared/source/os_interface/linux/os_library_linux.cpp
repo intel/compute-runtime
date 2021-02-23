@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/os_library_linux.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <dlfcn.h>
 
@@ -32,15 +33,16 @@ namespace Linux {
 
 OsLibrary::OsLibrary(const std::string &name) {
     if (name.empty()) {
-        this->handle = dlopen(0, RTLD_LAZY);
+        this->handle = SysCalls::dlopen(0, RTLD_LAZY);
     } else {
 #ifdef SANITIZER_BUILD
-        constexpr auto dlopenFlag = RTLD_LAZY;
+        auto dlopenFlag = RTLD_LAZY;
 #else
-        constexpr auto dlopenFlag = RTLD_LAZY | RTLD_DEEPBIND;
+        auto dlopenFlag = RTLD_LAZY | RTLD_DEEPBIND;
         /* Background: https://github.com/intel/compute-runtime/issues/122 */
 #endif
-        this->handle = dlopen(name.c_str(), dlopenFlag);
+        adjustLibraryFlags(dlopenFlag);
+        this->handle = SysCalls::dlopen(name.c_str(), dlopenFlag);
     }
 }
 

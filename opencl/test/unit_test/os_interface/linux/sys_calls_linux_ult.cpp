@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <dlfcn.h>
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
@@ -23,6 +24,8 @@ namespace NEO {
 namespace SysCalls {
 uint32_t closeFuncCalled = 0u;
 int closeFuncArgPassed = 0;
+int dlOpenFlags = 0;
+bool dlOpenCalled = 0;
 constexpr int fakeFileDescriptor = 123;
 uint32_t vmId = 0;
 bool makeFakeDevicePath = false;
@@ -43,6 +46,13 @@ int open(const char *file, int flags) {
     }
     return 0;
 }
+
+void *dlopen(const char *filename, int flag) {
+    dlOpenFlags = flag;
+    dlOpenCalled = true;
+    return ::dlopen(filename, flag);
+}
+
 int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
     if (fileDescriptor == fakeFileDescriptor) {
         if (request == DRM_IOCTL_VERSION) {
