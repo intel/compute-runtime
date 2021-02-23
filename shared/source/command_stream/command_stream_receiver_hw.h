@@ -93,6 +93,16 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled) override;
 
+    void flushTagUpdate() override;
+    void flushMiFlushDW();
+    void flushPipeControl();
+    void flushSmallTask(LinearStream &commandStreamTask,
+                        size_t commandStreamStartTask);
+    void flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
+
+    bool isUpdateTagFromWaitEnabled();
+    void updateTagFromWait() override;
+
     bool isMultiOsContextCapable() const override;
 
     MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override;

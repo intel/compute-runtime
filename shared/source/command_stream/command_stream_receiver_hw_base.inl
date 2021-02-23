@@ -204,6 +204,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         initProgrammingFlags();
     }
 
+    bool updateTag = false;
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             //for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
@@ -224,14 +225,21 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         auto address = getTagAllocation()->getGpuAddress();
 
-        PipeControlArgs args(dispatchFlags.dcFlush);
-        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-            commandStreamTask,
-            PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-            address,
-            taskCount + 1,
-            peekHwInfo(),
-            args);
+        updateTag = !isUpdateTagFromWaitEnabled();
+        updateTag |= dispatchFlags.blocking;
+
+        if (updateTag) {
+            PipeControlArgs args(dispatchFlags.dcFlush);
+            MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+                commandStreamTask,
+                PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                address,
+                taskCount + 1,
+                peekHwInfo(),
+                args);
+        } else {
+            currentPipeControlForNooping = nullptr;
+        }
 
         this->latestSentTaskCount = taskCount + 1;
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
@@ -571,9 +579,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-            this->flush(batchBuffer, this->getResidencyAllocations());
-            this->latestFlushedTaskCount = this->taskCount + 1;
-            this->makeSurfacePackNonResident(this->getResidencyAllocations());
+            if (updateTag) {
+                this->latestFlushedTaskCount = this->taskCount + 1;
+            }
+            flushHandler(batchBuffer, this->getResidencyAllocations());
         } else {
             auto commandBuffer = new CommandBuffer(device);
             commandBuffer->batchBuffer = batchBuffer;
@@ -838,6 +847,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
+    updateTagFromWait();
+
     int64_t waitTimeout = 0;
     bool enableTimeout = false;
 
@@ -1077,6 +1088,101 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     }
 
     return newTaskCount;
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
+    if (this->osContext->getEngineType() == aub_stream::ENGINE_BCS) {
+        this->flushMiFlushDW();
+    } else {
+        this->flushPipeControl();
+    }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
+    auto lock = obtainUniqueOwnership();
+
+    auto &commandStream = getCS(EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
+    auto commandStreamStart = commandStream.getUsed();
+
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), taskCount, false, true);
+
+    makeResident(*tagAllocation);
+    makeResident(*commandStream.getGraphicsAllocation());
+
+    this->flushSmallTask(commandStream, commandStreamStart);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
+    auto lock = obtainUniqueOwnership();
+
+    auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo()));
+    auto commandStreamStart = commandStream.getUsed();
+
+    PipeControlArgs args(true);
+    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(commandStream,
+                                                                                        PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                                                                                        getTagAllocation()->getGpuAddress(),
+                                                                                        taskCount,
+                                                                                        peekHwInfo(),
+                                                                                        args);
+
+    makeResident(*tagAllocation);
+    makeResident(*commandStream.getGraphicsAllocation());
+
+    this->flushSmallTask(commandStream, commandStreamStart);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStreamTask, size_t commandStreamStartTask) {
+    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
+
+    void *endingCmdPtr = nullptr;
+
+    if (isDirectSubmissionEnabled()) {
+        endingCmdPtr = commandStreamTask.getSpace(0);
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&commandStreamTask,
+                                                                        0ull,
+                                                                        false);
+    } else {
+        auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(commandStreamTask.getSpace(sizeof(MI_BATCH_BUFFER_END)));
+        *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
+    }
+
+    alignToCacheLine(commandStreamTask);
+
+    BatchBuffer batchBuffer{commandStreamTask.getGraphicsAllocation(), commandStreamStartTask, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
+                            commandStreamTask.getUsed(), &commandStreamTask, endingCmdPtr, false};
+
+    flushHandler(batchBuffer, getResidencyAllocations());
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    flush(batchBuffer, allocationsForResidency);
+    makeSurfacePackNonResident(allocationsForResidency);
+}
+
+template <typename GfxFamily>
+inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
+    bool enabled = false;
+
+    if (DebugManager.flags.UpdateTaskCountFromWait.get() != -1) {
+        enabled = DebugManager.flags.UpdateTaskCountFromWait.get();
+    }
+
+    return enabled;
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::updateTagFromWait() {
+    if (isUpdateTagFromWaitEnabled()) {
+        flushTagUpdate();
+    }
 }
 
 template <typename GfxFamily>

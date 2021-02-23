@@ -46,6 +46,9 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
+    void flushTagUpdate() override{};
+    void updateTagFromWait() override{};
+
     bool isMultiOsContextCapable() const override { return multiOsContextCapable; }
 
     MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {

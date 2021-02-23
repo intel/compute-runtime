@@ -208,6 +208,9 @@ class CommandStreamReceiver {
 
     virtual uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled) = 0;
 
+    virtual void flushTagUpdate() = 0;
+    virtual void updateTagFromWait() = 0;
+
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();
     }

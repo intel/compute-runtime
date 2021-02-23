@@ -452,6 +452,9 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     using BaseClass::CommandStreamReceiver;
 
+    void flushTagUpdate() override{};
+    void updateTagFromWait() override{};
+
     bool isMultiOsContextCapable() const override { return false; }
 
     MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {
