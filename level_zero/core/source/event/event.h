@@ -53,7 +53,7 @@ struct Event : _ze_event_handle_t {
     virtual uint64_t getGpuAddress();
 
     void *hostAddress = nullptr;
-    uint32_t packetsInUse = 0;
+    uint32_t packetsInUse;
     uint64_t gpuAddress = 0u;
 
     ze_event_scope_flags_t signalScope = 0u;
@@ -96,7 +96,6 @@ struct EventImp : public Event {
 
   protected:
     ze_result_t calculateProfilingData();
-    ze_result_t queryStatusKernelTimestamp();
     ze_result_t hostEventSetValue(uint32_t eventValue);
     ze_result_t hostEventSetValueTimestamps(uint32_t eventVal);
     void assignTimestampData(void *address);

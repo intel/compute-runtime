@@ -241,29 +241,17 @@ ze_result_t Event::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t EventImp::queryStatusKernelTimestamp() {
-    assignTimestampData(hostAddress);
-    uint32_t packetsToCheck = packetsInUse ? packetsInUse : 1;
-
-    for (uint32_t i = 0; i < packetsToCheck; i++) {
-        auto &packet = timestampsData->packets[i];
-        if (packet.contextEnd == Event::STATE_CLEARED) {
-            return ZE_RESULT_NOT_READY;
-        }
-    }
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t EventImp::queryStatus() {
     uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
     uint32_t queryVal = Event::STATE_CLEARED;
-
     if (metricStreamer != nullptr) {
         *hostAddr = metricStreamer->getNotificationState();
     }
     this->csr->downloadAllocations();
     if (isTimestampEvent) {
-        return queryStatusKernelTimestamp();
+        auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
+        auto timeStampAddress = baseAddr + offsetof(TimestampPacketStorage::Packet, contextEnd);
+        hostAddr = reinterpret_cast<uint64_t *>(timeStampAddress);
     }
     memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), static_cast<void *>(hostAddr), sizeof(uint32_t));
     return queryVal == Event::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
@@ -355,6 +343,7 @@ ze_result_t EventImp::reset() {
     if (allocOnDevice) {
         return ZE_RESULT_SUCCESS;
     }
+
     resetPackets();
     return hostEventSetValue(Event::STATE_INITIAL);
 }

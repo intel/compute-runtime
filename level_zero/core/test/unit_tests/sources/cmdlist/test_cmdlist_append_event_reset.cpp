@@ -147,7 +147,7 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
 
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, itorPC.size());
-    uint32_t postSyncFound = 0u;
+    bool postSyncFound = false;
     for (auto it : itorPC) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
@@ -156,54 +156,10 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
             EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
             EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
             EXPECT_FALSE(cmd->getDcFlushEnable());
-            postSyncFound++;
-            gpuAddress += sizeof(struct TimestampPacketStorage::Packet);
+            postSyncFound = true;
         }
     }
-    ASSERT_EQ(NEO::TimestampPacketSizeControl::preferredPacketCount, postSyncFound);
-}
-
-HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetWhenMoreThanOnePacketThenPipeControlAppendedCorrectly, SklPlusMatcher) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    auto &commandContainer = commandList->commandContainer;
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
-
-    event->packetsInUse = 3;
-    commandList->appendEventReset(event->toHandle());
-
-    ASSERT_EQ(0u, event->getPacketsInUse());
-    auto gpuAddress = event->getGpuAddress() + offsetof(TimestampPacketStorage::Packet, contextEnd);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-
-    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(0u, itorPC.size());
-    uint32_t postSyncFound = 0;
-    for (auto it : itorPC) {
-        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
-        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_CLEARED);
-            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
-            EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
-            EXPECT_FALSE(cmd->getDcFlushEnable());
-            postSyncFound++;
-            gpuAddress += sizeof(struct TimestampPacketStorage::Packet);
-        }
-    }
-    ASSERT_EQ(3u, postSyncFound);
+    ASSERT_TRUE(postSyncFound);
 }
 
 HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPipeControlWithDcFlushAppended, SklPlusMatcher) {
