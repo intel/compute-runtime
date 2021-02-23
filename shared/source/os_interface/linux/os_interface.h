@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,8 @@ class OSInterface::OSInterfaceImpl {
         return drm.get();
     }
     void setDrm(Drm *drm);
+
+    bool isDebugAttachAvailable() const;
 
   protected:
     std::unique_ptr<Drm> drm;

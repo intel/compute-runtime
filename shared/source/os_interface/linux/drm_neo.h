@@ -137,6 +137,8 @@ class Drm {
     MOCKABLE_VIRTUAL void unregisterResource(uint32_t handle);
     MOCKABLE_VIRTUAL uint32_t registerIsaCookie(uint32_t isaHandle);
 
+    MOCKABLE_VIRTUAL bool isDebugAttachAvailable();
+
     SystemInfo *getSystemInfo() const {
         return systemInfo.get();
     }

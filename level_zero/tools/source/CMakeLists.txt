@@ -1,9 +1,10 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
+add_subdirectory(debug)
 add_subdirectory(metrics)
 add_subdirectory(sysman)
 add_subdirectory(pin)

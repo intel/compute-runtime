@@ -40,6 +40,7 @@
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler.h"
+#include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 
@@ -486,6 +487,16 @@ ze_result_t DeviceImp::getDeviceImageProperties(ze_device_image_properties_t *pD
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t DeviceImp::getDebugProperties(zet_device_debug_properties_t *pDebugProperties) {
+    bool isDebugAttachAvailable = getOsInterface().isDebugAttachAvailable();
+    if (isDebugAttachAvailable && !isSubdevice) {
+        pDebugProperties->flags = zet_device_debug_property_flag_t::ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH;
+    } else {
+        pDebugProperties->flags = 0;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t DeviceImp::systemBarrier() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
 
 ze_result_t DeviceImp::activateMetricGroups(uint32_t count,
@@ -799,4 +810,17 @@ ze_result_t DeviceImp::mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) {
     *ordinal = i - 1;
     return ZE_RESULT_SUCCESS;
 };
+
+DebugSession *DeviceImp::getDebugSession(const zet_debug_config_t &config) {
+    if (debugSession != nullptr) {
+        return debugSession.get();
+    }
+
+    if (!this->isSubdevice) {
+        auto session = DebugSession::create(config, this);
+        debugSession.reset(session);
+    }
+    return debugSession.get();
+}
+
 } // namespace L0

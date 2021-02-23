@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,13 @@ void OSInterface::OSInterfaceImpl::setDrm(Drm *drm) {
     this->drm.reset(drm);
 }
 
+bool OSInterface::OSInterfaceImpl::isDebugAttachAvailable() const {
+    if (drm) {
+        return drm->isDebugAttachAvailable();
+    }
+    return false;
+}
+
 OSInterface::OSInterface() {
     osInterfaceImpl = new OSInterfaceImpl();
 }
@@ -40,6 +47,10 @@ bool OSInterface::are64kbPagesEnabled() {
 
 uint32_t OSInterface::getDeviceHandle() const {
     return 0;
+}
+
+bool OSInterface::isDebugAttachAvailable() const {
+    return osInterfaceImpl->isDebugAttachAvailable();
 }
 
 bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) {

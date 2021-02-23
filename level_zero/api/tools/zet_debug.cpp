@@ -5,13 +5,15 @@
  *
  */
 
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/debug/debug_handlers.h"
 #include <level_zero/zet_api.h>
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zetDeviceGetDebugProperties(
     zet_device_handle_t hDevice,
     zet_device_debug_properties_t *pDebugProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Device::fromHandle(hDevice)->getDebugProperties(pDebugProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -19,7 +21,7 @@ zetDebugAttach(
     zet_device_handle_t hDevice,
     const zet_debug_config_t *config,
     zet_debug_session_handle_t *phDebug) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::debugAttach(hDevice, config, phDebug);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

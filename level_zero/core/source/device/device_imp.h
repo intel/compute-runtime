@@ -12,10 +12,12 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/module/module.h"
+#include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 namespace L0 {
 struct SysmanDevice;
+
 struct DeviceImp : public Device {
     uint32_t getRootDeviceIndex() override;
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
@@ -44,6 +46,8 @@ struct DeviceImp : public Device {
     ze_result_t getCommandQueueGroupProperties(uint32_t *pCount,
                                                ze_command_queue_group_properties_t *pCommandQueueGroupProperties) override;
     ze_result_t getExternalMemoryProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties) override;
+    ze_result_t getDebugProperties(zet_device_debug_properties_t *pDebugProperties) override;
+
     ze_result_t systemBarrier() override;
     void *getExecEnvironment() override;
     BuiltinFunctionsLib *getBuiltinFunctionsLib() override;
@@ -54,6 +58,8 @@ struct DeviceImp : public Device {
     NEO::OSInterface &getOsInterface() override;
     uint32_t getPlatformInfo() const override;
     MetricContext &getMetricContext() override;
+    DebugSession *getDebugSession(const zet_debug_config_t &config) override;
+
     uint32_t getMaxNumHwThreads() const override;
     ze_result_t activateMetricGroups(uint32_t count,
                                      zet_metric_group_handle_t *phMetricGroups) override;
@@ -95,6 +101,7 @@ struct DeviceImp : public Device {
   protected:
     NEO::GraphicsAllocation *debugSurface = nullptr;
     SysmanDevice *pSysmanDevice = nullptr;
+    std::unique_ptr<DebugSession> debugSession = nullptr;
 };
 
 } // namespace L0

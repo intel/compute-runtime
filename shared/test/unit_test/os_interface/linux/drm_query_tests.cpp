@@ -34,3 +34,12 @@ TEST(DrmQueryTest, GivenGtMaxFreqFileExistsWhenFrequencyIsQueriedThenValidValueI
 
     EXPECT_EQ(expectedMaxFrequency, maxFrequency);
 }
+
+TEST(DrmQueryTest, WhenCallingIsDebugAttachAvailableThenReturnValueIsFalse) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.allowDebugAttachCallBase = true;
+
+    EXPECT_FALSE(drm.isDebugAttachAvailable());
+}

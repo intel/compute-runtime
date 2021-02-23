@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,10 @@ OSInterface::~OSInterface() {
 
 uint32_t OSInterface::getDeviceHandle() const {
     return static_cast<uint32_t>(osInterfaceImpl->getDeviceHandle());
+}
+
+bool OSInterface::isDebugAttachAvailable() const {
+    return false;
 }
 
 OSInterface::OSInterfaceImpl::OSInterfaceImpl() = default;

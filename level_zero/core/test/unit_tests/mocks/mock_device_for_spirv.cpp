@@ -13,6 +13,8 @@
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 
+#include "level_zero/tools/source/debug/debug_session.h"
+
 namespace L0 {
 namespace ult {
 template <bool useImagesBuiltins>

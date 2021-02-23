@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -242,11 +242,20 @@ struct Mock<Device> : public Device {
     ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) override {
         return ZE_RESULT_SUCCESS;
     }
+
+    ze_result_t getDebugProperties(zet_device_debug_properties_t *properties) override {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    DebugSession *getDebugSession(const zet_debug_config_t &config) override {
+        return nullptr;
+    }
 };
 
 template <>
 struct Mock<L0::DeviceImp> : public L0::DeviceImp {
     using Base = L0::DeviceImp;
+    using Base::debugSession;
 
     explicit Mock(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
         device->incRefInternal();

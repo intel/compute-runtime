@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ struct BuiltinFunctionsLib;
 struct ExecutionEnvironment;
 struct MetricContext;
 struct SysmanDevice;
+struct DebugSession;
 
 enum class ModuleType;
 
@@ -72,6 +73,8 @@ struct Device : _ze_device_handle_t {
 
     virtual ze_result_t getCommandQueueGroupProperties(uint32_t *pCount,
                                                        ze_command_queue_group_properties_t *pCommandQueueGroupProperties) = 0;
+    virtual ze_result_t getDebugProperties(zet_device_debug_properties_t *pDebugProperties) = 0;
+
     virtual ze_result_t systemBarrier() = 0;
 
     virtual ~Device() = default;
@@ -87,6 +90,7 @@ struct Device : _ze_device_handle_t {
     virtual NEO::OSInterface &getOsInterface() = 0;
     virtual uint32_t getPlatformInfo() const = 0;
     virtual MetricContext &getMetricContext() = 0;
+    virtual DebugSession *getDebugSession(const zet_debug_config_t &config) = 0;
 
     virtual ze_result_t activateMetricGroups(uint32_t count,
                                              zet_metric_group_handle_t *phMetricGroups) = 0;

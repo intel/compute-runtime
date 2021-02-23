@@ -23,4 +23,8 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, int &sliceCount, int &subSli
     return translateTopologyInfo(data, sliceCount, subSliceCount, euCount);
 }
 
+bool Drm::isDebugAttachAvailable() {
+    return false;
+}
+
 } // namespace NEO

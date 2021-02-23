@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,8 @@ class OSInterface {
     OSInterfaceImpl *get() const {
         return osInterfaceImpl;
     };
+
+    MOCKABLE_VIRTUAL bool isDebugAttachAvailable() const;
     static bool osEnabled64kbPages;
     static bool osEnableLocalMemory;
     static bool are64kbPagesEnabled();

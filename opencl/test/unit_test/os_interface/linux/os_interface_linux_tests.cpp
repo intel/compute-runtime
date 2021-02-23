@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,11 +18,11 @@
 
 namespace NEO {
 
-TEST(OsInterfaceTest, GivenLinuxWhenare64kbPagesEnabledThenFalse) {
+TEST(OsInterfaceTest, GivenLinuxWhenCallingAre64kbPagesEnabledThenReturnFalse) {
     EXPECT_FALSE(OSInterface::are64kbPagesEnabled());
 }
 
-TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenDeviceHandleQueriedthenZeroIsReturned) {
+TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenDeviceHandleQueriedThenZeroIsReturned) {
     OSInterface osInterface;
     EXPECT_EQ(0u, osInterface.getDeviceHandle());
 }
@@ -33,6 +33,17 @@ TEST(OsInterfaceTest, GivenLinuxOsWhenCheckForNewResourceImplicitFlushSupportThe
 
 TEST(OsInterfaceTest, GivenLinuxOsWhenCheckForGpuIdleImplicitFlushSupportThenReturnFalse) {
     EXPECT_TRUE(OSInterface::gpuIdleImplicitFlush);
+}
+
+TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenCallingIsDebugAttachAvailableThenFalseIsReturned) {
+    OSInterface osInterface;
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock *drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    osInterface.get()->setDrm(drm);
+    EXPECT_FALSE(osInterface.isDebugAttachAvailable());
 }
 
 } // namespace NEO

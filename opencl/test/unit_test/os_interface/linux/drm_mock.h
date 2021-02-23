@@ -104,6 +104,13 @@ class DrmMock : public Drm {
         return Drm::setContextDebugFlag(drmContextId);
     }
 
+    bool isDebugAttachAvailable() override {
+        if (allowDebugAttachCallBase) {
+            return Drm::isDebugAttachAvailable();
+        }
+        return allowDebugAttach;
+    }
+
     static const int mockFd = 33;
 
     bool failRetTopology = false;
@@ -136,6 +143,8 @@ class DrmMock : public Drm {
     int StoredRetValForVmId = 1;
 
     bool disableSomeTopology = false;
+    bool allowDebugAttach = false;
+    bool allowDebugAttachCallBase = false;
     uint32_t passedContextDebugId = uint32_t(-1);
 
     uint32_t receivedContextCreateFlags = 0;
