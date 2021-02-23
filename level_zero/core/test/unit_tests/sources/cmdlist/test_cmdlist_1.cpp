@@ -624,14 +624,22 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     bool containsDstPtr = false;
-
-    for (auto &a : commandList.cmdListHelper.residencyContainer) {
-        if (a != nullptr && a->getGpuAddress() == reinterpret_cast<uint64_t>(alloc)) {
-            containsDstPtr = true;
+    bool gpuTimeStampAlloc = false;
+    for (auto &residentGfxAlloc : commandList.cmdListHelper.residencyContainer) {
+        if (residentGfxAlloc != nullptr) {
+            if (residentGfxAlloc->getGpuAddress() ==
+                reinterpret_cast<uint64_t>(alloc)) {
+                containsDstPtr = true;
+            }
+            if (residentGfxAlloc->getAllocationType() ==
+                NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_TAG_BUFFER) {
+                gpuTimeStampAlloc = true;
+            }
         }
     }
 
     EXPECT_TRUE(containsDstPtr);
+    EXPECT_TRUE(gpuTimeStampAlloc);
 
     EXPECT_EQ(testDevice->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
     EXPECT_EQ(2u, commandList.cmdListHelper.groupSize[0]);

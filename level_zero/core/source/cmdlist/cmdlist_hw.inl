@@ -1659,13 +1659,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     }
 
     size_t alignedSize = alignUp<size_t>(sizeof(EventData) * numEvents, MemoryConstants::pageSize64k);
-    NEO::GraphicsAllocation::AllocationType allocationType = NEO::GraphicsAllocation::AllocationType::BUFFER;
+    NEO::GraphicsAllocation::AllocationType allocationType = NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_TAG_BUFFER;
+    auto devices = device->getNEODevice()->getDeviceBitfield();
     NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(),
                                                    true,
                                                    alignedSize,
                                                    allocationType,
+                                                   devices.count() > 1,
                                                    false,
-                                                   device->getNEODevice()->getDeviceBitfield()};
+                                                   devices};
 
     NEO::GraphicsAllocation *timestampsGPUAddress = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
 
