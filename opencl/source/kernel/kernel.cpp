@@ -170,6 +170,7 @@ template void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData
 
 cl_int Kernel::initialize() {
     std::bitset<64> isDeviceInitialized{};
+    this->kernelHasIndirectAccess = false;
     for (auto &pClDevice : getDevices()) {
         auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
         if (isDeviceInitialized.test(rootDeviceIndex)) {
@@ -375,6 +376,10 @@ cl_int Kernel::initialize() {
         auto numArgs = kernelInfo.kernelArgInfo.size();
         kernelDeviceInfo.slmSizes.resize(numArgs);
         isDeviceInitialized.set(rootDeviceIndex);
+
+        this->kernelHasIndirectAccess |= kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
+                                         kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
+                                         kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
     }
 
     provideInitializationHints();

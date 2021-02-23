@@ -419,6 +419,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     void setWorkDim(uint32_t rootDeviceIndex, uint32_t workDim);
     uint32_t getMaxKernelWorkGroupSize(uint32_t rootDeviceIndex) const;
     uint32_t getSlmTotalSize(uint32_t rootDeviceIndex) const;
+    bool getHasIndirectAccess() {
+        return this->kernelHasIndirectAccess;
+    }
 
   protected:
     struct ObjectCounts {
@@ -642,6 +645,8 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     std::unordered_map<KernelConfig, KernelSubmissionData, KernelConfigHash> kernelSubmissionMap;
     bool singleSubdevicePreferedInCurrentEnqueue = false;
+
+    bool kernelHasIndirectAccess = true;
 };
 
 } // namespace NEO

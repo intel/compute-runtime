@@ -786,7 +786,51 @@ using KernelIndirectPropertiesTests = KernelPropertiesTests;
 
 HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessThenIndirectAccessIsSet) {
     DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
+    kernel->kernelHasIndirectAccess = true;
+
+    UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
+    EXPECT_EQ(false, unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+    EXPECT_EQ(false, unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_EQ(false, unifiedMemoryControls.indirectSharedAllocationsAllowed);
+
+    ze_kernel_indirect_access_flags_t flags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE |
+                                              ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST |
+                                              ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED;
+    auto res = kernel->setIndirectAccess(flags);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    unifiedMemoryControls = kernel->getUnifiedMemoryControls();
+    EXPECT_TRUE(unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+    EXPECT_TRUE(unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_TRUE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
+}
+
+HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessButWithDisableIndirectAccessSetThenIndirectAccessIsNotSet) {
+    DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(1);
+    kernel->kernelHasIndirectAccess = true;
+
+    UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
+    EXPECT_EQ(false, unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+    EXPECT_EQ(false, unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_EQ(false, unifiedMemoryControls.indirectSharedAllocationsAllowed);
+
+    ze_kernel_indirect_access_flags_t flags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE |
+                                              ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST |
+                                              ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED;
+    auto res = kernel->setIndirectAccess(flags);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    unifiedMemoryControls = kernel->getUnifiedMemoryControls();
+    EXPECT_FALSE(unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+    EXPECT_FALSE(unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_FALSE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
+}
+
+HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessAndDisableIndirectAccessNotSetThenIndirectAccessIsSet) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
     kernel->kernelHasIndirectAccess = true;
 
     UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
@@ -808,7 +852,7 @@ HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelTh
 
 HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatDoesNotHaveIndirectAccessThenIndirectAccessIsNotSet) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(1);
+    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
     kernel->kernelHasIndirectAccess = false;
 
     UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
@@ -826,28 +870,6 @@ HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelTh
     EXPECT_FALSE(unifiedMemoryControls.indirectDeviceAllocationsAllowed);
     EXPECT_FALSE(unifiedMemoryControls.indirectHostAllocationsAllowed);
     EXPECT_FALSE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
-}
-
-HWTEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatDoesNotHaveIndirectAccessButWithoutSettingDisableIndirectAccessThenIndirectAccessIsSet) {
-    DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
-    kernel->kernelHasIndirectAccess = false;
-
-    UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
-    EXPECT_EQ(false, unifiedMemoryControls.indirectDeviceAllocationsAllowed);
-    EXPECT_EQ(false, unifiedMemoryControls.indirectHostAllocationsAllowed);
-    EXPECT_EQ(false, unifiedMemoryControls.indirectSharedAllocationsAllowed);
-
-    ze_kernel_indirect_access_flags_t flags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE |
-                                              ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST |
-                                              ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED;
-    auto res = kernel->setIndirectAccess(flags);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    unifiedMemoryControls = kernel->getUnifiedMemoryControls();
-    EXPECT_TRUE(unifiedMemoryControls.indirectDeviceAllocationsAllowed);
-    EXPECT_TRUE(unifiedMemoryControls.indirectHostAllocationsAllowed);
-    EXPECT_TRUE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
 HWTEST_F(KernelPropertiesTests, givenValidKernelIndirectAccessFlagsSetThenExpectKernelIndirectAllocationsAllowedTrue) {

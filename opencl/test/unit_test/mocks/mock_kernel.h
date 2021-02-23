@@ -73,6 +73,7 @@ class MockKernel : public Kernel {
     using Kernel::kernelArguments;
     using Kernel::KernelConfig;
     using Kernel::kernelDeviceInfos;
+    using Kernel::kernelHasIndirectAccess;
     using Kernel::kernelSubmissionMap;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;

@@ -401,7 +401,7 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
 }
 
 ze_result_t KernelImp::setIndirectAccess(ze_kernel_indirect_access_flags_t flags) {
-    if (NEO::DebugManager.flags.DisableIndirectAccess.get() == 1 && this->kernelHasIndirectAccess == false) {
+    if (NEO::DebugManager.flags.DisableIndirectAccess.get() == 1 || this->kernelHasIndirectAccess == false) {
         return ZE_RESULT_SUCCESS;
     }
 
