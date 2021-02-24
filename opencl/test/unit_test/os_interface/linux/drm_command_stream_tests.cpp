@@ -1207,9 +1207,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitWhenPrint
     }
     expected << "\n";
 
-    std::cout << output << std::endl;
-    std::cout << expected.str() << std::endl;
-
     EXPECT_FALSE(output.compare(expected.str()));
 
     mm->freeGraphicsMemory(allocation1);
