@@ -852,37 +852,6 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreat
     EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
 }
 
-TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
-    MockContext context;
-    context.memoryManager = memoryManager.get();
-
-    cl_image_format imageFormat;
-    imageFormat.image_channel_data_type = CL_UNORM_INT8;
-    imageFormat.image_channel_order = CL_R;
-
-    cl_image_desc imageDesc = {};
-
-    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
-    imageDesc.image_width = 64u;
-
-    char data[64u * 4 * 8];
-
-    auto retVal = CL_SUCCESS;
-
-    cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> dstImage(
-        Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
-                      flags, 0, surfaceFormat, &imageDesc, data, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, dstImage);
-
-    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_BUFFER, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
-}
-
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountNonZeroisBeingCreatedThenAllocateGraphicsMemoryForImageIsUsed) {
     MockContext context;
     context.memoryManager = memoryManager.get();

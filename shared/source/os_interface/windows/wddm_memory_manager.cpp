@@ -69,10 +69,6 @@ GraphicsAllocation *WddmMemoryManager::allocateShareableMemory(const AllocationD
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
-    if (allocationData.imgInfo->linearStorage && allocationData.imgInfo->mipCount == 0) {
-        return allocateGraphicsMemoryWithAlignment(allocationData);
-    }
-
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, allocationData.imgInfo->size,
