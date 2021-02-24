@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,8 @@ class OsGlobalOperations {
     virtual void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) = 0;
+    virtual void getWedgedStatus(zes_device_state_t *pState) = 0;
+    virtual void getRepairStatus(zes_device_state_t *pState) = 0;
     virtual Device *getDevice() = 0;
     virtual ze_result_t reset(ze_bool_t force) = 0;
     virtual ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) = 0;

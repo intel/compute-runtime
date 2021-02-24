@@ -22,6 +22,8 @@ class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMov
     void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getWedgedStatus(zes_device_state_t *pState) override;
+    void getRepairStatus(zes_device_state_t *pState) override;
     Device *getDevice() override;
     ze_result_t reset(ze_bool_t force) override;
     ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) override;
