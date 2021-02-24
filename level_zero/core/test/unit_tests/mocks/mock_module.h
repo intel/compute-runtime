@@ -91,7 +91,7 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
         return NEO::TranslationOutput::ErrorCode::Success;
     }
 };
-
+template <typename T>
 struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
     MockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : moduleNumSpecConstants(moduleNumSpecConstants) {
     }
@@ -116,14 +116,17 @@ struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
     NEO::TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
                                                            ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
         output.idsBuffer.reset(new NEO::MockCIFBuffer());
+        output.sizesBuffer.reset(new NEO::MockCIFBuffer());
         for (uint32_t i = 0; i < moduleNumSpecConstants; i++) {
             output.idsBuffer->PushBackRawCopy(moduleSpecConstantsIds[i]);
+            output.sizesBuffer->PushBackRawCopy(moduleSpecConstantsSizes[i]);
         }
         return NEO::TranslationOutput::ErrorCode::Success;
     }
     uint32_t moduleNumSpecConstants = 0u;
     const std::vector<uint32_t> moduleSpecConstantsIds{0, 1, 2, 3};
-    const std::vector<uint64_t> moduleSpecConstantsValues{10, 20, 30, 40};
+    const std::vector<T> moduleSpecConstantsValues{10, 20, 30, 40};
+    const std::vector<uint32_t> moduleSpecConstantsSizes{sizeof(T), sizeof(T), sizeof(T), sizeof(T)};
 };
 
 } // namespace ult

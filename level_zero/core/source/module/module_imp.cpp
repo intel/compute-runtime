@@ -102,11 +102,16 @@ bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize
     NEO::TranslationInput inputArgs = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
 
     if (pConstants) {
+        NEO::SpecConstantInfo specConstInfo;
+        auto retVal = compilerInterface->getSpecConstantsInfo(*device->getNEODevice(), ArrayRef<const char>(input, inputSize), specConstInfo);
+        if (retVal != NEO::TranslationOutput::ErrorCode::Success) {
+            return false;
+        }
         for (uint32_t i = 0; i < pConstants->numConstants; i++) {
             uint64_t specConstantValue = 0;
-            memcpy_s(&specConstantValue, sizeof(uint64_t),
-                     const_cast<void *>(pConstants->pConstantValues[i]), sizeof(uint64_t));
             uint32_t specConstantId = pConstants->pConstantIds[i];
+            memcpy_s(&specConstantValue, sizeof(uint64_t),
+                     const_cast<void *>(pConstants->pConstantValues[i]), specConstInfo.sizesBuffer->GetMemory<uint32_t>()[specConstantId]);
             specConstantsValues[specConstantId] = specConstantValue;
         }
     }
