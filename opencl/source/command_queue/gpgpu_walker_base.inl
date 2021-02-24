@@ -216,6 +216,9 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) * 2;
     }
 
+    if (DebugManager.flags.GpuScratchRegWriteAfterWalker.get() != -1) {
+        expectedSizeCS += sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    }
     return expectedSizeCS;
 }
 

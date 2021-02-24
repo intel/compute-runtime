@@ -86,6 +86,9 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableMockSourceLevelDebugger, 0, "Switches driv
 DECLARE_DEBUG_VARIABLE(int32_t, ForceBtpPrefetchMode, -1, "-1: default, 0: disable, 1: enable, Enables Btp prefetching")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPointerImport, -1, "-1: default - disabled, 0: disabled, 1: enabled, Experimental implementation to import Host Pointer into L0")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideProfilingTimerResolution, -1, "-1: default - disabled, 0<=: Override deviceInfo.profilingTimerResolution")
+DECLARE_DEBUG_VARIABLE(int32_t, GpuScratchRegWriteAfterWalker, -1, "-1: disabled, x: add GPU scratch register write after x walker")
+DECLARE_DEBUG_VARIABLE(int32_t, GpuScratchRegWriteRegisterOffset, 0, "register offset for GPU scratch register write after walker")
+DECLARE_DEBUG_VARIABLE(int32_t, GpuScratchRegWriteRegisterData, 0, "register data for GPU scratch register write after walker")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

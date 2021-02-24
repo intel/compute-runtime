@@ -160,6 +160,12 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, mainKernel, postSyncAddress);
     }
 
+    if (PauseOnGpuProperties::GpuScratchRegWriteAllowed(DebugManager.flags.GpuScratchRegWriteAfterWalker.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount())) {
+        uint32_t registerOffset = DebugManager.flags.GpuScratchRegWriteRegisterOffset.get();
+        uint32_t registerData = DebugManager.flags.GpuScratchRegWriteRegisterData.get();
+        LriHelper<GfxFamily>::program(commandStream, registerOffset, registerData, EncodeSetMMIO<GfxFamily>::isRemapApplicable(registerOffset));
+    }
+
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount(), PauseOnGpuProperties::PauseMode::AfterWorkload)) {
         dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserEndConfirmation, DebugPauseState::hasUserEndConfirmation);
     }
@@ -311,5 +317,4 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
         }
     }
 }
-
 } // namespace NEO

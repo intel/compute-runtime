@@ -1418,6 +1418,21 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         return false;
     }
 
+    template <typename FamilyType>
+    bool verifyLoadRegImm(const GenCmdList::iterator &iterator) {
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+        uint32_t expectedRegisterOffset = DebugManager.flags.GpuScratchRegWriteRegisterOffset.get();
+        uint32_t expectedRegisterData = DebugManager.flags.GpuScratchRegWriteRegisterData.get();
+        auto loadRegImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*iterator);
+
+        if ((expectedRegisterOffset == loadRegImm->getRegisterOffset()) &&
+            (expectedRegisterData == loadRegImm->getDataDword())) {
+            return true;
+        }
+
+        return false;
+    }
+
     template <typename MI_SEMAPHORE_WAIT>
     void findSemaphores(GenCmdList &cmdList) {
         auto semaphore = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
@@ -1452,6 +1467,20 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         }
     }
 
+    template <typename FamilyType>
+    void findLoadRegImms(GenCmdList &cmdList) {
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+        auto loadRegImm = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+
+        while (loadRegImm != cmdList.end()) {
+            if (verifyLoadRegImm<FamilyType>(loadRegImm)) {
+                loadRegImmsFound++;
+            }
+
+            loadRegImm = find<MI_LOAD_REGISTER_IMM *>(++loadRegImm, cmdList.end());
+        }
+    }
+
     DebugManagerStateRestore restore;
 
     const size_t off[3] = {0, 0, 0};
@@ -1463,6 +1492,7 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
     uint32_t semaphoreAfterWalkerFound = 0;
     uint32_t pipeControlBeforeWalkerFound = 0;
     uint32_t pipeControlAfterWalkerFound = 0;
+    uint32_t loadRegImmsFound = 0;
 };
 
 HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInsertPauseCommandsAroundSpecifiedEnqueue) {
@@ -1611,4 +1641,65 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenDontI
     EXPECT_EQ(0u, pipeControlAfterWalkerFound);
 
     pCmdQ->setIsSpecialCommandQueue(false);
+}
+
+HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchWalkersThenInsertLoadRegisterImmCommandAroundSpecifiedEnqueue) {
+    DebugManager.flags.GpuScratchRegWriteAfterWalker.set(1);
+    DebugManager.flags.GpuScratchRegWriteRegisterData.set(0x1234);
+    DebugManager.flags.GpuScratchRegWriteRegisterOffset.set(0x5678);
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+
+    HardwareParse hwParser;
+
+    hwParser.parseCommands<FamilyType>(*pCmdQ);
+
+    findLoadRegImms<FamilyType>(hwParser.cmdList);
+
+    EXPECT_EQ(0u, loadRegImmsFound);
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+    hwParser.parseCommands<FamilyType>(*pCmdQ);
+
+    findLoadRegImms<FamilyType>(hwParser.cmdList);
+
+    EXPECT_EQ(1u, loadRegImmsFound);
+}
+
+HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatcMultiplehWalkersThenInsertLoadRegisterImmCommandOnlyOnce) {
+    DebugManager.flags.GpuScratchRegWriteAfterWalker.set(1);
+    DebugManager.flags.GpuScratchRegWriteRegisterData.set(0x1234);
+    DebugManager.flags.GpuScratchRegWriteRegisterOffset.set(0x5678);
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+
+    HardwareParse hwParser;
+
+    hwParser.parseCommands<FamilyType>(*pCmdQ);
+
+    findLoadRegImms<FamilyType>(hwParser.cmdList);
+
+    EXPECT_EQ(1u, loadRegImmsFound);
+}
+
+HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenEstimatingCommandStreamSizeThenMiLoadRegisterImmCommandSizeIsIncluded) {
+    MockKernelWithInternals mockKernel(*pClDevice);
+    DispatchInfo dispatchInfo;
+    MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
+    dispatchInfo.setKernel(mockKernel.mockKernel);
+    multiDispatchInfo.push(dispatchInfo);
+
+    auto baseCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, {}, false, false, false, *pCmdQ, multiDispatchInfo);
+    DebugManager.flags.GpuScratchRegWriteAfterWalker.set(1);
+
+    auto extendedCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, {}, false, false, false, *pCmdQ, multiDispatchInfo);
+
+    EXPECT_EQ(baseCommandStreamSize + sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM), extendedCommandStreamSize);
 }
