@@ -367,6 +367,39 @@ TEST_F(MemoryExportImportTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+using MemoryIPCTests = MemoryExportImportTest;
+
+TEST_F(MemoryIPCTests,
+       givenCallToGetIpcHandleWithNotKnownPointerThenInvalidArgumentIsReturned) {
+
+    uint32_t value = 0;
+
+    ze_ipc_mem_handle_t ipcHandle;
+    ze_result_t result = driverHandle->getIpcMemHandle(&value, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(MemoryIPCTests,
+       givenCallToGetIpcHandleWithDeviceAllocationThenIpcHandleIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = driverHandle->allocDeviceMem(device->toHandle(),
+                                                      &deviceDesc,
+                                                      size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle;
+    result = driverHandle->getIpcMemHandle(ptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = driverHandle->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 using DeviceMemorySizeTest = Test<DeviceFixture>;
 
 TEST_F(DeviceMemorySizeTest, givenSizeGreaterThanLimitThenDeviceAllocationFails) {
