@@ -25,9 +25,8 @@ zesGetDeviceProcAddrTable(
     zes_device_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -71,9 +70,8 @@ zesGetDriverProcAddrTable(
     zes_driver_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -94,9 +92,8 @@ zesGetDiagnosticsProcAddrTable(
     zes_diagnostics_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -120,9 +117,8 @@ zesGetEngineProcAddrTable(
     zes_engine_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -146,9 +142,8 @@ zesGetFabricPortProcAddrTable(
     zes_fabric_port_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -175,9 +170,8 @@ zesGetFanProcAddrTable(
     zes_fan_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -204,9 +198,8 @@ zesGetFirmwareProcAddrTable(
     zes_firmware_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -229,9 +222,8 @@ zesGetFrequencyProcAddrTable(
     zes_frequency_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -270,9 +262,8 @@ zesGetLedProcAddrTable(
     zes_led_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -297,9 +288,8 @@ zesGetMemoryProcAddrTable(
     zes_memory_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -323,9 +313,8 @@ zesGetPerformanceFactorProcAddrTable(
     zes_performance_factor_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -349,9 +338,8 @@ zesGetPowerProcAddrTable(
     zes_power_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -378,9 +366,8 @@ zesGetPsuProcAddrTable(
     zes_psu_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -403,9 +390,8 @@ zesGetRasProcAddrTable(
     zes_ras_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -430,9 +416,8 @@ zesGetSchedulerProcAddrTable(
     zes_scheduler_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -461,9 +446,8 @@ zesGetStandbyProcAddrTable(
     zes_standby_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
@@ -487,9 +471,8 @@ zesGetTemperatureProcAddrTable(
     zes_temperature_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    if (driver_ddiTable.version < version)
+        return ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     NEO::EnvironmentVariableReader envReader;
