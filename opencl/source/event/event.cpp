@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -737,7 +737,7 @@ void Event::setEndTimeStamp() {
 }
 
 TagNode<HwTimeStamps> *Event::getHwTimeStampNode() {
-    if (!timeStampNode) {
+    if (!cmdQueue->getTimestampPacketContainer() && !timeStampNode) {
         timeStampNode = cmdQueue->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag();
     }
     return timeStampNode;

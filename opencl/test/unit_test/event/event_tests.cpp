@@ -866,8 +866,13 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
     event->setCPUProfilingPath(true);
     HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
     ASSERT_NE(nullptr, perfCounter);
-    HwTimeStamps *timeStamps = event->getHwTimeStampNode()->tagForCpuAccess;
-    ASSERT_NE(nullptr, timeStamps);
+
+    auto hwTimeStampNode = event->getHwTimeStampNode();
+    if (pCmdQ->getTimestampPacketContainer()) {
+        EXPECT_EQ(nullptr, hwTimeStampNode);
+    } else {
+        ASSERT_NE(nullptr, hwTimeStampNode->tagForCpuAccess);
+    }
 
     event->setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(*pCmdQ)));
 
@@ -1109,8 +1114,12 @@ TEST_F(EventTest, GivenNoQueueWhenSettingCpuTimeStampThenTimesIsNotSet) {
     EXPECT_EQ(0ULL, outCPUtimeStamp);
 }
 
-TEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {
-    std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
+HWTEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {
+    pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+
+    auto myCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(pCmdQ->getContextPtr(), pClDevice, nullptr);
+
+    std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
     HwTimeStamps *timeStamps = event->getHwTimeStampNode()->tagForCpuAccess;
@@ -1130,8 +1139,12 @@ TEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {
     ASSERT_EQ(timeStamps, timeStamps2);
 }
 
-TEST_F(EventTest, WhenGetHwTimeStampsAllocationThenValidPointerIsReturned) {
-    std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
+HWTEST_F(EventTest, WhenGetHwTimeStampsAllocationThenValidPointerIsReturned) {
+    pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+
+    auto myCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(pCmdQ->getContextPtr(), pClDevice, nullptr);
+
+    std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
     GraphicsAllocation *allocation = event->getHwTimeStampNode()->getBaseGraphicsAllocation();
@@ -1144,8 +1157,12 @@ TEST_F(EventTest, WhenGetHwTimeStampsAllocationThenValidPointerIsReturned) {
     EXPECT_GT(memoryStorageSize, 0u);
 }
 
-TEST_F(EventTest, WhenEventIsCreatedThenHwTimeStampsMemoryIsPlacedInGraphicsAllocation) {
-    std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
+HWTEST_F(EventTest, WhenEventIsCreatedThenHwTimeStampsMemoryIsPlacedInGraphicsAllocation) {
+    pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+
+    auto myCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(pCmdQ->getContextPtr(), pClDevice, nullptr);
+
+    std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
     HwTimeStamps *timeStamps = event->getHwTimeStampNode()->tagForCpuAccess;

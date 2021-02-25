@@ -888,6 +888,8 @@ HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCount
 
 template <typename TagType>
 struct FixedGpuAddressTagAllocator : TagAllocator<TagType> {
+    using TagAllocator<TagType>::usedTags;
+    using TagAllocator<TagType>::deferredTags;
 
     struct MockTagNode : TagNode<TagType> {
         void setGpuAddress(uint64_t value) { this->gpuAddress = value; }
@@ -932,6 +934,28 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWit
     itor = expectStoreRegister<FamilyType>(cmdList, itor, timeStampGpuAddress + offsetof(HwTimeStamps, ContextEndTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
 
     EXPECT_TRUE(pEvent->calcProfilingData());
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(ProfilingWithPerfCountersTests, givenTimestampPacketsEnabledWhenEnqueueIsCalledThenDontAllocateHwTimeStamps) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    auto mockAllocator = new FixedGpuAddressTagAllocator<HwTimeStamps>(csr, 0x123);
+    csr.profilingTimeStampAllocator.reset(mockAllocator);
+
+    auto myCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(pCmdQ->getContextPtr(), pClDevice.get(), nullptr);
+    myCmdQ->setProfilingEnabled();
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    cl_event event;
+
+    myCmdQ->enqueueKernel(kernel->mockKernel, 1, globalOffsets, workItems, nullptr, 0, nullptr, &event);
+
+    EXPECT_EQ(!!myCmdQ->getTimestampPacketContainer(), mockAllocator->usedTags.peekIsEmpty());
+    EXPECT_TRUE(mockAllocator->deferredTags.peekIsEmpty());
 
     clReleaseEvent(event);
 }

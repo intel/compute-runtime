@@ -729,7 +729,12 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     if (isProfilingEnabled() && eventBuilder.getEvent()) {
         this->getDevice().getOSTime()->getCpuTime(&submitTimeStamp.CPUTimeinNS);
         eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
-        getGpgpuCommandStreamReceiver().makeResident(*eventBuilder.getEvent()->getHwTimeStampNode()->getBaseGraphicsAllocation());
+
+        auto hwTimestampNode = eventBuilder.getEvent()->getHwTimeStampNode();
+        if (hwTimestampNode) {
+            getGpgpuCommandStreamReceiver().makeResident(*hwTimestampNode->getBaseGraphicsAllocation());
+        }
+
         if (isPerfCountersEnabled()) {
             getGpgpuCommandStreamReceiver().makeResident(*eventBuilder.getEvent()->getHwPerfCounterNode()->getBaseGraphicsAllocation());
         }
