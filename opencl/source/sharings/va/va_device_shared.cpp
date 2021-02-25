@@ -47,10 +47,8 @@ ClDevice *VADevice::getRootDeviceFromVaDisplay(Platform *pPlatform, VADisplay va
         return nullptr;
     }
 
-    std::string_view prefixView = "../../devices/pci0000:00/0000:";
     std::string_view devicePathView(devicePath, static_cast<size_t>(readLinkSize));
-    devicePathView.remove_prefix(prefixView.size());
-    devicePathView = devicePathView.substr(0, 7);
+    devicePathView = devicePathView.substr(devicePathView.find("/drm/render") - 7u, 7u);
 
     for (size_t i = 0; i < pPlatform->getNumDevices(); ++i) {
         auto device = pPlatform->getClDevice(i);
