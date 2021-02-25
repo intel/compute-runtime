@@ -213,8 +213,12 @@ void CommandStreamReceiver::cleanupResources() {
         commandStream.replaceBuffer(nullptr, 0);
     }
 
-    if (tagAllocation) {
-        getMemoryManager()->freeGraphicsMemory(tagAllocation);
+    if (tagsMultiAllocation) {
+        for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
+            getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
+        }
+        delete tagsMultiAllocation;
+        tagsMultiAllocation = nullptr;
         tagAllocation = nullptr;
         tagAddress = nullptr;
     }
@@ -278,6 +282,25 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
     this->tagAddress = reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer());
     this->debugPauseStateAddress = reinterpret_cast<DebugPauseState *>(
         reinterpret_cast<uint8_t *>(allocation->getUnderlyingBuffer()) + debugPauseStateAddressOffset);
+}
+
+MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation(ExecutionEnvironment &executionEnvironment, MemoryManager &memoryManager, uint32_t currentRootDeviceIndex) {
+    std::vector<uint32_t> rootDeviceIndices;
+
+    for (auto index = 0u; index < executionEnvironment.rootDeviceEnvironments.size(); index++) {
+        if (executionEnvironment.rootDeviceEnvironments[index].get()->getHardwareInfo()->platform.eProductFamily ==
+            executionEnvironment.rootDeviceEnvironments[currentRootDeviceIndex].get()->getHardwareInfo()->platform.eProductFamily) {
+            rootDeviceIndices.push_back(index);
+        }
+    }
+
+    auto maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
+    auto allocations = new MultiGraphicsAllocation(maxRootDeviceIndex);
+
+    AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::TAG_BUFFER, systemMemoryBitfield};
+
+    memoryManager.createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *allocations);
+    return *allocations;
 }
 
 FlushStamp CommandStreamReceiver::obtainCurrentFlushStamp() const {
@@ -473,7 +496,9 @@ void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {
 }
 
 bool CommandStreamReceiver::initializeTagAllocation() {
-    auto tagAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::TAG_BUFFER, systemMemoryBitfield});
+    this->tagsMultiAllocation = &this->createTagsMultiAllocation(this->executionEnvironment, *this->getMemoryManager(), rootDeviceIndex);
+
+    auto tagAllocation = tagsMultiAllocation->getGraphicsAllocation(rootDeviceIndex);
     if (!tagAllocation) {
         return false;
     }

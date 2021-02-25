@@ -27,6 +27,9 @@ TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocINTELisCalledWithoutContextTh
 
 TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesHostUnifiedMemoryAllocation) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -172,6 +175,9 @@ TEST(clUnifiedSharedMemoryTests, whenClMemBlockingFreeINTELisCalledWithNullPoint
 
 TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithValidUmPointerThenMemoryIsFreed) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
 
@@ -186,6 +192,9 @@ TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithValidUmPointerThe
 
 TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithInvalidUmPointerThenMemoryIsNotFreed) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
 
@@ -276,6 +285,9 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocatio
 
 TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemoryHostAllocationThenProperFieldsAreSet) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_int);
     cl_int paramValue = 0;
@@ -308,6 +320,9 @@ TEST(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidPropertiesTokenThenE
 
 TEST(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidWriteCombinedTokenThenSuccessIsReturned) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_FLAGS_INTEL, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
 
@@ -360,6 +375,9 @@ TEST(clUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidWriteCombinedToken
 TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocWithoutPropertiesWhenGetMemAllocFlagsThenDefaultValueIsReturned) {
     uint64_t defaultValue = CL_MEM_ALLOC_DEFAULT_INTEL;
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_mem_properties_intel);
     cl_mem_properties_intel paramValue = 0;
@@ -377,6 +395,9 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocWithoutPropertiesWhenGet
 
 TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnifiedMemoryHostAllocationThenProperTypeIsReturned) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_mem_properties_intel);
     cl_mem_properties_intel paramValue = 0;
@@ -533,6 +554,9 @@ TEST(clUnifiedSharedMemoryTests, givenSharedAllocationWithoutDeviceWhenItIsQueri
 
 TEST(clUnifiedSharedMemoryTests, givenHostAllocationWhenItIsQueriedForDeviceThenProperDeviceIsReturned) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSizeRet = 0;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
@@ -573,6 +597,9 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocatio
 
 TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationSizeParamNameThenProperFieldsAreSet) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(size_t);
     size_t paramValue = 0;
@@ -1051,6 +1078,9 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxM
 using MultiRootDeviceClUnifiedSharedMemoryTests = MultiRootDeviceFixture;
 
 TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalledInMultiRootDeviceEnvironmentThenItAllocatesHostUnifiedMemoryAllocations) {
+    REQUIRE_SVM_OR_SKIP(device1);
+    REQUIRE_SVM_OR_SKIP(device2);
+
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(context.get(), nullptr, 4, 0, &retVal);
 
@@ -1085,6 +1115,9 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalle
 }
 
 TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCalledWithoutDeviceInMultiRootDeviceEnvironmentThenItAllocatesHostUnifiedMemoryAllocations) {
+    REQUIRE_SVM_OR_SKIP(device1);
+    REQUIRE_SVM_OR_SKIP(device2);
+
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(context.get(), nullptr, nullptr, 4, 0, &retVal);
 
@@ -1118,6 +1151,9 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCal
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCalledWithoutDeviceInMultiRootDeviceEnvironmentThenItWaitsForAllGpuAllocations) {
+    REQUIRE_SVM_OR_SKIP(device1);
+    REQUIRE_SVM_OR_SKIP(device2);
+
     mockMemoryManager->waitAllocations.reset(new MultiGraphicsAllocation(2u));
 
     cl_int retVal = CL_SUCCESS;

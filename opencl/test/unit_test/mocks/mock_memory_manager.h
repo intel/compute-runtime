@@ -48,7 +48,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::useNonSvmHostPtrAlloc;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using MemoryManagerCreate<OsAgnosticMemoryManager>::MemoryManagerCreate;
+    using MemoryManager::enable64kbpages;
     using MemoryManager::isCopyRequired;
+    using MemoryManager::localMemorySupported;
     using MemoryManager::reservedMemory;
 
     MockMemoryManager(ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, executionEnvironment) {}
@@ -73,6 +75,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override;
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) override;
 
     void *allocateSystemMemory(size_t size, size_t alignment) override;
 
@@ -113,6 +116,15 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return OsAgnosticMemoryManager::reserveCpuAddressRange(size, rootDeviceIndex);
     }
 
+    void *createMultiGraphicsAllocationInSystemMemoryPool(std::vector<uint32_t> &rootDeviceIndices,
+                                                          AllocationProperties &properties,
+                                                          MultiGraphicsAllocation &multiGraphicsAllocation) override {
+        if (isMockEventPoolCreateMemoryManager) {
+            return nullptr;
+        }
+        return OsAgnosticMemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphicsAllocation);
+    }
+
     bool isCpuCopyRequired(const void *ptr) override { return cpuCopyRequired; }
 
     GraphicsAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
@@ -124,9 +136,12 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
     AllocationData alignAllocationData;
+    uint32_t successAllocatedGraphicsMemoryIndex = 0u;
+    uint32_t maxSuccessAllocatedGraphicsMemoryIndex = std::numeric_limits<uint32_t>::max();
     std::vector<void *> lockResourcePointers;
     uint32_t handleFenceCompletionCalled = 0u;
     uint32_t waitForEnginesCompletionCalled = 0u;
+    uint32_t allocateGraphicsMemoryWithPropertiesCount = 0;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;
     bool allocationInDevicePoolCreated = false;
@@ -141,6 +156,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failAllocate32Bit = false;
     bool cpuCopyRequired = false;
     bool forceRenderCompressed = false;
+    bool forceFailureInPrimaryAllocation = false;
+    bool forceFailureInAllocationWithHostPointer = false;
+    bool isMockHostMemoryManager = false;
+    bool isMockEventPoolCreateMemoryManager = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;

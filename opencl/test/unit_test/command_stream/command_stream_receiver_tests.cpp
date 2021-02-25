@@ -670,7 +670,13 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
-    csr->setTagAllocation(mockGraphicsAllocation);
+
+    auto allocations = new MultiGraphicsAllocation(0u);
+    allocations->addAllocation(mockGraphicsAllocation);
+
+    csr->tagsMultiAllocation = allocations;
+    csr->setTagAllocation(allocations->getGraphicsAllocation(0u));
+
     EXPECT_FALSE(destructorCalled);
     csr.reset(nullptr);
     EXPECT_TRUE(destructorCalled);
@@ -687,6 +693,31 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
     EXPECT_TRUE(csr->getTagAddress() != nullptr);
     EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledInMultiRootDeviceEnvironmentThenTagAllocationIsBeingAllocated) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 10u);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+    executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+
+    EXPECT_EQ(nullptr, csr->getTagAllocation());
+    EXPECT_TRUE(csr->getTagAddress() == nullptr);
+
+    csr->initializeTagAllocation();
+
+    EXPECT_NE(nullptr, csr->getTagAllocation());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
+    EXPECT_TRUE(csr->getTagAddress() != nullptr);
+    EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
+
+    auto tagsMultiAllocation = csr->getTagsMultiAllocation();
+    auto graphicsAllocation0 = tagsMultiAllocation->getGraphicsAllocation(0);
+
+    for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
+        if (graphicsAllocation != graphicsAllocation0) {
+            EXPECT_EQ(graphicsAllocation->getUnderlyingBuffer(), graphicsAllocation0->getUnderlyingBuffer());
+        }
+    }
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndCreateGlobalFenceAllocationIsCalledThenFenceAllocationIsAllocated) {

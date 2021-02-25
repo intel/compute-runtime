@@ -23,6 +23,7 @@
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_svm_manager.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -771,6 +772,9 @@ TEST_F(ShareableUnifiedMemoryManagerPropertiesTest, givenShareableUnifiedPropert
 
 TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedForTransferCallsThenUSMAllocationIsReused) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_context clContext = &mockContext;
 
     auto status = CL_INVALID_PLATFORM;
@@ -939,6 +943,9 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTran
 
 TEST(UnfiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTransferRequirementsThenErrorIsReturned) {
     MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
     cl_context clContext = &mockContext;
 
     auto status = CL_SUCCESS;

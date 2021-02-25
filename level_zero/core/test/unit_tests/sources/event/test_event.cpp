@@ -5,6 +5,7 @@
  *
  */
 
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
 #include "test.h"
 
@@ -319,15 +320,6 @@ TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithNoDevicesThenEventPo
     EXPECT_EQ(allocation->getGraphicsAllocations().size(), 1u);
 }
 
-struct MemoryManagerEventPoolCreateNegativeTest : public NEO::OsAgnosticMemoryManager {
-    MemoryManagerEventPoolCreateNegativeTest(NEO::ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
-    void *createMultiGraphicsAllocation(std::vector<uint32_t> &rootDeviceIndices,
-                                        NEO::AllocationProperties &properties,
-                                        NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
-        return nullptr;
-    }
-};
-
 struct EventPoolCreateNegativeTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = new NEO::ExecutionEnvironment();
@@ -335,9 +327,6 @@ struct EventPoolCreateNegativeTest : public ::testing::Test {
         for (uint32_t i = 0; i < numRootDevices; i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
         }
-
-        memoryManager = new MemoryManagerEventPoolCreateNegativeTest(*executionEnvironment);
-        executionEnvironment->memoryManager.reset(memoryManager);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
         for (uint32_t i = 0; i < numRootDevices; i++) {
@@ -347,6 +336,7 @@ struct EventPoolCreateNegativeTest : public ::testing::Test {
 
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
+        static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->isMockEventPoolCreateMemoryManager = true;
 
         device = driverHandle->devices[0];
     }
@@ -357,7 +347,6 @@ struct EventPoolCreateNegativeTest : public ::testing::Test {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    MemoryManagerEventPoolCreateNegativeTest *memoryManager = nullptr;
     const uint32_t numRootDevices = 2u;
 };
 

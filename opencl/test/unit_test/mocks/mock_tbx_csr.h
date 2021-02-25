@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,6 +74,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
 template <typename GfxFamily>
 struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::latestFlushedTaskCount;
+    using CommandStreamReceiver::tagsMultiAllocation;
     using TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw;
     void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
         *reinterpret_cast<uint32_t *>(CommandStreamReceiver::getTagAllocation()->getUnderlyingBuffer()) = this->latestFlushedTaskCount;

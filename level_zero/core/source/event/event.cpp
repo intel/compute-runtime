@@ -71,9 +71,10 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, uint32_t numDevices, 
                                                       deviceBitfield};
     unifiedMemoryProperties.alignment = eventAlignment;
 
-    void *eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocation(rootDeviceIndices,
-                                                                                   unifiedMemoryProperties,
-                                                                                   *eventPoolAllocations);
+    void *eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices,
+                                                                                                     unifiedMemoryProperties,
+                                                                                                     *eventPoolAllocations);
+
     if (!eventPoolPtr) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }

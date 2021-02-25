@@ -35,6 +35,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::newResources;
     using CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using CommandStreamReceiver::tagAddress;
+    using CommandStreamReceiver::tagsMultiAllocation;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;

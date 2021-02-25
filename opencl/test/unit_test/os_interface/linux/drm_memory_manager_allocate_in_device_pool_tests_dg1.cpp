@@ -277,7 +277,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
 
     static_cast<DrmMockDg1 *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->getDrm())->outputFd = 7;
 
-    auto ptr = memoryManager->createMultiGraphicsAllocation(rootDeviceIndices, properties, multiGraphics);
+    auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
 
     EXPECT_NE(ptr, nullptr);
     EXPECT_NE(static_cast<DrmAllocation *>(multiGraphics.getDefaultGraphicsAllocation())->getMmapPtr(), nullptr);
@@ -321,7 +321,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
     size_t size = 4096u;
     AllocationProperties properties(rootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, {});
 
-    auto ptr = memoryManager->createMultiGraphicsAllocation(rootDeviceIndices, properties, multiGraphics);
+    auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
 
     EXPECT_EQ(ptr, nullptr);
 
@@ -353,7 +353,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndNoMemo
     size_t size = 4096u;
     AllocationProperties properties(rootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, {});
 
-    auto ptr = memoryManager->createMultiGraphicsAllocation(rootDeviceIndices, properties, multiGraphics);
+    auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
 
     EXPECT_NE(ptr, nullptr);
     EXPECT_EQ(static_cast<DrmAllocation *>(multiGraphics.getDefaultGraphicsAllocation())->getMmapPtr(), nullptr);

@@ -58,3 +58,30 @@ TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGr
 }
 
 INSTANTIATE_TEST_CASE_P(MemoryManagerType, MemoryManagerMultiDeviceTest, ::testing::Bool());
+
+TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGraphicsMemoryIsCalledThenGraphicsAllocationHasProperGpuAddress) {
+    std::vector<uint32_t> rootDeviceIndices;
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < getNumRootDevices(); ++rootDeviceIndex) {
+        rootDeviceIndices.push_back(rootDeviceIndex);
+    }
+
+    auto maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
+    auto tagsMultiAllocation = new MultiGraphicsAllocation(maxRootDeviceIndex);
+
+    AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::TAG_BUFFER, systemMemoryBitfield};
+
+    memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *tagsMultiAllocation);
+    EXPECT_NE(nullptr, tagsMultiAllocation);
+
+    auto graphicsAllocation0 = tagsMultiAllocation->getGraphicsAllocation(0);
+
+    for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
+        EXPECT_EQ(graphicsAllocation->getUnderlyingBuffer(), graphicsAllocation0->getUnderlyingBuffer());
+    }
+
+    for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
+        memoryManager->freeGraphicsMemory(graphicsAllocation);
+    }
+    delete tagsMultiAllocation;
+}

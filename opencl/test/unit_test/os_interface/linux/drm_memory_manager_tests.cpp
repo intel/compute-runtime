@@ -306,6 +306,9 @@ TEST_F(DrmMemoryManagerTest, givenDefaultDrmMemoryManagerWhenItIsCreatedAndGfxPa
     memoryManager->gfxPartitions[0].reset(failedInitGfxPartition.release());
     memoryManager->initialize(gemCloseWorkerMode::gemCloseWorkerInactive);
     EXPECT_FALSE(memoryManager->isInitialized());
+
+    auto mockGfxPartitionBasic = std::make_unique<MockGfxPartitionBasic>();
+    memoryManager->overrideGfxPartition(mockGfxPartitionBasic.release());
 }
 
 TEST_F(DrmMemoryManagerTest, WhenMemoryManagerIsCreatedThenPinBbIsCreated) {
@@ -3872,6 +3875,9 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndReleaseGpuRangeIsCalledThen
 
     memoryManager->overrideGfxPartition(mockGfxPartition.release());
     memoryManager->releaseGpuRange(reinterpret_cast<void *>(gpuAddressCanonized), size, 0);
+
+    auto mockGfxPartitionBasic = std::make_unique<MockGfxPartitionBasic>();
+    memoryManager->overrideGfxPartition(mockGfxPartitionBasic.release());
 }
 
 class GMockDrmMemoryManager : public TestedDrmMemoryManager {

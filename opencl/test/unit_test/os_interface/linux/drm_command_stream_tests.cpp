@@ -657,13 +657,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCsrCreatedWithInactiveG
 
 class DrmCommandStreamBatchingTests : public DrmCommandStreamEnhancedTest {
   public:
-    DrmAllocation *tagAllocation;
     DrmAllocation *preemptionAllocation;
 
     template <typename GfxFamily>
     void SetUpT() {
         DrmCommandStreamEnhancedTest::SetUpT<GfxFamily>();
-        tagAllocation = static_cast<DrmAllocation *>(device->getDefaultEngine().commandStreamReceiver->getTagAllocation());
         preemptionAllocation = static_cast<DrmAllocation *>(device->getDefaultEngine().commandStreamReceiver->getPreemptionAllocation());
     }
 
@@ -705,6 +703,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenP
 
 HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingThenCommandBufferIsNotSubmitted) {
     mock->reset();
+
     csr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
@@ -721,7 +720,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
 
     csr->makeResident(*dummyAllocation);
 
-    csr->setTagAllocation(tagAllocation);
+    auto allocations = device->getDefaultEngine().commandStreamReceiver->getTagsMultiAllocation();
+
+    csr->setTagAllocation(static_cast<DrmAllocation *>(allocations->getGraphicsAllocation(csr->getRootDeviceIndex())));
+
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
 
@@ -747,7 +749,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     elementInVector = std::find(recordedCmdBuffer->surfaces.begin(), recordedCmdBuffer->surfaces.end(), commandBuffer);
     EXPECT_NE(elementInVector, recordedCmdBuffer->surfaces.end());
 
-    elementInVector = std::find(recordedCmdBuffer->surfaces.begin(), recordedCmdBuffer->surfaces.end(), tagAllocation);
+    elementInVector = std::find(recordedCmdBuffer->surfaces.begin(), recordedCmdBuffer->surfaces.end(), allocations->getGraphicsAllocation(0u));
     EXPECT_NE(elementInVector, recordedCmdBuffer->surfaces.end());
 
     EXPECT_EQ(testedCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
@@ -779,7 +781,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap cs(commandBuffer);
 
-    csr->setTagAllocation(tagAllocation);
+    auto allocations = device->getDefaultEngine().commandStreamReceiver->getTagsMultiAllocation();
+
+    csr->setTagAllocation(static_cast<DrmAllocation *>(allocations->getGraphicsAllocation(csr->getRootDeviceIndex())));
+
     auto &submittedCommandBuffer = csr->getCS(1024);
     //use some bytes
     submittedCommandBuffer.getSpace(4);

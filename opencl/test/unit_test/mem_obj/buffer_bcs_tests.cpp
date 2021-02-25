@@ -143,15 +143,14 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhe
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithNotDefaultRootDeviceIndexAndBcsCsrWhenCreatingThenUseBlitOperation) {
-
-    std::unique_ptr<MockClDevice> newDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, 1u));
+    auto rootDeviceIndex = 1u;
+    std::unique_ptr<MockClDevice> newDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex));
     std::unique_ptr<BcsMockContext> newBcsMockContext = std::make_unique<BcsMockContext>(newDevice.get());
 
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(newBcsMockContext->bcsCsr.get());
-    auto newMemoryManager = new MockMemoryManager(true, true, *newDevice->getExecutionEnvironment());
 
-    newDevice->getExecutionEnvironment()->memoryManager.reset(newMemoryManager);
-    newBcsMockContext->memoryManager = newMemoryManager;
+    static_cast<MockMemoryManager *>(newDevice->getExecutionEnvironment()->memoryManager.get())->enable64kbpages[rootDeviceIndex] = true;
+    static_cast<MockMemoryManager *>(newDevice->getExecutionEnvironment()->memoryManager.get())->localMemorySupported[rootDeviceIndex] = true;
 
     EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
     auto bufferForBlt = clUniquePtr(Buffer::create(newBcsMockContext.get(), CL_MEM_COPY_HOST_PTR, 2000, &hostPtr, retVal));

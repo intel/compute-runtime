@@ -139,7 +139,7 @@ GraphicsAllocation *MemoryManager::createPaddedAllocation(GraphicsAllocation *in
     return allocateGraphicsMemoryWithProperties({inputGraphicsAllocation->getRootDeviceIndex(), sizeWithPadding, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, systemMemoryBitfield});
 }
 
-void *MemoryManager::createMultiGraphicsAllocation(std::vector<uint32_t> &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation) {
+void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(std::vector<uint32_t> &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation) {
     void *ptr = nullptr;
 
     for (auto &rootDeviceIndex : rootDeviceIndices) {
@@ -152,7 +152,7 @@ void *MemoryManager::createMultiGraphicsAllocation(std::vector<uint32_t> &rootDe
                 return nullptr;
             }
             multiGraphicsAllocation.addAllocation(graphicsAllocation);
-            ptr = reinterpret_cast<void *>(graphicsAllocation->getGpuAddress());
+            ptr = reinterpret_cast<void *>(graphicsAllocation->getUnderlyingBuffer());
         } else {
             properties.flags.allocateMemory = false;
             properties.flags.isUSMHostAllocation = true;

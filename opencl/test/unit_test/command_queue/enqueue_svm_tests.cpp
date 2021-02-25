@@ -1423,6 +1423,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyC
 
 struct createHostUnifiedMemoryAllocationTest : public ::testing::Test {
     void SetUp() override {
+        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         device0 = context.pRootDevice0;
         device1 = context.pRootDevice1;
         device2 = context.pRootDevice2;
@@ -1489,7 +1490,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
 
     SvmAllocationData allocData(maxRootDeviceIndex);
 
-    void *unifiedMemoryPtr = memoryManager->createMultiGraphicsAllocation(rootDeviceIndices, allocationProperties, allocData.gpuAllocations);
+    void *unifiedMemoryPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, allocData.gpuAllocations);
 
     EXPECT_NE(nullptr, unifiedMemoryPtr);
     EXPECT_EQ(numDevices, allocData.gpuAllocations.getGraphicsAllocations().size());
@@ -1535,7 +1536,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
 
     SvmAllocationData allocData(maxRootDeviceIndex);
 
-    void *unifiedMemoryPtr = memoryManager->createMultiGraphicsAllocation(rootDeviceIndices, allocationProperties, allocData.gpuAllocations);
+    void *unifiedMemoryPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, allocData.gpuAllocations);
 
     EXPECT_NE(nullptr, unifiedMemoryPtr);
     EXPECT_EQ(numDevices, allocData.gpuAllocations.getGraphicsAllocations().size());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,13 @@ class MockGfxPartition : public GfxPartition {
     MOCK_METHOD2(freeGpuAddressRange, void(uint64_t gpuAddress, size_t size));
 
     static std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> allHeapNames;
+
+    OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
+};
+
+class MockGfxPartitionBasic : public GfxPartition {
+  public:
+    MockGfxPartitionBasic() : GfxPartition(reservedCpuAddressRange) {}
 
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
 };

@@ -344,9 +344,10 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingMakeSurfacePackNonResi
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForTaskCountWithKmdNotifyFallbackThenTagAllocationAndScheduledAllocationsAreDownloaded) {
     MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
     MockOsContext osContext(0, pDevice->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
-    uint32_t tag = 0u;
+
     tbxCsr.setupContext(osContext);
-    tbxCsr.setTagAllocation(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), false, sizeof(tag), pDevice->getDeviceBitfield()}, &tag));
+    tbxCsr.initializeTagAllocation();
+    *tbxCsr.getTagAddress() = 0u;
     tbxCsr.latestFlushedTaskCount = 1u;
 
     MockGraphicsAllocation allocation1, allocation2, allocation3;
@@ -369,9 +370,10 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForTaskCountWithKm
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForCompletionWithTimeoutThenFlushIsCalledAndTagAllocationAndScheduledAllocationsAreDownloaded) {
     MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
     MockOsContext osContext(0, pDevice->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
-    uint32_t tag = 0u;
+
     tbxCsr.setupContext(osContext);
-    tbxCsr.setTagAllocation(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), false, sizeof(tag), pDevice->getDeviceBitfield()}, &tag));
+    tbxCsr.initializeTagAllocation();
+    *tbxCsr.getTagAddress() = 0u;
     tbxCsr.latestFlushedTaskCount = 1u;
 
     MockGraphicsAllocation allocation1, allocation2, allocation3;
@@ -395,9 +397,10 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForCompletionWithT
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenDownloadAllocatoinsCalledThenTagAndScheduledAllocationsAreDownloadedAndRemovedFromContainer) {
     MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
     MockOsContext osContext(0, pDevice->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
-    uint32_t tag = 0u;
+
     tbxCsr.setupContext(osContext);
-    tbxCsr.setTagAllocation(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), false, sizeof(tag), pDevice->getDeviceBitfield()}, &tag));
+    tbxCsr.initializeTagAllocation();
+    *tbxCsr.getTagAddress() = 0u;
 
     MockGraphicsAllocation allocation1, allocation2, allocation3;
     tbxCsr.allocationsForDownload = {&allocation1, &allocation2, &allocation3};

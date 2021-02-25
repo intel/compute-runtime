@@ -146,7 +146,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     auto maxRootDeviceIndex = *std::max_element(rootDeviceIndicesVector.begin(), rootDeviceIndicesVector.end(), std::less<uint32_t const>());
     SvmAllocationData allocData(maxRootDeviceIndex);
 
-    void *usmPtr = memoryManager->createMultiGraphicsAllocation(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations);
+    void *usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations);
     if (!usmPtr) {
         return nullptr;
     }
