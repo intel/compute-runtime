@@ -75,7 +75,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenNullHostPtrWhenReadingRectangularRegion
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
-        100,
+        20,
         nullptr,
         &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -110,7 +110,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRe
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
-        100,
+        20,
         nullptr,
         &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -120,7 +120,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRe
 
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {10, 10, 1};
+    size_t region[] = {10, 10, 0};
 
     auto retVal = clEnqueueReadBufferRect(
         pCommandQueue,
@@ -144,12 +144,11 @@ TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRe
 
 TEST_F(clEnqueueReadBufferRectTest, GivenQueueIncapableWhenReadingRectangularRegionThenInvalidOperationIsReturned) {
     MockBuffer buffer{};
-    buffer.size = 100;
     char ptr[10];
 
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {10, 10, 1};
+    size_t region[] = {10, 10, 0};
 
     this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL);
     auto retVal = clEnqueueReadBufferRect(
@@ -175,7 +174,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegio
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
-        100,
+        20,
         nullptr,
         &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -185,7 +184,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegio
 
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {10, 10, 1};
+    size_t region[] = {10, 10, 0};
     size_t bufferRowPitch = 9;
 
     auto retVal = clEnqueueReadBufferRect(

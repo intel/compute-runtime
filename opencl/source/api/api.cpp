@@ -2680,23 +2680,6 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
         WithCastToInternal(dstBuffer, &pDstBuffer));
 
     if (CL_SUCCESS == retVal) {
-
-        if (!pSrcBuffer->bufferRectPitchSet(srcOrigin,
-                                            region,
-                                            srcRowPitch,
-                                            srcSlicePitch,
-                                            dstRowPitch,
-                                            dstSlicePitch) ||
-            !pDstBuffer->bufferRectPitchSet(dstOrigin,
-                                            region,
-                                            srcRowPitch,
-                                            srcSlicePitch,
-                                            dstRowPitch,
-                                            dstSlicePitch)) {
-            retVal = CL_INVALID_VALUE;
-            TRACING_EXIT(clEnqueueCopyBufferRect, &retVal);
-            return retVal;
-        }
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueCopyBufferRect, &retVal);

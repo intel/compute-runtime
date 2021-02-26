@@ -558,10 +558,6 @@ bool Buffer::bufferRectPitchSet(const size_t *bufferOrigin,
     if (hostSlicePitch == 0)
         hostSlicePitch = region[1] * hostRowPitch;
 
-    if (region[0] == 0 || region[1] == 0 || region[2] == 0) {
-        return false;
-    }
-
     if (bufferRowPitch < region[0] ||
         hostRowPitch < region[0]) {
         return false;

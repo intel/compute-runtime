@@ -74,7 +74,7 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenNullHostPtrWhenWritingRectangularRegi
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
-        100,
+        20,
         nullptr,
         &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -107,12 +107,11 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenNullHostPtrWhenWritingRectangularRegi
 
 TEST_F(clEnqueueWriteBufferRectTests, GivenCorrectParametersWhenWritingRectangularRegionThenSuccessIsReturned) {
     MockBuffer buffer{};
-    buffer.size = 100;
     char ptr[10];
 
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {10, 10, 1};
+    size_t region[] = {10, 10, 0};
 
     auto retVal = clEnqueueWriteBufferRect(
         pCommandQueue,
@@ -135,12 +134,11 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenCorrectParametersWhenWritingRectangul
 
 TEST_F(clEnqueueWriteBufferRectTests, GivenQueueIncapableWhenWritingRectangularRegionThenInvalidOperationIsReturned) {
     MockBuffer buffer{};
-    buffer.size = 100;
     char ptr[10];
 
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {10, 10, 1};
+    size_t region[] = {10, 10, 0};
 
     this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL);
     auto retVal = clEnqueueWriteBufferRect(
