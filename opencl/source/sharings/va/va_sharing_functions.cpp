@@ -98,12 +98,13 @@ cl_int VASharingFunctions::getSupportedFormats(cl_mem_flags flags,
                                                cl_uint numEntries,
                                                VAImageFormat *formats,
                                                cl_uint *numImageFormats) {
-    if (flags != CL_MEM_READ_ONLY && flags != CL_MEM_WRITE_ONLY && flags != CL_MEM_READ_WRITE) {
+    if (flags != CL_MEM_READ_ONLY && flags != CL_MEM_WRITE_ONLY && flags != CL_MEM_READ_WRITE &&
+        flags != CL_MEM_KERNEL_READ_AND_WRITE) {
         return CL_INVALID_VALUE;
     }
 
     if (imageType != CL_MEM_OBJECT_IMAGE2D) {
-        return CL_INVALID_VALUE;
+        return CL_SUCCESS;
     }
 
     if (numImageFormats != nullptr) {
