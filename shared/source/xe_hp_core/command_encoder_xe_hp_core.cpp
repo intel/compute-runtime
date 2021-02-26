@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/command_encoder.inl"
+#include "shared/source/command_container/command_encoder_raytracing_xehp_plus.inl"
 #include "shared/source/command_container/command_encoder_xehp_plus.inl"
 #include "shared/source/command_container/encode_compute_mode_tgllp_plus.inl"
 #include "shared/source/command_container/implicit_scaling.h"
@@ -73,4 +74,5 @@ template struct EncodeMemoryPrefetch<Family>;
 template struct EncodeMiArbCheck<Family>;
 template struct EncodeWA<Family>;
 template struct ImplicitScalingDispatch<Family>;
+template struct EncodeEnableRayTracing<Family>;
 } // namespace NEO

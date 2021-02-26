@@ -84,6 +84,8 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     };
 
     struct MockModule : public L0::ModuleImp {
+        using ModuleImp::getKernelImmutableDataVector;
+        using ModuleImp::maxGroupSize;
         using ModuleImp::translationUnit;
         using ModuleImp::type;
         MockModule(L0::Device *device,

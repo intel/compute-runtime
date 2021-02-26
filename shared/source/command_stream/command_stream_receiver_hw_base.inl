@@ -938,10 +938,6 @@ void CommandStreamReceiverHw<GfxFamily>::programMediaSampler(LinearStream &comma
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programPerDssBackedBuffer(LinearStream &commandStream, Device &device, DispatchFlags &dispatchFlags) {
-}
-
-template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForMediaSampler(bool mediaSamplerRequired) const {
     return 0;
 }
@@ -1387,11 +1383,6 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
         osContext.setDirectSubmissionActive();
     }
     return ret;
-}
-
-template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
-    return 0;
 }
 
 template <typename GfxFamily>

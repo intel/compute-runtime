@@ -370,4 +370,10 @@ struct EncodeMiArbCheck {
     static void program(LinearStream &commandStream);
     static size_t getCommandSize();
 };
+
+template <typename GfxFamily>
+struct EncodeEnableRayTracing {
+    static void programEnableRayTracing(LinearStream &commandStream, GraphicsAllocation &backBuffer);
+};
+
 } // namespace NEO

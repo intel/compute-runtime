@@ -807,6 +807,11 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                               kernelImmData->getDescriptor().kernelAttributes.hasNonKernelArgStore ||
                               kernelImmData->getDescriptor().kernelAttributes.hasNonKernelArgAtomic;
 
+    if (this->usesRayTracing()) {
+        neoDevice->initializeRayTracing();
+        this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

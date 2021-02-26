@@ -747,3 +747,11 @@ TEST(ClDeviceHelperTest, givenZeroNumberOfTilesWhenPrepareDeviceEnvironmentsCoun
     uint32_t devicesCount = HwHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }
+
+TEST_F(DeviceTest, whenInitializeRayTracingIsCalledAndRtBackedBufferIsNullptrMemoryBackedBufferIsCreated) {
+    EXPECT_EQ(nullptr, pDevice->getRTMemoryBackedBuffer());
+    pDevice->initializeRayTracing();
+    EXPECT_NE(nullptr, pDevice->getRTMemoryBackedBuffer());
+    pDevice->initializeRayTracing();
+    EXPECT_NE(nullptr, pDevice->getRTMemoryBackedBuffer());
+}

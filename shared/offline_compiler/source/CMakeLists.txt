@@ -33,6 +33,8 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.h
     ${NEO_SHARED_DIRECTORY}/helpers${BRANCH_DIR_SUFFIX}/hw_info_extended.cpp
+    ${NEO_SHARED_DIRECTORY}/kernel${BRANCH_DIR_SUFFIX}/kernel_descriptor.cpp
+    ${NEO_SHARED_DIRECTORY}/kernel${BRANCH_DIR_SUFFIX}/kernel_descriptor.h
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
     ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.cpp
     ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.h

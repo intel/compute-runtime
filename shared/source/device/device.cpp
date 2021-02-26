@@ -13,6 +13,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
@@ -34,6 +35,9 @@ Device::Device(ExecutionEnvironment *executionEnvironment)
 }
 
 Device::~Device() {
+    getMemoryManager()->freeGraphicsMemory(rtMemoryBackedBuffer);
+    rtMemoryBackedBuffer = nullptr;
+
     DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());
 
     if (performanceCounters) {
@@ -543,4 +547,10 @@ const std::vector<EngineControl> &Device::getEngines() const {
     return this->engines;
 }
 
+void Device::initializeRayTracing() {
+    if (rtMemoryBackedBuffer == nullptr) {
+        auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(*this);
+        rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, GraphicsAllocation::AllocationType::BUFFER, getDeviceBitfield()});
+    }
+}
 } // namespace NEO

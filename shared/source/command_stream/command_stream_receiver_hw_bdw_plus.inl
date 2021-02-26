@@ -109,4 +109,13 @@ GraphicsAllocation *CommandStreamReceiverHw<GfxFamily>::getClearColorAllocation(
     return nullptr;
 }
 
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programPerDssBackedBuffer(LinearStream &commandStream, Device &device, DispatchFlags &dispatchFlags) {
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
+    return 0;
+}
+
 } // namespace NEO

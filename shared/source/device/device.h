@@ -111,6 +111,8 @@ class Device : public ReferenceTrackedObject<Device> {
 
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
+    GraphicsAllocation *getRTMemoryBackedBuffer() { return rtMemoryBackedBuffer; }
+    void initializeRayTracing();
 
   protected:
     Device() = delete;
@@ -169,6 +171,9 @@ class Device : public ReferenceTrackedObject<Device> {
     DeviceBitfield deviceBitfield = 1;
 
     uintptr_t specializedDevice = reinterpret_cast<uintptr_t>(nullptr);
+
+    GraphicsAllocation *rtMemoryBackedBuffer = nullptr;
+    GraphicsAllocation *rtDispatchGlobals = nullptr;
 };
 
 inline EngineControl &Device::getDefaultEngine() {

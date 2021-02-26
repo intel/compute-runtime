@@ -57,4 +57,5 @@ template struct EncodeMemoryPrefetch<Family>;
 template struct EncodeWA<Family>;
 template struct EncodeMiArbCheck<Family>;
 template struct EncodeComputeMode<Family>;
+template struct EncodeEnableRayTracing<Family>;
 } // namespace NEO

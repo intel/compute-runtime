@@ -214,6 +214,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         }
     }
 
+    if (kernelImp->usesRayTracing()) {
+        NEO::GraphicsAllocation *memoryBackedBuffer = device->getNEODevice()->getRTMemoryBackedBuffer();
+        if (memoryBackedBuffer == nullptr) {
+            return ZE_RESULT_ERROR_UNINITIALIZED;
+        } else {
+            NEO::LinearStream *linearStream = commandContainer.getCommandStream();
+            NEO::EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(*linearStream, *memoryBackedBuffer);
+        }
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

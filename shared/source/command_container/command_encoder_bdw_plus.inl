@@ -442,4 +442,8 @@ void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
     *cmd = localCmd;
 }
 
+template <typename GfxFamily>
+void EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(LinearStream &commandStream, GraphicsAllocation &backBuffer) {
+}
+
 } // namespace NEO
