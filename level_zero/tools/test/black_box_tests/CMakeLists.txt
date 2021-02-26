@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -31,3 +31,5 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     endforeach()
   endif()
 endif()
+
+add_subdirectories()
