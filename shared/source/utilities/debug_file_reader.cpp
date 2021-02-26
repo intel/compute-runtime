@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultV
 
     std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(settingName));
     if (it != settingStringMap.end()) {
-        value = atoll(it->second.c_str());
+        value = strtoll(it->second.c_str(), nullptr, 0);
     }
 
     return value;

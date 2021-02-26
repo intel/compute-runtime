@@ -89,7 +89,11 @@ TEST(SettingsFileReader, givenDebugFileSettingInWhichStringIsFollowedByIntegerWh
     int32_t retValue = 0;
     int32_t returnedIntValue = reader->getSetting("IntTestKey", retValue);
 
-    EXPECT_EQ(1, returnedIntValue);
+    EXPECT_EQ(123, returnedIntValue);
+
+    int32_t returnedIntValueHex = reader->getSetting("IntTestKeyHex", 0);
+
+    EXPECT_EQ(0xABCD, returnedIntValueHex);
 
     std::string retValueString;
     std::string returnedStringValue = reader->getSetting("StringTestKey", retValueString);
