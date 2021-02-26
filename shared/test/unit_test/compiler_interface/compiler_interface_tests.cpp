@@ -1054,7 +1054,34 @@ TEST_F(CompilerInterfaceTest, whenRequestingSipKernelBinaryThenProperSystemRouti
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, whenRequestingIvalidSipKernelBinaryThenErrorIsReturned) {
+TEST_F(CompilerInterfaceTest, givenUseBindlessDebugSipWhenRequestingSipKernelBinaryThenProperSystemRoutineIsSelectedFromCompiler) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.UseBindlessDebugSip.set(true);
+    MockCompilerDebugVars igcDebugVars;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+    std::vector<char> sipBinary;
+    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary);
+    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_NE(0U, sipBinary.size());
+    EXPECT_EQ(IGC::SystemRoutineType::contextSaveRestore, getIgcDebugVars().typeOfSystemRoutine);
+    EXPECT_EQ(MockCompilerDebugVars::SipAddressingType::bindful, getIgcDebugVars().receivedSipAddressingType);
+
+    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsr, sipBinary);
+    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_NE(0U, sipBinary.size());
+    EXPECT_EQ(IGC::SystemRoutineType::debug, getIgcDebugVars().typeOfSystemRoutine);
+    EXPECT_EQ(MockCompilerDebugVars::SipAddressingType::bindless, getIgcDebugVars().receivedSipAddressingType);
+
+    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsrLocal, sipBinary);
+    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_NE(0U, sipBinary.size());
+    EXPECT_EQ(IGC::SystemRoutineType::debugSlm, getIgcDebugVars().typeOfSystemRoutine);
+    EXPECT_EQ(MockCompilerDebugVars::SipAddressingType::bindless, getIgcDebugVars().receivedSipAddressingType);
+
+    gEnvironment->igcPopDebugVars();
+}
+
+TEST_F(CompilerInterfaceTest, whenRequestingInvalidSipKernelBinaryThenErrorIsReturned) {
     MockCompilerDebugVars igcDebugVars;
     gEnvironment->igcPushDebugVars(igcDebugVars);
     std::vector<char> sipBinary;

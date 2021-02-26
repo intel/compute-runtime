@@ -309,22 +309,25 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
     }
 
     IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine = IGC::SystemRoutineType::undefined;
+    bool debugSip = false;
     switch (type) {
     case SipKernelType::Csr:
         typeOfSystemRoutine = IGC::SystemRoutineType::contextSaveRestore;
         break;
     case SipKernelType::DbgCsr:
         typeOfSystemRoutine = IGC::SystemRoutineType::debug;
+        debugSip = true;
         break;
     case SipKernelType::DbgCsrLocal:
         typeOfSystemRoutine = IGC::SystemRoutineType::debugSlm;
+        debugSip = true;
         break;
     default:
         break;
     }
 
     auto deviceCtx = getIgcDeviceCtx(device);
-    const bool bindlessSip = false;
+    bool bindlessSip = debugSip ? DebugManager.flags.UseBindlessDebugSip.get() : false;
 
     auto systemRoutineBuffer = igcMain.get()->CreateBuiltin<CIF::Builtins::BufferLatest>();
     auto stateSaveAreaBuffer = igcMain.get()->CreateBuiltin<CIF::Builtins::BufferLatest>();

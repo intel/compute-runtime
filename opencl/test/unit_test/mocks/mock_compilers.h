@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,11 @@
 namespace NEO {
 
 struct MockCompilerDebugVars {
+    enum class SipAddressingType {
+        unknown,
+        bindful,
+        bindless
+    };
     bool forceBuildFailure = false;
     bool forceCreateFailure = false;
     bool forceRegisterFail = false;
@@ -35,6 +40,7 @@ struct MockCompilerDebugVars {
     bool failCreateIgcFeWaInterface = false;
     int64_t overrideFclDeviceCtxVersion = -1;
     IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine = IGC::SystemRoutineType::undefined;
+    SipAddressingType receivedSipAddressingType = SipAddressingType::unknown;
     std::string *receivedInternalOptionsOutput = nullptr;
     std::string *receivedInput = nullptr;
 

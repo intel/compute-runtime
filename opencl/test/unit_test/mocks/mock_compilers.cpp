@@ -492,6 +492,8 @@ bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutine
                                            CIF::Builtins::BufferSimple *stateSaveAreaHeaderInit) {
     MockCompilerDebugVars &debugVars = *NEO::igcDebugVars;
     debugVars.typeOfSystemRoutine = typeOfSystemRoutine;
+    debugVars.receivedSipAddressingType = bindless ? MockCompilerDebugVars::SipAddressingType::bindless : MockCompilerDebugVars::SipAddressingType::bindful;
+
     const char mockData[64] = {'C', 'T', 'N', 'I'};
 
     if (debugVars.forceBuildFailure || typeOfSystemRoutine == IGC::SystemRoutineType::undefined) {
