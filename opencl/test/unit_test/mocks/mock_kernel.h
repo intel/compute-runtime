@@ -28,6 +28,7 @@ namespace NEO {
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrintfSurface &token);
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnvironment &execEnv);
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessEventPoolSurface &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessDefaultDeviceQueueSurface &token);
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchString &token);
 
 struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
@@ -444,12 +445,11 @@ class MockParentKernel : public Kernel {
         info->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
         info->kernelDescriptor.kernelAttributes.simdSize = 32;
 
-        SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateDeviceQueue = new SPatchAllocateStatelessDefaultDeviceQueueSurface;
-        allocateDeviceQueue->DataParamOffset = crossThreadOffset;
-        allocateDeviceQueue->DataParamSize = 8;
-        allocateDeviceQueue->SurfaceStateHeapOffset = 0;
-        allocateDeviceQueue->Size = 8;
-        info->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = allocateDeviceQueue;
+        SPatchAllocateStatelessDefaultDeviceQueueSurface allocateDeviceQueueSurface = {};
+        allocateDeviceQueueSurface.DataParamOffset = crossThreadOffset;
+        allocateDeviceQueueSurface.DataParamSize = 8;
+        allocateDeviceQueueSurface.Size = 8;
+        populateKernelDescriptor(info->kernelDescriptor, allocateDeviceQueueSurface);
 
         crossThreadOffset += 8;
 
@@ -494,12 +494,11 @@ class MockParentKernel : public Kernel {
 
         infoBlock->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
 
-        SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateDeviceQueueBlock = new SPatchAllocateStatelessDefaultDeviceQueueSurface;
-        allocateDeviceQueueBlock->DataParamOffset = crossThreadOffsetBlock;
-        allocateDeviceQueueBlock->DataParamSize = 8;
-        allocateDeviceQueueBlock->SurfaceStateHeapOffset = 0;
-        allocateDeviceQueueBlock->Size = 8;
-        infoBlock->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = allocateDeviceQueueBlock;
+        SPatchAllocateStatelessDefaultDeviceQueueSurface allocateDeviceQueueSurfaceBlock = {};
+        allocateDeviceQueueSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
+        allocateDeviceQueueSurfaceBlock.DataParamSize = 8;
+        allocateDeviceQueueSurfaceBlock.Size = 8;
+        populateKernelDescriptor(infoBlock->kernelDescriptor, allocateDeviceQueueSurfaceBlock);
 
         crossThreadOffsetBlock += 8;
 
@@ -599,14 +598,12 @@ class MockParentKernel : public Kernel {
                 continue;
             }
             auto &kernelInfo = *pKernelInfo;
-            delete kernelInfo.patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
             delete kernelInfo.patchInfo.threadPayload;
             delete &kernelInfo;
             BlockKernelManager *blockManager = program->getBlockKernelManager();
 
             for (uint32_t i = 0; i < blockManager->getCount(); i++) {
                 const KernelInfo *blockInfo = blockManager->getBlockKernelInfo(i);
-                delete blockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
                 delete blockInfo->patchInfo.threadPayload;
                 delete blockInfo->patchInfo.dataParameterStream;
                 delete blockInfo->patchInfo.bindingTableState;

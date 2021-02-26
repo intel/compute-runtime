@@ -42,14 +42,10 @@ TEST_F(KernelDataTest, GIVENpatchTokenAllocateStatelessDefaultDeviceQueueSurface
 
     buildAndDecode();
 
-    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.Token,
-              pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->Token);
-    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.DataParamOffset,
-              pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset);
-    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.DataParamSize,
-              pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamSize);
-    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset,
-              pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->SurfaceStateHeapOffset);
+    const auto &defaultQueueSurfaceAddress = pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress;
+    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.DataParamOffset, defaultQueueSurfaceAddress.stateless);
+    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.DataParamSize, defaultQueueSurfaceAddress.pointerSize);
+    EXPECT_EQ(allocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset, defaultQueueSurfaceAddress.bindful);
 }
 
 TEST_F(KernelDataTest, GIVENpatchTokenStatelessDeviceQueueKernelArgumentWHENdecodeTokensTHENapropriateKernelArgInfoFilled) {

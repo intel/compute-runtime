@@ -454,18 +454,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
 
         pCmdQ->enqueueKernel(parentKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
 
-        const auto &patchInfo = parentKernel->getKernelInfo(rootDeviceIndex).patchInfo;
+        const auto &implicitArgs = parentKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.implicitArgs;
 
-        if (patchInfo.pAllocateStatelessDefaultDeviceQueueSurface) {
-            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData(rootDeviceIndex)),
-                                           patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset);
-
+        const auto &defaultQueueSurfaceAddress = implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress;
+        if (isValidOffset(defaultQueueSurfaceAddress.stateless)) {
+            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData(rootDeviceIndex)), defaultQueueSurfaceAddress.stateless);
             EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddressToPatch(), *patchLocation);
         }
 
-        const auto &eventPool = parentKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
-        if (isValidOffset(eventPool.stateless)) {
-            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData(rootDeviceIndex)), eventPool.stateless);
+        const auto &eventPoolSurfaceAddress = implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
+        if (isValidOffset(eventPoolSurfaceAddress.stateless)) {
+            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData(rootDeviceIndex)), eventPoolSurfaceAddress.stateless);
             EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddressToPatch(), *patchLocation);
         }
     }
@@ -486,18 +485,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
         uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
 
         for (uint32_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
+            const auto implicitArgs = blockManager->getBlockKernelInfo(i)->kernelDescriptor.payloadMappings.implicitArgs;
             const uint32_t offset = MockKernel::ReflectionSurfaceHelperPublic::getConstantBufferOffset(reflectionSurface, i);
 
-            uint32_t defaultQueueOffset = pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset;
-            uint32_t defaultQueueSize = pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamSize;
-            if (defaultQueueSize == sizeof(uint64_t)) {
-                EXPECT_EQ_VAL(pDevQueueHw->getQueueBuffer()->getGpuAddress(), *(uint64_t *)ptrOffset(reflectionSurface, offset + defaultQueueOffset));
+            const auto &defaultQueue = implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress;
+            if (defaultQueue.pointerSize == sizeof(uint64_t)) {
+                EXPECT_EQ_VAL(pDevQueueHw->getQueueBuffer()->getGpuAddress(), *(uint64_t *)ptrOffset(reflectionSurface, offset + defaultQueue.stateless));
             } else {
-                EXPECT_EQ((uint32_t)pDevQueueHw->getQueueBuffer()->getGpuAddress(), *(uint32_t *)ptrOffset(reflectionSurface, offset + defaultQueueOffset));
+                EXPECT_EQ((uint32_t)pDevQueueHw->getQueueBuffer()->getGpuAddress(), *(uint32_t *)ptrOffset(reflectionSurface, offset + defaultQueue.stateless));
             }
 
-            const auto &eventPoolSurfaceAddress = pBlockInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
+            const auto &eventPoolSurfaceAddress = implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
             if (eventPoolSurfaceAddress.pointerSize == sizeof(uint64_t)) {
                 EXPECT_EQ_VAL(pDevQueueHw->getEventPoolBuffer()->getGpuAddress(), *(uint64_t *)ptrOffset(reflectionSurface, offset + eventPoolSurfaceAddress.stateless));
             } else {

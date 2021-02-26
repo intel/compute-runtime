@@ -437,7 +437,6 @@ TEST(PatchInfo, WhenPatchInfoIsCreatedThenMembersAreNullptr) {
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessPrivateSurface);
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization);
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization);
-    EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessDefaultDeviceQueueSurface);
 }
 
 typedef Test<ClDeviceFixture> KernelPrivateSurfaceTest;
@@ -1324,12 +1323,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatefulKe
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup default device queue surface
-    SPatchAllocateStatelessDefaultDeviceQueueSurface AllocateStatelessDefaultDeviceQueueSurface;
-    AllocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset = 0;
-    AllocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 0;
-    AllocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = &AllocateStatelessDefaultDeviceQueueSurface;
+    SPatchAllocateStatelessDefaultDeviceQueueSurface allocateStatelessDefaultDeviceQueueSurface = {};
+    allocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset = 0;
+    allocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 0;
+    allocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessDefaultDeviceQueueSurface);
 
     // create kernel
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
@@ -1351,7 +1349,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatefulKe
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
-                  pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->SurfaceStateHeapOffset));
+                  pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(0u, surfaceAddress);
@@ -1368,12 +1366,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatefulKe
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup default device queue surface
-    SPatchAllocateStatelessDefaultDeviceQueueSurface AllocateStatelessDefaultDeviceQueueSurface;
-    AllocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset = 0;
-    AllocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 0;
-    AllocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = &AllocateStatelessDefaultDeviceQueueSurface;
+    SPatchAllocateStatelessDefaultDeviceQueueSurface allocateStatelessDefaultDeviceQueueSurface = {};
+    allocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset = 0;
+    allocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 0;
+    allocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessDefaultDeviceQueueSurface);
 
     // create kernel
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
@@ -1397,7 +1394,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatefulKe
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
-                  pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->SurfaceStateHeapOffset));
+                  pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), surfaceAddress);
@@ -1411,21 +1408,20 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatelessK
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup default device queue surface
-    SPatchAllocateStatelessDefaultDeviceQueueSurface AllocateStatelessDefaultDeviceQueueSurface;
-    AllocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset = 0;
-    AllocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 0;
-    AllocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = &AllocateStatelessDefaultDeviceQueueSurface;
+    SPatchAllocateStatelessDefaultDeviceQueueSurface allocateStatelessDefaultDeviceQueueSurface = {};
+    allocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 0;
+    allocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessDefaultDeviceQueueSurface);
 
     // create kernel
     MockProgram program(toClDeviceVector(*pClDevice));
     MockKernel *pKernel = new MockKernel(&program, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
 
-    // define stateful path
+    // define stateless path
     pKernelInfo->usesSsh = false;
     pKernelInfo->requiresSshForBuffers = false;
 
@@ -1441,13 +1437,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenKernelWith
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
-    pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = nullptr;
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
 
     // create kernel
     MockProgram program(toClDeviceVector(*pClDevice));
     MockKernel *pKernel = new MockKernel(&program, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
 
-    // define stateful path
+    // define stateless path
     pKernelInfo->usesSsh = false;
     pKernelInfo->requiresSshForBuffers = false;
 
@@ -1467,20 +1463,19 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatelessK
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
 
     // setup default device queue surface
-    SPatchAllocateStatelessDefaultDeviceQueueSurface AllocateStatelessDefaultDeviceQueueSurface;
-    AllocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset = 0;
-    AllocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 0;
-    AllocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = &AllocateStatelessDefaultDeviceQueueSurface;
+    SPatchAllocateStatelessDefaultDeviceQueueSurface allocateStatelessDefaultDeviceQueueSurface = {};
+    allocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 0;
+    allocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessDefaultDeviceQueueSurface);
 
     // create kernel
     MockProgram program(toClDeviceVector(*pClDevice));
     MockKernel *pKernel = new MockKernel(&program, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
 
-    // define stateful path
+    // define stateless path
     pKernelInfo->usesSsh = false;
     pKernelInfo->requiresSshForBuffers = false;
 

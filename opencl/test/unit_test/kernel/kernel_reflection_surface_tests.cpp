@@ -1065,13 +1065,14 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
             }
         }
 
-        if (pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface) {
-            auto *patchedPointer = ptrOffset(pCurbe, pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset);
-            if (pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamSize == sizeof(uint32_t)) {
+        const auto &defaultQueueSurfaceAddress = pBlockInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress;
+        if (isValidOffset(defaultQueueSurfaceAddress.stateless)) {
+            auto *patchedPointer = ptrOffset(pCurbe, defaultQueueSurfaceAddress.stateless);
+            if (defaultQueueSurfaceAddress.pointerSize == sizeof(uint32_t)) {
                 uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
                 uint64_t patchedValue64 = *patchedValue;
                 EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), patchedValue64);
-            } else if (pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamSize == sizeof(uint64_t)) {
+            } else if (defaultQueueSurfaceAddress.pointerSize == sizeof(uint64_t)) {
                 uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
                 EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), *patchedValue);
             }

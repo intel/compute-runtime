@@ -314,11 +314,6 @@ void KernelInfo::storePatchToken(const SPatchAllocateStatelessGlobalMemorySurfac
     patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization = pStatelessGlobalMemorySurfaceWithInitializationArg;
 }
 
-void KernelInfo::storePatchToken(const SPatchAllocateStatelessDefaultDeviceQueueSurface *pStatelessDefaultDeviceQueueSurfaceArg) {
-    usesSsh |= true;
-    patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = pStatelessDefaultDeviceQueueSurfaceArg;
-}
-
 void KernelInfo::storePatchToken(const SPatchKernelAttributesInfo *pKernelAttributesInfo) {
     this->patchInfo.pKernelAttributesInfo = pKernelAttributesInfo;
     attributes = reinterpret_cast<const char *>(pKernelAttributesInfo) + sizeof(SPatchKernelAttributesInfo);

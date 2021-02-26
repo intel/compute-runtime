@@ -343,13 +343,10 @@ cl_int Kernel::initialize() {
             Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0);
         }
 
-        if (patchInfo.pAllocateStatelessDefaultDeviceQueueSurface) {
-
-            if (requiresSshForBuffers(rootDeviceIndex)) {
-                auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)),
-                                              patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->SurfaceStateHeapOffset);
-                Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0);
-            }
+        if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful)) {
+            auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)),
+                                          kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful);
+            Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0);
         }
 
         setThreadArbitrationPolicy(hwHelper.getDefaultThreadArbitrationPolicy());
@@ -2444,23 +2441,17 @@ void Kernel::provideInitializationHints() {
 }
 
 void Kernel::patchDefaultDeviceQueue(DeviceQueue *devQueue) {
-
     auto rootDeviceIndex = devQueue->getDevice().getRootDeviceIndex();
-    const auto &patchInfo = kernelInfos[rootDeviceIndex]->patchInfo;
-    if (patchInfo.pAllocateStatelessDefaultDeviceQueueSurface) {
-        if (kernelDeviceInfos[rootDeviceIndex].crossThreadData) {
-            auto patchLocation = ptrOffset(reinterpret_cast<uint32_t *>(getCrossThreadData(rootDeviceIndex)),
-                                           patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset);
-
-            patchWithRequiredSize(patchLocation, patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamSize,
-                                  static_cast<uintptr_t>(devQueue->getQueueBuffer()->getGpuAddressToPatch()));
-        }
-        if (requiresSshForBuffers(rootDeviceIndex)) {
-            auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)),
-                                          patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->SurfaceStateHeapOffset);
-            Buffer::setSurfaceState(&devQueue->getDevice(), surfaceState, false, false, devQueue->getQueueBuffer()->getUnderlyingBufferSize(),
-                                    (void *)devQueue->getQueueBuffer()->getGpuAddress(), 0, devQueue->getQueueBuffer(), 0, 0);
-        }
+    const auto &defaultQueueSurfaceAddress = kernelInfos[rootDeviceIndex]->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress;
+    if (isValidOffset(defaultQueueSurfaceAddress.stateless) && kernelDeviceInfos[rootDeviceIndex].crossThreadData) {
+        auto patchLocation = ptrOffset(reinterpret_cast<uint32_t *>(getCrossThreadData(rootDeviceIndex)), defaultQueueSurfaceAddress.stateless);
+        patchWithRequiredSize(patchLocation, defaultQueueSurfaceAddress.pointerSize,
+                              static_cast<uintptr_t>(devQueue->getQueueBuffer()->getGpuAddressToPatch()));
+    }
+    if (isValidOffset(defaultQueueSurfaceAddress.bindful)) {
+        auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap(rootDeviceIndex)), defaultQueueSurfaceAddress.bindful);
+        Buffer::setSurfaceState(&devQueue->getDevice(), surfaceState, false, false, devQueue->getQueueBuffer()->getUnderlyingBufferSize(),
+                                (void *)devQueue->getQueueBuffer()->getGpuAddress(), 0, devQueue->getQueueBuffer(), 0, 0);
     }
 }
 

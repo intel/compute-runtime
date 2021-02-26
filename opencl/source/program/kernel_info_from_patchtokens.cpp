@@ -184,13 +184,6 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
     storeTokenIfNotNull(dst, src.tokens.allocateStatelessPrivateSurface);
     storeTokenIfNotNull(dst, src.tokens.allocateStatelessConstantMemorySurfaceWithInitialization);
     storeTokenIfNotNull(dst, src.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization);
-    if (nullptr != src.tokens.allocateStatelessEventPoolSurface) {
-        dst.usesSsh = true;
-    }
-    if (nullptr != src.tokens.allocateStatelessPrintfSurface) {
-        dst.usesSsh = true;
-    }
-    storeTokenIfNotNull(dst, src.tokens.allocateStatelessDefaultDeviceQueueSurface);
     storeTokenIfNotNull(dst, src.tokens.allocateSyncBuffer);
 
     dst.isVmeWorkload = dst.isVmeWorkload || (src.tokens.inlineVmeSamplerInfo != nullptr);

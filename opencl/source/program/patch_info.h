@@ -67,7 +67,6 @@ struct PatchInfo {
     const SPatchAllocateSyncBuffer *pAllocateSyncBuffer = nullptr;
     const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization *pAllocateStatelessConstantMemorySurfaceWithInitialization = nullptr;
     const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization *pAllocateStatelessGlobalMemorySurfaceWithInitialization = nullptr;
-    const SPatchAllocateStatelessDefaultDeviceQueueSurface *pAllocateStatelessDefaultDeviceQueueSurface = nullptr;
     const SPatchAllocateSystemThreadSurface *pAllocateSystemThreadSurface = nullptr;
 };
 

@@ -719,12 +719,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
     allocateStatelessEventPoolSurface.DataParamSize = 8;
     populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessEventPoolSurface);
 
-    SPatchAllocateStatelessDefaultDeviceQueueSurface AllocateStatelessDefaultDeviceQueueSurface;
-    AllocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset = 256;
-    AllocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 32;
-    AllocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = &AllocateStatelessDefaultDeviceQueueSurface;
+    SPatchAllocateStatelessDefaultDeviceQueueSurface allocateStatelessDefaultDeviceQueueSurface;
+    allocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset = 256;
+    allocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 32;
+    allocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessDefaultDeviceQueueSurface);
 
     // create program with valid context
     MockContext context;

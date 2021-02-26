@@ -114,12 +114,12 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenPrivateMemoryForBlocksIsA
     uint32_t crossThreadOffsetBlock = 0;
 
     auto infoBlock = new KernelInfo();
-    SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateDeviceQueueBlock = new SPatchAllocateStatelessDefaultDeviceQueueSurface;
-    allocateDeviceQueueBlock->DataParamOffset = crossThreadOffsetBlock;
-    allocateDeviceQueueBlock->DataParamSize = 8;
-    allocateDeviceQueueBlock->SurfaceStateHeapOffset = 0;
-    allocateDeviceQueueBlock->Size = 8;
-    infoBlock->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = allocateDeviceQueueBlock;
+    infoBlock->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+    SPatchAllocateStatelessDefaultDeviceQueueSurface allocateDeviceQueueSurface = {};
+    allocateDeviceQueueSurface.DataParamOffset = crossThreadOffsetBlock;
+    allocateDeviceQueueSurface.DataParamSize = 8;
+    allocateDeviceQueueSurface.Size = 8;
+    populateKernelDescriptor(infoBlock->kernelDescriptor, allocateDeviceQueueSurface);
 
     crossThreadOffsetBlock += 8;
 

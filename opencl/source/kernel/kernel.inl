@@ -24,16 +24,6 @@ void Kernel::patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printf
     for (uint32_t i = 0; i < blockCount; i++) {
         const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
 
-        // clang-format off
-        uint64_t defaultQueueOffset = pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface ? 
-            pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset : ReflectionSurfaceHelper::undefinedOffset;
-        uint64_t deviceQueueOffset = ReflectionSurfaceHelper::undefinedOffset;
-
-        uint32_t defaultQueueSize = pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface ? 
-            pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamSize : 0;
-        uint32_t deviceQueueSize = 0;
-        // clang-format on
-
         uint64_t printfBufferOffset = ReflectionSurfaceHelper::undefinedOffset;
         uint32_t printfBufferPatchSize = 0U;
         const auto &printfSurface = pBlockInfo->kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
@@ -50,6 +40,17 @@ void Kernel::patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printf
             eventPoolOffset = eventPoolSurfaceAddress.stateless;
             eventPoolSize = eventPoolSurfaceAddress.pointerSize;
         }
+
+        uint64_t defaultQueueOffset = ReflectionSurfaceHelper::undefinedOffset;
+        uint32_t defaultQueueSize = 0U;
+        const auto &defaultQueueSurface = pBlockInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress;
+        if (isValidOffset(defaultQueueSurface.stateless)) {
+            defaultQueueOffset = defaultQueueSurface.stateless;
+            defaultQueueSize = defaultQueueSurface.pointerSize;
+        }
+
+        uint64_t deviceQueueOffset = ReflectionSurfaceHelper::undefinedOffset;
+        uint32_t deviceQueueSize = 0;
 
         uint64_t privateSurfaceOffset = ReflectionSurfaceHelper::undefinedOffset;
         uint32_t privateSurfacePatchSize = 0;
