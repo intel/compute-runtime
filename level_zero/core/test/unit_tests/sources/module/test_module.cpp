@@ -229,13 +229,13 @@ HWTEST_F(ModuleTest, GivenIncorrectNameWhenCreatingKernelThenResultErrorInvalidA
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
-
+template <typename T1, typename T2>
 struct ModuleSpecConstantsTests : public DeviceFixture,
                                   public ::testing::Test {
     void SetUp() override {
         DeviceFixture::SetUp();
 
-        mockCompiler = new MockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);
+        mockCompiler = new MockCompilerInterfaceWithSpecConstants<T1, T2>(moduleNumSpecConstants);
         auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
         rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
 
@@ -246,17 +246,77 @@ struct ModuleSpecConstantsTests : public DeviceFixture,
         DeviceFixture::TearDown();
     }
 
-    const uint32_t moduleNumSpecConstants = 4;
+    void runTest() {
+        std::string testFile;
+        retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
+
+        size_t size = 0;
+        auto src = loadDataFromFile(testFile.c_str(), size);
+
+        ASSERT_NE(0u, size);
+        ASSERT_NE(nullptr, src);
+
+        ze_module_desc_t moduleDesc = {};
+        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+        moduleDesc.inputSize = size;
+
+        specConstants.numConstants = mockCompiler->moduleNumSpecConstants;
+        for (uint32_t i = mockCompiler->moduleNumSpecConstants / 2; i > 0; i--) {
+            specConstantsPointerValues.push_back(&mockCompiler->moduleSpecConstantsValuesT1[i - 1]);
+            specConstantsPointerValues.push_back(&mockCompiler->moduleSpecConstantsValuesT2[i - 1]);
+        }
+        for (uint32_t i = mockCompiler->moduleNumSpecConstants; i > 0; i--) {
+            specConstantsPointerIds.push_back(mockCompiler->moduleSpecConstantsIds[i - 1]);
+        }
+        specConstants.pConstantIds = specConstantsPointerIds.data();
+        specConstants.pConstantValues = specConstantsPointerValues.data();
+        moduleDesc.pConstants = &specConstants;
+
+        auto module = new Module(device, nullptr, ModuleType::User);
+        module->translationUnit.reset(mockTranslationUnit);
+
+        bool success = module->initialize(&moduleDesc, neoDevice);
+        for (uint32_t i = 0; i < mockCompiler->moduleNumSpecConstants / 2; i++) {
+            EXPECT_EQ(static_cast<uint64_t>(module->translationUnit->specConstantsValues[mockCompiler->moduleSpecConstantsIds[2 * i]]), static_cast<uint64_t>(mockCompiler->moduleSpecConstantsValuesT2[i]));
+            EXPECT_EQ(static_cast<uint64_t>(module->translationUnit->specConstantsValues[mockCompiler->moduleSpecConstantsIds[2 * i + 1]]), static_cast<uint64_t>(mockCompiler->moduleSpecConstantsValuesT1[i]));
+        }
+        EXPECT_TRUE(success);
+        module->destroy();
+    }
+
+    const uint32_t moduleNumSpecConstants = 3 * 2;
     ze_module_constants_t specConstants;
     std::vector<const void *> specConstantsPointerValues;
+    std::vector<uint32_t> specConstantsPointerIds;
 
     const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
-    MockCompilerInterfaceWithSpecConstants *mockCompiler;
+    MockCompilerInterfaceWithSpecConstants<T1, T2> *mockCompiler;
     MockModuleTranslationUnit *mockTranslationUnit;
 };
 
-HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorThenModuleCorrectlyPassesThemToTheCompiler) {
+using ModuleSpecConstantsLongTests = ModuleSpecConstantsTests<uint32_t, uint64_t>;
+TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWithLongSizeInDescriptorThenModuleCorrectlyPassesThemToTheCompiler) {
+    runTest();
+}
+using ModuleSpecConstantsCharTests = ModuleSpecConstantsTests<char, uint32_t>;
+TEST_F(ModuleSpecConstantsCharTests, givenSpecializationConstantsSetWithCharSizeInDescriptorThenModuleCorrectlyPassesThemToTheCompiler) {
+    runTest();
+}
+
+TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompilerReturnsErrorThenModuleInitFails) {
+    class FailingMockCompilerInterfaceWithSpecConstants : public MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t> {
+      public:
+        FailingMockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(moduleNumSpecConstants) {}
+        NEO::TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
+                                                               ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
+            return NEO::TranslationOutput::ErrorCode::CompilerNotAvailable;
+        }
+    };
+    mockCompiler = new FailingMockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
     std::string testFile;
     retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
 
@@ -272,8 +332,9 @@ HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorTh
     moduleDesc.inputSize = size;
 
     specConstants.numConstants = mockCompiler->moduleNumSpecConstants;
-    for (uint32_t i = 0; i < mockCompiler->moduleNumSpecConstants; i++) {
-        specConstantsPointerValues.push_back(&mockCompiler->moduleSpecConstantsValues[i]);
+    for (uint32_t i = 0; i < mockCompiler->moduleNumSpecConstants / 2; i++) {
+        specConstantsPointerValues.push_back(&mockCompiler->moduleSpecConstantsValuesT2[i]);
+        specConstantsPointerValues.push_back(&mockCompiler->moduleSpecConstantsValuesT1[i]);
     }
 
     specConstants.pConstantIds = mockCompiler->moduleSpecConstantsIds.data();
@@ -284,7 +345,45 @@ HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorTh
     module->translationUnit.reset(mockTranslationUnit);
 
     bool success = module->initialize(&moduleDesc, neoDevice);
-    EXPECT_TRUE(success);
+    EXPECT_FALSE(success);
+    module->destroy();
+}
+
+TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenUserPassTooMuchConstsIdsThenModuleInitFails) {
+    std::string testFile;
+    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    specConstants.numConstants = mockCompiler->moduleNumSpecConstants;
+    for (uint32_t i = mockCompiler->moduleNumSpecConstants / 2; i > 0; i--) {
+        specConstantsPointerValues.push_back(&mockCompiler->moduleSpecConstantsValuesT1[i - 1]);
+        specConstantsPointerValues.push_back(&mockCompiler->moduleSpecConstantsValuesT2[i - 1]);
+    }
+    for (uint32_t i = mockCompiler->moduleNumSpecConstants; i > 0; i--) {
+        specConstantsPointerIds.push_back(mockCompiler->moduleSpecConstantsIds[i - 1]);
+    }
+    specConstantsPointerIds.push_back(0x1000);
+    specConstants.numConstants += 1;
+
+    specConstants.pConstantIds = specConstantsPointerIds.data();
+    specConstants.pConstantValues = specConstantsPointerValues.data();
+    moduleDesc.pConstants = &specConstants;
+
+    auto module = new Module(device, nullptr, ModuleType::User);
+    module->translationUnit.reset(mockTranslationUnit);
+
+    bool success = module->initialize(&moduleDesc, neoDevice);
+    EXPECT_FALSE(success);
     module->destroy();
 }
 

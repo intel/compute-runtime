@@ -91,7 +91,7 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
         return NEO::TranslationOutput::ErrorCode::Success;
     }
 };
-
+template <typename T1, typename T2>
 struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
     MockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : moduleNumSpecConstants(moduleNumSpecConstants) {
     }
@@ -101,29 +101,25 @@ struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
 
         EXPECT_EQ(moduleNumSpecConstants, input.specializedValues.size());
 
-        for (uint32_t i = 0; i < moduleSpecConstantsIds.size(); i++) {
-            uint32_t specConstantId = moduleSpecConstantsIds[i];
-            auto it = input.specializedValues.find(specConstantId);
-            EXPECT_NE(it, input.specializedValues.end());
-
-            uint64_t specConstantValue = moduleSpecConstantsValues[i];
-            EXPECT_EQ(specConstantValue, it->second);
-        }
-
         return NEO::TranslationOutput::ErrorCode::Success;
     }
 
     NEO::TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
                                                            ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
         output.idsBuffer.reset(new NEO::MockCIFBuffer());
+        output.sizesBuffer.reset(new NEO::MockCIFBuffer());
         for (uint32_t i = 0; i < moduleNumSpecConstants; i++) {
             output.idsBuffer->PushBackRawCopy(moduleSpecConstantsIds[i]);
+            output.sizesBuffer->PushBackRawCopy(moduleSpecConstantsSizes[i]);
         }
         return NEO::TranslationOutput::ErrorCode::Success;
     }
     uint32_t moduleNumSpecConstants = 0u;
-    const std::vector<uint32_t> moduleSpecConstantsIds{0, 1, 2, 3};
-    const std::vector<uint64_t> moduleSpecConstantsValues{10, 20, 30, 40};
+    const std::vector<uint32_t> moduleSpecConstantsIds{2, 0, 1, 3, 5, 4};
+    const std::vector<T1> moduleSpecConstantsValuesT1{10, 20, 30};
+    const std::vector<T2> moduleSpecConstantsValuesT2{static_cast<T2>(std::numeric_limits<T1>::max()) + 60u, static_cast<T2>(std::numeric_limits<T1>::max()) + 50u, static_cast<T2>(std::numeric_limits<T1>::max()) + 40u};
+    const std::vector<uint32_t> moduleSpecConstantsSizes{sizeof(T2), sizeof(T1), sizeof(T2), sizeof(T1), sizeof(T2), sizeof(T1)};
+    static_assert(sizeof(T1) < sizeof(T2));
 };
 
 } // namespace ult
