@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 
 extern bool verbose;
 bool verbose = false;
+bool useCopyEngine = false;
 
 uint8_t uinitializedPattern = 1;
 uint8_t expectedPattern = 7;
@@ -76,6 +77,8 @@ inline void initializeProcess(ze_context_handle_t &context,
                               ze_device_handle_t &device,
                               ze_command_queue_handle_t &cmdQueue,
                               ze_command_list_handle_t &cmdList,
+                              ze_command_queue_handle_t &cmdQueueCopy,
+                              ze_command_list_handle_t &cmdListCopy,
                               bool isServer) {
     SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
 
@@ -142,19 +145,51 @@ inline void initializeProcess(ze_context_handle_t &context,
                                                                 queueProperties.data()));
 
     ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDescCopy = {};
     for (uint32_t i = 0; i < numQueueGroups; i++) {
         if (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) {
             cmdQueueDesc.ordinal = i;
+            break;
         }
     }
+
+    uint32_t copyOrdinal = std::numeric_limits<uint32_t>::max();
+    if (useCopyEngine) {
+        for (uint32_t i = 0; i < numQueueGroups; i++) {
+            if ((queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) == 0 &&
+                (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY)) {
+                copyOrdinal = i;
+                break;
+            }
+        }
+    }
+
+    if (copyOrdinal == std::numeric_limits<uint32_t>::max()) {
+        std::cout << "Using EUs for copies\n";
+        cmdQueueDescCopy.ordinal = cmdQueueDesc.ordinal;
+    } else {
+        std::cout << "Using copy engines for copies\n";
+        cmdQueueDescCopy.ordinal = copyOrdinal;
+    }
+
+    std::cout << (isServer ? "Server " : "Client ") << " using queues "
+              << cmdQueueDescCopy.ordinal << " and " << cmdQueueDesc.ordinal << "\n";
+
     cmdQueueDesc.index = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
+    cmdQueueDescCopy.index = 0;
+    cmdQueueDescCopy.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDescCopy, &cmdQueueCopy));
 
     // Create command list
     ze_command_list_desc_t cmdListDesc = {};
     cmdListDesc.commandQueueGroupOrdinal = cmdQueueDesc.ordinal;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
+
+    ze_command_list_desc_t cmdListDescCopy = {};
+    cmdListDescCopy.commandQueueGroupOrdinal = cmdQueueDescCopy.ordinal;
+    SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDescCopy, &cmdListCopy));
 }
 
 void run_client(int commSocket) {
@@ -164,7 +199,9 @@ void run_client(int commSocket) {
     ze_device_handle_t device;
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
-    initializeProcess(context, device, cmdQueue, cmdList, false);
+    ze_command_queue_handle_t cmdQueueCopy;
+    ze_command_list_handle_t cmdListCopy;
+    initializeProcess(context, device, cmdQueue, cmdList, cmdQueueCopy, cmdListCopy, false);
 
     void *zeBuffer;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -172,6 +209,9 @@ void run_client(int commSocket) {
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, zeBuffer, reinterpret_cast<void *>(&expectedPattern),
                                                        sizeof(expectedPattern), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // get the dma_buf from the other process
     int dma_buf_fd = recvmsg_fd(commSocket);
@@ -187,14 +227,16 @@ void run_client(int commSocket) {
     SUCCESS_OR_TERMINATE(zeMemOpenIpcHandle(context, device, pIpcHandle, 0u, &zeIpcBuffer));
 
     // Copy from client to server
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeIpcBuffer, zeBuffer, allocSize, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
-    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdListCopy, zeIpcBuffer, zeBuffer, allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListCopy));
+    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueueCopy, 1, &cmdListCopy, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueueCopy, std::numeric_limits<uint64_t>::max()));
 
     SUCCESS_OR_TERMINATE(zeMemCloseIpcHandle(context, zeIpcBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListCopy));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueueCopy));
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
 
@@ -208,7 +250,9 @@ void run_server(int commSocket, bool &validRet) {
     ze_device_handle_t device;
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
-    initializeProcess(context, device, cmdQueue, cmdList, true);
+    ze_command_queue_handle_t cmdQueueCopy;
+    ze_command_list_handle_t cmdListCopy;
+    initializeProcess(context, device, cmdQueue, cmdList, cmdQueueCopy, cmdListCopy, true);
 
     void *zeBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -273,12 +317,16 @@ void run_server(int commSocket, bool &validRet) {
 
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListCopy));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueueCopy));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 }
 
 int main(int argc, char *argv[]) {
     verbose = isVerbose(argc, argv);
     bool outputValidationSuccessful;
+
+    useCopyEngine = isParamEnabled(argc, argv, "-c", "--copyengine");
 
     int sv[2];
     if (socketpair(PF_UNIX, SOCK_STREAM, 0, sv) < 0) {
