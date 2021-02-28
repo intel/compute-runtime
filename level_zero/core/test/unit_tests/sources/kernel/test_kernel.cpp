@@ -705,6 +705,19 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
                         sizeof(kernelProperties.uuid.mid)));
 }
 
+HWTEST_F(KernelPropertiesTests, givenValidKernelThenProfilePropertiesAreRetrieved) {
+    zet_profile_properties_t kernelProfileProperties = {};
+
+    kernelProfileProperties.flags = std::numeric_limits<uint32_t>::max();
+    kernelProfileProperties.numTokens = std::numeric_limits<uint32_t>::max();
+
+    ze_result_t res = kernel->getProfileInfo(&kernelProfileProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(0U, kernelProfileProperties.flags);
+    EXPECT_EQ(0U, kernelProfileProperties.numTokens);
+}
+
 HWTEST_F(KernelPropertiesTests, whenSettingValidKernelIndirectAccessFlagsThenFlagsAreSetCorrectly) {
     UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
     EXPECT_EQ(false, unifiedMemoryControls.indirectDeviceAllocationsAllowed);

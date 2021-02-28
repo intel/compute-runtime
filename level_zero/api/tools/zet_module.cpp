@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,5 +21,5 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zetKernelGetProfileInfo(
     zet_kernel_handle_t hKernel,
     zet_profile_properties_t *pProfileProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Kernel::fromHandle(hKernel)->getProfileInfo(pProfileProperties);
 }

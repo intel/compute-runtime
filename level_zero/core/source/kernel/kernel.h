@@ -13,6 +13,7 @@
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include <level_zero/ze_api.h>
+#include <level_zero/zet_api.h>
 
 #include <memory>
 #include <vector>
@@ -117,6 +118,8 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
 
     virtual ze_result_t suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount) = 0;
     virtual ze_result_t setCacheConfig(ze_cache_config_flags_t flags) = 0;
+
+    virtual ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) = 0;
 
     virtual const KernelImmutableData *getImmutableData() const = 0;
     virtual std::unique_ptr<Kernel> clone() const = 0;

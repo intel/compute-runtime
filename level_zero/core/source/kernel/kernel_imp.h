@@ -124,6 +124,12 @@ struct KernelImp : Kernel {
 
     ze_result_t setCacheConfig(ze_cache_config_flags_t flags) override;
 
+    ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) override {
+        pProfileProperties->flags = 0;
+        pProfileProperties->numTokens = 0;
+        return ZE_RESULT_SUCCESS;
+    }
+
     bool hasIndirectAccess() {
         return kernelHasIndirectAccess;
     }
