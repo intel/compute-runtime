@@ -122,7 +122,7 @@ INSTANTIATE_TEST_CASE_P(
     GetCommandQueueInfoTest,
     ::testing::ValuesIn(DefaultCommandQueueProperties));
 
-TEST(GetCommandQueueFamilyInfoTest, givenQueueFamilyNotSelectedWhenGettingFamilyAndQueueIndexThenInvalidValueueIsReturned) {
+TEST(GetCommandQueueFamilyInfoTest, givenQueueFamilyNotSelectedWhenGettingFamilyAndQueueIndexThenValuesAreReturned) {
     MockContext context{};
     MockCommandQueue queue{context};
     queue.queueFamilySelected = false;
