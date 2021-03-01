@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,9 +61,9 @@ void LinuxGlobalOperationsImp::getBrandName(char (&brandName)[ZES_STRING_PROPERT
     }
     if (strVal.compare(intelPciId) == 0) {
         std::strncpy(brandName, vendorIntel.c_str(), ZES_STRING_PROPERTY_SIZE);
-        return;
+    } else {
+        std::strncpy(brandName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
     }
-    std::strncpy(brandName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 
 void LinuxGlobalOperationsImp::getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) {
@@ -85,9 +85,9 @@ void LinuxGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPE
     }
     if (strVal.compare(intelPciId) == 0) {
         std::strncpy(vendorName, vendorIntel.c_str(), ZES_STRING_PROPERTY_SIZE);
-        return;
+    } else {
+        std::strncpy(vendorName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
     }
-    std::strncpy(vendorName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 
 void LinuxGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {

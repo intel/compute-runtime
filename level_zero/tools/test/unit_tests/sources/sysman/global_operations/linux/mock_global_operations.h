@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,18 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
+    ze_result_t getFalseValString(const std::string file, std::string &val) {
+        if (file.compare(subsystemVendorFile) == 0) {
+            val = "0xa086";
+        } else if (file.compare(deviceFile) == 0) {
+            val = "0xa123";
+        } else if (file.compare(vendorFile) == 0) {
+            val = "0xa086";
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
     ze_result_t getValUnsignedLong(const std::string file, uint64_t &val) {
         if ((file.compare("clients/4/pid") == 0) || (file.compare("clients/5/pid") == 0)) {
             val = pid1;
@@ -116,6 +128,43 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
+    ze_result_t getValUnsignedLongCreatedBytesSuccess(const std::string file, uint64_t &val) {
+        if ((file.compare("clients/4/pid") == 0) || (file.compare("clients/5/pid") == 0)) {
+            val = pid1;
+        } else if (file.compare("clients/6/pid") == 0) {
+            val = pid2;
+        } else if (file.compare("clients/7/pid") == 0) {
+            val = pid3;
+        } else if ((file.compare("clients/4/busy/0") == 0) || (file.compare("clients/4/busy/3") == 0) ||
+                   (file.compare("clients/5/busy/1") == 0) || (file.compare("clients/6/busy/0") == 0) ||
+                   (file.compare("clients/8/busy/1") == 0) || (file.compare("clients/8/busy/0") == 0)) {
+            val = engineTimeSpent;
+        } else if ((file.compare("clients/4/busy/1") == 0) || (file.compare("clients/4/busy/2") == 0) ||
+                   (file.compare("clients/5/busy/0") == 0) || (file.compare("clients/5/busy/2") == 0) ||
+                   (file.compare("clients/7/busy/0") == 0) || (file.compare("clients/7/busy/2") == 0) ||
+                   (file.compare("clients/5/busy/3") == 0) || (file.compare("clients/6/busy/1") == 0) ||
+                   (file.compare("clients/6/busy/2") == 0) || (file.compare("clients/6/busy/3") == 0) ||
+                   (file.compare("clients/8/busy/2") == 0) || (file.compare("clients/8/busy/3") == 0)) {
+            val = 0;
+        } else if ((file.compare("clients/4/total_device_memory_buffer_objects/created_bytes") == 0) ||
+                   (file.compare("clients/5/total_device_memory_buffer_objects/created_bytes") == 0) ||
+                   (file.compare("clients/6/total_device_memory_buffer_objects/created_bytes") == 0) ||
+                   (file.compare("clients/8/total_device_memory_buffer_objects/created_bytes") == 0) ||
+                   (file.compare("clients/7/total_device_memory_buffer_objects/created_bytes") == 0)) {
+            val = 1024;
+        } else if ((file.compare("clients/4/total_device_memory_buffer_objects/imported_bytes") == 0) ||
+                   (file.compare("clients/5/total_device_memory_buffer_objects/imported_bytes") == 0) ||
+                   (file.compare("clients/6/total_device_memory_buffer_objects/imported_bytes") == 0) ||
+                   (file.compare("clients/8/total_device_memory_buffer_objects/imported_bytes") == 0)) {
+            val = 512;
+        } else if (file.compare("clients/7/total_device_memory_buffer_objects/imported_bytes") == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
     ze_result_t getScannedDir4Entries(const std::string path, std::vector<std::string> &list) {
         if (path.compare(clientsDir) == 0) {
             list.push_back(clientId1);
@@ -125,7 +174,8 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
             list.push_back(clientId5);
             list.push_back(clientId6);
         } else if ((path.compare("clients/4/busy") == 0) || (path.compare("clients/5/busy") == 0) ||
-                   (path.compare("clients/6/busy") == 0) || (path.compare("clients/7/busy") == 0) || (path.compare("clients/8/busy") == 0)) {
+                   (path.compare("clients/6/busy") == 0) || (path.compare("clients/7/busy") == 0) ||
+                   (path.compare("clients/8/busy") == 0)) {
             list.push_back(engine0);
             list.push_back(engine1);
             list.push_back(engine2);
@@ -231,6 +281,10 @@ struct Mock<GlobalOperationsProcfsAccess> : public GlobalOperationsProcfsAccess 
         return ZE_RESULT_SUCCESS;
     }
 
+    ze_result_t getMockFileNameReturnError(const ::pid_t pid, const int fd, std::string &val) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     bool mockIsAlive(const ::pid_t pid) {
         if (pid == ourDevicePid) {
             return true;
@@ -307,6 +361,10 @@ struct Mock<GlobalOperationsFsAccess> : public GlobalOperationsFsAccess {
 
     ze_result_t getValNotAvaliable(const std::string file, std::string &val) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t getValErrorUnkown(const std::string file, std::string &val) {
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     ze_result_t getValPermissionDenied(const std::string file, std::string &val) {
