@@ -692,7 +692,7 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
     }
 
     //check if buffer is compatible
-    if (!buffer->isReadWriteOnCpuAllowed(device->getRootDeviceIndex())) {
+    if (!buffer->isReadWriteOnCpuAllowed(device->getDevice())) {
         return false;
     }
 

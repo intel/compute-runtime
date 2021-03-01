@@ -595,10 +595,12 @@ size_t Buffer::calculateHostPtrSize(const size_t *origin, const size_t *region, 
     return hostPtrSize;
 }
 
-bool Buffer::isReadWriteOnCpuAllowed(uint32_t rootDeviceIndex) {
+bool Buffer::isReadWriteOnCpuAllowed(const Device &device) {
     if (forceDisallowCPUCopy) {
         return false;
     }
+
+    auto rootDeviceIndex = device.getRootDeviceIndex();
 
     if (this->isCompressed(rootDeviceIndex)) {
         return false;
@@ -611,6 +613,13 @@ bool Buffer::isReadWriteOnCpuAllowed(uint32_t rootDeviceIndex) {
     }
 
     if (graphicsAllocation->storageInfo.getNumBanks() > 1) {
+        return false;
+    }
+
+    const auto &hardwareInfo = device.getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto isCpuAccessDisallowed = LocalMemoryAccessMode::CpuAccessDisallowed == hwHelper.getLocalMemoryAccessMode(hardwareInfo);
+    if (isCpuAccessDisallowed) {
         return false;
     }
     return true;
