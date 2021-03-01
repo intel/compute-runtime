@@ -581,17 +581,15 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenNotSetUseSystemMemoryWhenGraphicsAl
     EXPECT_NE(0u, gpuAddress);
 
     auto heap = HeapIndex::HEAP_STANDARD64KB;
-    auto sizeReserved = alignUp(sizeAligned, 2 * MemoryConstants::megaByte);
     if (memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED)) {
         heap = HeapIndex::HEAP_EXTENDED;
-        sizeReserved = alignUp(sizeAligned, MemoryConstants::pageSize);
     }
     EXPECT_LT(GmmHelper::canonize(memoryManager->getGfxPartition(0)->getHeapBase(heap)), gpuAddress);
     EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(0)->getHeapLimit(heap)), gpuAddress);
     EXPECT_EQ(0u, allocation->getGpuBaseAddress());
     EXPECT_EQ(sizeAligned, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(gpuAddress, reinterpret_cast<uint64_t>(allocation->getReservedAddressPtr()));
-    EXPECT_EQ(sizeReserved, allocation->getReservedAddressSize());
+    EXPECT_EQ(sizeAligned, allocation->getReservedAddressSize());
 
     EXPECT_EQ(1u, allocation->storageInfo.getNumBanks());
     EXPECT_EQ(allocData.storageInfo.getMemoryBanks(), allocation->storageInfo.getMemoryBanks());
@@ -642,7 +640,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenNotSetUseSystemMemoryWhenGraphicsAl
     EXPECT_EQ(0u, allocation->getGpuBaseAddress());
     EXPECT_EQ(sizeAligned, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(gpuAddress, reinterpret_cast<uint64_t>(allocation->getReservedAddressPtr()));
-    EXPECT_EQ(alignUp(sizeAligned, 2 * MemoryConstants::megaByte), allocation->getReservedAddressSize());
+    EXPECT_EQ(sizeAligned, allocation->getReservedAddressSize());
 
     EXPECT_EQ(1u, allocation->storageInfo.getNumBanks());
     EXPECT_EQ(allocData.storageInfo.getMemoryBanks(), allocation->storageInfo.getMemoryBanks());
@@ -1254,7 +1252,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenGraphicsAllocationInDevicePoolIsAll
     EXPECT_NE(0u, gpuAddress);
     EXPECT_EQ(sizeAlignedTo64KB, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(gpuAddress, reinterpret_cast<uint64_t>(allocation->getReservedAddressPtr()));
-    EXPECT_EQ(alignUp(sizeAlignedTo64KB, 2 * MemoryConstants::megaByte), allocation->getReservedAddressSize());
+    EXPECT_EQ(sizeAlignedTo64KB, allocation->getReservedAddressSize());
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     auto bo = drmAllocation->getBO();

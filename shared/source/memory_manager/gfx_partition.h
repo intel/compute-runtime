@@ -23,6 +23,7 @@ enum class HeapIndex : uint32_t {
     HEAP_EXTERNAL = 3u,
     HEAP_STANDARD,
     HEAP_STANDARD64KB,
+    HEAP_STANDARD2MB,
     HEAP_SVM,
     HEAP_EXTENDED,
     HEAP_EXTERNAL_FRONT_WINDOW,
@@ -83,7 +84,8 @@ class GfxPartition {
     }
 
     uint64_t getHeapMinimalAddress(HeapIndex heapIndex) {
-        if (heapIndex == HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW ||
+        if (heapIndex == HeapIndex::HEAP_SVM ||
+            heapIndex == HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW ||
             heapIndex == HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW ||
             heapIndex == HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW ||
             heapIndex == HeapIndex::HEAP_INTERNAL_FRONT_WINDOW) {
@@ -103,7 +105,7 @@ class GfxPartition {
 
     bool isLimitedRange() { return getHeap(HeapIndex::HEAP_SVM).getSize() == 0ull; }
 
-    static const uint64_t heapGranularity = MemoryConstants::pageSize64k;
+    static const uint64_t heapGranularity = 2 * MemoryConstants::megaByte;
     static constexpr size_t externalFrontWindowPoolSize = 16 * MemoryConstants::megaByte;
     static constexpr size_t internalFrontWindowPoolSize = 1 * MemoryConstants::megaByte;
 

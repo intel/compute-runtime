@@ -184,14 +184,20 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
         gfxBase += gfxHeap32Size;
     }
 
-    uint64_t gfxStandardSize = alignDown((gfxTop - gfxBase) >> 1, heapGranularity);
+    uint32_t numStandardHeaps = static_cast<uint32_t>(HeapIndex::HEAP_STANDARD2MB) - static_cast<uint32_t>(HeapIndex::HEAP_STANDARD) + 1;
+    uint64_t gfxStandardSize = alignDown((gfxTop - gfxBase) / numStandardHeaps, heapGranularity);
 
     heapInit(HeapIndex::HEAP_STANDARD, gfxBase, gfxStandardSize);
     gfxBase += gfxStandardSize;
 
     // Split HEAP_STANDARD64K among root devices
     auto gfxStandard64KBSize = alignDown(gfxStandardSize / numRootDevices, GfxPartition::heapGranularity);
-    heapInitWithAllocationAlignment(HeapIndex::HEAP_STANDARD64KB, gfxBase + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize, 2 * MemoryConstants::megaByte);
+    heapInitWithAllocationAlignment(HeapIndex::HEAP_STANDARD64KB, gfxBase + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize, MemoryConstants::pageSize64k);
+    gfxBase += gfxStandardSize;
+
+    // Split HEAP_STANDARD2MB among root devices
+    auto gfxStandard2MBSize = alignDown(gfxStandardSize / numRootDevices, GfxPartition::heapGranularity);
+    heapInitWithAllocationAlignment(HeapIndex::HEAP_STANDARD2MB, gfxBase + rootDeviceIndex * gfxStandard2MBSize, gfxStandard2MBSize, 2 * MemoryConstants::megaByte);
 
     return true;
 }

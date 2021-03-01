@@ -161,13 +161,13 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
     return r;
 }
 
-uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, bool specificBitness, uint32_t rootDeviceIndex, bool requiresStandard64KBHeap) {
+uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, bool specificBitness, uint32_t rootDeviceIndex, bool requiresStandard2MBHeap) {
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     if (specificBitness && this->force32bitAllocations) {
         return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_EXTERNAL, size));
     }
-    if (requiresStandard64KBHeap) {
-        return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD64KB, size));
+    if (requiresStandard2MBHeap) {
+        return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD2MB, size));
     }
     return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size));
 }
