@@ -143,12 +143,20 @@ void handle_SIGABRT(int signal) {
     raise(signal);
 }
 #else
+#include <signal.h>
+
 LONG WINAPI UltExceptionFilter(
     _In_ struct _EXCEPTION_POINTERS *exceptionInfo) {
     std::cout << "UnhandledException: 0x" << std::hex << exceptionInfo->ExceptionRecord->ExceptionCode << std::dec
               << " on test: " << lastTest
               << std::endl;
     return EXCEPTION_CONTINUE_SEARCH;
+}
+void (*oldSigAbrt)(int) = nullptr;
+void handle_SIGABRT(int sig_no) {
+    std::cout << "SIGABRT on: " << lastTest << std::endl;
+    signal(SIGABRT, oldSigAbrt);
+    raise(sig_no);
 }
 #endif
 
@@ -190,13 +198,13 @@ int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
     bool enable_alarm = true;
+    bool enable_abrt = true;
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
 
     applyWorkarounds();
 
 #if defined(__linux__)
     bool enable_segv = true;
-    bool enable_abrt = true;
     if (getenv("IGDRCL_TEST_SELF_EXEC") == nullptr) {
         std::string wd = getRunPath(argv[0]);
         setenv("LD_LIBRARY_PATH", wd.c_str(), 1);
@@ -408,6 +416,10 @@ int main(int argc, char **argv) {
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
 #if defined(__linux__)
+    std::cout << "enable SIGALRM handler: " << enable_alarm << std::endl;
+    std::cout << "enable SIGSEGV handler: " << enable_segv << std::endl;
+    std::cout << "enable SIGABRT handler: " << enable_abrt << std::endl;
+
     //ULTs timeout
     if (enable_alarm) {
         unsigned int alarmTime = NEO::ultIterationMaxTime * ::testing::GTEST_FLAG(repeat);
@@ -446,7 +458,12 @@ int main(int argc, char **argv) {
         }
     }
 #else
+    std::cout << "enable SIGABRT handler: " << enable_abrt << std::endl;
+
     SetUnhandledExceptionFilter(&UltExceptionFilter);
+    if (enable_abrt) {
+        oldSigAbrt = signal(SIGABRT, handle_SIGABRT);
+    }
 #endif
     if (useMockGmm) {
         GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<MockGmmClientContext>;
