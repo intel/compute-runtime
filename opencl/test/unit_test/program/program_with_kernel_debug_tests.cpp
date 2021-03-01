@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,6 +129,19 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     EXPECT_THAT(pProgram->getOptions(), ::testing::StartsWith("-s debugFileName"));
 }
 
+TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledWithCmCOptionThenDashSFilenameIsNotPrepended) {
+    MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
+    sourceLevelDebugger->sourceCodeFilename = "debugFileName";
+    pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
+
+    char options[] = "-cmc -cl-opt-disable";
+    cl_int retVal = pProgram->compile(pProgram->getDevices(), options,
+                                      0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_THAT(pProgram->getOptions(), ::testing::Not(::testing::StartsWith("-s debugFileName")));
+    EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr(CompilerOptions::optDisable.data()));
+}
+
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenInternalOptionsIncludeDebugFlag) {
     std::string receivedInternalOptions;
 
@@ -167,6 +180,17 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
     cl_int retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_THAT(pProgram->getOptions(), ::testing::StartsWith("-s debugFileName"));
+}
+
+TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltWithCmCOptionThenDashSFilenameIsNotPrepended) {
+    MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
+    sourceLevelDebugger->sourceCodeFilename = "debugFileName";
+    pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
+
+    char options[] = "-cmc -cl-opt-disable";
+    cl_int retVal = pProgram->build(pProgram->getDevices(), options, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_THAT(pProgram->getOptions(), ::testing::Not(::testing::StartsWith("-s debugFileName")));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinkedThenKernelDebugOptionsAreAppended) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,12 +129,10 @@ cl_int Program::compile(
                 if (sourceLevelDebuggerNotified[device->getRootDeviceIndex()]) {
                     continue;
                 }
-                appendKernelDebugOptions(*device, internalOptions);
                 std::string filename;
+                appendKernelDebugOptions(*device, internalOptions);
                 notifyDebuggerWithSourceCode(*device, filename);
-                if (!filename.empty()) {
-                    options = std::string("-s ") + filename + " " + options;
-                }
+                prependFilePathToOptions(filename);
 
                 sourceLevelDebuggerNotified[device->getRootDeviceIndex()] = true;
             }

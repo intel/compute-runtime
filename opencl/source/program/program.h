@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -296,6 +296,7 @@ class Program : public BaseObject<_cl_program> {
 
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions(ClDevice &clDevice, std::string &internalOptions);
     void notifyDebuggerWithSourceCode(ClDevice &clDevice, std::string &filename);
+    void prependFilePathToOptions(const std::string &filename);
 
     void setBuildStatus(cl_build_status status);
     void setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_program_binary_type binaryType);

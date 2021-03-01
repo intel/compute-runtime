@@ -546,4 +546,13 @@ cl_int Program::processInputDevices(ClDeviceVector *&deviceVectorPtr, cl_uint nu
     }
     return CL_SUCCESS;
 }
+
+void Program::prependFilePathToOptions(const std::string &filename) {
+    ConstStringRef cmcOption = "-cmc";
+    if (!filename.empty() && options.compare(0, cmcOption.size(), cmcOption.data())) {
+        // Add "-s" flag first so it will be ignored by clang in case the options already have this flag set.
+        options = std::string("-s ") + filename + " " + options;
+    }
+}
+
 } // namespace NEO

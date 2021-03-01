@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,10 +99,7 @@ cl_int Program::build(
                     }
                     appendKernelDebugOptions(*clDevice, internalOptions);
                     notifyDebuggerWithSourceCode(*clDevice, filename);
-                    if (!filename.empty()) {
-                        // Add "-s" flag first so it will be ignored by clang in case the options already have this flag set.
-                        options = std::string("-s ") + filename + " " + options;
-                    }
+                    prependFilePathToOptions(filename);
 
                     phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::SourceCodeNotification;
                 }
