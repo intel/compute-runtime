@@ -203,6 +203,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::commandQueueProperties;
     using BaseClass::commandStream;
     using BaseClass::gpgpuEngine;
+    using BaseClass::isBlitAuxTranslationRequired;
     using BaseClass::latestSentEnqueueType;
     using BaseClass::obtainCommandStream;
     using BaseClass::obtainNewTimestampPacketNodes;

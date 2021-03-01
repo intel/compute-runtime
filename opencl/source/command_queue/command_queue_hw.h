@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -488,5 +488,7 @@ class CommandQueueHw : public CommandQueue {
 
     bool isGpgpuSubmissionForBcsRequired(bool queueBlocked) const;
     void setupEvent(EventBuilder &eventBuilder, cl_event *outEvent, uint32_t cmdType);
+
+    bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
 };
 } // namespace NEO

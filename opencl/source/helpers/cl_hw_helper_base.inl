@@ -13,14 +13,6 @@
 
 namespace NEO {
 
-template <typename Family>
-bool ClHwHelperHw<Family>::isBlitAuxTranslationRequired(const HardwareInfo &hwInfo, const MultiDispatchInfo &multiDispatchInfo) {
-    return (HwHelperHw<Family>::getAuxTranslationMode() == AuxTranslationMode::Blit) &&
-           hwInfo.capabilityTable.blitterOperationsSupported &&
-           multiDispatchInfo.getKernelObjsForAuxTranslation() &&
-           (multiDispatchInfo.getKernelObjsForAuxTranslation()->size() > 0);
-}
-
 template <typename GfxFamily>
 inline bool ClHwHelperHw<GfxFamily>::requiresAuxResolves(const KernelInfo &kernelInfo) const {
     return hasStatelessAccessToBuffer(kernelInfo);

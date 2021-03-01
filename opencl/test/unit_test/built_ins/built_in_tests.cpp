@@ -514,6 +514,7 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
         mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
     } else {
         auto gfxAllocation = mockKernelObjForAuxTranslation.mockGraphicsAllocation.get();
+        gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         auto ptr = reinterpret_cast<void *>(gfxAllocation->getGpuAddressToPatch());
         mockKernel.mockKernel->setArgSvmAlloc(0, ptr, gfxAllocation);
     }
@@ -525,6 +526,7 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
 
     mockKernel.mockKernel->auxTranslationRequired = true;
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
     EXPECT_EQ(1u, mockBuiltinKernel->takeOwnershipCalls);
     EXPECT_EQ(1u, mockBuiltinKernel->releaseOwnershipCalls);
 }

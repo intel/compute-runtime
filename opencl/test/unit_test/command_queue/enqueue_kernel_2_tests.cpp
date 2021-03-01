@@ -930,9 +930,13 @@ HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhe
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
+    auto hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
+
     MockKernelWithInternals mockKernel(*pClDevice, context);
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);
     cmdQ.bcsEngine = cmdQ.gpgpuEngine;
+
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
 
     size_t gws[3] = {1, 0, 0};
     MockBuffer buffer;
@@ -947,15 +951,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhe
     mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
 
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size());
-
-    // aux builtin not dispatched before NDR
-    EXPECT_EQ(0u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(0)));
-
-    // only NDR is dispatched
-    EXPECT_EQ(1u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(1)));
-    auto kernel = std::get<Kernel *>(cmdQ.dispatchAuxTranslationInputs.at(1));
-    EXPECT_FALSE(kernel->isBuiltIn);
+    EXPECT_EQ(0u, cmdQ.dispatchAuxTranslationInputs.size());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalker) {

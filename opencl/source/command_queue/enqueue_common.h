@@ -61,20 +61,30 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
     KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
     MultiDispatchInfo multiDispatchInfo(kernel);
 
+    auto auxTranslationMode = AuxTranslationMode::None;
+
     if (DebugManager.flags.ForceDispatchScheduler.get()) {
         forceDispatchScheduler(multiDispatchInfo);
     } else {
         auto rootDeviceIndex = device->getRootDeviceIndex();
+
         kernel->updateAuxTranslationRequired();
         if (kernel->isAuxTranslationRequired()) {
-            auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getClDevice());
-            builtInLock.takeOwnership(builder);
             kernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation, rootDeviceIndex);
             multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
+
             if (!kernelObjsForAuxTranslation.empty()) {
-                dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::AuxToNonAux);
+                auxTranslationMode = HwHelperHw<GfxFamily>::get().getAuxTranslationMode(device->getHardwareInfo());
             }
         }
+
+        if (AuxTranslationMode::Builtin == auxTranslationMode) {
+            auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getClDevice());
+            builtInLock.takeOwnership(builder);
+
+            dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::AuxToNonAux);
+        }
+
         if (kernel->getKernelInfo(rootDeviceIndex).builtinDispatchBuilder == nullptr) {
             DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> builder(getClDevice());
             builder.setDispatchGeometry(workDim, workItems, enqueuedWorkSizes, globalOffsets, Vec3<size_t>{0, 0, 0}, localWorkSizesIn);
@@ -88,15 +98,14 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                 return;
             }
         }
-        if (kernel->isAuxTranslationRequired()) {
-            if (!kernelObjsForAuxTranslation.empty()) {
-                UNRECOVERABLE_IF(kernel->isParentKernel);
-                dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::NonAuxToAux);
-            }
+
+        if (AuxTranslationMode::Builtin == auxTranslationMode) {
+            UNRECOVERABLE_IF(kernel->isParentKernel);
+            dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::NonAuxToAux);
         }
     }
 
-    if (ClHwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo)) {
+    if (AuxTranslationMode::Blit == auxTranslationMode) {
         setupBlitAuxTranslation(multiDispatchInfo);
     }
 
@@ -195,7 +204,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     CsrDependencies csrDeps;
     BlitPropertiesContainer blitPropertiesContainer;
 
-    bool enqueueWithBlitAuxTranslation = ClHwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo);
+    bool enqueueWithBlitAuxTranslation = isBlitAuxTranslationRequired(multiDispatchInfo);
 
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         eventsRequest.fillCsrDependencies(csrDeps, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
@@ -223,7 +232,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                             blockedCommandsData, surfacesForResidency, numSurfaceForResidency);
     auto commandStreamStart = commandStream.getUsed();
 
-    if (ClHwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo)) {
+    if (enqueueWithBlitAuxTranslation) {
         processDispatchForBlitAuxTranslation(multiDispatchInfo, blitPropertiesContainer, timestampPacketDependencies,
                                              eventsRequest, blockQueue);
     }
@@ -1176,4 +1185,12 @@ void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dis
             event);
     }
 }
+
+template <typename GfxFamily>
+bool CommandQueueHw<GfxFamily>::isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo) {
+    return multiDispatchInfo.getKernelObjsForAuxTranslation() &&
+           (multiDispatchInfo.getKernelObjsForAuxTranslation()->size() > 0) &&
+           (HwHelperHw<GfxFamily>::get().getAuxTranslationMode(device->getHardwareInfo()) == AuxTranslationMode::Blit);
+}
+
 } // namespace NEO

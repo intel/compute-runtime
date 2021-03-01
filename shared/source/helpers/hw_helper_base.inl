@@ -173,12 +173,19 @@ bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const 
 }
 
 template <typename Family>
-AuxTranslationMode HwHelperHw<Family>::getAuxTranslationMode() {
+AuxTranslationMode HwHelperHw<Family>::getAuxTranslationMode(const HardwareInfo &hwInfo) {
+    auto mode = HwHelperHw<Family>::defaultAuxTranslationMode;
+
     if (DebugManager.flags.ForceAuxTranslationMode.get() != -1) {
-        return static_cast<AuxTranslationMode>(DebugManager.flags.ForceAuxTranslationMode.get());
+        mode = static_cast<AuxTranslationMode>(DebugManager.flags.ForceAuxTranslationMode.get());
     }
 
-    return HwHelperHw<Family>::defaultAuxTranslationMode;
+    if (mode == AuxTranslationMode::Blit && !hwInfo.capabilityTable.blitterOperationsSupported) {
+        DEBUG_BREAK_IF(true);
+        mode = AuxTranslationMode::Builtin;
+    }
+
+    return mode;
 }
 
 template <typename GfxFamily>

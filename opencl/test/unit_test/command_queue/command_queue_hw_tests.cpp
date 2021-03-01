@@ -96,6 +96,35 @@ HWTEST_F(CommandQueueHwTest, WhenConstructingTwoCommandQueuesThenOnlyOneDebugSur
     EXPECT_EQ(dbgSurface, device->getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation());
 }
 
+HWTEST_F(CommandQueueHwTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenCheckMemObjectsCountAndDebugFlag) {
+    DebugManagerStateRestore restore;
+    MockBuffer buffer;
+    KernelObjsForAuxTranslation kernelObjects;
+    MultiDispatchInfo multiDispatchInfo;
+    HardwareInfo *hwInfo = pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw(context, pClDevice, nullptr);
+
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    EXPECT_FALSE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
+
+    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjects);
+    EXPECT_FALSE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
+
+    kernelObjects.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, &buffer});
+    EXPECT_TRUE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
+
+    hwInfo->capabilityTable.blitterOperationsSupported = false;
+    EXPECT_FALSE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
+
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+    EXPECT_FALSE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
+}
+
 HWTEST_F(CommandQueueHwTest, WhenEnqueuingBlockedMapUnmapOperationThenVirtualEventIsCreated) {
 
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);

@@ -46,7 +46,6 @@ class ClHwHelperHw : public ClHwHelper {
         return clHwHelper;
     }
 
-    static bool isBlitAuxTranslationRequired(const HardwareInfo &hwInfo, const MultiDispatchInfo &multiDispatchInfo);
     bool requiresAuxResolves(const KernelInfo &kernelInfo) const override;
     bool allowRenderCompressionForContext(const HardwareInfo &hwInfo, const Context &context) const override;
     cl_command_queue_capabilities_intel getAdditionalDisabledQueueFamilyCapabilities(EngineGroupType type) const override;

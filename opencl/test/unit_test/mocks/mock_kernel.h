@@ -35,6 +35,7 @@ struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
     MockKernelObjForAuxTranslation(Type type) : KernelObjForAuxTranslation(type, nullptr) {
         if (type == KernelObjForAuxTranslation::Type::MEM_OBJ) {
             mockBuffer.reset(new MockBuffer);
+            mockBuffer->getGraphicsAllocation(0)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
             this->object = mockBuffer.get();
         } else {
             DEBUG_BREAK_IF(type != KernelObjForAuxTranslation::Type::GFX_ALLOC);

@@ -149,7 +149,7 @@ class HwHelper {
 template <typename GfxFamily>
 class HwHelperHw : public HwHelper {
   public:
-    static HwHelper &get() {
+    static HwHelperHw<GfxFamily> &get() {
         static HwHelperHw<GfxFamily> hwHelper;
         return hwHelper;
     }
@@ -268,7 +268,7 @@ class HwHelperHw : public HwHelper {
 
     uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) override;
 
-    static AuxTranslationMode getAuxTranslationMode();
+    static AuxTranslationMode getAuxTranslationMode(const HardwareInfo &hwInfo);
 
     uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const override;
 
