@@ -146,7 +146,7 @@ TEST_F(ZesFirmwareFixture, GivenFailedFirmwareInitializationWhenInitializingFirm
     EXPECT_EQ(0u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
 }
 
-TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareSuccessIsReturned) {
+TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareThenSuccessIsReturned) {
     FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFwTypes[0]);
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
 
@@ -160,7 +160,7 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareSucces
     delete ptestFirmwareImp;
 }
 
-TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingUnkownFirmwareFailureIsReturned) {
+TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingUnkownFirmwareThenFailureIsReturned) {
     for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
         delete handle;
     }
@@ -177,7 +177,7 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingUnkownFirmwareFai
     delete ptestFirmwareImp;
 }
 
-TEST_F(ZesFirmwareFixture, GivenFirmwareInitializationFailureCreateHandleMustFail) {
+TEST_F(ZesFirmwareFixture, GivenFirmwareInitializationFailureThenCreateHandleMustFail) {
     for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
         delete handle;
     }

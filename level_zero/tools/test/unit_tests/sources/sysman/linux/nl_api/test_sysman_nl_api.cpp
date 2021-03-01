@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ class SysmanNlApiFixture : public ::testing::Test {
 };
 const int SysmanNlApiFixture::testAttr = 1;
 
-TEST_F(SysmanNlApiFixture, GivenNlApiWhenMissingDllEntryPointVerifyLoadEntryPointsFails) {
+TEST_F(SysmanNlApiFixture, GivenNlApiWhenMissingDllEntryPointThenVerifyLoadEntryPointsFails) {
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("genl_connect"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("genl_ctrl_resolve"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("genl_handle_msg"));
