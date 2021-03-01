@@ -94,7 +94,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenGettingRasPropertiesThenSuccessI
     delete pTestRasImp;
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhileCallingzesRasGetStateThenFailureIsReturned) {
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhileCallingZesRasGetStateThenFailureIsReturned) {
     RasImp *pTestRasImp = new RasImp(pSysmanDeviceImp->pRasHandleContext->pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
     pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pTestRasImp);
 

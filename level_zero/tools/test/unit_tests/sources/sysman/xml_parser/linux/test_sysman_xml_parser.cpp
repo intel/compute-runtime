@@ -134,12 +134,12 @@ TEST_F(SysmanXmlParserFixture, GivenMissingAttributeWhenCallingXmlNodeGetAttribu
         delete pXmlNode;
     }
 }
-TEST_F(SysmanXmlParserFixture, GivenNonExistentFileWhenCallingParseFileThenVerifyParseFileRetursNullptr) {
+TEST_F(SysmanXmlParserFixture, GivenNonExistentFileWhenCallingParseFileThenVerifyParseFileReturnsNullptr) {
 
     XmlDoc *pNoXmlDoc = pXmlParser->parseFile(std::string("NoSuchFile.xml"));
     EXPECT_EQ(pNoXmlDoc, nullptr);
 }
-TEST_F(SysmanXmlParserFixture, GivenInvalidXmlBufferFileWhenCallingParseBufferVerifyParseBufferRetursNullptr) {
+TEST_F(SysmanXmlParserFixture, GivenInvalidXmlBufferFileWhenCallingParseBufferThenVerifyParseBufferReturnsNullptr) {
 
     std::string invalidXmlBuffer = testXmlBuffer.substr(2); // omit starting <?
     XmlDoc *pInvalidXmlDoc = pXmlParser->parseBuffer(invalidXmlBuffer);
