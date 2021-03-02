@@ -223,6 +223,21 @@ if(UNIX)
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
           COMPONENT ${OCLOC_NAME}
   )
+elseif(WIN32)
+  if(NEO_WINDOWS_INSTALL)
+    install(TARGETS ${OCLOC_NAME}
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            COMPONENT ocloc
+    )
+    install(TARGETS ${OCLOC_NAME}_lib
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT ocloc
+    )
+    install(FILES ${OCLOC_DIRECTORY}/source/ocloc_api.h
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+            COMPONENT ocloc
+    )
+  endif()
 endif()
 
 set(OCLOC_OUTPUT_NAME "${OCLOC_NAME}${OCLOC_BITNESS_SUFFIX}")
