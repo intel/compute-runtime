@@ -567,21 +567,6 @@ BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle)
     return bo;
 }
 
-BufferObject *DrmMemoryManager::createSharedBufferObject(int boHandle, size_t size, bool requireSpecificBitness, uint32_t rootDeviceIndex) {
-    uint64_t gpuRange = 0llu;
-
-    gpuRange = acquireGpuRange(size, requireSpecificBitness, rootDeviceIndex, isLocalMemorySupported(rootDeviceIndex));
-
-    auto bo = new (std::nothrow) BufferObject(&getDrm(rootDeviceIndex), boHandle, size, maxOsContextCount);
-    if (!bo) {
-        return nullptr;
-    }
-
-    bo->gpuAddress = gpuRange;
-    bo->setUnmapSize(size);
-    return bo;
-}
-
 GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) {
     std::unique_lock<std::mutex> lock(mtx);
 
@@ -601,13 +586,23 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     auto boHandle = openFd.handle;
     auto bo = findAndReferenceSharedBufferObject(boHandle);
 
+    uint64_t gpuRange = 0llu;
+    size_t reservedRange = 0u;
+
     if (bo == nullptr) {
         size_t size = lseekFunction(handle, 0, SEEK_END);
-        bo = createSharedBufferObject(boHandle, size, requireSpecificBitness, properties.rootDeviceIndex);
+
+        bo = new (std::nothrow) BufferObject(&getDrm(properties.rootDeviceIndex), boHandle, size, maxOsContextCount);
 
         if (!bo) {
             return nullptr;
         }
+
+        gpuRange = acquireGpuRange(size, requireSpecificBitness, properties.rootDeviceIndex, isLocalMemorySupported(properties.rootDeviceIndex));
+
+        bo->setAddress(gpuRange);
+        bo->setUnmapSize(size);
+        reservedRange = size;
 
         pushSharedBufferObject(bo);
     }
@@ -616,6 +611,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->gpuAddress), bo->size,
                                            handle, MemoryPool::SystemCpuInaccessible);
+    if (reservedRange) {
+        drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), reservedRange);
+    }
 
     if (requireSpecificBitness && this->force32bitAllocations) {
         drmAllocation->set32BitAllocation(true);

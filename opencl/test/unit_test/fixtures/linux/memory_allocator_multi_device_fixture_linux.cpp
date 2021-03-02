@@ -13,7 +13,7 @@ using namespace NEO;
 
 void MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(ExecutionEnvironment &executionEnvironment) {
     auto memoryManager = static_cast<TestedDrmMemoryManager *>(executionEnvironment.memoryManager.get());
-    auto bufferObject = memoryManager->createSharedBufferObject(0u, 10, true, 0u);
+    auto bufferObject = new (std::nothrow) BufferObject(&memoryManager->getDrm(0u), 0, 10, MemoryManager::maxOsContextCount);
     memoryManager->pushSharedBufferObject(bufferObject);
 }
 
