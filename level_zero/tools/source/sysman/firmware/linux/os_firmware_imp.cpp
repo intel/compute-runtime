@@ -19,13 +19,13 @@ ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedF
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
 
     FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
-    std::vector<std::string> mtdDescriptorStrings;
+    std::vector<std::string> mtdDescriptorStrings = {};
     ze_result_t result = pFsAccess->read(mtdDescriptor, mtdDescriptorStrings);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    for (std::string readByteLine : mtdDescriptorStrings) {
-        for (std::string fwType : deviceSupportedFwTypes) {
+    for (const auto &readByteLine : mtdDescriptorStrings) {
+        for (const auto &fwType : deviceSupportedFwTypes) {
             if (std::string::npos != readByteLine.find(fwType)) {
                 supportedFwTypes.push_back(fwType);
             }
