@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/offline_compiler/source/ocloc_api.h"
-
-#include "level_zero/api/extensions/public/ze_exp_ext.h"
 
 #include "zello_common.h"
 
