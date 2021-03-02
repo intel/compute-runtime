@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -170,6 +170,21 @@ HWTEST2_F(ContextCreateSamplerTest, givenDifferentDescriptorValuesThenSamplerIsC
     EXPECT_NE(nullptr, sampler);
 
     sampler->destroy();
+}
+
+HWTEST2_F(ContextCreateSamplerTest, givenInvalidHardwareFamilyThenSamplerIsNotCreated, SamplerCreateSupport) {
+    ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_NONE;
+    ze_sampler_filter_mode_t filterMode = ZE_SAMPLER_FILTER_MODE_LINEAR;
+    ze_bool_t isNormalized = false;
+
+    ze_sampler_desc_t desc = {};
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    L0::Sampler *sampler = Sampler::create(IGFX_MAX_PRODUCT, device, &desc);
+
+    EXPECT_EQ(nullptr, sampler);
 }
 
 } // namespace ult

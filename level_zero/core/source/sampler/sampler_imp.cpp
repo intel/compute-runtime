@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,11 +32,7 @@ Sampler *Sampler::create(uint32_t productFamily, Device *device, const ze_sample
     SamplerImp *sampler = nullptr;
     if (allocator) {
         sampler = static_cast<SamplerImp *>((*allocator)());
-        if (sampler->initialize(device, desc)) {
-            delete sampler;
-            DEBUG_BREAK_IF(true);
-            return nullptr;
-        }
+        sampler->initialize(device, desc);
     }
 
     return sampler;
