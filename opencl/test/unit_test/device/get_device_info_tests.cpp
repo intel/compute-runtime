@@ -12,6 +12,8 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "test.h"
@@ -707,9 +709,20 @@ class MockHwHelper : public HwHelperHw<GfxFamily> {
         }
     }
 
+    bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const override {
+        if ((deviceBitfield.to_ulong() == disableEngineSupportOnSubDevice) && (disabledSubDeviceEngineType == engineType)) {
+            return false;
+        }
+
+        return true;
+    }
+
     static auto overrideHwHelper() {
         return RAIIHwHelperFactory<MockHwHelper<GfxFamily, ccsCount, bcsCount>>{::defaultHwInfo->platform.eRenderCoreFamily};
     }
+
+    uint64_t disableEngineSupportOnSubDevice = -1; // disabled by default
+    aub_stream::EngineType disabledSubDeviceEngineType = aub_stream::EngineType::ENGINE_BCS;
 };
 
 using GetDeviceInfoQueueFamilyTest = ::testing::Test;
@@ -754,6 +767,59 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenRet
     EXPECT_EQ(clDevice.getQueueFamilyCapabilities(EngineGroupType::Copy), families[1].capabilities);
     EXPECT_EQ(1u, families[1].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[1].properties);
+}
+
+HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenInitializingCapsThenReturnCorrectFamilies) {
+    constexpr int bcsCount = 1;
+
+    using MockHwHelperT = MockHwHelper<FamilyType, 3, bcsCount>;
+
+    auto raiiHwHelper = MockHwHelperT::overrideHwHelper();
+    MockHwHelperT &mockHwHelper = static_cast<MockHwHelperT &>(raiiHwHelper.mockHwHelper);
+
+    mockHwHelper.disableEngineSupportOnSubDevice = 0b10; // subdevice 1
+    mockHwHelper.disabledSubDeviceEngineType = aub_stream::EngineType::ENGINE_BCS;
+
+    UltClDeviceFactory deviceFactory{1, 2};
+    ClDevice &clDevice0 = *deviceFactory.subDevices[0];
+    ClDevice &clDevice1 = *deviceFactory.subDevices[1];
+    size_t paramRetSize{};
+    cl_int retVal{};
+
+    // subdevice 0
+    {
+        cl_queue_family_properties_intel families[static_cast<int>(EngineGroupType::MaxEngineGroups)];
+        retVal = clDevice0.getDeviceInfo(CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, sizeof(families), families, &paramRetSize);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(2u, paramRetSize / sizeof(cl_queue_family_properties_intel));
+
+        EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, families[0].capabilities);
+        EXPECT_EQ(3u, families[0].count);
+        EXPECT_EQ(clDevice0.getDeviceInfo().queueOnHostProperties, families[0].properties);
+
+        EXPECT_EQ(clDevice0.getQueueFamilyCapabilities(EngineGroupType::Copy), families[1].capabilities);
+        EXPECT_EQ(1u, families[1].count);
+        EXPECT_EQ(clDevice0.getDeviceInfo().queueOnHostProperties, families[1].properties);
+    }
+
+    // subdevice 1
+    {
+        cl_queue_family_properties_intel families[static_cast<int>(EngineGroupType::MaxEngineGroups)];
+        retVal = clDevice1.getDeviceInfo(CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL, sizeof(families), families, &paramRetSize);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(1u, paramRetSize / sizeof(cl_queue_family_properties_intel));
+
+        EXPECT_EQ(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL, families[0].capabilities);
+        EXPECT_EQ(3u, families[0].count);
+        EXPECT_EQ(clDevice1.getDeviceInfo().queueOnHostProperties, families[0].properties);
+
+        clDevice1.getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+
+        MockContext context(&clDevice1);
+        MockCommandQueue cmdQ(&context, &clDevice1, nullptr);
+
+        EXPECT_EQ(nullptr, cmdQ.getBcsCommandStreamReceiver());
+    }
 }
 
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenDeviceRootDeviceWhenInitializingCapsThenReturnDefaultFamily) {

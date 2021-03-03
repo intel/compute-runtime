@@ -575,4 +575,9 @@ uint32_t HwHelperHw<GfxFamily>::getNumCacheRegions(const HardwareInfo &hwInfo) c
     return 0;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
+    return true;
+}
+
 } // namespace NEO

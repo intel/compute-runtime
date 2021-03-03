@@ -70,11 +70,16 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
 
     if (device) {
         auto hwInfo = device->getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
         gpgpuEngine = &device->getDefaultEngine();
-        if (hwInfo.capabilityTable.blitterOperationsSupported || gpgpuEngine->commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
+        bool bcsAllowed = hwInfo.capabilityTable.blitterOperationsSupported &&
+                          hwHelper.isSubDeviceEngineSupported(hwInfo, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
+
+        if (bcsAllowed || gpgpuEngine->commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
-        if (hwInfo.capabilityTable.blitterOperationsSupported) {
+        if (bcsAllowed) {
             auto &selectorCopyEngine = device->getDeviceById(0)->getSelectorCopyEngine();
             bcsEngine = &device->getDeviceById(0)->getEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), false, false);
         }

@@ -120,6 +120,10 @@ void Device::addEngineToEngineGroup(EngineControl &engine) {
     const HwHelper &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engine.getEngineType(), hardwareInfo);
 
+    if (!hwHelper.isSubDeviceEngineSupported(hardwareInfo, getDeviceBitfield(), engine.getEngineType())) {
+        return;
+    }
+
     if (hwHelper.isCopyOnlyEngineType(engineGroupType) && DebugManager.flags.EnableBlitterOperationsSupport.get() == 0) {
         return;
     }
