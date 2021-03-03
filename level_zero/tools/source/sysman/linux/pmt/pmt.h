@@ -32,6 +32,7 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
     char *mappedMemory = nullptr;
     static uint32_t rootDeviceTelemNodeIndex;
     std::map<std::string, uint64_t> keyOffsetMap;
+    ze_result_t getKeyOffsetMap(std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
 
   private:
     void init(FsAccess *pFsAccess);

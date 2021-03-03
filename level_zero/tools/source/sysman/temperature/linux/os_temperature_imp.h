@@ -16,6 +16,7 @@ namespace L0 {
 
 class SysfsAccess;
 class PlatformMonitoringTech;
+struct Device;
 class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getProperties(zes_temp_properties_t *pProperties) override;
@@ -28,6 +29,7 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass
 
   protected:
     PlatformMonitoringTech *pPmt = nullptr;
+    Device *pDevice = nullptr;
     zes_temp_sensors_t type = ZES_TEMP_SENSORS_GLOBAL;
 
   private:

@@ -20,12 +20,6 @@ const std::string PlatformMonitoringTech::baseTelemSysFS("/sys/class/intel_pmt")
 const std::string PlatformMonitoringTech::telem("telem");
 uint32_t PlatformMonitoringTech::rootDeviceTelemNodeIndex = 0;
 
-const std::map<std::string, uint64_t> deviceKeyOffsetMap = {
-    {"PACKAGE_ENERGY", 0x400},
-    {"COMPUTE_TEMPERATURES", 0x68},
-    {"SOC_TEMPERATURES", 0x60},
-    {"CORE_TEMPERATURES", 0x6c}};
-
 ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess, std::string &rootPciPathOfGpuDevice) {
     std::vector<std::string> listOfTelemNodes;
     auto result = pFsAccess->listDirectory(baseTelemSysFS, listOfTelemNodes);
@@ -96,7 +90,11 @@ void PlatformMonitoringTech::init(FsAccess *pFsAccess) {
         retVal = result;
         return;
     }
-    keyOffsetMap = deviceKeyOffsetMap;
+    if (getKeyOffsetMap(guid, keyOffsetMap) != ZE_RESULT_SUCCESS) {
+        // We didnt have any entry for this guid in guidToKeyOffsetMap
+        retVal = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return;
+    }
 
     std::string sizePath = baseTelemSysFSNode + std::string("/size");
     result = pFsAccess->read(sizePath, size);

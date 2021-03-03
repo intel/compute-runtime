@@ -14,10 +14,16 @@
 namespace L0 {
 namespace ult {
 
-constexpr uint8_t tempArrForSubDevices[28] = {0x12, 0, 0, 0, 0, 0, 0, 0, 0x45, 0, 0, 0, 0x6f, 0, 0, 0, 0x34, 0, 0, 0, 0x16, 0, 0, 0, 0x1d, 0, 0, 0};
+constexpr uint8_t memory0MaxTemperature = 0x12;
+constexpr uint8_t memory1MaxTemperature = 0x45;
+constexpr uint8_t memory2MaxTemperature = 0x32;
+constexpr uint8_t memory3MaxTemperature = 0x36;
+constexpr uint8_t tempArrForSubDevices[28] = {memory0MaxTemperature, 0, 0, 0, 0, 0, 0, 0, memory1MaxTemperature, 0, 0, 0, 0x6f, 0, 0, 0, 0x34, 0, 0, 0, 0x16, 0, 0, 0, 0x1d, 0, 0, 0};
 constexpr uint64_t offsetForSubDevices = 28;
-constexpr uint8_t memory0MaxTempIndex = 0;
-constexpr uint8_t memory1MaxTempIndex = 8;
+constexpr uint16_t memory0MaxTempIndex = 0;
+constexpr uint16_t memory1MaxTempIndex = 8;
+constexpr uint16_t memory2MaxTempIndex = 300;
+constexpr uint16_t memory3MaxTempIndex = 308;
 constexpr uint8_t subDeviceMinTempIndex = 12;
 constexpr uint8_t subDeviceMaxTempIndex = 16;
 constexpr uint8_t gtMinTempIndex = 20;
@@ -28,8 +34,19 @@ constexpr uint64_t offsetForNoSubDevices = 0x60;
 constexpr uint8_t computeIndexForNoSubDevices = 9;
 constexpr uint8_t globalIndexForNoSubDevices = 3;
 
-constexpr uint64_t mappedLength = 256;
+constexpr uint64_t mappedLength = 400;
 const std::string baseTelemSysFS("/sys/class/intel_pmt");
+std::string rootPciPathOfGpuDeviceInTemperature = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
+const std::string realPathTelem1 = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
+const std::string realPathTelem2 = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem2";
+const std::string realPathTelem3 = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem3";
+const std::string realPathTelem4 = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem4";
+const std::string realPathTelem5 = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem5";
+const std::string sysfsPahTelem1 = "/sys/class/intel_pmt/telem1";
+const std::string sysfsPahTelem2 = "/sys/class/intel_pmt/telem2";
+const std::string sysfsPahTelem3 = "/sys/class/intel_pmt/telem3";
+const std::string sysfsPahTelem4 = "/sys/class/intel_pmt/telem4";
+const std::string sysfsPahTelem5 = "/sys/class/intel_pmt/telem5";
 class TemperaturePmt : public PlatformMonitoringTech {
   public:
     TemperaturePmt(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
@@ -49,15 +66,16 @@ struct Mock<TemperaturePmt> : public TemperaturePmt {
     }
 
     void mockedInit(FsAccess *pFsAccess) {
-        mappedMemory = new char[mappedLength];
-        std::string rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
-        if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDevice)) {
+        mappedMemory = new char[mappedLength]();
+        if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDeviceInTemperature)) {
             return;
         }
         // Fill mappedMemory to validate cases when there are subdevices
         for (uint64_t i = 0; i < sizeof(tempArrForSubDevices) / sizeof(uint8_t); i++) {
             mappedMemory[offsetForSubDevices + i] = tempArrForSubDevices[i];
         }
+        mappedMemory[memory2MaxTempIndex] = memory2MaxTemperature;
+        mappedMemory[memory3MaxTempIndex] = memory3MaxTemperature;
         // Fill mappedMemory to validate cases when there are no subdevices
         for (uint64_t i = 0; i < sizeof(tempArrForNoSubDevices) / sizeof(uint8_t); i++) {
             mappedMemory[offsetForNoSubDevices + i] = tempArrForNoSubDevices[i];
@@ -65,8 +83,7 @@ struct Mock<TemperaturePmt> : public TemperaturePmt {
     }
 
     void mockedInitWithoutMappedMemory(FsAccess *pFsAccess) {
-        std::string rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
-        if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDevice)) {
+        if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDeviceInTemperature)) {
             return;
         }
     }
@@ -92,16 +109,16 @@ struct Mock<TemperatureFsAccess> : public TemperatureFsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
     ze_result_t getRealPathSuccess(const std::string path, std::string &buf) {
-        if (path.compare("/sys/class/intel_pmt/telem1") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
-        } else if (path.compare("/sys/class/intel_pmt/telem2") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem2";
-        } else if (path.compare("/sys/class/intel_pmt/telem3") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem3";
-        } else if (path.compare("/sys/class/intel_pmt/telem4") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem4";
-        } else if (path.compare("/sys/class/intel_pmt/telem5") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem5";
+        if (path.compare(sysfsPahTelem1) == 0) {
+            buf = realPathTelem1;
+        } else if (path.compare(sysfsPahTelem2) == 0) {
+            buf = realPathTelem2;
+        } else if (path.compare(sysfsPahTelem3) == 0) {
+            buf = realPathTelem3;
+        } else if (path.compare(sysfsPahTelem4) == 0) {
+            buf = realPathTelem4;
+        } else if (path.compare(sysfsPahTelem5) == 0) {
+            buf = realPathTelem5;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
