@@ -195,13 +195,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandStreamFixture, GivenDispatchInfoW
     DispatchInfo dispatchInfo(device, mockParentKernel, 1, Vec3<size_t>{24, 1, 1}, Vec3<size_t>{24, 1, 1}, Vec3<size_t>{0, 0, 0});
     MultiDispatchInfo multiDispatchInfo(mockParentKernel);
 
-    size_t size = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, mockParentKernel);
+    size_t size = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, mockParentKernel, {});
     size_t numOfKernels = MemoryConstants::pageSize / size;
 
     size_t rest = MemoryConstants::pageSize - (numOfKernels * size);
 
     SchedulerKernel &scheduler = pCmdQ->getContext().getSchedulerKernel();
-    size_t schedulerSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, &scheduler);
+    size_t schedulerSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, &scheduler, {});
 
     while (rest >= schedulerSize) {
         numOfKernels++;

@@ -204,7 +204,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
-    auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(device->getNEODevice());
+    auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
 
@@ -214,7 +214,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
-    estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(device->getNEODevice());
+    estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
     EXPECT_LE(sizeAfter - sizeBefore, estimate);

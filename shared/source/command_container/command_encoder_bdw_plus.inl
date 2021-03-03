@@ -43,7 +43,13 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     LinearStream *listCmdBufferStream = container.getCommandStream();
     size_t sshOffset = 0;
 
-    size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device);
+    auto threadDims = static_cast<const uint32_t *>(pThreadGroupDimensions);
+    const Vec3<size_t> threadStartVec{0, 0, 0};
+    Vec3<size_t> threadDimsVec{0, 0, 0};
+    if (threadDims != nullptr) {
+        threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
+    }
+    size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device, threadStartVec, threadDimsVec);
     if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
         auto bbEnd = listCmdBufferStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *bbEnd = Family::cmdInitBatchBufferEnd;
@@ -191,7 +197,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     EncodeDispatchKernel<Family>::encodeThreadData(cmd,
                                                    nullptr,
-                                                   static_cast<const uint32_t *>(pThreadGroupDimensions),
+                                                   threadDims,
                                                    dispatchInterface->getGroupSize(),
                                                    kernelDescriptor.kernelAttributes.simdSize,
                                                    kernelDescriptor.kernelAttributes.numLocalIdChannels,
@@ -316,7 +322,7 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
 
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device) {
+size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, Vec3<size_t> groupStart, Vec3<size_t> groupCount) {
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using MI_BATCH_BUFFER_END = typename Family::MI_BATCH_BUFFER_END;

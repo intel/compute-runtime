@@ -268,7 +268,7 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Consume all memory except what is needed for this enqueue
-    size_t barrierCmdStreamSize = NEO::EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_BARRIER, false, false, *pCmdQ, nullptr);
+    size_t barrierCmdStreamSize = NEO::EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_BARRIER, false, false, *pCmdQ, nullptr, {});
     commandStream.getSpace(commandStream.getMaxAvailableSpace() - barrierCmdStreamSize);
 
     //now trigger event

@@ -46,7 +46,7 @@ struct EncodeDispatchKernel {
 
     static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 
-    static size_t estimateEncodeDispatchKernelCmdsSize(Device *device);
+    static size_t estimateEncodeDispatchKernelCmdsSize(Device *device, Vec3<size_t> groupStart, Vec3<size_t> groupCount);
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                     size_t *lws,

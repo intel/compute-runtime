@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,7 +90,8 @@ void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo)
 void setSpecialWorkgroupSize(size_t workgroupSize[3]);
 
 inline cl_uint computeDimensions(const size_t workItems[3]) {
-    return (workItems[2] > 1) ? 3 : (workItems[1] > 1) ? 2 : 1;
+    return (workItems[2] > 1) ? 3 : (workItems[1] > 1) ? 2
+                                                       : 1;
 }
 
 template <typename GfxFamily>
@@ -167,12 +168,12 @@ template <typename GfxFamily>
 struct EnqueueOperation {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     static size_t getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo);
-    static size_t getSizeRequiredCS(uint32_t cmdType, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel);
+    static size_t getSizeRequiredCS(uint32_t cmdType, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo);
     static size_t getSizeRequiredForTimestampPacketWrite();
     static size_t getSizeForCacheFlushAfterWalkerCommands(const Kernel &kernel, const CommandQueue &commandQueue);
 
   private:
-    static size_t getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel);
+    static size_t getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo);
     static size_t getSizeRequiredCSNonKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue);
 };
 
