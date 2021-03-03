@@ -132,6 +132,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastSentThreadArbitrationPolicy = commandStreamReceiver.requiredThreadArbitrationPolicy;
         commandStreamReceiver.lastSentCoherencyRequest = 0;
         commandStreamReceiver.lastMediaSamplerConfig = 0;
+        commandStreamReceiver.lastSentUseGlobalAtomics = false;
     }
 
     template <typename GfxFamily>

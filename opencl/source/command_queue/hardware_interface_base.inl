@@ -101,7 +101,9 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         void *addressToPatch = reinterpret_cast<void *>(debugSurface->getGpuAddress());
         size_t sizeToPatch = debugSurface->getUnderlyingBufferSize();
         Buffer::setSurfaceState(&commandQueue.getDevice(), commandQueue.getDevice().getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh),
-                                false, false, sizeToPatch, addressToPatch, 0, debugSurface, 0, 0);
+                                false, false, sizeToPatch, addressToPatch, 0, debugSurface, 0, 0,
+                                mainKernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
+                                mainKernel->getTotalNumDevicesInContext());
     }
 
     auto numSupportedDevices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices();

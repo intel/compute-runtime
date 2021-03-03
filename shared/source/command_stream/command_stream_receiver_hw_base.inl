@@ -367,6 +367,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         latestSentStatelessMocsConfig = mocsIndex;
     }
 
+    if (dispatchFlags.useGlobalAtomics != lastSentUseGlobalAtomics) {
+        isStateBaseAddressDirty = true;
+        lastSentUseGlobalAtomics = dispatchFlags.useGlobalAtomics;
+    }
+
     bool sourceLevelDebuggerActive = device.getSourceLevelDebugger() != nullptr ? true : false;
 
     auto memoryCompressionState = lastMemoryCompressionState;

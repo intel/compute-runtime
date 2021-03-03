@@ -710,6 +710,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     Kernel *kernel = nullptr;
     bool usePerDssBackedBuffer = false;
     bool auxTranslationRequired = false;
+    bool useGlobalAtomics = false;
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
@@ -730,6 +731,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
         if (kernel->requiresPerDssBackedBuffer(rootDeviceIndex)) {
             usePerDssBackedBuffer = true;
+        }
+
+        if (kernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics) {
+            useGlobalAtomics = true;
         }
     }
 
@@ -776,9 +781,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     auto memoryCompressionState = getGpgpuCommandStreamReceiver().getMemoryCompressionState(auxTranslationRequired);
 
-    auto context = kernel->getProgram()->getContextPtr();
-    auto numDevicesInContext = context ? context->getNumDevices() : 1u;
-
     DispatchFlags dispatchFlags(
         {},                                                                                         //csrDependencies
         &timestampPacketDependencies.barrierNodes,                                                  //barrierTimestampPacketNodes
@@ -805,8 +807,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         false,                                                                                      //epilogueRequired
         usePerDssBackedBuffer,                                                                      //usePerDssBackedBuffer
         kernel->isSingleSubdevicePreferred(),                                                       //useSingleSubdevice
-        kernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,    //useGlobalAtomics
-        numDevicesInContext                                                                         //numDevicesInContext
+        useGlobalAtomics,                                                                           //useGlobalAtomics
+        kernel->getTotalNumDevicesInContext()                                                       //numDevicesInContext
     );
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;

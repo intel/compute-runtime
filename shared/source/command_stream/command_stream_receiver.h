@@ -345,6 +345,7 @@ class CommandStreamReceiver {
     bool useNewResourceImplicitFlush = false;
     bool newResources = false;
     bool useGpuIdleImplicitFlush = false;
+    bool lastSentUseGlobalAtomics = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

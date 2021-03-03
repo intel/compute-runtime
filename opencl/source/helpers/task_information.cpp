@@ -217,9 +217,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired());
 
-    auto context = kernel->getProgram()->getContextPtr();
-    auto numDevicesInContext = context ? context->getNumDevices() : 1u;
-
     DispatchFlags dispatchFlags(
         {},                                                                                      //csrDependencies
         nullptr,                                                                                 //barrierTimestampPacketNodes
@@ -247,7 +244,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         kernel->requiresPerDssBackedBuffer(rootDeviceIndex),                                     //usePerDssBackedBuffer
         kernel->isSingleSubdevicePreferred(),                                                    //useSingleSubdevice
         kernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
-        numDevicesInContext);                                                                    //numDevicesInContext
+        kernel->getTotalNumDevicesInContext());                                                  //numDevicesInContext
 
     if (timestampPacketDependencies) {
         eventsRequest.fillCsrDependencies(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);

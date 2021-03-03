@@ -59,7 +59,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
         }
     }
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device, bool useGlobalAtomics, size_t numDevicesInContext) override {
-        Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, (externalAlloc != nullptr) ? externalAlloc : &mockGfxAllocation, 0, 0);
+        Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, (externalAlloc != nullptr) ? externalAlloc : &mockGfxAllocation, 0, 0, false, 1u);
     }
     GraphicsAllocation *externalAlloc = nullptr;
 };
@@ -80,7 +80,7 @@ class AlignedBuffer : public MockBufferStorage, public Buffer {
                                    GraphicsAllocationHelper::toMultiGraphicsAllocation(gfxAllocation), true, false, false) {
     }
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device, bool useGlobalAtomics, size_t numDevicesInContext) override {
-        Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0);
+        Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0, false, 1u);
     }
 };
 
@@ -100,7 +100,7 @@ class UnalignedBuffer : public MockBufferStorage, public Buffer {
                                        GraphicsAllocationHelper::toMultiGraphicsAllocation(gfxAllocation), false, false, false) {
     }
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device, bool useGlobalAtomics, size_t numDevicesInContext) override {
-        Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0);
+        Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0, false, 1u);
     }
 };
 

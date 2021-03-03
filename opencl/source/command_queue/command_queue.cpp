@@ -540,7 +540,10 @@ bool CommandQueue::setupDebugSurface(Kernel *kernel) {
                                   kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful);
     void *addressToPatch = reinterpret_cast<void *>(debugSurface->getGpuAddress());
     size_t sizeToPatch = debugSurface->getUnderlyingBufferSize();
-    Buffer::setSurfaceState(&device->getDevice(), surfaceState, false, false, sizeToPatch, addressToPatch, 0, debugSurface, 0, 0);
+    Buffer::setSurfaceState(&device->getDevice(), surfaceState, false, false, sizeToPatch,
+                            addressToPatch, 0, debugSurface, 0, 0,
+                            kernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
+                            kernel->getTotalNumDevicesInContext());
     return true;
 }
 

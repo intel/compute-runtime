@@ -127,7 +127,9 @@ class Buffer : public MemObj {
                                 size_t offset,
                                 GraphicsAllocation *gfxAlloc,
                                 cl_mem_flags flags,
-                                cl_mem_flags_intel flagsIntel);
+                                cl_mem_flags_intel flagsIntel,
+                                bool useGlobalAtomics,
+                                size_t numDevicesInContext);
 
     static void provideCompressionHint(GraphicsAllocation::AllocationType allocationType,
                                        Context *context,

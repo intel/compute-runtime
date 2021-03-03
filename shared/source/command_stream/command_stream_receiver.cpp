@@ -332,6 +332,7 @@ void CommandStreamReceiver::initProgrammingFlags() {
     lastMediaSamplerConfig = -1;
     lastPreemptionMode = PreemptionMode::Initial;
     latestSentStatelessMocsConfig = 0;
+    lastSentUseGlobalAtomics = false;
 }
 
 void CommandStreamReceiver::programForAubSubCapture(bool wasActiveInPreviousEnqueue, bool isActive) {
