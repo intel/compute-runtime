@@ -99,7 +99,7 @@ struct DriverHandleGetFdMock : public DriverHandleImp {
                                size_t alignment, void **ptr) override {
         ze_result_t res = DriverHandleImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
         if (ZE_RESULT_SUCCESS == res) {
-            allocationMap.first = ptr;
+            allocationMap.first = *ptr;
             allocationMap.second = mockFd;
         }
 
@@ -398,6 +398,42 @@ TEST_F(MemoryIPCTests,
 
     result = driverHandle->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryIPCTests,
+       whenCallingOpenIpcHandleWithIpcHandleThenDeviceAllocationIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = driverHandle->allocDeviceMem(device->toHandle(),
+                                                      &deviceDesc,
+                                                      size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = driverHandle->getIpcMemHandle(ptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_ipc_memory_flag_t flags = {};
+    void *ipcPtr;
+    result = driverHandle->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ipcPtr, ptr);
+
+    result = driverHandle->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryIPCTests,
+       whenCallingOpenIpcHandleWithIncorrectHandleThenInvalidArgumentIsReturned) {
+    ze_ipc_mem_handle_t ipcHandle = {};
+    ze_ipc_memory_flag_t flags = {};
+    void *ipcPtr;
+    ze_result_t res = driverHandle->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
 using DeviceMemorySizeTest = Test<DeviceFixture>;
