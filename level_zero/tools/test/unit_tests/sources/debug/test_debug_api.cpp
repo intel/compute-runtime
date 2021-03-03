@@ -9,6 +9,8 @@
 
 #include "test.h"
 
+#include "level_zero/tools/source/debug/debug_handlers.h"
+
 namespace L0 {
 namespace ult {
 
@@ -59,6 +61,43 @@ TEST(DebugSessionTest, WhenDebugSessionCreateIsCalledThenNullptrReturned) {
 
     L0::DebugSession *session = L0::DebugSession::create(config, nullptr);
     EXPECT_EQ(nullptr, session);
+}
+
+TEST(DebugSessionTest, WhenUnsupportedFunctionCalledThenErrorIsReturned) {
+    zet_debug_session_handle_t session = {};
+
+    auto result = L0::DebugApiHandlers::debugDetach(session);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    result = L0::DebugApiHandlers::debugReadEvent(session, 0, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    ze_device_thread_t thread = {};
+    result = L0::DebugApiHandlers::debugInterrupt(session, thread);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    result = L0::DebugApiHandlers::debugResume(session, thread);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    result = L0::DebugApiHandlers::debugReadMemory(session, thread, nullptr, 0, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    result = L0::DebugApiHandlers::debugWriteMemory(session, thread, nullptr, 0, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    result = L0::DebugApiHandlers::debugAcknowledgeEvent(session, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    zet_device_handle_t hDevice = {};
+    result = L0::DebugApiHandlers::debugGetRegisterSetProperties(hDevice, nullptr, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    zet_debug_regset_type_t type = {ZET_DEBUG_REGSET_TYPE_INVALID};
+    result = L0::DebugApiHandlers::debugReadRegisters(session, thread, type, 0, 0, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    result = L0::DebugApiHandlers::debugWriteRegisters(session, thread, type, 0, 0, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 } // namespace ult

@@ -21,13 +21,13 @@ zetDebugAttach(
     zet_device_handle_t hDevice,
     const zet_debug_config_t *config,
     zet_debug_session_handle_t *phDebug) {
-    return L0::debugAttach(hDevice, config, phDebug);
+    return L0::DebugApiHandlers::debugAttach(hDevice, config, phDebug);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zetDebugDetach(
     zet_debug_session_handle_t hDebug) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DebugApiHandlers::debugDetach(hDebug);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -35,21 +35,21 @@ zetDebugReadEvent(
     zet_debug_session_handle_t hDebug,
     uint64_t timeout,
     zet_debug_event_t *event) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DebugApiHandlers::debugReadEvent(hDebug, timeout, event);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zetDebugInterrupt(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DebugApiHandlers::debugInterrupt(hDebug, thread);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zetDebugResume(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DebugApiHandlers::debugResume(hDebug, thread);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -59,7 +59,7 @@ zetDebugReadMemory(
     const zet_debug_memory_space_desc_t *desc,
     size_t size,
     void *buffer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DebugApiHandlers::debugReadMemory(hDebug, thread, desc, size, buffer);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -69,14 +69,14 @@ zetDebugWriteMemory(
     const zet_debug_memory_space_desc_t *desc,
     size_t size,
     const void *buffer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DebugApiHandlers::debugWriteMemory(hDebug, thread, desc, size, buffer);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zetDebugAcknowledgeEvent(
     zet_debug_session_handle_t hDebug,
     const zet_debug_event_t *event) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DebugApiHandlers::debugAcknowledgeEvent(hDebug, event);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -84,7 +84,7 @@ zetDebugGetRegisterSetProperties(
     zet_device_handle_t hDevice,
     uint32_t *pCount,
     zet_debug_regset_properties_t *pRegisterSetProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DebugApiHandlers::debugGetRegisterSetProperties(hDevice, pCount, pRegisterSetProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -95,7 +95,7 @@ zetDebugReadRegisters(
     uint32_t start,
     uint32_t count,
     void *pRegisterValues) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DebugApiHandlers::debugReadRegisters(hDebug, thread, type, start, count, pRegisterValues);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -106,5 +106,5 @@ zetDebugWriteRegisters(
     uint32_t start,
     uint32_t count,
     void *pRegisterValues) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DebugApiHandlers::debugWriteRegisters(hDebug, thread, type, start, count, pRegisterValues);
 }

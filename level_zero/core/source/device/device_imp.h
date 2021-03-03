@@ -59,6 +59,7 @@ struct DeviceImp : public Device {
     uint32_t getPlatformInfo() const override;
     MetricContext &getMetricContext() override;
     DebugSession *getDebugSession(const zet_debug_config_t &config) override;
+    void removeDebugSession() override { debugSession.release(); }
 
     uint32_t getMaxNumHwThreads() const override;
     ze_result_t activateMetricGroups(uint32_t count,

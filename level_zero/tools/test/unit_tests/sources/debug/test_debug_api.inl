@@ -107,5 +107,33 @@ TEST(DebugSessionTest, givenDebugSessionWhenConvertingToAndFromHandleCorrectHand
     EXPECT_EQ(session, sessionFromHandle);
 }
 
+TEST(DebugSessionTest, givenDebugSessionWhenGettingConnectedDeviceThenCorrectDeviceIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
+    L0::DebugSession *session = debugSession.get();
+
+    auto device = session->getConnectedDevice();
+
+    EXPECT_EQ(&deviceImp, device);
+}
+
+TEST(DebugSessionTest, givenDeviceWithDebugSessionWhenRemoveCalledThenSessionIsNotDeleted) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
+    L0::DebugSession *session = debugSession.get();
+    deviceImp.debugSession.reset(session);
+    deviceImp.removeDebugSession();
+
+    EXPECT_EQ(nullptr, deviceImp.debugSession.get());
+}
+
 } // namespace ult
 } // namespace L0

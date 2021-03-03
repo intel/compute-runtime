@@ -250,6 +250,8 @@ struct Mock<Device> : public Device {
     DebugSession *getDebugSession(const zet_debug_config_t &config) override {
         return nullptr;
     }
+
+    void removeDebugSession() override {}
 };
 
 template <>

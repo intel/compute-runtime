@@ -23,8 +23,13 @@ struct DebugSession : _zet_debug_session_handle_t {
     static DebugSession *fromHandle(zet_debug_session_handle_t handle) { return static_cast<DebugSession *>(handle); }
     inline zet_debug_session_handle_t toHandle() { return this; }
 
+    virtual bool closeConnection() = 0;
+
+    Device *getConnectedDevice() { return connectedDevice; }
+
   protected:
-    DebugSession(const zet_debug_config_t &config, Device *device){};
+    DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device){};
+    Device *connectedDevice = nullptr;
 };
 
 } // namespace L0
