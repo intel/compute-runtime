@@ -259,10 +259,10 @@ if(BUILD_WITH_L0)
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
                    ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
+                   ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/devices.inl
+                   ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/allocator_helper.cpp
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/create_drm_memory_manager.cpp
-                   ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/devices${BRANCH_DIR_SUFFIX}/devices.inl
-                   ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/devices/devices_base.inl
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/options_linux.cpp
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/os_interface.cpp
     )
@@ -316,7 +316,7 @@ if(BUILD_WITH_L0)
                                ${I915_INCLUDES_DIR}
     )
     target_include_directories(${TARGET_NAME_L0} PRIVATE
-                               ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/devices${BRANCH_DIR_SUFFIX}
+                               ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}
     )
   else()
     set(OS_SPECIFIC_LIBS "")

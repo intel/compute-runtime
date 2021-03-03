@@ -186,7 +186,7 @@ if(${GENERATE_EXECUTABLE})
   else()
     target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${GMM_LINK_NAME})
     target_include_directories(${NEO_DYNAMIC_LIB_NAME} PRIVATE
-                               ${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/devices${BRANCH_DIR_SUFFIX}
+                               ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}
     )
     set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
                  APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${EXPORTS_FILENAME}"

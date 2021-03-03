@@ -42,11 +42,11 @@ append_sources_from_properties(RUNTIME_SRCS_DLL_BASE NEO_CORE_SRCS_LINK)
 set(RUNTIME_SRCS_DLL_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/allocator_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/create_drm_memory_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/linux/devices${BRANCH_DIR_SUFFIX}/devices.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/linux/devices/devices_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/options_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/os_interface.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/devices.inl
+    ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
     ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
     ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
 )

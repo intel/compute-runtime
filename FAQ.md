@@ -49,7 +49,7 @@ See [README.md](https://github.com/intel/compute-runtime/blob/master/README.md).
 To check support for any device, you can follow these steps:
 1. Go to [Ark]( https://ark.intel.com) and find your Device ID
 1. Check if this Device ID is enumerated in the
-[supported device list](https://github.com/intel/compute-runtime/blob/master/opencl/source/dll/linux/devices/devices_base.inl)
+[supported device list](https://github.com/intel/compute-runtime/blob/master/shared/source/dll/devices/devices_base.inl)
 
 ### When will support for platform X be added?
 
