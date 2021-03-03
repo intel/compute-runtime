@@ -6,6 +6,8 @@
  */
 
 {
+  global:
+      ze*;
   local:
-      cl*;
+      *;
 };
