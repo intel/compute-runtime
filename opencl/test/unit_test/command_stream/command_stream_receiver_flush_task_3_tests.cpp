@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -1940,4 +1941,38 @@ TEST(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRootDev
         EXPECT_EQ(2u, mockCsr2->waitForCompletionWithTimeoutCalled);
         EXPECT_EQ(2u, mockCsr3->waitForCompletionWithTimeoutCalled);
     }
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhenFlushingTaskThenWorkPartitionAllocationIsMadeResident) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableStaticPartitioning.set(1);
+    DebugManager.flags.ForcePreemptionMode.set(PreemptionMode::Disabled);
+    UltDeviceFactory deviceFactory{1, 2};
+    MockDevice *device = deviceFactory.rootDevices[0];
+    auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
+    ASSERT_NE(nullptr, mockCsr.getWorkPartitionAllocation());
+
+    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    mockCsr.flushTask(commandStream,
+                      0,
+                      dsh,
+                      ioh,
+                      ssh,
+                      taskLevel,
+                      dispatchFlags,
+                      *device);
+
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    bool found = false;
+    for (auto allocation : cmdBuffer->surfaces) {
+        if (allocation == mockCsr.getWorkPartitionAllocation()) {
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
 }
