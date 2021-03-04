@@ -7,6 +7,8 @@
 
 #include "shared/offline_compiler/source/ocloc_api.h"
 
+#include "level_zero/api/extensions/public/ze_exp_ext.h"
+
 #include "zello_common.h"
 
 #include <dlfcn.h>
