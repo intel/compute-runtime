@@ -115,7 +115,7 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
                                                  placeholder,
                                                  MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT,
                                                  MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD,
-                                                 0x1u, 0x1u);
+                                                 0x1u, 0x1u, 0x0u, 0x0u);
         return miAtomic;
     }
 

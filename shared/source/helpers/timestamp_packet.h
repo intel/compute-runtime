@@ -178,7 +178,7 @@ struct TimestampPacketHelper {
             EncodeAtomic<GfxFamily>::programMiAtomic(cmdStream, dependenciesCountAddress,
                                                      MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
                                                      MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
-                                                     0u, 0u);
+                                                     0u, 0u, 0x0u, 0x0u);
         }
     }
 

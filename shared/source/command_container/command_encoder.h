@@ -318,14 +318,21 @@ struct EncodeAtomic {
                                 ATOMIC_OPCODES opcode,
                                 DATA_SIZE dataSize,
                                 uint32_t returnDataControl,
-                                uint32_t csStall);
+                                uint32_t csStall,
+                                uint32_t operand1dword0,
+                                uint32_t operand1dword1);
 
     static void programMiAtomic(MI_ATOMIC *atomic,
                                 uint64_t writeAddress,
                                 ATOMIC_OPCODES opcode,
                                 DATA_SIZE dataSize,
                                 uint32_t returnDataControl,
-                                uint32_t csStall);
+                                uint32_t csStall,
+                                uint32_t operand1dword0,
+                                uint32_t operand1dword1);
+
+    static void setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress);
+    static uint64_t getMiAtomicAddress(MI_ATOMIC &atomic);
 };
 
 template <typename GfxFamily>

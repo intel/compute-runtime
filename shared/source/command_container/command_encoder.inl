@@ -570,19 +570,39 @@ size_t EncodeSempahore<Family>::getSizeMiSemaphoreWait() {
 }
 
 template <typename Family>
+void EncodeAtomic<Family>::setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress) {
+    atomic.setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
+    atomic.setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
+}
+
+template <typename Family>
+uint64_t EncodeAtomic<Family>::getMiAtomicAddress(MI_ATOMIC &atomic) {
+    uint64_t address = (static_cast<uint64_t>(atomic.getMemoryAddressHigh()) << 32) | (atomic.getMemoryAddress());
+    return address;
+}
+
+template <typename Family>
 void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic,
                                            uint64_t writeAddress,
                                            ATOMIC_OPCODES opcode,
                                            DATA_SIZE dataSize,
                                            uint32_t returnDataControl,
-                                           uint32_t csStall) {
+                                           uint32_t csStall,
+                                           uint32_t operand1dword0,
+                                           uint32_t operand1dword1) {
     MI_ATOMIC cmd = Family::cmdInitAtomic;
     cmd.setAtomicOpcode(opcode);
     cmd.setDataSize(dataSize);
-    cmd.setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
-    cmd.setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
+    EncodeAtomic<Family>::setMiAtomicAddress(cmd, writeAddress);
     cmd.setReturnDataControl(returnDataControl);
     cmd.setCsStall(csStall);
+    if (opcode == ATOMIC_OPCODES::ATOMIC_4B_MOVE ||
+        opcode == ATOMIC_OPCODES::ATOMIC_8B_MOVE) {
+        cmd.setDwordLength(MI_ATOMIC::DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1);
+        cmd.setInlineData(0x1);
+        cmd.setOperand1DataDword0(operand1dword0);
+        cmd.setOperand1DataDword1(operand1dword1);
+    }
 
     *atomic = cmd;
 }
@@ -593,9 +613,11 @@ void EncodeAtomic<Family>::programMiAtomic(LinearStream &commandStream,
                                            ATOMIC_OPCODES opcode,
                                            DATA_SIZE dataSize,
                                            uint32_t returnDataControl,
-                                           uint32_t csStall) {
+                                           uint32_t csStall,
+                                           uint32_t operand1dword0,
+                                           uint32_t operand1dword1) {
     auto miAtomic = commandStream.getSpaceForCmd<MI_ATOMIC>();
-    EncodeAtomic<Family>::programMiAtomic(miAtomic, writeAddress, opcode, dataSize, returnDataControl, csStall);
+    EncodeAtomic<Family>::programMiAtomic(miAtomic, writeAddress, opcode, dataSize, returnDataControl, csStall, operand1dword0, operand1dword1);
 }
 
 template <typename Family>
