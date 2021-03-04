@@ -20,7 +20,7 @@ struct TimestampEvent : public Test<DeviceFixture> {
         DeviceFixture::SetUp();
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.count = 1;
-        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
         ze_event_desc_t eventDesc = {};
         eventDesc.index = 0;

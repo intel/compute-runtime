@@ -72,7 +72,7 @@ struct Mock<EventPool> : public EventPool {
     MOCK_METHOD2(reserveEventFromPool, ze_result_t(int index, ::L0::Event *event));
     MOCK_METHOD1(releaseEventToPool, ze_result_t(::L0::Event *event));
     MOCK_METHOD0(getDevice, Device *());
-    MOCK_METHOD0(getEventSize, size_t());
+    MOCK_METHOD0(getEventSize, uint32_t());
 
     std::vector<int> pool;
 
