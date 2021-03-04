@@ -23,6 +23,9 @@
 #include <memory>
 
 using namespace NEO;
+namespace NEO {
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchDataParameterStream &token);
+}
 
 class MockSchedulerKernel : public SchedulerKernel {
   public:
@@ -31,14 +34,14 @@ class MockSchedulerKernel : public SchedulerKernel {
 
     static MockSchedulerKernel *create(Program &program, KernelInfo *&info) {
         info = new KernelInfo;
-        SPatchDataParameterStream dataParametrStream;
-        dataParametrStream.DataParameterStreamSize = 8;
-        dataParametrStream.Size = 8;
+        SPatchDataParameterStream dataParameterStream;
+        dataParameterStream.DataParameterStreamSize = 8;
+        dataParameterStream.Size = 8;
+        populateKernelDescriptor(info->kernelDescriptor, dataParameterStream);
 
         info->kernelDescriptor.kernelAttributes.simdSize = 32;
         info->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = false;
 
-        info->patchInfo.dataParameterStream = &dataParametrStream;
         KernelArgInfo bufferArg;
         bufferArg.isBuffer = true;
 
@@ -114,8 +117,8 @@ TEST(SchedulerKernelTest, WhenSchedulerKernelIsCreatedThenCurbeSizeIsCorrect) {
 
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.DataParameterStreamSize = crossTrheadDataSize;
+    populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
 
-    info.patchInfo.dataParameterStream = &dataParameterStream;
     info.heapInfo.DynamicStateHeapSize = dshSize;
 
     KernelInfoContainer kernelInfos;
@@ -278,8 +281,6 @@ TEST(SchedulerKernelTest, GivenNullKernelInfoWhenGettingCurbeSizeThenSizeIsCorre
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     KernelInfo info;
-
-    info.patchInfo.dataParameterStream = nullptr;
 
     KernelInfoContainer kernelInfos;
     kernelInfos.push_back(&info);

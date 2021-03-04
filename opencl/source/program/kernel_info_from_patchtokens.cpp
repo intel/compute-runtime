@@ -135,9 +135,6 @@ void populateKernelInfoArg(KernelInfo &dstKernelInfo, KernelArgInfo &dstKernelIn
 
     for (auto &byValArg : src.byValMap) {
         dstKernelInfo.storeKernelArgument(byValArg);
-        if (byValArg->Type == DATA_PARAMETER_KERNEL_ARGUMENT) {
-            dstKernelInfo.patchInfo.dataParameterBuffersKernelArgs.push_back(byValArg);
-        }
     }
 
     dstKernelInfoArg.offsetObjectId = getOffset(src.objectId);
@@ -160,17 +157,8 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
     dst.heapInfo.pSsh = src.heaps.surfaceState.begin();
 
     storeTokenIfNotNull(dst, src.tokens.executionEnvironment);
-    dst.patchInfo.samplerStateArray = src.tokens.samplerStateArray;
-    dst.patchInfo.bindingTableState = src.tokens.bindingTableState;
     dst.usesSsh = src.tokens.bindingTableState && (src.tokens.bindingTableState->Count > 0);
-    dst.patchInfo.localsurface = src.tokens.allocateLocalSurface;
     dst.workloadInfo.slmStaticSize = src.tokens.allocateLocalSurface ? src.tokens.allocateLocalSurface->TotalInlineLocalMemorySize : 0U;
-    dst.patchInfo.mediavfestate = src.tokens.mediaVfeState[0];
-    dst.patchInfo.mediaVfeStateSlot1 = src.tokens.mediaVfeState[1];
-    dst.patchInfo.interfaceDescriptorDataLoad = src.tokens.mediaInterfaceDescriptorLoad;
-    dst.patchInfo.interfaceDescriptorData = src.tokens.interfaceDescriptorData;
-    dst.patchInfo.threadPayload = src.tokens.threadPayload;
-    dst.patchInfo.dataParameterStream = src.tokens.dataParameterStream;
 
     dst.kernelArgInfo.resize(src.tokens.kernelArgs.size());
 
@@ -180,15 +168,15 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
         populateKernelInfoArg(dst, kernelInfoArg, decodedKernelArg);
     }
 
-    storeTokenIfNotNull(dst, src.tokens.kernelAttributesInfo);
-    storeTokenIfNotNull(dst, src.tokens.allocateStatelessPrivateSurface);
-    storeTokenIfNotNull(dst, src.tokens.allocateStatelessConstantMemorySurfaceWithInitialization);
-    storeTokenIfNotNull(dst, src.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization);
-    storeTokenIfNotNull(dst, src.tokens.allocateSyncBuffer);
+    if (nullptr != src.tokens.allocateSyncBuffer) {
+        dst.usesSsh = true;
+    }
+    if (nullptr != src.tokens.allocateSystemThreadSurface) {
+        dst.usesSsh = true;
+    }
 
     dst.isVmeWorkload = dst.isVmeWorkload || (src.tokens.inlineVmeSamplerInfo != nullptr);
     dst.systemKernelOffset = src.tokens.stateSip ? src.tokens.stateSip->SystemKernelOffset : 0U;
-    storeTokenIfNotNull(dst, src.tokens.allocateSystemThreadSurface);
 
     for (uint32_t i = 0; i < 3U; ++i) {
         dst.workloadInfo.localWorkSizeOffsets[i] = getOffset(src.tokens.crossThreadPayloadArgs.localWorkSize[i]);
@@ -221,10 +209,9 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
         populateKernelDescriptor(dst.kernelDescriptor, src, gpuPointerSizeInBytes);
     }
 
-    if (dst.patchInfo.dataParameterStream && dst.patchInfo.dataParameterStream->DataParameterStreamSize) {
-        uint32_t crossThreadDataSize = dst.patchInfo.dataParameterStream->DataParameterStreamSize;
-        dst.crossThreadData = new char[crossThreadDataSize];
-        memset(dst.crossThreadData, 0x00, crossThreadDataSize);
+    if (dst.kernelDescriptor.kernelAttributes.crossThreadDataSize) {
+        dst.crossThreadData = new char[dst.kernelDescriptor.kernelAttributes.crossThreadDataSize];
+        memset(dst.crossThreadData, 0x00, dst.kernelDescriptor.kernelAttributes.crossThreadDataSize);
     }
 }
 

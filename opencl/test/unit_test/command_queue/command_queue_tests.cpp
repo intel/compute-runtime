@@ -1046,8 +1046,9 @@ HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsC
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
     MockCommandQueue cmdQ(context.get(), pClDevice, 0);
 
-    kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + kernel->getAllocatedKernelInfo()->patchInfo.pAllocateSystemThreadSurface->Offset, rootDeviceIndex);
+    const auto &systemThreadSurfaceAddress = kernel->getAllocatedKernelInfo()->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful;
     kernel->getAllocatedKernelInfo()->usesSsh = true;
+    kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + systemThreadSurfaceAddress, rootDeviceIndex);
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
 
     cmdQ.getGpgpuCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
@@ -1066,8 +1067,9 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSet
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
     MockCommandQueue cmdQ(context.get(), pClDevice, 0);
 
-    kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + kernel->getAllocatedKernelInfo()->patchInfo.pAllocateSystemThreadSurface->Offset, rootDeviceIndex);
+    const auto &systemThreadSurfaceAddress = kernel->getAllocatedKernelInfo()->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful;
     kernel->getAllocatedKernelInfo()->usesSsh = true;
+    kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + systemThreadSurfaceAddress, rootDeviceIndex);
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
     commandStreamReceiver.allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();

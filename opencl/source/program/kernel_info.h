@@ -112,12 +112,6 @@ struct KernelInfo {
     void storeKernelArgument(const SPatchStatelessDeviceQueueKernelArgument *pStatelessDeviceQueueKernelArg);
     void storeKernelArgument(const SPatchSamplerKernelArgument *pSamplerKernelArg);
     void storePatchToken(const SPatchExecutionEnvironment *execEnv);
-    void storePatchToken(const SPatchAllocateStatelessPrivateSurface *pStatelessPrivateSurfaceArg);
-    void storePatchToken(const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization *pStatelessConstantMemorySurfaceWithInitializationArg);
-    void storePatchToken(const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization *pStatelessGlobalMemorySurfaceWithInitializationArg);
-    void storePatchToken(const SPatchKernelAttributesInfo *pKernelAttributesInfo);
-    void storePatchToken(const SPatchAllocateSystemThreadSurface *pSystemThreadSurface);
-    void storePatchToken(const SPatchAllocateSyncBuffer *pAllocateSyncBuffer);
     GraphicsAllocation *getGraphicsAllocation() const { return this->kernelAllocation; }
     void resizeKernelArgInfoAndRegisterParameter(uint32_t argCount) {
         if (kernelArgInfo.size() <= argCount) {
@@ -170,7 +164,6 @@ struct KernelInfo {
     bool createKernelAllocation(const Device &device, bool internalIsa);
     void apply(const DeviceInfoKernelPayloadConstants &constants);
 
-    std::string attributes;
     HeapInfo heapInfo = {};
     PatchInfo patchInfo = {};
     std::vector<KernelArgInfo> kernelArgInfo;
@@ -182,7 +175,6 @@ struct KernelInfo {
     bool hasIndirectStatelessAccess = false;
     bool isVmeWorkload = false;
     char *crossThreadData = nullptr;
-    size_t requiredSubGroupSize = 0;
     uint32_t gpuPointerSize = 0;
     const BuiltinDispatchInfoBuilder *builtinDispatchBuilder = nullptr;
     uint32_t argumentsToPatchNum = 0;

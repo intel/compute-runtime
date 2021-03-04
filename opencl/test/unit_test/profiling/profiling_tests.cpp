@@ -41,15 +41,16 @@ struct ProfilingTests : public CommandEnqueueFixture,
 
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
 
+        SPatchThreadPayload threadPayload = {};
         memset(&threadPayload, 0, sizeof(threadPayload));
         threadPayload.LocalIDXPresent = 1;
         threadPayload.LocalIDYPresent = 1;
         threadPayload.LocalIDZPresent = 1;
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, threadPayload);
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
-        kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
-        kernelInfo.patchInfo.threadPayload = &threadPayload;
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, dataParameterStream);
     }
 
     void TearDown() override {
@@ -60,7 +61,6 @@ struct ProfilingTests : public CommandEnqueueFixture,
 
     SKernelBinaryHeaderCommon kernelHeader = {};
     SPatchDataParameterStream dataParameterStream = {};
-    SPatchThreadPayload threadPayload = {};
     KernelInfo kernelInfo;
     MockContext ctx;
 

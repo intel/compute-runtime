@@ -31,7 +31,7 @@ TGLLPTEST_F(KernelTgllpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenS
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
         auto rootDeviceIndex = device->getRootDeviceIndex();
         MockKernelWithInternals mockKernelWithInternals{*device};
-        mockKernelWithInternals.kernelInfo.patchInfo.threadPayload = &threadPayload;
+        populateKernelDescriptor(mockKernelWithInternals.kernelInfo.kernelDescriptor, threadPayload);
 
         for (auto isCcsUsed : ::testing::Bool()) {
             uint64_t kernelStartOffset = mockKernelWithInternals.mockKernel->getKernelStartOffset(false, false, isCcsUsed, rootDeviceIndex);

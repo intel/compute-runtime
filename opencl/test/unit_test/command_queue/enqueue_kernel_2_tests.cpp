@@ -308,13 +308,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
 
     EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
 
-    SPatchMediaVFEState mediaVFEstate;
     auto scratchSize = GetParam().scratchSize;
 
-    mediaVFEstate.PerThreadScratchSpace = scratchSize;
-
     MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
+
+    SPatchMediaVFEState mediaVFEstate;
+    mediaVFEstate.PerThreadScratchSpace = scratchSize;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
     uint32_t sizeToProgram = (scratchSize / static_cast<uint32_t>(MemoryConstants::kiloByte));
     uint32_t bitValue = 0u;
@@ -370,6 +370,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     }
 
     mediaVFEstate.PerThreadScratchSpace = scratchSize;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
     auto itorfirstBBEnd = find<typename FamilyType::MI_BATCH_BUFFER_END *>(itorWalker, cmdList.end());
     ASSERT_NE(cmdList.end(), itorfirstBBEnd);
@@ -443,13 +444,13 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
     auto mockCsr = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    SPatchMediaVFEState mediaVFEstate;
     uint32_t scratchSize = 1024u;
 
-    mediaVFEstate.PerThreadScratchSpace = scratchSize;
-
     MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
+
+    SPatchMediaVFEState mediaVFEstate;
+    mediaVFEstate.PerThreadScratchSpace = scratchSize;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
     uint32_t sizeToProgram = (scratchSize / static_cast<uint32_t>(MemoryConstants::kiloByte));
     uint32_t bitValue = 0u;
@@ -486,12 +487,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
         auto memoryManager = csr->getMemoryManager();
         memoryManager->setForce32BitAllocations(true);
 
-        SPatchMediaVFEState mediaVFEstate;
         auto scratchSize = 1024;
-        mediaVFEstate.PerThreadScratchSpace = scratchSize;
 
         MockKernelWithInternals mockKernel(*pClDevice);
-        mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
+
+        SPatchMediaVFEState mediaVFEstate;
+        mediaVFEstate.PerThreadScratchSpace = scratchSize;
+        populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
         enqueueKernel<FamilyType>(mockKernel);
         auto graphicsAllocation = csr->getScratchAllocation();

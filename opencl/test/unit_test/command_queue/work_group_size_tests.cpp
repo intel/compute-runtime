@@ -87,9 +87,9 @@ struct WorkGroupSizeBase {
             Math::divideAndRoundUp(workItems[0], workGroupSize[0]),
             Math::divideAndRoundUp(workItems[1], workGroupSize[1]),
             Math::divideAndRoundUp(workItems[2], workGroupSize[2])};
-        const iOpenCL::SPatchThreadPayload threadPayload = {};
-        GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(&pCmd, globalOffsets, workGroupsStart, workGroupsNum,
-                                                                workGroupSize, simdSize, dims, true, false, threadPayload, 0u);
+        KernelDescriptor kd;
+        GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(&pCmd, kd, globalOffsets, workGroupsStart, workGroupsNum,
+                                                                workGroupSize, simdSize, dims, true, false, 0u);
 
         //And check if it is programmed correctly
         auto numWorkItems = computeWalkerWorkItems<FamilyType>(pCmd);

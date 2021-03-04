@@ -422,23 +422,6 @@ TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreated
     EXPECT_TRUE(pKernelInfo->kernelArgInfo[0].isReadOnly);
 }
 
-TEST(PatchInfo, WhenPatchInfoIsCreatedThenMembersAreNullptr) {
-    PatchInfo patchInfo;
-    EXPECT_EQ(nullptr, patchInfo.interfaceDescriptorDataLoad);
-    EXPECT_EQ(nullptr, patchInfo.localsurface);
-    EXPECT_EQ(nullptr, patchInfo.mediavfestate);
-    EXPECT_EQ(nullptr, patchInfo.mediaVfeStateSlot1);
-    EXPECT_EQ(nullptr, patchInfo.interfaceDescriptorData);
-    EXPECT_EQ(nullptr, patchInfo.samplerStateArray);
-    EXPECT_EQ(nullptr, patchInfo.bindingTableState);
-    EXPECT_EQ(nullptr, patchInfo.dataParameterStream);
-    EXPECT_EQ(nullptr, patchInfo.threadPayload);
-    EXPECT_EQ(nullptr, patchInfo.pKernelAttributesInfo);
-    EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessPrivateSurface);
-    EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization);
-    EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization);
-}
-
 typedef Test<ClDeviceFixture> KernelPrivateSurfaceTest;
 typedef Test<ClDeviceFixture> KernelGlobalSurfaceTest;
 typedef Test<ClDeviceFixture> KernelConstantSurfaceTest;
@@ -546,11 +529,11 @@ TEST_F(KernelPrivateSurfaceTest, WhenChangingResidencyThenCsrResidencySizeIsUpda
     tokenSPS.DataParamOffset = 40;
     tokenSPS.DataParamSize = 8;
     tokenSPS.PerThreadPrivateMemorySize = 112;
-    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &tokenSPS;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tokenSPS);
 
     SPatchDataParameterStream tokenDPS;
     tokenDPS.DataParameterStreamSize = 64;
-    pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tokenDPS);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
@@ -583,11 +566,11 @@ TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWh
     tokenSPS.DataParamOffset = 40;
     tokenSPS.DataParamSize = 8;
     tokenSPS.PerThreadPrivateMemorySize = 112;
-    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &tokenSPS;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tokenSPS);
 
     SPatchDataParameterStream tokenDPS;
     tokenDPS.DataParameterStreamSize = 64;
-    pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tokenDPS);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
@@ -622,11 +605,11 @@ TEST_F(KernelPrivateSurfaceTest, WhenPrivateSurfaceAllocationFailsThenOutOfResou
     tokenSPS.DataParamOffset = 40;
     tokenSPS.DataParamSize = 8;
     tokenSPS.PerThreadPrivateMemorySize = 112;
-    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &tokenSPS;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tokenSPS);
 
     SPatchDataParameterStream tokenDPS;
     tokenDPS.DataParameterStreamSize = 64;
-    pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tokenDPS);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
@@ -663,11 +646,11 @@ TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateS
         tokenSPS.DataParamOffset = 40;
         tokenSPS.DataParamSize = 4;
         tokenSPS.PerThreadPrivateMemorySize = 112;
-        pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &tokenSPS;
+        populateKernelDescriptor(pKernelInfo->kernelDescriptor, tokenSPS);
 
         SPatchDataParameterStream tokenDPS;
         tokenDPS.DataParameterStreamSize = 64;
-        pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
+        populateKernelDescriptor(pKernelInfo->kernelDescriptor, tokenDPS);
 
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
@@ -692,13 +675,12 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup constant memory
-    SPatchAllocateStatelessPrivateSurface AllocateStatelessPrivateMemorySurface;
-    AllocateStatelessPrivateMemorySurface.SurfaceStateHeapOffset = 0;
-    AllocateStatelessPrivateMemorySurface.DataParamOffset = 0;
-    AllocateStatelessPrivateMemorySurface.DataParamSize = 8;
-    AllocateStatelessPrivateMemorySurface.PerThreadPrivateMemorySize = 16;
-
-    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &AllocateStatelessPrivateMemorySurface;
+    SPatchAllocateStatelessPrivateSurface allocateStatelessPrivateMemorySurface;
+    allocateStatelessPrivateMemorySurface.SurfaceStateHeapOffset = 0;
+    allocateStatelessPrivateMemorySurface.DataParamOffset = 0;
+    allocateStatelessPrivateMemorySurface.DataParamSize = 8;
+    allocateStatelessPrivateMemorySurface.PerThreadPrivateMemorySize = 16;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessPrivateMemorySurface);
 
     MockContext context;
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
@@ -724,7 +706,7 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
-                  pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface->SurfaceStateHeapOffset));
+                  pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(bufferAddress, surfaceAddress);
@@ -774,17 +756,18 @@ TEST_F(KernelPrivateSurfaceTest, givenNonNullDataParameterStreamWhenGettingConst
 
     SPatchDataParameterStream tokenDPS;
     tokenDPS.DataParameterStreamSize = 64;
-    pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tokenDPS);
 
     EXPECT_EQ(64u, pKernelInfo->getConstantBufferSize());
 }
 
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4ThenReturnOutOfResources) {
-    auto pAllocateStatelessPrivateSurface = std::unique_ptr<SPatchAllocateStatelessPrivateSurface>(new SPatchAllocateStatelessPrivateSurface());
-    pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
-
     auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
+
+    SPatchAllocateStatelessPrivateSurface allocateStatelessPrivateSurface = {};
+    allocateStatelessPrivateSurface.PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessPrivateSurface);
+
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     MockContext context;
@@ -798,11 +781,12 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
 }
 
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4And32BitAllocationsThenReturnOutOfResources) {
-    auto pAllocateStatelessPrivateSurface = std::unique_ptr<SPatchAllocateStatelessPrivateSurface>(new SPatchAllocateStatelessPrivateSurface());
-    pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
-
     auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
+
+    SPatchAllocateStatelessPrivateSurface allocateStatelessPrivateSurface = {};
+    allocateStatelessPrivateSurface.PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessPrivateSurface);
+
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     MockContext context;
@@ -816,11 +800,12 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
 }
 
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize8And32BitAllocationsThenReturnOutOfResources) {
-    auto pAllocateStatelessPrivateSurface = std::unique_ptr<SPatchAllocateStatelessPrivateSurface>(new SPatchAllocateStatelessPrivateSurface());
-    pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
-
     auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
+
+    SPatchAllocateStatelessPrivateSurface allocateStatelessPrivateSurface = {};
+    allocateStatelessPrivateSurface.PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessPrivateSurface);
+
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     MockContext context;
@@ -839,15 +824,14 @@ TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalS
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup global memory
-    SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization AllocateStatelessGlobalMemorySurfaceWithInitialization;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.DataParamOffset = 0;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization = &AllocateStatelessGlobalMemorySurfaceWithInitialization;
+    SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization allocateStatelessGlobalMemorySurfaceWithInitialization;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.DataParamOffset = 0;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessGlobalMemorySurfaceWithInitialization);
 
     SPatchDataParameterStream tempSPatchDataParameterStream;
     tempSPatchDataParameterStream.DataParameterStreamSize = 16;
-    pKernelInfo->patchInfo.dataParameterStream = &tempSPatchDataParameterStream;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tempSPatchDataParameterStream);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
@@ -878,15 +862,14 @@ TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalS
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup global memory
-    SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization AllocateStatelessGlobalMemorySurfaceWithInitialization;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.DataParamOffset = 0;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization = &AllocateStatelessGlobalMemorySurfaceWithInitialization;
+    SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization allocateStatelessGlobalMemorySurfaceWithInitialization;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.DataParamOffset = 0;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessGlobalMemorySurfaceWithInitialization);
 
     SPatchDataParameterStream tempSPatchDataParameterStream;
     tempSPatchDataParameterStream.DataParameterStreamSize = 16;
-    pKernelInfo->patchInfo.dataParameterStream = &tempSPatchDataParameterStream;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tempSPatchDataParameterStream);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
@@ -917,12 +900,11 @@ HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlob
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup global memory
-    SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization AllocateStatelessGlobalMemorySurfaceWithInitialization;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.SurfaceStateHeapOffset = 0;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.DataParamOffset = 0;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization = &AllocateStatelessGlobalMemorySurfaceWithInitialization;
+    SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization allocateStatelessGlobalMemorySurfaceWithInitialization;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.SurfaceStateHeapOffset = 0;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.DataParamOffset = 0;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessGlobalMemorySurfaceWithInitialization);
 
     char buffer[16];
     MockGraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
@@ -951,7 +933,7 @@ HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlob
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
-                  pKernelInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization->SurfaceStateHeapOffset));
+                  pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(bufferAddress, surfaceAddress);
@@ -995,15 +977,14 @@ TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConst
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup constant memory
-    SPatchAllocateStatelessConstantMemorySurfaceWithInitialization AllocateStatelessConstantMemorySurfaceWithInitialization;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.DataParamOffset = 0;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization = &AllocateStatelessConstantMemorySurfaceWithInitialization;
+    SPatchAllocateStatelessConstantMemorySurfaceWithInitialization allocateStatelessConstantMemorySurfaceWithInitialization;
+    allocateStatelessConstantMemorySurfaceWithInitialization.DataParamOffset = 0;
+    allocateStatelessConstantMemorySurfaceWithInitialization.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessConstantMemorySurfaceWithInitialization);
 
     SPatchDataParameterStream tempSPatchDataParameterStream;
     tempSPatchDataParameterStream.DataParameterStreamSize = 16;
-    pKernelInfo->patchInfo.dataParameterStream = &tempSPatchDataParameterStream;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tempSPatchDataParameterStream);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
@@ -1033,15 +1014,14 @@ TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConst
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup constant memory
-    SPatchAllocateStatelessConstantMemorySurfaceWithInitialization AllocateStatelessConstantMemorySurfaceWithInitialization;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.DataParamOffset = 0;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization = &AllocateStatelessConstantMemorySurfaceWithInitialization;
+    SPatchAllocateStatelessConstantMemorySurfaceWithInitialization allocateStatelessConstantMemorySurfaceWithInitialization;
+    allocateStatelessConstantMemorySurfaceWithInitialization.DataParamOffset = 0;
+    allocateStatelessConstantMemorySurfaceWithInitialization.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessConstantMemorySurfaceWithInitialization);
 
     SPatchDataParameterStream tempSPatchDataParameterStream;
     tempSPatchDataParameterStream.DataParameterStreamSize = 16;
-    pKernelInfo->patchInfo.dataParameterStream = &tempSPatchDataParameterStream;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tempSPatchDataParameterStream);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
@@ -1071,12 +1051,11 @@ HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenCo
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // setup constant memory
-    SPatchAllocateStatelessConstantMemorySurfaceWithInitialization AllocateStatelessConstantMemorySurfaceWithInitialization;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.SurfaceStateHeapOffset = 0;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.DataParamOffset = 0;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.DataParamSize = 8;
-
-    pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization = &AllocateStatelessConstantMemorySurfaceWithInitialization;
+    SPatchAllocateStatelessConstantMemorySurfaceWithInitialization allocateStatelessConstantMemorySurfaceWithInitialization;
+    allocateStatelessConstantMemorySurfaceWithInitialization.SurfaceStateHeapOffset = 0;
+    allocateStatelessConstantMemorySurfaceWithInitialization.DataParamOffset = 0;
+    allocateStatelessConstantMemorySurfaceWithInitialization.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessConstantMemorySurfaceWithInitialization);
 
     char buffer[16];
     MockGraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
@@ -1105,7 +1084,7 @@ HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenCo
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
-                  pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization->SurfaceStateHeapOffset));
+                  pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(bufferAddress, surfaceAddress);
@@ -2461,7 +2440,7 @@ struct KernelCrossThreadTests : Test<ClDeviceFixture> {
 
         pKernelInfo = std::make_unique<KernelInfo>();
         ASSERT_NE(nullptr, pKernelInfo);
-        pKernelInfo->patchInfo.dataParameterStream = &patchDataParameterStream;
+        populateKernelDescriptor(pKernelInfo->kernelDescriptor, patchDataParameterStream);
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
     }
 
@@ -2628,12 +2607,11 @@ TEST_F(KernelCrossThreadTests, GivenSlmStatisSizeWhenCreatingKernelThenSlmTotalS
     delete kernel;
 }
 TEST_F(KernelCrossThreadTests, givenKernelWithPrivateMemoryWhenItIsCreatedThenCurbeIsPatchedProperly) {
-
     SPatchAllocateStatelessPrivateSurface allocatePrivate;
     allocatePrivate.DataParamSize = 8;
     allocatePrivate.DataParamOffset = 0;
     allocatePrivate.PerThreadPrivateMemorySize = 1;
-    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &allocatePrivate;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocatePrivate);
 
     MockKernel *kernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
 
@@ -2694,15 +2672,12 @@ TEST_F(KernelCrossThreadTests, WhenPatchingBlocksSimdSizeThenSimdSizeIsPatchedCo
 
 TEST(KernelInfoTest, WhenPatchingBorderColorOffsetThenPatchIsAppliedCorrectly) {
     KernelInfo info;
-    SPatchSamplerStateArray samplerState;
-    samplerState.BorderColorOffset = 3;
-
-    info.patchInfo.samplerStateArray = nullptr;
-
     EXPECT_EQ(0u, info.getBorderColorOffset());
 
-    info.patchInfo.samplerStateArray = &samplerState;
-
+    SPatchSamplerStateArray samplerState = {};
+    samplerState.BorderColorOffset = 3;
+    samplerState.Count = 1;
+    populateKernelDescriptor(info.kernelDescriptor, samplerState);
     EXPECT_EQ(3u, info.getBorderColorOffset());
 }
 
@@ -3141,12 +3116,14 @@ TEST(KernelTest, givenKernelRequiringPrivateScratchSpaceWhenGettingSizeForPrivat
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
     MockKernelWithInternals mockKernel(*device);
+
     SPatchMediaVFEState mediaVFEstate;
+    mediaVFEstate.PerThreadScratchSpace = 512u;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
+
     SPatchMediaVFEState mediaVFEstateSlot1;
     mediaVFEstateSlot1.PerThreadScratchSpace = 1024u;
-    mediaVFEstate.PerThreadScratchSpace = 512u;
-    mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
-    mockKernel.kernelInfo.patchInfo.mediaVfeStateSlot1 = &mediaVFEstateSlot1;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstateSlot1, 1);
 
     EXPECT_EQ(1024u, mockKernel.mockKernel->getPrivateScratchSize(device->getRootDeviceIndex()));
 }
@@ -3155,7 +3132,6 @@ TEST(KernelTest, givenKernelWithoutMediaVfeStateSlot1WhenGettingSizeForPrivateSc
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
     MockKernelWithInternals mockKernel(*device);
-    mockKernel.kernelInfo.patchInfo.mediaVfeStateSlot1 = nullptr;
 
     EXPECT_EQ(0u, mockKernel.mockKernel->getPrivateScratchSize(device->getRootDeviceIndex()));
 }
@@ -3171,6 +3147,31 @@ TEST(KernelTest, givenKernelWithPatchInfoCollectionEnabledWhenPatchWithImplicitS
     uint64_t crossThreadData = 0;
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
     kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, device->getDevice(), patchToken);
+    EXPECT_EQ(1u, kernel.mockKernel->getPatchInfoDataList().size());
+}
+
+TEST(KernelTest, givenKernelWithPatchInfoCollecitonEnabledAndArgumentWithInvalidCrossThreadDataOffsetWhenPatchWithImplicitSurfaceCalledThenPatchInfoDataIsNotCollected) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockKernelWithInternals kernel(*device);
+    MockGraphicsAllocation mockAllocation;
+    ArgDescPointer arg;
+    uint64_t ptr = 0;
+    kernel.mockKernel->patchWithImplicitSurface(&ptr, mockAllocation, device->getDevice(), arg);
+    EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
+}
+
+TEST(KernelTest, givenKernelWithPatchInfoCollectionEnabledAndValidArgumentWhenPatchWithImplicitSurfaceCalledThenPatchInfoDataIsCollected) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockKernelWithInternals kernel(*device);
+    MockGraphicsAllocation mockAllocation;
+    ArgDescPointer arg;
+    arg.stateless = 0;
+    uint64_t crossThreadData = 0;
+    EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
+    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, device->getDevice(), arg);
     EXPECT_EQ(1u, kernel.mockKernel->getPatchInfoDataList().size());
 }
 
@@ -3234,7 +3235,7 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseWhenGettingStartOffse
     SPatchThreadPayload threadPayload = {};
 
     threadPayload.OffsetToSkipPerThreadDataLoad = 128u;
-    mockKernel.kernelInfo.patchInfo.threadPayload = &threadPayload;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, threadPayload);
 
     mockKernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
     auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
@@ -3253,7 +3254,7 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeTrueAndLocalIdsUsedWhenGet
     SPatchThreadPayload threadPayload = {};
 
     threadPayload.OffsetToSkipPerThreadDataLoad = 128u;
-    mockKernel.kernelInfo.patchInfo.threadPayload = &threadPayload;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, threadPayload);
 
     mockKernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
     auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
@@ -3272,7 +3273,7 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseAndLocalIdsNotUsedWhe
     SPatchThreadPayload threadPayload = {};
 
     threadPayload.OffsetToSkipPerThreadDataLoad = 128u;
-    mockKernel.kernelInfo.patchInfo.threadPayload = &threadPayload;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, threadPayload);
 
     mockKernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
     auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
@@ -3395,7 +3396,7 @@ TEST_F(KernelMultiRootDeviceTest, givenKernelWithPrivateSurfaceWhenInitializeThe
     tokenSPS.DataParamOffset = 40;
     tokenSPS.DataParamSize = 8;
     tokenSPS.PerThreadPrivateMemorySize = 112;
-    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &tokenSPS;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, tokenSPS);
 
     KernelInfoContainer kernelInfos;
     kernelInfos.resize(deviceFactory->rootDevices.size());

@@ -348,16 +348,13 @@ void Program::allocateBlockPrivateSurfaces(const ClDevice &clDevice) {
     for (uint32_t i = 0; i < blockCount; i++) {
         const KernelInfo *info = blockKernelManager->getBlockKernelInfo(i);
 
-        if (info->patchInfo.pAllocateStatelessPrivateSurface) {
-            auto perHwThreadPrivateMemorySize = PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(info->patchInfo.pAllocateStatelessPrivateSurface, info->getMaxSimdSize());
+        auto perHwThreadPrivateMemorySize = info->kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
+        if (perHwThreadPrivateMemorySize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
+            auto privateSize = static_cast<size_t>(KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, clDevice.getSharedDeviceInfo().computeUnitsUsedForScratch));
 
-            if (perHwThreadPrivateMemorySize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
-                auto privateSize = static_cast<size_t>(KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, clDevice.getSharedDeviceInfo().computeUnitsUsedForScratch));
-
-                auto *privateSurface = this->executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
-                    {rootDeviceIndex, privateSize, GraphicsAllocation::AllocationType::PRIVATE_SURFACE, clDevice.getDeviceBitfield()});
-                blockKernelManager->pushPrivateSurface(privateSurface, i);
-            }
+            auto *privateSurface = this->executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
+                {rootDeviceIndex, privateSize, GraphicsAllocation::AllocationType::PRIVATE_SURFACE, clDevice.getDeviceBitfield()});
+            blockKernelManager->pushPrivateSurface(privateSurface, i);
         }
     }
 }

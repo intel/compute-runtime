@@ -175,7 +175,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
     size_t sshUsed = blockedCommandsData->ssh->getUsed();
 
     size_t expectedSizeSSH = pKernel->getNumberOfBindingTableStates(rootDeviceIndex) * sizeof(RENDER_SURFACE_STATE) +
-                             pKernel->getKernelInfo(rootDeviceIndex).patchInfo.bindingTableState->Count * sizeof(BINDING_TABLE_STATE) +
+                             pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.bindingTable.numEntries * sizeof(BINDING_TABLE_STATE) +
                              UnitTestHelper<FamilyType>::getDefaultSshUsage();
 
     if ((pKernel->requiresSshForBuffers(rootDeviceIndex)) || (pKernel->getKernelInfo(rootDeviceIndex).patchInfo.imageMemObjKernelArgs.size() > 0)) {

@@ -587,8 +587,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
 
     constexpr uint32_t grfSize = sizeof(typename FamilyType::GRF);
     size_t localWorkSize = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
-    ASSERT_NE(nullptr, modifiedKernelInfo.patchInfo.threadPayload);
-    auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*modifiedKernelInfo.patchInfo.threadPayload);
+    auto numChannels = modifiedKernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
     size_t expectedIohSize = PerThreadDataHelper::getPerThreadDataSizeTotal(modifiedKernelInfo.getMaxSimdSize(), grfSize, numChannels, localWorkSize);
     ASSERT_LE(expectedIohSize, ioh.getUsed());
 
@@ -692,26 +691,26 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // define patch offsets for global, constant, private, event pool and default device queue surfaces
-    SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization AllocateStatelessGlobalMemorySurfaceWithInitialization;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.GlobalBufferIndex = 0;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.SurfaceStateHeapOffset = 0;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.DataParamOffset = 0;
-    AllocateStatelessGlobalMemorySurfaceWithInitialization.DataParamSize = 8;
-    pKernelInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization = &AllocateStatelessGlobalMemorySurfaceWithInitialization;
+    SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization allocateStatelessGlobalMemorySurfaceWithInitialization;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.GlobalBufferIndex = 0;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.SurfaceStateHeapOffset = 0;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.DataParamOffset = 0;
+    allocateStatelessGlobalMemorySurfaceWithInitialization.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessGlobalMemorySurfaceWithInitialization);
 
-    SPatchAllocateStatelessConstantMemorySurfaceWithInitialization AllocateStatelessConstantMemorySurfaceWithInitialization;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.ConstantBufferIndex = 0;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.SurfaceStateHeapOffset = 64;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.DataParamOffset = 8;
-    AllocateStatelessConstantMemorySurfaceWithInitialization.DataParamSize = 8;
-    pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization = &AllocateStatelessConstantMemorySurfaceWithInitialization;
+    SPatchAllocateStatelessConstantMemorySurfaceWithInitialization allocateStatelessConstantMemorySurfaceWithInitialization;
+    allocateStatelessConstantMemorySurfaceWithInitialization.ConstantBufferIndex = 0;
+    allocateStatelessConstantMemorySurfaceWithInitialization.SurfaceStateHeapOffset = 64;
+    allocateStatelessConstantMemorySurfaceWithInitialization.DataParamOffset = 8;
+    allocateStatelessConstantMemorySurfaceWithInitialization.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessConstantMemorySurfaceWithInitialization);
 
-    SPatchAllocateStatelessPrivateSurface AllocateStatelessPrivateMemorySurface;
-    AllocateStatelessPrivateMemorySurface.PerThreadPrivateMemorySize = 32;
-    AllocateStatelessPrivateMemorySurface.SurfaceStateHeapOffset = 128;
-    AllocateStatelessPrivateMemorySurface.DataParamOffset = 16;
-    AllocateStatelessPrivateMemorySurface.DataParamSize = 8;
-    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &AllocateStatelessPrivateMemorySurface;
+    SPatchAllocateStatelessPrivateSurface allocateStatelessPrivateMemorySurface;
+    allocateStatelessPrivateMemorySurface.PerThreadPrivateMemorySize = 32;
+    allocateStatelessPrivateMemorySurface.SurfaceStateHeapOffset = 128;
+    allocateStatelessPrivateMemorySurface.DataParamOffset = 16;
+    allocateStatelessPrivateMemorySurface.DataParamSize = 8;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessPrivateMemorySurface);
 
     SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;
     allocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 192;
@@ -767,14 +766,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
     bindingTableState.Count = 5;
     bindingTableState.Offset = btiOffset;
     bindingTableState.SurfaceStateOffset = 0;
-    pKernelInfo->patchInfo.bindingTableState = &bindingTableState;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, bindingTableState);
 
     // setup thread payload
-    SPatchThreadPayload threadPayload;
+    SPatchThreadPayload threadPayload = {};
     threadPayload.LocalIDXPresent = 1;
     threadPayload.LocalIDYPresent = 1;
     threadPayload.LocalIDZPresent = 1;
-    pKernelInfo->patchInfo.threadPayload = &threadPayload;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, threadPayload);
 
     // define stateful path
     pKernelInfo->usesSsh = true;
@@ -948,14 +947,86 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     bindingTableState.Count = 0;
     bindingTableState.Offset = 64;
     bindingTableState.SurfaceStateOffset = 0;
-    pKernelInfo->patchInfo.bindingTableState = &bindingTableState;
+    populateKernelDescriptor(pKernelInfo->kernelDescriptor, bindingTableState);
 
     dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
-    pKernelInfo->patchInfo.bindingTableState = nullptr;
-
     delete pKernel;
+}
+HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerStateArrayWhenSendIndirectStateIsCalledThenInterfaceDescriptorIsNotPopulated) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
+
+    auto &commandStream = cmdQ.getCS(1024);
+    auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
+    *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
+
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    const size_t localWorkSize = 256;
+    const size_t localWorkSizes[3]{localWorkSize, 1, 1};
+    uint32_t interfaceDescriptorIndex = 0;
+    auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex);
+
+    //Undefined Offset, Defined BorderColorOffset
+    SPatchSamplerStateArray samplerStateArray = {};
+    samplerStateArray.BorderColorOffset = 0;
+    samplerStateArray.Count = 2;
+    samplerStateArray.Offset = undefined<uint16_t>;
+    samplerStateArray.Size = sizeof(SPatchSamplerStateArray);
+    samplerStateArray.Token = 1;
+    populateKernelDescriptor(mockKernelWithInternal->kernelInfo.kernelDescriptor, samplerStateArray);
+
+    HardwareCommandsHelper<FamilyType>::sendIndirectState(
+        commandStream,
+        dsh,
+        ioh,
+        ssh,
+        *mockKernelWithInternal->mockKernel,
+        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
+        mockKernelWithInternal->mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize(),
+        localWorkSizes,
+        0,
+        interfaceDescriptorIndex,
+        pDevice->getPreemptionMode(),
+        pWalkerCmd,
+        nullptr,
+        true,
+        *pDevice);
+
+    auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
+    EXPECT_EQ(0U, interfaceDescriptor->getSamplerStatePointer());
+    EXPECT_EQ(0U, interfaceDescriptor->getSamplerCount());
+
+    //Defined Offset, Undefined BorderColorOffset
+    samplerStateArray.Offset = 0;
+    samplerStateArray.BorderColorOffset = undefined<uint16_t>;
+    populateKernelDescriptor(mockKernelWithInternal->kernelInfo.kernelDescriptor, samplerStateArray);
+
+    HardwareCommandsHelper<FamilyType>::sendIndirectState(
+        commandStream,
+        dsh,
+        ioh,
+        ssh,
+        *mockKernelWithInternal->mockKernel,
+        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
+        mockKernelWithInternal->mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize(),
+        localWorkSizes,
+        0,
+        interfaceDescriptorIndex,
+        pDevice->getPreemptionMode(),
+        pWalkerCmd,
+        nullptr,
+        true,
+        *pDevice);
+
+    interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
+    EXPECT_EQ(0U, interfaceDescriptor->getSamplerStatePointer());
+    EXPECT_EQ(0U, interfaceDescriptor->getSamplerCount());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgrammedThenBorderColorIsCorrectlyCopiedToDshAndSamplerStatesAreProgrammedWithPointer) {
@@ -979,20 +1050,18 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     const uint32_t borderColorSize = 64;
     const uint32_t samplerStateSize = sizeof(SAMPLER_STATE) * 2;
 
-    SPatchSamplerStateArray samplerStateArray;
+    SPatchSamplerStateArray samplerStateArray = {};
     samplerStateArray.BorderColorOffset = 0x0;
     samplerStateArray.Count = 2;
     samplerStateArray.Offset = borderColorSize;
     samplerStateArray.Size = samplerStateSize;
     samplerStateArray.Token = 1;
+    populateKernelDescriptor(mockKernelWithInternal->kernelInfo.kernelDescriptor, samplerStateArray);
 
     char *mockDsh = new char[(borderColorSize + samplerStateSize) * 4];
-
     memset(mockDsh, 6, borderColorSize);
     memset(mockDsh + borderColorSize, 8, borderColorSize);
-
     mockKernelWithInternal->kernelInfo.heapInfo.pDsh = mockDsh;
-    mockKernelWithInternal->kernelInfo.patchInfo.samplerStateArray = &samplerStateArray;
 
     uint64_t interfaceDescriptorTableOffset = dsh.getUsed();
     dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
@@ -1100,7 +1169,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, WhenGettingSizeR
         totalSize += pBlockInfo->heapInfo.SurfaceStateHeapSize;
         totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
-        maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState ? pBlockInfo->patchInfo.bindingTableState->Count : 0);
+        maxBindingTableCount = std::max(maxBindingTableCount, static_cast<uint32_t>(pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.numEntries));
     }
 
     totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
@@ -1128,22 +1197,21 @@ HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineT
     DebugManager.flags.EnablePassInlineData.set(1u);
 
     uint32_t crossThreadData[8];
-
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->PassInlineData = 1;
+    mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.flags.passInlineData = true;
     mockKernelWithInternal->mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 
     EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
 HWTEST_F(HardwareCommandsTest, givenNoDebugSettingsWhenDefaultModeIsExcercisedThenWeFollowKernelSettingForInlineProgramming) {
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->PassInlineData = 1;
+    mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.flags.passInlineData = true;
     EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
 HWTEST_F(HardwareCommandsTest, givenDisabledPassInlineDataWhenKernelAllowsInlineThenReturnFalse) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnablePassInlineData.set(0u);
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->PassInlineData = 1;
+    mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.flags.passInlineData = true;
     EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
@@ -1153,41 +1221,19 @@ HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelDisallowsInli
 
     uint32_t crossThreadData[8];
 
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->PassInlineData = 0;
+    mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.flags.passInlineData = false;
     mockKernelWithInternal->mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 
     EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
-HWTEST_F(HardwareCommandsTest, whenLocalIdxInXDimPresentThenExpectLocalIdsInUseIsTrue) {
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDXPresent = 1;
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 0;
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 0;
-
+HWTEST_F(HardwareCommandsTest, whenNumLocalIdsIsBiggerThanZeroThenExpectLocalIdsInUseIsTrue) {
+    mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels = 1;
     EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 
-HWTEST_F(HardwareCommandsTest, whenLocalIdxInYDimPresentThenExpectLocalIdsInUseIsTrue) {
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDXPresent = 0;
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 1;
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 0;
-
-    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
-}
-
-HWTEST_F(HardwareCommandsTest, whenLocalIdxInZDimPresentThenExpectLocalIdsInUseIsTrue) {
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDXPresent = 0;
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 0;
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 1;
-
-    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
-}
-
-HWTEST_F(HardwareCommandsTest, whenLocalIdxAreNotPresentThenExpectLocalIdsInUseIsFalse) {
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDXPresent = 0;
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 0;
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal->kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 0;
-
+HWTEST_F(HardwareCommandsTest, whenNumLocalIdsIsZeroThenExpectLocalIdsInUseIsFalse) {
+    mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels = 0;
     EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex));
 }
 

@@ -64,6 +64,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     void SetUpT() {
         SyncBufferEnqueueHandlerTest::SetUp();
         kernelInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, context);
+        kernelInternals->kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
         kernel = kernelInternals->mockKernel;
         kernel->executionType = KernelExecutionType::Concurrent;
         commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
@@ -81,7 +82,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         sPatchAllocateSyncBuffer.SurfaceStateHeapOffset = 0;
         sPatchAllocateSyncBuffer.DataParamOffset = 0;
         sPatchAllocateSyncBuffer.DataParamSize = sizeof(uint8_t);
-        kernelInternals->kernelInfo.patchInfo.pAllocateSyncBuffer = &sPatchAllocateSyncBuffer;
+        populateKernelDescriptor(kernelInternals->kernelInfo.kernelDescriptor, sPatchAllocateSyncBuffer);
     }
 
     MockSyncBufferHandler *getSyncBufferHandler() {
@@ -176,6 +177,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSshRequiredWhenPatchingSyncBuffer
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     kernelInternals->kernelInfo.usesSsh = true;
     kernelInternals->kernelInfo.requiresSshForBuffers = true;
+    kernelInternals->kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindfulAndStateless;
     patchAllocateSyncBuffer();
 
     pClDevice->allocateSyncBufferHandler();

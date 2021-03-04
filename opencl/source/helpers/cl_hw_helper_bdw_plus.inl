@@ -19,7 +19,7 @@ inline cl_command_queue_capabilities_intel ClHwHelperHw<GfxFamily>::getAdditiona
 
 template <typename GfxFamily>
 cl_ulong ClHwHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelInfo &kernelInfo) const {
-    return kernelInfo.patchInfo.pAllocateStatelessPrivateSurface ? kernelInfo.patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize : 0;
+    return kernelInfo.kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
 }
 
 } // namespace NEO

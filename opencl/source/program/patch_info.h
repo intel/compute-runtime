@@ -48,26 +48,10 @@ using iOpenCL::SPatchThreadPayload;
 using iOpenCL::SProgramBinaryHeader;
 
 struct PatchInfo {
-    const SPatchMediaInterfaceDescriptorLoad *interfaceDescriptorDataLoad = nullptr;
-    const SPatchAllocateLocalSurface *localsurface = nullptr;
-    const SPatchMediaVFEState *mediavfestate = nullptr;
-    const SPatchMediaVFEState *mediaVfeStateSlot1 = nullptr;
-    const SPatchInterfaceDescriptorData *interfaceDescriptorData = nullptr;
-    const SPatchSamplerStateArray *samplerStateArray = nullptr;
-    const SPatchBindingTableState *bindingTableState = nullptr;
-    ::std::vector<const SPatchDataParameterBuffer *> dataParameterBuffersKernelArgs;
     ::std::vector<const SPatchStatelessGlobalMemoryObjectKernelArgument *>
         statelessGlobalMemObjKernelArgs;
     ::std::vector<const SPatchImageMemoryObjectKernelArgument *>
         imageMemObjKernelArgs;
-    const SPatchDataParameterStream *dataParameterStream = nullptr;
-    const SPatchThreadPayload *threadPayload = nullptr;
-    const SPatchKernelAttributesInfo *pKernelAttributesInfo = nullptr;
-    const SPatchAllocateStatelessPrivateSurface *pAllocateStatelessPrivateSurface = nullptr;
-    const SPatchAllocateSyncBuffer *pAllocateSyncBuffer = nullptr;
-    const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization *pAllocateStatelessConstantMemorySurfaceWithInitialization = nullptr;
-    const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization *pAllocateStatelessGlobalMemorySurfaceWithInitialization = nullptr;
-    const SPatchAllocateSystemThreadSurface *pAllocateSystemThreadSurface = nullptr;
 };
 
 } // namespace NEO

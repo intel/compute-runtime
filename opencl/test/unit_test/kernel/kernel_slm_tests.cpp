@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,21 +22,22 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
         ClDeviceFixture::SetUp();
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
+        SPatchDataParameterStream dataParameterStream = {};
         memset(&dataParameterStream, 0, sizeof(dataParameterStream));
         dataParameterStream.DataParameterStreamSize = sizeof(crossThreadData);
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, dataParameterStream);
 
+        SPatchThreadPayload threadPayload;
         memset(&threadPayload, 0, sizeof(threadPayload));
         threadPayload.LocalIDXPresent = 1;
         threadPayload.LocalIDYPresent = 1;
         threadPayload.LocalIDZPresent = 1;
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, threadPayload);
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
-        kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
 
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
-
-        kernelInfo.patchInfo.threadPayload = &threadPayload;
     }
     void TearDown() override {
         ClDeviceFixture::TearDown();
@@ -48,8 +49,6 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
     std::unique_ptr<MockProgram> program;
 
     SKernelBinaryHeaderCommon kernelHeader;
-    SPatchDataParameterStream dataParameterStream;
-    SPatchThreadPayload threadPayload;
     KernelInfo kernelInfo;
 
     uint32_t kernelIsa[32];

@@ -217,11 +217,11 @@ class Kernel : public BaseObject<_cl_kernel> {
     Program *getProgram() const { return program; }
 
     uint32_t getScratchSize(uint32_t rootDeviceIndex) {
-        return getKernelInfo(rootDeviceIndex).patchInfo.mediavfestate ? getKernelInfo(rootDeviceIndex).patchInfo.mediavfestate->PerThreadScratchSpace : 0;
+        return getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
     }
 
     uint32_t getPrivateScratchSize(uint32_t rootDeviceIndex) {
-        return getKernelInfo(rootDeviceIndex).patchInfo.mediaVfeStateSlot1 ? getKernelInfo(rootDeviceIndex).patchInfo.mediaVfeStateSlot1->PerThreadScratchSpace : 0;
+        return getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
     }
 
     void createReflectionSurface();
@@ -335,9 +335,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     KernelExecutionType getExecutionType() const {
         return executionType;
     }
-    bool isUsingSyncBuffer(uint32_t rootDeviceIndex) const {
-        return (getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSyncBuffer != nullptr);
-    }
 
     bool checkIfIsParentKernelAndBlocksUsesPrintf();
 
@@ -345,18 +342,8 @@ class Kernel : public BaseObject<_cl_kernel> {
         return getKernelInfo(rootDeviceIndex).gpuPointerSize == 4;
     }
 
-    int32_t getDebugSurfaceBti(uint32_t rootDeviceIndex) const {
-        if (getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface) {
-            return getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface->BTI;
-        }
-        return -1;
-    }
-
     size_t getPerThreadSystemThreadSurfaceSize(uint32_t rootDeviceIndex) const {
-        if (getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface) {
-            return getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize;
-        }
-        return 0;
+        return getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.perThreadSystemThreadSurfaceSize;
     }
 
     std::vector<PatchInfoData> &getPatchInfoDataList() { return patchInfoDataList; };
@@ -496,6 +483,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void *patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, GraphicsAllocation *svmAlloc, uint32_t rootDeviceIndex);
 
+    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const Device &device, const ArgDescPointer &arg);
     // Sets-up both crossThreadData and ssh for given implicit (private/constant, etc.) allocation
     template <typename PatchTokenT>
     void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const Device &device, const PatchTokenT &patch);

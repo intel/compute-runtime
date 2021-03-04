@@ -13,6 +13,7 @@
 #include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
 #include "patch_shared.h"
@@ -26,22 +27,22 @@ struct PerThreadDataTests : public ClDeviceFixture,
     void SetUp() override {
         ClDeviceFixture::SetUp();
 
-        threadPayload = {};
+        SPatchThreadPayload threadPayload = {};
         threadPayload.LocalIDXPresent = localIdX ? 1 : 0;
         threadPayload.LocalIDYPresent = localIdY ? 1 : 0;
         threadPayload.LocalIDZPresent = localIdZ ? 1 : 0;
         threadPayload.LocalIDFlattenedPresent = flattenedId;
         threadPayload.UnusedPerThreadConstantPresent =
             !(localIdX || localIdY || localIdZ || flattenedId);
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, threadPayload);
 
-        kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+        simd = 32;
+        kernelInfo.kernelDescriptor.kernelAttributes.simdSize = simd;
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
 
-        kernelInfo.patchInfo.threadPayload = &threadPayload;
-
-        simd = kernelInfo.getMaxSimdSize();
+        kernelInfo.kernelDescriptor.kernelAttributes.simdSize = kernelInfo.getMaxSimdSize();
         numChannels = threadPayload.LocalIDXPresent +
                       threadPayload.LocalIDYPresent +
                       threadPayload.LocalIDZPresent;
@@ -66,7 +67,6 @@ struct PerThreadDataTests : public ClDeviceFixture,
     size_t indirectHeapMemorySize;
 
     SKernelBinaryHeaderCommon kernelHeader;
-    SPatchThreadPayload threadPayload;
     KernelInfo kernelInfo;
 };
 
@@ -121,22 +121,20 @@ HWTEST_F(PerThreadDataXYZTests, Given2x4x8WhenSendingPerThreadDataThenCorrectAmo
 }
 
 HWTEST_F(PerThreadDataXYZTests, GivenDifferentSimdWhenGettingThreadPayloadSizeThenCorrectSizeIsReturned) {
-    simd = 32;
-    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 2u * 3u, size);
 
-    simd = 16;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 3u, size);
 
-    simd = 16;
-    threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.perThreadDataHeaderIsPresent = true;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 4u, size);
 
-    simd = 16;
-    threadPayload.UnusedPerThreadConstantPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent = true;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 5u, size);
 }
 
@@ -181,39 +179,36 @@ HWTEST_F(PerThreadDataNoIdsTests, GivenThreadPaylodDataWithoutLocalIdsWhenSendin
 }
 
 HWTEST_F(PerThreadDataNoIdsTests, GivenSimdWhenGettingThreadPayloadSizeThenCorrectValueIsReturned) {
-    simd = 32;
-    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize, size);
 
-    simd = 16;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize, size);
 
-    simd = 16;
-    threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.perThreadDataHeaderIsPresent = true;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 2u, size);
 }
 
 typedef PerThreadDataTests<false, false, false, true> PerThreadDataFlattenedIdsTests;
 
 HWTEST_F(PerThreadDataFlattenedIdsTests, GivenSimdWhenGettingThreadPayloadSizeThenCorrectValueIsReturned) {
-    simd = 32;
-    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 2u, size);
 
-    simd = 16;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize, size);
 
-    simd = 16;
-    threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.perThreadDataHeaderIsPresent = true;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 2u, size);
 
-    simd = 32;
-    threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+    size = PerThreadDataHelper::getThreadPayloadSize(kernelInfo.kernelDescriptor, grfSize);
     EXPECT_EQ(grfSize * 3u, size);
 }
 
@@ -226,7 +221,7 @@ TEST(PerThreadDataTest, WhenSettingLocalIdsInPerThreadDataThenIdsAreSetInCorrect
     const std::array<uint16_t, 3> localWorkSizes = {{24, 1, 1}};
     const std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};
 
-    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize, grfSize);
+    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, grfSize, numChannels, localWorkSize);
 
     auto sizeOverSizedBuffer = sizePerThreadDataTotal * 4;
     auto buffer = static_cast<char *>(alignedMalloc(sizeOverSizedBuffer, 16));

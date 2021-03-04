@@ -495,14 +495,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameScra
     HardwareParse hwParser;
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
-
-    SPatchMediaVFEState mediaVFEstate;
     uint32_t scratchSize = 4096u;
 
-    mediaVFEstate.PerThreadScratchSpace = scratchSize;
-
     MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
+
+    SPatchMediaVFEState mediaVFEstate;
+    mediaVFEstate.PerThreadScratchSpace = scratchSize;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
     auto sizeToProgram = PreambleHelper<FamilyType>::getScratchSizeValueToProgramMediaVfeState(scratchSize);
 
@@ -536,14 +535,13 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueingKernelThatRequirePrivateScratchThenPri
     csr.getMemoryManager()->setForce32BitAllocations(false);
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
-
-    SPatchMediaVFEState mediaVFEstate;
     uint32_t privateScratchSize = 4096u;
 
-    mediaVFEstate.PerThreadScratchSpace = privateScratchSize;
-
     MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.patchInfo.mediaVfeStateSlot1 = &mediaVFEstate;
+
+    SPatchMediaVFEState mediaVFEstate;
+    mediaVFEstate.PerThreadScratchSpace = privateScratchSize;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 1);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 

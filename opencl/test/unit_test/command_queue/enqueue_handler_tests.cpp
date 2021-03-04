@@ -571,8 +571,8 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
         MockKernelWithInternals kernelInternals{*pClDevice, context};
         kernelInternals.kernelInfo.usesSsh = true;
         kernelInternals.kernelInfo.requiresSshForBuffers = true;
-        kernelInternals.kernelInfo.patchInfo.pAllocateSyncBuffer = &sPatchAllocateSyncBuffer;
-        kernelInternals.kernelInfo.patchInfo.bindingTableState = &sPatchBindingTableState;
+        populateKernelDescriptor(kernelInternals.kernelInfo.kernelDescriptor, sPatchAllocateSyncBuffer);
+        populateKernelDescriptor(kernelInternals.kernelInfo.kernelDescriptor, sPatchBindingTableState);
         kernelInternals.kernelInfo.heapInfo.SurfaceStateHeapSize = sizeof(RENDER_SURFACE_STATE) + sizeof(BINDING_TABLE_STATE);
         auto kernel = kernelInternals.mockKernel;
         kernel->initialize();

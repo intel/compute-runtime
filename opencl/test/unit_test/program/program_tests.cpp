@@ -1341,7 +1341,6 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
 
     auto pKernelInfo = pProgram->getKernelInfo("test", rootDeviceIndex);
 
-    EXPECT_NE(nullptr, pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization);
     ASSERT_NE(nullptr, pProgram->getConstantSurface(pClDevice->getRootDeviceIndex()));
 
     uint32_t expected_values[] = {0xabcd5432u, 0xaabb5533u};
@@ -1377,7 +1376,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
 
     auto crossThreadData = pKernel->getCrossThreadData(rootDeviceIndex);
     uint32_t *constBuffGpuAddr = reinterpret_cast<uint32_t *>(pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex())->getGpuAddressToPatch());
-    uintptr_t *pDst = reinterpret_cast<uintptr_t *>(crossThreadData + pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization->DataParamOffset);
+    uintptr_t *pDst = reinterpret_cast<uintptr_t *>(crossThreadData + pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
 
     EXPECT_EQ(*pDst, reinterpret_cast<uintptr_t>(constBuffGpuAddr));
 
@@ -1406,7 +1405,6 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
 
     auto pKernelInfo = pProgram->getKernelInfo("test", rootDeviceIndex);
 
-    ASSERT_NE(nullptr, pKernelInfo->patchInfo.dataParameterStream);
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.globalWorkSizeOffsets[0]);
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.globalWorkSizeOffsets[1]);
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.globalWorkSizeOffsets[2]);
@@ -1425,14 +1423,12 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenLwsIsSet) {
 
     auto pKernelInfo = pProgram->getKernelInfo("test", rootDeviceIndex);
 
-    ASSERT_NE(nullptr, pKernelInfo->patchInfo.dataParameterStream);
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.localWorkSizeOffsets[0]);
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.localWorkSizeOffsets[1]);
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.localWorkSizeOffsets[2]);
 
     pKernelInfo = pProgram->getKernelInfo("test_get_local_size", rootDeviceIndex);
 
-    ASSERT_NE(nullptr, pKernelInfo->patchInfo.dataParameterStream);
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.localWorkSizeOffsets[0]);
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.localWorkSizeOffsets[1]);
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.localWorkSizeOffsets[2]);
@@ -2072,14 +2068,14 @@ TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfaces
 
     KernelInfo *infoBlock = new KernelInfo;
 
-    SPatchAllocateStatelessPrivateSurface *privateSurfaceBlock = new SPatchAllocateStatelessPrivateSurface;
-    privateSurfaceBlock->DataParamOffset = crossThreadOffsetBlock;
-    privateSurfaceBlock->DataParamSize = 8;
-    privateSurfaceBlock->Size = 8;
-    privateSurfaceBlock->SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock->Token = 0;
-    privateSurfaceBlock->PerThreadPrivateMemorySize = 0;
-    infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock;
+    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
+    privateSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
+    privateSurfaceBlock.DataParamSize = 8;
+    privateSurfaceBlock.Size = 8;
+    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
+    privateSurfaceBlock.Token = 0;
+    privateSurfaceBlock.PerThreadPrivateMemorySize = 0;
+    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
@@ -2087,7 +2083,6 @@ TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfaces
 
     EXPECT_EQ(nullptr, program->getBlockKernelManager()->getPrivateSurface(0));
 
-    delete privateSurfaceBlock;
     delete program;
 }
 
@@ -2098,14 +2093,14 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 
     KernelInfo *infoBlock = new KernelInfo;
 
-    SPatchAllocateStatelessPrivateSurface *privateSurfaceBlock = new SPatchAllocateStatelessPrivateSurface;
-    privateSurfaceBlock->DataParamOffset = crossThreadOffsetBlock;
-    privateSurfaceBlock->DataParamSize = 8;
-    privateSurfaceBlock->Size = 8;
-    privateSurfaceBlock->SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock->Token = 0;
-    privateSurfaceBlock->PerThreadPrivateMemorySize = 1000;
-    infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock;
+    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
+    privateSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
+    privateSurfaceBlock.DataParamSize = 8;
+    privateSurfaceBlock.Size = 8;
+    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
+    privateSurfaceBlock.Token = 0;
+    privateSurfaceBlock.PerThreadPrivateMemorySize = 1000;
+    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
@@ -2113,7 +2108,6 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 
     EXPECT_NE(nullptr, program->getBlockKernelManager()->getPrivateSurface(0));
 
-    delete privateSurfaceBlock;
     delete program;
 }
 
@@ -2124,14 +2118,14 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 
     KernelInfo *infoBlock = new KernelInfo;
 
-    SPatchAllocateStatelessPrivateSurface *privateSurfaceBlock = new SPatchAllocateStatelessPrivateSurface;
-    privateSurfaceBlock->DataParamOffset = crossThreadOffsetBlock;
-    privateSurfaceBlock->DataParamSize = 8;
-    privateSurfaceBlock->Size = 8;
-    privateSurfaceBlock->SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock->Token = 0;
-    privateSurfaceBlock->PerThreadPrivateMemorySize = 1000;
-    infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock;
+    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
+    privateSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
+    privateSurfaceBlock.DataParamSize = 8;
+    privateSurfaceBlock.Size = 8;
+    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
+    privateSurfaceBlock.Token = 0;
+    privateSurfaceBlock.PerThreadPrivateMemorySize = 1000;
+    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
@@ -2147,7 +2141,6 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 
     EXPECT_EQ(privateSurface, privateSurface2);
 
-    delete privateSurfaceBlock;
     delete program;
 }
 
@@ -2158,14 +2151,14 @@ TEST_F(ProgramTests, givenProgramWithBlockKernelsWhenfreeBlockResourcesisCalledT
 
     KernelInfo *infoBlock = new KernelInfo;
 
-    SPatchAllocateStatelessPrivateSurface *privateSurfaceBlock = new SPatchAllocateStatelessPrivateSurface;
-    privateSurfaceBlock->DataParamOffset = crossThreadOffsetBlock;
-    privateSurfaceBlock->DataParamSize = 8;
-    privateSurfaceBlock->Size = 8;
-    privateSurfaceBlock->SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock->Token = 0;
-    privateSurfaceBlock->PerThreadPrivateMemorySize = 1000;
-    infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock;
+    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
+    privateSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
+    privateSurfaceBlock.DataParamSize = 8;
+    privateSurfaceBlock.Size = 8;
+    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
+    privateSurfaceBlock.Token = 0;
+    privateSurfaceBlock.PerThreadPrivateMemorySize = 1000;
+    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
@@ -2176,7 +2169,6 @@ TEST_F(ProgramTests, givenProgramWithBlockKernelsWhenfreeBlockResourcesisCalledT
 
     program->freeBlockResources();
 
-    delete privateSurfaceBlock;
     delete program;
 }
 
@@ -2964,17 +2956,16 @@ using ProgramMultiRootDeviceTests = MultiRootDeviceFixture;
 
 TEST_F(ProgramMultiRootDeviceTests, WhenPrivateSurfaceIsCreatedThenItHasCorrectRootDeviceIndex) {
     auto program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*device1));
-
-    auto privateSurfaceBlock = std::make_unique<SPatchAllocateStatelessPrivateSurface>();
-    privateSurfaceBlock->DataParamOffset = 0;
-    privateSurfaceBlock->DataParamSize = 8;
-    privateSurfaceBlock->Size = 8;
-    privateSurfaceBlock->SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock->Token = 0;
-    privateSurfaceBlock->PerThreadPrivateMemorySize = 1000;
-
     auto infoBlock = std::make_unique<KernelInfo>();
-    infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock.get();
+
+    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
+    privateSurfaceBlock.DataParamOffset = 0;
+    privateSurfaceBlock.DataParamSize = 8;
+    privateSurfaceBlock.Size = 8;
+    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
+    privateSurfaceBlock.Token = 0;
+    privateSurfaceBlock.PerThreadPrivateMemorySize = 1000;
+    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock.release());
     program->allocateBlockPrivateSurfaces(*device1);

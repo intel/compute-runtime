@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -256,7 +256,7 @@ uint64_t DeviceQueueHw<GfxFamily>::getBlockKernelStartPointer(const Device &devi
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     if (blockAllocation && isCcsUsed && hwHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
-        blockKernelStartPointer += blockInfo->patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
+        blockKernelStartPointer += blockInfo->kernelDescriptor.entryPoints.skipSetFFIDGP;
     }
     return blockKernelStartPointer;
 }

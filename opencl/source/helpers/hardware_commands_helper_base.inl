@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,18 +35,14 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(
     const Kernel &kernel) {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-    const auto &patchInfo = kernel.getKernelInfo(rootDeviceIndex).patchInfo;
-    auto samplerCount = patchInfo.samplerStateArray
-                            ? patchInfo.samplerStateArray->Count
-                            : 0;
+    const auto &samplerTable = kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.samplerTable;
+
+    auto samplerCount = samplerTable.numSamplers;
     auto totalSize = samplerCount
                          ? alignUp(samplerCount * sizeof(SAMPLER_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE)
                          : 0;
 
-    auto borderColorSize = patchInfo.samplerStateArray
-                               ? patchInfo.samplerStateArray->Offset - patchInfo.samplerStateArray->BorderColorOffset
-                               : 0;
-
+    auto borderColorSize = samplerTable.borderColor;
     borderColorSize = alignUp(borderColorSize + EncodeStates<GfxFamily>::alignIndirectStatePointer - 1,
                               EncodeStates<GfxFamily>::alignIndirectStatePointer);
 
@@ -63,14 +59,12 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(
     const Kernel &kernel,
     size_t localWorkSize) {
     typedef typename GfxFamily::WALKER_TYPE WALKER_TYPE;
+    const auto &kernelInfo = kernel.getKernelInfo(rootDeviceIndex);
 
-    auto threadPayload = kernel.getKernelInfo(rootDeviceIndex).patchInfo.threadPayload;
-    DEBUG_BREAK_IF(nullptr == threadPayload);
-
-    auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
+    auto numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
     uint32_t grfSize = sizeof(typename GfxFamily::GRF);
     return alignUp((kernel.getCrossThreadDataSize(rootDeviceIndex) +
-                    getPerThreadDataSizeTotal(kernel.getKernelInfo(rootDeviceIndex).getMaxSimdSize(), grfSize, numChannels, localWorkSize)),
+                    getPerThreadDataSizeTotal(kernelInfo.getMaxSimdSize(), grfSize, numChannels, localWorkSize)),
                    WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 }
 
@@ -132,7 +126,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kern
         totalSize += pBlockInfo->heapInfo.SurfaceStateHeapSize;
         totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
-        maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState->Count);
+        maxBindingTableCount = std::max(maxBindingTableCount, static_cast<uint32_t>(pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.numEntries));
     }
 
     SchedulerKernel &scheduler = kernel.getContext().getSchedulerKernel();
@@ -233,31 +227,28 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
 
     // Copy the kernel over to the ISH
     const auto &kernelInfo = kernel.getKernelInfo(rootDeviceIndex);
-    const auto &patchInfo = kernelInfo.patchInfo;
 
     ssh.align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
     kernel.patchBindlessSurfaceStateOffsets(device, ssh.getUsed());
 
-    auto dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh, (kernelInfo.patchInfo.bindingTableState != nullptr) ? kernelInfo.patchInfo.bindingTableState->Count : 0,
+    auto dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh, kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries,
                                                                                                   kernel.getSurfaceStateHeap(rootDeviceIndex), kernel.getSurfaceStateHeapSize(rootDeviceIndex),
                                                                                                   kernel.getNumberOfBindingTableStates(rootDeviceIndex), kernel.getBindingTableOffset(rootDeviceIndex));
 
     // Copy our sampler state if it exists
-    uint32_t samplerStateOffset = 0;
+    const auto &samplerTable = kernelInfo.kernelDescriptor.payloadMappings.samplerTable;
     uint32_t samplerCount = 0;
-    if (patchInfo.samplerStateArray) {
-        samplerCount = patchInfo.samplerStateArray->Count;
-        samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, patchInfo.samplerStateArray->Offset,
-                                                                       samplerCount, patchInfo.samplerStateArray->BorderColorOffset,
+    uint32_t samplerStateOffset = 0;
+    if (isValidOffset(samplerTable.tableOffset) && isValidOffset(samplerTable.borderColor)) {
+        samplerCount = samplerTable.numSamplers;
+        samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, samplerTable.tableOffset,
+                                                                       samplerCount, samplerTable.borderColor,
                                                                        kernel.getDynamicStateHeap(rootDeviceIndex), device.getBindlessHeapsHelper());
     }
 
-    auto threadPayload = kernelInfo.patchInfo.threadPayload;
-    DEBUG_BREAK_IF(nullptr == threadPayload);
-
     auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];
     auto threadsPerThreadGroup = static_cast<uint32_t>(getThreadsPerWG(simd, localWorkItems));
-    auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
+    auto numChannels = static_cast<uint32_t>(kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels);
 
     uint32_t sizeCrossThreadData = kernel.getCrossThreadDataSize(rootDeviceIndex);
 
@@ -348,16 +339,14 @@ bool HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kern
         checkKernelForInlineData = !!DebugManager.flags.EnablePassInlineData.get();
     }
     if (checkKernelForInlineData) {
-        return kernel.getKernelInfo(rootDeviceIndex).patchInfo.threadPayload->PassInlineData;
+        return kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.flags.passInlineData;
     }
     return false;
 }
 
 template <typename GfxFamily>
 bool HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(const Kernel &kernel, uint32_t rootDeviceIndex) {
-    return (kernel.getKernelInfo(rootDeviceIndex).patchInfo.threadPayload->LocalIDXPresent ||
-            kernel.getKernelInfo(rootDeviceIndex).patchInfo.threadPayload->LocalIDYPresent ||
-            kernel.getKernelInfo(rootDeviceIndex).patchInfo.threadPayload->LocalIDZPresent);
+    return kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.numLocalIdChannels > 0;
 }
 
 } // namespace NEO

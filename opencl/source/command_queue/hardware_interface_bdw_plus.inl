@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,10 +105,10 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         true,
         commandQueue.getDevice());
 
-    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, globalOffsets, startWorkGroups,
+    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor,
+                                                           globalOffsets, startWorkGroups,
                                                            numWorkGroups, localWorkSizes, simd, dim,
-                                                           false, false,
-                                                           *kernel.getKernelInfo(rootDeviceIndex).patchInfo.threadPayload, 0u);
+                                                           false, false, 0u);
 
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd);
     *walkerCmdBuf = walkerCmd;

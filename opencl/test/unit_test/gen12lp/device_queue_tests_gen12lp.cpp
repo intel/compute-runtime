@@ -21,13 +21,13 @@ GEN12LPTEST_F(DeviceQueueHwTest, givenDeviceQueueWhenRunningOnCCsThenFfidSkipOff
     KernelInfo *blockInfo = const_cast<KernelInfo *>(mockParentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0));
     blockInfo->createKernelAllocation(device->getDevice(), false);
     ASSERT_NE(nullptr, blockInfo->getGraphicsAllocation());
-    const_cast<SPatchThreadPayload *>(blockInfo->patchInfo.threadPayload)->OffsetToSkipSetFFIDGP = 0x1234;
+    blockInfo->kernelDescriptor.entryPoints.skipSetFFIDGP = 0x1234;
 
     auto &hwInfo = const_cast<HardwareInfo &>(device->getHardwareInfo());
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
 
-    uint64_t expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch() + blockInfo->patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
+    uint64_t expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch() + blockInfo->kernelDescriptor.entryPoints.skipSetFFIDGP;
     uint64_t offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(device->getDevice(), blockInfo, true);
     EXPECT_EQ(expectedOffset, offset);
 

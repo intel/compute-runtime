@@ -592,10 +592,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
 
     size_t GWS = 1;
     uint32_t scratchSize = 1024;
-    SPatchMediaVFEState mediaVFEstate;
 
+    SPatchMediaVFEState mediaVFEstate;
     mediaVFEstate.PerThreadScratchSpace = scratchSize;
-    kernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
+    populateKernelDescriptor(kernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
     EXPECT_EQ(false, kernel.mockKernel->isBuiltIn);
 
@@ -667,6 +667,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     //now re-try to see if SBA is not programmed
     scratchSize *= 2;
     mediaVFEstate.PerThreadScratchSpace = scratchSize;
+    populateKernelDescriptor(kernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
 
@@ -707,10 +708,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
 
     size_t GWS = 1;
     uint32_t scratchSize = 1024;
-    SPatchMediaVFEState mediaVFEstate;
 
+    SPatchMediaVFEState mediaVFEstate;
     mediaVFEstate.PerThreadScratchSpace = scratchSize;
-    kernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
+    populateKernelDescriptor(kernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
     EXPECT_EQ(false, kernel.mockKernel->isBuiltIn);
 

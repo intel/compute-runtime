@@ -193,8 +193,7 @@ HWTEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithSetBindingTableStateAnd
     SPatchBindingTableState bindingTableStateInfo;
     bindingTableStateInfo.Offset = 0;
     bindingTableStateInfo.Count = 4;
-
-    info.patchInfo.bindingTableState = &bindingTableStateInfo;
+    populateKernelDescriptor(info.kernelDescriptor, bindingTableStateInfo);
 
     BINDING_TABLE_STATE bindingTableState[4];
 
@@ -245,8 +244,7 @@ HWTEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBindingTableStateAndIma
     SPatchBindingTableState bindingTableStateInfo;
     bindingTableStateInfo.Offset = 0;
     bindingTableStateInfo.Count = 0;
-
-    info.patchInfo.bindingTableState = &bindingTableStateInfo;
+    populateKernelDescriptor(info.kernelDescriptor, bindingTableStateInfo);
 
     BINDING_TABLE_STATE bindingTableState[1];
 
@@ -347,8 +345,9 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBufferAndDataParameterBuf
     dataParameterBuffer.SourceOffset = 0;
     dataParameterBuffer.Type = iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT;
 
-    info.patchInfo.dataParameterBuffersKernelArgs.push_back(&dataParameterBuffer);
     info.storeKernelArgument(&dataParameterBuffer);
+    info.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    populateKernelArgDescriptor(info.kernelDescriptor, 0, dataParameterBuffer);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
     uint64_t tokenMask = 0;
@@ -659,14 +658,14 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNoKernelArgsWhenObtainingKernelRefl
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;
     dataParameterStream.DataParameterStreamSize = 0;
-    info.patchInfo.dataParameterStream = &dataParameterStream;
+    populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
 
     SPatchBindingTableState bindingTableState;
     bindingTableState.Count = 0;
     bindingTableState.Offset = 0;
     bindingTableState.Size = 0;
     bindingTableState.SurfaceStateOffset = 0;
-    info.patchInfo.bindingTableState = &bindingTableState;
+    populateKernelDescriptor(info.kernelDescriptor, bindingTableState);
 
     KernelInfoContainer kernelInfos;
     kernelInfos.push_back(&info);
@@ -712,14 +711,14 @@ TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKe
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;
     dataParameterStream.DataParameterStreamSize = 0;
-    info.patchInfo.dataParameterStream = &dataParameterStream;
+    populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
 
     SPatchBindingTableState bindingTableState;
     bindingTableState.Count = 0;
     bindingTableState.Offset = 0;
     bindingTableState.Size = 0;
     bindingTableState.SurfaceStateOffset = 0;
-    info.patchInfo.bindingTableState = &bindingTableState;
+    populateKernelDescriptor(info.kernelDescriptor, bindingTableState);
 
     KernelArgInfo argInfo;
     argInfo.isDeviceQueue = true;
@@ -787,7 +786,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelReflectionSurfaceThenKerne
 
         blockCurbeParamCounts[i] = curbeParamsForBlock.size();
 
-        maxConstantBufferSize = std::max(maxConstantBufferSize, static_cast<size_t>(pBlockInfo->patchInfo.dataParameterStream->DataParameterStreamSize));
+        maxConstantBufferSize = std::max(maxConstantBufferSize, static_cast<size_t>(pBlockInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize));
         totalCurbeParamsSize += blockCurbeParamCounts[i];
 
         size_t samplerStateAndBorderColorSize = pBlockInfo->getSamplerStateArraySize(pDevice->getHardwareInfo());
@@ -1234,21 +1233,21 @@ class ReflectionSurfaceHelperSetKernelDataTest : public testing::TestWithParam<s
         samplerStateArray.Offset = 5;
         samplerStateArray.Size = 16;
         samplerStateArray.Token = 1;
-
-        info.patchInfo.samplerStateArray = &samplerStateArray;
+        populateKernelDescriptor(info.kernelDescriptor, samplerStateArray);
 
         dataParameterStream.DataParameterStreamSize = 60;
         dataParameterStream.Size = 20;
         dataParameterStream.Token = 3;
-
-        info.patchInfo.dataParameterStream = &dataParameterStream;
+        populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
 
         info.kernelDescriptor.kernelAttributes.simdSize = 16;
         info.kernelDescriptor.kernelAttributes.barrierCount = 1;
 
-        info.patchInfo.threadPayload = &threadPayload;
+        SPatchThreadPayload threadPayload = {};
+        populateKernelDescriptor(info.kernelDescriptor, threadPayload);
 
-        info.patchInfo.pAllocateStatelessPrivateSurface = &privateSurface;
+        SPatchAllocateStatelessPrivateSurface privateSurface;
+        populateKernelDescriptor(info.kernelDescriptor, privateSurface);
 
         info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] = 4;
         info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1] = 8;
@@ -1269,8 +1268,6 @@ class ReflectionSurfaceHelperSetKernelDataTest : public testing::TestWithParam<s
     KernelInfo info;
     SPatchSamplerStateArray samplerStateArray;
     SPatchDataParameterStream dataParameterStream;
-    SPatchThreadPayload threadPayload;
-    SPatchAllocateStatelessPrivateSurface privateSurface;
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
 };
@@ -1293,12 +1290,16 @@ TEST_P(ReflectionSurfaceHelperSetKernelDataTest, WhenSettingKernelDataThenDataAn
 
     std::tie(localIDPresent, privateSurfaceSize) = GetParam();
 
+    SPatchThreadPayload threadPayload = {};
     threadPayload.LocalIDFlattenedPresent = localIDPresent.flattend;
     threadPayload.LocalIDXPresent = localIDPresent.x;
     threadPayload.LocalIDYPresent = localIDPresent.y;
     threadPayload.LocalIDZPresent = localIDPresent.z;
+    populateKernelDescriptor(info.kernelDescriptor, threadPayload);
 
+    SPatchAllocateStatelessPrivateSurface privateSurface = {};
     privateSurface.PerThreadPrivateMemorySize = privateSurfaceSize;
+    populateKernelDescriptor(info.kernelDescriptor, privateSurface);
 
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
 
@@ -1351,8 +1352,6 @@ TEST_P(ReflectionSurfaceHelperSetKernelDataTest, WhenSettingKernelDataThenDataAn
 }
 
 TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullThreadPayloadWhenSettingKernelDataThenDataAndOffsetsAreCorrect) {
-    info.patchInfo.threadPayload = nullptr;
-
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
@@ -1380,11 +1379,11 @@ TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullThreadPayloadWhenSetti
 }
 
 TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullPrivateSurfaceWhenSettingKernelDataThenDataAndOffsetsAreCorrect) {
-    info.patchInfo.pAllocateStatelessPrivateSurface = nullptr;
-
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
+    SPatchAllocateStatelessPrivateSurface patch = {};
+    populateKernelDescriptor(info.kernelDescriptor, patch);
 
     uint64_t tokenMask = 1 | 2 | 4;
 
@@ -1409,7 +1408,8 @@ TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullPrivateSurfaceWhenSett
 }
 
 TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullSamplerStateWhenSettingKernelDataThenDataAndOffsetsAreCorrect) {
-    info.patchInfo.samplerStateArray = nullptr;
+    SPatchSamplerStateArray samplerStateArray = {};
+    populateKernelDescriptor(info.kernelDescriptor, samplerStateArray);
 
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
 
@@ -1462,8 +1462,6 @@ TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenDisabledConcurrentExecutio
 TEST_F(ReflectionSurfaceHelperFixture, GivenNullBindingTableWhenSettingKernelDataThenDataIsCorrectlySet) {
     KernelInfo info;
 
-    info.patchInfo.bindingTableState = nullptr;
-
     std::unique_ptr<char> kernelDataMemory(new char[200]);
     IGIL_KernelAddressData *kernalAddressData = reinterpret_cast<IGIL_KernelAddressData *>(kernelDataMemory.get());
     MockKernel::ReflectionSurfaceHelperPublic::setKernelAddressData(kernelDataMemory.get(), 0, 1, 2, 3, 4, 5, 6, info, pPlatform->getClDevice(0)->getHardwareInfo());
@@ -1482,8 +1480,7 @@ TEST_F(ReflectionSurfaceHelperFixture, GivenSetBindingTableWhenSettingKernelData
     SPatchBindingTableState bindingTableStateInfo;
     bindingTableStateInfo.Offset = 0;
     bindingTableStateInfo.Count = 4;
-
-    info.patchInfo.bindingTableState = &bindingTableStateInfo;
+    populateKernelDescriptor(info.kernelDescriptor, bindingTableStateInfo);
 
     std::unique_ptr<char> kernelDataMemory(new char[200]);
     IGIL_KernelAddressData *kernalAddressData = reinterpret_cast<IGIL_KernelAddressData *>(kernelDataMemory.get());
@@ -1500,8 +1497,6 @@ TEST_F(ReflectionSurfaceHelperFixture, GivenSetBindingTableWhenSettingKernelData
 
 TEST_F(ReflectionSurfaceHelperFixture, WhenPatchingBlocksCurbeThenAddressesAreSetCorrectly) {
     KernelInfo info;
-
-    info.patchInfo.bindingTableState = nullptr;
 
     std::unique_ptr<char> refletionSurfaceMemory(new char[4096]);
     IGIL_KernelDataHeader *header = reinterpret_cast<IGIL_KernelDataHeader *>(refletionSurfaceMemory.get());
@@ -1548,8 +1543,6 @@ TEST_F(ReflectionSurfaceHelperFixture, WhenPatchingBlocksCurbeThenAddressesAreSe
 
 TEST_F(ReflectionSurfaceHelperFixture, GivenUndefinedOffsetsWhenPatchingBlocksCurbeThenAddressesAreSetCorrectly) {
     KernelInfo info;
-
-    info.patchInfo.bindingTableState = nullptr;
 
     std::unique_ptr<char> refletionSurfaceMemory(new char[4096]);
     IGIL_KernelDataHeader *header = reinterpret_cast<IGIL_KernelDataHeader *>(refletionSurfaceMemory.get());
@@ -1948,7 +1941,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryWh
 
     auto *blockInfo = parentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0);
 
-    uint32_t blockPatchOffset = blockInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization->DataParamOffset;
+    uint32_t blockPatchOffset = blockInfo->kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless;
 
     uint64_t *pCurbe = (uint64_t *)ptrOffset(reflectionSurface->getUnderlyingBuffer(), constBufferOffset + blockPatchOffset);
 
@@ -1982,7 +1975,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryAn
 
     auto *blockInfo = parentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0);
 
-    uint32_t blockPatchOffset = blockInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization->DataParamOffset;
+    uint32_t blockPatchOffset = blockInfo->kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless;
     uint64_t *pCurbe = (uint64_t *)ptrOffset(reflectionSurface->getUnderlyingBuffer(), constBufferOffset + blockPatchOffset);
 
     EXPECT_EQ(0u, *pCurbe);
@@ -2015,7 +2008,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 
     auto *blockInfo = parentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0);
 
-    uint32_t blockPatchOffset = blockInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization->DataParamOffset;
+    uint32_t blockPatchOffset = blockInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless;
 
     uint64_t *pCurbe = (uint64_t *)ptrOffset(reflectionSurface->getUnderlyingBuffer(), constBufferOffset);
     uint64_t *pCurbeToPatch = (uint64_t *)ptrOffset(reflectionSurface->getUnderlyingBuffer(), constBufferOffset + blockPatchOffset);
@@ -2058,7 +2051,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 
     auto *blockInfo = parentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0);
 
-    uint32_t blockPatchOffset = blockInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization->DataParamOffset;
+    uint32_t blockPatchOffset = blockInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless;
 
     uint64_t *pCurbe = (uint64_t *)ptrOffset(reflectionSurface->getUnderlyingBuffer(), constBufferOffset);
     uint64_t *pCurbeToPatch = (uint64_t *)ptrOffset(reflectionSurface->getUnderlyingBuffer(), constBufferOffset + blockPatchOffset);
@@ -2093,14 +2086,14 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelRefl
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;
     dataParameterStream.DataParameterStreamSize = 0;
-    info.patchInfo.dataParameterStream = &dataParameterStream;
+    populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
 
     SPatchBindingTableState bindingTableState;
     bindingTableState.Count = 0;
     bindingTableState.Offset = 0;
     bindingTableState.Size = 0;
     bindingTableState.SurfaceStateOffset = 0;
-    info.patchInfo.bindingTableState = &bindingTableState;
+    populateKernelDescriptor(info.kernelDescriptor, bindingTableState);
 
     auto rootDeviceIndex = device1->getRootDeviceIndex();
     KernelInfoContainer kernelInfos;
@@ -2148,14 +2141,14 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKe
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;
     dataParameterStream.DataParameterStreamSize = 0;
-    info.patchInfo.dataParameterStream = &dataParameterStream;
+    populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
 
     SPatchBindingTableState bindingTableState;
     bindingTableState.Count = 0;
     bindingTableState.Offset = 0;
     bindingTableState.Size = 0;
     bindingTableState.SurfaceStateOffset = 0;
-    info.patchInfo.bindingTableState = &bindingTableState;
+    populateKernelDescriptor(info.kernelDescriptor, bindingTableState);
 
     KernelArgInfo argInfo;
     argInfo.isDeviceQueue = true;

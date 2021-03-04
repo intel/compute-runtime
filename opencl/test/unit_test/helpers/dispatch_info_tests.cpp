@@ -33,10 +33,10 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
 
         pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
 
-        pMediaVFEstate = new SPatchMediaVFEState();
-        pMediaVFEstate->PerThreadScratchSpace = 1024;
-        pMediaVFEstate->ScratchSpaceOffset = 0;
-        pKernelInfo->patchInfo.mediavfestate = pMediaVFEstate;
+        SPatchMediaVFEState mediaVFEstate = {};
+        mediaVFEstate.PerThreadScratchSpace = 1024;
+        mediaVFEstate.ScratchSpaceOffset = 0;
+        populateKernelDescriptor(pKernelInfo->kernelDescriptor, mediaVFEstate, 0);
 
         SPatchAllocateStatelessPrintfSurface printfSurface = {};
         populateKernelDescriptor(pKernelInfo->kernelDescriptor, printfSurface);
@@ -48,7 +48,6 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
     }
     void TearDown() override {
         delete pKernel;
-        delete pMediaVFEstate;
         delete pProgram;
 
         ContextFixture::TearDown();
@@ -56,7 +55,6 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
     }
 
     std::unique_ptr<KernelInfo> pKernelInfo;
-    SPatchMediaVFEState *pMediaVFEstate = nullptr;
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/program/program_info.h"
 
 #include "opencl/source/program/kernel_info.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -40,9 +41,9 @@ TEST(GetMaxInlineSlmNeeded, GivenProgramWithKernelsThenReturnMaxOfInlineSlmNeede
     slmTokens[2].TotalInlineLocalMemorySize = 32;
     NEO::ProgramInfo programInfo;
     programInfo.kernelInfos = {new NEO::KernelInfo(), new NEO::KernelInfo(), new NEO::KernelInfo()};
-    programInfo.kernelInfos[0]->patchInfo.localsurface = &slmTokens[0];
-    programInfo.kernelInfos[1]->patchInfo.localsurface = &slmTokens[1];
-    programInfo.kernelInfos[2]->patchInfo.localsurface = &slmTokens[2];
+    populateKernelDescriptor(programInfo.kernelInfos[0]->kernelDescriptor, slmTokens[0]);
+    populateKernelDescriptor(programInfo.kernelInfos[1]->kernelDescriptor, slmTokens[1]);
+    populateKernelDescriptor(programInfo.kernelInfos[2]->kernelDescriptor, slmTokens[2]);
     EXPECT_EQ(64U, NEO::getMaxInlineSlmNeeded(programInfo));
 }
 

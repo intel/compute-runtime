@@ -83,8 +83,8 @@ struct MultiDeviceKernelArgBufferTest : public ::testing::Test {
             pKernelInfosStorage[i]->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
             pKernelInfosStorage[i]->kernelArgInfo[0].isBuffer = true;
 
-            pKernelInfosStorage[i]->patchInfo.dataParameterStream = &dataParameterStream[i];
             dataParameterStream[i].DataParameterStreamSize = (i + 1) * sizeof(void *);
+            populateKernelDescriptor(pKernelInfosStorage[i]->kernelDescriptor, dataParameterStream[i]);
 
             pKernelInfosStorage[i]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = i * sizeof(void *);
             pKernelInfosStorage[i]->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(void *);

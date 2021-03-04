@@ -16,7 +16,7 @@ namespace NEO {
 
 void BlockKernelManager::addBlockKernelInfo(KernelInfo *blockKernelInfo) {
     blockKernelInfoArray.push_back(blockKernelInfo);
-    blockUsesPrintf |= blockKernelInfo->kernelDescriptor.kernelAttributes.flags.usesPrintf;
+    blockUsesPrintf = blockKernelInfo->kernelDescriptor.kernelAttributes.flags.usesPrintf;
 }
 
 const KernelInfo *BlockKernelManager::getBlockKernelInfo(size_t ordinal) {

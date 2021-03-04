@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -182,7 +182,7 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
 
         auto blockKernelStartPointer = getBlockKernelStartPointer(getDevice(), pBlockInfo, isCcsUsed);
 
-        auto bindingTableCount = pBlockInfo->patchInfo.bindingTableState->Count;
+        auto bindingTableCount = static_cast<uint32_t>(pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.numEntries);
         maxBindingTableCount = std::max(maxBindingTableCount, bindingTableCount);
 
         totalBlockSSHSize += alignUp(pBlockInfo->heapInfo.SurfaceStateHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
@@ -192,15 +192,14 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
                                                                                         pBlockInfo->heapInfo.pSsh,
                                                                                         pBlockInfo->heapInfo.SurfaceStateHeapSize,
                                                                                         bindingTableCount,
-                                                                                        pBlockInfo->patchInfo.bindingTableState->Offset);
+                                                                                        pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.tableOffset);
 
         parentKernel->setReflectionSurfaceBlockBtOffset(i, static_cast<uint32_t>(btOffset));
 
         // Determine SIMD size
         uint32_t simd = pBlockInfo->getMaxSimdSize();
-        DEBUG_BREAK_IF(pBlockInfo->patchInfo.interfaceDescriptorData == nullptr);
 
-        uint32_t idOffset = pBlockInfo->patchInfo.interfaceDescriptorData->Offset;
+        uint32_t idOffset = pBlockInfo->kernelDescriptor.kernelMetadata.deviceSideEnqueueBlockInterfaceDescriptorOffset;
         const INTERFACE_DESCRIPTOR_DATA *pBlockID = static_cast<const INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(pBlockInfo->heapInfo.pDsh, idOffset));
 
         pIDDestination[blockIndex + i] = *pBlockID;
@@ -214,10 +213,7 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
         // Set offset to sampler states, block's DHSOffset is added by scheduler
         pIDDestination[blockIndex + i].setSamplerStatePointer(static_cast<uint32_t>(pBlockInfo->getBorderColorStateSize()));
 
-        auto threadPayload = pBlockInfo->patchInfo.threadPayload;
-        DEBUG_BREAK_IF(nullptr == threadPayload);
-
-        auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
+        auto numChannels = pBlockInfo->kernelDescriptor.kernelAttributes.numLocalIdChannels;
         auto grfSize = device->getDeviceInfo().grfSize;
         auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, grfSize, numChannels);
         auto numGrfPerThreadData = static_cast<uint32_t>(sizePerThreadData / grfSize);

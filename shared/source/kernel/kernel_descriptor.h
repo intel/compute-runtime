@@ -70,6 +70,7 @@ struct KernelDescriptor final {
         uint8_t gpuPointerSize = 0;
         uint8_t simdSize = 8;
         uint8_t numLocalIdChannels = 3;
+        uint8_t localId[3] = {0U, 0U, 0U};
 
         bool supportsBuffersBiggerThan4Gb() const {
             return Stateless == bufferAddressingMode;

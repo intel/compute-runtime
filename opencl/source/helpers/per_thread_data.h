@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/local_id_gen.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
 #include "patch_shared.h"
 
@@ -42,12 +43,6 @@ struct PerThreadDataHelper {
         const std::array<uint8_t, 3> &workgroupWalkOrder,
         bool hasKernelOnlyImages);
 
-    static inline uint32_t getNumLocalIdChannels(const iOpenCL::SPatchThreadPayload &threadPayload) {
-        return threadPayload.LocalIDXPresent +
-               threadPayload.LocalIDYPresent +
-               threadPayload.LocalIDZPresent;
-    }
-
-    static uint32_t getThreadPayloadSize(const iOpenCL::SPatchThreadPayload &threadPayload, uint32_t simd, uint32_t grfSize);
+    static uint32_t getThreadPayloadSize(const KernelDescriptor &kernelDescriptor, uint32_t grfSize);
 };
 } // namespace NEO

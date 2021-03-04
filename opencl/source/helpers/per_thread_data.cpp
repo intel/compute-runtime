@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,13 +35,13 @@ size_t PerThreadDataHelper::sendPerThreadData(
     return offsetPerThreadData;
 }
 
-uint32_t PerThreadDataHelper::getThreadPayloadSize(const iOpenCL::SPatchThreadPayload &threadPayload, uint32_t simd, uint32_t grfSize) {
-    uint32_t multiplier = static_cast<uint32_t>(getGRFsPerThread(simd, grfSize));
+uint32_t PerThreadDataHelper::getThreadPayloadSize(const KernelDescriptor &kernelDescriptor, uint32_t grfSize) {
+    uint32_t multiplier = static_cast<uint32_t>(getGRFsPerThread(kernelDescriptor.kernelAttributes.simdSize, grfSize));
     uint32_t threadPayloadSize = 0;
-    threadPayloadSize = getNumLocalIdChannels(threadPayload) * multiplier * grfSize;
-    threadPayloadSize += (threadPayload.HeaderPresent) ? grfSize : 0;
-    threadPayloadSize += (threadPayload.LocalIDFlattenedPresent) ? (grfSize * multiplier) : 0;
-    threadPayloadSize += (threadPayload.UnusedPerThreadConstantPresent) ? grfSize : 0;
+    threadPayloadSize = kernelDescriptor.kernelAttributes.numLocalIdChannels * multiplier * grfSize;
+    threadPayloadSize += (kernelDescriptor.kernelAttributes.flags.perThreadDataHeaderIsPresent) ? grfSize : 0;
+    threadPayloadSize += (kernelDescriptor.kernelAttributes.flags.usesFlattenedLocalIds) ? (grfSize * multiplier) : 0;
+    threadPayloadSize += (kernelDescriptor.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent) ? grfSize : 0;
     return threadPayloadSize;
 }
 } // namespace NEO

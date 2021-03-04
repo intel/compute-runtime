@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,9 +135,9 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithAllocateSyncBufferPatchWhenEx
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
     SPatchAllocateSyncBuffer patchAllocateSyncBuffer;
-    pProgram->mockKernelInfo.patchInfo.pAllocateSyncBuffer = &patchAllocateSyncBuffer;
+    populateKernelDescriptor(pProgram->mockKernelInfo.kernelDescriptor, patchAllocateSyncBuffer);
 
-    EXPECT_TRUE(pKernel->isUsingSyncBuffer(testedRootDeviceIndex));
+    EXPECT_TRUE(pKernel->usesSyncBuffer(testedRootDeviceIndex));
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,

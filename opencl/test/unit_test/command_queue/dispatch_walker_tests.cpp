@@ -46,32 +46,35 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
         memset(&kernelHeader, 0, sizeof(kernelHeader));
         kernelHeader.KernelHeapSize = sizeof(kernelIsa);
 
+        SPatchDataParameterStream dataParameterStream = {};
         memset(&dataParameterStream, 0, sizeof(dataParameterStream));
         dataParameterStream.DataParameterStreamSize = sizeof(crossThreadData);
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, dataParameterStream);
+        populateKernelDescriptor(kernelInfoWithSampler.kernelDescriptor, dataParameterStream);
 
+        SPatchThreadPayload threadPayload = {};
         memset(&threadPayload, 0, sizeof(threadPayload));
         threadPayload.LocalIDXPresent = 1;
         threadPayload.LocalIDYPresent = 1;
         threadPayload.LocalIDZPresent = 1;
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, threadPayload);
+        populateKernelDescriptor(kernelInfoWithSampler.kernelDescriptor, threadPayload);
 
+        SPatchSamplerStateArray samplerArray = {};
         samplerArray.BorderColorOffset = 0;
         samplerArray.Count = 1;
         samplerArray.Offset = 4;
         samplerArray.Size = 2;
         samplerArray.Token = 0;
+        populateKernelDescriptor(kernelInfoWithSampler.kernelDescriptor, samplerArray);
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
-        kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
-        kernelInfo.patchInfo.threadPayload = &threadPayload;
 
         kernelInfoWithSampler.heapInfo.pKernelHeap = kernelIsa;
         kernelInfoWithSampler.heapInfo.KernelHeapSize = sizeof(kernelIsa);
-        kernelInfoWithSampler.patchInfo.dataParameterStream = &dataParameterStream;
         kernelInfoWithSampler.kernelDescriptor.kernelAttributes.simdSize = 32;
-        kernelInfoWithSampler.patchInfo.threadPayload = &threadPayload;
-        kernelInfoWithSampler.patchInfo.samplerStateArray = &samplerArray;
         kernelInfoWithSampler.heapInfo.pDsh = static_cast<const void *>(dsh);
     }
 
@@ -94,9 +97,6 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
     std::unique_ptr<MockProgram> program;
 
     SKernelBinaryHeaderCommon kernelHeader = {};
-    SPatchDataParameterStream dataParameterStream = {};
-    SPatchThreadPayload threadPayload = {};
-    SPatchSamplerStateArray samplerArray = {};
 
     KernelInfo kernelInfo;
     KernelInfo kernelInfoWithSampler;
@@ -145,10 +145,10 @@ HWTEST_F(DispatchWalkerTest, givenSimd1WhenSetGpgpuWalkerThreadDataThenSimdInWal
     size_t numWorkGroups[] = {1, 1, 1};
     size_t localWorkSizesIn[] = {32, 1, 1};
     uint32_t simd = 1;
-    iOpenCL::SPatchThreadPayload threadPayload;
 
+    KernelDescriptor kd;
     GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(
-        computeWalker, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, threadPayload, 5u);
+        computeWalker, kd, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, 5u);
     EXPECT_EQ(computeWalker->getSimdSize(), 32 >> 4);
 }
 
@@ -197,10 +197,12 @@ HWTEST_F(DispatchWalkerTest, WhenDispatchingWalkerThenCommandStreamMemoryIsntCha
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalIdsWhenDispatchingWalkerThenWalkerIsDispatched) {
+    SPatchThreadPayload threadPayload = {};
     threadPayload.LocalIDXPresent = 0;
     threadPayload.LocalIDYPresent = 0;
     threadPayload.LocalIDZPresent = 0;
     threadPayload.UnusedPerThreadConstantPresent = 1;
+    populateKernelDescriptor(kernelInfo.kernelDescriptor, threadPayload);
 
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());

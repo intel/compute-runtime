@@ -58,11 +58,12 @@ void Kernel::patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printf
 
         auto privateSurface = blockManager->getPrivateSurface(i);
 
-        UNRECOVERABLE_IF(pBlockInfo->patchInfo.pAllocateStatelessPrivateSurface != nullptr && pBlockInfo->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize && privateSurface == nullptr);
-
+        UNRECOVERABLE_IF((pBlockInfo->kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize > 0U) && privateSurface == nullptr);
         if (privateSurface) {
-            privateSurfaceOffset = pBlockInfo->patchInfo.pAllocateStatelessPrivateSurface->DataParamOffset;
-            privateSurfacePatchSize = pBlockInfo->patchInfo.pAllocateStatelessPrivateSurface->DataParamSize;
+            const auto &privateMemory = pBlockInfo->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress;
+            UNRECOVERABLE_IF(false == isValidOffset(privateMemory.stateless));
+            privateSurfaceOffset = privateMemory.stateless;
+            privateSurfacePatchSize = privateMemory.pointerSize;
             privateSurfaceGpuAddress = privateSurface->getGpuAddressToPatch();
         }
 

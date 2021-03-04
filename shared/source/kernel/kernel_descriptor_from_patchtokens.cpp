@@ -93,6 +93,9 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchInterfaceDescri
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchThreadPayload &token) {
     dst.kernelAttributes.flags.perThreadDataHeaderIsPresent = (0U != token.HeaderPresent);
     dst.kernelAttributes.numLocalIdChannels = token.LocalIDXPresent + token.LocalIDYPresent + token.LocalIDZPresent;
+    dst.kernelAttributes.localId[0] = token.LocalIDXPresent;
+    dst.kernelAttributes.localId[1] = token.LocalIDYPresent;
+    dst.kernelAttributes.localId[2] = token.LocalIDZPresent;
     dst.kernelAttributes.flags.usesFlattenedLocalIds = (0U != token.LocalIDFlattenedPresent);
     dst.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent = (0U != token.UnusedPerThreadConstantPresent);
     dst.kernelAttributes.flags.passInlineData = (0 != token.PassInlineData);
@@ -154,8 +157,7 @@ void populatePointerKernelArg(ArgDescPointer &dst, const TokenT &src, KernelDesc
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrivateSurface &token) {
     dst.kernelAttributes.flags.usesPrivateMemory = true;
-    dst.kernelAttributes.perHwThreadPrivateMemorySize = token.PerThreadPrivateMemorySize;
-    dst.kernelAttributes.perHwThreadPrivateMemorySize = static_cast<uint32_t>(PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(&token, dst.kernelAttributes.simdSize));
+    dst.kernelAttributes.perHwThreadPrivateMemorySize = static_cast<uint32_t>(PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(token, dst.kernelAttributes.simdSize));
     populatePointerKernelArg(dst.payloadMappings.implicitArgs.privateMemoryAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
@@ -197,7 +199,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchString &token) 
 }
 
 template <typename TokenT, typename... ArgsT>
-inline void populateKernelDescriptorIfNotNull(KernelDescriptor &dst, const TokenT *token, ArgsT &&... args) {
+inline void populateKernelDescriptorIfNotNull(KernelDescriptor &dst, const TokenT *token, ArgsT &&...args) {
     if (token != nullptr) {
         populateKernelDescriptor(dst, *token, std::forward<ArgsT>(args)...);
     }

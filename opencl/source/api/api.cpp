@@ -3431,7 +3431,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     }
 
     if ((pKernel->getExecutionType() != KernelExecutionType::Default) ||
-        pKernel->isUsingSyncBuffer(pCommandQueue->getDevice().getRootDeviceIndex())) {
+        pKernel->usesSyncBuffer(pCommandQueue->getDevice().getRootDeviceIndex())) {
         retVal = CL_INVALID_KERNEL;
         TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
         return retVal;
@@ -5884,7 +5884,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         }
     }
 
-    if (pKernel->isUsingSyncBuffer(rootDeviceIndex)) {
+    if (pKernel->usesSyncBuffer(rootDeviceIndex)) {
         if (pKernel->getExecutionType() != KernelExecutionType::Concurrent) {
             retVal = CL_INVALID_KERNEL;
             return retVal;

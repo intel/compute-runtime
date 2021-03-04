@@ -571,7 +571,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     sPatchPrintfSurface.DataParamOffset = 0;
     sPatchPrintfSurface.DataParamSize = 8;
     populateKernelDescriptor(kernelInfo->kernelDescriptor, sPatchPrintfSurface);
-    kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(0, testString));
+    kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap[0].assign(testString);
 
     uint64_t crossThread[10];
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);

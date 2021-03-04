@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
+
 #include "opencl/test/unit_test/fixtures/kernel_work_group_info_fixture.h"
 
 using namespace NEO;
@@ -79,7 +81,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
     MockKernelWithInternals mockKernel(*pDevice);
     SPatchMediaVFEState mediaVFEstate;
     mediaVFEstate.PerThreadScratchSpace = 1024; //whatever greater than 0
-    mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
     cl_ulong scratchSpaceSize = static_cast<cl_ulong>(mockKernel.mockKernel->getScratchSize(testedRootDeviceIndex));
     EXPECT_EQ(scratchSpaceSize, 1024u);
@@ -106,7 +108,7 @@ HWTEST2_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocatio
     MockKernelWithInternals mockKernel(*pDevice);
     SPatchAllocateStatelessPrivateSurface privateAllocation;
     privateAllocation.PerThreadPrivateMemorySize = 1024;
-    mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrivateSurface = &privateAllocation;
+    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, privateAllocation);
 
     retVal = clGetKernelWorkGroupInfo(
         mockKernel,
@@ -116,9 +118,9 @@ HWTEST2_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocatio
         &param_value,
         &paramValueSizeRet);
 
-    EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_EQ(paramValueSizeRet, sizeof(cl_ulong));
-    EXPECT_EQ(param_value, privateAllocation.PerThreadPrivateMemorySize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_ulong), paramValueSizeRet);
+    EXPECT_EQ(PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(privateAllocation, mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize), param_value);
 }
 
 TEST_F(clGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenZeroIsReturned) {

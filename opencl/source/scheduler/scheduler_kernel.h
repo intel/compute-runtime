@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ class SchedulerKernel : public Kernel {
 
     size_t getCurbeSize() {
         auto &defaultKernelInfo = getDefaultKernelInfo();
-        size_t crossTrheadDataSize = defaultKernelInfo.patchInfo.dataParameterStream ? defaultKernelInfo.patchInfo.dataParameterStream->DataParameterStreamSize : 0;
+        size_t crossTrheadDataSize = defaultKernelInfo.kernelDescriptor.kernelAttributes.crossThreadDataSize;
         size_t dshSize = defaultKernelInfo.heapInfo.DynamicStateHeapSize;
 
         crossTrheadDataSize = alignUp(crossTrheadDataSize, 64);

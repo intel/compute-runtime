@@ -25,11 +25,24 @@
 #include <cassert>
 
 namespace NEO {
+void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPatchDataParameterBuffer &token);
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrintfSurface &token);
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnvironment &execEnv);
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessEventPoolSurface &token);
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessDefaultDeviceQueueSurface &token);
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchString &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateSystemThreadSurface &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateLocalSurface &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchInterfaceDescriptorData &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchMediaVFEState &token, uint32_t slot);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchSamplerStateArray &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchBindingTableState &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchThreadPayload &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchDataParameterStream &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrivateSurface &token);
+void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateSyncBuffer &token);
 
 struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
     MockKernelObjForAuxTranslation(Type type) : KernelObjForAuxTranslation(type, nullptr) {
@@ -147,7 +160,6 @@ class MockKernel : public Kernel {
         }
 
         if (kernelInfoAllocated) {
-            delete kernelInfoAllocated->patchInfo.threadPayload;
             delete kernelInfoAllocated;
         }
     }
@@ -162,14 +174,13 @@ class MockKernel : public Kernel {
         auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
 
-        SPatchThreadPayload *threadPayload = new SPatchThreadPayload;
-        threadPayload->LocalIDXPresent = 0;
-        threadPayload->LocalIDYPresent = 0;
-        threadPayload->LocalIDZPresent = 0;
-        threadPayload->HeaderPresent = 0;
-        threadPayload->Size = 128;
-
-        info->patchInfo.threadPayload = threadPayload;
+        SPatchThreadPayload threadPayload = {};
+        threadPayload.LocalIDXPresent = 0;
+        threadPayload.LocalIDYPresent = 0;
+        threadPayload.LocalIDZPresent = 0;
+        threadPayload.HeaderPresent = 0;
+        threadPayload.Size = 128;
+        populateKernelDescriptor(info->kernelDescriptor, threadPayload);
 
         info->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = false;
         info->kernelDescriptor.kernelAttributes.numGrfRequired = grfNumber;
@@ -214,6 +225,8 @@ class MockKernel : public Kernel {
         }
 
         if (newCrossThreadDataSize == 0) {
+            kernelDeviceInfos[rootDeviceIndex].crossThreadData = nullptr;
+            kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = 0;
             return;
         }
         kernelDeviceInfos[rootDeviceIndex].crossThreadData = mockCrossThreadDatas[rootDeviceIndex].data();
@@ -300,26 +313,27 @@ class MockKernelWithInternals {
   public:
     MockKernelWithInternals(const ClDeviceVector &deviceVector, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment execEnv = {}) {
         memset(&kernelHeader, 0, sizeof(SKernelBinaryHeaderCommon));
-        memset(&threadPayload, 0, sizeof(SPatchThreadPayload));
         memset(&dataParameterStream, 0, sizeof(SPatchDataParameterStream));
         memset(&mediaVfeState, 0, sizeof(SPatchMediaVFEState));
         memset(&mediaVfeStateSlot1, 0, sizeof(SPatchMediaVFEState));
+        memset(&threadPayload, 0, sizeof(SPatchThreadPayload));
         threadPayload.LocalIDXPresent = 1;
         threadPayload.LocalIDYPresent = 1;
         threadPayload.LocalIDZPresent = 1;
+
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.pSsh = sshLocal;
         kernelInfo.heapInfo.pDsh = dshLocal;
         kernelInfo.heapInfo.SurfaceStateHeapSize = sizeof(sshLocal);
-        kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, dataParameterStream);
 
         populateKernelDescriptor(kernelInfo.kernelDescriptor, execEnv);
         kernelInfo.kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
 
-        kernelInfo.patchInfo.threadPayload = &threadPayload;
-        kernelInfo.patchInfo.mediavfestate = &mediaVfeState;
-        kernelInfo.patchInfo.mediaVfeStateSlot1 = &mediaVfeStateSlot1;
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, threadPayload);
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, mediaVfeState, 0);
+        populateKernelDescriptor(kernelInfo.kernelDescriptor, mediaVfeStateSlot1, 1);
 
         if (context == nullptr) {
             mockContext = new MockContext;
@@ -432,14 +446,13 @@ class MockParentKernel : public Kernel {
         uint32_t crossThreadOffset = 0;
         uint32_t crossThreadOffsetBlock = 0;
 
-        SPatchThreadPayload *threadPayload = new SPatchThreadPayload;
-        threadPayload->LocalIDXPresent = 0;
-        threadPayload->LocalIDYPresent = 0;
-        threadPayload->LocalIDZPresent = 0;
-        threadPayload->HeaderPresent = 0;
-        threadPayload->Size = 128;
-
-        info->patchInfo.threadPayload = threadPayload;
+        SPatchThreadPayload threadPayload = {};
+        threadPayload.LocalIDXPresent = 0;
+        threadPayload.LocalIDYPresent = 0;
+        threadPayload.LocalIDZPresent = 0;
+        threadPayload.HeaderPresent = 0;
+        threadPayload.Size = 128;
+        populateKernelDescriptor(info->kernelDescriptor, threadPayload);
 
         info->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
         info->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
@@ -523,63 +536,57 @@ class MockParentKernel : public Kernel {
             crossThreadOffsetBlock += 8;
         }
 
-        infoBlock->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization = nullptr;
-        infoBlock->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization = nullptr;
-
         if (addChildGlobalMemory) {
-            SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization *globalMemoryBlock = new SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization;
-            globalMemoryBlock->DataParamOffset = crossThreadOffsetBlock;
-            globalMemoryBlock->DataParamSize = 8;
-            globalMemoryBlock->Size = 8;
-            globalMemoryBlock->SurfaceStateHeapOffset = 0;
-            globalMemoryBlock->Token = 0;
-            infoBlock->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization = globalMemoryBlock;
+            SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization globalMemoryBlock = {};
+            globalMemoryBlock.DataParamOffset = crossThreadOffsetBlock;
+            globalMemoryBlock.DataParamSize = 8;
+            globalMemoryBlock.Size = 8;
+            globalMemoryBlock.SurfaceStateHeapOffset = 0;
+            populateKernelDescriptor(infoBlock->kernelDescriptor, globalMemoryBlock);
             crossThreadOffsetBlock += 8;
         }
 
         if (addChildConstantMemory) {
-            SPatchAllocateStatelessConstantMemorySurfaceWithInitialization *constantMemoryBlock = new SPatchAllocateStatelessConstantMemorySurfaceWithInitialization;
-            constantMemoryBlock->DataParamOffset = crossThreadOffsetBlock;
-            constantMemoryBlock->DataParamSize = 8;
-            constantMemoryBlock->Size = 8;
-            constantMemoryBlock->SurfaceStateHeapOffset = 0;
-            constantMemoryBlock->Token = 0;
-            infoBlock->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization = constantMemoryBlock;
+            SPatchAllocateStatelessConstantMemorySurfaceWithInitialization constantMemoryBlock = {};
+            constantMemoryBlock.DataParamOffset = crossThreadOffsetBlock;
+            constantMemoryBlock.DataParamSize = 8;
+            constantMemoryBlock.Size = 8;
+            constantMemoryBlock.SurfaceStateHeapOffset = 0;
+            populateKernelDescriptor(infoBlock->kernelDescriptor, constantMemoryBlock);
             crossThreadOffsetBlock += 8;
         }
 
-        SPatchThreadPayload *threadPayloadBlock = new SPatchThreadPayload;
-        threadPayloadBlock->LocalIDXPresent = 0;
-        threadPayloadBlock->LocalIDYPresent = 0;
-        threadPayloadBlock->LocalIDZPresent = 0;
-        threadPayloadBlock->HeaderPresent = 0;
-        threadPayloadBlock->Size = 128;
-
-        infoBlock->patchInfo.threadPayload = threadPayloadBlock;
+        SPatchThreadPayload threadPayloadBlock = {};
+        threadPayloadBlock.LocalIDXPresent = 0;
+        threadPayloadBlock.LocalIDYPresent = 0;
+        threadPayloadBlock.LocalIDZPresent = 0;
+        threadPayloadBlock.HeaderPresent = 0;
+        threadPayloadBlock.Size = 128;
+        populateKernelDescriptor(infoBlock->kernelDescriptor, threadPayloadBlock);
 
         infoBlock->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
         infoBlock->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
         infoBlock->kernelDescriptor.kernelAttributes.simdSize = 32;
 
-        SPatchDataParameterStream *streamBlock = new SPatchDataParameterStream;
-        streamBlock->DataParameterStreamSize = 0;
-        streamBlock->Size = 0;
-        infoBlock->patchInfo.dataParameterStream = streamBlock;
+        SPatchDataParameterStream streamBlock = {};
+        streamBlock.DataParameterStreamSize = 0;
+        streamBlock.Size = 0;
+        populateKernelDescriptor(infoBlock->kernelDescriptor, streamBlock);
 
-        SPatchBindingTableState *bindingTable = new SPatchBindingTableState;
-        bindingTable->Count = 0;
-        bindingTable->Offset = 0;
-        bindingTable->Size = 0;
-        bindingTable->SurfaceStateOffset = 0;
-        infoBlock->patchInfo.bindingTableState = bindingTable;
+        SPatchBindingTableState bindingTable = {};
+        bindingTable.Count = 0;
+        bindingTable.Offset = 0;
+        bindingTable.Size = 0;
+        bindingTable.SurfaceStateOffset = 0;
+        populateKernelDescriptor(infoBlock->kernelDescriptor, bindingTable);
 
-        SPatchInterfaceDescriptorData *idData = new SPatchInterfaceDescriptorData;
-        idData->BindingTableOffset = 0;
-        idData->KernelOffset = 0;
-        idData->Offset = 0;
-        idData->SamplerStateOffset = 0;
-        idData->Size = 0;
-        infoBlock->patchInfo.interfaceDescriptorData = idData;
+        SPatchInterfaceDescriptorData idData = {};
+        idData.BindingTableOffset = 0;
+        idData.KernelOffset = 0;
+        idData.Offset = 0;
+        idData.SamplerStateOffset = 0;
+        idData.Size = 0;
+        populateKernelDescriptor(infoBlock->kernelDescriptor, idData);
 
         infoBlock->heapInfo.pDsh = (void *)new uint64_t[64];
         infoBlock->crossThreadData = new char[crossThreadOffsetBlock > crossThreadSize ? crossThreadOffsetBlock : crossThreadSize];
@@ -599,18 +606,11 @@ class MockParentKernel : public Kernel {
                 continue;
             }
             auto &kernelInfo = *pKernelInfo;
-            delete kernelInfo.patchInfo.threadPayload;
             delete &kernelInfo;
             BlockKernelManager *blockManager = program->getBlockKernelManager();
 
             for (uint32_t i = 0; i < blockManager->getCount(); i++) {
                 const KernelInfo *blockInfo = blockManager->getBlockKernelInfo(i);
-                delete blockInfo->patchInfo.threadPayload;
-                delete blockInfo->patchInfo.dataParameterStream;
-                delete blockInfo->patchInfo.bindingTableState;
-                delete blockInfo->patchInfo.interfaceDescriptorData;
-                delete blockInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization;
-                delete blockInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization;
                 delete[](uint64_t *) blockInfo->heapInfo.pDsh;
             }
         }
@@ -640,28 +640,16 @@ class MockSchedulerKernel : public SchedulerKernel {
 class MockDebugKernel : public MockKernel {
   public:
     MockDebugKernel(Program *program, KernelInfoContainer &kernelInfos) : MockKernel(program, kernelInfos) {
-        if (!kernelInfos[0]->patchInfo.pAllocateSystemThreadSurface) {
-            SPatchAllocateSystemThreadSurface *patchToken = new SPatchAllocateSystemThreadSurface;
-
-            patchToken->BTI = 0;
-            patchToken->Offset = 0;
-            patchToken->PerThreadSystemThreadSurfaceSize = MockDebugKernel::perThreadSystemThreadSurfaceSize;
-            patchToken->Size = sizeof(SPatchAllocateSystemThreadSurface);
-            patchToken->Token = iOpenCL::PATCH_TOKEN_ALLOCATE_SIP_SURFACE;
-
-            const_cast<KernelInfo *>(kernelInfos[0])->patchInfo.pAllocateSystemThreadSurface = patchToken;
-
-            systemThreadSurfaceAllocated = true;
+        if (!isValidOffset(kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful)) {
+            SPatchAllocateSystemThreadSurface allocateSystemThreadSurface = {};
+            allocateSystemThreadSurface.Offset = 0;
+            allocateSystemThreadSurface.PerThreadSystemThreadSurfaceSize = MockDebugKernel::perThreadSystemThreadSurfaceSize;
+            populateKernelDescriptor(const_cast<KernelDescriptor &>(kernelInfos[0]->kernelDescriptor), allocateSystemThreadSurface);
         }
     }
 
-    ~MockDebugKernel() override {
-        if (systemThreadSurfaceAllocated) {
-            delete kernelInfos[0]->patchInfo.pAllocateSystemThreadSurface;
-        }
-    }
+    ~MockDebugKernel() override {}
     static const uint32_t perThreadSystemThreadSurfaceSize;
-    bool systemThreadSurfaceAllocated = false;
 };
 
 } // namespace NEO

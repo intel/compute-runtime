@@ -257,7 +257,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBui
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto kernelInfo = pProgram->getKernelInfo("CopyBuffer", pDevice->getRootDeviceIndex());
-    EXPECT_NE(0u, kernelInfo->patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize);
+    EXPECT_NE(0u, kernelInfo->kernelDescriptor.kernelAttributes.perThreadSystemThreadSurfaceSize);
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuiltThenDebugDataIsStored) {

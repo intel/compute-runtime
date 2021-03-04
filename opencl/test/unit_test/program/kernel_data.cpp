@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/string.h"
 
 #include "opencl/source/platform/platform.h"
@@ -38,20 +39,6 @@ TEST_F(KernelDataTest, GivenHeapsWhenBuildingThenProgramIsCorrect) {
     buildAndDecode();
 }
 
-TEST_F(KernelDataTest, GivenMediaInterfaceDescriptorLoadWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchMediaInterfaceDescriptorLoad mediaIdLoad;
-    mediaIdLoad.Token = PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-    mediaIdLoad.Size = sizeof(SPatchMediaInterfaceDescriptorLoad);
-    mediaIdLoad.InterfaceDescriptorDataOffset = 0xabcd;
-
-    pPatchList = &mediaIdLoad;
-    patchListSize = mediaIdLoad.Size;
-
-    buildAndDecode();
-
-    EXPECT_EQ_CONST(PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD, pKernelInfo->patchInfo.interfaceDescriptorDataLoad->Token);
-}
-
 TEST_F(KernelDataTest, GivenAllocateLocalSurfaceWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchAllocateLocalSurface allocateLocalSurface;
     allocateLocalSurface.Token = PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE;
@@ -64,8 +51,7 @@ TEST_F(KernelDataTest, GivenAllocateLocalSurfaceWhenBuildingThenProgramIsCorrect
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE, pKernelInfo->patchInfo.localsurface->Token);
-    EXPECT_EQ_VAL(allocateLocalSurface.TotalInlineLocalMemorySize, pKernelInfo->patchInfo.localsurface->TotalInlineLocalMemorySize);
+    EXPECT_EQ_VAL(allocateLocalSurface.TotalInlineLocalMemorySize, pKernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize);
 }
 
 TEST_F(KernelDataTest, GivenAllocateStatelessConstantMemoryWithInitWhenBuildingThenProgramIsCorrect) {
@@ -81,8 +67,7 @@ TEST_F(KernelDataTest, GivenAllocateStatelessConstantMemoryWithInitWhenBuildingT
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_ALLOCATE_STATELESS_CONSTANT_MEMORY_SURFACE_WITH_INITIALIZATION, pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization->Token);
-    EXPECT_EQ_VAL(0xddu, pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization->SurfaceStateHeapOffset);
+    EXPECT_EQ_VAL(0xddu, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful);
 }
 
 TEST_F(KernelDataTest, GivenAllocateStatelessGlobalMemoryWithInitWhenBuildingThenProgramIsCorrect) {
@@ -98,8 +83,7 @@ TEST_F(KernelDataTest, GivenAllocateStatelessGlobalMemoryWithInitWhenBuildingThe
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_ALLOCATE_STATELESS_GLOBAL_MEMORY_SURFACE_WITH_INITIALIZATION, pKernelInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization->Token);
-    EXPECT_EQ_VAL(0xddu, pKernelInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization->SurfaceStateHeapOffset);
+    EXPECT_EQ_VAL(0xddu, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful);
 }
 
 TEST_F(KernelDataTest, GivenPrintfStringWhenBuildingThenProgramIsCorrect) {
@@ -146,9 +130,7 @@ TEST_F(KernelDataTest, GivenMediaVfeStateWhenBuildingThenProgramIsCorrect) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_MEDIA_VFE_STATE, pKernelInfo->patchInfo.mediavfestate->Token);
-    EXPECT_EQ_VAL(MediaVFEState.PerThreadScratchSpace, pKernelInfo->patchInfo.mediavfestate->PerThreadScratchSpace);
-    EXPECT_EQ_VAL(MediaVFEState.ScratchSpaceOffset, pKernelInfo->patchInfo.mediavfestate->ScratchSpaceOffset);
+    EXPECT_EQ_VAL(MediaVFEState.PerThreadScratchSpace, pKernelInfo->kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
 }
 
 TEST_F(KernelDataTest, WhenMediaVfeStateSlot1TokenIsParsedThenCorrectValuesAreSet) {
@@ -163,9 +145,7 @@ TEST_F(KernelDataTest, WhenMediaVfeStateSlot1TokenIsParsedThenCorrectValuesAreSe
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1, pKernelInfo->patchInfo.mediaVfeStateSlot1->Token);
-    EXPECT_EQ_VAL(MediaVFEState.PerThreadScratchSpace, pKernelInfo->patchInfo.mediaVfeStateSlot1->PerThreadScratchSpace);
-    EXPECT_EQ_VAL(MediaVFEState.ScratchSpaceOffset, pKernelInfo->patchInfo.mediaVfeStateSlot1->ScratchSpaceOffset);
+    EXPECT_EQ_VAL(MediaVFEState.PerThreadScratchSpace, pKernelInfo->kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
 }
 
 TEST_F(KernelDataTest, GivenSyncBufferTokenWhenParsingProgramThenTokenIsFound) {
@@ -181,27 +161,10 @@ TEST_F(KernelDataTest, GivenSyncBufferTokenWhenParsingProgramThenTokenIsFound) {
 
     buildAndDecode();
 
-    EXPECT_EQ(token.Token, pKernelInfo->patchInfo.pAllocateSyncBuffer->Token);
-    EXPECT_EQ(token.SurfaceStateHeapOffset, pKernelInfo->patchInfo.pAllocateSyncBuffer->SurfaceStateHeapOffset);
-    EXPECT_EQ(token.DataParamOffset, pKernelInfo->patchInfo.pAllocateSyncBuffer->DataParamOffset);
-    EXPECT_EQ(token.DataParamSize, pKernelInfo->patchInfo.pAllocateSyncBuffer->DataParamSize);
-}
-
-TEST_F(KernelDataTest, GivenMediaInterfaceDescriptorDataWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchInterfaceDescriptorData idData;
-    idData.Token = PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA;
-    idData.Size = sizeof(SPatchInterfaceDescriptorData);
-    idData.BindingTableOffset = 0xaa;
-    idData.KernelOffset = 0xbb;
-    idData.Offset = 0xcc;
-    idData.SamplerStateOffset = 0xdd;
-
-    pPatchList = &idData;
-    patchListSize = idData.Size;
-
-    buildAndDecode();
-
-    EXPECT_EQ_CONST(PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA, pKernelInfo->patchInfo.interfaceDescriptorData->Token);
+    EXPECT_TRUE(pKernelInfo->kernelDescriptor.kernelAttributes.flags.usesSyncBuffer);
+    EXPECT_EQ(token.SurfaceStateHeapOffset, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.bindful);
+    EXPECT_EQ(token.DataParamOffset, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.stateless);
+    EXPECT_EQ(token.DataParamSize, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.pointerSize);
 }
 
 TEST_F(KernelDataTest, GivenSamplerArgumentWhenBuildingThenProgramIsCorrect) {
@@ -251,45 +214,22 @@ TEST_F(KernelDataTest, GivenBindingTableStateWhenBuildingThenProgramIsCorrect) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_BINDING_TABLE_STATE, pKernelInfo->patchInfo.bindingTableState->Token);
+    EXPECT_EQ_CONST(bindingTableState.Count, pKernelInfo->kernelDescriptor.payloadMappings.bindingTable.numEntries);
+    EXPECT_EQ_CONST(bindingTableState.Offset, pKernelInfo->kernelDescriptor.payloadMappings.bindingTable.tableOffset);
 }
 
 TEST_F(KernelDataTest, GivenDataParameterStreamWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Token = PATCH_TOKEN_DATA_PARAMETER_STREAM;
     dataParameterStream.Size = sizeof(SPatchDataParameterStream);
-    dataParameterStream.DataParameterStreamSize = 0x10;
+    dataParameterStream.DataParameterStreamSize = 64;
 
     pPatchList = &dataParameterStream;
     patchListSize = dataParameterStream.Size;
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_STREAM, pKernelInfo->patchInfo.dataParameterStream->Token);
-}
-
-TEST_F(KernelDataTest, GivenThreadPayloadWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchThreadPayload threadPayload;
-    threadPayload.Token = PATCH_TOKEN_THREAD_PAYLOAD;
-    threadPayload.Size = sizeof(SPatchThreadPayload);
-    threadPayload.GetGlobalOffsetPresent = true;
-    threadPayload.GetGroupIDPresent = true;
-    threadPayload.GetLocalIDPresent = true;
-    threadPayload.HeaderPresent = true;
-    threadPayload.IndirectPayloadStorage = true;
-    threadPayload.LocalIDFlattenedPresent = true;
-    threadPayload.LocalIDXPresent = true;
-    threadPayload.LocalIDYPresent = true;
-    threadPayload.LocalIDZPresent = true;
-    threadPayload.OffsetToSkipPerThreadDataLoad = true;
-    threadPayload.PassInlineData = true;
-
-    pPatchList = &threadPayload;
-    patchListSize = threadPayload.Size;
-
-    buildAndDecode();
-
-    EXPECT_EQ_CONST(PATCH_TOKEN_THREAD_PAYLOAD, pKernelInfo->patchInfo.threadPayload->Token);
+    EXPECT_EQ_CONST(dataParameterStream.DataParameterStreamSize, pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize);
 }
 
 TEST_F(KernelDataTest, GivenExecutionEnvironmentNoReqdWorkGroupSizeWhenBuildingThenProgramIsCorrect) {
@@ -444,27 +384,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentRequiresSubgroupIndependentForwa
     EXPECT_EQ_VAL(1u, program->getSubgroupKernelInfoArray(rootDeviceIndex).size());
 }
 
-TEST_F(KernelDataTest, GivenKernelAttributesInfoWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchKernelAttributesInfo kernelAttributesInfo;
-    kernelAttributesInfo.Token = PATCH_TOKEN_KERNEL_ATTRIBUTES_INFO;
-    kernelAttributesInfo.AttributesSize = 0x10;
-    kernelAttributesInfo.Size = sizeof(SPatchKernelAttributesInfo) + kernelAttributesInfo.AttributesSize;
-    const std::string attributesValue = "dummy_attribute";
-
-    std::vector<char> patchToken(sizeof(iOpenCL::SPatchKernelAttributesInfo) + kernelAttributesInfo.AttributesSize);
-    memcpy_s(patchToken.data(), patchToken.size(), &kernelAttributesInfo, sizeof(iOpenCL::SPatchKernelAttributesInfo));
-    memcpy_s(patchToken.data() + sizeof(iOpenCL::SPatchKernelAttributesInfo), kernelAttributesInfo.AttributesSize,
-             attributesValue.data(), attributesValue.size());
-
-    pPatchList = patchToken.data();
-    patchListSize = static_cast<uint32_t>(patchToken.size());
-
-    buildAndDecode();
-
-    EXPECT_EQ(attributesValue, pKernelInfo->kernelDescriptor.kernelMetadata.kernelLanguageAttributes);
-    EXPECT_EQ_CONST(PATCH_TOKEN_KERNEL_ATTRIBUTES_INFO, pKernelInfo->patchInfo.pKernelAttributesInfo->Token);
-}
-
 TEST_F(KernelDataTest, WhenDecodingExecutionEnvironmentTokenThenWalkOrderIsForcedToXMajor) {
     iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
@@ -541,17 +460,23 @@ TEST_P(DataParameterTest, GivenTokenTypeWhenBuildingThenProgramIsCorrect) {
 
     buildAndDecode();
 
-    if (pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size() > 0) {
-        EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs[0]->Token);
-        EXPECT_EQ_VAL(GetParam(), pKernelInfo->patchInfo.dataParameterBuffersKernelArgs[0]->Type);
-        if (pKernelInfo->kernelArgInfo.size() == dataParameterToken.ArgumentNumber + 1) {
-            if (GetParam() == DATA_PARAMETER_BUFFER_STATEFUL) {
-                EXPECT_TRUE(pKernelInfo->kernelArgInfo[dataParameterToken.ArgumentNumber].pureStatefulBufferAccess);
-            } else {
-                EXPECT_FALSE(pKernelInfo->kernelArgInfo[dataParameterToken.ArgumentNumber].pureStatefulBufferAccess);
-            }
-        } // no else - some params are skipped
+    if (DATA_PARAMETER_KERNEL_ARGUMENT == GetParam()) {
+        ASSERT_NE(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
+        EXPECT_EQ(dataParameterToken.ArgumentNumber, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments[0].argNum);
+        EXPECT_EQ(dataParameterToken.Offset, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments[0].byValueElement.offset);
+        EXPECT_EQ(dataParameterToken.SourceOffset, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments[0].byValueElement.sourceOffset);
+        EXPECT_EQ(dataParameterToken.DataSize, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments[0].byValueElement.size);
+    } else {
+        EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     }
+
+    if (pKernelInfo->kernelArgInfo.size() == dataParameterToken.ArgumentNumber + 1) {
+        if (GetParam() == DATA_PARAMETER_BUFFER_STATEFUL) {
+            EXPECT_TRUE(pKernelInfo->kernelArgInfo[dataParameterToken.ArgumentNumber].pureStatefulBufferAccess);
+        } else {
+            EXPECT_FALSE(pKernelInfo->kernelArgInfo[dataParameterToken.ArgumentNumber].pureStatefulBufferAccess);
+        }
+    } // no else - some params are skipped
 }
 
 // note that we start at '2' because we test kernel arg tokens elsewhere
@@ -577,7 +502,7 @@ TEST_F(KernelDataParameterTest, GivenDataParameterBufferOffsetWhenBuildingThenPr
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
     EXPECT_EQ_VAL(pKernelInfo->kernelArgInfo[1].offsetBufferOffset, dataParameterToken.Offset);
 }
@@ -594,7 +519,7 @@ TEST_F(KernelDataParameterTest, givenDataParameterBufferStatefulWhenDecodingThen
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
     EXPECT_TRUE(pKernelInfo->kernelArgInfo[1].pureStatefulBufferAccess);
 }
@@ -616,7 +541,7 @@ TEST_F(KernelDataParameterTest, givenUnknownDataParameterWhenDecodedThenParamete
 
     buildAndDecode();
 
-    EXPECT_EQ_VAL(0u, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ_VAL(0u, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
 }
 
 TEST_F(KernelDataTest, GivenDataParameterSumOfLocalMemoryObjectArgumentSizesWhenBuildingThenProgramIsCorrect) {
@@ -640,7 +565,7 @@ TEST_F(KernelDataTest, GivenDataParameterSumOfLocalMemoryObjectArgumentSizesWhen
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
     EXPECT_EQ(alignment, pKernelInfo->kernelArgInfo[argumentNumber].slmAlignment);
     ASSERT_EQ(1U, pKernelInfo->kernelArgInfo[argumentNumber].kernelArgPatchInfoVector.size());
@@ -668,7 +593,7 @@ TEST_F(KernelDataTest, GivenDataParameterImageWidthWhenBuildingThenProgramIsCorr
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
     EXPECT_EQ(offsetImgWidth, pKernelInfo->kernelArgInfo[argumentNumber].offsetImgWidth);
 }
@@ -694,7 +619,7 @@ TEST_F(KernelDataTest, GivenDataParameterImageHeightWhenBuildingThenProgramIsCor
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetImgHeight, pKernelInfo->kernelArgInfo[argumentNumber].offsetImgHeight);
@@ -721,7 +646,7 @@ TEST_F(KernelDataTest, GivenDataParameterImageDepthWhenBuildingThenProgramIsCorr
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetImgDepth, pKernelInfo->kernelArgInfo[argumentNumber].offsetImgDepth);
@@ -748,7 +673,7 @@ TEST_F(KernelDataTest, GivenDataParameterImageNumSamplersWhenBuildingThenProgram
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetNumSamples, pKernelInfo->kernelArgInfo[argumentNumber].offsetNumSamples);
@@ -775,7 +700,7 @@ TEST_F(KernelDataTest, GivenDataParameterImageNumMipLevelsWhenBuildingThenProgra
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetNumMipLevels, pKernelInfo->kernelArgInfo[argumentNumber].offsetNumMipLevels);
@@ -810,7 +735,7 @@ TEST_F(KernelDataTest, givenFlatImageDataParamTokenWhenDecodingThenSetAllOffsets
 
         buildAndDecode();
 
-        EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+        EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
         ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
     };
 
@@ -848,7 +773,7 @@ TEST_F(KernelDataTest, GivenDataParameterImageDataTypeWhenBuildingThenProgramIsC
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetChannelDataType, pKernelInfo->kernelArgInfo[argumentNumber].offsetChannelDataType);
@@ -875,7 +800,7 @@ TEST_F(KernelDataTest, GivenDataParameterImageChannelOrderWhenBuildingThenProgra
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetChannelOrder, pKernelInfo->kernelArgInfo[argumentNumber].offsetChannelOrder);
@@ -902,7 +827,7 @@ TEST_F(KernelDataTest, GivenDataParameterImageArraySizeWhenBuildingThenProgramIs
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetImageArraySize, pKernelInfo->kernelArgInfo[argumentNumber].offsetArraySize);
@@ -929,7 +854,7 @@ TEST_F(KernelDataTest, GivenDataParameterWorkDimensionsWhenBuildingThenProgramIs
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetWorkDim, pKernelInfo->workloadInfo.workDimOffset);
@@ -956,7 +881,7 @@ TEST_F(KernelDataTest, GivenDataParameterSimdSizeWhenBuildingThenProgramIsCorrec
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetSimdSize, pKernelInfo->workloadInfo.simdSizeOffset);
@@ -983,7 +908,7 @@ TEST_F(KernelDataTest, GivenParameterPrivateMemoryStatelessSizeWhenBuildingThenP
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 }
 
@@ -1008,7 +933,7 @@ TEST_F(KernelDataTest, GivenDataParameterLocalMemoryStatelessWindowSizeWhenBuild
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 }
 
@@ -1033,7 +958,7 @@ TEST_F(KernelDataTest, GivenDataParameterLocalMemoryStatelessWindowStartAddressW
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 }
 
@@ -1058,7 +983,7 @@ TEST_F(KernelDataTest, GivenDataParameterNumWorkGroupsWhenBuildingThenProgramIsC
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetNumWorkGroups[argumentNumber], pKernelInfo->workloadInfo.numWorkGroupsOffset[argumentNumber]);
@@ -1085,7 +1010,7 @@ TEST_F(KernelDataTest, GivenDataParameterMaxWorkgroupSizeWhenBuildingThenProgram
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetMaxWorkGroupSize, pKernelInfo->workloadInfo.maxWorkGroupSizeOffset);
@@ -1113,7 +1038,7 @@ TEST_F(KernelDataTest, GivenDataParameterSamplerAddressModeWhenBuildingThenProgr
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(1U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[0].offsetSamplerAddressingMode);
@@ -1141,7 +1066,7 @@ TEST_F(KernelDataTest, GivenDataParameterSamplerCoordinateSnapWaIsRequiredThenKe
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[1].offsetSamplerSnapWa);
@@ -1169,7 +1094,7 @@ TEST_F(KernelDataTest, GivenDataParameterSamplerNormalizedCoordsThenKernelInfoIs
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[1].offsetSamplerNormalizedCoords);
@@ -1207,9 +1132,7 @@ TEST_F(KernelDataTest, GivenDataParameterKernelArgumentWhenBuildingThenProgramIs
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_KERNEL_ARGUMENT, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs[0]->Type);
-
+    ASSERT_EQ(2U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(1u, pKernelInfo->kernelArgInfo.size());
     ASSERT_EQ(2u, pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.size());
 
@@ -1262,7 +1185,7 @@ TEST_F(KernelDataTest, GivenPatchTokenSamplerStateArrayWhenBuildingThenProgramIs
     token.Size = static_cast<uint32_t>(sizeof(SPatchSamplerStateArray));
 
     token.Offset = 33;
-    token.Count = 0x1FF0;
+    token.Count = 0xF0;
     token.BorderColorOffset = 0x3FF0;
 
     pPatchList = &token;
@@ -1270,11 +1193,9 @@ TEST_F(KernelDataTest, GivenPatchTokenSamplerStateArrayWhenBuildingThenProgramIs
 
     buildAndDecode();
 
-    ASSERT_NE(nullptr, pKernelInfo->patchInfo.samplerStateArray);
-
-    EXPECT_EQ_VAL(token.Offset, pKernelInfo->patchInfo.samplerStateArray->Offset);
-    EXPECT_EQ_VAL(token.Count, pKernelInfo->patchInfo.samplerStateArray->Count);
-    EXPECT_EQ_VAL(token.BorderColorOffset, pKernelInfo->patchInfo.samplerStateArray->BorderColorOffset);
+    EXPECT_EQ_VAL(token.Offset, pKernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
+    EXPECT_EQ_VAL(token.Count, pKernelInfo->kernelDescriptor.payloadMappings.samplerTable.numSamplers);
+    EXPECT_EQ_VAL(token.BorderColorOffset, pKernelInfo->kernelDescriptor.payloadMappings.samplerTable.borderColor);
 }
 
 TEST_F(KernelDataTest, GivenPatchTokenAllocateStatelessPrivateMemoryWhenBuildingThenProgramIsCorrect) {
@@ -1292,12 +1213,10 @@ TEST_F(KernelDataTest, GivenPatchTokenAllocateStatelessPrivateMemoryWhenBuilding
 
     buildAndDecode();
 
-    ASSERT_NE(nullptr, pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface);
-
-    EXPECT_EQ_VAL(token.SurfaceStateHeapOffset, pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface->SurfaceStateHeapOffset);
-    EXPECT_EQ_VAL(token.DataParamOffset, pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface->DataParamOffset);
-    EXPECT_EQ_VAL(token.DataParamSize, pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface->DataParamSize);
-    EXPECT_EQ_VAL(token.PerThreadPrivateMemorySize, pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize);
+    EXPECT_EQ_VAL(token.SurfaceStateHeapOffset, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.bindful);
+    EXPECT_EQ_VAL(token.DataParamOffset, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.stateless);
+    EXPECT_EQ_VAL(token.DataParamSize, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.pointerSize);
+    EXPECT_EQ_VAL(PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(token, pKernelInfo->kernelDescriptor.kernelAttributes.simdSize), pKernelInfo->kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
 }
 
 TEST_F(KernelDataTest, GivenDataParameterVmeMbBlockTypeWhenBuildingThenProgramIsCorrect) {
@@ -1321,7 +1240,7 @@ TEST_F(KernelDataTest, GivenDataParameterVmeMbBlockTypeWhenBuildingThenProgramIs
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetVmeMbBlockType, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeMbBlockType);
@@ -1348,7 +1267,7 @@ TEST_F(KernelDataTest, GivenDataParameterDataVmeSubpixelModeWhenBuildingThenProg
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetVmeSubpixelMode, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeSubpixelMode);
@@ -1375,7 +1294,7 @@ TEST_F(KernelDataTest, GivenDataParameterVmeSadAdjustModeWhenBuildingThenProgram
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetVmeSadAdjustMode, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeSadAdjustMode);
@@ -1402,7 +1321,7 @@ TEST_F(KernelDataTest, GivenDataParameterVmeSearchPathTypeWhenBuildingThenProgra
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetVmeSearchPathType, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeSearchPathType);
@@ -1420,28 +1339,9 @@ TEST_F(KernelDataTest, GivenPatchTokenStateSipWhenBuildingThenProgramIsCorrect) 
 
     buildAndDecode();
 
-    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
     EXPECT_EQ_VAL(token.SystemKernelOffset, pKernelInfo->systemKernelOffset);
-}
-
-TEST_F(KernelDataTest, GivenPatchTokenAllocateSipSurfaceWhenBuildingThenProgramIsCorrect) {
-    SPatchAllocateSystemThreadSurface token;
-    token.Token = PATCH_TOKEN_ALLOCATE_SIP_SURFACE;
-    token.Size = static_cast<uint32_t>(sizeof(SPatchAllocateSystemThreadSurface));
-    token.Offset = 32;
-    token.BTI = 0;
-    token.PerThreadSystemThreadSurfaceSize = 0x10000;
-
-    pPatchList = &token;
-    patchListSize = token.Size;
-
-    buildAndDecode();
-
-    EXPECT_EQ(0u, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->BTI);
-    EXPECT_EQ(token.Offset, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->Offset);
-    EXPECT_EQ(token.Token, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->Token);
-    EXPECT_EQ(token.PerThreadSystemThreadSurfaceSize, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize);
 }
 
 TEST_F(KernelDataTest, givenSymbolTablePatchTokenThenLinkerInputIsCreated) {

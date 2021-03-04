@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -159,7 +159,7 @@ HWTEST_F(EnqueueDebugKernelSimpleTest, givenKernelFromProgramWithDebugEnabledWhe
     std::unique_ptr<GMockCommandQueueHw<FamilyType>> mockCmdQ(new GMockCommandQueueHw<FamilyType>(context, pClDevice, 0));
     mockCmdQ->getGpgpuCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
 
-    EXPECT_NE(nullptr, kernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface);
+    EXPECT_TRUE(isValidOffset(kernel->getDefaultKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful));
 
     EXPECT_CALL(*mockCmdQ.get(), setupDebugSurface(kernel.get())).Times(1).RetiresOnSaturation();
 
@@ -175,7 +175,7 @@ HWTEST_F(EnqueueDebugKernelSimpleTest, givenKernelWithoutSystemThreadSurfaceWhen
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(*pDevice, &program));
     kernel->initialize();
 
-    EXPECT_EQ(nullptr, kernel->getKernelInfo(rootDeviceIndex).patchInfo.pAllocateSystemThreadSurface);
+    EXPECT_FALSE(isValidOffset(kernel->getDefaultKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful));
 
     std::unique_ptr<GMockCommandQueueHw<FamilyType>> mockCmdQ(new GMockCommandQueueHw<FamilyType>(context, pClDevice, 0));
 

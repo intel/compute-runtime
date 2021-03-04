@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -209,12 +209,9 @@ inline const uint8_t *getInlineData(const SPatchString *ptr) {
     return ptrOffset(reinterpret_cast<const uint8_t *>(ptr), sizeof(SPatchString));
 }
 
-inline uint64_t getPerHwThreadPrivateSurfaceSize(const SPatchAllocateStatelessPrivateSurface *ptr, uint32_t simdSize) {
-    if (nullptr == ptr) {
-        return 0;
-    }
-    uint32_t multiplier = ptr->IsSimtThread ? simdSize : 1U;
-    return static_cast<uint64_t>(ptr->PerThreadPrivateMemorySize) * multiplier;
+inline uint64_t getPerHwThreadPrivateSurfaceSize(const SPatchAllocateStatelessPrivateSurface &ptr, uint32_t simdSize) {
+    uint32_t multiplier = ptr.IsSimtThread ? simdSize : 1U;
+    return static_cast<uint64_t>(ptr.PerThreadPrivateMemorySize) * multiplier;
 }
 
 const KernelArgAttributesFromPatchtokens getInlineData(const SPatchKernelArgumentInfo *ptr);

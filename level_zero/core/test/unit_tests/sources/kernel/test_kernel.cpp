@@ -915,7 +915,6 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelAndNoMediavfestateThenSpillMemSi
         }
     }
 
-    ki->patchInfo.mediavfestate = nullptr;
     EXPECT_EQ(0u, kernelProperties.spillMemSize);
 }
 
@@ -939,7 +938,6 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelAndNollocateStatelessPrivateSurf
         }
     }
 
-    ki->patchInfo.pAllocateStatelessPrivateSurface = nullptr;
     EXPECT_EQ(0u, kernelProperties.privateMemSize);
 }
 

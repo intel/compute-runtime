@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -271,7 +271,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     kernelTokens.tokens.allocateStatelessPrivateSurface = &privateSurface;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesPrivateMemory);
-    EXPECT_EQ(NEO::PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(&privateSurface, kernelDescriptor.kernelAttributes.simdSize), kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
+    EXPECT_EQ(NEO::PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(privateSurface, kernelDescriptor.kernelAttributes.simdSize), kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
     EXPECT_EQ(privateSurface.DataParamOffset, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.stateless);
     EXPECT_EQ(privateSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.pointerSize);
     EXPECT_EQ(privateSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.bindful);

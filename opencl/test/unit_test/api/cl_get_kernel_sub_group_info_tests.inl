@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -286,11 +286,11 @@ TEST_F(KernelSubGroupInfoReturnCompileSizeTest, GivenKernelWhenGettingCompileSub
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
     size_t requiredSubGroupSize = 0;
-    auto start = pKernel->getKernelInfo(rootDeviceIndex).attributes.find("intel_reqd_sub_group_size(");
+    auto start = pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find("intel_reqd_sub_group_size(");
     if (start != std::string::npos) {
         start += strlen("intel_reqd_sub_group_size(");
-        auto stop = pKernel->getKernelInfo(rootDeviceIndex).attributes.find(")", start);
-        requiredSubGroupSize = stoi(pKernel->getKernelInfo(rootDeviceIndex).attributes.substr(start, stop - start));
+        auto stop = pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find(")", start);
+        requiredSubGroupSize = stoi(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelLanguageAttributes.substr(start, stop - start));
     }
 
     EXPECT_EQ(paramValue[0], requiredSubGroupSize);

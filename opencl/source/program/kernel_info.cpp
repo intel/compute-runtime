@@ -298,45 +298,6 @@ void KernelInfo::storeKernelArgument(const SPatchStatelessDeviceQueueKernelArgum
     storeKernelArgPatchInfo(argNum, pStatelessDeviceQueueKernelArg->DataParamSize, pStatelessDeviceQueueKernelArg->DataParamOffset, 0, pStatelessDeviceQueueKernelArg->SurfaceStateHeapOffset);
 }
 
-void KernelInfo::storePatchToken(
-    const SPatchAllocateStatelessPrivateSurface *pStatelessPrivateSurfaceArg) {
-    usesSsh |= true;
-    patchInfo.pAllocateStatelessPrivateSurface = pStatelessPrivateSurfaceArg;
-}
-
-void KernelInfo::storePatchToken(const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization *pStatelessConstantMemorySurfaceWithInitializationArg) {
-    usesSsh |= true;
-    patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization = pStatelessConstantMemorySurfaceWithInitializationArg;
-}
-
-void KernelInfo::storePatchToken(const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization *pStatelessGlobalMemorySurfaceWithInitializationArg) {
-    usesSsh |= true;
-    patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization = pStatelessGlobalMemorySurfaceWithInitializationArg;
-}
-
-void KernelInfo::storePatchToken(const SPatchKernelAttributesInfo *pKernelAttributesInfo) {
-    this->patchInfo.pKernelAttributesInfo = pKernelAttributesInfo;
-    attributes = reinterpret_cast<const char *>(pKernelAttributesInfo) + sizeof(SPatchKernelAttributesInfo);
-
-    auto start = attributes.find("intel_reqd_sub_group_size(");
-    if (start != std::string::npos) {
-        start += strlen("intel_reqd_sub_group_size(");
-        auto stop = attributes.find(")", start);
-        std::stringstream requiredSubGroupSizeStr(attributes.substr(start, stop - start));
-        requiredSubGroupSizeStr >> requiredSubGroupSize;
-    }
-}
-
-void KernelInfo::storePatchToken(const SPatchAllocateSystemThreadSurface *pSystemThreadSurface) {
-    usesSsh |= true;
-    patchInfo.pAllocateSystemThreadSurface = pSystemThreadSurface;
-}
-
-void KernelInfo::storePatchToken(const SPatchAllocateSyncBuffer *pAllocateSyncBuffer) {
-    usesSsh |= true;
-    patchInfo.pAllocateSyncBuffer = pAllocateSyncBuffer;
-}
-
 void KernelInfo::storeKernelArgPatchInfo(uint32_t argNum, uint32_t dataSize, uint32_t dataOffset, uint32_t sourceOffset, uint32_t offsetSSH) {
     resizeKernelArgInfoAndRegisterParameter(argNum);
 
@@ -350,8 +311,7 @@ void KernelInfo::storeKernelArgPatchInfo(uint32_t argNum, uint32_t dataSize, uin
 }
 
 size_t KernelInfo::getSamplerStateArrayCount() const {
-    size_t count = patchInfo.samplerStateArray ? (size_t)patchInfo.samplerStateArray->Count : 0;
-    return count;
+    return kernelDescriptor.payloadMappings.samplerTable.numSamplers;
 }
 size_t KernelInfo::getSamplerStateArraySize(const HardwareInfo &hwInfo) const {
     size_t samplerStateArraySize = getSamplerStateArrayCount() * Sampler::getSamplerStateSize(hwInfo);
@@ -360,22 +320,22 @@ size_t KernelInfo::getSamplerStateArraySize(const HardwareInfo &hwInfo) const {
 
 size_t KernelInfo::getBorderColorStateSize() const {
     size_t borderColorSize = 0;
-    if (patchInfo.samplerStateArray) {
-        borderColorSize = patchInfo.samplerStateArray->Offset - patchInfo.samplerStateArray->BorderColorOffset;
+    if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0U) {
+        borderColorSize = kernelDescriptor.payloadMappings.samplerTable.tableOffset - kernelDescriptor.payloadMappings.samplerTable.borderColor;
     }
     return borderColorSize;
 }
 
 size_t KernelInfo::getBorderColorOffset() const {
     size_t borderColorOffset = 0;
-    if (patchInfo.samplerStateArray) {
-        borderColorOffset = patchInfo.samplerStateArray->BorderColorOffset;
+    if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0U) {
+        borderColorOffset = kernelDescriptor.payloadMappings.samplerTable.borderColor;
     }
     return borderColorOffset;
 }
 
 uint32_t KernelInfo::getConstantBufferSize() const {
-    return patchInfo.dataParameterStream ? patchInfo.dataParameterStream->DataParameterStreamSize : 0;
+    return kernelDescriptor.kernelAttributes.crossThreadDataSize;
 }
 
 bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) {
@@ -412,12 +372,9 @@ void KernelInfo::apply(const DeviceInfoKernelPayloadConstants &constants) {
         *(uint32_t *)&(this->crossThreadData[localMemoryStatelessWindowSizeOffset]) = constants.slmWindowSize;
     }
 
-    uint32_t privateMemorySize = 0U;
-    if (patchInfo.pAllocateStatelessPrivateSurface) {
-        auto perHwThreadSize = PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(patchInfo.pAllocateStatelessPrivateSurface, this->getMaxSimdSize());
-        privateMemorySize = static_cast<uint32_t>(KernelHelper::getPrivateSurfaceSize(perHwThreadSize,
-                                                                                      constants.computeUnitsUsedForScratch));
-    }
+    auto perHwThreadSize = kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
+    uint32_t privateMemorySize = static_cast<uint32_t>(KernelHelper::getPrivateSurfaceSize(perHwThreadSize,
+                                                                                           constants.computeUnitsUsedForScratch));
 
     if (privateMemoryStatelessSizeOffset != WorkloadInfo::undefinedOffset) {
         *(uint32_t *)&(this->crossThreadData[privateMemoryStatelessSizeOffset]) = privateMemorySize;

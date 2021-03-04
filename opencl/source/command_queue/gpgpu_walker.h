@@ -106,6 +106,7 @@ class GpgpuWalkerHelper {
 
     static size_t setGpgpuWalkerThreadData(
         WALKER_TYPE<GfxFamily> *walkerCmd,
+        const KernelDescriptor &kernelDescriptor,
         const size_t globalOffsets[3],
         const size_t startWorkGroups[3],
         const size_t numWorkGroups[3],
@@ -114,7 +115,6 @@ class GpgpuWalkerHelper {
         uint32_t workDim,
         bool localIdsGenerationByRuntime,
         bool inlineDataProgrammingRequired,
-        const iOpenCL::SPatchThreadPayload &threadPayload,
         uint32_t requiredWorkgroupOrder);
 
     static void dispatchProfilingCommandsStart(
