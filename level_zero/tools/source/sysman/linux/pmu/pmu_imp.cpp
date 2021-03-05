@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,7 +72,7 @@ int64_t PmuInterfaceImp::pmuInterfaceOpen(uint64_t config, int group, uint32_t f
     return ret;
 }
 
-int PmuInterfaceImp::pmuReadSingle(int fd, uint64_t *data, ssize_t sizeOfdata) {
+int PmuInterfaceImp::pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) {
     ssize_t len;
     len = read(fd, data, sizeOfdata);
     if (len != sizeOfdata) {

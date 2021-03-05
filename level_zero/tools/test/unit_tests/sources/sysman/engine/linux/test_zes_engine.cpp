@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,8 +55,8 @@ class ZesEngineFixture : public SysmanDeviceFixture {
 
         ON_CALL(*pPmuInterface.get(), perfEventOpen(_, _, _, _, _))
             .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImp>::mockedPerfEventOpenAndSuccessReturn));
-        ON_CALL(*pPmuInterface.get(), pmuReadSingle(_, _, _))
-            .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImp>::mockedPmuReadSingleAndSuccessReturn));
+        ON_CALL(*pPmuInterface.get(), pmuRead(_, _, _))
+            .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImp>::mockedPmuReadAndSuccessReturn));
 
         ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<EngineSysfsAccess>::getValStringSymLinkSuccess));
@@ -179,9 +179,9 @@ TEST_F(ZesEngineFixture, GivenTestIntegratedDevicesAndValidEngineHandleWhenCalli
     delete pOsEngineTest1;
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndPmuReadSingleFailsThenVerifyEngineGetActivityReturnsFailure) {
-    ON_CALL(*pPmuInterface.get(), pmuReadSingle(_, _, _))
-        .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImp>::mockedPmuReadSingleAndFailureReturn));
+TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndPmuReadFailsThenVerifyEngineGetActivityReturnsFailure) {
+    ON_CALL(*pPmuInterface.get(), pmuRead(_, _, _))
+        .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImp>::mockedPmuReadAndFailureReturn));
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());

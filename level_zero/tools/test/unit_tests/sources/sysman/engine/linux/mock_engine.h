@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,17 +75,17 @@ struct Mock<MockPmuInterfaceImp> : public MockPmuInterfaceImp {
     int64_t mockedPerfEventOpenAndFailureReturn(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) {
         return -1;
     }
-    int mockedPmuReadSingleAndSuccessReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
+    int mockedPmuReadAndSuccessReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
         data[0] = mockActiveTime;
         data[1] = mockTimestamp;
         return 0;
     }
-    int mockedPmuReadSingleAndFailureReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
+    int mockedPmuReadAndFailureReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
         return -1;
     }
 
     MOCK_METHOD(int64_t, perfEventOpen, (perf_event_attr * attr, pid_t pid, int cpu, int groupFd, uint64_t flags), (override));
-    MOCK_METHOD(int, pmuReadSingle, (int fd, uint64_t *data, ssize_t sizeOfdata), (override));
+    MOCK_METHOD(int, pmuRead, (int fd, uint64_t *data, ssize_t sizeOfdata), (override));
 };
 
 class EngineSysfsAccess : public SysfsAccess {};

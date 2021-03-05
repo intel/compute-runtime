@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     uint64_t data[2] = {};
-    if (pPmuInterface->pmuReadSingle(static_cast<int>(fd), data, sizeof(data)) < 0) {
+    if (pPmuInterface->pmuRead(static_cast<int>(fd), data, sizeof(data)) < 0) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     // In data[], First u64 is "active time", And second u64 is "timestamp". Both in nanoseconds
