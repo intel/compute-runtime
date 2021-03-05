@@ -1555,10 +1555,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(ze_event_h
         NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, ptrOffset(baseAddr, globalOffset));
         NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, ptrOffset(baseAddr, contextOffset));
     }
-
-    if (beforeWalker) {
-        event->increasePacketsInUse();
-    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1650,13 +1646,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     auto dstptrAllocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents);
     commandContainer.addToResidencyContainer(dstptrAllocationStruct.alloc);
 
-    std::unique_ptr<EventData[]> timestampsAddress = std::make_unique<EventData[]>(numEvents);
+    std::unique_ptr<EventData[]> timestampsData = std::make_unique<EventData[]>(numEvents);
 
     for (uint32_t i = 0u; i < numEvents; ++i) {
         auto event = Event::fromHandle(phEvents[i]);
         commandContainer.addToResidencyContainer(&event->getAllocation());
-        timestampsAddress[i].address = event->getGpuAddress();
-        timestampsAddress[i].packetsInUse = event->getPacketsInUse();
+        timestampsData[i].address = event->getGpuAddress();
+        timestampsData[i].packetsInUse = event->getPacketsInUse();
     }
 
     size_t alignedSize = alignUp<size_t>(sizeof(EventData) * numEvents, MemoryConstants::pageSize64k);
@@ -1670,14 +1666,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
                                                    false,
                                                    devices};
 
-    NEO::GraphicsAllocation *timestampsGPUAddress = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+    NEO::GraphicsAllocation *timestampsGPUData = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
 
-    UNRECOVERABLE_IF(timestampsGPUAddress == nullptr);
+    UNRECOVERABLE_IF(timestampsGPUData == nullptr);
 
-    commandContainer.addToResidencyContainer(timestampsGPUAddress);
-    commandContainer.getDeallocationContainer().push_back(timestampsGPUAddress);
+    commandContainer.addToResidencyContainer(timestampsGPUData);
+    commandContainer.getDeallocationContainer().push_back(timestampsGPUData);
 
-    bool result = device->getDriverHandle()->getMemoryManager()->copyMemoryToAllocation(timestampsGPUAddress, 0, timestampsAddress.get(), sizeof(EventData) * numEvents);
+    bool result = device->getDriverHandle()->getMemoryManager()->copyMemoryToAllocation(timestampsGPUData, 0, timestampsData.get(), sizeof(EventData) * numEvents);
 
     UNRECOVERABLE_IF(!result);
 
@@ -1717,7 +1713,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
 
     auto dstValPtr = static_cast<uintptr_t>(dstptrAllocationStruct.alloc->getGpuAddress());
 
-    builtinFunction->setArgBufferWithAlloc(0u, static_cast<uintptr_t>(timestampsGPUAddress->getGpuAddress()), timestampsGPUAddress);
+    builtinFunction->setArgBufferWithAlloc(0u, static_cast<uintptr_t>(timestampsGPUData->getGpuAddress()), timestampsGPUData);
     builtinFunction->setArgBufferWithAlloc(1, dstValPtr, dstptrAllocationStruct.alloc);
 
     auto appendResult = appendLaunchKernel(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, numWaitEvents,

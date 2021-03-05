@@ -226,6 +226,18 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsOfPacketTagBuff
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, allocation->getAllocationType());
 }
 
+TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsIncreasedThenCorrectOffsetIsReturned) {
+    EXPECT_EQ(0u, event->getPacketsInUse());
+    auto gpuAddr = event->getGpuAddress();
+    EXPECT_EQ(gpuAddr, event->getTimestampPacketAddress());
+
+    event->increasePacketsInUse();
+    EXPECT_EQ(1u, event->getPacketsInUse());
+
+    gpuAddr += sizeof(TimestampPacketStorage::Packet);
+    EXPECT_EQ(gpuAddr, event->getTimestampPacketAddress());
+}
+
 HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
     TimestampPacketStorage::Packet data = {};
     data.contextStart = 1u;
@@ -233,10 +245,7 @@ HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryK
     data.globalStart = 3u;
     data.globalEnd = 4u;
 
-    event->increasePacketsInUse();
-    EXPECT_EQ(event->getPacketsInUse(), 1u);
     event->hostAddress = &data;
-
     ze_kernel_timestamp_result_t result = {};
 
     event->queryKernelTimestamp(&result);

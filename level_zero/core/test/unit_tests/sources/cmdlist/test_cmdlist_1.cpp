@@ -1043,11 +1043,10 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCo
     auto baseAddr = event->getGpuAddress();
     auto contextOffset = offsetof(TimestampPacketStorage::Packet, contextStart);
     auto globalOffset = offsetof(TimestampPacketStorage::Packet, globalStart);
-    EXPECT_EQ(event->getPacketsInUse(), 0u);
     EXPECT_EQ(event->getTimestampPacketAddress(), baseAddr);
 
     commandList->appendEventForProfilingCopyCommand(event->toHandle(), true);
-    EXPECT_EQ(event->getPacketsInUse(), 1u);
+    EXPECT_EQ(event->getPacketsInUse(), 0u);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(

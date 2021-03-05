@@ -54,7 +54,7 @@ struct Event : _ze_event_handle_t {
 
     void *hostAddress = nullptr;
     uint64_t gpuAddress;
-    uint32_t packetsInUse;
+    uint32_t packetsInUse = 0u;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
