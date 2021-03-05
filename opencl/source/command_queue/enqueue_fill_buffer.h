@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
 
     buffer->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
 
-    auto patternAllocation = memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), alignUp(patternSize, MemoryConstants::cacheLineSize), GraphicsAllocation::AllocationType::FILL_PATTERN, getDevice().getDeviceBitfield()});
+    auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto storageWithAllocations = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
+    auto allocationType = GraphicsAllocation::AllocationType::FILL_PATTERN;
+    auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, allocationType).release();
+    commandStreamReceieverOwnership.unlock();
+
+    if (!patternAllocation) {
+        patternAllocation = memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), alignUp(patternSize, MemoryConstants::cacheLineSize), GraphicsAllocation::AllocationType::FILL_PATTERN, getDevice().getDeviceBitfield()});
+    }
 
     if (patternSize == 1) {
         int patternInt = (uint32_t)((*(uint8_t *)pattern << 24) | (*(uint8_t *)pattern << 16) | (*(uint8_t *)pattern << 8) | *(uint8_t *)pattern);
@@ -86,7 +94,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         event);
 
     auto storageForAllocation = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
-    storageForAllocation->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), TEMPORARY_ALLOCATION, taskCount);
+    storageForAllocation->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION, taskCount);
 
     return CL_SUCCESS;
 }

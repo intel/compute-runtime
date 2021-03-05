@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, WhenFillingBufferThenGpgp
 
     // Compute the SIMD lane mask
     size_t simd =
-        cmd->getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD32 ? 32 : cmd->getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD16 ? 16 : 8;
+        cmd->getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD32 ? 32 : cmd->getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD16 ? 16
+                                                                                                                         : 8;
     uint64_t simdMask = maxNBitValue(simd);
 
     // Mask off lanes based on the execution masks
@@ -373,8 +374,8 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeCopied) 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
-    ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
-    GraphicsAllocation *allocation = csr.getTemporaryAllocations().peekHead();
+    ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
+    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
 
     while (allocation != nullptr) {
         if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
@@ -394,8 +395,8 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeAligned)
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
-    ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
-    GraphicsAllocation *allocation = csr.getTemporaryAllocations().peekHead();
+    ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
+    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
 
     while (allocation != nullptr) {
         if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
@@ -410,6 +411,19 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeAligned)
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(alignUp(allocation->getUnderlyingBuffer(), MemoryConstants::cacheLineSize), allocation->getUnderlyingBuffer());
     EXPECT_EQ(alignUp(allocation->getUnderlyingBufferSize(), MemoryConstants::cacheLineSize), allocation->getUnderlyingBufferSize());
+}
+
+HWTEST_F(EnqueueFillBufferCmdTests, WhenFillBufferIsCalledTwiceThenPatternAllocationIsReused) {
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
+    EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
+    ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
+    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
+    EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
+    ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
+    EXPECT_NE(csr.getAllocationsForReuse().peekHead(), nullptr);
+    EXPECT_EQ(allocation, csr.getAllocationsForReuse().peekHead());
+    EXPECT_EQ(csr.getAllocationsForReuse().peekTail(), allocation);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeOneByteShouldGetPreparedForMiddleKernel) {
@@ -436,10 +450,10 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeOneByteSho
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
-    ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
+    ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
+    ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
-    GraphicsAllocation *allocation = csr.getTemporaryAllocations().peekHead();
+    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
     ASSERT_NE(nullptr, allocation);
 
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), output, size));
@@ -469,10 +483,10 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeTwoBytesSh
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
-    ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
+    ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
+    ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
-    GraphicsAllocation *allocation = csr.getTemporaryAllocations().peekHead();
+    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
     ASSERT_NE(nullptr, allocation);
 
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), output, size));
@@ -500,9 +514,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationI
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
+    ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
 
-    GraphicsAllocation *patternAllocation = csr.getTemporaryAllocations().peekHead();
+    GraphicsAllocation *patternAllocation = csr.getAllocationsForReuse().peekHead();
     ASSERT_NE(nullptr, patternAllocation);
 
     EXPECT_EQ(GraphicsAllocation::AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());
