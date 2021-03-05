@@ -28,11 +28,13 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {};
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = 0;
+    cmdQueueDesc.ordinal = copyQueueGroup;
     cmdQueueDesc.index = 0;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
 
@@ -40,6 +42,7 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     cmdListDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
     cmdListDesc.pNext = nullptr;
     cmdListDesc.flags = 0;
+    cmdListDesc.commandQueueGroupOrdinal = copyQueueGroup;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 
     ze_device_mem_alloc_desc_t deviceDesc;
@@ -95,11 +98,13 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {};
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = 0;
+    cmdQueueDesc.ordinal = copyQueueGroup;
     cmdQueueDesc.index = 0;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
 
@@ -107,6 +112,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     cmdListDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
     cmdListDesc.pNext = nullptr;
     cmdListDesc.flags = 0;
+    cmdListDesc.commandQueueGroupOrdinal = copyQueueGroup;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 
     ze_host_mem_alloc_desc_t hostDesc;
@@ -160,11 +166,13 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {};
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = 0;
+    cmdQueueDesc.ordinal = copyQueueGroup;
     cmdQueueDesc.index = 0;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
 
@@ -172,6 +180,7 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
     cmdListDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
     cmdListDesc.pNext = nullptr;
     cmdListDesc.flags = 0;
+    cmdListDesc.commandQueueGroupOrdinal = copyQueueGroup;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 
     void *dstBuffer = nullptr;
@@ -273,7 +282,7 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
 }
 
 void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
-    const size_t allocSize = 4096 + 7;
+    const size_t allocSize = 4096;
     char pattern0 = 5;
     const size_t pattern1Size = 8;
     char *pattern1 = new char[pattern1Size];
@@ -284,11 +293,13 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {};
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = 0;
+    cmdQueueDesc.ordinal = copyQueueGroup;
     cmdQueueDesc.index = 0;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
 
@@ -296,6 +307,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     cmdListDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
     cmdListDesc.pNext = nullptr;
     cmdListDesc.flags = 0;
+    cmdListDesc.commandQueueGroupOrdinal = copyQueueGroup;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 
     // Initialize buffers
@@ -386,11 +398,13 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {};
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = 0;
+    cmdQueueDesc.ordinal = copyQueueGroup;
     cmdQueueDesc.index = 0;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
 
@@ -398,6 +412,7 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
     cmdListDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
     cmdListDesc.pNext = nullptr;
     cmdListDesc.flags = 0;
+    cmdListDesc.commandQueueGroupOrdinal = copyQueueGroup;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 
     void *dstBuffer = nullptr;

@@ -97,6 +97,26 @@ uint32_t getCommandQueueOrdinal(ze_device_handle_t &device) {
     return computeQueueGroupOrdinal;
 }
 
+uint32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
+    uint32_t numQueueGroups = 0;
+    SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
+    if (numQueueGroups == 0) {
+        std::cout << "No queue groups found!\n";
+        std::terminate();
+    }
+    std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
+    SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups,
+                                                                queueProperties.data()));
+    uint32_t copyOnlyQueueGroupOrdinal = 0;
+    for (uint32_t i = 0; i < numQueueGroups; i++) {
+        if (!(queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) && (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY)) {
+            copyOnlyQueueGroupOrdinal = i;
+            break;
+        }
+    }
+    return copyOnlyQueueGroupOrdinal;
+}
+
 ze_result_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_queue_handle_t &cmdQueue) {
     ze_command_queue_desc_t descriptor = {};
     descriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
