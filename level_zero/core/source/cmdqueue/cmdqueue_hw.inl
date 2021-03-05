@@ -88,10 +88,14 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     constexpr size_t residencyContainerSpaceForTagWrite = 1;
 
     NEO::Device *neoDevice = device->getNEODevice();
-    NEO::PreemptionMode statePreemption = commandQueuePreemptionMode;
     auto devicePreemption = device->getDevicePreemptionMode();
-
     const bool initialPreemptionMode = commandQueuePreemptionMode == NEO::PreemptionMode::Initial;
+    NEO::PreemptionMode cmdQueuePreemption = commandQueuePreemptionMode;
+    if (initialPreemptionMode) {
+        cmdQueuePreemption = devicePreemption;
+    }
+    NEO::PreemptionMode statePreemption = cmdQueuePreemption;
+
     const bool stateSipRequired = (initialPreemptionMode && devicePreemption == NEO::PreemptionMode::MidThread) ||
                                   (neoDevice->getDebugger() && NEO::Debugger::isDebugEnabled(internalUsage));
 
@@ -104,7 +108,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(devicePreemption, commandQueuePreemptionMode);
-    statePreemption = devicePreemption;
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed) {
         debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(neoDevice->getSourceLevelDebugger() != nullptr);
@@ -249,11 +252,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         NEO::PreemptionHelper::programCmdStream<GfxFamily>(child,
-                                                           devicePreemption,
+                                                           cmdQueuePreemption,
                                                            commandQueuePreemptionMode,
                                                            csr->getPreemptionAllocation());
-        commandQueuePreemptionMode = devicePreemption;
-        statePreemption = commandQueuePreemptionMode;
+        statePreemption = cmdQueuePreemption;
 
         const bool sipKernelUsed = devicePreemption == NEO::PreemptionMode::MidThread ||
                                    (neoDevice->getDebugger() != nullptr && NEO::Debugger::isDebugEnabled(internalUsage));
