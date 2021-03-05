@@ -682,7 +682,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMMIO(uint32_t offset, uint32_t 
     auto streamLocked = getAubStream()->lockStream();
 
     if (hardwareContextController) {
-        return hardwareContextController->writeMMIO(offset, value);
+        hardwareContextController->writeMMIO(offset, value);
     }
 }
 
