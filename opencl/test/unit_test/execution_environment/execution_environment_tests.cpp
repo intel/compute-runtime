@@ -185,7 +185,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         MemoryOperationsHandlerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct AubCenterMock : public DestructorCounted<AubCenter, 3> {
-        AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB) {}
+        AubCenterMock(uint32_t &destructorId, const GmmHelper &gmmHelper) : DestructorCounted(destructorId, defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB) {}
     };
     struct CompilerInterfaceMock : public DestructorCounted<CompilerInterface, 2> {
         CompilerInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -197,14 +197,16 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         SourceLevelDebuggerMock(uint32_t &destructorId) : DestructorCounted(destructorId, nullptr) {}
     };
 
+    auto gmmHelper = new GmmHelperMock(destructorId, defaultHwInfo.get());
+
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->gmmHelper = std::unique_ptr<GmmHelperMock>(gmmHelper);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);
-    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::make_unique<AubCenterMock>(destructorId);
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::make_unique<AubCenterMock>(destructorId, *gmmHelper);
     executionEnvironment->rootDeviceEnvironments[0]->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->debugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);

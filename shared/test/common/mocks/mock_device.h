@@ -134,9 +134,12 @@ template <>
 inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
     auto executionEnvironment = new ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
+
     auto hwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
+
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
+
+    MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->initializeMemoryManager();
     return Device::create<RootDevice>(executionEnvironment, 0u);
 }

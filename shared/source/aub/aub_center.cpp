@@ -18,7 +18,7 @@
 namespace NEO {
 extern aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, uint32_t stepping, bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace);
 
-AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
+AubCenter::AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (DebugManager.flags.UseAubStream.get()) {
         auto devicesCount = HwHelper::getSubDevicesCount(pHwInfo);
         auto memoryBankSize = AubHelper::getMemBankSize(pHwInfo);
@@ -32,7 +32,7 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
         auto &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
         stepping = hwHelper.getAubStreamSteppingFromHwRevId(*pHwInfo);
 
-        aub_stream::MMIOList extraMmioList = hwHelper.getExtraMmioList(*pHwInfo);
+        aub_stream::MMIOList extraMmioList = hwHelper.getExtraMmioList(*pHwInfo, gmmHelper);
         aub_stream::MMIOList debugMmioList = AubHelper::getAdditionalMmioList();
 
         extraMmioList.insert(extraMmioList.end(), debugMmioList.begin(), debugMmioList.end());

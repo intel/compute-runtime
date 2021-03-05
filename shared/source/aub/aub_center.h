@@ -16,10 +16,11 @@
 
 namespace NEO {
 struct HardwareInfo;
+class GmmHelper;
 
 class AubCenter {
   public:
-    AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
+    AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
 
     AubCenter();
     virtual ~AubCenter() = default;

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -21,20 +22,23 @@
 
 using namespace NEO;
 
-TEST(AubCenter, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreatedThenAubCenterDoesNotCreateAubManager) {
+struct AubCenterTests : public ::testing::Test {
     DebugManagerStateRestore restorer;
+    GmmHelper gmmHelper{nullptr, defaultHwInfo.get()};
+};
+
+TEST_F(AubCenterTests, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreatedThenAubCenterDoesNotCreateAubManager) {
     DebugManager.flags.UseAubStream.set(false);
 
-    MockAubCenter aubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(nullptr, aubCenter.aubManager.get());
 }
 
-TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreateAubManagerWithCorrectParameters) {
-    DebugManagerStateRestore restorer;
+TEST_F(AubCenterTests, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreateAubManagerWithCorrectParameters) {
     DebugManager.flags.UseAubStream.set(false);
 
     MockAubManager *mockAubManager = new MockAubManager(defaultHwInfo->platform.eProductFamily, 4, 8 * MB, defaultHwInfo->platform.usRevId, true, aub_stream::mode::aubFile, defaultHwInfo->capabilityTable.gpuAddressSpace);
-    MockAubCenter mockAubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter mockAubCenter(defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter.aubManager = std::unique_ptr<MockAubManager>(mockAubManager);
 
     EXPECT_EQ(defaultHwInfo->platform.eProductFamily, mockAubManager->mockAubManagerParams.productFamily);
@@ -46,8 +50,7 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreat
     EXPECT_EQ(defaultHwInfo->capabilityTable.gpuAddressSpace, mockAubManager->mockAubManagerParams.gpuAddressSpace);
 }
 
-TEST(AubCenter, GivenDefaultSetCommandStreamReceiverFlagAndAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
-    DebugManagerStateRestore restorer;
+TEST_F(AubCenterTests, GivenDefaultSetCommandStreamReceiverFlagAndAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
     DebugManager.flags.UseAubStream.set(true);
 
     std::string aubFile("test.aub");
@@ -56,8 +59,7 @@ TEST(AubCenter, GivenDefaultSetCommandStreamReceiverFlagAndAubFileNameWhenGettin
     EXPECT_EQ(aub_stream::mode::aubFile, mode);
 }
 
-TEST(AubCenter, GivenCsrHwAndEmptyAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
-    DebugManagerStateRestore restorer;
+TEST_F(AubCenterTests, GivenCsrHwAndEmptyAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
     DebugManager.flags.UseAubStream.set(true);
 
     std::string aubFile("");
@@ -66,8 +68,7 @@ TEST(AubCenter, GivenCsrHwAndEmptyAubFileNameWhenGettingAubStreamModeThenModeAub
     EXPECT_EQ(aub_stream::mode::aubFile, mode);
 }
 
-TEST(AubCenter, GivenCsrHwAndNotEmptyAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
-    DebugManagerStateRestore restorer;
+TEST_F(AubCenterTests, GivenCsrHwAndNotEmptyAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
     DebugManager.flags.UseAubStream.set(true);
 
     std::string aubFile("test.aub");
@@ -76,7 +77,7 @@ TEST(AubCenter, GivenCsrHwAndNotEmptyAubFileNameWhenGettingAubStreamModeThenMode
     EXPECT_EQ(aub_stream::mode::aubFile, mode);
 }
 
-TEST(AubCenter, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
+TEST_F(AubCenterTests, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
     struct {
         __REVID stepping;
         uint32_t expectedAubStreamStepping;
@@ -89,7 +90,6 @@ TEST(AubCenter, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
         {REVISION_D, AubMemDump::SteppingValues::D},
         {REVISION_K, AubMemDump::SteppingValues::K}};
 
-    DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(true);
 
     auto hwInfo = *defaultHwInfo;
@@ -101,13 +101,12 @@ TEST(AubCenter, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
         }
 
         hwInfo.platform.usRevId = hwRevId;
-        MockAubCenter aubCenter(&hwInfo, false, "", CommandStreamReceiverType::CSR_AUB);
+        MockAubCenter aubCenter(&hwInfo, gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
         EXPECT_EQ(steppingPair.expectedAubStreamStepping, aubCenter.stepping);
     }
 }
 
-TEST(AubCenter, GivenCsrTypeWhenGettingAubStreamModeThenCorrectModeIsReturned) {
-    DebugManagerStateRestore restorer;
+TEST_F(AubCenterTests, GivenCsrTypeWhenGettingAubStreamModeThenCorrectModeIsReturned) {
     DebugManager.flags.UseAubStream.set(true);
 
     std::string aubFile("test.aub");
@@ -122,8 +121,7 @@ TEST(AubCenter, GivenCsrTypeWhenGettingAubStreamModeThenCorrectModeIsReturned) {
     EXPECT_EQ(aub_stream::mode::aubFileAndTbx, mode);
 }
 
-TEST(AubCenter, GivenSetCommandStreamReceiverFlagEqualDefaultHwWhenAubManagerIsCreatedThenCsrTypeDefinesAubStreamMode) {
-    DebugManagerStateRestore restorer;
+TEST_F(AubCenterTests, GivenSetCommandStreamReceiverFlagEqualDefaultHwWhenAubManagerIsCreatedThenCsrTypeDefinesAubStreamMode) {
     DebugManager.flags.UseAubStream.set(true);
     DebugManager.flags.SetCommandStreamReceiver.set(-1);
 
@@ -132,37 +130,35 @@ TEST(AubCenter, GivenSetCommandStreamReceiverFlagEqualDefaultHwWhenAubManagerIsC
                                                        CommandStreamReceiverType::CSR_AUB};
 
     for (auto type : aubTypes) {
-        MockAubCenter aubCenter(defaultHwInfo.get(), true, "test", type);
+        MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, true, "test", type);
         EXPECT_EQ(aub_stream::mode::aubFile, aubCenter.aubStreamMode);
     }
 
-    MockAubCenter aubCenter2(defaultHwInfo.get(), true, "", CommandStreamReceiverType::CSR_TBX);
+    MockAubCenter aubCenter2(defaultHwInfo.get(), gmmHelper, true, "", CommandStreamReceiverType::CSR_TBX);
     EXPECT_EQ(aub_stream::mode::tbx, aubCenter2.aubStreamMode);
 
-    MockAubCenter aubCenter3(defaultHwInfo.get(), true, "", CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+    MockAubCenter aubCenter3(defaultHwInfo.get(), gmmHelper, true, "", CommandStreamReceiverType::CSR_TBX_WITH_AUB);
     EXPECT_EQ(aub_stream::mode::aubFileAndTbx, aubCenter3.aubStreamMode);
 }
 
-TEST(AubCenter, GivenSetCommandStreamReceiverFlagSetWhenAubManagerIsCreatedThenDebugFlagDefinesAubStreamMode) {
-    DebugManagerStateRestore restorer;
+TEST_F(AubCenterTests, GivenSetCommandStreamReceiverFlagSetWhenAubManagerIsCreatedThenDebugFlagDefinesAubStreamMode) {
     DebugManager.flags.UseAubStream.set(true);
 
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX);
 
-    MockAubCenter aubCenter(defaultHwInfo.get(), true, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, true, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(aub_stream::mode::tbx, aubCenter.aubStreamMode);
 
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
-    MockAubCenter aubCenter2(defaultHwInfo.get(), true, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter2(defaultHwInfo.get(), gmmHelper, true, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(aub_stream::mode::aubFileAndTbx, aubCenter2.aubStreamMode);
 }
 
-TEST(AubCenter, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithoutDebugFilterSettingsThenItInitializesSubCaptureFiltersWithDefaults) {
-    DebugManagerStateRestore restorer;
+TEST_F(AubCenterTests, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithoutDebugFilterSettingsThenItInitializesSubCaptureFiltersWithDefaults) {
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
 
-    MockAubCenter aubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
     auto subCaptureCommon = aubCenter.getSubCaptureCommon();
     EXPECT_NE(nullptr, subCaptureCommon);
 
@@ -171,14 +167,13 @@ TEST(AubCenter, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithoutDebugFilterS
     EXPECT_STREQ("", subCaptureCommon->subCaptureFilter.dumpKernelName.c_str());
 }
 
-TEST(AubCenter, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithDebugFilterSettingsThenItInitializesSubCaptureFiltersWithDebugFilterSettings) {
-    DebugManagerStateRestore restorer;
+TEST_F(AubCenterTests, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithDebugFilterSettingsThenItInitializesSubCaptureFiltersWithDebugFilterSettings) {
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
     DebugManager.flags.AUBDumpFilterKernelStartIdx.set(10);
     DebugManager.flags.AUBDumpFilterKernelEndIdx.set(100);
     DebugManager.flags.AUBDumpFilterKernelName.set("kernel_name");
 
-    MockAubCenter aubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB);
     auto subCaptureCommon = aubCenter.getSubCaptureCommon();
     EXPECT_NE(nullptr, subCaptureCommon);
 
