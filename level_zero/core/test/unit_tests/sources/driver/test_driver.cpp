@@ -38,8 +38,7 @@ TEST(zeInit, whenCallingZeInitThenInitializeOnDriverIsCalled) {
 
 using DriverVersionTest = Test<DeviceFixture>;
 
-TEST_F(DriverVersionTest,
-       givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
+TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
     uint32_t count = 0;
     ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
     EXPECT_EQ(count, static_cast<uint32_t>(driverHandle->extensionsSupported.size()));

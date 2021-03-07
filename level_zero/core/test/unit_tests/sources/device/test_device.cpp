@@ -787,7 +787,7 @@ TEST(DevicePropertyFlagDiscreteDeviceTest, givenDiscreteDeviceThenCorrectDeviceP
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
 }
 
-TEST(zeDevice, givenValidImagePropertiesStructGetImageProperties) {
+TEST(zeDevice, givenValidImagePropertiesStructWhenGettingImagePropertiesThenSuccessIsReturned) {
     Mock<Device> device;
     ze_result_t result;
     ze_device_image_properties_t imageProperties;
