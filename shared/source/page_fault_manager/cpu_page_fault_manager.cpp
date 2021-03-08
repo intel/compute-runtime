@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,9 @@
 
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/options.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
@@ -77,15 +79,36 @@ bool PageFaultManager::verifyPageFault(void *ptr) {
         auto &pageFaultData = alloc.second;
         if (ptr >= allocPtr && ptr < ptrOffset(allocPtr, pageFaultData.size)) {
             this->setAubWritable(true, allocPtr, pageFaultData.unifiedMemoryManager);
-            if (pageFaultData.domain == AllocationDomain::Gpu) {
-                this->transferToCpu(allocPtr, pageFaultData.size, pageFaultData.cmdQ);
-            }
-            pageFaultData.domain = AllocationDomain::Cpu;
-            this->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
+
+            gpuDomainHandler(this, allocPtr, pageFaultData);
             return true;
         }
     }
     return false;
+}
+
+void PageFaultManager::handleGpuDomainTransferForHw(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
+    if (pageFaultData.domain == AllocationDomain::Gpu) {
+        pageFaultHandler->transferToCpu(allocPtr, pageFaultData.size, pageFaultData.cmdQ);
+    }
+    pageFaultData.domain = AllocationDomain::Cpu;
+    pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
+}
+
+void PageFaultManager::handleGpuDomainTransferForTbx(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
+    pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
+
+    if (pageFaultData.domain == AllocationDomain::Gpu) {
+        pageFaultHandler->transferToCpu(allocPtr, pageFaultData.size, pageFaultData.cmdQ);
+    }
+    pageFaultData.domain = AllocationDomain::Cpu;
+}
+
+void PageFaultManager::selectGpuDomainHandler() {
+    if (DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_TBX ||
+        DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_TBX_WITH_AUB) {
+        this->gpuDomainHandler = &PageFaultManager::handleGpuDomainTransferForTbx;
+    }
 }
 
 void PageFaultManager::setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,11 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void transferToGpu(void *ptr, void *cmdQ);
     MOCKABLE_VIRTUAL void setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager);
 
+    static void handleGpuDomainTransferForHw(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
+    static void handleGpuDomainTransferForTbx(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
+    void selectGpuDomainHandler();
+
+    decltype(&handleGpuDomainTransferForHw) gpuDomainHandler = &handleGpuDomainTransferForHw;
     std::unordered_map<void *, PageFaultData> memoryData;
     SpinLock mtx;
 };

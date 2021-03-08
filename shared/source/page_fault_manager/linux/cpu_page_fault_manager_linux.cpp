@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,10 @@
 
 namespace NEO {
 std::unique_ptr<PageFaultManager> PageFaultManager::create() {
-    return std::make_unique<PageFaultManagerLinux>();
+    auto pageFaultManager = std::make_unique<PageFaultManagerLinux>();
+
+    pageFaultManager->selectGpuDomainHandler();
+    return pageFaultManager;
 }
 
 std::function<void(int signal, siginfo_t *info, void *context)> PageFaultManagerLinux::pageFaultHandler;
