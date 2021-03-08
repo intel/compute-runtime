@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ struct AUBCopyImage
     std::unique_ptr<Image> dstImage;
 };
 
-HWTEST_P(AUBCopyImage, simple) {
+HWTEST_P(AUBCopyImage, WhenCopyingThenExpectationsMet) {
 
     const size_t testImageDimensions = 4;
     cl_float srcMemory[testImageDimensions * testImageDimensions] = {

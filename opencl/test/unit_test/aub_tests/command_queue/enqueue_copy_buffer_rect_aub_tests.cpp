@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ struct CopyBufferRectHw
 
 typedef CopyBufferRectHw AUBCopyBufferRect;
 
-HWTEST_P(AUBCopyBufferRect, simple) {
+HWTEST_P(AUBCopyBufferRect, WhenCopyingThenExpectationsMet) {
     //3D UINT8 buffer 20x20x20
     static const size_t rowPitch = 20;
     static const size_t slicePitch = rowPitch * rowPitch;
