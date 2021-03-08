@@ -46,7 +46,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     auto threadDims = static_cast<const uint32_t *>(pThreadGroupDimensions);
     const Vec3<size_t> threadStartVec{0, 0, 0};
     Vec3<size_t> threadDimsVec{0, 0, 0};
-    if (threadDims != nullptr) {
+    if (!isIndirect) {
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
     size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device, threadStartVec, threadDimsVec);
