@@ -473,95 +473,104 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
 HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelThenKernelIsExecutedOnImmediateCmdQ, SklPlusMatcher) {
     createKernel();
 
-    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               result));
+    ASSERT_NE(nullptr, commandList0);
 
-    EXPECT_CALL(cmdQueue, executeCommandLists).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(cmdQueue, synchronize).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount{1, 1, 1};
 
-    auto result = commandList->appendLaunchKernel(
+    result = commandList0->appendLaunchKernel(
         kernel->toHandle(),
         &groupCount, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelWithInvalidEventThenInvalidArgumentErrorIsReturned, SklPlusMatcher) {
     createKernel();
 
-    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               result));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount{1, 1, 1};
 
-    auto result = commandList->appendLaunchKernel(
+    result = commandList0->appendLaunchKernel(
         kernel->toHandle(),
         &groupCount, nullptr, 1, nullptr);
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-    commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelIndirectThenKernelIsExecutedOnImmediateCmdQ, SklPlusMatcher) {
     createKernel();
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
 
-    Mock<CommandQueue> cmdQueue;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               result));
+    ASSERT_NE(nullptr, commandList0);
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
-
-    EXPECT_CALL(cmdQueue, executeCommandLists).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(cmdQueue, synchronize).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount{1, 1, 1};
 
-    auto result = commandList->appendLaunchKernelIndirect(
+    result = commandList0->appendLaunchKernelIndirect(
         kernel->toHandle(),
         &groupCount, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelIndirectWithInvalidEventThenInvalidArgumentErrorIsReturned, SklPlusMatcher) {
     createKernel();
 
-    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               result));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount{1, 1, 1};
 
-    auto result = commandList->appendLaunchKernelIndirect(
+    result = commandList0->appendLaunchKernelIndirect(
         kernel->toHandle(),
         &groupCount, nullptr, 1, nullptr);
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-    commandList->cmdQImmediate = nullptr;
 }
 
 using SupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;

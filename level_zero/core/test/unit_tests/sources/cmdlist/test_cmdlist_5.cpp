@@ -720,13 +720,9 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     event.waitScope = 0;
     event2.waitScope = 0;
     ze_event_handle_t events[] = {&event, &event2};
-    auto event_object = L0::Event::fromHandle(events[0]);
-    auto event_object2 = L0::Event::fromHandle(events[1]);
 
     auto used = commandContainer.getCommandStream()->getUsed();
     commandList->appendWaitOnEvents(2, events);
-    EXPECT_EQ(true, event_object->updateTaskCountEnabled);
-    EXPECT_EQ(true, event_object2->updateTaskCountEnabled);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -787,13 +783,9 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
     event.waitScope = 0;
     event2.waitScope = 0;
     ze_event_handle_t events[] = {&event, &event2};
-    auto event_object = L0::Event::fromHandle(events[0]);
-    auto event_object2 = L0::Event::fromHandle(events[1]);
 
     auto used = commandContainer.getCommandStream()->getUsed();
     commandList->appendWaitOnEvents(2, events);
-    EXPECT_EQ(true, event_object->updateTaskCountEnabled);
-    EXPECT_EQ(true, event_object2->updateTaskCountEnabled);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(

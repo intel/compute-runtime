@@ -11,6 +11,7 @@
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
+#include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -727,16 +728,20 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndIn
 }
 
 HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingRenderEngineThenSuccessIsReturned, Platforms) {
-    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               result));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     void *src_buffer = reinterpret_cast<void *>(0x1234);
     void *dst_buffer = reinterpret_cast<void *>(0x2345);
@@ -758,28 +763,74 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     events.push_back(event1.get());
 
-    EXPECT_CALL(cmdQueue, executeCommandLists).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(cmdQueue, synchronize).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
+    ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
+    ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
+    result = commandList0->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
+                                                  src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingRenderEngineInALoopThenSuccessIsReturned) {
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
+
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               ret));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+
+    void *src_buffer = reinterpret_cast<void *>(0x1234);
+    void *dst_buffer = reinterpret_cast<void *>(0x2345);
+    uint32_t width = 16;
+    uint32_t height = 16;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 2;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+
+    std::vector<ze_event_handle_t> events;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    events.push_back(event.get());
+    eventDesc.index = 1;
+    auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    events.push_back(event1.get());
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
-    result = commandList->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                 src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    commandList->cmdQImmediate = nullptr;
+
+    for (auto i = 0; i < 2000; i++) {
+        ret = commandList0->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
+                                                   src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
 HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, Platforms) {
-    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
 
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::Copy,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     void *src_buffer = reinterpret_cast<void *>(0x1234);
     void *dst_buffer = reinterpret_cast<void *>(0x2345);
@@ -801,28 +852,150 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     events.push_back(event1.get());
 
-    EXPECT_CALL(cmdQueue, executeCommandLists).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(cmdQueue, synchronize).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
-    result = commandList->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                 src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
+    auto result = commandList0->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
+                                                       src_buffer, &sr, width, 0, events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    commandList->cmdQImmediate = nullptr;
+}
+
+using ImageSupported = IsAtLeastProduct<IGFX_SKYLAKE>;
+
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingRenderThenSuccessIsReturned, ImageSupported) {
+    const ze_command_queue_desc_t queueDesc = {};
+    bool internalEngine = true;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &queueDesc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::Copy,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHWSrc->initialize(device, &desc);
+    imageHWDst->initialize(device, &desc);
+
+    ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    ze_image_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+    returnValue = commandList0->appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+}
+
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingCopyWintInvalidRegionArguementsThenErrorIsReturned, ImageSupported) {
+    const ze_command_queue_desc_t queueDesc = {};
+    bool internalEngine = true;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &queueDesc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::Copy,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHWSrc->initialize(device, &desc);
+    imageHWDst->initialize(device, &desc);
+
+    ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    ze_image_region_t dstRegion = {2, 2, 2, 4, 4, 4};
+    returnValue = commandList0->appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+}
+
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenCopyFromImageToImageUsingRenderThenSuccessIsReturned, ImageSupported) {
+    const ze_command_queue_desc_t queueDesc = {};
+    bool internalEngine = true;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &queueDesc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::Copy,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHWSrc->initialize(device, &desc);
+    imageHWDst->initialize(device, &desc);
+
+    returnValue = commandList0->appendImageCopy(imageHWDst->toHandle(), imageHWSrc->toHandle(), nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
 HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndInvalidWaitHandleUsingCopyEngineThenErrorIsReturned, Platforms) {
-    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::Copy,
+                                                                               result));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     void *src_buffer = reinterpret_cast<void *>(0x1234);
     void *dst_buffer = reinterpret_cast<void *>(0x2345);
@@ -846,10 +1019,9 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
-    result = commandList->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
-                                                 src_buffer, &sr, width, 0, events[0], 1u, nullptr);
+    result = commandList0->appendMemoryCopyRegion(dst_buffer, &dr, width, 0,
+                                                  src_buffer, &sr, width, 0, events[0], 1u, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-    commandList->cmdQImmediate = nullptr;
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEventWithTimestampThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -884,10 +1056,8 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEven
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendSignalEvent(event);
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
 
     auto result = event_object->hostSignal();
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
@@ -925,16 +1095,13 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendBarrier(event, 0, nullptr);
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
 
     auto result = event_object->hostSignal();
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr);
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventResetThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -969,48 +1136,11 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventReset
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendEventReset(event);
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
 
     auto result = event_object->hostSignal();
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
-}
-
-HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhenAppendWaitEventsWithHostScopeAndTimeStampThenTaskCountNeededFlagIsDisabled) {
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
-    ASSERT_NE(nullptr, commandList);
-
-    EXPECT_EQ(device, commandList->device);
-    EXPECT_EQ(1u, commandList->cmdListType);
-    EXPECT_NE(nullptr, commandList->cmdQImmediate);
-
-    auto &commandContainer = commandList->commandContainer;
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 2;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    auto event2 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    ze_event_handle_t events[] = {event->toHandle(), event2->toHandle()};
-
-    auto used = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events);
-    EXPECT_EQ(false, event->updateTaskCountEnabled);
-    EXPECT_EQ(false, event2->updateTaskCountEnabled);
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-
-    EXPECT_EQ(used, commandContainer.getCommandStream()->getUsed());
 }
 
 TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListForCopyEnigneThenItHasImmediateCommandQueueCreated) {
@@ -1052,18 +1182,12 @@ TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListF
 
             commandList->appendBarrier(nullptr, 0, nullptr);
             commandList->appendBarrier(event->toHandle(), 2, events);
-            EXPECT_EQ(true, event->updateTaskCountEnabled);
-            EXPECT_EQ(true, event1->updateTaskCountEnabled);
-            EXPECT_EQ(true, event2->updateTaskCountEnabled);
 
             auto result = event->hostSignal();
-            EXPECT_EQ(false, event->updateTaskCountEnabled);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
             result = event1->hostSignal();
-            EXPECT_EQ(false, event1->updateTaskCountEnabled);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
             result = event2->hostSignal();
-            EXPECT_EQ(false, event2->updateTaskCountEnabled);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         }
     }

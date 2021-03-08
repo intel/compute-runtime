@@ -10,6 +10,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device.h"
@@ -167,8 +168,20 @@ struct CommandList : _ze_command_list_handle_t {
         commandListPerThreadScratchSize = size;
     }
 
+    uint32_t getCommandListSLMEnable() const {
+        return commandListSLMEnabled;
+    }
+
+    void setCommandListSLMEnable(bool isSLMEnabled) {
+        commandListSLMEnabled = isSLMEnabled;
+    }
+
     NEO::PreemptionMode getCommandListPreemptionMode() const {
         return commandListPreemptionMode;
+    }
+
+    uint32_t getThreadArbitrationPolicy() const {
+        return threadArbitrationPolicy;
     }
 
     UnifiedMemoryControls getUnifiedMemoryControls() const {
@@ -201,6 +214,7 @@ struct CommandList : _ze_command_list_handle_t {
     };
 
     CommandQueue *cmdQImmediate = nullptr;
+    NEO::CommandStreamReceiver *csr = nullptr;
     uint32_t cmdListType = CommandListType::TYPE_REGULAR;
     Device *device = nullptr;
     std::vector<Kernel *> printfFunctionContainer;
@@ -214,8 +228,6 @@ struct CommandList : _ze_command_list_handle_t {
         return hostPtrMap;
     };
 
-    virtual ze_result_t setSyncModeQueue(bool syncMode) = 0;
-
     const NEO::StreamProperties &getRequiredStreamState() {
         return requiredStreamState;
     }
@@ -226,10 +238,15 @@ struct CommandList : _ze_command_list_handle_t {
         return commandsToPatch;
     }
 
-  protected:
-    std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
+    bool isSyncModeQueue = false;
+    bool commandListSLMEnabled = false;
     uint32_t commandListPerThreadScratchSize = 0u;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
+    uint32_t threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
+    bool isFlushTaskSubmissionEnabled = false;
+
+  protected:
+    std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     NEO::EngineGroupType engineGroupType;
     ze_command_list_flags_t flags = 0u;
     UnifiedMemoryControls unifiedMemoryControls;

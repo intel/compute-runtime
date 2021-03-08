@@ -108,6 +108,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
     }
     HeapContainer sshAllocations;
 
+    bool getFlushTaskUsedForImmediate() { return isFlushTaskUsedForImmediate; }
+    void setFlushTaskUsedForImmediate(bool flushTaskUsedForImmediate) { isFlushTaskUsedForImmediate = flushTaskUsedForImmediate; }
+
   protected:
     void *iddBlock = nullptr;
     Device *device = nullptr;
@@ -125,6 +128,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
     std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
     ResidencyContainer residencyContainer;
     std::vector<GraphicsAllocation *> deallocationContainer;
+
+    bool isFlushTaskUsedForImmediate = false;
 };
 
 } // namespace NEO

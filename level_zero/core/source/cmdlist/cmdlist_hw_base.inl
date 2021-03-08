@@ -46,8 +46,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     const auto functionImmutableData = kernel->getImmutableData();
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
                                                         kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
-
     this->setCommandListPerThreadScratchSize(perThreadScratchSize);
+
+    auto slmEnable = (kernel->getImmutableData()->getDescriptor().kernelAttributes.slmInlineSize > 0);
+    this->setCommandListSLMEnable(slmEnable);
 
     auto kernelPreemptionMode = obtainFunctionPreemptionMode(kernel);
     commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);

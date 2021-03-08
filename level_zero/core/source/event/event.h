@@ -70,7 +70,6 @@ struct Event : _ze_event_handle_t {
     uint32_t kernelCount = 1u;
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
-    bool updateTaskCountEnabled = false;
 
     uint64_t globalStartTS;
     uint64_t globalEndTS;

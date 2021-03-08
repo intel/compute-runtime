@@ -101,25 +101,26 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
 }
 
 HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendWriteGlobalTimestampThenReturnsSuccess, Platforms) {
-    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
+
     uint64_t timestampAddress = 0x12345678555500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
-
-    EXPECT_CALL(cmdQueue, executeCommandLists).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(cmdQueue, synchronize).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-
-    auto result = commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+    auto result = commandList0->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenLeftMiddleAndRightCopyAdded) {
@@ -432,16 +433,20 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
 }
 
 HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndWaitEventsUsingRenderEngineThenSuccessIsReturned, Platforms) {
-    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
 
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               ret));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -463,29 +468,29 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
     auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     events.push_back(event1.get());
 
-    EXPECT_CALL(cmdQueue, executeCommandLists).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(cmdQueue, synchronize).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-
-    result = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&one), sizeof(one), size,
-                                           events[0], 1u, &events[1]);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ret = commandList0->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&one), sizeof(one), size,
+                                         events[0], 1u, &events[1]);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     ret = hostDriverHandle->releaseImportedPointer(heapPointer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, Platforms) {
-    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
 
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::Copy,
+                                                                               ret));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -507,31 +512,31 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
     auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     events.push_back(event1.get());
 
-    EXPECT_CALL(cmdQueue, executeCommandLists).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(cmdQueue, synchronize).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
-
-    result = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&one), sizeof(one), size,
-                                           events[0], 1u, &events[1]);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ret = commandList0->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&one), sizeof(one), size,
+                                         events[0], 1u, &events[1]);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     ret = hostDriverHandle->releaseImportedPointer(heapPointer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryFillWithSignalAndInvalidWaitHandleUsingCopyEngineThenErrorIsReturned, SupportedPlatformsSklIcllp) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    Mock<CommandQueue> cmdQueue;
 
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
-    auto &commandContainer = commandList->commandContainer;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    commandList->device = device;
-    commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
+
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               NEO::EngineGroupType::Copy,
+                                                                               ret));
+    ASSERT_NE(nullptr, commandList0);
+
+    CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    EXPECT_EQ(cmdQueue->getCsr(), neoDevice->getInternalEngine().commandStreamReceiver);
 
     ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -553,21 +558,12 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
     auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     events.push_back(event1.get());
 
-    result = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&one), sizeof(one), size,
-                                           events[0], 1u, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    ret = commandList0->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&one), sizeof(one), size,
+                                         events[0], 1u, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
 
     ret = hostDriverHandle->releaseImportedPointer(heapPointer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-
-    auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(cmdList.end(), itor);
-
-    commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPointerWhenFindIsCalledThenRegisterHappens, Platforms) {

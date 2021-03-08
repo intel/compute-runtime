@@ -67,7 +67,9 @@ ErrorCode CommandContainer::initialize(Device *device) {
                                                                    defaultListCmdBufferSize));
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 
-    addToResidencyContainer(cmdBufferAllocation);
+    if (!getFlushTaskUsedForImmediate()) {
+        addToResidencyContainer(cmdBufferAllocation);
+    }
 
     constexpr size_t heapSize = 65536u;
     heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumAvailableDevices() > 1u));
@@ -236,8 +238,11 @@ void CommandContainer::allocateNextCommandBuffer() {
     commandStream->replaceBuffer(cmdBufferAllocation->getUnderlyingBuffer(), defaultListCmdBufferSize);
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 
-    addToResidencyContainer(cmdBufferAllocation);
+    if (!getFlushTaskUsedForImmediate()) {
+        addToResidencyContainer(cmdBufferAllocation);
+    }
 }
+
 void CommandContainer::prepareBindfulSsh() {
     if (ApiSpecificConfig::getBindlessConfiguration()) {
         if (allocationIndirectHeaps[IndirectHeap::SURFACE_STATE] == nullptr) {

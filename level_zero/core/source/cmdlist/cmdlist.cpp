@@ -21,6 +21,7 @@ CommandList::~CommandList() {
     removeHostPtrAllocations();
     printfFunctionContainer.clear();
 }
+
 void CommandList::storePrintfFunction(Kernel *kernel) {
     auto it = std::find(this->printfFunctionContainer.begin(), this->printfFunctionContainer.end(),
                         kernel);

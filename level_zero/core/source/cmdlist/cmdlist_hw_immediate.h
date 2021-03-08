@@ -13,6 +13,7 @@ namespace L0 {
 
 struct EventPool;
 struct Event;
+constexpr size_t maxImmediateCommandSize = 4 * MemoryConstants::kiloByte;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFamily> {
@@ -90,13 +91,26 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                         uint32_t numWaitEvents,
                                         ze_event_handle_t *phWaitEvents) override;
 
-    ze_result_t setSyncModeQueue(bool syncMode) override {
-        isSyncModeQueue = syncMode;
-        return ZE_RESULT_SUCCESS;
-    }
+    ze_result_t appendImageCopy(
+        ze_image_handle_t dst, ze_image_handle_t src,
+        ze_event_handle_t hEvent,
+        uint32_t numWaitEvents,
+        ze_event_handle_t *phWaitEvents) override;
+
+    ze_result_t appendImageCopyRegion(ze_image_handle_t hDstImage,
+                                      ze_image_handle_t hSrcImage,
+                                      const ze_image_region_t *pDstRegion,
+                                      const ze_image_region_t *pSrcRegion,
+                                      ze_event_handle_t hEvent,
+                                      uint32_t numWaitEvents,
+                                      ze_event_handle_t *phWaitEvents) override;
+
+    ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration);
+
+    void checkAvailableSpace();
 
   protected:
-    bool isSyncModeQueue = false;
+    size_t cmdListBBEndOffset = 0;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

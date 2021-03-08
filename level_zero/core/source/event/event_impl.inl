@@ -113,11 +113,6 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         return retVal;
     }
 
-    if (updateTaskCountEnabled) {
-        this->csr->flushTagUpdate();
-        updateTaskCountEnabled = false;
-    }
-
     return retVal;
 }
 
@@ -159,11 +154,6 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(uint32_t eventVal) {
     auto hostAddr = static_cast<uint64_t *>(hostAddress);
     UNRECOVERABLE_IF(hostAddr == nullptr);
     memcpy_s(static_cast<void *>(hostAddr), sizeof(uint32_t), static_cast<void *>(&eventVal), sizeof(uint32_t));
-
-    if (updateTaskCountEnabled) {
-        this->csr->flushTagUpdate();
-        updateTaskCountEnabled = false;
-    }
 
     NEO::CpuIntrinsics::clFlush(hostAddr);
 

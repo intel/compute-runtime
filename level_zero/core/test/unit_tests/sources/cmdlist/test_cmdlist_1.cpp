@@ -300,7 +300,6 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendSignalEvent
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendSignalEvent(event);
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
 
     auto result = event_object->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -339,8 +338,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThen
     ASSERT_NE(nullptr, event_object->csr);
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
-    commandList->appendBarrier(event, 0, nullptr);
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
+    commandList->appendBarrier(nullptr, 1, &event);
 
     auto result = event_object->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -348,7 +346,6 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThen
     EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr);
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendResetEventThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -383,7 +380,6 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendResetEventT
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendEventReset(event);
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
 
     auto result = event_object->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -423,10 +419,8 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEven
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendSignalEvent(event);
-    EXPECT_EQ(true, event_object->updateTaskCountEnabled);
 
     auto result = event_object->hostSignal();
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
@@ -464,16 +458,13 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendBarrier(event, 0, nullptr);
-    EXPECT_EQ(true, event_object->updateTaskCountEnabled);
 
     auto result = event_object->hostSignal();
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr);
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndCopyEngineAndAppendBarrierThenUpdateTaskCountNeededFlagIsEnabled) {
@@ -509,16 +500,13 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndCopyEngineAndApp
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendBarrier(event, 0, nullptr);
-    EXPECT_EQ(true, event_object->updateTaskCountEnabled);
 
     auto result = event_object->hostSignal();
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr);
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventResetThenUpdateTaskCountNeededFlagIsEnabled) {
@@ -553,10 +541,8 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventReset
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 
     commandList->appendEventReset(event);
-    EXPECT_EQ(true, event_object->updateTaskCountEnabled);
 
     auto result = event_object->hostSignal();
-    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
@@ -935,44 +921,6 @@ HWTEST_F(CommandListCreate, givenCommandListWhenSetBarrierThenPipeControlIsProgr
     auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
     EXPECT_NE(cmdList.end(), itor);
-}
-
-HWTEST_F(CommandListCreate, givenSyncCmdQueueAndCopyOnlyImmediateCommandListWhenAppendWaitEventsWithHostScopeThenMiFlushAndSemWaitAreAdded) {
-    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
-    ASSERT_NE(nullptr, commandList);
-
-    EXPECT_EQ(device, commandList->device);
-    EXPECT_EQ(1u, commandList->cmdListType);
-    EXPECT_NE(nullptr, commandList->cmdQImmediate);
-
-    auto &commandContainer = commandList->commandContainer;
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 2;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    auto event2 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    ze_event_handle_t events[] = {event->toHandle(), event2->toHandle()};
-
-    auto used = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events);
-    EXPECT_EQ(false, event->updateTaskCountEnabled);
-    EXPECT_EQ(false, event2->updateTaskCountEnabled);
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-
-    EXPECT_EQ(used, commandContainer.getCommandStream()->getUsed());
 }
 
 using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
