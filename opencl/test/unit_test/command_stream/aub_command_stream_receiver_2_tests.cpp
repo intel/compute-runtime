@@ -1226,7 +1226,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenUsmAllocationWhenDumpAllocationIsCa
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
     auto memoryManager = std::make_unique<MockMemoryManager>(false, true, *pDevice->executionEnvironment);
-    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
 
     std::set<uint32_t> rootDeviceIndices{rootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{rootDeviceIndex, pDevice->getDeviceBitfield()}};

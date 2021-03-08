@@ -26,7 +26,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     auto &device = *(new MockDevice);
     REQUIRE_SVM_OR_SKIP(&device);
     MockClDevice clDevice{&device};
-    MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
+    MockSVMAllocsManager svmAllocsManager(device.getMemoryManager(), false);
     WhiteBox<LinkerInput> emptyLinkerInput;
     std::vector<uint8_t> initData;
     initData.resize(64, 7U);
@@ -70,7 +70,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
     REQUIRE_SVM_OR_SKIP(&device);
     MockClDevice clDevice{&device};
     MockMemoryManager memoryManager;
-    MockSVMAllocsManager svmAllocsManager(&memoryManager);
+    MockSVMAllocsManager svmAllocsManager(&memoryManager, false);
     WhiteBox<LinkerInput> linkerInputExportGlobalVariables;
     WhiteBox<LinkerInput> linkerInputExportGlobalConstants;
     linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
@@ -156,7 +156,7 @@ TEST(AllocateGlobalSurfaceTest, WhenGlobalsAreNotExportedAndAllocationFailsThenG
     auto memoryManager = std::make_unique<MockMemoryManager>(*clDevice.getExecutionEnvironment());
     memoryManager->failInAllocateWithSizeAndAlignment = true;
     clDevice.injectMemoryManager(memoryManager.release());
-    MockSVMAllocsManager mockSvmAllocsManager(clDevice.getMemoryManager());
+    MockSVMAllocsManager mockSvmAllocsManager(clDevice.getMemoryManager(), false);
     WhiteBox<LinkerInput> emptyLinkerInput;
     std::vector<uint8_t> initData;
     initData.resize(64, 7U);
@@ -191,7 +191,7 @@ TEST(AllocateGlobalSurfaceTest, WhenGlobalsAreExportedAndAllocationFailsThenGrac
     auto pDevice = new MockDevice{};
     MockClDevice clDevice{pDevice};
     MockMemoryManager memoryManager{*clDevice.getExecutionEnvironment()};
-    MockSVMAllocsManager svmAllocsManager(&memoryManager);
+    MockSVMAllocsManager svmAllocsManager(&memoryManager, false);
     memoryManager.failInAllocateWithSizeAndAlignment = true;
     WhiteBox<LinkerInput> linkerInputExportGlobalVariables;
     WhiteBox<LinkerInput> linkerInputExportGlobalConstants;
@@ -236,7 +236,7 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
             DebugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
             MockDevice device;
             device.getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
-            MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
+            MockSVMAllocsManager svmAllocsManager(device.getMemoryManager(), false);
 
             auto pAllocation = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */,
                                                       nullptr /* linker input */, initData.data());

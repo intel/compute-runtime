@@ -2455,7 +2455,7 @@ TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfac
     EXPECT_EQ(nullptr, allocation);
     EXPECT_EQ(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
 
-    auto svmAllocsManager = std::make_unique<SVMAllocsManager>(device.getMemoryManager());
+    auto svmAllocsManager = std::make_unique<SVMAllocsManager>(device.getMemoryManager(), false);
     memoryManager->recentlyPassedDeviceBitfield = {};
     allocation = allocateGlobalsSurface(svmAllocsManager.get(), device.getDevice(), 1024, false, &linkerInput, nullptr);
     EXPECT_EQ(nullptr, allocation);

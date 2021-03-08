@@ -859,7 +859,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
 HWTEST_F(BcsTests, givenNonZeroCopySvmAllocationWhenConstructingBlitPropertiesForReadWriteBufferCallThenSetValidAllocations) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     MockMemoryManager mockMemoryManager(true, true);
-    SVMAllocsManager svmAllocsManager(&mockMemoryManager);
+    SVMAllocsManager svmAllocsManager(&mockMemoryManager, false);
 
     auto svmAllocationProperties = MemObjHelper::getSvmAllocationProperties(CL_MEM_READ_WRITE);
     auto svmAlloc = svmAllocsManager.createSVMAlloc(1, svmAllocationProperties, context->getRootDeviceIndices(), context->getDeviceBitfields());
@@ -904,7 +904,7 @@ HWTEST_F(BcsTests, givenNonZeroCopySvmAllocationWhenConstructingBlitPropertiesFo
 HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     MockMemoryManager mockMemoryManager(true, true);
-    SVMAllocsManager svmAllocsManager(&mockMemoryManager);
+    SVMAllocsManager svmAllocsManager(&mockMemoryManager, false);
 
     auto svmAllocationProperties = MemObjHelper::getSvmAllocationProperties(CL_MEM_READ_WRITE);
     auto svmAlloc = svmAllocsManager.createSVMAlloc(1, svmAllocationProperties, context->getRootDeviceIndices(), context->getDeviceBitfields());

@@ -50,7 +50,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSynchronizeMemoryThenEnq
     REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
 
     auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
-    auto svmAllocsManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
+    auto svmAllocsManager = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
     auto device = std::unique_ptr<MockClDevice>(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     auto rootDeviceIndex = device->getRootDeviceIndex();
     std::set<uint32_t> rootDeviceIndices{rootDeviceIndex};
@@ -88,7 +88,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenGpuTransferIsInvokedThen
         int insertSvmMapOperationCalled = 0;
     };
     auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
-    auto svmAllocsManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
+    auto svmAllocsManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
     auto device = std::unique_ptr<MockClDevice>(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     auto rootDeviceIndex = device->getRootDeviceIndex();
     std::set<uint32_t> rootDeviceIndices{rootDeviceIndex};

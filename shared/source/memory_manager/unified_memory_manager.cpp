@@ -102,7 +102,8 @@ void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &co
     }
 }
 
-SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager) : memoryManager(memoryManager) {
+SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager, bool multiOsContextSupport)
+    : memoryManager(memoryManager), multiOsContextSupport(multiOsContextSupport) {
 }
 
 void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationProperties svmProperties,
@@ -135,7 +136,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                  alignedSize,
                                                  allocationType,
                                                  false,
-                                                 deviceBitfield.count() > 1,
+                                                 (deviceBitfield.count() > 1) && multiOsContextSupport,
                                                  deviceBitfield};
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.flags.isUSMHostAllocation = true;
@@ -178,7 +179,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                                                  alignedSize,
                                                  allocationType,
                                                  false,
-                                                 deviceBitfield.count() > 1,
+                                                 (deviceBitfield.count() > 1) && multiOsContextSupport,
                                                  deviceBitfield};
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
@@ -390,7 +391,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                        alignedSize,
                                        GraphicsAllocation::AllocationType::SVM_GPU,
                                        false,
-                                       subDevices.count() > 1,
+                                       (subDevices.count() > 1) && multiOsContextSupport,
                                        subDevices};
 
     gpuProperties.alignment = 2 * MemoryConstants::megaByte;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_svm_manager.h"
 
 #include "d3d_sharing_functions.h"
 
@@ -103,7 +104,8 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
 
     this->devices = devices;
     memoryManager = devices[0]->getMemoryManager();
-    svmAllocsManager = new SVMAllocsManager(memoryManager);
+    svmAllocsManager = new MockSVMAllocsManager(memoryManager,
+                                                false);
 
     for (auto &rootDeviceIndex : rootDeviceIndices) {
         DeviceBitfield deviceBitfield{};

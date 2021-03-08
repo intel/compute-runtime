@@ -1590,7 +1590,7 @@ TEST(LinkerTests, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenPatchingDa
         for (auto isLocalMemorySupported : ::testing::Bool()) {
             DebugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
             auto pDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-            MockSVMAllocsManager svmAllocsManager(pDevice->getMemoryManager());
+            MockSVMAllocsManager svmAllocsManager(pDevice->getMemoryManager(), false);
 
             WhiteBox<NEO::LinkerInput> linkerInput;
             NEO::Linker linker(linkerInput);

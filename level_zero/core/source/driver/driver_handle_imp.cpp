@@ -178,11 +178,11 @@ DriverHandleImp::~DriverHandleImp() {
 }
 
 ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
-
     if (enablePciIdDeviceOrder) {
         sortNeoDevices(neoDevices);
     }
 
+    bool multiOsContextDriver = false;
     for (auto &neoDevice : neoDevices) {
         if (!neoDevice->getHardwareInfo().capabilityTable.levelZeroSupported) {
             continue;
@@ -191,11 +191,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         if (this->memoryManager == nullptr) {
             this->memoryManager = neoDevice->getMemoryManager();
             if (this->memoryManager == nullptr) {
-                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-            }
-
-            this->svmAllocsManager = new NEO::SVMAllocsManager(memoryManager);
-            if (this->svmAllocsManager == nullptr) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
         }
@@ -211,10 +206,17 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         auto pNeoDevice = neoDevice.release();
         auto device = Device::create(this, pNeoDevice, pNeoDevice->getExecutionEnvironment()->rootDeviceEnvironments[pNeoDevice->getRootDeviceIndex()]->deviceAffinityMask, false);
         this->devices.push_back(device);
+
+        multiOsContextDriver |= device->isMultiDeviceCapable();
     }
 
     if (this->devices.size() == 0) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    this->svmAllocsManager = new NEO::SVMAllocsManager(memoryManager, multiOsContextDriver);
+    if (this->svmAllocsManager == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
 
     this->numDevices = static_cast<uint32_t>(this->devices.size());
@@ -237,7 +239,6 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     driverHandle->enableProgramDebugging = envVariables.programDebugging;
     driverHandle->enableSysman = envVariables.sysman;
     driverHandle->enablePciIdDeviceOrder = envVariables.pciIdDeviceOrder;
-
     ze_result_t res = driverHandle->initialize(std::move(devices));
     if (res != ZE_RESULT_SUCCESS) {
         delete driverHandle;

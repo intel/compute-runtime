@@ -219,10 +219,11 @@ bool Context::createImpl(const cl_context_properties *properties,
             anySvmSupport |= device->getHardwareInfo().capabilityTable.ftrSvm;
         }
 
-        if (anySvmSupport) {
-            this->svmAllocsManager = new SVMAllocsManager(this->memoryManager);
-        }
         setupContextType();
+        if (anySvmSupport) {
+            this->svmAllocsManager = new SVMAllocsManager(this->memoryManager,
+                                                          this->areMultiStorageAllocationsPreferred());
+        }
     }
 
     for (auto &device : devices) {
