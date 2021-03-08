@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class AUBPrintfKernelFixture : public AUBFixture,
     const char *kernelName = "test_printf_number";
 };
 
-HWTEST_F(AUBPrintfKernelFixture, EnqueuePrintfKernel) {
+HWTEST_F(AUBPrintfKernelFixture, GivenPrintfKernelThenEnqueuingSucceeds) {
     ASSERT_NE(nullptr, pKernel);
 
     size_t offset[3] = {0, 0, 0};
