@@ -120,6 +120,9 @@ void CommandQueueHw<GfxFamily>::forceDispatchScheduler(NEO::MultiDispatchInfo &m
     DeviceQueueHw<GfxFamily> *devQueueHw = castToObjectOrAbort<DeviceQueueHw<GfxFamily>>(devQueue);
 
     DispatchInfo dispatchInfo(devQueue->getClDevice(), &scheduler, 1, Vec3<size_t>(scheduler.getGws(), 1, 1), Vec3<size_t>(scheduler.getLws(), 1, 1), Vec3<size_t>(0, 0, 0));
+    Vec3<size_t> workGroupCount = generateWorkgroupsNumber(dispatchInfo.getGWS(), dispatchInfo.getEnqueuedWorkgroupSize());
+    dispatchInfo.setTotalNumberOfWorkgroups(workGroupCount);
+    dispatchInfo.setNumberOfWorkgroups(workGroupCount);
 
     scheduler.createReflectionSurface();
     GraphicsAllocation *reflectionSurface = scheduler.getKernelReflectionSurface();

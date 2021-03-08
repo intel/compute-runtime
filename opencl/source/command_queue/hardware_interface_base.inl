@@ -202,10 +202,10 @@ void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQ
     Vec3<size_t> elws = (dispatchInfo.getEnqueuedWorkgroupSize().x > 0) ? dispatchInfo.getEnqueuedWorkgroupSize() : lws;
 
     // Compute number of work groups
-    Vec3<size_t> totalNumberOfWorkgroups = (dispatchInfo.getTotalNumberOfWorkgroups().x > 0) ? dispatchInfo.getTotalNumberOfWorkgroups()
-                                                                                             : generateWorkgroupsNumber(gws, lws);
-
-    Vec3<size_t> numberOfWorkgroups = (dispatchInfo.getNumberOfWorkgroups().x > 0) ? dispatchInfo.getNumberOfWorkgroups() : totalNumberOfWorkgroups;
+    Vec3<size_t> totalNumberOfWorkgroups = dispatchInfo.getTotalNumberOfWorkgroups();
+    Vec3<size_t> numberOfWorkgroups = dispatchInfo.getNumberOfWorkgroups();
+    UNRECOVERABLE_IF(totalNumberOfWorkgroups.x == 0);
+    UNRECOVERABLE_IF(numberOfWorkgroups.x == 0);
 
     size_t globalWorkSizes[3] = {gws.x, gws.y, gws.z};
 

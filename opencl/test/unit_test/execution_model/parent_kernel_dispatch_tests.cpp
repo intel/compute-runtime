@@ -42,6 +42,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
     size_t executionModelDSHUsedBefore = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE)->getUsed();
 
     DispatchInfo dispatchInfo(pClDevice, pKernel, 1, workItems, nullptr, globalOffsets);
+    dispatchInfo.setNumberOfWorkgroups({1, 1, 1});
+    dispatchInfo.setTotalNumberOfWorkgroups({1, 1, 1});
     MultiDispatchInfo multiDispatchInfo(pKernel);
     multiDispatchInfo.push(dispatchInfo);
     HardwareInterface<FamilyType>::dispatchWalker(
@@ -92,6 +94,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
 
     DispatchInfo dispatchInfo(pClDevice, pKernel, 1, workItems, nullptr, globalOffsets);
+    dispatchInfo.setNumberOfWorkgroups({1, 1, 1});
+    dispatchInfo.setTotalNumberOfWorkgroups({1, 1, 1});
     multiDispatchInfo.push(dispatchInfo);
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
@@ -115,6 +119,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
     DispatchInfo dispatchInfo(pClDevice, pKernel, 1, workItems, nullptr, globalOffsets);
+    dispatchInfo.setNumberOfWorkgroups({1, 1, 1});
+    dispatchInfo.setTotalNumberOfWorkgroups({1, 1, 1});
     multiDispatchInfo.push(dispatchInfo);
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
@@ -148,6 +154,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
     MultiDispatchInfo multiDispatchInfo(pKernel);
 
     DispatchInfo dispatchInfo(pClDevice, pKernel, 1, workItems, nullptr, globalOffsets);
+    dispatchInfo.setNumberOfWorkgroups({1, 1, 1});
+    dispatchInfo.setTotalNumberOfWorkgroups({1, 1, 1});
     multiDispatchInfo.push(dispatchInfo);
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
@@ -256,6 +264,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenBlockedQueueWhenParen
         const size_t workItems[3] = {1, 1, 1};
 
         DispatchInfo dispatchInfo(pClDevice, mockParentKernel, 1, workItems, nullptr, globalOffsets);
+        dispatchInfo.setNumberOfWorkgroups({1, 1, 1});
+        dispatchInfo.setTotalNumberOfWorkgroups({1, 1, 1});
         MultiDispatchInfo multiDispatchInfo(mockParentKernel);
         multiDispatchInfo.push(dispatchInfo);
         HardwareInterface<FamilyType>::dispatchWalker(
@@ -288,6 +298,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
         const size_t workItems[3] = {1, 1, 1};
 
         DispatchInfo dispatchInfo(pClDevice, mockParentKernel, 1, workItems, nullptr, globalOffsets);
+        dispatchInfo.setNumberOfWorkgroups({1, 1, 1});
+        dispatchInfo.setTotalNumberOfWorkgroups({1, 1, 1});
         MultiDispatchInfo multiDispatchInfo(mockParentKernel);
         multiDispatchInfo.push(dispatchInfo);
         HardwareInterface<FamilyType>::dispatchWalker(
@@ -345,6 +357,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenUsedSSHHeapWhenParent
         ASSERT_EQ(0u, mockParentKernel->getKernelInfo(rootDeviceIndex).heapInfo.SurfaceStateHeapSize);
 
         DispatchInfo dispatchInfo(pClDevice, mockParentKernel, 1, workItems, nullptr, globalOffsets);
+        dispatchInfo.setNumberOfWorkgroups({1, 1, 1});
+        dispatchInfo.setTotalNumberOfWorkgroups({1, 1, 1});
         MultiDispatchInfo multiDispatchInfo(mockParentKernel);
         multiDispatchInfo.push(dispatchInfo);
         HardwareInterface<FamilyType>::dispatchWalker(
@@ -380,6 +394,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenNotUsedSSHHeapWhenPar
         auto *bufferMemory = ssh.getCpuBase();
 
         DispatchInfo dispatchInfo(pClDevice, mockParentKernel, 1, workItems, nullptr, globalOffsets);
+        dispatchInfo.setNumberOfWorkgroups({1, 1, 1});
+        dispatchInfo.setTotalNumberOfWorkgroups({1, 1, 1});
         MultiDispatchInfo multiDispatchInfo;
         multiDispatchInfo.push(dispatchInfo);
         HardwareInterface<FamilyType>::dispatchWalker(

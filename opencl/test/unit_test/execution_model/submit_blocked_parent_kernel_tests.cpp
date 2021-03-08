@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -413,6 +413,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
     const size_t workItems[3] = {1, 1, 1};
 
     DispatchInfo dispatchInfo(device, parentKernel.get(), 1, workItems, nullptr, globalOffsets);
+    dispatchInfo.setNumberOfWorkgroups({1, 1, 1});
+    dispatchInfo.setTotalNumberOfWorkgroups({1, 1, 1});
     MultiDispatchInfo multiDispatchInfo(parentKernel.get());
     multiDispatchInfo.push(dispatchInfo);
     HardwareInterface<FamilyType>::dispatchWalker(
