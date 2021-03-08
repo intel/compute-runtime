@@ -130,10 +130,10 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
         ASSERT_NE(nullptr, csrWithAubDump);
 
         auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csrWithAubDump,
-                                                                                         getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo),
+                                                                                         EngineTypeUsage{getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo), EngineUsage::Regular},
                                                                                          deviceBitfield,
                                                                                          PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo),
-                                                                                         false, false, false);
+                                                                                         false);
         csrWithAubDump->setupContext(*osContext);
     }
 
@@ -157,8 +157,8 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenSett
     CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("aubfile", *executionEnvironment, 0, deviceBitfield);
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-    MockOsContext osContext(0, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first,
-                            PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false, false, false);
+    MockOsContext osContext(0, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                            PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
 
     csrWithAubDump.setupContext(osContext);
     EXPECT_EQ(&osContext, &csrWithAubDump.getOsContext());
@@ -284,8 +284,8 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
     bool isTimestampPacketNodeReleasable(Args &&...args) {
         CsrT csr(std::forward<Args>(args)...);
         auto hwInfo = csr.peekExecutionEnvironment().rootDeviceEnvironments[0]->getHardwareInfo();
-        MockOsContext osContext(0, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first,
-                                PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false, false, false);
+        MockOsContext osContext(0, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
         csr.setupContext(osContext);
 
         auto allocator = csr.getTimestampPacketAllocator();

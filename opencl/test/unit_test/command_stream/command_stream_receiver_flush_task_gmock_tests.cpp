@@ -270,8 +270,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
 
     bool stateBaseAddressDirty;
     bool vfeStateDirty;
-    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
-                            false, false, false);
+    MockOsContext osContext(0, 8, EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     mockCsr->setupContext(osContext);
     mockCsr->getScratchSpaceController()->setRequiredScratchSpace(nullptr, 0u, 10u, 0u, 1u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, vfeStateDirty);
 
@@ -292,8 +291,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
 
     bool stateBaseAddressDirty;
     bool vfeStateDirty;
-    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
-                            false, false, false);
+    MockOsContext osContext(0, 8, EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     mockCsr->setupContext(osContext);
     mockCsr->getScratchSpaceController()->setRequiredScratchSpace(nullptr, 0u, 10u, 0u, 1u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, vfeStateDirty);
 
@@ -316,8 +314,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
 
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     mockCsr->requiredScratchSize = 0x200000;
-    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
-                            false, false, false);
+    MockOsContext osContext(0, 8, EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     mockCsr->setupContext(osContext);
 
     mockCsr->programVFEState(commandStream, flags, 10);

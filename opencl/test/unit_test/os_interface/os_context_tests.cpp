@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 using namespace NEO;
 
 TEST(OSContext, whenCreatingDefaultOsContextThenExpectInitializedAlways) {
-    OsContext *osContext = OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     EXPECT_TRUE(osContext->isInitialized());
     EXPECT_FALSE(osContext->isLowPriority());
     EXPECT_FALSE(osContext->isInternalEngine());
@@ -20,16 +20,24 @@ TEST(OSContext, whenCreatingDefaultOsContextThenExpectInitializedAlways) {
     delete osContext;
 }
 
-TEST(OSContext, givenLowPriorityRootDeviceInternalAreTrueWhenCreatingDefaultOsContextThenExpectGettersTrue) {
-    OsContext *osContext = OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, true, true, true);
-    EXPECT_TRUE(osContext->isLowPriority());
+TEST(OSContext, givenInternalAndRootDeviceAreTrueWhenCreatingDefaultOsContextThenExpectGettersTrue) {
+    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Internal}, PreemptionMode::Disabled, true);
+    EXPECT_FALSE(osContext->isLowPriority());
     EXPECT_TRUE(osContext->isInternalEngine());
     EXPECT_TRUE(osContext->isRootDevice());
     delete osContext;
 }
 
+TEST(OSContext, givenLowPriorityAndRootDeviceAreTrueWhenCreatingDefaultOsContextThenExpectGettersTrue) {
+    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::LowPriority}, PreemptionMode::Disabled, true);
+    EXPECT_TRUE(osContext->isLowPriority());
+    EXPECT_FALSE(osContext->isInternalEngine());
+    EXPECT_TRUE(osContext->isRootDevice());
+    delete osContext;
+}
+
 TEST(OSContext, givenOsContextCreatedDefaultIsFalseWhenSettingTrueThenFlagTrueReturned) {
-    OsContext *osContext = OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     EXPECT_FALSE(osContext->isDefaultContext());
     osContext->setDefaultContext(true);
     EXPECT_TRUE(osContext->isDefaultContext());

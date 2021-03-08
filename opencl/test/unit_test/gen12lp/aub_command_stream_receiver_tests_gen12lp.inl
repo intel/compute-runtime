@@ -23,8 +23,8 @@ using Gen12LPAubCommandStreamReceiverTests = Test<ClDeviceFixture>;
 
 GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGUCWorkQueueItemHeaderIsCalledThenAppropriateValueDependingOnEngineTypeIsReturned) {
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    MockOsContext rcsOsContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
-    MockOsContext ccsOsContext(0, 1, aub_stream::ENGINE_CCS, PreemptionMode::Disabled, false, false, false);
+    MockOsContext rcsOsContext(0, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    MockOsContext ccsOsContext(0, 1, EngineTypeUsage{aub_stream::ENGINE_CCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
 
     aubCsr->setupContext(ccsOsContext);
     uint32_t headerCCS = aubCsr->getGUCWorkQueueItemHeader();
@@ -45,7 +45,7 @@ GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenGraphicsAlloctionWhenGe
 }
 
 GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenCCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
-    MockOsContext osContext(0, 1, aub_stream::ENGINE_CCS, PreemptionMode::Disabled, false, false, false);
+    MockOsContext osContext(0, 1, EngineTypeUsage{aub_stream::ENGINE_CCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     aubCsr.setupContext(osContext);
 
@@ -58,7 +58,7 @@ GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenCCSEnabledWhenEngineMmi
 }
 
 GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenRCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
-    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    MockOsContext osContext(0, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     aubCsr.setupContext(osContext);
 

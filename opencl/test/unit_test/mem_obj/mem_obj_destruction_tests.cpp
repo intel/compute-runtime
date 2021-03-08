@@ -488,9 +488,9 @@ HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledTh
 
     auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*mockDevice.executionEnvironment, 1);
     auto osContext = mockDevice.executionEnvironment->memoryManager->createAndRegisterOsContext(mockDevice.engines[0].commandStreamReceiver,
-                                                                                                aub_stream::ENGINE_RCS, 1,
+                                                                                                EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, 1,
                                                                                                 PreemptionMode::Disabled,
-                                                                                                false, false, false);
+                                                                                                false);
     mockDevice.engines[0].osContext = osContext;
 
     mockDevice.resetCommandStreamReceiver(mockCsr);
@@ -527,9 +527,9 @@ HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWait
 
     auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*mockDevice.executionEnvironment, 1);
     auto osContext = mockDevice.executionEnvironment->memoryManager->createAndRegisterOsContext(mockDevice.engines[0].commandStreamReceiver,
-                                                                                                aub_stream::ENGINE_RCS, 1,
+                                                                                                EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, 1,
                                                                                                 PreemptionMode::Disabled,
-                                                                                                false, false, false);
+                                                                                                false);
     mockDevice.engines[0].osContext = osContext;
 
     mockDevice.resetCommandStreamReceiver(mockCsr);

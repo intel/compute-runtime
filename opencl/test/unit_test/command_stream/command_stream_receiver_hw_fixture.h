@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,7 @@ struct BcsTests : public Test<ClDeviceFixture> {
         auto contextId = engine->osContext->getContextId();
 
         delete engine->osContext;
-        engine->osContext = OsContext::create(nullptr, contextId, pDevice->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS, PreemptionMode::Disabled,
-                                              false, false, false);
+        engine->osContext = OsContext::create(nullptr, contextId, pDevice->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
         engine->osContext->incRefInternal();
         csr.setupContext(*engine->osContext);
 

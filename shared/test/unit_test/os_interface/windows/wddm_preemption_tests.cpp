@@ -43,8 +43,8 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         wddm->init();
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         ASSERT_NE(nullptr, hwInfo);
-        auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first;
-        osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, engine, preemptionMode, false, false, false);
+        auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
+        osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, engine, preemptionMode, false);
     }
 
     DebugManagerStateRestore *dbgRestorer = nullptr;

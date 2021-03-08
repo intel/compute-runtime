@@ -62,10 +62,8 @@ class MockWddmResidencyController : public WddmResidencyController {
 class MockOsContextWin : public OsContextWin {
   public:
     MockOsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                     aub_stream::EngineType engineType, PreemptionMode preemptionMode,
-                     bool lowPriority, bool internalEngine, bool rootDevice)
-        : OsContextWin(wddm, contextId, deviceBitfield, engineType, preemptionMode,
-                       lowPriority, internalEngine, rootDevice),
+                     EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice)
+        : OsContextWin(wddm, contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice),
           mockResidencyController(wddm, contextId) {}
 
     WddmResidencyController &getResidencyController() override { return mockResidencyController; };
@@ -81,8 +79,8 @@ struct WddmResidencyControllerTest : ::testing::Test {
         rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         wddm->init();
-        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 1, aub_stream::ENGINE_RCS,
-                                                              PreemptionMode::Disabled, false, false, false);
+        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                              PreemptionMode::Disabled, false);
         wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin);
         residencyController = &mockOsContextWin->mockResidencyController;
     }
@@ -105,8 +103,7 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
         wddm->resetGdi(gdi);
         wddm->init();
 
-        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 0, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
-                                                              false, false, false);
+        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 0, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
         wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin);
         residencyController = &mockOsContextWin->mockResidencyController;
         residencyController->registerCallback();
@@ -137,8 +134,8 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
         csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
-                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first, 1, preemptionMode,
-                                                              false, false, false);
+                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0], 1, preemptionMode,
+                                                              false);
 
         osContext->incRefInternal();
         residencyController = &static_cast<OsContextWin *>(osContext)->getResidencyController();
@@ -173,9 +170,9 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         csr.reset(createCommandStream(*executionEnvironment, 0u, 1));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
-                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first,
+                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                               1, PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
-                                                              false, false, false);
+                                                              false);
 
         osContext->incRefInternal();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,10 +67,10 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     DeviceBitfield deviceBitfield(1);
     auto csr = std::make_unique<MockCsr<FamilyType>>(execStamp, *executionEnvironment, 0, deviceBitfield);
     auto hwInfo = *defaultHwInfo;
-    auto engine = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0].first;
+    auto engine = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), engine, deviceBitfield,
                                                                                      PreemptionHelper::getDefaultPreemptionMode(hwInfo),
-                                                                                     false, false, false);
+                                                                                     false);
     csr->setupContext(*osContext);
 
     Surface *surface = createSurface::Create<TypeParam>(this->data,

@@ -902,8 +902,8 @@ TEST(MemoryManagerTest, givenPropertiesWithOsContextWhenGetAllocationDataIsCalle
     AllocationProperties properties{0, 1, GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, mockDeviceBitfield};
 
     MockOsContext osContext(0u, 1,
-                            HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0].first,
-                            PreemptionMode::Disabled, false, false, false);
+                            HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                            PreemptionMode::Disabled, false);
 
     properties.osContext = &osContext;
 

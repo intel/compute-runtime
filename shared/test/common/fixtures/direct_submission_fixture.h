@@ -21,8 +21,7 @@ struct DirectSubmissionFixture : public DeviceFixture {
         DeviceFixture::SetUp();
         DeviceFactory::prepareDeviceEnvironments(*pDevice->getExecutionEnvironment());
 
-        osContext.reset(OsContext::create(nullptr, 0u, pDevice->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
-                                          false, false, false));
+        osContext.reset(OsContext::create(nullptr, 0u, pDevice->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, false));
     }
 
     std::unique_ptr<OsContext> osContext;

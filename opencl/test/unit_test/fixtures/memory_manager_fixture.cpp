@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,9 +25,9 @@ void MemoryManagerWithCsrFixture::SetUp() {
     csr->tagAddress = &currentGpuTag;
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     auto engine = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), engine.first, 1,
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineTypeUsage{engine.first, EngineUsage::Regular}, 1,
                                                                PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
-                                                               false, false, false);
+                                                               false);
     csr->setupContext(*osContext);
 }
 

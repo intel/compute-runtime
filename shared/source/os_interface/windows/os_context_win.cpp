@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,19 +14,16 @@
 namespace NEO {
 
 OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             aub_stream::EngineType engineType, PreemptionMode preemptionMode,
-                             bool lowPriority, bool internalEngine, bool rootDevice) {
+                             EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice) {
     if (osInterface) {
-        return new OsContextWin(*osInterface->get()->getWddm(), contextId, deviceBitfield, engineType, preemptionMode,
-                                lowPriority, internalEngine, rootDevice);
+        return new OsContextWin(*osInterface->get()->getWddm(), contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
     }
-    return new OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority, internalEngine, rootDevice);
+    return new OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
 }
 
 OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                           aub_stream::EngineType engineType, PreemptionMode preemptionMode,
-                           bool lowPriority, bool internalEngine, bool rootDevice)
-    : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority, internalEngine, rootDevice),
+                           EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice)
+    : OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice),
       wddm(wddm),
       residencyController(wddm, contextId) {
 

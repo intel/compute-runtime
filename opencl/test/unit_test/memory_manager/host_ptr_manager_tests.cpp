@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -919,8 +919,7 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWa
     uint32_t csr1GpuTag = taskCountNotReady;
     csr0->tagAddress = &csr0GpuTag;
     csr1->tagAddress = &csr1GpuTag;
-    auto osContext = memoryManager->createAndRegisterOsContext(csr1.get(), aub_stream::EngineType::ENGINE_RCS, 0, PreemptionMode::Disabled,
-                                                               true, false, false);
+    auto osContext = memoryManager->createAndRegisterOsContext(csr1.get(), EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::LowPriority}, 0, PreemptionMode::Disabled, false);
     csr1->setupContext(*osContext);
 
     void *cpuPtr = reinterpret_cast<void *>(0x100004);

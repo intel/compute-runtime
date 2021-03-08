@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,7 @@ class OsContextWin : public OsContext {
     ~OsContextWin() override;
 
     OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                 aub_stream::EngineType engineType, PreemptionMode preemptionMode,
-                 bool lowPriority, bool internalEngine, bool rootDevice);
+                 EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
 
     D3DKMT_HANDLE getWddmContextHandle() const { return wddmContextHandle; }
     void setWddmContextHandle(D3DKMT_HANDLE wddmContextHandle) { this->wddmContextHandle = wddmContextHandle; }

@@ -16,9 +16,8 @@ class MockOsContext : public OsContext {
     using OsContext::getDeviceBitfield;
 
     MockOsContext(uint32_t contextId, DeviceBitfield deviceBitfield,
-                  aub_stream::EngineType engineType, PreemptionMode preemptionMode,
-                  bool lowPriority, bool internalEngine, bool rootDevice)
-        : OsContext(contextId, deviceBitfield, engineType, preemptionMode,
-                    lowPriority, internalEngine, rootDevice) {}
+                  EngineTypeUsage typeUsage, PreemptionMode preemptionMode,
+                  bool rootDevice)
+        : OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice) {}
 };
 } // namespace NEO
