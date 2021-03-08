@@ -151,10 +151,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfolingWhenWa
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
     cl_event event;
-    cl_kernel clKernel = &kernel;
 
     static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
-        clKernel,
+        &kernel,
         dimensions,
         globalOffsets,
         workItems,
@@ -198,10 +197,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingWhenNo
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
     cl_event event;
-    cl_kernel clKernel = &kernel;
 
     static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
-        clKernel,
+        &kernel,
         dimensions,
         globalOffsets,
         workItems,
@@ -687,9 +685,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWit
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
     cl_event event;
-    cl_kernel clKernel = kernel->mockKernel;
 
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
     HardwareParse parse;
     auto &cmdList = parse.cmdList;
@@ -739,9 +736,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWit
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
     cl_event event;
-    cl_kernel clKernel = kernel->mockKernel;
 
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
     HardwareParse parse;
     auto &cmdList = parse.cmdList;
@@ -792,8 +788,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueBlo
     uint32_t dimensions = 1;
     cl_event event;
     cl_event ue = new UserEvent();
-    cl_kernel clKernel = kernel->mockKernel;
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr,
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr,
                                                                           1,   // one user event to block queue
                                                                           &ue, // user event not signaled
                                                                           &event);
@@ -849,9 +844,8 @@ HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCount
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
-    cl_kernel clKernel = kernel->mockKernel;
 
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, nullptr);
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, nullptr);
 
     HardwareParse parse;
     auto &cmdList = parse.cmdList;
@@ -917,9 +911,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWit
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
     cl_event event;
-    cl_kernel clKernel = kernel->mockKernel;
 
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
     auto pEvent = static_cast<MockEvent<Event> *>(event);
     EXPECT_EQ(pEvent->getHwTimeStampNode()->getGpuAddress(), timeStampGpuAddress);
@@ -972,10 +965,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersOnCCSTests, givenCommandQue
     uint32_t dimensions = 1;
     cl_event event;
     cl_event userEvent = clCreateUserEvent(context.get(), nullptr);
-    cl_kernel clKernel = kernel->mockKernel;
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get());
 
-    cmdQHw->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 1, &userEvent, &event);
+    cmdQHw->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 1, &userEvent, &event);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
     NEO::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();
@@ -1026,10 +1018,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersOnCCSTests, givenCommandQue
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
     cl_event event;
-    cl_kernel clKernel = kernel->mockKernel;
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get());
 
-    cmdQHw->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
+    cmdQHw->enqueueKernel(kernel->mockKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
     HardwareParse parse;
     auto &cmdList = parse.cmdList;

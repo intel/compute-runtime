@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
-    cl_kernel clKernel,
+    Kernel *pKernel,
     cl_uint workDim,
     const size_t *globalWorkOffsetIn,
     const size_t *globalWorkSizeIn,
@@ -36,7 +36,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     size_t workGroupSize[3] = {1, 1, 1};
     size_t enqueuedLocalWorkSize[3] = {0, 0, 0};
 
-    auto &kernel = *castToObjectOrAbort<Kernel>(clKernel);
+    auto &kernel = *pKernel;
     auto rootDeviceIndex = device->getRootDeviceIndex();
     const auto &kernelInfo = kernel.getKernelInfo(rootDeviceIndex);
 

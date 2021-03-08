@@ -85,7 +85,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     virtual cl_int enqueueFillBuffer(Buffer *buffer, const void *pattern, size_t patternSize, size_t offset,
                                      size_t size, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueKernel(cl_kernel kernel, cl_uint workDim, const size_t *globalWorkOffset, const size_t *globalWorkSize,
+    virtual cl_int enqueueKernel(Kernel *kernel, cl_uint workDim, const size_t *globalWorkOffset, const size_t *globalWorkSize,
                                  const size_t *localWorkSize, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
     virtual cl_int enqueueBarrierWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;

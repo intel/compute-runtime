@@ -144,7 +144,7 @@ class CommandQueueHw : public CommandQueue {
                             const cl_event *eventWaitList,
                             cl_event *event) override;
 
-    cl_int enqueueKernel(cl_kernel kernel,
+    cl_int enqueueKernel(Kernel *kernel,
                          cl_uint workDim,
                          const size_t *globalWorkOffset,
                          const size_t *globalWorkSize,

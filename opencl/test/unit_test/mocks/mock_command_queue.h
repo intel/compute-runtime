@@ -88,7 +88,7 @@ class MockCommandQueue : public CommandQueue {
                              size_t size, cl_uint numEventsInWaitList,
                              const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
 
-    cl_int enqueueKernel(cl_kernel kernel, cl_uint workDim, const size_t *globalWorkOffset,
+    cl_int enqueueKernel(Kernel *kernel, cl_uint workDim, const size_t *globalWorkOffset,
                          const size_t *globalWorkSize, const size_t *localWorkSize,
                          cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
 

@@ -3449,7 +3449,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     }
 
     retVal = pCommandQueue->enqueueKernel(
-        kernel,
+        pKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -5904,7 +5904,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
     }
 
     retVal = pCommandQueue->enqueueKernel(
-        kernel,
+        pKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
