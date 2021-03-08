@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,7 +117,7 @@ struct AubFillImage
     std::unique_ptr<Image> image;
 };
 
-HWTEST_P(AubFillImage, simple) {
+HWTEST_P(AubFillImage, WhenFillingThenExpectationsMet) {
     const unsigned int testWidth = 5;
     const unsigned int testHeight = std::get<2>(GetParam()).imageType != CL_MEM_OBJECT_IMAGE1D ? 5 : 1;
     const unsigned int testDepth = std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D ? 5 : 1;

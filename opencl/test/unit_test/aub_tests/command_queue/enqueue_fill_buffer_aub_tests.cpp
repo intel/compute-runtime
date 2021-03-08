@@ -32,7 +32,7 @@ struct FillBufferHw
 
 typedef FillBufferHw AUBFillBuffer;
 
-HWTEST_P(AUBFillBuffer, simple) {
+HWTEST_P(AUBFillBuffer, WhenFillingThenExpectationsMet) {
     cl_float destMemory[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     auto pDestMemory = &destMemory[0];
     MockContext context(this->pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
