@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ TEST_F(clEventTests, GivenNullEventWhenReleasingEventThenClInvalidEventErrorIsRe
     EXPECT_EQ(CL_INVALID_EVENT, retVal);
 }
 
-TEST_F(clEventTests, GivenValidEventWhenReleasingEventTheSuccessIsReturned) {
+TEST_F(clEventTests, GivenValidEventWhenReleasingEventThenSuccessIsReturned) {
     auto *pEvent = new Event(nullptr, 0, 0, 0);
     ASSERT_NE(nullptr, pEvent);
 

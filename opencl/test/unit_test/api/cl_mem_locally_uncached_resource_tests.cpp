@@ -136,7 +136,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, GivenAtLeastOne
     EXPECT_FALSE(kernel->hasUncacheableStatelessArgs());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateWhenStatelessIsProgrammedItIsCached) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateWhenStatelessIsProgrammedThenItIsCached) {
     cl_int retVal = CL_SUCCESS;
 
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
@@ -291,7 +291,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
     EXPECT_FALSE(kernel->hasUncacheableStatelessArgs());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, WhenUnsettingUncacheableResourceFromKernelThanKernelContinuesToCorrectlySetMocs) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, WhenUnsettingUncacheableResourceFromKernelThenKernelContinuesToCorrectlySetMocs) {
     cl_int retVal = CL_SUCCESS;
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     auto kernel = mockKernel.mockKernel;

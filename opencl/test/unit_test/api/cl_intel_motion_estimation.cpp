@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -319,7 +319,7 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroAndDescriptorN
     EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), param_value_size_ret);
 }
 
-TEST_F(IntelMotionEstimationGetInfoTest, getInfoTypeExpectPass) {
+TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeWhenGettingAcceleratorInfoThenAcceleratorTypeMotionEstimationIntelIsReturned) {
     ASSERT_EQ(sizeof(cl_accelerator_type_intel), sizeof(cl_uint));
 
     result = clGetAcceleratorInfoINTEL(
