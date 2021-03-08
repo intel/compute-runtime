@@ -47,7 +47,10 @@ if(WIN32)
   )
 endif()
 
-target_include_directories(igdrcl_aub_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(igdrcl_aub_tests PRIVATE
+                           ${CMAKE_CURRENT_SOURCE_DIR}
+                           ${NEO_SOURCE_DIR}/shared/test/common/helpers/includes${BRANCH_DIR_SUFFIX}
+)
 
 target_sources(igdrcl_aub_tests PRIVATE
                ${NEO_SHARED_TEST_DIRECTORY}/unit_test/page_fault_manager/default_asan_options.cpp
