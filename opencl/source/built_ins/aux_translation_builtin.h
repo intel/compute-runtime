@@ -101,6 +101,7 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     }
 
     void resizeKernelInstances(size_t size) const;
+    MultiDeviceKernel *multiDeviceBaseKernel = nullptr;
     Kernel *baseKernel = nullptr;
     mutable std::vector<std::unique_ptr<Kernel>> convertToNonAuxKernel;
     mutable std::vector<std::unique_ptr<Kernel>> convertToAuxKernel;

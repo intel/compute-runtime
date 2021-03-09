@@ -27,7 +27,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenValidParametersWhenExecutingKernelThenS
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
-        pKernel,
+        pMultiDeviceKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -51,7 +51,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenQueueIncapableWhenExecutingKernelThenIn
     this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_KERNEL_INTEL);
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
-        pKernel,
+        pMultiDeviceKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -68,7 +68,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenNullCommandQueueWhenExecutingKernelThen
 
     retVal = clEnqueueNDRangeKernel(
         nullptr,
-        pKernel,
+        pMultiDeviceKernel,
         1,
         nullptr,
         globalWorkSize,
@@ -91,7 +91,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenNonZeroEventsAndEmptyEventWaitListWhenE
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
-        pKernel,
+        pMultiDeviceKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -115,7 +115,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenConcurrentKernelWhenExecutingKernelThen
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
-        pKernel,
+        pMultiDeviceKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -141,7 +141,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithAllocateSyncBufferPatchWhenEx
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,
-        pKernel,
+        pMultiDeviceKernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,

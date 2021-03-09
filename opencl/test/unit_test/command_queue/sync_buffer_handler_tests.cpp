@@ -90,7 +90,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     cl_int enqueueNDCount() {
-        return clEnqueueNDCountKernelINTEL(commandQueue, kernel, workDim, gwOffset, workgroupCount, lws, 0, nullptr, nullptr);
+        return clEnqueueNDCountKernelINTEL(commandQueue, kernelInternals->mockMultiDeviceKernel, workDim, gwOffset, workgroupCount, lws, 0, nullptr, nullptr);
     }
 
     bool isCooperativeDispatchSupported() {

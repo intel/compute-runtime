@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,6 @@ TEST_F(clReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVir
     cl_queue_properties properties = 0;
     ClDevice *device = (ClDevice *)testedClDevice;
     MockKernelWithInternals kernelInternals(*device, pContext);
-    Kernel *kernel = kernelInternals.mockKernel;
 
     cmdQ = clCreateCommandQueue(pContext, testedClDevice, properties, &retVal);
 
@@ -72,7 +71,7 @@ TEST_F(clReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVir
 
     EXPECT_EQ(success, retVal);
 
-    retVal = clEnqueueNDRangeKernel(cmdQ, kernel, 1, offset, gws, nullptr, 1, &event, &eventOut);
+    retVal = clEnqueueNDRangeKernel(cmdQ, kernelInternals.mockMultiDeviceKernel, 1, offset, gws, nullptr, 1, &event, &eventOut);
 
     EXPECT_EQ(success, retVal);
     EXPECT_NE(nullptr, eventOut);

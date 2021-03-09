@@ -132,7 +132,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckC
 
     EXPECT_EQ(retVal, CL_INVALID_ARG_VALUE);
     retVal = clSetKernelArg(
-        pKernel.get(),
+        pMultiDeviceKernel.get(),
         0,
         sizeof(memObj),
         &memObj);
@@ -140,7 +140,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckC
     EXPECT_EQ(retVal, CL_INVALID_ARG_VALUE);
 
     retVal = clSetKernelArg(
-        pKernel.get(),
+        pMultiDeviceKernel.get(),
         0,
         sizeof(memObj),
         &memObj);
@@ -148,7 +148,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckC
     EXPECT_EQ(retVal, CL_INVALID_ARG_VALUE);
 
     retVal = clSetKernelArg(
-        pKernel.get(),
+        pMultiDeviceKernel.get(),
         1000,
         sizeof(memObj),
         &memObj);

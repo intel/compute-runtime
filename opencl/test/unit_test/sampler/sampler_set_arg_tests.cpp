@@ -59,6 +59,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
         pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgSampler);
         pKernel->setKernelArgHandler(1, &Kernel::setArgSampler);
@@ -70,7 +71,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     }
 
     void TearDown() {
-        delete pKernel;
+        delete pMultiDeviceKernel;
 
         delete sampler;
         delete context;
@@ -101,6 +102,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
     SKernelBinaryHeaderCommon kernelHeader;
     std::unique_ptr<KernelInfo> pKernelInfo;
     char samplerStateHeap[0x80];
@@ -116,7 +118,7 @@ HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorre
     cl_sampler samplerObj = sampler;
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(samplerObj),
         &samplerObj);

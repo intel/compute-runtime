@@ -39,17 +39,12 @@ class GraphicsAllocation;
 class ImageTransformer;
 class Surface;
 class PrintfHandler;
-
-template <>
-struct OpenCLObjectMapper<_cl_kernel> {
-    typedef class Kernel DerivedType;
-};
+class MultiDeviceKernel;
 
 using KernelInfoContainer = StackVec<const KernelInfo *, 1>;
 
-class Kernel : public BaseObject<_cl_kernel> {
+class Kernel : public ReferenceTrackedObject<Kernel> {
   public:
-    static const cl_ulong objectMagic = 0x3284ADC8EA0AFE25LL;
     static const uint32_t kernelBinaryAlignement = 64;
 
     enum kernelArgType {
@@ -121,7 +116,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     Kernel &operator=(const Kernel &) = delete;
     Kernel(const Kernel &) = delete;
 
-    ~Kernel() override;
+    virtual ~Kernel();
 
     static bool isMemObj(kernelArgType kernelArg) {
         return kernelArg == BUFFER_OBJ || kernelArg == IMAGE_OBJ || kernelArg == PIPE_OBJ;
@@ -406,9 +401,12 @@ class Kernel : public BaseObject<_cl_kernel> {
     void setWorkDim(uint32_t rootDeviceIndex, uint32_t workDim);
     uint32_t getMaxKernelWorkGroupSize(uint32_t rootDeviceIndex) const;
     uint32_t getSlmTotalSize(uint32_t rootDeviceIndex) const;
-    bool getHasIndirectAccess() {
+    bool getHasIndirectAccess() const {
         return this->kernelHasIndirectAccess;
     }
+
+    MultiDeviceKernel *getMultiDeviceKernel() const { return pMultiDeviceKernel; }
+    void setMultiDeviceKernel(MultiDeviceKernel *pMultiDeviceKernelToSet) { pMultiDeviceKernel = pMultiDeviceKernelToSet; }
 
   protected:
     struct ObjectCounts {
@@ -635,6 +633,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool singleSubdevicePreferedInCurrentEnqueue = false;
 
     bool kernelHasIndirectAccess = true;
+    MultiDeviceKernel *pMultiDeviceKernel;
 };
 
 } // namespace NEO

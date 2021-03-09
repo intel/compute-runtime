@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,29 +51,29 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
     const KernelInfo *pKernelInfo0 = pProgram->getKernelInfo("simple_kernel_0", rootDeviceIndex);
     ASSERT_NE(nullptr, pKernelInfo0);
 
-    Kernel *pKernel0 = Kernel::create<MockKernel>(
+    auto pMultiDeviceKernel0 = MultiDeviceKernel::create<MockKernel>(
         pProgram,
         MockKernel::toKernelInfoContainer(*pKernelInfo0, rootDeviceIndex),
         &retVal);
-    ASSERT_NE(nullptr, pKernel0);
+    ASSERT_NE(nullptr, pMultiDeviceKernel0);
 
     const KernelInfo *pKernelInfo1 = pProgram->getKernelInfo("simple_kernel_1", rootDeviceIndex);
     ASSERT_NE(nullptr, pKernelInfo1);
 
-    Kernel *pKernel1 = Kernel::create<MockKernel>(
+    auto pMultiDeviceKernel1 = MultiDeviceKernel::create<MockKernel>(
         pProgram,
         MockKernel::toKernelInfoContainer(*pKernelInfo1, rootDeviceIndex),
         &retVal);
-    ASSERT_NE(nullptr, pKernel1);
+    ASSERT_NE(nullptr, pMultiDeviceKernel1);
 
     const KernelInfo *pKernelInfo2 = pProgram->getKernelInfo("simple_kernel_2", rootDeviceIndex);
     ASSERT_NE(nullptr, pKernelInfo2);
 
-    Kernel *pKernel2 = Kernel::create<MockKernel>(
+    auto pMultiDeviceKernel2 = MultiDeviceKernel::create<MockKernel>(
         pProgram,
         MockKernel::toKernelInfoContainer(*pKernelInfo2, rootDeviceIndex),
         &retVal);
-    ASSERT_NE(nullptr, pKernel2);
+    ASSERT_NE(nullptr, pMultiDeviceKernel2);
 
     const cl_int NUM_ELEMS = 64;
     const size_t BUFFER_SIZE = NUM_ELEMS * sizeof(cl_uint);
@@ -142,27 +142,27 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
 
     //__kernel void simple_kernel_0(const uint arg0, const float arg1, __global uint *dst)
     //{ dst = arg0 + arg1 }
-    retVal = clSetKernelArg(pKernel0, 0, sizeof(cl_uint), &arg0);
+    retVal = clSetKernelArg(pMultiDeviceKernel0, 0, sizeof(cl_uint), &arg0);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel0, 1, sizeof(cl_float), &arg1);
+    retVal = clSetKernelArg(pMultiDeviceKernel0, 1, sizeof(cl_float), &arg1);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel0, 2, sizeof(cl_mem), &arg2);
+    retVal = clSetKernelArg(pMultiDeviceKernel0, 2, sizeof(cl_mem), &arg2);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     //__kernel void simple_kernel_1(__global uint *src, const uint arg1, __global uint *dst)
     //{ dst = src + arg1 }
-    retVal = clSetKernelArg(pKernel1, 0, sizeof(cl_mem), &arg2);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 0, sizeof(cl_mem), &arg2);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel1, 1, sizeof(cl_uint), &arg3);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 1, sizeof(cl_uint), &arg3);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel1, 2, sizeof(cl_mem), &arg4);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 2, sizeof(cl_mem), &arg4);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     //__kernel void simple_kernel_2(const uint arg1, __global uint *dst)
     //{ dst = arg1 }
-    retVal = clSetKernelArg(pKernel2, 0, sizeof(cl_mem), &arg5);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 0, sizeof(cl_mem), &arg5);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel2, 1, sizeof(cl_mem), &arg6);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 1, sizeof(cl_mem), &arg6);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // Create a second command queue (beyond the default one)
@@ -174,7 +174,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
     csr.overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
     retVal = pCmdQ2->enqueueKernel(
-        pKernel0,
+        pMultiDeviceKernel0->getKernel(rootDeviceIndex),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -186,7 +186,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
 
     // depends on kernel0
     retVal = pCmdQ2->enqueueKernel(
-        pKernel1,
+        pMultiDeviceKernel1->getKernel(rootDeviceIndex),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -198,7 +198,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
 
     // independent from other kernels, can be run asynchronously
     retVal = pCmdQ2->enqueueKernel(
-        pKernel2,
+        pMultiDeviceKernel2->getKernel(rootDeviceIndex),
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -232,9 +232,9 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
     delete intermediateBuffer;
     delete destinationBuffer1;
     delete destinationBuffer2;
-    delete pKernel0;
-    delete pKernel1;
-    delete pKernel2;
+    delete pMultiDeviceKernel0;
+    delete pMultiDeviceKernel1;
+    delete pMultiDeviceKernel2;
     delete pProgram;
     delete pCmdQ2;
 }
@@ -274,12 +274,12 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
     const KernelInfo *pKernelInfo = pProgram->getKernelInfo("device_side_block_motion_estimate_intel", rootDeviceIndex);
     EXPECT_NE(nullptr, pKernelInfo);
 
-    Kernel *pKernel = Kernel::create<MockKernel>(
+    auto *pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(
         pProgram,
         MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex),
         &retVal);
-    ASSERT_NE(pKernel, nullptr);
-
+    ASSERT_NE(pMultiDeviceKernel, nullptr);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     EXPECT_EQ(true, pKernel->isVmeKernel());
 
     cl_image_format imageFormat;
@@ -401,21 +401,21 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
     cl_int arg6 = mbHeight;
     cl_int arg7 = CL_AVC_ME_PARTITION_MASK_8x8_INTEL;
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(cl_mem), &arg0);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &arg0);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 1, sizeof(cl_mem), &arg1);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 1, sizeof(cl_mem), &arg1);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 2, sizeof(cl_mem), &arg2);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 2, sizeof(cl_mem), &arg2);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 3, sizeof(cl_mem), &arg3);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 3, sizeof(cl_mem), &arg3);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 4, sizeof(cl_mem), &arg4);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 4, sizeof(cl_mem), &arg4);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 5, sizeof(cl_mem), &arg5);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 5, sizeof(cl_mem), &arg5);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 6, sizeof(cl_int), &arg6);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 6, sizeof(cl_int), &arg6);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 7, sizeof(cl_int), &arg7);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 7, sizeof(cl_int), &arg7);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     retVal = pCmdQ->enqueueKernel(
@@ -496,7 +496,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
     refMemory = nullptr;
     delete refImage;
 
-    delete pKernel;
+    delete pMultiDeviceKernel;
     delete pProgram;
 }
 } // namespace ULT

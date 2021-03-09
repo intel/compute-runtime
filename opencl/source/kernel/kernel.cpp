@@ -533,7 +533,7 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
         break;
 
     case CL_KERNEL_REFERENCE_COUNT:
-        refCount = static_cast<cl_uint>(this->getReference());
+        refCount = static_cast<cl_uint>(pMultiDeviceKernel->getRefApiCount());
         srcSize = sizeof(refCount);
         pSrc = &refCount;
         break;

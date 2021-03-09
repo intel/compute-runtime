@@ -81,13 +81,14 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
 
         ASSERT_NE(nullptr, pVmeKernel);
         ASSERT_EQ(true, pVmeKernel->isVmeKernel());
+        pMultiDeviceVmeKernel = new MockMultiDeviceKernel(pVmeKernel);
     }
 
     void TearDown() override {
         if (skipVmeTest) {
             return;
         }
-        pVmeKernel->release();
+        pMultiDeviceVmeKernel->release();
 
         HardwareParse::TearDown();
         Parent::TearDown();
@@ -96,6 +97,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
     GenCmdList::iterator itorWalker1;
     GenCmdList::iterator itorWalker2;
 
+    MockMultiDeviceKernel *pMultiDeviceVmeKernel = nullptr;
     Kernel *pVmeKernel = nullptr;
     bool skipVmeTest = false;
 };

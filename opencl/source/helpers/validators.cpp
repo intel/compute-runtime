@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
@@ -75,7 +75,7 @@ cl_int validateObject(cl_program object) {
 }
 
 cl_int validateObject(cl_kernel object) {
-    return castToObject<Kernel>(object) != nullptr
+    return castToObject<MultiDeviceKernel>(object) != nullptr
                ? CL_SUCCESS
                : CL_INVALID_KERNEL;
 }

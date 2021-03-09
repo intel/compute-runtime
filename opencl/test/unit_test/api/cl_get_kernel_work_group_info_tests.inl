@@ -32,7 +32,7 @@ TEST_F(clGetKernelWorkGroupInfoTest, GivenInvalidDeviceWhenGettingWorkGroupInfoF
 
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
-        pKernel,
+        pMultiDeviceKernel,
         reinterpret_cast<cl_device_id>(pKernel),
         CL_KERNEL_WORK_GROUP_SIZE,
         0,
@@ -46,7 +46,7 @@ TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
 
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
-        pKernel,
+        pMultiDeviceKernel,
         nullptr,
         CL_KERNEL_WORK_GROUP_SIZE,
         0,
@@ -61,10 +61,11 @@ TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
     size_t paramValueSizeRet;
     MockUnrestrictiveContext context;
     auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
-    auto mockKernel = std::make_unique<MockKernel>(mockProgram.get(), MockKernel::toKernelInfoContainer(pKernel->getKernelInfo(testedRootDeviceIndex), context.getDevice(0)->getRootDeviceIndex()));
+    auto pMockKernel = new MockKernel(mockProgram.get(), MockKernel::toKernelInfoContainer(pKernel->getKernelInfo(testedRootDeviceIndex), context.getDevice(0)->getRootDeviceIndex()));
+    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(pMockKernel);
 
     retVal = clGetKernelWorkGroupInfo(
-        mockKernel.get(),
+        pMultiDeviceKernel.get(),
         nullptr,
         CL_KERNEL_WORK_GROUP_SIZE,
         0,
@@ -87,7 +88,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
     EXPECT_EQ(scratchSpaceSize, 1024u);
 
     retVal = clGetKernelWorkGroupInfo(
-        mockKernel,
+        mockKernel.mockMultiDeviceKernel,
         pDevice,
         CL_KERNEL_SPILL_MEM_SIZE_INTEL,
         sizeof(cl_ulong),
@@ -111,7 +112,7 @@ HWTEST2_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocatio
     populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, privateAllocation);
 
     retVal = clGetKernelWorkGroupInfo(
-        mockKernel,
+        mockKernel.mockMultiDeviceKernel,
         pDevice,
         CL_KERNEL_PRIVATE_MEM_SIZE,
         sizeof(cl_ulong),
@@ -131,7 +132,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocatio
     MockKernelWithInternals mockKernel(*pDevice);
 
     retVal = clGetKernelWorkGroupInfo(
-        mockKernel,
+        mockKernel.mockMultiDeviceKernel,
         pDevice,
         CL_KERNEL_PRIVATE_MEM_SIZE,
         sizeof(cl_ulong),

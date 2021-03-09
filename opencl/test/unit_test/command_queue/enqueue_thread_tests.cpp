@@ -96,13 +96,13 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
       protected:
         ~MyCommandQueue() override {
             if (kernel) {
-                EXPECT_FALSE(kernel->hasOwnership());
+                EXPECT_FALSE(kernel->getMultiDeviceKernel()->hasOwnership());
             }
         }
         void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &multiDispatchInfo) override {
             for (auto &dispatchInfo : multiDispatchInfo) {
                 auto &kernel = *dispatchInfo.getKernel();
-                EXPECT_TRUE(kernel.hasOwnership());
+                EXPECT_TRUE(kernel.getMultiDeviceKernel()->hasOwnership());
             }
         }
 

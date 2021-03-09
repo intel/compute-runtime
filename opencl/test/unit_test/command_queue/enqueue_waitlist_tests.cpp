@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
     static void EnqueueNDRange(EnqueueWaitlistTest *test, cl_uint numWaits, cl_event *waits, cl_event *outEvent, bool blocking = false) {
         size_t threadNum = 10;
         size_t threads[1] = {threadNum};
-        cl_int error = clEnqueueNDRangeKernel(test->pCmdQ, test->pKernel, 1, NULL, threads, threads, numWaits, waits, outEvent);
+        cl_int error = clEnqueueNDRangeKernel(test->pCmdQ, test->pMultiDeviceKernel, 1, NULL, threads, threads, numWaits, waits, outEvent);
         test->test_error(error, "Unable to execute kernel");
         return;
     }

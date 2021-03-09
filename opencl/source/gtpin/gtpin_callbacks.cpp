@@ -16,6 +16,7 @@
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/program.h"
 
@@ -62,7 +63,8 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         return;
     }
     if (isGTPinInitialized) {
-        auto pKernel = castToObjectOrAbort<Kernel>(kernel);
+        auto pMultiDeviceKernel = castToObjectOrAbort<MultiDeviceKernel>(kernel);
+        auto pKernel = pMultiDeviceKernel->getDefaultKernel();
         auto &device = pKernel->getDevices()[0]->getDevice();
         auto rootDeviceIndex = device.getRootDeviceIndex();
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
@@ -107,7 +109,8 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         auto pCmdQ = reinterpret_cast<CommandQueue *>(pCmdQueue);
         auto &device = pCmdQ->getDevice();
         auto rootDeviceIndex = device.getRootDeviceIndex();
-        auto pKernel = castToObjectOrAbort<Kernel>(kernel);
+        auto pMultiDeviceKernel = castToObjectOrAbort<MultiDeviceKernel>(kernel);
+        auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
         if (pKernel->isParentKernel || pKernel->getSurfaceStateHeapSize(rootDeviceIndex) == 0) {
             // Kernel with no SSH, not supported
             return;

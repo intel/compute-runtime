@@ -288,10 +288,11 @@ class StatelessCopyKernelFixture : public ProgramFixture {
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        kernel.reset(Kernel::create<MockKernel>(
+        multiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel("StatelessCopyBuffer"),
             &retVal));
+        kernel = static_cast<MockKernel *>(multiDeviceKernel->getKernel(device->getRootDeviceIndex()));
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
@@ -300,7 +301,8 @@ class StatelessCopyKernelFixture : public ProgramFixture {
         ProgramFixture::TearDown();
     }
 
-    std::unique_ptr<Kernel> kernel = nullptr;
+    std::unique_ptr<MultiDeviceKernel> multiDeviceKernel = nullptr;
+    MockKernel *kernel = nullptr;
     cl_int retVal = CL_SUCCESS;
 };
 
@@ -327,11 +329,11 @@ class StatelessKernelWithIndirectAccessFixture : public ProgramFixture {
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        kernel.reset(Kernel::create<MockKernel>(
+        multiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel("testIndirect"),
             &retVal));
-        ASSERT_NE(nullptr, kernel);
+        ASSERT_NE(nullptr, multiDeviceKernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
@@ -339,7 +341,7 @@ class StatelessKernelWithIndirectAccessFixture : public ProgramFixture {
         ProgramFixture::TearDown();
     }
 
-    std::unique_ptr<Kernel> kernel = nullptr;
+    std::unique_ptr<MultiDeviceKernel> multiDeviceKernel = nullptr;
     cl_int retVal = CL_SUCCESS;
 };
 

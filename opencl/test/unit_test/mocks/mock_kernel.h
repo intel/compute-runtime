@@ -15,6 +15,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
+#include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/source/scheduler/scheduler_kernel.h"
@@ -68,6 +69,24 @@ struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
 
     std::unique_ptr<MockBuffer> mockBuffer = nullptr;
     std::unique_ptr<MockGraphicsAllocation> mockGraphicsAllocation = nullptr;
+};
+
+class MockMultiDeviceKernel : public MultiDeviceKernel {
+  public:
+    using MultiDeviceKernel::MultiDeviceKernel;
+
+    void takeOwnership() const override {
+        MultiDeviceKernel::takeOwnership();
+        takeOwnershipCalls++;
+    }
+
+    void releaseOwnership() const override {
+        releaseOwnershipCalls++;
+        MultiDeviceKernel::releaseOwnership();
+    }
+
+    mutable uint32_t takeOwnershipCalls = 0;
+    mutable uint32_t releaseOwnershipCalls = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -282,15 +301,6 @@ class MockKernel : public Kernel {
 
     void makeResident(CommandStreamReceiver &commandStreamReceiver) override;
     void getResidency(std::vector<Surface *> &dst, uint32_t rootDeviceIndex) override;
-    void takeOwnership() const override {
-        Kernel::takeOwnership();
-        takeOwnershipCalls++;
-    }
-
-    void releaseOwnership() const override {
-        releaseOwnershipCalls++;
-        Kernel::releaseOwnership();
-    }
 
     void setSpecialPipelineSelectMode(bool value) { specialPipelineSelectMode = value; }
 
@@ -298,8 +308,6 @@ class MockKernel : public Kernel {
 
     uint32_t makeResidentCalls = 0;
     uint32_t getResidencyCalls = 0;
-    mutable uint32_t takeOwnershipCalls = 0;
-    mutable uint32_t releaseOwnershipCalls = 0;
 
     bool canKernelTransformImages = true;
     bool isPatchedOverride = true;
@@ -359,6 +367,7 @@ class MockKernelWithInternals {
         mockProgram = new MockProgram(context, false, deviceVector);
         mockKernel = new MockKernel(mockProgram, kernelInfos);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
+        mockMultiDeviceKernel = new MockMultiDeviceKernel(mockKernel);
 
         for (const auto &pClDevice : deviceVector) {
             mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal), pClDevice->getRootDeviceIndex());
@@ -401,7 +410,7 @@ class MockKernelWithInternals {
     }
 
     ~MockKernelWithInternals() {
-        mockKernel->decRefInternal();
+        mockMultiDeviceKernel->decRefInternal();
         mockProgram->decRefInternal();
         mockContext->decRefInternal();
     }
@@ -410,6 +419,7 @@ class MockKernelWithInternals {
         return mockKernel;
     }
 
+    MockMultiDeviceKernel *mockMultiDeviceKernel = nullptr;
     MockKernel *mockKernel;
     MockProgram *mockProgram;
     Context *mockContext;

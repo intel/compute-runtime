@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,8 +63,9 @@ void KernelImageArgTest::SetUp() {
     ClDeviceFixture::SetUp();
     context.reset(new MockContext(pClDevice));
     program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pClDevice));
-    pKernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex)));
+    pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+    pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(pKernel);
 
     pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
     pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
@@ -82,7 +83,7 @@ void KernelImageArgTest::SetUp() {
 
 void KernelImageArgTest::TearDown() {
     image.reset();
-    pKernel.reset();
+    pMultiDeviceKernel.reset();
     program.reset();
     context.reset();
     ClDeviceFixture::TearDown();

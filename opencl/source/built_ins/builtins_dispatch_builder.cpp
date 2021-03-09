@@ -62,13 +62,13 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
         auto middleSizeEls = middleSizeBytes / middleElSize; // num work items in middle walker
 
         // Set-up ISA
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Left, kernLeftLeftover);
+        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Left, kernLeftLeftover->getKernel(clDevice.getRootDeviceIndex()));
         if (isSrcMisaligned) {
-            kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddleMisaligned);
+            kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddleMisaligned->getKernel(clDevice.getRootDeviceIndex()));
         } else {
-            kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddle);
+            kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddle->getKernel(clDevice.getRootDeviceIndex()));
         }
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Right, kernRightLeftover);
+        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Right, kernRightLeftover->getKernel(clDevice.getRootDeviceIndex()));
 
         // Set-up common kernel args
         if (operationParams.srcSvmAlloc) {
@@ -117,10 +117,10 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
     }
 
   protected:
-    Kernel *kernLeftLeftover = nullptr;
-    Kernel *kernMiddle = nullptr;
-    Kernel *kernMiddleMisaligned = nullptr;
-    Kernel *kernRightLeftover = nullptr;
+    MultiDeviceKernel *kernLeftLeftover = nullptr;
+    MultiDeviceKernel *kernMiddle = nullptr;
+    MultiDeviceKernel *kernMiddleMisaligned = nullptr;
+    MultiDeviceKernel *kernRightLeftover = nullptr;
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
         : BuiltinDispatchInfoBuilder(kernelsLib, device) {
         if (populateKernels) {
@@ -187,7 +187,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder
 
         // Set-up ISA
         int dimensions = is3D ? 3 : 2;
-        kernelNoSplit3DBuilder.setKernel(kernelBytes[dimensions - 1]);
+        kernelNoSplit3DBuilder.setKernel(kernelBytes[dimensions - 1]->getKernel(clDevice.getRootDeviceIndex()));
 
         size_t srcOffsetFromAlignedPtr = 0;
         size_t dstOffsetFromAlignedPtr = 0;
@@ -246,7 +246,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder
     }
 
   protected:
-    Kernel *kernelBytes[3]{};
+    MultiDeviceKernel *kernelBytes[3]{};
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
         : BuiltinDispatchInfoBuilder(kernelsLib, device) {
         if (populateKernels) {
@@ -303,9 +303,9 @@ class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
         auto middleSizeEls = middleSizeBytes / middleElSize; // num work items in middle walker
 
         // Set-up ISA
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Left, kernLeftLeftover);
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddle);
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Right, kernRightLeftover);
+        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Left, kernLeftLeftover->getKernel(clDevice.getRootDeviceIndex()));
+        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddle->getKernel(clDevice.getRootDeviceIndex()));
+        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Right, kernRightLeftover->getKernel(clDevice.getRootDeviceIndex()));
 
         DEBUG_BREAK_IF((operationParams.srcMemObj == nullptr) || (operationParams.srcOffset != 0));
         DEBUG_BREAK_IF((operationParams.dstMemObj == nullptr) && (operationParams.dstSvmAlloc == nullptr));
@@ -346,9 +346,9 @@ class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
     }
 
   protected:
-    Kernel *kernLeftLeftover = nullptr;
-    Kernel *kernMiddle = nullptr;
-    Kernel *kernRightLeftover = nullptr;
+    MultiDeviceKernel *kernLeftLeftover = nullptr;
+    MultiDeviceKernel *kernMiddle = nullptr;
+    MultiDeviceKernel *kernRightLeftover = nullptr;
 
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
         : BuiltinDispatchInfoBuilder(kernelsLib, device) {
@@ -388,7 +388,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
     }
 
   protected:
-    Kernel *kernelBytes[5] = {nullptr};
+    MultiDeviceKernel *kernelBytes[5] = {nullptr};
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
         : BuiltinDispatchInfoBuilder(kernelsLib, device) {
         if (populateKernels) {
@@ -432,7 +432,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
         // Set-up kernel
         auto bytesExponent = Math::log2(bytesPerPixel);
         DEBUG_BREAK_IF(bytesExponent >= 5);
-        kernelNoSplit3DBuilder.setKernel(kernelBytes[bytesExponent]);
+        kernelNoSplit3DBuilder.setKernel(kernelBytes[bytesExponent]->getKernel(clDevice.getRootDeviceIndex()));
 
         // Set-up source host ptr / buffer
         if (operationParams.srcPtr) {
@@ -503,7 +503,7 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBu
     }
 
   protected:
-    Kernel *kernelBytes[5] = {nullptr};
+    MultiDeviceKernel *kernelBytes[5] = {nullptr};
 
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
         : BuiltinDispatchInfoBuilder(kernelsLib, device) {
@@ -548,7 +548,7 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBu
         // Set-up ISA
         auto bytesExponent = Math::log2(bytesPerPixel);
         DEBUG_BREAK_IF(bytesExponent >= 5);
-        kernelNoSplit3DBuilder.setKernel(kernelBytes[bytesExponent]);
+        kernelNoSplit3DBuilder.setKernel(kernelBytes[bytesExponent]->getKernel(clDevice.getRootDeviceIndex()));
 
         // Set-up source image
         kernelNoSplit3DBuilder.setArg(0, srcImageRedescribed, operationParams.srcMipLevel);
@@ -634,7 +634,7 @@ class BuiltInOp<EBuiltInOps::CopyImageToImage3d> : public BuiltinDispatchInfoBui
         multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(dstImageRedescribed)); // life range same as mdi's
 
         // Set-up kernel
-        kernelNoSplit3DBuilder.setKernel(kernel);
+        kernelNoSplit3DBuilder.setKernel(kernel->getKernel(clDevice.getRootDeviceIndex()));
 
         // Set-up source image
         kernelNoSplit3DBuilder.setArg(0, srcImageRedescribed, operationParams.srcMipLevel);
@@ -670,7 +670,7 @@ class BuiltInOp<EBuiltInOps::CopyImageToImage3d> : public BuiltinDispatchInfoBui
     }
 
   protected:
-    Kernel *kernel = nullptr;
+    MultiDeviceKernel *kernel = nullptr;
 };
 
 template <>
@@ -695,7 +695,7 @@ class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
         multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(imageRedescribed));
 
         // Set-up kernel
-        kernelNoSplit3DBuilder.setKernel(kernel);
+        kernelNoSplit3DBuilder.setKernel(kernel->getKernel(clDevice.getRootDeviceIndex()));
 
         // Set-up destination image
         kernelNoSplit3DBuilder.setArg(0, imageRedescribed);
@@ -727,7 +727,7 @@ class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
     }
 
   protected:
-    Kernel *kernel = nullptr;
+    MultiDeviceKernel *kernel = nullptr;
 };
 
 BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {

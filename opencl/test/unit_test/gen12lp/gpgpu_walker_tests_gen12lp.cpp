@@ -54,10 +54,11 @@ struct HardwareInterfaceTests : public ClDeviceFixture, public LinearStreamFixtu
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
         auto kernelInfos = MockKernel::toKernelInfoContainer(pProgram->mockKernelInfo, rootDeviceIndex);
         pKernel = new MockKernelWithApplicableWa(pProgram, kernelInfos);
+        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
     }
 
     void TearDown() override {
-        pKernel->release();
+        pMultiDeviceKernel->release();
         pProgram->release();
         pCommandQueue->release();
         pContext->release();
@@ -70,6 +71,7 @@ struct HardwareInterfaceTests : public ClDeviceFixture, public LinearStreamFixtu
     Context *pContext = nullptr;
     MockProgram *pProgram = nullptr;
     MockKernelWithApplicableWa *pKernel = nullptr;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
 };
 
 GEN12LPTEST_F(HardwareInterfaceTests, GivenKernelWithApplicableWaDisableRccRhwoOptimizationWhenDispatchWorkaroundsIsCalledThenWorkaroundIsApplied) {

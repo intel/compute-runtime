@@ -75,11 +75,12 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
 
         // create a kernel
-        pKernel = Kernel::create<MockKernel>(
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel, Program, MockMultiDeviceKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel(pKernelName->c_str()),
             &retVal);
 
+        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(pDevice->getRootDeviceIndex()));
         EXPECT_NE(nullptr, pKernel);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
@@ -87,7 +88,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     void TearDown() override {
         delete pKernelName;
         delete pTestFilename;
-        pKernel->release();
+        pMultiDeviceKernel->release();
 
         pContext->release();
         ProgramFixture::TearDown();
@@ -97,6 +98,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     std::string *pKernelName = nullptr;
     cl_uint simd = 32;
     cl_int retVal = CL_SUCCESS;
+    MockMultiDeviceKernel *pMultiDeviceKernel = nullptr;
     MockKernel *pKernel = nullptr;
     MockContext *pContext = nullptr;
 };

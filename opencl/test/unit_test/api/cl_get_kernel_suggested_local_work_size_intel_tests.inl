@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenInvalidInputWhenCallingGetKe
     size_t suggestedLocalWorkSize[3];
     cl_uint workDim = 1;
 
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(nullptr, pKernel, workDim,
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(nullptr, pMultiDeviceKernel, workDim,
                                                     globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 
@@ -32,24 +32,24 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenInvalidInputWhenCallingGetKe
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 
     pKernel->isPatchedOverride = false;
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, workDim,
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, workDim,
                                                     globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
     pKernel->isPatchedOverride = true;
 
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, workDim,
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, workDim,
                                                     globalWorkOffset, globalWorkSize, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, 0,
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, 0,
                                                     globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_INVALID_WORK_DIMENSION, retVal);
 
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, 4,
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, 4,
                                                     globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_INVALID_WORK_DIMENSION, retVal);
 
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, workDim,
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, workDim,
                                                     globalWorkOffset, nullptr, suggestedLocalWorkSize);
     EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, retVal);
 }
@@ -66,7 +66,7 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenVariousInputWhenGettingSugge
     auto expectedLws = computeWorkgroupSize(dispatchInfo);
     EXPECT_GT(expectedLws.x, 1u);
 
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, 1, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, 1, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(expectedLws.x, suggestedLocalWorkSize[0]);
     EXPECT_EQ(0u, suggestedLocalWorkSize[1]);
@@ -74,7 +74,7 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenVariousInputWhenGettingSugge
 
     dispatchInfo.setDim(2);
     expectedLws = computeWorkgroupSize(dispatchInfo);
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, 2, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, 2, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(expectedLws.x, suggestedLocalWorkSize[0]);
     EXPECT_EQ(expectedLws.y, suggestedLocalWorkSize[1]);
@@ -82,14 +82,14 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenVariousInputWhenGettingSugge
 
     dispatchInfo.setDim(3);
     expectedLws = computeWorkgroupSize(dispatchInfo);
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, 3, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, 3, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(expectedLws.x, suggestedLocalWorkSize[0]);
     EXPECT_EQ(expectedLws.y, suggestedLocalWorkSize[1]);
     EXPECT_EQ(expectedLws.z, suggestedLocalWorkSize[2]);
 
     //null global work offset is fine
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, 3, nullptr, globalWorkSize, suggestedLocalWorkSize);
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, 3, nullptr, globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(expectedLws.x, suggestedLocalWorkSize[0]);
     EXPECT_EQ(expectedLws.y, suggestedLocalWorkSize[1]);
@@ -97,7 +97,8 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenVariousInputWhenGettingSugge
 }
 
 TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenKernelWithExecutionEnvironmentPatchedWhenGettingSuggestedLocalWorkSizeThenCorrectValuesAreReturned) {
-    std::unique_ptr<MockKernel> kernelWithExecutionEnvironmentPatch(MockKernel::create(pCommandQueue->getDevice(), pProgram));
+    auto pKernelWithExecutionEnvironmentPatch = MockKernel::create(pCommandQueue->getDevice(), pProgram);
+    MultiDeviceKernel multiDeviceKernelWithExecutionEnvironmentPatch(pKernelWithExecutionEnvironmentPatch);
 
     size_t globalWorkOffset[] = {0, 0, 0};
     size_t globalWorkSize[] = {128, 128, 128};
@@ -107,11 +108,11 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenKernelWithExecutionEnvironme
     Vec3<size_t> elws{0, 0, 0};
     Vec3<size_t> gws{128, 128, 128};
     Vec3<size_t> offset{0, 0, 0};
-    const DispatchInfo dispatchInfo{pDevice, kernelWithExecutionEnvironmentPatch.get(), workDim, gws, elws, offset};
+    const DispatchInfo dispatchInfo{pDevice, pKernelWithExecutionEnvironmentPatch, workDim, gws, elws, offset};
     auto expectedLws = computeWorkgroupSize(dispatchInfo);
     EXPECT_GT(expectedLws.x * expectedLws.y * expectedLws.z, 1u);
 
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, kernelWithExecutionEnvironmentPatch.get(), workDim, globalWorkOffset,
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, &multiDeviceKernelWithExecutionEnvironmentPatch, workDim, globalWorkOffset,
                                                     globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(expectedLws.x, suggestedLocalWorkSize[0]);

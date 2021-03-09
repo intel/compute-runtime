@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,7 @@ struct ExecutionModelKernelFixture : public ProgramFromBinaryFixture,
             pProgram->getKernelInfosForKernel(kernelName),
             &retVal);
 
+        pMultiDeviceKernel = new MockMultiDeviceKernel(pKernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, pKernel);
     }
@@ -51,8 +52,8 @@ struct ExecutionModelKernelFixture : public ProgramFromBinaryFixture,
         if (IsSkipped()) {
             return;
         }
-        if (pKernel != nullptr) {
-            pKernel->release();
+        if (pMultiDeviceKernel != nullptr) {
+            pMultiDeviceKernel->release();
         }
 
         ProgramFromBinaryFixture::TearDown();
@@ -68,6 +69,7 @@ struct ExecutionModelKernelFixture : public ProgramFromBinaryFixture,
         }
     }
 
+    MockMultiDeviceKernel *pMultiDeviceKernel = nullptr;
     Kernel *pKernel = nullptr;
     cl_int retVal = CL_SUCCESS;
 };

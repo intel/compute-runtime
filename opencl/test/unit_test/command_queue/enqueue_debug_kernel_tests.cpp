@@ -58,6 +58,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
 
             ASSERT_EQ(CL_SUCCESS, retVal);
             ASSERT_NE(nullptr, debugKernel);
+            pMultiDeviceKernel = new MultiDeviceKernel(debugKernel);
 
             cl_mem src = &bufferSrc;
             cl_mem dst = &bufferDst;
@@ -75,12 +76,13 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
     void TearDown() override {
         if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
             delete kbHelper;
-            debugKernel->release();
+            pMultiDeviceKernel->release();
         }
         ProgramSimpleFixture::TearDown();
     }
     cl_device_id device;
     Kernel *debugKernel = nullptr;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
     KernelBinaryHelper *kbHelper = nullptr;
     MockContext context;
     MockBuffer bufferSrc;

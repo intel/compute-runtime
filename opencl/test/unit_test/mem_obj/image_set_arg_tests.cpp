@@ -83,6 +83,7 @@ class ImageSetArgTest : public ClDeviceFixture,
         pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
         pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
@@ -98,7 +99,7 @@ class ImageSetArgTest : public ClDeviceFixture,
 
     void TearDown() override {
         delete srcImage;
-        delete pKernel;
+        delete pMultiDeviceKernel;
 
         delete context;
         ClDeviceFixture::TearDown();
@@ -108,6 +109,7 @@ class ImageSetArgTest : public ClDeviceFixture,
     MockContext *context;
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
     std::unique_ptr<KernelInfo> pKernelInfo;
     char surfaceStateHeap[0x80] = {};
     Image *srcImage = nullptr;
@@ -351,7 +353,7 @@ HWTEST_F(ImageSetArgTest, WhenSettingKernelArgThenPropertiesAreSetCorrectly) {
     cl_mem memObj = srcImage;
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(memObj),
         &memObj);
@@ -402,7 +404,7 @@ HWTEST_F(ImageSetArgTest, givenImage2DWithMipMapsWhenSetKernelArgIsCalledThenMip
     EXPECT_EQ(3u, srcImage->peekMipCount());
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(memObj),
         &memObj);
@@ -423,7 +425,7 @@ HWTEST_F(ImageSetArgTest, Given2dArrayWhenSettingKernelArgThenPropertiesAreSetCo
     cl_mem memObj = image2Darray;
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(memObj),
         &memObj);
@@ -471,7 +473,7 @@ HWTEST_F(ImageSetArgTest, Given1dArrayWhenSettingKernelArgThenPropertiesAreSetCo
     cl_mem memObj = image1Darray;
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(memObj),
         &memObj);
@@ -527,7 +529,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAuxC
     EXPECT_FALSE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(memObj),
         &memObj);
@@ -563,7 +565,7 @@ HWTEST_F(ImageSetArgTest, givenDepthFormatWhenSetArgIsCalledThenProgramAuxFields
     cl_mem memObj = image;
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(memObj),
         &memObj);
@@ -598,7 +600,7 @@ HWTEST_F(ImageSetArgTest, givenMultisampledR32Floatx8x24DepthStencilFormatWhenSe
     image->setMcsSurfaceInfo(msi);
     cl_mem memObj = image.get();
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
@@ -625,7 +627,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationAndRenderCompressionWhenSetArgOnMult
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
@@ -655,7 +657,7 @@ HWTEST_F(ImageSetArgTest, givenDepthFormatAndRenderCompressionWhenSetArgOnMultis
     image->setMcsSurfaceInfo(msi);
     cl_mem memObj = image.get();
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
@@ -692,7 +694,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
 
     mcsAlloc->getDefaultGmm()->isRenderCompressed = true;
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
@@ -723,7 +725,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     mockMcsGmmResInfo->setMultisampleControlSurface();
     EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
@@ -758,7 +760,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     mockMcsGmmResInfo->setAuxQPitch(qPitchValue);
     EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
@@ -789,7 +791,7 @@ HWTEST_F(ImageSetArgTest, GivenImageFrom1dBufferWhenSettingKernelArgThenProperti
     ASSERT_NE(nullptr, imageFromBuffer);
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(imageFromBuffer),
         &imageFromBuffer);
@@ -833,7 +835,7 @@ HWTEST_F(ImageSetArgTest, GivenImageWithClLuminanceFormatWhenSettingKernelArgThe
     cl_mem memObj = luminanceImage;
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(memObj),
         &memObj);
@@ -943,6 +945,7 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
         pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
         pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
@@ -960,7 +963,7 @@ HWTEST_F(ImageMediaBlockSetArgTest, WhenSettingKernelArgImageThenPropertiesAreCo
     cl_mem memObj = srcImage;
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(memObj),
         &memObj);

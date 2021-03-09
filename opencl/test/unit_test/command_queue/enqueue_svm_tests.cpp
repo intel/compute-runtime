@@ -766,8 +766,8 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
 
     auto program = clUniquePtr(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context, context->getDevices(), &retVal));
     program->build(program->getDevices(), nullptr, false);
-    auto kernel = clUniquePtr(Kernel::create<MockKernel>(program.get(), program->getKernelInfosForKernel("FillBufferBytes"), &retVal));
-
+    auto kernel = Kernel::create<MockKernel>(program.get(), program->getKernelInfosForKernel("FillBufferBytes"), &retVal);
+    MultiDeviceKernel multiDeviceKernel(kernel);
     std::vector<Surface *> allSurfaces;
     kernel->getResidency(allSurfaces, rootDeviceIndex);
     EXPECT_EQ(1u, allSurfaces.size());
@@ -779,7 +779,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
     size_t offset = 0;
     size_t size = 1;
     retVal = this->pCmdQ->enqueueKernel(
-        kernel.get(),
+        kernel,
         1,
         &offset,
         &size,

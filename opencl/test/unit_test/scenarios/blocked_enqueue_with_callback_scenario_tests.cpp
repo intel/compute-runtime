@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ TEST_F(ScenarioTest, givenAsyncHandlerDisabledAndUserEventBlockingEnqueueAndOutp
 
     cl_command_queue clCommandQ = nullptr;
     cl_queue_properties properties = 0;
-    cl_kernel clKernel = kernel;
+    cl_kernel clKernel = kernelInternals->mockMultiDeviceKernel;
     size_t offset[] = {0, 0, 0};
     size_t gws[] = {1, 1, 1};
 
@@ -86,7 +86,7 @@ TEST_F(ScenarioTest, givenAsyncHandlerEnabledAndUserEventBlockingEnqueueAndOutpu
 
     cl_command_queue clCommandQ = nullptr;
     cl_queue_properties properties = 0;
-    cl_kernel clKernel = kernel;
+    cl_kernel clKernel = kernelInternals->mockMultiDeviceKernel;
     size_t offset[] = {0, 0, 0};
     size_t gws[] = {1, 1, 1};
     cl_int retVal = CL_SUCCESS;

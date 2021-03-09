@@ -70,6 +70,7 @@ class BufferSetArgTest : public ContextFixture,
         pKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
 
         pKernel->setKernelArgHandler(1, &Kernel::setArgBuffer);
@@ -83,7 +84,7 @@ class BufferSetArgTest : public ContextFixture,
     void TearDown() override {
         delete buffer;
         delete BufferDefaults::context;
-        delete pKernel;
+        delete pMultiDeviceKernel;
 
         delete pProgram;
         ContextFixture::TearDown();
@@ -92,6 +93,7 @@ class BufferSetArgTest : public ContextFixture,
 
     cl_int retVal = CL_SUCCESS;
     MockProgram *pProgram;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
     MockKernel *pKernel = nullptr;
     std::unique_ptr<KernelInfo> pKernelInfo;
     SKernelBinaryHeaderCommon kernelHeader;
@@ -266,7 +268,7 @@ TEST_F(BufferSetArgTest, WhenSettingKernelArgThenAddressToPatchIsSetCorrectlyAnd
     cl_mem memObj = buffer;
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(memObj),
         &memObj);

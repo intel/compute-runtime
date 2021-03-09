@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,9 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         : BuiltinDispatchInfoBuilder(kernelsLib, device) {
         populate(builtinOp,
                  mediaKernelsBuildOptions,
-                 kernelName, vmeKernel);
+                 kernelName, multiDeviceVmeKernel);
         auto rootDeviceIndex = clDevice.getRootDeviceIndex();
+        vmeKernel = multiDeviceVmeKernel->getKernel(rootDeviceIndex);
         widthArgNum = vmeKernel->getKernelInfo(rootDeviceIndex).getArgNumByName("width");
         heightArgNum = vmeKernel->getKernelInfo(rootDeviceIndex).getArgNumByName("height");
         strideArgNum = vmeKernel->getKernelInfo(rootDeviceIndex).getArgNumByName("stride");
@@ -241,6 +242,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
     int32_t motionVectorBufferArgNum;
     int32_t predictionMotionVectorBufferArgNum;
     int32_t residualsArgNum;
+    MultiDeviceKernel *multiDeviceVmeKernel;
     Kernel *vmeKernel;
 };
 

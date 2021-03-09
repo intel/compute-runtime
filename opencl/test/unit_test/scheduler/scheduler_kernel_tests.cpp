@@ -195,7 +195,7 @@ TEST(SchedulerKernelTest, givenGraphicsAllocationWithDifferentCpuAndGpuAddresses
 
     std::unique_ptr<KernelInfo> info(nullptr);
     KernelInfo *infoPtr = nullptr;
-    auto scheduler = clUniquePtr(MockSchedulerKernel::create(*program, infoPtr));
+    auto scheduler = std::unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(*program, infoPtr));
     info.reset(infoPtr);
     std::unique_ptr<MockGraphicsAllocation> allocs[9];
 

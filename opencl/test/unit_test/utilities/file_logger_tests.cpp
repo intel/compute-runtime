@@ -537,7 +537,7 @@ TEST(FileLogger, GivenBufferNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
-    auto kernel = clUniquePtr(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
+    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex));
 
     KernelArgPatchInfo kernelArgPatchInfo;
 
@@ -572,7 +572,7 @@ TEST(FileLogger, GivenBufferWhenDumpingKernelArgsThenFileIsCreated) {
     auto kernelInfo = std::make_unique<KernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
-    auto kernel = clUniquePtr(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
+    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex));
 
     KernelArgPatchInfo kernelArgPatchInfo;
 
@@ -612,7 +612,7 @@ TEST(FileLogger, GivenSamplerWhenDumpingKernelArgsThenFileIsNotCreated) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
-    auto kernel = clUniquePtr(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
+    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex));
 
     KernelArgPatchInfo kernelArgPatchInfo;
 
@@ -640,7 +640,7 @@ TEST(FileLogger, GivenImageNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
-    auto kernel = clUniquePtr(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
+    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex));
 
     char surfaceStateHeap[0x80];
     kernelInfo->heapInfo.pSsh = surfaceStateHeap;

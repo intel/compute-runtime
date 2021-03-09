@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ HWTEST_F(BarrierScenarioTest, givenBlockedEnqueueBarrierOnOOQWhenUserEventIsUnbl
     auto mockCmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pPlatform->getClDevice(0), properties));
     clCommandQ = mockCmdQ.get();
 
-    cl_kernel clKernel = kernel;
+    cl_kernel clKernel = kernelInternals->mockMultiDeviceKernel;
     size_t offset[] = {0, 0, 0};
     size_t gws[] = {1, 1, 1};
 

@@ -93,16 +93,18 @@ class ExecutionModelSchedulerTest : public ClDeviceFixture,
 
         parentKernel = MockParentKernel::create(*context);
         ASSERT_NE(nullptr, parentKernel);
+        pMultiDeviceKernel = new MockMultiDeviceKernel(parentKernel);
     }
 
     void TearDown() override {
-        parentKernel->release();
+        pMultiDeviceKernel->release();
 
         DeviceQueueFixture::TearDown();
         CommandQueueHwFixture::TearDown();
         ClDeviceFixture::TearDown();
     }
 
+    MockMultiDeviceKernel *pMultiDeviceKernel = nullptr;
     MockParentKernel *parentKernel = nullptr;
 };
 

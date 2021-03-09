@@ -497,7 +497,8 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
 
     auto mockProgram = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
-    mockAuxBuiltInOp->usedKernels.at(0).reset(mockBuiltinKernel);
+    auto pMultiDeviceKernel = new MockMultiDeviceKernel(mockBuiltinKernel);
+    mockAuxBuiltInOp->usedKernels.at(0).reset(pMultiDeviceKernel);
 
     MockKernelWithInternals mockKernel(*pClDevice, pContext);
     MockCommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, nullptr);
@@ -521,14 +522,14 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
 
     mockKernel.mockKernel->auxTranslationRequired = false;
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(0u, mockBuiltinKernel->takeOwnershipCalls);
-    EXPECT_EQ(0u, mockBuiltinKernel->releaseOwnershipCalls);
+    EXPECT_EQ(0u, pMultiDeviceKernel->takeOwnershipCalls);
+    EXPECT_EQ(0u, pMultiDeviceKernel->releaseOwnershipCalls);
 
     mockKernel.mockKernel->auxTranslationRequired = true;
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_EQ(1u, mockBuiltinKernel->takeOwnershipCalls);
-    EXPECT_EQ(1u, mockBuiltinKernel->releaseOwnershipCalls);
+    EXPECT_EQ(1u, pMultiDeviceKernel->takeOwnershipCalls);
+    EXPECT_EQ(1u, pMultiDeviceKernel->releaseOwnershipCalls);
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
@@ -2172,9 +2173,9 @@ TEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnloc
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     {
         BuiltInOwnershipWrapper lock(mockAuxBuiltInOp);
-        EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->hasOwnership());
+        EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->getMultiDeviceKernel()->hasOwnership());
     }
-    EXPECT_FALSE(mockAuxBuiltInOp.baseKernel->hasOwnership());
+    EXPECT_FALSE(mockAuxBuiltInOp.baseKernel->getMultiDeviceKernel()->hasOwnership());
 }
 
 TEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingThenLockOnlyWhenRequested) {
@@ -2182,9 +2183,9 @@ TEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingT
     {
         BuiltInOwnershipWrapper lock;
         lock.takeOwnership(mockAuxBuiltInOp);
-        EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->hasOwnership());
+        EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->getMultiDeviceKernel()->hasOwnership());
     }
-    EXPECT_FALSE(mockAuxBuiltInOp.baseKernel->hasOwnership());
+    EXPECT_FALSE(mockAuxBuiltInOp.baseKernel->getMultiDeviceKernel()->hasOwnership());
 }
 
 TEST_F(BuiltInOwnershipWrapperTests, givenLockWithAcquiredOwnershipWhenTakeOwnershipCalledThenAbort) {

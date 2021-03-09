@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -212,7 +212,8 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKer
         "block_motion_estimate_intel",
         &retVal);
 
-    auto kernNeo = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto kernNeo = pMultiDeviceKernel->getKernel(testedRootDeviceIndex);
     EXPECT_NE(nullptr, kernNeo->getKernelInfo(testedRootDeviceIndex).builtinDispatchBuilder);
     EXPECT_EQ(6U, kernNeo->getKernelArgsNumber());
 
@@ -248,7 +249,8 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
         "block_advanced_motion_estimate_check_intel",
         &retVal);
 
-    auto kernNeo = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto kernNeo = pMultiDeviceKernel->getKernel(testedRootDeviceIndex);
     EXPECT_NE(nullptr, kernNeo->getKernelInfo(testedRootDeviceIndex).builtinDispatchBuilder);
     EXPECT_EQ(15U, kernNeo->getKernelArgsNumber());
 
@@ -284,7 +286,8 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
         "block_advanced_motion_estimate_bidirectional_check_intel",
         &retVal);
 
-    auto kernNeo = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto kernNeo = pMultiDeviceKernel->getKernel(testedRootDeviceIndex);
     EXPECT_NE(nullptr, kernNeo->getKernelInfo(testedRootDeviceIndex).builtinDispatchBuilder);
     EXPECT_EQ(20U, kernNeo->getKernelArgsNumber());
 

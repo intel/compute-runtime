@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
 
         pMockKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex));
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
+        pMockMultiDeviceKernel = new MultiDeviceKernel(pMockKernel);
         svmCapabilities = pDevice->getDeviceInfo().svmCapabilities;
         if (svmCapabilities != 0) {
             ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -36,8 +37,8 @@ class KernelExecInfoFixture : public ApiFixture<> {
             clSVMFree(pContext, ptrSvm);
         }
 
-        if (pMockKernel) {
-            delete pMockKernel;
+        if (pMockMultiDeviceKernel) {
+            delete pMockMultiDeviceKernel;
         }
 
         ApiFixture::TearDown();
@@ -45,6 +46,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
 
     cl_int retVal = CL_SUCCESS;
     MockKernel *pMockKernel = nullptr;
+    MultiDeviceKernel *pMockMultiDeviceKernel = nullptr;
     std::unique_ptr<KernelInfo> pKernelInfo;
     void *ptrSvm = nullptr;
     cl_device_svm_capabilities svmCapabilities = 0;
@@ -68,9 +70,10 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKern
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrSvm = false;
 
-    auto pMockKernel = std::make_unique<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex));
+    auto pMockKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex));
+    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(pMockKernel);
     auto retVal = clSetKernelExecInfo(
-        pMockKernel.get(),            // cl_kernel kernel
+        pMultiDeviceKernel.get(),     // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
         0,                            // size_t param_value_size
         nullptr                       // const void *param_value
@@ -83,7 +86,7 @@ TEST_F(clSetKernelExecInfoTests, GivenNullParamValueWhenSettingAdditionalKernelI
     size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
     retVal = clSetKernelExecInfo(
-        pMockKernel,                  // cl_kernel kernel
+        pMockMultiDeviceKernel,       // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
@@ -96,7 +99,7 @@ TEST_F(clSetKernelExecInfoTests, GivenNullPointerInParamValueWhenSettingAddition
     size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
     retVal = clSetKernelExecInfo(
-        pMockKernel,                  // cl_kernel kernel
+        pMockMultiDeviceKernel,       // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
@@ -109,7 +112,7 @@ TEST_F(clSetKernelExecInfoTests, GivenParamSizeZeroWhenSettingAdditionalKernelIn
     size_t SvmPtrListSizeInBytes = 0;
 
     retVal = clSetKernelExecInfo(
-        pMockKernel,                  // cl_kernel kernel
+        pMockMultiDeviceKernel,       // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
@@ -122,7 +125,7 @@ TEST_F(clSetKernelExecInfoTests, GivenInvalidParamSizeWhenSettingAdditionalKerne
     size_t SvmPtrListSizeInBytes = (size_t)(-1);
 
     retVal = clSetKernelExecInfo(
-        pMockKernel,                  // cl_kernel kernel
+        pMockMultiDeviceKernel,       // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
@@ -135,10 +138,10 @@ TEST_F(clSetKernelExecInfoTests, GivenInvalidParamNameWhenSettingAdditionalKerne
     size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
     retVal = clSetKernelExecInfo(
-        pMockKernel,           // cl_kernel kernel
-        0,                     // cl_kernel_exec_info param_name
-        SvmPtrListSizeInBytes, // size_t param_value_size
-        pSvmPtrList            // const void *param_value
+        pMockMultiDeviceKernel, // cl_kernel kernel
+        0,                      // cl_kernel_exec_info param_name
+        SvmPtrListSizeInBytes,  // size_t param_value_size
+        pSvmPtrList             // const void *param_value
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
@@ -148,7 +151,7 @@ TEST_F(clSetKernelExecInfoTests, GivenInvalidOperationWhenSettingAdditionalKerne
     size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
     retVal = clSetKernelExecInfo(
-        pMockKernel,                               // cl_kernel kernel
+        pMockMultiDeviceKernel,                    // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM, // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes,                     // size_t param_value_size
         pSvmPtrList                                // const void *param_value
@@ -162,7 +165,7 @@ TEST_F(clSetKernelExecInfoTests, GivenValidPointerListWithOnePointerWhenSettingA
         size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
         retVal = clSetKernelExecInfo(
-            pMockKernel,                  // cl_kernel kernel
+            pMockMultiDeviceKernel,       // cl_kernel kernel
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
             SvmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
@@ -185,7 +188,7 @@ TEST_F(clSetKernelExecInfoTests, GivenValidPointerListWithMultiplePointersWhenSe
         size_t SvmPtrListSizeInBytes = 3 * sizeof(void *);
 
         retVal = clSetKernelExecInfo(
-            pMockKernel,                  // cl_kernel kernel
+            pMockMultiDeviceKernel,       // cl_kernel kernel
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
             SvmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
@@ -212,7 +215,7 @@ TEST_F(clSetKernelExecInfoTests, givenReadOnlySvmPtrListWhenUsedAsKernelPointers
         size_t SvmPtrListSizeInBytes = 2 * sizeof(void *);
 
         retVal = clSetKernelExecInfo(
-            pMockKernel,                  // cl_kernel kernel
+            pMockMultiDeviceKernel,       // cl_kernel kernel
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
             SvmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
@@ -233,7 +236,7 @@ TEST_F(clSetKernelExecInfoTests, GivenMultipleSettingKernelInfoOperationsWhenSet
         size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
         retVal = clSetKernelExecInfo(
-            pMockKernel,                  // cl_kernel kernel
+            pMockMultiDeviceKernel,       // cl_kernel kernel
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
             SvmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
@@ -243,7 +246,7 @@ TEST_F(clSetKernelExecInfoTests, GivenMultipleSettingKernelInfoOperationsWhenSet
         EXPECT_EQ(1u, pMockKernel->kernelSvmGfxAllocations.size());
 
         retVal = clSetKernelExecInfo(
-            pMockKernel,                  // cl_kernel kernel
+            pMockMultiDeviceKernel,       // cl_kernel kernel
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
             SvmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
@@ -257,24 +260,24 @@ TEST_F(clSetKernelExecInfoTests, GivenMultipleSettingKernelInfoOperationsWhenSet
 TEST_F(clSetKernelExecInfoTests, givenNonExistingParamNameWithValuesWhenSettingAdditionalKernelInfoThenInvalidValueIsReturned) {
     uint32_t paramName = 1234u;
     size_t size = sizeof(cl_bool);
-    retVal = clSetKernelExecInfo(pMockKernel, paramName, size, nullptr);
+    retVal = clSetKernelExecInfo(pMockMultiDeviceKernel, paramName, size, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     size = 2 * sizeof(cl_bool);
     cl_bool paramValue = CL_TRUE;
-    retVal = clSetKernelExecInfo(pMockKernel, paramName, size, &paramValue);
+    retVal = clSetKernelExecInfo(pMockMultiDeviceKernel, paramName, size, &paramValue);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = clSetKernelExecInfo(pMockKernel, paramName, size, nullptr);
+    retVal = clSetKernelExecInfo(pMockMultiDeviceKernel, paramName, size, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     size = sizeof(cl_bool);
     paramValue = CL_FALSE;
-    retVal = clSetKernelExecInfo(pMockKernel, paramName, size, &paramValue);
+    retVal = clSetKernelExecInfo(pMockMultiDeviceKernel, paramName, size, &paramValue);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     paramValue = CL_TRUE;
-    retVal = clSetKernelExecInfo(pMockKernel, paramName, size, &paramValue);
+    retVal = clSetKernelExecInfo(pMockMultiDeviceKernel, paramName, size, &paramValue);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -283,7 +286,7 @@ HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhe
     size_t ptrSizeInBytes = sizeof(uint32_t *);
 
     retVal = clSetKernelExecInfo(
-        pMockKernel,                                         // cl_kernel kernel
+        pMockMultiDeviceKernel,                              // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, // cl_kernel_exec_info param_name
         ptrSizeInBytes,                                      // size_t param_value_size
         &newThreadArbitrationPolicy                          // const void *param_value
@@ -298,7 +301,7 @@ HWTEST_F(clSetKernelExecInfoTests, givenInvalidThreadArbitrationPolicyWhenSettin
     size_t ptrSizeInBytes = 1 * sizeof(uint32_t *);
 
     retVal = clSetKernelExecInfo(
-        pMockKernel,                                         // cl_kernel kernel
+        pMockMultiDeviceKernel,                              // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, // cl_kernel_exec_info param_name
         ptrSizeInBytes,                                      // size_t param_value_size
         &invalidThreadArbitrationPolicy                      // const void *param_value
@@ -310,7 +313,7 @@ HWTEST_F(clSetKernelExecInfoTests, givenInvalidParamSizeWhenSettingKernelExecuti
     cl_execution_info_kernel_type_intel kernelExecutionType;
 
     retVal = clSetKernelExecInfo(
-        pMockKernel,                                     // cl_kernel kernel
+        pMockMultiDeviceKernel,                          // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL,           // cl_kernel_exec_info param_name
         sizeof(cl_execution_info_kernel_type_intel) - 1, // size_t param_value_size
         &kernelExecutionType                             // const void *param_value
@@ -320,7 +323,7 @@ HWTEST_F(clSetKernelExecInfoTests, givenInvalidParamSizeWhenSettingKernelExecuti
 
 HWTEST_F(clSetKernelExecInfoTests, givenInvalidParamValueWhenSettingKernelExecutionTypeThenClInvalidValueErrorIsReturned) {
     retVal = clSetKernelExecInfo(
-        pMockKernel,                                 // cl_kernel kernel
+        pMockMultiDeviceKernel,                      // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL,       // cl_kernel_exec_info param_name
         sizeof(cl_execution_info_kernel_type_intel), // size_t param_value_size
         nullptr                                      // const void *param_value
@@ -334,29 +337,29 @@ HWTEST_F(clSetKernelExecInfoTests, givenDifferentExecutionTypesWhenSettingAdditi
     cl_execution_info_kernel_type_intel kernelExecutionType = -1;
 
     retVal = clSetKernelExecInfo(
-        pMockKernel,         // cl_kernel kernel
-        paramName,           // cl_kernel_exec_info param_name
-        paramSize,           // size_t param_value_size
-        &kernelExecutionType // const void *param_value
+        pMockMultiDeviceKernel, // cl_kernel kernel
+        paramName,              // cl_kernel_exec_info param_name
+        paramSize,              // size_t param_value_size
+        &kernelExecutionType    // const void *param_value
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     kernelExecutionType = CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL;
     retVal = clSetKernelExecInfo(
-        pMockKernel,         // cl_kernel kernel
-        paramName,           // cl_kernel_exec_info param_name
-        paramSize,           // size_t param_value_size
-        &kernelExecutionType // const void *param_value
+        pMockMultiDeviceKernel, // cl_kernel kernel
+        paramName,              // cl_kernel_exec_info param_name
+        paramSize,              // size_t param_value_size
+        &kernelExecutionType    // const void *param_value
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(KernelExecutionType::Default, pMockKernel->executionType);
 
     kernelExecutionType = CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL;
     retVal = clSetKernelExecInfo(
-        pMockKernel,         // cl_kernel kernel
-        paramName,           // cl_kernel_exec_info param_name
-        paramSize,           // size_t param_value_size
-        &kernelExecutionType // const void *param_value
+        pMockMultiDeviceKernel, // cl_kernel kernel
+        paramName,              // cl_kernel_exec_info param_name
+        paramSize,              // size_t param_value_size
+        &kernelExecutionType    // const void *param_value
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(KernelExecutionType::Concurrent, pMockKernel->executionType);

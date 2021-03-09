@@ -761,7 +761,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
 
-    Kernel *pKernel1 = (Kernel *)kernel1;
+    MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
+    Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId1 = pKernel1->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
@@ -770,9 +771,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff11 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel1, 0, sizeof(cl_mem), &buff10);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 0, sizeof(cl_mem), &buff10);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel1, 1, sizeof(cl_mem), &buff11);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 1, sizeof(cl_mem), &buff11);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount12 = KernelSubmitCallbackCount;
@@ -782,7 +783,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel1, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel1, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
@@ -795,7 +796,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     // Verify that GT-Pin Kernel Create callback is not called multiple times for the same kernel
     EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
 
-    Kernel *pKernel2 = (Kernel *)kernel2;
+    MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
+    Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId2 = pKernel2->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
@@ -803,15 +805,15 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff21 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel2, 0, sizeof(cl_mem), &buff20);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 0, sizeof(cl_mem), &buff20);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel2, 1, sizeof(cl_mem), &buff21);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 1, sizeof(cl_mem), &buff21);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount22 = KernelSubmitCallbackCount;
     int prevCount23 = CommandBufferCreateCallbackCount;
     int prevCount24 = CommandBufferCompleteCallbackCount;
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);
@@ -909,7 +911,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
 
-    Kernel *pKernel1 = (Kernel *)kernel1;
+    MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
+    Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId1 = pKernel1->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
@@ -926,9 +929,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff11 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel1, 0, sizeof(cl_mem), &buff10);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 0, sizeof(cl_mem), &buff10);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel1, 1, sizeof(cl_mem), &buff11);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 1, sizeof(cl_mem), &buff11);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount12 = KernelSubmitCallbackCount;
@@ -936,7 +939,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     int prevCount14 = CommandBufferCompleteCallbackCount;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t workgroupCount[3] = {n, 1, 1};
-    retVal = clEnqueueNDCountKernelINTEL(cmdQ, pKernel1, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(cmdQ, pMultiDeviceKernel1, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
@@ -949,7 +952,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     // Verify that GT-Pin Kernel Create callback is not called multiple times for the same kernel
     EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
 
-    Kernel *pKernel2 = (Kernel *)kernel2;
+    MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
+    Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId2 = pKernel2->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
@@ -957,15 +961,15 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff21 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel2, 0, sizeof(cl_mem), &buff20);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 0, sizeof(cl_mem), &buff20);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel2, 1, sizeof(cl_mem), &buff21);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 1, sizeof(cl_mem), &buff21);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount22 = KernelSubmitCallbackCount;
     int prevCount23 = CommandBufferCreateCallbackCount;
     int prevCount24 = CommandBufferCompleteCallbackCount;
-    retVal = clEnqueueNDCountKernelINTEL(cmdQ, pKernel2, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(cmdQ, pMultiDeviceKernel2, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);
@@ -1183,12 +1187,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GTPinTests, givenInitializedGTPinInterfaceWhenKernel
     size_t localWorkSize[3] = {1, 1, 1};
 
     MockParentKernel *parentKernel = MockParentKernel::create(*pContext);
+    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(parentKernel);
 
-    retVal = clEnqueueNDRangeKernel(cmdQ, parentKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel.get(), workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount2, KernelSubmitCallbackCount);
-
-    delete parentKernel;
 
     // Cleanup
     retVal = clReleaseKernel(kernel);
@@ -1262,7 +1265,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
 
-    Kernel *pKernel = (Kernel *)kernel;
+    MultiDeviceKernel *pMultiDeviceKernel = static_cast<MultiDeviceKernel *>(kernel);
+    Kernel *pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo = pKernel->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId = pKernel->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
@@ -1271,9 +1275,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
     auto buff0 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff1 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(cl_mem), &buff0);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &buff0);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 1, sizeof(cl_mem), &buff1);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 1, sizeof(cl_mem), &buff1);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Verify that when SSH is removed then during kernel execution
@@ -1287,7 +1291,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount2, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount3, CommandBufferCreateCallbackCount);
@@ -1375,7 +1379,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
 
-    Kernel *pKernel = (Kernel *)kernel;
+    MultiDeviceKernel *pMultiDeviceKernel = static_cast<MultiDeviceKernel *>(kernel);
+    Kernel *pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo = pKernel->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId = pKernel->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
@@ -1384,9 +1389,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
     auto buff0 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff1 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel, 0, sizeof(cl_mem), &buff0);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &buff0);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 1, sizeof(cl_mem), &buff1);
+    retVal = clSetKernelArg(pMultiDeviceKernel, 1, sizeof(cl_mem), &buff1);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Verify that when SSH is removed then during kernel execution
@@ -1403,7 +1408,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 1, &userEvent, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 1, &userEvent, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount2, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount3, CommandBufferCreateCallbackCount);
@@ -1499,7 +1504,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
 
-    Kernel *pKernel1 = (Kernel *)kernel1;
+    MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
+    Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId1 = pKernel1->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
@@ -1508,9 +1514,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff11 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel1, 0, sizeof(cl_mem), &buff10);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 0, sizeof(cl_mem), &buff10);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel1, 1, sizeof(cl_mem), &buff11);
+    retVal = clSetKernelArg(pMultiDeviceKernel1, 1, sizeof(cl_mem), &buff11);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_event userEvent = clCreateUserEvent(context, &retVal);
@@ -1523,7 +1529,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel1, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 1, &userEvent, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel1, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 1, &userEvent, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
@@ -1537,7 +1543,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     // Verify that Kernel Create callback was not called now
     EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
 
-    Kernel *pKernel2 = (Kernel *)kernel2;
+    MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
+    Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
     uint64_t gtpinKernelId2 = pKernel2->getKernelId(rootDeviceIndex);
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
@@ -1545,16 +1552,16 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff21 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 
-    retVal = clSetKernelArg(pKernel2, 0, sizeof(cl_mem), &buff20);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 0, sizeof(cl_mem), &buff20);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel2, 1, sizeof(cl_mem), &buff21);
+    retVal = clSetKernelArg(pMultiDeviceKernel2, 1, sizeof(cl_mem), &buff21);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     int prevCount22 = KernelSubmitCallbackCount;
     int prevCount23 = CommandBufferCreateCallbackCount;
     int prevCount24 = CommandBufferCompleteCallbackCount;
     EXPECT_EQ(prevCount14, prevCount24);
-    retVal = clEnqueueNDRangeKernel(cmdQ, pKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);
@@ -1656,12 +1663,13 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
     EXPECT_NE(nullptr, kernel1);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    Kernel *pKernel1 = (Kernel *)kernel1;
+    MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
+    Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
     returnNullResource = true;
 
     auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
 
-    gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
+    gtpinNotifyKernelSubmit(pMultiDeviceKernel1, pCmdQueue);
     EXPECT_EQ(nullptr, kernelExecQueue[0].gtpinResource);
 
     CommandStreamReceiver &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
@@ -1674,13 +1682,13 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
 
     returnNullResource = false;
 
-    gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
+    gtpinNotifyKernelSubmit(pMultiDeviceKernel1, pCmdQueue);
     EXPECT_NE(nullptr, kernelExecQueue[1].gtpinResource);
     gtpinNotifyMakeResident(pKernel1, &csr);
     EXPECT_TRUE(kernelExecQueue[1].isResourceResident);
     cl_mem gtpinBuffer1 = kernelExecQueue[1].gtpinResource;
 
-    gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
+    gtpinNotifyKernelSubmit(pMultiDeviceKernel1, pCmdQueue);
     EXPECT_NE(nullptr, kernelExecQueue[2].gtpinResource);
     gtpinNotifyUpdateResidencyList(pKernel1, &residencyVector);
     EXPECT_EQ(1u, residencyVector.size());
@@ -1782,7 +1790,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
 
     // Simulate that created kernel was sent for execution
-    auto pKernel = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
     ASSERT_NE(nullptr, pKernel);
     EXPECT_EQ(0u, kernelExecQueue.size());
@@ -1824,7 +1833,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     ASSERT_NE(nullptr, kernel2);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // ... and simulate that it was sent for execution
-    auto pKernel2 = castToObject<Kernel>(kernel2);
+    auto pMultiDeviceKernel2 = castToObject<MultiDeviceKernel>(kernel2);
+    auto pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
     ASSERT_NE(nullptr, pKernel2);
     EXPECT_EQ(1u, kernelExecQueue.size());
     EXPECT_EQ(1u, kernelResources.size());
@@ -1975,7 +1985,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
 
     // Simulate that created kernel was sent for execution two times in a row
-    auto pKernel = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
     ASSERT_NE(nullptr, pKernel);
     EXPECT_EQ(0u, kernelExecQueue.size());
@@ -2219,7 +2230,8 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    Kernel *pKernel = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     ASSERT_NE(nullptr, pKernel);
 
     size_t numBTS1 = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
@@ -2319,7 +2331,8 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    Kernel *pKernel = castToObject<Kernel>(kernel);
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     ASSERT_NE(nullptr, pKernel);
 
     bool isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted(rootDeviceIndex);
@@ -2393,16 +2406,17 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
 
     auto pProgramm = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pDevice));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(context.get(), pDevice, nullptr));
-    std::unique_ptr<MockKernel> pKernel(new MockKernel(pProgramm.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex)));
+    auto pKernel = new MockKernel(pProgramm.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
+    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(pKernel);
 
     pKernel->setSshLocal(nullptr, sizeof(surfaceStateHeap), rootDeviceIndex);
 
     kernelOffset = 0x1234;
     EXPECT_NE(pKernel->getStartOffset(), kernelOffset);
     returnNullResource = true;
-    cl_context ctxt = (cl_context)((Context *)context.get());
+    cl_context ctxt = context.get();
     currContext = (gtpin::context_handle_t)ctxt;
-    gtpinNotifyKernelSubmit(pKernel.get(), cmdQ.get());
+    gtpinNotifyKernelSubmit(pMultiDeviceKernel.get(), cmdQ.get());
     EXPECT_EQ(pKernel->getStartOffset(), kernelOffset);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -2467,7 +2481,7 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
     bool slmUsed = false;
     bool ndRangeKernel = false;
 
-    gtpinNotifyKernelSubmit(kernel, mockCmdQ.get());
+    gtpinNotifyKernelSubmit(kernel.mockMultiDeviceKernel, mockCmdQ.get());
 
     std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, ndRangeKernel, nullptr, preemptionMode, kernel, 1));
     CompletionStamp stamp = command->submit(20, false);

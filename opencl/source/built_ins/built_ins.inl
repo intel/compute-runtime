@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,8 @@
 namespace NEO {
 
 BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltinDispatchInfoBuilder(kernelsLib, device) {
-    BuiltinDispatchInfoBuilder::populate(EBuiltInOps::AuxTranslation, "", "fullCopy", baseKernel);
-
+    BuiltinDispatchInfoBuilder::populate(EBuiltInOps::AuxTranslation, "", "fullCopy", multiDeviceBaseKernel);
+    baseKernel = multiDeviceBaseKernel->getKernel(clDevice.getRootDeviceIndex());
     resizeKernelInstances(5);
 }
 

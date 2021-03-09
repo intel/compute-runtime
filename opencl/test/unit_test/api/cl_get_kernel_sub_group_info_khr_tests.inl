@@ -74,7 +74,7 @@ TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGr
     paramValueSizeRet = 0;
 
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
         sizeof(size_t) * 3,
@@ -103,7 +103,7 @@ TEST_P(KernelSubGroupInfoKhrReturnCountTest, GivenLwsParameterWhenGettingSubGrou
     CalculatedWGS = inputValue[0] * inputValue[1] * inputValue[2];
 
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
         sizeof(size_t) * 3,
@@ -127,7 +127,7 @@ typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturn
 TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, GivenKernelWhenGettingRequiredSubGroupSizeThenCorrectValueIsReturned) {
 
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
         0,
@@ -168,7 +168,7 @@ TEST_F(KernelSubGroupInfoKhrTest, GivenNullKernelWhenGettingKernelSubGroupInfoTh
 TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidDeviceWhenGettingSubGroupInfoFromSingleDeviceKernelThenInvalidDeviceErrorIsReturned) {
 
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         reinterpret_cast<cl_device_id>(pKernel),
         CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
         0,
@@ -183,7 +183,7 @@ TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidDeviceWhenGettingSubGroupInfoFromS
 TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingSubGroupInfoFromSingleDeviceKernelThenSuccessIsReturned) {
 
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         nullptr,
         CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
         0,
@@ -199,10 +199,11 @@ TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingSubGroupInfoFromMult
 
     MockUnrestrictiveContext context;
     auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
-    auto mockKernel = std::make_unique<MockKernel>(mockProgram.get(), pKernel->getKernelInfos());
+    auto mockKernel = new MockKernel(mockProgram.get(), pKernel->getKernelInfos());
+    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(mockKernel);
 
     retVal = clGetKernelSubGroupInfoKHR(
-        mockKernel.get(),
+        pMultiDeviceKernel.get(),
         nullptr,
         CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
         0,
@@ -216,7 +217,7 @@ TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingSubGroupInfoFromMult
 
 TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidParamNameWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         0,
         sizeof(size_t),
@@ -241,7 +242,7 @@ INSTANTIATE_TEST_CASE_P(KernelSubGroupInfoKhrInputParams,
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     // work dim == 0
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         0,
@@ -254,7 +255,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 
     // work dim % sizeof(size_t) != 0
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         (sizeof(size_t) * MaxWorkDim) - 1,
@@ -267,7 +268,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 
     // work dim > MaxWorkDim
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         sizeof(size_t) * (MaxWorkDim + 1),
@@ -280,7 +281,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 
     // null input_value
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         sizeof(size_t) * (MaxWorkDim),
@@ -295,7 +296,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidParamSizeWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     //param_value_size < sizeof(size_t)
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         sizeof(size_t),
@@ -309,7 +310,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidParamSizeWhenGettingKer
 
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenNoReturnPointerWhenGettingKernelSubGroupInfoThenSuccessIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
-        pKernel,
+        pMultiDeviceKernel,
         pClDevice,
         GetParam(),
         sizeof(size_t),

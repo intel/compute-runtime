@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
         pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
 
         ASSERT_EQ(true, pKernel->isVmeKernel());
 
@@ -64,7 +65,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
 
     void TearDown() override {
         delete srcImage;
-        delete pKernel;
+        delete pMultiDeviceKernel;
         program.reset();
         delete context;
         ClDeviceFixture::TearDown();
@@ -74,6 +75,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
     MockContext *context;
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
     std::unique_ptr<KernelInfo> pKernelInfo;
     char surfaceStateHeap[0x80];
     Image *srcImage = nullptr;
@@ -104,7 +106,7 @@ HWTEST_F(MediaImageSetArgTest, WhenSettingKernelArgImageThenArgsSetCorrectly) {
     cl_mem memObj = srcImage;
 
     retVal = clSetKernelArg(
-        pKernel,
+        pMultiDeviceKernel,
         0,
         sizeof(memObj),
         &memObj);

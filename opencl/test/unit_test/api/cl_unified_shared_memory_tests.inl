@@ -652,7 +652,7 @@ TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSyst
 
     auto systemPointer = reinterpret_cast<void *>(0xfeedbac);
 
-    auto retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockKernel, 0, systemPointer);
+    auto retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockMultiDeviceKernel, 0, systemPointer);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     //check if cross thread is updated
@@ -672,7 +672,7 @@ TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithVa
 
     MockKernelWithInternals mockKernel(*mockContext->getDevice(0u), mockContext.get(), true);
 
-    retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockKernel, 0, unfiedMemoryDeviceAllocation);
+    retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockMultiDeviceKernel, 0, unfiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto svmAlloc = mockContext->getSVMAllocsManager()->getSVMAlloc(unfiedMemoryDeviceAllocation);
     EXPECT_EQ(mockKernel.mockKernel->kernelArguments[0].object,
