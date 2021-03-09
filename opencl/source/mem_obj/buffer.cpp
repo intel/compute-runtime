@@ -547,7 +547,8 @@ bool Buffer::bufferRectPitchSet(const size_t *bufferOrigin,
                                 size_t &bufferRowPitch,
                                 size_t &bufferSlicePitch,
                                 size_t &hostRowPitch,
-                                size_t &hostSlicePitch) {
+                                size_t &hostSlicePitch,
+                                bool isSrcBuffer) {
     if (bufferRowPitch == 0)
         bufferRowPitch = region[0];
     if (bufferSlicePitch == 0)
@@ -558,6 +559,10 @@ bool Buffer::bufferRectPitchSet(const size_t *bufferOrigin,
     if (hostSlicePitch == 0)
         hostSlicePitch = region[1] * hostRowPitch;
 
+    if (region[0] == 0 || region[1] == 0 || region[2] == 0) {
+        return false;
+    }
+
     if (bufferRowPitch < region[0] ||
         hostRowPitch < region[0]) {
         return false;
@@ -566,8 +571,9 @@ bool Buffer::bufferRectPitchSet(const size_t *bufferOrigin,
         (hostSlicePitch < region[1] * hostRowPitch || hostSlicePitch % hostRowPitch != 0)) {
         return false;
     }
-
-    if ((bufferOrigin[2] + region[2] - 1) * bufferSlicePitch + (bufferOrigin[1] + region[1] - 1) * bufferRowPitch + bufferOrigin[0] + region[0] > this->getSize()) {
+    auto slicePitch = isSrcBuffer ? bufferSlicePitch : hostSlicePitch;
+    auto rowPitch = isSrcBuffer ? bufferRowPitch : hostRowPitch;
+    if ((bufferOrigin[2] + region[2] - 1) * slicePitch + (bufferOrigin[1] + region[1] - 1) * rowPitch + bufferOrigin[0] + region[0] > this->getSize()) {
         return false;
     }
     return true;

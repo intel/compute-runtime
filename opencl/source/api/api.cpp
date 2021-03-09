@@ -2363,7 +2363,8 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
                                     bufferRowPitch,
                                     bufferSlicePitch,
                                     hostRowPitch,
-                                    hostSlicePitch) == false) {
+                                    hostSlicePitch,
+                                    true) == false) {
         retVal = CL_INVALID_VALUE;
         TRACING_EXIT(clEnqueueReadBufferRect, &retVal);
         return retVal;
@@ -2503,7 +2504,8 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
                                     bufferRowPitch,
                                     bufferSlicePitch,
                                     hostRowPitch,
-                                    hostSlicePitch) == false) {
+                                    hostSlicePitch,
+                                    true) == false) {
         retVal = CL_INVALID_VALUE;
         TRACING_EXIT(clEnqueueWriteBufferRect, &retVal);
         return retVal;
@@ -2680,6 +2682,25 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
         WithCastToInternal(dstBuffer, &pDstBuffer));
 
     if (CL_SUCCESS == retVal) {
+
+        if (!pSrcBuffer->bufferRectPitchSet(srcOrigin,
+                                            region,
+                                            srcRowPitch,
+                                            srcSlicePitch,
+                                            dstRowPitch,
+                                            dstSlicePitch,
+                                            true) ||
+            !pDstBuffer->bufferRectPitchSet(dstOrigin,
+                                            region,
+                                            srcRowPitch,
+                                            srcSlicePitch,
+                                            dstRowPitch,
+                                            dstSlicePitch,
+                                            false)) {
+            retVal = CL_INVALID_VALUE;
+            TRACING_EXIT(clEnqueueCopyBufferRect, &retVal);
+            return retVal;
+        }
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
             TRACING_EXIT(clEnqueueCopyBufferRect, &retVal);

@@ -144,7 +144,8 @@ class Buffer : public MemObj {
                             size_t &bufferRowPitch,
                             size_t &bufferSlicePitch,
                             size_t &hostRowPitch,
-                            size_t &hostSlicePitch);
+                            size_t &hostSlicePitch,
+                            bool isSrcBuffer);
 
     static size_t calculateHostPtrSize(const size_t *origin, const size_t *region, size_t rowPitch, size_t slicePitch);
 

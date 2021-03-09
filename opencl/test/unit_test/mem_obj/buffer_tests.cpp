@@ -77,6 +77,97 @@ TEST(Buffer, givenReadOnlySetOfInputFlagsWhenPassedToisReadOnlyMemoryPermittedBy
     EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(memoryProperties));
 }
 
+TEST(TestBufferRectCheck, givenSmallerDstBufferWhenCallBufferRectPitchSetThenCorrectValidationIsDone) {
+    auto srcBuffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, srcBuffer);
+    srcBuffer->size = 500;
+
+    size_t originBuffer[] = {0, 0, 0};
+    size_t region[] = {10, 20, 1};
+    size_t srcRowPitch = 20u;
+    size_t srcSlicePitch = 0u;
+    size_t dstRowPitch = 10u;
+    size_t dstSlicePitch = 0u;
+
+    auto retVal = srcBuffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_TRUE(retVal);
+
+    auto dstBuffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, dstBuffer);
+    dstBuffer->size = 200;
+
+    EXPECT_GT(srcBuffer->size, dstBuffer->size);
+
+    retVal = dstBuffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, false);
+    EXPECT_TRUE(retVal);
+    retVal = dstBuffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_FALSE(retVal);
+}
+
+TEST(TestBufferRectCheck, givenInvalidSrcPitchWhenCallBufferRectPitchSetThenReturnFalse) {
+    auto buffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, buffer);
+    buffer->size = 200;
+
+    size_t originBuffer[] = {0, 0, 0};
+    size_t region[] = {3, 1, 1};
+    size_t srcRowPitch = 10u;
+    size_t srcSlicePitch = 10u;
+    size_t dstRowPitch = 3u;
+    size_t dstSlicePitch = 10u;
+
+    auto retVal = buffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_FALSE(retVal);
+}
+
+TEST(TestBufferRectCheck, givenInvalidDstPitchWhenCallBufferRectPitchSetThenReturnFalse) {
+    auto buffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, buffer);
+    buffer->size = 200;
+
+    size_t originBuffer[] = {0, 0, 0};
+    size_t region[] = {3, 1, 1};
+    size_t srcRowPitch = 3u;
+    size_t srcSlicePitch = 10u;
+    size_t dstRowPitch = 10u;
+    size_t dstSlicePitch = 10u;
+
+    auto retVal = buffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_FALSE(retVal);
+}
+
+TEST(TestBufferRectCheck, givenInvalidDstAndSrcPitchWhenCallBufferRectPitchSetThenReturnFalse) {
+    auto buffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, buffer);
+    buffer->size = 200;
+
+    size_t originBuffer[] = {0, 0, 0};
+    size_t region[] = {3, 2, 1};
+    size_t srcRowPitch = 10u;
+    size_t srcSlicePitch = 10u;
+    size_t dstRowPitch = 10u;
+    size_t dstSlicePitch = 10u;
+
+    auto retVal = buffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_FALSE(retVal);
+}
+
+TEST(TestBufferRectCheck, givenCorrectDstAndSrcPitchWhenCallBufferRectPitchSetThenReturnTrue) {
+    auto buffer = std::make_unique<MockBuffer>();
+    ASSERT_NE(nullptr, buffer);
+    buffer->size = 200;
+
+    size_t originBuffer[] = {0, 0, 0};
+    size_t region[] = {3, 1, 1};
+    size_t srcRowPitch = 10u;
+    size_t srcSlicePitch = 10u;
+    size_t dstRowPitch = 10u;
+    size_t dstSlicePitch = 10u;
+
+    auto retVal = buffer->bufferRectPitchSet(originBuffer, region, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, true);
+    EXPECT_TRUE(retVal);
+}
+
 class BufferReadOnlyTest : public testing::TestWithParam<uint64_t> {
 };
 
