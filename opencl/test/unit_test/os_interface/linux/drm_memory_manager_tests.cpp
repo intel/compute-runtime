@@ -1061,19 +1061,19 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenCreatingGraphicsAllocation64k
     EXPECT_EQ(nullptr, allocation);
 }
 
-TEST_F(DrmMemoryManagerTest, givenRequiresStandard2MBHeapSetToFalseThenStandardHeapIsUsed) {
+TEST_F(DrmMemoryManagerTest, givenRequiresStandardHeapThenStandardHeapIsAcquired) {
     const uint32_t rootDeviceIndex = 0;
     size_t bufferSize = 4096u;
-    uint64_t range = memoryManager->acquireGpuRange(bufferSize, false, rootDeviceIndex, false);
+    uint64_t range = memoryManager->acquireGpuRange(bufferSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
 
     EXPECT_LT(GmmHelper::canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_STANDARD)), range);
     EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_STANDARD)), range);
 }
 
-TEST_F(DrmMemoryManagerTest, givenRequiresStandard2MBHeapSetToTrueThenStandard2MBHeapIsUsed) {
+TEST_F(DrmMemoryManagerTest, givenRequiresStandard2MBHeapThenStandard2MBHeapIsAcquired) {
     const uint32_t rootDeviceIndex = 0;
     size_t bufferSize = 4096u;
-    uint64_t range = memoryManager->acquireGpuRange(bufferSize, false, rootDeviceIndex, true);
+    uint64_t range = memoryManager->acquireGpuRange(bufferSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD2MB);
 
     EXPECT_LT(GmmHelper::canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_STANDARD2MB)), range);
     EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_STANDARD2MB)), range);
@@ -1090,8 +1090,8 @@ TEST_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateGraphicsAlloc
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(0u, allocation->getGpuAddress());
 
-    EXPECT_LT(GmmHelper::canonize(memoryManager->getGfxPartition(allocation->getRootDeviceIndex())->getHeapBase(HeapIndex::HEAP_STANDARD2MB)), allocation->getGpuAddress());
-    EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(allocation->getRootDeviceIndex())->getHeapLimit(HeapIndex::HEAP_STANDARD2MB)), allocation->getGpuAddress());
+    EXPECT_LT(GmmHelper::canonize(memoryManager->getGfxPartition(allocation->getRootDeviceIndex())->getHeapBase(HeapIndex::HEAP_STANDARD64KB)), allocation->getGpuAddress());
+    EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(allocation->getRootDeviceIndex())->getHeapLimit(HeapIndex::HEAP_STANDARD64KB)), allocation->getGpuAddress());
 
     memoryManager->freeGraphicsMemory(allocation);
 }

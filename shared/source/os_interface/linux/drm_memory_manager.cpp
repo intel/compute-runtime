@@ -77,7 +77,7 @@ void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
             bo = allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs[rootDeviceIndex]), MemoryConstants::pageSize, 0, rootDeviceIndex);
             if (bo) {
                 if (isLimitedRange(rootDeviceIndex)) {
-                    bo->gpuAddress = acquireGpuRange(bo->size, false, rootDeviceIndex, false);
+                    bo->gpuAddress = acquireGpuRange(bo->size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
                 }
             } else {
                 alignedFreeWrapper(memoryForPinBBs[rootDeviceIndex]);
@@ -161,15 +161,9 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
     return r;
 }
 
-uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, bool specificBitness, uint32_t rootDeviceIndex, bool requiresStandard2MBHeap) {
+uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex) {
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
-    if (specificBitness && this->force32bitAllocations) {
-        return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_EXTERNAL, size));
-    }
-    if (requiresStandard2MBHeap) {
-        return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD2MB, size));
-    }
-    return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size));
+    return GmmHelper::canonize(gfxPartition->heapAllocate(heapIndex, size));
 }
 
 void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t rootDeviceIndex) {
@@ -248,7 +242,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
 
     // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     if ((isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) && !allocationData.flags.isUSMHostAllocation) {
-        gpuAddress = acquireGpuRange(alignedSize, false, allocationData.rootDeviceIndex, false);
+        gpuAddress = acquireGpuRange(alignedSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
         if (!gpuAddress) {
             return nullptr;
         }
@@ -316,7 +310,7 @@ DrmAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationD
     // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     uint64_t gpuAddress = 0;
     if (isLimitedRange(allocationData.rootDeviceIndex)) {
-        gpuAddress = acquireGpuRange(cSize, false, allocationData.rootDeviceIndex, false);
+        gpuAddress = acquireGpuRange(cSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
         if (!gpuAddress) {
             return nullptr;
         }
@@ -389,7 +383,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
     auto realAllocationSize = alignedSize;
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
 
-    auto gpuVirtualAddress = acquireGpuRange(alignedSize, false, allocationData.rootDeviceIndex, false);
+    auto gpuVirtualAddress = acquireGpuRange(alignedSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
     if (!gpuVirtualAddress) {
         return nullptr;
     }
@@ -428,7 +422,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData
 GraphicsAllocation *DrmMemoryManager::allocateShareableMemory(const AllocationData &allocationData) {
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr, allocationData.size, false);
     size_t bufferSize = allocationData.size;
-    uint64_t gpuRange = acquireGpuRange(bufferSize, false, allocationData.rootDeviceIndex, true);
+    uint64_t gpuRange = acquireGpuRange(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB);
 
     drm_i915_gem_create create = {0, 0, 0};
     create.size = bufferSize;
@@ -457,7 +451,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
         return alloc;
     }
 
-    uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, false, allocationData.rootDeviceIndex, false);
+    uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
 
     drm_i915_gem_create create = {0, 0, 0};
     create.size = allocationData.imgInfo->size;
@@ -598,7 +592,11 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
             return nullptr;
         }
 
-        gpuRange = acquireGpuRange(size, requireSpecificBitness, properties.rootDeviceIndex, isLocalMemorySupported(properties.rootDeviceIndex));
+        auto heapIndex = isLocalMemorySupported(properties.rootDeviceIndex) ? HeapIndex::HEAP_STANDARD2MB : HeapIndex::HEAP_STANDARD;
+        if (requireSpecificBitness && this->force32bitAllocations) {
+            heapIndex = HeapIndex::HEAP_EXTERNAL;
+        }
+        gpuRange = acquireGpuRange(size, properties.rootDeviceIndex, heapIndex);
 
         bo->setAddress(gpuRange);
         bo->setUnmapSize(size);
@@ -645,7 +643,7 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
     uint64_t gpuRange = 0llu;
 
     auto rootDeviceIndex = inputGraphicsAllocation->getRootDeviceIndex();
-    gpuRange = acquireGpuRange(sizeWithPadding, false, rootDeviceIndex, false);
+    gpuRange = acquireGpuRange(sizeWithPadding, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
 
     auto srcPtr = inputGraphicsAllocation->getUnderlyingBuffer();
     auto srcSize = inputGraphicsAllocation->getUnderlyingBufferSize();
@@ -954,7 +952,7 @@ uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
 }
 
 AddressRange DrmMemoryManager::reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) {
-    auto gpuVa = acquireGpuRange(size, false, rootDeviceIndex, false);
+    auto gpuVa = acquireGpuRange(size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
     return AddressRange{gpuVa, size};
 }
 
