@@ -748,6 +748,17 @@ void MemoryManager::overrideAllocationData(AllocationData &allocationData, const
     }
 }
 
+bool MemoryManager::isAllocationTypeToCapture(GraphicsAllocation::AllocationType type) const {
+    switch (type) {
+    case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
+        return true;
+    default:
+        break;
+    }
+    return false;
+}
+
 bool MemoryTransferHelper::transferMemoryToAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory, size_t srcSize) {
     if (useBlitter) {
         return (BlitHelperFunctions::blitMemoryToAllocation(device, dstAllocation, dstOffset, srcMemory, {srcSize, 1, 1}) == BlitOperationResult::Success);

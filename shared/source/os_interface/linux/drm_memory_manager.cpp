@@ -995,6 +995,10 @@ void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
     if (allocation && getDrm(allocation->getRootDeviceIndex()).resourceRegistrationEnabled()) {
         auto drmAllocation = static_cast<DrmAllocation *>(allocation);
         drmAllocation->registerBOBindExtHandle(&getDrm(drmAllocation->getRootDeviceIndex()));
+
+        if (isAllocationTypeToCapture(drmAllocation->getAllocationType())) {
+            drmAllocation->markForCapture();
+        }
     }
 }
 } // namespace NEO

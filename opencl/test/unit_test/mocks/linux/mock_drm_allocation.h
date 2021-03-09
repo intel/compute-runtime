@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,13 @@ class MockDrmAllocation : public DrmAllocation {
         DrmAllocation::registerBOBindExtHandle(drm);
     }
 
+    void markForCapture() override {
+        markedForCapture = true;
+        DrmAllocation::markForCapture();
+    }
+
     bool registerBOBindExtHandleCalled = false;
+    bool markedForCapture = false;
 };
 
 } // namespace NEO

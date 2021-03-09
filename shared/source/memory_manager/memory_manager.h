@@ -223,6 +223,7 @@ class MemoryManager {
     virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
     virtual void registerAllocationInOs(GraphicsAllocation *allocation) {}
+    bool isAllocationTypeToCapture(GraphicsAllocation::AllocationType type) const;
 
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;

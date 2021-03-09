@@ -147,4 +147,13 @@ void DrmAllocation::freeRegisteredBOBindExtHandles(Drm *drm) {
         drm->unregisterResource(i);
     }
 }
+
+void DrmAllocation::markForCapture() {
+    auto &bos = getBOs();
+    for (auto bo : bos) {
+        if (bo) {
+            bo->markForCapture();
+        }
+    }
+}
 } // namespace NEO

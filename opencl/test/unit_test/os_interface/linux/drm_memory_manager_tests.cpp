@@ -4081,6 +4081,32 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeAndDisabledRegistrationInDrmWhe
     EXPECT_EQ(Drm::ResourceClass::MaxSize, mockDrm->registeredClass);
 }
 
+TEST(DrmMemoryManager, givenResourceRegistrationEnabledAndAllocTypeToCaptureWhenRegisteringAllocationInOsThenItIsMarkedForCapture) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1u);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
+    auto mockDrm = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mockDrm);
+
+    // mock resource registration enabling by storing class handles
+    mockDrm->classHandles.push_back(1);
+
+    MockBufferObject bo(mockDrm, 0, 0, 1);
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::SCRATCH_SURFACE, MemoryPool::System4KBPages);
+    allocation.bufferObjects[0] = &bo;
+    memoryManager->registerAllocationInOs(&allocation);
+
+    EXPECT_TRUE(allocation.markedForCapture);
+
+    MockDrmAllocation allocation2(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System4KBPages);
+    allocation2.bufferObjects[0] = &bo;
+    memoryManager->registerAllocationInOs(&allocation2);
+
+    EXPECT_FALSE(allocation2.markedForCapture);
+}
+
 TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenAllocatingThenAllocationIsRegistered) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1u);
@@ -4277,6 +4303,22 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenSe
             EXPECT_EQ(CacheRegion::Region1, bo->peekCacheRegion());
         }
     }
+}
+
+TEST(DrmAllocationTest, givenBoWhenMarkingForCaptureThenBosAreMarked) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::SCRATCH_SURFACE, MemoryPool::System4KBPages);
+    allocation.markForCapture();
+
+    allocation.bufferObjects[0] = &bo;
+    allocation.markForCapture();
+
+    EXPECT_TRUE(bo.isMarkedForCapture());
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCacheRegionThenSetRegionInBufferObject) {

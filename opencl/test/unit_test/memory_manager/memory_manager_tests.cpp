@@ -2568,3 +2568,10 @@ TEST(MemoryManagerTest, givenDebugModuleAreaAllocationTypeWhenCallingGetAllocati
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_EQ(1u, allocData.flags.use32BitFrontWindow);
 }
+
+TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivateTypesReturnTrue) {
+    MockMemoryManager mockMemoryManager;
+
+    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(GraphicsAllocation::AllocationType::SCRATCH_SURFACE));
+    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(GraphicsAllocation::AllocationType::PRIVATE_SURFACE));
+}

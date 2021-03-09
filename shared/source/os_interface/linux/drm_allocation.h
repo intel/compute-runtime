@@ -78,6 +78,7 @@ class DrmAllocation : public GraphicsAllocation {
     MOCKABLE_VIRTUAL void registerBOBindExtHandle(Drm *drm);
     void freeRegisteredBOBindExtHandles(Drm *drm);
     void linkWithRegisteredHandle(uint32_t handle);
+    MOCKABLE_VIRTUAL void markForCapture();
 
   protected:
     BufferObjects bufferObjects{};
