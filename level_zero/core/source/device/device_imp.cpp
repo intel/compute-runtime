@@ -264,6 +264,9 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
 
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
 
+    std::string memoryName;
+    getDeviceMemoryName(memoryName);
+    strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, memoryName.c_str());
     pMemProperties->maxClockRate = deviceInfo.maxClockFrequency;
     pMemProperties->maxBusWidth = deviceInfo.addressBits;
     pMemProperties->totalSize = deviceInfo.globalMemSize;

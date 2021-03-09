@@ -22,4 +22,10 @@ bool DeviceImp::isMultiDeviceCapable() const {
     return neoDevice->getNumAvailableDevices() > 1u;
 }
 
+void DeviceImp::processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_module_properties_t *pKernelProperties) {
+}
+
+void DeviceImp::getDeviceMemoryName(std::string &memoryName) {
+    memoryName = "DDR";
+}
 } // namespace L0

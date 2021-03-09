@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,16 @@ namespace ult {
 using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::Return;
+
+using DeviceFixtureGen12LP = Test<DeviceFixture>;
+
+HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPaWhenGettingMemoryPropertiesThenMemoryNameComesAsDDR, IsGen12LP) {
+    ze_device_memory_properties_t memProperties = {};
+    uint32_t pCount = 1u;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMemoryProperties(&pCount, &memProperties));
+    EXPECT_EQ(0, strcmp(memProperties.name, "DDR"));
+}
 
 using DeviceQueueGroupTest = Test<DeviceFixture>;
 
