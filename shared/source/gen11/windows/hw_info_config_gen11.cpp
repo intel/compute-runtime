@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,15 @@
 
 namespace NEO {
 
-#ifdef SUPPORT_BDW
-template class HwInfoConfigHw<IGFX_BROADWELL>;
+#ifdef SUPPORT_ICLLP
+template class HwInfoConfigHw<IGFX_ICELAKE_LP>;
 #endif
 
+#ifdef SUPPORT_LKF
+template class HwInfoConfigHw<IGFX_LAKEFIELD>;
+#endif
+
+#ifdef SUPPORT_EHL
+template class HwInfoConfigHw<IGFX_ELKHARTLAKE>;
+#endif
 } // namespace NEO

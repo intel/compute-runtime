@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -35,6 +35,24 @@ macro(macro_for_each_platform)
     if(EXISTS ${CORE_GENX_PREFIX}/${PLATFORM_FILE})
       list(APPEND CORE_SRCS_${GEN_TYPE}_H_BASE ${CORE_GENX_PREFIX}/${PLATFORM_FILE})
     endif()
+  endforeach()
+
+  foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
+    foreach(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.inl")
+      foreach(BRANCH ${BRANCH_DIR_LIST})
+        set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}${PLATFORM_FILE})
+        if(EXISTS ${SRC_FILE})
+          list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})
+        endif()
+
+        string(REGEX REPLACE "/$" "" _BRANCH_FILENAME_SUFFIX "${BRANCH_DIR}")
+        string(REGEX REPLACE "^/" "_" _BRANCH_FILENAME_SUFFIX "${_BRANCH_FILENAME_SUFFIX}")
+        set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${GEN_TYPE_LOWER}${BRANCH}linux/hw_info_config_${PLATFORM_IT_LOWER}${_BRANCH_FILENAME_SUFFIX}.inl)
+        if(EXISTS ${SRC_FILE})
+          list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX ${SRC_FILE})
+        endif()
+      endforeach()
+    endforeach()
   endforeach()
 
 endmacro()
@@ -79,6 +97,13 @@ macro(macro_for_each_gen)
           list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${SRC_FILE})
         endif()
       endforeach()
+
+      if(EXISTS ${CORE_GENX_PREFIX}${BRANCH_DIR}windows/hw_info_config_${GEN_TYPE_LOWER}${_BRANCH_FILENAME_SUFFIX}.cpp)
+        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_WINDOWS ${CORE_GENX_PREFIX}${BRANCH_DIR}windows/hw_info_config_${GEN_TYPE_LOWER}${_BRANCH_FILENAME_SUFFIX}.cpp)
+      endif()
+      if(EXISTS ${CORE_GENX_PREFIX}${BRANCH_DIR}linux/hw_info_config_${GEN_TYPE_LOWER}${_BRANCH_FILENAME_SUFFIX}.cpp)
+        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX ${CORE_GENX_PREFIX}${BRANCH_DIR}linux/hw_info_config_${GEN_TYPE_LOWER}${_BRANCH_FILENAME_SUFFIX}.cpp)
+      endif()
     endforeach()
     if(EXISTS ${GENERATED_GENX_PREFIX}/hw_cmds_generated_${GEN_TYPE_LOWER}.inl)
       list(APPEND CORE_SRCS_${GEN_TYPE}_H_BASE "${GENERATED_GENX_PREFIX}/hw_cmds_generated_${GEN_TYPE_LOWER}.inl")
@@ -93,6 +118,9 @@ macro(macro_for_each_gen)
   list(APPEND CORE_SRCS_GENX_ALL_LINUX ${CORE_SRCS_${GEN_TYPE}_CPP_LINUX})
 
   list(APPEND CORE_SRCS_LINK ${${GEN_TYPE}_SRC_LINK_BASE})
+  list(APPEND RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE})
+  list(APPEND RUNTIME_SRCS_GENX_ALL_LINUX ${RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX})
+  list(APPEND RUNTIME_SRCS_GENX_ALL_WINDOWS ${RUNTIME_SRCS_${GEN_TYPE}_CPP_WINDOWS})
 endmacro()
 
 apply_macro_for_each_gen("SUPPORTED")
@@ -100,3 +128,6 @@ apply_macro_for_each_gen("SUPPORTED")
 set_property(GLOBAL PROPERTY CORE_SRCS_GENX_ALL_BASE ${CORE_SRCS_GENX_ALL_BASE})
 set_property(GLOBAL PROPERTY CORE_SRCS_GENX_ALL_LINUX ${CORE_SRCS_GENX_ALL_LINUX})
 set_property(GLOBAL PROPERTY CORE_SRCS_GENX_ALL_WINDOWS ${CORE_SRCS_GENX_ALL_WINDOWS})
+set_property(GLOBAL PROPERTY RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_GENX_ALL_BASE})
+set_property(GLOBAL PROPERTY RUNTIME_SRCS_GENX_ALL_LINUX ${RUNTIME_SRCS_GENX_ALL_LINUX})
+set_property(GLOBAL PROPERTY RUNTIME_SRCS_GENX_ALL_WINDOWS ${RUNTIME_SRCS_GENX_ALL_WINDOWS})

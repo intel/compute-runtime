@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,10 @@
 namespace NEO {
 
 template <>
-int HwInfoConfigHw<IGFX_LAKEFIELD>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<IGFX_ELKHARTLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     if (nullptr == osIface) {
         return 0;
     }
-
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
 
     gtSystemInfo->SliceCount = 1;
@@ -23,5 +22,5 @@ int HwInfoConfigHw<IGFX_LAKEFIELD>::configureHardwareCustom(HardwareInfo *hwInfo
     return 0;
 }
 
-template class HwInfoConfigHw<IGFX_LAKEFIELD>;
+template class HwInfoConfigHw<IGFX_ELKHARTLAKE>;
 } // namespace NEO
