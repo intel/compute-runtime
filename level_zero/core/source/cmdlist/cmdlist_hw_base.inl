@@ -97,6 +97,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                  isPredicate,
                                                  kernel,
                                                  0,
+                                                 false,
                                                  neoDevice,
                                                  commandListPreemptionMode,
                                                  this->containsStatelessUncachedResource,

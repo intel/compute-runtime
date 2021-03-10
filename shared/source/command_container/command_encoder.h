@@ -35,6 +35,7 @@ struct EncodeDispatchKernel {
                        bool isPredicate,
                        DispatchKernelEncoderI *dispatchInterface,
                        uint64_t eventAddress,
+                       bool isTimestampEvent,
                        Device *device,
                        PreemptionMode preemptionMode,
                        bool &requiresUncachedMocs,
