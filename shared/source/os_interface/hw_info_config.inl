@@ -64,11 +64,6 @@ uint64_t HwInfoConfigHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilitiesValue() {
-    return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) {
     return true;
 }
