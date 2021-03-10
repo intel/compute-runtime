@@ -278,6 +278,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         std::string realClientPidPath = clientsDir + "/" + clientId + "/" + "pid";
         uint64_t pid;
         result = pSysfsAccess->read(realClientPidPath, pid);
+
         if (ZE_RESULT_SUCCESS != result) {
             std::string bPidString;
             result = pSysfsAccess->read(realClientPidPath, bPidString);
@@ -288,20 +289,29 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
                 pid = std::stoull(bPid, nullptr, 10);
             }
         }
+
         if (ZE_RESULT_SUCCESS != result) {
             if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+                //update the result as Success as ZE_RESULT_ERROR_NOT_AVAILABLE is expected if the "realClientPidPath" folder is empty
+                //this condition(when encountered) must not prevent the information accumulated for other clientIds
+                //this situation occurs when there is no call modifying result,
+                result = ZE_RESULT_SUCCESS;
                 continue;
             } else {
                 return result;
             }
         }
-
         // Traverse the clients/<clientId>/busy directory to get accelerator engines used by process
         std::vector<std::string> engineNums;
         std::string busyDirForEngines = clientsDir + "/" + clientId + "/" + "busy";
         result = pSysfsAccess->scanDirEntries(busyDirForEngines, engineNums);
         if (ZE_RESULT_SUCCESS != result) {
             if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+                //update the result as Success as ZE_RESULT_ERROR_NOT_AVAILABLE is expected if the "realClientPidPath" folder is empty
+                //this condition(when encountered) must not prevent the information accumulated for other clientIds
+                //this situation occurs when there is no call modifying result,
+                //Here its seen when the last element of clientIds returns ZE_RESULT_ERROR_NOT_AVAILABLE for some reason.
+                result = ZE_RESULT_SUCCESS;
                 continue;
             } else {
                 return result;
@@ -339,6 +349,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         result = pSysfsAccess->read(realClientTotalMemoryPath, memSize);
         if (ZE_RESULT_SUCCESS != result) {
             if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+                result = ZE_RESULT_SUCCESS;
                 continue;
             } else {
                 return result;
@@ -350,6 +361,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         result = pSysfsAccess->read(realClientTotalSharedMemoryPath, sharedMemSize);
         if (ZE_RESULT_SUCCESS != result) {
             if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+                result = ZE_RESULT_SUCCESS;
                 continue;
             } else {
                 return result;

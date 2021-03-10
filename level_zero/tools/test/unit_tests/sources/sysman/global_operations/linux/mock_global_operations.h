@@ -271,6 +271,12 @@ struct Mock<GlobalOperationsProcfsAccess> : public GlobalOperationsProcfsAccess 
         return ZE_RESULT_SUCCESS;
     }
 
+    ze_result_t getMockFileDescriptorsFailure(const ::pid_t pid, std::vector<int> &list) {
+        //return failure to verify the error condition check
+        list.clear();
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     ze_result_t getMockFileName(const ::pid_t pid, const int fd, std::string &val) {
         if (pid == ourDevicePid && fd == ourDeviceFd) {
             val = mockDeviceName;
