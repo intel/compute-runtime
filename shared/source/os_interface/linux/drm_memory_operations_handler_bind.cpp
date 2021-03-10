@@ -94,7 +94,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device
 void DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
     this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer), true);
 
-    auto clearContainer = true;
+    auto clearContainer = false;
 
     if (DebugManager.flags.PassBoundBOToExec.get() != -1) {
         clearContainer = !DebugManager.flags.PassBoundBOToExec.get();
