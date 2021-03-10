@@ -674,14 +674,14 @@ zesDeviceEnumDiagnosticTestSuites(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_diag_handle_t *phDiagnostics) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->diagnosticsGet(pCount, phDiagnostics);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDiagnosticsGetProperties(
     zes_diag_handle_t hDiagnostics,
     zes_diag_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetProperties(pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

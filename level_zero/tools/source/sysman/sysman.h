@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/tools/source/sysman/diagnostics/diagnostics.h"
 #include "level_zero/tools/source/sysman/engine/engine.h"
 #include "level_zero/tools/source/sysman/events/events.h"
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
@@ -50,6 +51,7 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) = 0;
     virtual ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) = 0;
     virtual ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) = 0;
+    virtual ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) = 0;
     virtual ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) = 0;
     virtual ze_result_t deviceEventRegister(zes_event_type_flags_t events) = 0;
     virtual bool deviceEventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) = 0;

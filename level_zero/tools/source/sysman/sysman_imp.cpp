@@ -36,11 +36,13 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pEvents = new EventsImp(pOsSysman);
     pFanHandleContext = new FanHandleContext(pOsSysman);
     pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
+    pDiagnosticsHandleContext = new DiagnosticsHandleContext(pOsSysman);
     pPerformanceHandleContext = new PerformanceHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pPerformanceHandleContext);
+    freeResource(pDiagnosticsHandleContext);
     freeResource(pFirmwareHandleContext);
     freeResource(pFanHandleContext);
     freeResource(pEvents);
@@ -111,6 +113,9 @@ void SysmanDeviceImp::init() {
     }
     if (pFirmwareHandleContext) {
         pFirmwareHandleContext->init();
+    }
+    if (pDiagnosticsHandleContext) {
+        pDiagnosticsHandleContext->init();
     }
     if (pPerformanceHandleContext) {
         pPerformanceHandleContext->init(deviceHandles);
@@ -191,6 +196,10 @@ ze_result_t SysmanDeviceImp::rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) {
 
 ze_result_t SysmanDeviceImp::firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) {
     return pFirmwareHandleContext->firmwareGet(pCount, phFirmware);
+}
+
+ze_result_t SysmanDeviceImp::diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) {
+    return pDiagnosticsHandleContext->diagnosticsGet(pCount, phDiagnostics);
 }
 
 ze_result_t SysmanDeviceImp::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) {
