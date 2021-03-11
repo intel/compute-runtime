@@ -284,12 +284,12 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
         reinterpret_cast<uint8_t *>(allocation->getUnderlyingBuffer()) + debugPauseStateAddressOffset);
 }
 
-MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation(ExecutionEnvironment &executionEnvironment, MemoryManager &memoryManager, uint32_t currentRootDeviceIndex) {
+MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation() {
     std::vector<uint32_t> rootDeviceIndices;
 
-    for (auto index = 0u; index < executionEnvironment.rootDeviceEnvironments.size(); index++) {
-        if (executionEnvironment.rootDeviceEnvironments[index].get()->getHardwareInfo()->platform.eProductFamily ==
-            executionEnvironment.rootDeviceEnvironments[currentRootDeviceIndex].get()->getHardwareInfo()->platform.eProductFamily) {
+    for (auto index = 0u; index < this->executionEnvironment.rootDeviceEnvironments.size(); index++) {
+        if (this->executionEnvironment.rootDeviceEnvironments[index].get()->getHardwareInfo()->platform.eProductFamily ==
+            this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get()->getHardwareInfo()->platform.eProductFamily) {
             rootDeviceIndices.push_back(index);
         }
     }
@@ -299,7 +299,7 @@ MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation(Execut
 
     AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::TAG_BUFFER, systemMemoryBitfield};
 
-    memoryManager.createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *allocations);
+    this->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *allocations);
     return *allocations;
 }
 
@@ -496,7 +496,7 @@ void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {
 }
 
 bool CommandStreamReceiver::initializeTagAllocation() {
-    this->tagsMultiAllocation = &this->createTagsMultiAllocation(this->executionEnvironment, *this->getMemoryManager(), rootDeviceIndex);
+    this->tagsMultiAllocation = &this->createTagsMultiAllocation();
 
     auto tagAllocation = tagsMultiAllocation->getGraphicsAllocation(rootDeviceIndex);
     if (!tagAllocation) {

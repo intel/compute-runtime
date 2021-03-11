@@ -116,7 +116,7 @@ class CommandStreamReceiver {
     MultiGraphicsAllocation *getTagsMultiAllocation() const {
         return tagsMultiAllocation;
     }
-    MultiGraphicsAllocation &createTagsMultiAllocation(ExecutionEnvironment &executionEnvironment, MemoryManager &memoryManager, uint32_t currentRootDeviceIndex);
+    MultiGraphicsAllocation &createTagsMultiAllocation();
     MOCKABLE_VIRTUAL volatile uint32_t *getTagAddress() const { return tagAddress; }
     uint64_t getDebugPauseStateGPUAddress() const { return tagAllocation->getGpuAddress() + debugPauseStateAddressOffset; }
 
