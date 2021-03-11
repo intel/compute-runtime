@@ -580,9 +580,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     auto boHandle = openFd.handle;
     auto bo = findAndReferenceSharedBufferObject(boHandle);
 
-    uint64_t gpuRange = 0llu;
-    size_t reservedRange = 0u;
-
     if (bo == nullptr) {
         size_t size = lseekFunction(handle, 0, SEEK_END);
 
@@ -596,11 +593,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         if (requireSpecificBitness && this->force32bitAllocations) {
             heapIndex = HeapIndex::HEAP_EXTERNAL;
         }
-        gpuRange = acquireGpuRange(size, properties.rootDeviceIndex, heapIndex);
+        auto gpuRange = acquireGpuRange(size, properties.rootDeviceIndex, heapIndex);
 
         bo->setAddress(gpuRange);
         bo->setUnmapSize(size);
-        reservedRange = size;
 
         pushSharedBufferObject(bo);
     }
@@ -609,9 +605,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->gpuAddress), bo->size,
                                            handle, MemoryPool::SystemCpuInaccessible);
-    if (reservedRange) {
-        drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), reservedRange);
-    }
 
     if (requireSpecificBitness && this->force32bitAllocations) {
         drmAllocation->set32BitAllocation(true);

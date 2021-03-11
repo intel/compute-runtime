@@ -2007,7 +2007,6 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
 
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
     EXPECT_EQ(size, graphicsAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(size, 2 * MemoryConstants::megaByte), graphicsAllocation->getReservedAddressSize());
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, graphicsAllocation->getMemoryPool());
     EXPECT_EQ(this->mock->inputFd, static_cast<int32_t>(handle));
 
@@ -2020,6 +2019,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
     EXPECT_EQ(this->mock->outputHandle, static_cast<uint32_t>(bo->peekHandle()));
     EXPECT_EQ(gpuAddress, bo->peekAddress());
     EXPECT_EQ(size, bo->peekSize());
+    EXPECT_EQ(alignUp(size, 2 * MemoryConstants::megaByte), bo->peekUnmapSize());
 
     EXPECT_EQ(handle, graphicsAllocation->peekSharedHandle());
 
