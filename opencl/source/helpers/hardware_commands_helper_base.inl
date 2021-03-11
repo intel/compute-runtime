@@ -188,6 +188,10 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     auto programmableIDSLMSize =
         static_cast<SHARED_LOCAL_MEMORY_SIZE>(HwHelperHw<GfxFamily>::get().computeSlmValues(hardwareInfo, slmTotalSize));
 
+    if (DebugManager.flags.OverrideSlmAllocationSize.get() != -1) {
+        programmableIDSLMSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(DebugManager.flags.OverrideSlmAllocationSize.get());
+    }
+
     interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
     EncodeDispatchKernel<GfxFamily>::programBarrierEnable(interfaceDescriptor,
                                                           kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.barrierCount,

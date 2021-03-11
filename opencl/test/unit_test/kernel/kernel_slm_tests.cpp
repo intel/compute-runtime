@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
@@ -144,3 +146,42 @@ INSTANTIATE_TEST_CASE_P(
     SlmSizes,
     KernelSLMAndBarrierTest,
     testing::ValuesIn(slmSizeInKb));
+
+HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverrideSlmAllocationSizeIsSetThenSlmSizeIsOverwritten) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
+    uint32_t expectedSlmSize = 5;
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.OverrideSlmAllocationSize.set(expectedSlmSize);
+
+    kernelInfo.workloadInfo.slmStaticSize = 0;
+
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
+
+    uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
+    INTERFACE_DESCRIPTOR_DATA interfaceDescriptorData;
+
+    HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
+        indirectHeap,
+        interfaceDescriptorOffset,
+        0,
+        sizeof(crossThreadData),
+        sizeof(perThreadData),
+        0,
+        0,
+        0,
+        1,
+        kernel,
+        4u,
+        pDevice->getPreemptionMode(),
+        &interfaceDescriptorData,
+        *pDevice);
+
+    auto pInterfaceDescriptor = HardwareCommandsHelper<FamilyType>::getInterfaceDescriptor(indirectHeap, interfaceDescriptorOffset, &interfaceDescriptorData);
+
+    EXPECT_EQ(expectedSlmSize, pInterfaceDescriptor->getSharedLocalMemorySize());
+}
