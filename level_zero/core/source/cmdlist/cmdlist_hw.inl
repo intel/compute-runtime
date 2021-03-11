@@ -29,6 +29,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/module/module.h"
@@ -1369,9 +1370,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
                                                                                                             size,
                                                                                                             neoDevice->getRootDeviceIndex(),
                                                                                                             nullptr);
-        if (gpuAllocation == nullptr) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+        auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+        if (driverHandle->isRemoteResourceNeeded(ptr, gpuAllocation, allocData, device)) {
+            if (allocData) {
+                gpuAllocation = driverHandle->getPeerAllocation(device, allocData, ptr, nullptr);
+            }
+            if (gpuAllocation == nullptr) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
         }
+
         commandContainer.addToResidencyContainer(gpuAllocation);
         uint32_t patternToCommand[4] = {};
         memcpy_s(&patternToCommand, sizeof(patternToCommand), pattern, patternSize);
@@ -1436,7 +1445,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(Device *device,
                                                                                         const void *buffer,
                                                                                         uint64_t bufferSize) {
-
     NEO::SvmAllocationData *allocData = nullptr;
     void *ptr = const_cast<void *>(buffer);
     bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr,
@@ -1459,7 +1467,14 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         hostPointerNeedsFlush = true;
     } else {
         alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        alignedPtr = sourcePtr;
+        DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(deviceImp->getDriverHandle());
+        if (driverHandle->isRemoteResourceNeeded(const_cast<void *>(buffer), alloc, allocData, device)) {
+            alloc = driverHandle->getPeerAllocation(device, allocData, const_cast<void *>(buffer), &alignedPtr);
+            UNRECOVERABLE_IF(alloc == nullptr);
+        } else {
+            alignedPtr = sourcePtr;
+        }
 
         if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
             allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {

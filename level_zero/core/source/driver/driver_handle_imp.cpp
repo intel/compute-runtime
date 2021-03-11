@@ -435,4 +435,45 @@ NEO::GraphicsAllocation *DriverHandleImp::getDriverSystemMemoryAllocation(void *
     return allocation;
 }
 
+bool DriverHandleImp::isRemoteResourceNeeded(void *ptr, NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, Device *device) {
+    return (alloc == nullptr || (allocData && ((allocData->gpuAllocations.getGraphicsAllocations().size() - 1) < device->getRootDeviceIndex())));
+}
+
+NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
+                                                            NEO::SvmAllocationData *allocData,
+                                                            void *ptr,
+                                                            uintptr_t *peerGpuAddress) {
+    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() != 1) {
+        return nullptr;
+    }
+
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+
+    NEO::SvmAllocationData *peerAllocData = nullptr;
+    void *peerPtr = nullptr;
+    NEO::GraphicsAllocation *alloc = nullptr;
+
+    std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocationsMutex);
+
+    auto iter = deviceImp->peerAllocations.allocations.find(ptr);
+    if (iter != deviceImp->peerAllocations.allocations.end()) {
+        peerAllocData = &iter->second;
+        alloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
+        peerPtr = reinterpret_cast<void *>(alloc->getGpuAddress());
+    } else {
+        alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+        uint64_t handle = alloc->peekInternalHandle(this->getMemoryManager());
+        ze_ipc_memory_flags_t flags = {};
+        peerPtr = this->importFdHandle(device, flags, handle, &alloc);
+        peerAllocData = this->getSvmAllocsManager()->getSVMAlloc(peerPtr);
+        deviceImp->peerAllocations.allocations.insert(std::make_pair(ptr, *peerAllocData));
+    }
+
+    if (peerGpuAddress) {
+        *peerGpuAddress = reinterpret_cast<uintptr_t>(peerPtr);
+    }
+
+    return alloc;
+}
+
 } // namespace L0

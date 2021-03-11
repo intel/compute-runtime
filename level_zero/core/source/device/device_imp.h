@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/utilities/spinlock.h"
+
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
@@ -14,6 +16,8 @@
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/metrics/metric.h"
+
+#include <mutex>
 
 namespace L0 {
 struct SysmanDevice;
@@ -101,6 +105,9 @@ struct DeviceImp : public Device {
 
     bool resourcesReleased = false;
     void releaseResources();
+
+    NEO::SVMAllocsManager::MapBasedAllocationTracker peerAllocations;
+    NEO::SpinLock peerAllocationsMutex;
 
   protected:
     NEO::GraphicsAllocation *debugSurface = nullptr;

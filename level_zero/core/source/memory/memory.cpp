@@ -6,9 +6,11 @@
  */
 
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 namespace L0 {
@@ -27,7 +29,7 @@ ze_result_t DriverHandleImp::getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
-void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle) {
+void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAlloc) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
@@ -55,6 +57,10 @@ void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_
 
     this->getSvmAllocsManager()->insertSVMAlloc(allocData);
 
+    if (pAlloc) {
+        *pAlloc = alloc;
+    }
+
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
@@ -66,7 +72,7 @@ ze_result_t DriverHandleImp::openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc
              reinterpret_cast<void *>(pIpcHandle.data),
              sizeof(handle));
 
-    *ptr = this->importFdHandle(hDevice, flags, handle);
+    *ptr = this->importFdHandle(hDevice, flags, handle, nullptr);
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -120,6 +126,21 @@ ze_result_t DriverHandleImp::freeMem(const void *ptr) {
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+
+    for (auto device : this->devices) {
+        DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+
+        std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocationsMutex);
+
+        auto iter = deviceImp->peerAllocations.allocations.find(ptr);
+        if (iter != deviceImp->peerAllocations.allocations.end()) {
+            auto peerAllocData = &iter->second;
+            auto peerAlloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
+            auto peerPtr = reinterpret_cast<void *>(peerAlloc->getGpuAddress());
+            svmAllocsManager->freeSVMAlloc(peerPtr);
+        }
+    }
+
     svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr));
     if (svmAllocsManager->getSvmMapOperation(ptr)) {
         svmAllocsManager->removeSvmMapOperation(ptr);

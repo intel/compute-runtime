@@ -39,7 +39,7 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t freeMem(const void *ptr) override;
     NEO::MemoryManager *getMemoryManager() override;
     void setMemoryManager(NEO::MemoryManager *memoryManager) override;
-    MOCKABLE_VIRTUAL void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle);
+    MOCKABLE_VIRTUAL void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAlloc);
     ze_result_t closeIpcMemHandle(const void *ptr) override;
     ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override;
     ze_result_t openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc_mem_handle_t handle,
@@ -70,8 +70,17 @@ struct DriverHandleImp : public DriverHandle {
                                                                      size_t size,
                                                                      uint32_t rootDeviceIndex,
                                                                      uintptr_t *gpuAddress) override;
+    NEO::GraphicsAllocation *getPeerAllocation(Device *device,
+                                               NEO::SvmAllocationData *allocData,
+                                               void *ptr,
+                                               uintptr_t *peerGpuAddress);
     void createHostPointerManager();
     void sortNeoDevices(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
+
+    bool isRemoteResourceNeeded(void *ptr,
+                                NEO::GraphicsAllocation *alloc,
+                                NEO::SvmAllocationData *allocData,
+                                Device *device);
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
     // Experimental functions

@@ -16,6 +16,7 @@
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/arrayref.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
@@ -24,6 +25,8 @@
 
 #include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/module/module.h"
@@ -559,9 +562,16 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
                                                                                                              1u,
                                                                                                              module->getDevice()->getRootDeviceIndex(),
                                                                                                              &gpuAddress);
-    if (nullptr == alloc) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    DeviceImp *device = static_cast<DeviceImp *>(this->module->getDevice());
+    DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(requestedAddress);
+    if (driverHandle->isRemoteResourceNeeded(requestedAddress, alloc, allocData, device)) {
+        alloc = driverHandle->getPeerAllocation(device, allocData, requestedAddress, &gpuAddress);
+        if (alloc == nullptr) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
     }
+
     return setArgBufferWithAlloc(argIndex, gpuAddress, alloc);
 }
 

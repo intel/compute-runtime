@@ -71,7 +71,6 @@ class SVMAllocsManager {
         SvmAllocationData *get(const void *);
         size_t getNumAllocs() const { return allocations.size(); };
 
-      protected:
         SvmAllocationContainer allocations;
     };
 

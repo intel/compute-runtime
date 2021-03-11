@@ -86,6 +86,9 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBlt
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     MockCommandListForMemFill<gfxCoreFamily> commandList;
     MockDriverHandle driverHandleMock;
+    NEO::DeviceVector neoDevices;
+    neoDevices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandleMock.initialize(std::move(neoDevices));
     device->setDriverHandle(&driverHandleMock);
     commandList.initialize(device, NEO::EngineGroupType::Copy);
     uint16_t pattern = 1;

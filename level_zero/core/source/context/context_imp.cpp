@@ -121,7 +121,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
             ze_ipc_memory_flags_t flags = {};
-            *ptr = this->driverHandle->importFdHandle(hDevice, flags, externalMemoryImportDesc->fd);
+            *ptr = this->driverHandle->importFdHandle(hDevice, flags, externalMemoryImportDesc->fd, nullptr);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
