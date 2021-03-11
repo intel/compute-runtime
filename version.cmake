@@ -66,6 +66,18 @@ else()
   set(NEO_OCL_DRIVER_VERSION "${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}")
 endif()
 
+find_program(GIT NAMES git)
+if(NOT "${GIT}" STREQUAL "GIT-NOTFOUND")
+  if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
+    set(GIT_arg --git-dir=${NEO_SOURCE_DIR}/.git rev-parse HEAD)
+    execute_process(
+                    COMMAND ${GIT} ${GIT_arg}
+                    OUTPUT_VARIABLE NEO_REVISION
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  endif()
+endif()
+
 # Level-Zero package version
 set(NEO_L0_VERSION_MAJOR 1)
 set(NEO_L0_VERSION_MINOR 1)

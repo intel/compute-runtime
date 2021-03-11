@@ -246,6 +246,18 @@ TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuc
     deleteOutFileList();
     delete pMultiCommand;
 }
+
+TEST_F(OfflineCompilerTests, GivenArgsWhenQueryIsCalledThenSuccessIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "query",
+        "NEO_REVISION"};
+
+    int retVal = OfflineCompiler::query(argv.size(), argv, oclocArgHelperWithoutInput.get());
+
+    EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
+}
+
 TEST_F(OfflineCompilerTests, GivenArgsWhenOfflineCompilerIsCreatedThenSuccessIsReturned) {
     std::vector<std::string> argv = {
         "ocloc",

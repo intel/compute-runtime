@@ -59,6 +59,8 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/offline_compiler.h
     ${OCLOC_DIRECTORY}/source/offline_compiler_helper.cpp
     ${OCLOC_DIRECTORY}/source/offline_compiler_options.cpp
+    ${OCLOC_DIRECTORY}/source/utilities/get_git_version_info.h
+    ${OCLOC_DIRECTORY}/source/utilities/get_git_version_info.cpp
     ${NEO_SOURCE_DIR}/shared/source/device_binary_format/device_binary_format_zebin.cpp
     ${NEO_SOURCE_DIR}/shared/source/device_binary_format/zebin_decoder.cpp
     ${NEO_SOURCE_DIR}/shared/source/device_binary_format/yaml/yaml_parser.cpp

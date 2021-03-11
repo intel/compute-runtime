@@ -106,6 +106,8 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             return buildFatBinary(allArgs, helper.get());
         } else if (numArgs > 1 && ConstStringRef("validate") == allArgs[1]) {
             return NEO::Ocloc::validate(allArgs, helper.get());
+        } else if (numArgs > 1 && ConstStringRef("query") == allArgs[1]) {
+            return OfflineCompiler::query(numArgs, allArgs, helper.get());
         } else {
             int retVal = OfflineCompiler::ErrorCode::SUCCESS;
 

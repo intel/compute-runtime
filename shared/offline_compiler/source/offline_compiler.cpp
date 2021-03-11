@@ -7,6 +7,7 @@
 
 #include "offline_compiler.h"
 
+#include "shared/offline_compiler/source/utilities/get_git_version_info.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -102,6 +103,22 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
     }
 
     return pOffCompiler;
+}
+
+int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper) {
+    int retVal = OUT_OF_HOST_MEMORY;
+    std::unique_ptr<OfflineCompiler> pOffCompiler{new OfflineCompiler()};
+
+    pOffCompiler->queryInvoke = true;
+    pOffCompiler->argHelper = helper;
+    retVal = pOffCompiler->initialize(numArgs, allArgs, true);
+
+    if (retVal != SUCCESS)
+        return retVal;
+
+    retVal = pOffCompiler->performQuery();
+
+    return retVal;
 }
 
 struct OfflineCompiler::buildInfo {
@@ -360,7 +377,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     size_t sourceFromFileSize = 0;
     this->pBuildInfo = std::make_unique<buildInfo>();
     retVal = parseCommandLine(numArgs, allArgs);
-    if (retVal != SUCCESS) {
+    if (retVal != SUCCESS || queryInvoke) {
         return retVal;
     }
 
@@ -585,6 +602,20 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     return retVal;
 }
 
+int OfflineCompiler::performQuery() {
+    int retVal = SUCCESS;
+
+    if (queryOption == QUERY_NEO_REVISION) {
+        auto revision = NEO::getRevision();
+        argHelper->saveOutput("NEO_REVISION", revision.c_str(), revision.size() + 1);
+    } else {
+        auto driverVersion = NEO::getOclDriverVersion();
+        argHelper->saveOutput("OCL_DRIVER_VERSION", driverVersion.c_str(), driverVersion.size() + 1);
+    }
+
+    return retVal;
+}
+
 int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::string> &argv) {
     int retVal = SUCCESS;
     bool compile32 = false;
@@ -598,7 +629,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     for (uint32_t argIndex = 1; argIndex < numArgs; argIndex++) {
         const auto &currArg = argv[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < numArgs);
-        if ("compile" == currArg) {
+        if ("compile" == currArg || "query" == currArg) {
             //skip it
         } else if (("-file" == currArg) && hasMoreArgs) {
             inputFile = argv[argIndex + 1];
@@ -653,6 +684,10 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (("-revision_id" == currArg) && hasMoreArgs) {
             revisionId = std::stoi(argv[argIndex + 1]);
             argIndex++;
+        } else if ("NEO_REVISION" == currArg && queryInvoke && !hasMoreArgs) {
+            queryOption = QUERY_NEO_REVISION;
+        } else if ("OCL_DRIVER_VERSION" == currArg && queryInvoke && !hasMoreArgs) {
+            queryOption = QUERY_OCL_DRIVER_VERSION;
         } else {
             argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
             retVal = INVALID_COMMAND_LINE;
@@ -661,18 +696,25 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     }
 
     if (retVal == SUCCESS) {
-        if (compile32 && compile64) {
-            argHelper->printf("Error: Cannot compile for 32-bit and 64-bit, please choose one.\n");
-            retVal = INVALID_COMMAND_LINE;
-        } else if (inputFile.empty()) {
-            argHelper->printf("Error: Input file name missing.\n");
-            retVal = INVALID_COMMAND_LINE;
-        } else if (deviceName.empty() && (false == onlySpirV)) {
-            argHelper->printf("Error: Device name missing.\n");
-            retVal = INVALID_COMMAND_LINE;
-        } else if (!argHelper->fileExists(inputFile)) {
-            argHelper->printf("Error: Input file %s missing.\n", inputFile.c_str());
-            retVal = INVALID_FILE;
+        if (queryInvoke) {
+            if (queryOption == QUERY_LAST) {
+                argHelper->printf("Error: no options for query provided.\n");
+                retVal = INVALID_COMMAND_LINE;
+            }
+        } else {
+            if (compile32 && compile64) {
+                argHelper->printf("Error: Cannot compile for 32-bit and 64-bit, please choose one.\n");
+                retVal = INVALID_COMMAND_LINE;
+            } else if (inputFile.empty()) {
+                argHelper->printf("Error: Input file name missing.\n");
+                retVal = INVALID_COMMAND_LINE;
+            } else if (deviceName.empty() && (false == onlySpirV)) {
+                argHelper->printf("Error: Device name missing.\n");
+                retVal = INVALID_COMMAND_LINE;
+            } else if (!argHelper->fileExists(inputFile)) {
+                argHelper->printf("Error: Input file %s missing.\n", inputFile.c_str());
+                retVal = INVALID_FILE;
+            }
         }
     }
 
