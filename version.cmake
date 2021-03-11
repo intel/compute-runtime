@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,7 +7,8 @@
 if(UNIX)
   if(NOT DEFINED NEO_OCL_DRIVER_VERSION)
     find_program(GIT NAMES git)
-    if(NOT "${GIT}" STREQUAL "GIT-NOTFOUND")
+    find_program(PYTHON_EXECUTABLE NAMES "python3")
+    if((NOT "${GIT}" STREQUAL "GIT-NOTFOUND") AND (NOT "${PYTHON_EXECUTABLE}" STREQUAL "PYTHON_EXECUTABLE-NOTFOUND"))
       if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
         set(GIT_arg --git-dir=${NEO_SOURCE_DIR}/.git show -s --format=%ct)
         execute_process(
@@ -15,33 +16,32 @@ if(UNIX)
                         OUTPUT_VARIABLE GIT_output
                         OUTPUT_STRIP_TRAILING_WHITESPACE
         )
+        set(PYTHON_arg ${CMAKE_CURRENT_SOURCE_DIR}/scripts/neo_ww_calculator.py ${GIT_output})
+        execute_process(
+                        COMMAND ${PYTHON_EXECUTABLE} ${PYTHON_arg}
+                        OUTPUT_VARIABLE VERSION_output
+                        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        string(REPLACE "." ";" VERSION_list ${VERSION_output})
       endif()
+    else()
+      message(WARNING "Unable to determine OpenCL major.minor version. Defaulting to 1.0")
     endif()
 
     if(NOT DEFINED NEO_OCL_VERSION_MAJOR)
-      if(NOT DEFINED GIT_output)
+      if(NOT DEFINED VERSION_list)
         set(NEO_OCL_VERSION_MAJOR 1)
       else()
-        SET(DATE_arg --date=@${GIT_output} +%y)
-        execute_process(
-                        COMMAND date ${DATE_arg}
-                        OUTPUT_VARIABLE NEO_OCL_VERSION_MAJOR
-                        OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
+        list(GET VERSION_list 0 NEO_OCL_VERSION_MAJOR)
         message(STATUS "Computed OpenCL version major is: ${NEO_OCL_VERSION_MAJOR}")
       endif()
     endif()
 
     if(NOT DEFINED NEO_OCL_VERSION_MINOR)
-      if(NOT DEFINED GIT_output)
+      if(NOT DEFINED VERSION_list)
         set(NEO_OCL_VERSION_MINOR 0)
       else()
-        SET(DATE_arg --date=@${GIT_output} +%V)
-        execute_process(
-                        COMMAND date ${DATE_arg}
-                        OUTPUT_VARIABLE NEO_OCL_VERSION_MINOR
-                        OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
+        list(GET VERSION_list 1 NEO_OCL_VERSION_MINOR)
         message(STATUS "Computed OpenCL version minor is: ${NEO_OCL_VERSION_MINOR}")
       endif()
     endif()
