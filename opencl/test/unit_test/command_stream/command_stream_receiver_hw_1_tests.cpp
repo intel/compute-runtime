@@ -804,8 +804,8 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
 
     MockTimestampPacketContainer timestamp0(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
     MockTimestampPacketContainer timestamp1(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
-    csrDependencies.push_back(&timestamp0);
-    csrDependencies.push_back(&timestamp1);
+    csrDependencies.timestampPacketContainer.push_back(&timestamp0);
+    csrDependencies.timestampPacketContainer.push_back(&timestamp1);
 
     size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
 

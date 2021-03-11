@@ -449,14 +449,14 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimat
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    eventsRequest.fillCsrDependencies(
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(
         csrDeps, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQHw, csrDeps, false, false, false, multiDispatchInfo, nullptr, 0);
     auto sizeWithEnabled = mockCmdQHw->requestedCmdStreamSize;
 
     size_t sizeForNodeDependency = 0;
-    for (auto timestampPacketContainer : csrDeps) {
+    for (auto timestampPacketContainer : csrDeps.timestampPacketContainer) {
         for (auto &node : timestampPacketContainer->peekNodes()) {
             sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(*node);
         }
@@ -499,13 +499,13 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    eventsRequest.fillCsrDependencies(csrDeps, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQHw, csrDeps, false, false, false, multiDispatchInfo, nullptr, 0);
     auto sizeWithEnabled = mockCmdQHw->requestedCmdStreamSize;
 
     size_t sizeForNodeDependency = 0;
-    for (auto timestampPacketContainer : csrDeps) {
+    for (auto timestampPacketContainer : csrDeps.timestampPacketContainer) {
         for (auto &node : timestampPacketContainer->peekNodes()) {
             sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(*node);
         }
@@ -531,8 +531,8 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhen
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDepsEmpty;
-    eventsRequest.fillCsrDependencies(csrDepsEmpty, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
-    EXPECT_EQ(0u, csrDepsEmpty.size());
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDepsEmpty, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    EXPECT_EQ(0u, csrDepsEmpty.timestampPacketContainer.size());
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     MockTimestampPacketContainer timestamp1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
@@ -559,12 +559,12 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhen
     cl_event waitlist2[] = {&event1, &eventWithEmptyTimestampContainer2, &event3, &eventWithEmptyTimestampContainer4, &event5};
     EventsRequest eventsRequest2(numEventsOnWaitlist, waitlist2, nullptr);
     CsrDependencies csrDepsSize3;
-    eventsRequest2.fillCsrDependencies(csrDepsSize3, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    eventsRequest2.fillCsrDependenciesForTimestampPacketContainer(csrDepsSize3, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
-    EXPECT_EQ(3u, csrDepsSize3.size());
+    EXPECT_EQ(3u, csrDepsSize3.timestampPacketContainer.size());
 
     size_t sizeForNodeDependency = 0;
-    for (auto timestampPacketContainer : csrDepsSize3) {
+    for (auto timestampPacketContainer : csrDepsSize3.timestampPacketContainer) {
         for (auto &node : timestampPacketContainer->peekNodes()) {
             sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(*node);
         }
@@ -794,11 +794,11 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrT
 
     auto sizeWithoutEvents = csr.getRequiredCmdStreamSize(flags, device->getDevice());
 
-    eventsRequest.fillCsrDependencies(flags.csrDependencies, csr, NEO::CsrDependencies::DependenciesType::OutOfCsr);
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(flags.csrDependencies, csr, NEO::CsrDependencies::DependenciesType::OutOfCsr);
     auto sizeWithEvents = csr.getRequiredCmdStreamSize(flags, device->getDevice());
 
     size_t sizeForNodeDependency = 0;
-    for (auto timestampPacketContainer : flags.csrDependencies) {
+    for (auto timestampPacketContainer : flags.csrDependencies.timestampPacketContainer) {
         for (auto &node : timestampPacketContainer->peekNodes()) {
             sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(*node);
         }
@@ -842,11 +842,11 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForDiff
 
     auto sizeWithoutEvents = csr.getRequiredCmdStreamSize(flags, device->getDevice());
 
-    eventsRequest.fillCsrDependencies(flags.csrDependencies, csr, NEO::CsrDependencies::DependenciesType::OutOfCsr);
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(flags.csrDependencies, csr, NEO::CsrDependencies::DependenciesType::OutOfCsr);
     auto sizeWithEvents = csr.getRequiredCmdStreamSize(flags, device->getDevice());
 
     size_t sizeForNodeDependency = 0;
-    for (auto timestampPacketContainer : flags.csrDependencies) {
+    for (auto timestampPacketContainer : flags.csrDependencies.timestampPacketContainer) {
         for (auto &node : timestampPacketContainer->peekNodes()) {
             sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(*node);
         }
@@ -991,8 +991,8 @@ HWTEST_F(TimestampPacketTests, givenAllDependencyTypesModeWhenFillingFromDiffere
     EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
 
     CsrDependencies csrDependencies;
-    eventsRequest.fillCsrDependencies(csrDependencies, csr1, CsrDependencies::DependenciesType::All);
-    EXPECT_EQ(static_cast<size_t>(eventsOnWaitlist), csrDependencies.size());
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDependencies, csr1, CsrDependencies::DependenciesType::All);
+    EXPECT_EQ(static_cast<size_t>(eventsOnWaitlist), csrDependencies.timestampPacketContainer.size());
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFromOneDeviceWhenEnqueueingThenProgramSemaphoresOnCsrStream) {
@@ -1177,7 +1177,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 
     EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    eventsRequest.fillCsrDependencies(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
@@ -1260,7 +1260,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
 
     EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    eventsRequest.fillCsrDependencies(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
@@ -1769,12 +1769,12 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingMarkerWi
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node2.getNode(0), 0);
 
     auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
-    auto expectedQueueSemaphoresCount = 1u;
+    auto expectedQueueSemaphoresCount = 2u;
     if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo())) {
         expectedQueueSemaphoresCount += 2;
     }
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node1.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), node1.getNode(0), 0);
 }
 
 HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingBarrierWithoutKernelThenInheritTimestampPacketsAndProgramSemaphores) {
@@ -1812,12 +1812,12 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingBarrierW
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node2.getNode(0), 0);
 
     auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
-    auto expectedQueueSemaphoresCount = 1u;
+    auto expectedQueueSemaphoresCount = 2u;
     if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo())) {
         expectedQueueSemaphoresCount += 2;
     }
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node1.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), node1.getNode(0), 0);
 }
 
 HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndNoOutputEventWhenEnqueueingMarkerThenDoNothing) {

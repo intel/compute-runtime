@@ -107,7 +107,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     }
 
     auto numSupportedDevices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices();
-    TimestampPacketHelper::programCsrDependencies<GfxFamily>(*commandStream, csrDependencies, numSupportedDevices);
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies, numSupportedDevices);
 
     dsh->align(EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,15 +144,15 @@ void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer 
     timestampPacketDependencies.barrierNodes.add(nodesAllocator->getTag());
 
     // wait for barrier and events before AuxToNonAux
-    blitPropertiesContainer[0].csrDependencies.push_back(&timestampPacketDependencies.barrierNodes);
+    blitPropertiesContainer[0].csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.barrierNodes);
 
-    for (auto dep : depsFromEvents) {
-        blitPropertiesContainer[0].csrDependencies.push_back(dep);
+    for (auto dep : depsFromEvents.timestampPacketContainer) {
+        blitPropertiesContainer[0].csrDependencies.timestampPacketContainer.push_back(dep);
     }
 
     // wait for NDR before NonAuxToAux
-    blitPropertiesContainer[numObjects].csrDependencies.push_back(&timestampPacketDependencies.cacheFlushNodes);
-    blitPropertiesContainer[numObjects].csrDependencies.push_back(&kernelTimestamps);
+    blitPropertiesContainer[numObjects].csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.cacheFlushNodes);
+    blitPropertiesContainer[numObjects].csrDependencies.timestampPacketContainer.push_back(&kernelTimestamps);
 }
 
 } // namespace NEO

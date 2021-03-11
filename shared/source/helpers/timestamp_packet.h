@@ -6,8 +6,8 @@
  */
 
 #pragma once
-
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/csr_deps.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -183,11 +183,26 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static void programCsrDependencies(LinearStream &cmdStream, const CsrDependencies &csrDependencies, uint32_t numSupportedDevices) {
-        for (auto timestampPacketContainer : csrDependencies) {
+    static void programCsrDependenciesForTimestampPacketContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies, uint32_t numSupportedDevices) {
+        for (auto timestampPacketContainer : csrDependencies.timestampPacketContainer) {
             for (auto &node : timestampPacketContainer->peekNodes()) {
                 TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(cmdStream, *node, numSupportedDevices);
             }
+        }
+    }
+
+    template <typename GfxFamily>
+    static void programCsrDependenciesForForTaskCountContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies) {
+        auto taskCountContainer = csrDependencies.taskCountContainer;
+
+        for (auto &[taskCountPreviousRootDevice, tagAddressPreviousRootDevice] : taskCountContainer) {
+            using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+            using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+
+            EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream,
+                                                                  static_cast<uint64_t>(tagAddressPreviousRootDevice),
+                                                                  taskCountPreviousRootDevice,
+                                                                  COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
         }
     }
 
@@ -241,13 +256,18 @@ struct TimestampPacketHelper {
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSize(const CsrDependencies &csrDependencies) {
         size_t totalCommandsSize = 0;
-        for (auto timestampPacketContainer : csrDependencies) {
+        for (auto timestampPacketContainer : csrDependencies.timestampPacketContainer) {
             for (auto &node : timestampPacketContainer->peekNodes()) {
                 totalCommandsSize += getRequiredCmdStreamSizeForNodeDependency<GfxFamily>(*node);
             }
         }
 
         return totalCommandsSize;
+    }
+
+    template <typename GfxFamily>
+    static size_t getRequiredCmdStreamSizeForTaskCountContainer(const CsrDependencies &csrDependencies) {
+        return csrDependencies.taskCountContainer.size() * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
     }
 };
 

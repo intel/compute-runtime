@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 namespace NEO {
 
 void CsrDependencies::makeResident(CommandStreamReceiver &commandStreamReceiver) const {
-    for (auto &timestampPacketContainer : *this) {
+    for (auto &timestampPacketContainer : timestampPacketContainer) {
         timestampPacketContainer->makeResident(commandStreamReceiver);
     }
 }

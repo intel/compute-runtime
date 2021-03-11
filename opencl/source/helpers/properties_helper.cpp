@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 
 namespace NEO {
 
-void EventsRequest::fillCsrDependencies(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr, CsrDependencies::DependenciesType depsType) const {
+void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr, CsrDependencies::DependenciesType depsType) const {
     for (cl_uint i = 0; i < this->numEventsInWaitList; i++) {
         auto event = castToObjectOrAbort<Event>(this->eventWaitList[i]);
         if (event->isUserEvent()) {
@@ -35,7 +35,26 @@ void EventsRequest::fillCsrDependencies(CsrDependencies &csrDeps, CommandStreamR
                               (CsrDependencies::DependenciesType::All == depsType);
 
         if (pushDependency) {
-            csrDeps.push_back(timestampPacketContainer);
+            csrDeps.timestampPacketContainer.push_back(timestampPacketContainer);
+        }
+    }
+}
+
+void EventsRequest::fillCsrDependenciesForTaskCountContainer(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr) const {
+    for (cl_uint i = 0; i < this->numEventsInWaitList; i++) {
+        auto event = castToObjectOrAbort<Event>(this->eventWaitList[i]);
+        if (event->isUserEvent()) {
+            continue;
+        }
+
+        if (event->getCommandQueue() && event->getCommandQueue()->getDevice().getRootDeviceIndex() != currentCsr.getRootDeviceIndex()) {
+            auto taskCountPreviousRootDevice = event->peekTaskCount();
+            auto tagAddressPreviousRootDevice = event->getCommandQueue()->getCommandStreamReceiver(false).getTagAddress();
+
+            csrDeps.taskCountContainer.push_back({taskCountPreviousRootDevice, reinterpret_cast<uint64_t>(tagAddressPreviousRootDevice)});
+
+            auto graphicsAllocation = event->getCommandQueue()->getCommandStreamReceiver(false).getTagsMultiAllocation()->getGraphicsAllocation(currentCsr.getRootDeviceIndex());
+            currentCsr.getResidencyAllocations().push_back(graphicsAllocation);
         }
     }
 }
@@ -43,7 +62,6 @@ void EventsRequest::fillCsrDependencies(CsrDependencies &csrDeps, CommandStreamR
 TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking,
                                        size_t *offsetPtr, size_t *sizePtr, void *ptr, bool doTransferOnCpu, uint32_t rootDeviceIndex)
     : memObj(memObj), ptr(ptr), cmdType(cmdType), mapFlags(mapFlags), blocking(blocking), doTransferOnCpu(doTransferOnCpu) {
-
     // no size or offset passed for unmap operation
     if (cmdType != CL_COMMAND_UNMAP_MEM_OBJECT) {
         if (memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {

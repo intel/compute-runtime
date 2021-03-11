@@ -585,46 +585,6 @@ bool CommandQueue::validateCapabilityForOperation(cl_command_queue_capabilities_
     return operationValid && waitListValid && outEventValid;
 }
 
-void CommandQueue::waitForEventsFromDifferentRootDeviceIndex(cl_uint numEventsInWaitList, const cl_event *eventWaitList,
-                                                             StackVec<cl_event, 8> &waitListCurrentRootDeviceIndex, bool &isEventWaitListFromPreviousRootDevice) {
-    isEventWaitListFromPreviousRootDevice = false;
-
-    for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
-        CommandQueue *commandQueuePreviousRootDevice = nullptr;
-        auto maxTaskCountPreviousRootDevice = 0u;
-
-        if (this->getDevice().getRootDeviceIndex() != rootDeviceIndex) {
-            for (auto eventId = 0u; eventId < numEventsInWaitList; eventId++) {
-                auto event = castToObject<Event>(eventWaitList[eventId]);
-
-                if (event->getCommandQueue() && event->getCommandQueue()->getDevice().getRootDeviceIndex() == rootDeviceIndex) {
-                    maxTaskCountPreviousRootDevice = std::max(maxTaskCountPreviousRootDevice, event->peekTaskCount());
-                    commandQueuePreviousRootDevice = event->getCommandQueue();
-                    isEventWaitListFromPreviousRootDevice = true;
-                }
-            }
-
-            if (maxTaskCountPreviousRootDevice) {
-                commandQueuePreviousRootDevice->getCommandStreamReceiver(false).waitForCompletionWithTimeout(false, 0, maxTaskCountPreviousRootDevice);
-            }
-        }
-    }
-
-    if (isEventWaitListFromPreviousRootDevice) {
-        for (auto eventId = 0u; eventId < numEventsInWaitList; eventId++) {
-            auto event = castToObject<Event>(eventWaitList[eventId]);
-
-            if (event->getCommandQueue()) {
-                if (event->getCommandQueue()->getDevice().getRootDeviceIndex() == this->getDevice().getRootDeviceIndex()) {
-                    waitListCurrentRootDeviceIndex.push_back(static_cast<cl_event>(eventWaitList[eventId]));
-                }
-            } else {
-                waitListCurrentRootDeviceIndex.push_back(static_cast<cl_event>(eventWaitList[eventId]));
-            }
-        }
-    }
-}
-
 cl_uint CommandQueue::getQueueFamilyIndex() const {
     if (isQueueFamilySelected()) {
         return queueFamilyIndex;

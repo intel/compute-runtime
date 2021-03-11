@@ -303,8 +303,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool validateCapability(cl_command_queue_capabilities_intel capability) const;
     bool validateCapabilitiesForEventWaitList(cl_uint numEventsInWaitList, const cl_event *waitList) const;
     bool validateCapabilityForOperation(cl_command_queue_capabilities_intel capability, cl_uint numEventsInWaitList, const cl_event *waitList, const cl_event *outEvent) const;
-    void waitForEventsFromDifferentRootDeviceIndex(cl_uint numEventsInWaitList, const cl_event *eventWaitList,
-                                                   StackVec<cl_event, 8> &waitListCurrentRootDeviceIndex, bool &isEventWaitListFromPreviousRootDevice);
     cl_uint getQueueFamilyIndex() const;
     cl_uint getQueueIndexWithinFamily() const { return queueIndexWithinFamily; }
     bool isQueueFamilySelected() const { return queueFamilySelected; }

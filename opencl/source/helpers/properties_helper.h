@@ -24,7 +24,8 @@ struct EventsRequest {
     EventsRequest(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *outEvent)
         : numEventsInWaitList(numEventsInWaitList), eventWaitList(eventWaitList), outEvent(outEvent) {}
 
-    void fillCsrDependencies(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr, CsrDependencies::DependenciesType depsType) const;
+    void fillCsrDependenciesForTimestampPacketContainer(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr, CsrDependencies::DependenciesType depsType) const;
+    void fillCsrDependenciesForTaskCountContainer(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr) const;
 
     cl_uint numEventsInWaitList;
     const cl_event *eventWaitList;

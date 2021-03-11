@@ -219,6 +219,9 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (DebugManager.flags.GpuScratchRegWriteAfterWalker.get() != -1) {
         expectedSizeCS += sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
     }
+
+    expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<GfxFamily>(csrDeps);
+
     return expectedSizeCS;
 }
 

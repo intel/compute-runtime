@@ -220,8 +220,8 @@ HWTEST_F(BcsTests, givenCsrDependenciesWhenProgrammingCommandStreamThenAddSemaph
 
     MockTimestampPacketContainer timestamp0(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
     MockTimestampPacketContainer timestamp1(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
-    blitProperties.csrDependencies.push_back(&timestamp0);
-    blitProperties.csrDependencies.push_back(&timestamp1);
+    blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp0);
+    blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp1);
 
     blitBuffer(&csr, blitProperties, true);
 
@@ -278,8 +278,8 @@ HWTEST_F(BcsTests, givenMultipleBlitPropertiesWhenDispatchingThenProgramCommands
 
     MockTimestampPacketContainer timestamp1(*csr.getTimestampPacketAllocator(), 1);
     MockTimestampPacketContainer timestamp2(*csr.getTimestampPacketAllocator(), 1);
-    blitProperties1.csrDependencies.push_back(&timestamp1);
-    blitProperties2.csrDependencies.push_back(&timestamp2);
+    blitProperties1.csrDependencies.timestampPacketContainer.push_back(&timestamp1);
+    blitProperties2.csrDependencies.timestampPacketContainer.push_back(&timestamp2);
 
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties1);
@@ -1248,8 +1248,8 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenProgrammingBlitterThen
 
     MockTimestampPacketContainer timestamp0(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
     MockTimestampPacketContainer timestamp1(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
-    blitProperties.csrDependencies.push_back(&timestamp0);
-    blitProperties.csrDependencies.push_back(&timestamp1);
+    blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp0);
+    blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp1);
 
     blitBuffer(&csr, blitProperties, true);
 
