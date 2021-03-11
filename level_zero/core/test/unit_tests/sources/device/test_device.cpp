@@ -8,6 +8,7 @@
 #include "shared/source/device/root_device.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -324,6 +325,105 @@ TEST_F(DeviceTest, whenGetExternalMemoryPropertiesIsCalledThenSuccessIsReturnedA
     EXPECT_TRUE(externalMemoryProperties.memoryAllocationExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
     EXPECT_FALSE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD);
     EXPECT_TRUE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
+}
+
+TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledThenSuccessIsReturnedAndValuesSetCorrectly) {
+    uint64_t hostTs = 0u;
+    uint64_t deviceTs = 0u;
+
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(0u, hostTs);
+    EXPECT_NE(0u, deviceTs);
+}
+
+class FalseCpuGpuTime : public NEO::OSTime {
+  public:
+    bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override {
+        return false;
+    }
+    bool getCpuTime(uint64_t *timeStamp) override {
+        return true;
+    };
+    double getHostTimerResolution() const override {
+        return 0;
+    }
+    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
+        return NEO::OSTime::getDeviceTimerResolution(hwInfo);
+    }
+    uint64_t getCpuRawTimestamp() override {
+        return 0;
+    }
+    static std::unique_ptr<OSTime> create() {
+        return std::unique_ptr<OSTime>(new FalseCpuGpuTime());
+    }
+};
+
+struct GlobalTimestampTest : public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex);
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    const uint32_t rootDeviceIndex = 1u;
+    const uint32_t numRootDevices = 2u;
+};
+
+TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuGpuTimeIsFalseReturnError) {
+    uint64_t hostTs = 0u;
+    uint64_t deviceTs = 0u;
+
+    neoDevice->setOSTime(new FalseCpuGpuTime());
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    device = driverHandle->devices[0];
+
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+}
+
+class FalseCpuTime : public NEO::OSTime {
+  public:
+    bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override {
+        return true;
+    }
+    bool getCpuTime(uint64_t *timeStamp) override {
+        return false;
+    };
+    double getHostTimerResolution() const override {
+        return 0;
+    }
+    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
+        return NEO::OSTime::getDeviceTimerResolution(hwInfo);
+    }
+    uint64_t getCpuRawTimestamp() override {
+        return 0;
+    }
+    static std::unique_ptr<OSTime> create() {
+        return std::unique_ptr<OSTime>(new FalseCpuTime());
+    }
+};
+
+TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuTimeIsFalseReturnError) {
+    uint64_t hostTs = 0u;
+    uint64_t deviceTs = 0u;
+
+    neoDevice->setOSTime(new FalseCpuTime());
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    device = driverHandle->devices[0];
+
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
 using DeviceGetMemoryTests = DeviceTest;

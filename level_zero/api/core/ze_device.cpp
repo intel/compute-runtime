@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,4 +113,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetStatus(
     ze_device_handle_t hDevice) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDeviceGetGlobalTimestamps(
+    ze_device_handle_t hDevice,
+    uint64_t *hostTimestamp,
+    uint64_t *deviceTimestamp) {
+    return L0::Device::fromHandle(hDevice)->getGlobalTimestamps(hostTimestamp, deviceTimestamp);
 }

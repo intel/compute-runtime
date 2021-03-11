@@ -219,6 +219,7 @@ zeGetDeviceProcAddrTable(
     pDdiTable->pfnCanAccessPeer = zeDeviceCanAccessPeer;
     pDdiTable->pfnGetStatus = zeDeviceGetStatus;
     pDdiTable->pfnGetExternalMemoryProperties = zeDeviceGetExternalMemoryProperties;
+    pDdiTable->pfnGetGlobalTimestamps = zeDeviceGetGlobalTimestamps;
     driver_ddiTable.core_ddiTable.Device = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnGet = zeDeviceGet_Tracing;

@@ -132,6 +132,11 @@ struct Mock<Device> : public Device {
                 (ze_device_external_memory_properties_t * pExternalMemoryProperties),
                 (override));
     MOCK_METHOD(ze_result_t,
+                getGlobalTimestamps,
+                (uint64_t * hostTimestamp,
+                 uint64_t *deviceTimestamp),
+                (override));
+    MOCK_METHOD(ze_result_t,
                 systemBarrier,
                 (),
                 (override));

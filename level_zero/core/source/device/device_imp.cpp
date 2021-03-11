@@ -431,6 +431,21 @@ ze_result_t DeviceImp::getExternalMemoryProperties(ze_device_external_memory_pro
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) {
+    NEO::TimeStampData queueTimeStamp;
+    bool retVal = this->neoDevice->getOSTime()->getCpuGpuTime(&queueTimeStamp);
+    if (!retVal)
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+
+    *deviceTimestamp = queueTimeStamp.GPUTimeStamp;
+
+    retVal = this->neoDevice->getOSTime()->getCpuTime(hostTimestamp);
+    if (!retVal)
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t DeviceImp::getSubDevices(uint32_t *pCount, ze_device_handle_t *phSubdevices) {
     if (*pCount == 0) {
         *pCount = this->numSubDevices;
