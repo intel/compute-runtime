@@ -86,7 +86,7 @@ struct DriverHandle : _ze_driver_handle_t {
     DriverHandle &operator=(const DriverHandle &) = delete;
     DriverHandle &operator=(DriverHandle &&) = delete;
 
-    static DriverHandle *create(std::vector<std::unique_ptr<NEO::Device>> devices, const L0EnvVariables &envVariables);
+    static DriverHandle *create(std::vector<std::unique_ptr<NEO::Device>> devices, const L0EnvVariables &envVariables, ze_result_t *returnValue);
 };
 
 } // namespace L0

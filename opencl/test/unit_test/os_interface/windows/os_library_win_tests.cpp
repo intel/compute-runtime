@@ -102,3 +102,20 @@ TEST(OSLibraryWinTest, WhenCreatingFullSystemPathThenProperPathIsConstructed) {
     auto fullPath = OsLibrary::createFullSystemPath("test");
     EXPECT_STREQ("C:\\System\\test", fullPath.c_str());
 }
+
+TEST(OSLibraryWinTest, GivenInvalidLibraryWhenOpeningLibraryThenLoadLibraryErrorIsReturned) {
+    std::string errorValue;
+    auto lib = std::make_unique<Windows::OsLibrary>("abc", &errorValue);
+    EXPECT_FALSE(errorValue.empty());
+}
+
+TEST(OSLibraryWinTest, GivenNoLastErrorOnWindowsThenErrorStringisEmpty) {
+    std::string errorValue;
+
+    auto lib = std::make_unique<Windows::OsLibrary>(Os::testDllName, &errorValue);
+    EXPECT_NE(nullptr, lib);
+    EXPECT_TRUE(errorValue.empty());
+    lib.get()->getLastErrorString(&errorValue);
+    EXPECT_TRUE(errorValue.empty());
+    lib.get()->getLastErrorString(nullptr);
+}

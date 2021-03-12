@@ -55,7 +55,7 @@ void DriverImp::initialize(ze_result_t *result) {
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     executionEnvironment->decRefInternal();
     if (!neoDevices.empty()) {
-        GlobalDriverHandle = DriverHandle::create(std::move(neoDevices), envVariables);
+        GlobalDriverHandle = DriverHandle::create(std::move(neoDevices), envVariables, result);
         if (GlobalDriverHandle != nullptr) {
             *result = ZE_RESULT_SUCCESS;
 

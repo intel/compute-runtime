@@ -12,6 +12,7 @@
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -25,6 +26,7 @@ namespace ult {
 
 struct DualStorageModuleFixture : public ModuleFixture {
     void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
         DebugManager.flags.EnableLocalMemory.set(1);
         DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
         ModuleFixture::SetUp();
@@ -39,6 +41,7 @@ using CommandListDualStroage = Test<DualStorageModuleFixture>;
 
 struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
     void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
         NEO::DebugManager.flags.EnableSWTags.set(true);
         ModuleFixture::SetUp();
     }

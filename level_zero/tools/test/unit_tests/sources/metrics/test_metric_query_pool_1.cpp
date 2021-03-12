@@ -28,9 +28,10 @@ class MetricQueryPoolTest : public MetricContextFixture,
                             public ::testing::Test {
   public:
     void SetUp() override {
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
         MetricContextFixture::SetUp();
         auto executionEnvironment = new NEO::ExecutionEnvironment();
-        driverHandle.reset(DriverHandle::create(NEO::DeviceFactory::createDevices(*executionEnvironment), L0EnvVariables{}));
+        driverHandle.reset(DriverHandle::create(NEO::DeviceFactory::createDevices(*executionEnvironment), L0EnvVariables{}, &returnValue));
     }
 
     void TearDown() override {

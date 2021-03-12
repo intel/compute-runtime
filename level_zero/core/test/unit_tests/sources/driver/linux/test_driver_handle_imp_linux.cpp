@@ -11,6 +11,8 @@
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
+
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
@@ -29,6 +31,7 @@ class TestDriverMockDrm : public Drm {
 class DriverLinuxFixture : public ::testing::Test {
   public:
     void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
@@ -54,6 +57,7 @@ class DriverLinuxFixture : public ::testing::Test {
 };
 
 TEST_F(DriverLinuxFixture, GivenEnvironmentVariableForDeviceOrderAccordingToPciSetWhenRetrievingNeoDevicesThenNeoDevicesAccordingToBusOrderRetrieved) {
+    NEO::MockCompilerEnableGuard mock(true);
     DriverHandleImp *driverHandle = new DriverHandleImp;
     driverHandle->enablePciIdDeviceOrder = true;
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));

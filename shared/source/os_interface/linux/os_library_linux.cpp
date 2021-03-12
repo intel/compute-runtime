@@ -14,7 +14,11 @@
 
 namespace NEO {
 OsLibrary *OsLibrary::load(const std::string &name) {
-    auto ptr = new (std::nothrow) Linux::OsLibrary(name);
+    return load(name, nullptr);
+}
+
+OsLibrary *OsLibrary::load(const std::string &name, std::string *errorValue) {
+    auto ptr = new (std::nothrow) Linux::OsLibrary(name, errorValue);
     if (ptr == nullptr)
         return nullptr;
 
@@ -31,7 +35,7 @@ const std::string OsLibrary::createFullSystemPath(const std::string &name) {
 
 namespace Linux {
 
-OsLibrary::OsLibrary(const std::string &name) {
+OsLibrary::OsLibrary(const std::string &name, std::string *errorValue) {
     if (name.empty()) {
         this->handle = SysCalls::dlopen(0, RTLD_LAZY);
     } else {
@@ -43,6 +47,9 @@ OsLibrary::OsLibrary(const std::string &name) {
 #endif
         adjustLibraryFlags(dlopenFlag);
         this->handle = SysCalls::dlopen(name.c_str(), dlopenFlag);
+        if (!this->handle && (errorValue != nullptr)) {
+            errorValue->assign(dlerror());
+        }
     }
 }
 

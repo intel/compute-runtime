@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,8 +41,22 @@ TEST(OSLibraryTest, GivenFakeLibNameWhenLoadingLibraryThenNullIsReturned) {
     EXPECT_EQ(nullptr, library);
 }
 
+TEST(OSLibraryTest, GivenFakeLibNameWhenLoadingLibraryThenNullIsReturnedAndErrorString) {
+    std::string errorValue;
+    OsLibrary *library = OsLibrary::load(fakeLibName, &errorValue);
+    EXPECT_FALSE(errorValue.empty());
+    EXPECT_EQ(nullptr, library);
+}
+
 TEST(OSLibraryTest, GivenValidLibNameWhenLoadingLibraryThenLibraryIsLoaded) {
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
+    EXPECT_NE(nullptr, library);
+}
+
+TEST(OSLibraryTest, GivenValidLibNameWhenLoadingLibraryThenLibraryIsLoadedWithNoErrorString) {
+    std::string errorValue;
+    std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName, &errorValue));
+    EXPECT_TRUE(errorValue.empty());
     EXPECT_NE(nullptr, library);
 }
 

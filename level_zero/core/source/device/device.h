@@ -106,7 +106,7 @@ struct Device : _ze_device_handle_t {
 
     inline ze_device_handle_t toHandle() { return this; }
 
-    static Device *create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask, bool isSubDevice);
+    static Device *create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask, bool isSubDevice, ze_result_t *returnValue);
 
     virtual NEO::PreemptionMode getDevicePreemptionMode() const = 0;
     virtual const NEO::DeviceInfo &getDeviceInfo() const = 0;

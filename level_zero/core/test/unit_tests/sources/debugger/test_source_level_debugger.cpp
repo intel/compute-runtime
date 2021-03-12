@@ -11,6 +11,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
@@ -27,6 +28,7 @@ namespace ult {
 using CommandQueueDebugCommandsTest = Test<ActiveDebuggerFixture>;
 
 HWTEST_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsExecutedThenKernelDebugCommandsAreAdded) {
+    NEO::MockCompilerEnableGuard mock(true);
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
     auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
@@ -261,6 +263,7 @@ struct TwoSubDevicesDebuggerEnabledTest : public ActiveDebuggerFixture, public :
 };
 
 TEST_F(TwoSubDevicesDebuggerEnabledTest, givenDebuggingEnabledWhenSubDevicesAreCreatedThenDebugSurfaceFromRootDeviceIsSet) {
+    NEO::MockCompilerEnableGuard mock(true);
     auto subDevice0 = static_cast<L0::DeviceImp *>(deviceL0)->subDevices[0];
     auto subDevice1 = static_cast<L0::DeviceImp *>(deviceL0)->subDevices[1];
 

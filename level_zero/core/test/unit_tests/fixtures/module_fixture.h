@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/program/kernel_info.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 #include "level_zero/core/source/module/module.h"
@@ -172,6 +173,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
 struct ModuleFixture : public DeviceFixture {
     void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
         DeviceFixture::SetUp();
         createModuleFromBinary();
     }

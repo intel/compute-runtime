@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
@@ -27,6 +28,8 @@ namespace ult {
 
 struct ActiveDebuggerFixture {
     void SetUp() { // NOLINT(readability-identifier-naming)
+        NEO::MockCompilerEnableGuard mock(true);
+        ze_result_t returnValue;
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -46,7 +49,7 @@ struct ActiveDebuggerFixture {
         std::vector<std::unique_ptr<NEO::Device>> devices;
         devices.push_back(std::unique_ptr<NEO::Device>(device));
 
-        auto driverHandleUlt = whitebox_cast(DriverHandle::create(std::move(devices), L0EnvVariables{}));
+        auto driverHandleUlt = whitebox_cast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
         driverHandle.reset(driverHandleUlt);
 
         ASSERT_NE(nullptr, driverHandle);

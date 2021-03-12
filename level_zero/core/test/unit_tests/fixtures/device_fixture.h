@@ -12,6 +12,8 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
+
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
@@ -22,6 +24,7 @@ struct Device;
 namespace ult {
 
 struct DeviceFixture {
+    NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
     virtual void SetUp();    // NOLINT(readability-identifier-naming)
     virtual void TearDown(); // NOLINT(readability-identifier-naming)
 
@@ -32,6 +35,7 @@ struct DeviceFixture {
 };
 
 struct MultiDeviceFixture {
+    NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
     virtual void SetUp();    // NOLINT(readability-identifier-naming)
     virtual void TearDown(); // NOLINT(readability-identifier-naming)
 

@@ -13,6 +13,8 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/source/os_interface/os_inc_base.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -25,6 +27,7 @@ namespace ult {
 
 struct HostPointerManagerFixure {
     void SetUp() {
+        NEO::MockCompilerEnableGuard mock(true);
         NEO::DeviceVector devices;
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();

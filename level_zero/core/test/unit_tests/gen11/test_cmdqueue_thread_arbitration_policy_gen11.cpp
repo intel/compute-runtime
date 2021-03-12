@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "test.h"
 
 #include "level_zero/core/source/driver/driver_imp.h"
@@ -22,6 +23,8 @@ namespace ult {
 
 struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
     void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -33,7 +36,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
         std::vector<std::unique_ptr<NEO::Device>> devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-        auto driverHandleUlt = whitebox_cast(DriverHandle::create(std::move(devices), L0EnvVariables{}));
+        auto driverHandleUlt = whitebox_cast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
         driverHandle.reset(driverHandleUlt);
 
         ASSERT_NE(nullptr, driverHandle);
@@ -46,7 +49,6 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
         ASSERT_NE(nullptr, device);
 
         ze_command_queue_desc_t queueDesc = {};
-        ze_result_t returnValue;
         commandQueue = whitebox_cast(CommandQueue::create(productFamily, device,
                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                           &queueDesc,

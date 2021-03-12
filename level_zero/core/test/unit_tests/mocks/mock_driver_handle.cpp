@@ -73,9 +73,10 @@ ze_result_t Mock<DriverHandle>::freeMem(const void *ptr) {
 void Mock<DriverHandle>::setupDevices(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
     this->numDevices = static_cast<uint32_t>(neoDevices.size());
     for (auto &neoDevice : neoDevices) {
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
         this->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
         this->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-        auto device = Device::create(this, neoDevice.release(), std::numeric_limits<uint32_t>::max(), false);
+        auto device = Device::create(this, neoDevice.release(), std::numeric_limits<uint32_t>::max(), false, &returnValue);
         this->devices.push_back(device);
     }
 }

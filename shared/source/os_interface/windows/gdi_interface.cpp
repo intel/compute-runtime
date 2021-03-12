@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ inline const std::string getGdiName() {
     }
 }
 
-Gdi::Gdi() : gdiDll(getGdiName()),
+Gdi::Gdi() : gdiDll(getGdiName(), nullptr),
              initialized(false) {
     if (gdiDll.isLoaded()) {
         initialized = Gdi::getAllProcAddresses();

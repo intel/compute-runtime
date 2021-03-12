@@ -587,7 +587,7 @@ uint32_t DeviceImp::getMaxNumHwThreads() const { return maxNumHwThreads; }
 
 const NEO::HardwareInfo &DeviceImp::getHwInfo() const { return neoDevice->getHardwareInfo(); }
 
-Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask, bool isSubDevice) {
+Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask, bool isSubDevice, ze_result_t *returnValue) {
     auto device = new DeviceImp;
     UNRECOVERABLE_IF(device == nullptr);
 
@@ -629,7 +629,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
             ze_device_handle_t subDevice = Device::create(driverHandle,
                                                           device->neoDevice->getDeviceById(i),
                                                           0,
-                                                          true);
+                                                          true, returnValue);
             if (subDevice == nullptr) {
                 return nullptr;
             }
@@ -646,6 +646,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
             auto sipType = NEO::SipKernel::getSipKernelType(hwInfo.platform.eRenderCoreFamily, neoDevice->getDebugger());
             NEO::initSipKernel(sipType, *neoDevice);
         }
+    } else {
+        *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
     auto supportDualStorageSharedMemory = neoDevice->getMemoryManager()->isLocalMemorySupported(device->neoDevice->getRootDeviceIndex());
@@ -660,10 +662,10 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         cmdQueueDesc.flags = 0;
         cmdQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
         cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+        ze_result_t resultValue = ZE_RESULT_SUCCESS;
         device->pageFaultCommandList =
             CommandList::createImmediate(
-                device->neoDevice->getHardwareInfo().platform.eProductFamily, device, &cmdQueueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue);
+                device->neoDevice->getHardwareInfo().platform.eProductFamily, device, &cmdQueueDesc, true, NEO::EngineGroupType::RenderCompute, resultValue);
     }
 
     if (device->getSourceLevelDebugger()) {
