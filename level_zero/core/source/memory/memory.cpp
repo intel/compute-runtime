@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,11 @@ void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, uint64_t handl
 
 ze_result_t DriverHandleImp::openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc_mem_handle_t pIpcHandle,
                                               ze_ipc_memory_flag_t flags, void **ptr) {
-    uint64_t handle = *(pIpcHandle.data);
+    uint64_t handle = 0u;
+    memcpy_s(&handle,
+             sizeof(handle),
+             reinterpret_cast<void *>(pIpcHandle.data),
+             sizeof(handle));
 
     *ptr = this->importFdHandle(hDevice, handle);
     if (nullptr == *ptr) {

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
@@ -434,6 +435,86 @@ TEST_F(MemoryIPCTests,
     void *ipcPtr;
     ze_result_t res = driverHandle->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+}
+
+struct DriverHandleGetIpcHandleMock : public DriverHandleImp {
+    void *importFdHandle(ze_device_handle_t hDevice, uint64_t handle) override {
+        EXPECT_EQ(handle, static_cast<uint64_t>(mockFd));
+        if (mockFd == allocationMap.second) {
+            return allocationMap.first;
+        }
+        return nullptr;
+    }
+
+    ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override {
+        uint64_t handle = mockFd;
+        memcpy_s(reinterpret_cast<void *>(pIpcHandle->data),
+                 sizeof(ze_ipc_mem_handle_t),
+                 &handle,
+                 sizeof(handle));
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t allocDeviceMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc, size_t size,
+                               size_t alignment, void **ptr) override {
+        ze_result_t res = DriverHandleImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
+        if (ZE_RESULT_SUCCESS == res) {
+            allocationMap.first = *ptr;
+            allocationMap.second = mockFd;
+        }
+
+        return res;
+    }
+
+    const int mockFd = 999;
+    std::pair<void *, int> allocationMap;
+};
+
+struct MemoryGetIpcHandleTest : public ::testing::Test {
+    void SetUp() override {
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        auto mockBuiltIns = new MockBuiltins();
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<DriverHandleGetIpcHandleMock>();
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+    }
+
+    void TearDown() override {
+    }
+    std::unique_ptr<DriverHandleGetIpcHandleMock> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+};
+
+TEST_F(MemoryGetIpcHandleTest,
+       whenCallingOpenIpcHandleWithIpcHandleThenFdHandleIsCorrectlyRead) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = driverHandle->allocDeviceMem(device->toHandle(),
+                                                      &deviceDesc,
+                                                      size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = driverHandle->getIpcMemHandle(ptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_ipc_memory_flag_t flags = {};
+    void *ipcPtr;
+    result = driverHandle->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ipcPtr, ptr);
+
+    result = driverHandle->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 using DeviceMemorySizeTest = Test<DeviceFixture>;
