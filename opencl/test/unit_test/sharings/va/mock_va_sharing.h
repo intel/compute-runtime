@@ -17,6 +17,7 @@ namespace NEO {
 
 class VASharingFunctionsMock : public VASharingFunctions {
   public:
+    using VASharingFunctions::mutex;
     using VASharingFunctions::supported2PlaneFormats;
     using VASharingFunctions::supported3PlaneFormats;
 

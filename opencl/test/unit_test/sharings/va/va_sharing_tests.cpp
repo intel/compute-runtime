@@ -215,7 +215,7 @@ TEST_F(VaSharingTests, givenMockVaWithExportSurfaceHandlerWhenVaSurfaceIsCreated
         auto vaHandler = static_cast<VASharing *>(handler);
         EXPECT_EQ(vaHandler->peekFunctionsHandler(), &vaSharing->sharingFunctions);
 
-        auto sharingFunctions = vaSharing->sharingFunctions;
+        auto &sharingFunctions = vaSharing->sharingFunctions;
         EXPECT_FALSE(sharingFunctions.deriveImageCalled);
         EXPECT_FALSE(sharingFunctions.destroyImageCalled);
 
@@ -731,7 +731,7 @@ TEST_F(VaSharingTests, givenMockVaWithExportSurfaceHandlerAndRGBPWhenVaSurfaceIs
         auto vaHandler = static_cast<VASharing *>(handler);
         EXPECT_EQ(vaHandler->peekFunctionsHandler(), &vaSharing->sharingFunctions);
 
-        auto sharingFunctions = vaSharing->sharingFunctions;
+        auto &sharingFunctions = vaSharing->sharingFunctions;
         EXPECT_FALSE(sharingFunctions.deriveImageCalled);
         EXPECT_FALSE(sharingFunctions.destroyImageCalled);
 

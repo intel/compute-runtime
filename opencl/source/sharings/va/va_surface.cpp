@@ -41,6 +41,8 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     size_t imageOffset = 0;
     size_t imagePitch = 0;
 
+    std::unique_lock<std::mutex> lock(sharingFunctions->mutex);
+
     vaStatus = sharingFunctions->exportSurfaceHandle(*surface,
                                                      VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2,
                                                      VA_EXPORT_SURFACE_READ_WRITE | VA_EXPORT_SURFACE_SEPARATE_LAYERS,
@@ -117,6 +119,8 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false);
 
     memoryManager->closeSharedHandle(sharedHandle);
+
+    lock.unlock();
 
     imgDesc.image_row_pitch = imgInfo.rowPitch;
     imgDesc.image_slice_pitch = 0u;

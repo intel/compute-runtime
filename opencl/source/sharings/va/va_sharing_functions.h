@@ -10,6 +10,7 @@
 #include "opencl/source/sharings/va/va_sharing_defines.h"
 
 #include <functional>
+#include <mutex>
 #include <vector>
 
 namespace NEO {
@@ -81,6 +82,8 @@ class VASharingFunctions : public SharingFunctions {
     static std::function<int(void *handle)> fdlclose;
 
     static bool isVaLibraryAvailable();
+
+    std::mutex mutex;
 
   protected:
     void *libHandle = nullptr;
