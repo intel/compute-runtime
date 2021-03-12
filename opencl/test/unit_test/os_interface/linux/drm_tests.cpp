@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
@@ -225,6 +226,29 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
     EXPECT_EQ(static_cast<uint64_t>(-1023), drmMock.receivedContextParamRequest.value);
     EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
+}
+
+TEST(DrmTest, givenDirectSubmissionEnabledOnBlitterWhenCreateBcsEngineThenLowPriorityIsSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false, false, false);
+    EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDirectSubmission.set(1);
+    DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1);
+
+    OsContextLinux osContext2(drmMock, 0u, 1, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false, false, false);
+    EXPECT_EQ(3u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(drmMock.receivedCreateContextId, drmMock.receivedContextParamRequest.ctx_id);
+    EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
+    EXPECT_EQ(static_cast<uint64_t>(-1023), drmMock.receivedContextParamRequest.value);
+    EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
+
+    OsContextLinux osContext3(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    EXPECT_EQ(4u, drmMock.receivedContextParamRequestCount);
 }
 
 TEST(DrmTest, WhenGettingExecSoftPinThenCorrectValueIsReturned) {
