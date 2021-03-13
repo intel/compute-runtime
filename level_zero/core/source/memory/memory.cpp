@@ -133,11 +133,8 @@ ze_result_t DriverHandleImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDe
 
 ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc,
                                             size_t size, size_t alignment, void **ptr) {
-    if (size > this->devices[0]->getNEODevice()->getHardwareCapabilities().maxMemAllocSize) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-    }
 
+    bool relaxedSizeAllowed = false;
     if (deviceDesc->pNext) {
         const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC) {
@@ -160,7 +157,20 @@ ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, const ze
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
             return ZE_RESULT_SUCCESS;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
+            const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
+                reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
+            if (!(relaxedLimitsDesc->flags & ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            relaxedSizeAllowed = true;
         }
+    }
+
+    if (relaxedSizeAllowed == false &&
+        (size > this->devices[0]->getNEODevice()->getHardwareCapabilities().maxMemAllocSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
 
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
@@ -192,6 +202,25 @@ ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, const ze
                                             size_t size,
                                             size_t alignment,
                                             void **ptr) {
+    bool relaxedSizeAllowed = false;
+    if (deviceDesc->pNext) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
+            const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
+                reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
+            if (!(relaxedLimitsDesc->flags & ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            relaxedSizeAllowed = true;
+        }
+    }
+
+    if (relaxedSizeAllowed == false &&
+        (size > this->devices[0]->getNEODevice()->getHardwareCapabilities().maxMemAllocSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+
     auto neoDevice = this->devices[0]->getNEODevice();
 
     auto deviceBitfields = this->deviceBitfields;
@@ -208,11 +237,6 @@ ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, const ze
 
     if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
-    }
-
-    if (size > neoDevice->getDeviceInfo().maxMemAllocSize) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
 
     auto usmPtr =

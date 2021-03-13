@@ -93,6 +93,7 @@ struct DriverHandleImp : public DriverHandle {
     std::vector<Device *> devices;
     // Spec extensions
     const std::vector<std::pair<std::string, uint32_t>> extensionsSupported = {
+        {ZE_RELAXED_ALLOCATION_LIMITS_EXP_NAME, ZE_RELAXED_ALLOCATION_LIMITS_EXP_VERSION_CURRENT},
         {ZE_MODULE_PROGRAM_EXP_NAME, ZE_MODULE_PROGRAM_EXP_VERSION_CURRENT},
         {ZE_GLOBAL_OFFSET_EXP_NAME, ZE_GLOBAL_OFFSET_EXP_VERSION_CURRENT}};
 
