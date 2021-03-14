@@ -94,6 +94,7 @@ zeGetContextProcAddrTable(
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     pDdiTable->pfnCreate = zeContextCreate;
+    pDdiTable->pfnCreateEx = zeContextCreateEx;
     pDdiTable->pfnDestroy = zeContextDestroy;
     pDdiTable->pfnGetStatus = zeContextGetStatus;
     pDdiTable->pfnSystemBarrier = zeContextSystemBarrier;

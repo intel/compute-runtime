@@ -255,7 +255,7 @@ HWTEST2_F(DeviceQueueGroupTest,
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
-    res = driverHandle->createContext(&desc, &hContext);
+    res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     L0::Context *context = Context::fromHandle(hContext);
 

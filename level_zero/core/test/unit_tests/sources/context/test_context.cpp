@@ -12,6 +12,7 @@
 #include "test.h"
 
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
@@ -22,11 +23,51 @@
 namespace L0 {
 namespace ult {
 
+using MultiDeviceContextTests = Test<MultiDeviceFixture>;
+
+TEST_F(MultiDeviceContextTests,
+       whenCreatingContextWithZeroNumDevicesThenAllDevicesAreAssociatedWithTheContext) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
+    for (size_t i = 0; i < driverHandle->devices.size(); i++) {
+        EXPECT_EQ(driverHandle->devices[i], contextImp->getDevices()[i]);
+    }
+
+    res = L0::Context::fromHandle(hContext)->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultiDeviceContextTests,
+       whenCreatingContextWithNonZeroNumDevicesThenOnlySpecifiedDeviceIsAssociatedWithTheContext) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+
+    uint32_t count = 1;
+    ze_device_handle_t device = driverHandle->devices[1]->toHandle();
+
+    ze_result_t res = driverHandle->createContext(&desc, 1u, &device, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
+    EXPECT_EQ(contextImp->getDevices().size(), count);
+    EXPECT_EQ(contextImp->getDevices()[0], driverHandle->devices[1]);
+
+    res = L0::Context::fromHandle(hContext)->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 using ContextGetStatusTest = Test<DeviceFixture>;
 TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsReturnedWhenResourcesHaveBeenReleased) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
-    ze_result_t res = driverHandle->createContext(&desc, &hContext);
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     L0::Context *context = L0::Context::fromHandle(hContext);
@@ -51,7 +92,7 @@ TEST_F(ContextTest, whenCreatingAndDestroyingContextThenSuccessIsReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
 
-    ze_result_t res = driverHandle->createContext(&desc, &hContext);
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     res = L0::Context::fromHandle(hContext)->destroy();
@@ -338,7 +379,7 @@ TEST_F(ContextTest, whenGettingDriverThenDriverIsRetrievedSuccessfully) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
 
-    ze_result_t res = driverHandle->createContext(&desc, &hContext);
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
@@ -353,7 +394,7 @@ TEST_F(ContextTest, whenCallingVirtualMemInterfacesThenUnsupportedIsReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
 
-    ze_result_t res = driverHandle->createContext(&desc, &hContext);
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
@@ -379,7 +420,7 @@ TEST_F(ContextTest, whenCallingPhysicalMemInterfacesThenUnsupportedIsReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
 
-    ze_result_t res = driverHandle->createContext(&desc, &hContext);
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
@@ -400,7 +441,7 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesThenUnsupportedIsReturned
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
 
-    ze_result_t res = driverHandle->createContext(&desc, &hContext);
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
@@ -440,7 +481,7 @@ using IsAtMostProductDG1 = IsAtMostProduct<IGFX_DG1>;
 HWTEST2_F(ContextTest, WhenCreatingImageThenSuccessIsReturned, IsAtMostProductDG1) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
-    ze_result_t res = driverHandle->createContext(&desc, &hContext);
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));

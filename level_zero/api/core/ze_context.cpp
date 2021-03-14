@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,17 @@ zeContextCreate(
     ze_driver_handle_t hDriver,
     const ze_context_desc_t *desc,
     ze_context_handle_t *phContext) {
-    return L0::DriverHandle::fromHandle(hDriver)->createContext(desc, phContext);
+    return L0::DriverHandle::fromHandle(hDriver)->createContext(desc, 0u, nullptr, phContext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextCreateEx(
+    ze_driver_handle_t hDriver,
+    const ze_context_desc_t *desc,
+    uint32_t numDevices,
+    ze_device_handle_t *phDevices,
+    ze_context_handle_t *phContext) {
+    return L0::DriverHandle::fromHandle(hDriver)->createContext(desc, numDevices, phDevices, phContext);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

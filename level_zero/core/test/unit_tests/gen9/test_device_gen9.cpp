@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ HWTEST2_F(DeviceQueueGroupTest, givenQueueGroupsReturnedThenCommandListIsCreated
 
     ze_context_handle_t hContext;
     ze_context_desc_t contextDesc;
-    res = driverHandle->createContext(&contextDesc, &hContext);
+    res = driverHandle->createContext(&contextDesc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     L0::Context *context = Context::fromHandle(hContext);
 

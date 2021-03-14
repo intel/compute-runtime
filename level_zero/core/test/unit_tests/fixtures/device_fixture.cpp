@@ -46,7 +46,7 @@ void ContextFixture::SetUp() {
 
     ze_context_handle_t hContext = {};
     ze_context_desc_t desc;
-    ze_result_t res = driverHandle->createContext(&desc, &hContext);
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, hContext);
     context = L0::Context::fromHandle(hContext);

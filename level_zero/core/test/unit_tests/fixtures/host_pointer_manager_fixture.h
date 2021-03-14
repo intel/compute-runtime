@@ -46,7 +46,7 @@ struct HostPointerManagerFixure {
         ASSERT_NE(nullptr, heapPointer);
 
         ze_context_desc_t desc;
-        ze_result_t ret = hostDriverHandle->createContext(&desc, &hContext);
+        ze_result_t ret = hostDriverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
         context = L0::Context::fromHandle(hContext);
     }
