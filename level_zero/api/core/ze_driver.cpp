@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,4 +49,12 @@ zeDriverGetExtensionProperties(
     uint32_t *pCount,
     ze_driver_extension_properties_t *pExtensionProperties) {
     return L0::DriverHandle::fromHandle(hDriver)->getExtensionProperties(pCount, pExtensionProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDriverGetExtensionFunctionAddress(
+    ze_driver_handle_t hDriver,
+    const char *name,
+    void **ppFunctionAddress) {
+    return L0::DriverHandle::fromHandle(hDriver)->getExtensionFunctionAddress(name, ppFunctionAddress);
 }

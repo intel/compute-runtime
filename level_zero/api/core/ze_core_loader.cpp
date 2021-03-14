@@ -32,6 +32,7 @@ zeGetDriverProcAddrTable(
     pDdiTable->pfnGetProperties = zeDriverGetProperties;
     pDdiTable->pfnGetIpcProperties = zeDriverGetIpcProperties;
     pDdiTable->pfnGetExtensionProperties = zeDriverGetExtensionProperties;
+    pDdiTable->pfnGetExtensionFunctionAddress = zeDriverGetExtensionFunctionAddress;
     driver_ddiTable.core_ddiTable.Driver = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnGet = zeDriverGet_Tracing;
