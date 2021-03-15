@@ -111,8 +111,8 @@ class SVMAllocsManager {
                          const SvmAllocationProperties svmProperties,
                          const std::set<uint32_t> &rootDeviceIndices,
                          const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields);
-    void *createHostUnifiedMemoryAllocation(size_t size,
-                                            const UnifiedMemoryProperties &svmProperties);
+    MOCKABLE_VIRTUAL void *createHostUnifiedMemoryAllocation(size_t size,
+                                                             const UnifiedMemoryProperties &svmProperties);
     MOCKABLE_VIRTUAL void *createUnifiedMemoryAllocation(size_t size,
                                                          const UnifiedMemoryProperties &svmProperties);
     MOCKABLE_VIRTUAL void *createSharedUnifiedMemoryAllocation(size_t size,

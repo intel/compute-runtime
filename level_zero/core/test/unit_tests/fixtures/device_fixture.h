@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 namespace L0 {
@@ -27,6 +28,7 @@ struct DeviceFixture {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
+    L0::ContextImp *context = nullptr;
 };
 
 struct MultiDeviceFixture {
@@ -38,12 +40,12 @@ struct MultiDeviceFixture {
     std::vector<NEO::Device *> devices;
     const uint32_t numRootDevices = 2u;
     const uint32_t numSubDevices = 2u;
+    L0::ContextImp *context = nullptr;
 };
 
 struct ContextFixture : DeviceFixture {
     void SetUp() override;
     void TearDown() override;
-    L0::Context *context = nullptr;
 };
 
 } // namespace ult

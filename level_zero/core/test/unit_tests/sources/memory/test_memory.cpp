@@ -335,13 +335,20 @@ struct MemoryExportImportTest : public ::testing::Test {
         driverHandle = std::make_unique<DriverHandleGetFdMock>();
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc;
+        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
     }
 
     void TearDown() override {
+        context->destroy();
     }
     std::unique_ptr<DriverHandleGetFdMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
+    L0::ContextImp *context = nullptr;
 };
 
 TEST_F(MemoryExportImportTest,
@@ -419,7 +426,7 @@ TEST_F(MemoryExportImportTest,
     void *ptr = nullptr;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = driverHandle->allocHostMem(&hostDesc, size, alignment, &ptr);
+    ze_result_t result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
@@ -841,8 +848,8 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsNullDevice
     void *ptr = nullptr;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = driverHandle->allocHostMem(&hostDesc,
-                                                    size, alignment, &ptr);
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
@@ -966,8 +973,8 @@ TEST_F(MemoryTest, givenCallToCheckMemoryAccessFromDeviceWithValidHostAllocation
     void *ptr = nullptr;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t res = driverHandle->allocHostMem(&hostDesc,
-                                                 size, alignment, &ptr);
+    ze_result_t res = context->allocHostMem(&hostDesc,
+                                            size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, ptr);
 
@@ -1092,11 +1099,22 @@ struct AllocHostMemoryTest : public ::testing::Test {
 
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
+
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc;
+        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    }
+
+    void TearDown() override {
+        context->destroy();
     }
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     const uint32_t numRootDevices = 2u;
+    L0::ContextImp *context = nullptr;
 };
 
 TEST_F(AllocHostMemoryTest,
@@ -1107,8 +1125,8 @@ TEST_F(AllocHostMemoryTest,
     static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount = 0;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = driverHandle->allocHostMem(&hostDesc,
-                                                    4096u, 0u, &ptr);
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               4096u, 0u, &ptr);
     EXPECT_EQ(static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
@@ -1127,8 +1145,8 @@ TEST_F(AllocHostMemoryTest,
     static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount = 0;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = driverHandle->allocHostMem(&hostDesc,
-                                                    4096u, 0u, &ptr);
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               4096u, 0u, &ptr);
     EXPECT_EQ(static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount, 1u);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
     EXPECT_EQ(nullptr, ptr);
@@ -1145,8 +1163,8 @@ TEST_F(AllocHostMemoryTest,
     static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount = 0;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = driverHandle->allocHostMem(&hostDesc,
-                                                    4096u, 0u, &ptr);
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               4096u, 0u, &ptr);
     EXPECT_EQ(static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
     EXPECT_EQ(nullptr, ptr);

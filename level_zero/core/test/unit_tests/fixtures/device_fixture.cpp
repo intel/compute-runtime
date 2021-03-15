@@ -23,9 +23,16 @@ void DeviceFixture::SetUp() { // NOLINT(readability-identifier-naming)
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
     device = driverHandle->devices[0];
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 }
 
 void DeviceFixture::TearDown() { // NOLINT(readability-identifier-naming)
+    context->destroy();
 }
 
 void MultiDeviceFixture::SetUp() { // NOLINT(readability-identifier-naming)
@@ -36,24 +43,23 @@ void MultiDeviceFixture::SetUp() { // NOLINT(readability-identifier-naming)
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     ze_result_t res = driverHandle->initialize(std::move(devices));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+    res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 }
 
 void MultiDeviceFixture::TearDown() { // NOLINT(readability-identifier-naming)
+    context->destroy();
 }
 
 void ContextFixture::SetUp() {
     DeviceFixture::SetUp();
-
-    ze_context_handle_t hContext = {};
-    ze_context_desc_t desc;
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_NE(nullptr, hContext);
-    context = L0::Context::fromHandle(hContext);
 }
 
 void ContextFixture::TearDown() {
-    context->destroy();
     DeviceFixture::TearDown();
 }
 

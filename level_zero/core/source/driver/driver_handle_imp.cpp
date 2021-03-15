@@ -52,6 +52,13 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
         }
     }
 
+    for (auto device : context->getDevices()) {
+        auto neoDevice = device->getNEODevice();
+        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->subDeviceBitfields.insert({neoDevice->getRootDeviceIndex(),
+                                            neoDevice->getDeviceBitfield()});
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

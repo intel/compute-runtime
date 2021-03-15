@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,18 +39,27 @@ DriverHandle *ContextImp::getDriverHandle() {
 }
 
 ContextImp::ContextImp(DriverHandle *driverHandle) {
-    this->driverHandle = driverHandle;
+    this->driverHandle = static_cast<DriverHandleImp *>(driverHandle);
 }
 
 ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t size,
                                      size_t alignment,
                                      void **ptr) {
-    DEBUG_BREAK_IF(nullptr == this->driverHandle);
-    return this->driverHandle->allocHostMem(hostDesc,
-                                            size,
-                                            alignment,
-                                            ptr);
+
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
+                                                                           this->rootDeviceIndices,
+                                                                           this->subDeviceBitfields);
+
+    auto usmPtr = this->driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size,
+                                                                                          unifiedMemoryProperties);
+    if (usmPtr == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
+    *ptr = usmPtr;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,

@@ -501,7 +501,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithS
 
     void *dst_buffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = device->getDriverHandle()->allocHostMem(&hostDesc, 16384u, 4090u, &dst_buffer);
+    result = context->allocHostMem(&hostDesc, 16384u, 4090u, &dst_buffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -563,7 +563,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
 
     void *dst_buffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = device->getDriverHandle()->allocHostMem(&hostDesc, 16384u, 4090u, &dst_buffer);
+    result = context->allocHostMem(&hostDesc, 16384u, 4090u, &dst_buffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -618,7 +618,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
 
     void *dst_buffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = device->getDriverHandle()->allocHostMem(&hostDesc, 16384u, 4090u, &dst_buffer);
+    result = context->allocHostMem(&hostDesc, 16384u, 4090u, &dst_buffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};

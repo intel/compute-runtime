@@ -18,9 +18,11 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<Mock<PowerKmdSysManager>> pKmdSysManager;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
-    void SetUp(bool allowSetCalls) { // NOLINT(readability-identifier-naming)
+    void SetUp() override {
         SysmanDeviceFixture::SetUp();
+    }
 
+    void init(bool allowSetCalls) {
         pKmdSysManager.reset(new Mock<PowerKmdSysManager>);
 
         pKmdSysManager->allowSetCalls = allowSetCalls;
@@ -51,7 +53,7 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-    SetUp(true);
+    init(true);
 
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
@@ -59,7 +61,7 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenInvalidComponentCountWhenEnumeratingPowerDomainThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-    SetUp(true);
+    init(true);
 
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
@@ -71,7 +73,7 @@ TEST_F(SysmanDevicePowerFixture, GivenInvalidComponentCountWhenEnumeratingPowerD
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainThenValidPowerHandlesIsReturned) {
-    SetUp(true);
+    init(true);
 
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
@@ -86,7 +88,7 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAllowSetToTrueThenCallSucceeds) {
     // Setting allow set calls or not
-    SetUp(true);
+    init(true);
 
     auto handles = get_power_handles(powerHandleComponentCount);
 
@@ -108,7 +110,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAllowSetToFalseThenCallSucceeds) {
     // Setting allow set calls or not
-    SetUp(false);
+    init(false);
 
     auto handles = get_power_handles(powerHandleComponentCount);
 
@@ -130,7 +132,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrieved) {
     // Setting allow set calls or not
-    SetUp(true);
+    init(true);
 
     auto handles = get_power_handles(powerHandleComponentCount);
 
@@ -151,7 +153,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerLimitsAllowSetToFalseThenCallSucceedsWithValidPowerReadingsRetrieved) {
     // Setting allow set calls or not
-    SetUp(false);
+    init(false);
 
     auto handles = get_power_handles(powerHandleComponentCount);
 
@@ -175,7 +177,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerLimitsAllo
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsAllowSetToFalseThenCallFails) {
     // Setting allow set calls or not
-    SetUp(false);
+    init(false);
 
     auto handles = get_power_handles(powerHandleComponentCount);
 
@@ -198,7 +200,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsAllo
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingEnergyThresholdAllowSetToFalseThenCallFails) {
     // Setting allow set calls or not
-    SetUp(false);
+    init(false);
 
     auto handles = get_power_handles(powerHandleComponentCount);
 
@@ -213,7 +215,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingEnergyThreshold
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingEnergyThresholdAllowSetToTrueThenCallSucceeds) {
     // Setting allow set calls or not
-    SetUp(true);
+    init(true);
 
     auto handles = get_power_handles(powerHandleComponentCount);
 
@@ -234,7 +236,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingEnergyThreshold
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsAllowSetToTrueThenCallSucceeds) {
     // Setting allow set calls or not
-    SetUp(true);
+    init(true);
 
     auto handles = get_power_handles(powerHandleComponentCount);
 

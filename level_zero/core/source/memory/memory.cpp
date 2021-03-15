@@ -112,25 +112,6 @@ ze_result_t DriverHandleImp::getMemAddressRange(const void *ptr, void **pBase, s
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t DriverHandleImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment,
-                                          void **ptr) {
-    if (size > this->devices[0]->getDeviceInfo().maxMemAllocSize) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-    }
-
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, this->rootDeviceIndices, this->deviceBitfields);
-
-    auto usmPtr = svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
-    if (usmPtr == nullptr) {
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-    }
-
-    *ptr = usmPtr;
-
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc,
                                             size_t size, size_t alignment, void **ptr) {
 

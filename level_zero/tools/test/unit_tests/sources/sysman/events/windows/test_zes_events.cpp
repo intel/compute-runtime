@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,9 +25,11 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     GlobalOperations *pGlobalOperationsOld = nullptr;
 
-    void SetUp(bool allowSetCalls) { // NOLINT(readability-identifier-naming)
+    void SetUp() override {
         SysmanDeviceFixture::SetUp();
+    }
 
+    void init(bool allowSetCalls) {
         pKmdSysManager.reset(new Mock<MockKmdSysManager>);
 
         pKmdSysManager->allowSetCalls = allowSetCalls;
@@ -61,7 +63,7 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterTimingOutWithNoEvent) {
-    SetUp(true);
+    init(true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
@@ -74,7 +76,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterReceivingEventOnInfiniteWait) {
-    SetUp(true);
+    init(true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
@@ -90,7 +92,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterReceivingEventOnInfiniteWaitMultipleTimes) {
-    SetUp(true);
+    init(true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();

@@ -615,7 +615,7 @@ class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Tes
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         ze_host_mem_alloc_desc_t hostDesc = {};
-        res = driverHandle->allocHostMem(&hostDesc, 4096u, rootDeviceIndex, ptr);
+        res = context->allocHostMem(&hostDesc, 4096u, rootDeviceIndex, ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     }
 };
@@ -677,7 +677,7 @@ class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, publi
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         ze_host_mem_alloc_desc_t hostDesc = {};
-        res = driverHandle->allocHostMem(&hostDesc, 4096u, rootDeviceIndex, ptr);
+        res = context->allocHostMem(&hostDesc, 4096u, rootDeviceIndex, ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     }
 };

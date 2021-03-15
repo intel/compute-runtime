@@ -113,9 +113,12 @@ struct ContextImp : Context {
         return devices;
     }
 
+    std::set<uint32_t> rootDeviceIndices = {};
+    std::map<uint32_t, NEO::DeviceBitfield> subDeviceBitfields;
+
   protected:
     std::vector<Device *> devices;
-    DriverHandle *driverHandle = nullptr;
+    DriverHandleImp *driverHandle = nullptr;
 };
 
 } // namespace L0

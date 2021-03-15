@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,10 +48,6 @@ struct Mock<DriverHandle> : public DriverHandleImp {
                           ze_device_handle_t *phDevices) override;
     NEO::MemoryManager *getMemoryManager() override;
     NEO::SVMAllocsManager *getSvmAllocManager();
-    ze_result_t allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
-                             size_t size,
-                             size_t alignment,
-                             void **ptr) override;
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
                                const ze_device_mem_alloc_desc_t *deviceDesc,
                                size_t size,

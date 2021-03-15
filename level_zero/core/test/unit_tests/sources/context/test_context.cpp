@@ -63,6 +63,88 @@ TEST_F(MultiDeviceContextTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+struct SVMAllocsManagerContextMock : public NEO::SVMAllocsManager {
+    SVMAllocsManagerContextMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    void *createHostUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties) override {
+        EXPECT_EQ(expectedRootDeviceIndexes.size(), memoryProperties.rootDeviceIndices.size());
+        EXPECT_NE(memoryProperties.rootDeviceIndices.find(expectedRootDeviceIndexes[0]),
+                  memoryProperties.rootDeviceIndices.end());
+        EXPECT_NE(memoryProperties.rootDeviceIndices.find(expectedRootDeviceIndexes[1]),
+                  memoryProperties.rootDeviceIndices.end());
+
+        return alignedMalloc(4096u, 4096u);
+    }
+    std::vector<uint32_t> expectedRootDeviceIndexes;
+};
+
+struct DriverHandleContexteMock : public DriverHandleImp {
+    ze_result_t freeMem(const void *ptr) override {
+        alignedFree(const_cast<void *>(ptr));
+        return ZE_RESULT_SUCCESS;
+    }
+};
+
+struct ContextHostAllocTests : public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        auto executionEnvironment = new NEO::ExecutionEnvironment;
+        auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
+        driverHandle = std::make_unique<DriverHandleContexteMock>();
+        ze_result_t res = driverHandle->initialize(std::move(devices));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new SVMAllocsManagerContextMock(driverHandle->memoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
+
+        zeDevices.resize(numberOfDevicesInContext);
+        driverHandle->getDevice(&numberOfDevicesInContext, zeDevices.data());
+
+        for (uint32_t i = 0; i < numberOfDevicesInContext; i++) {
+            L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(L0::Device::fromHandle(zeDevices[i]));
+            currSvmAllocsManager->expectedRootDeviceIndexes.push_back(deviceImp->getRootDeviceIndex());
+        }
+    }
+
+    void TearDown() override {
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
+        delete currSvmAllocsManager;
+    }
+
+    DebugManagerStateRestore restorer;
+    NEO::SVMAllocsManager *prevSvmAllocsManager;
+    SVMAllocsManagerContextMock *currSvmAllocsManager;
+    std::unique_ptr<DriverHandleContexteMock> driverHandle;
+    std::vector<ze_device_handle_t> zeDevices;
+    const uint32_t numRootDevices = 4u;
+    uint32_t numberOfDevicesInContext = 2u;
+};
+
+TEST_F(ContextHostAllocTests,
+       whenAllocatingHostMemoryOnlyIndexesOfDevicesWithinTheContextAreUsed) {
+    L0::ContextImp *context = nullptr;
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+    ze_result_t res = driverHandle->createContext(&desc,
+                                                  numberOfDevicesInContext,
+                                                  zeDevices.data(),
+                                                  &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
+    void *hostPtr = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    size_t size = 1024;
+    res = context->allocHostMem(&hostDesc, size, 0u, &hostPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, hostPtr);
+
+    res = driverHandle->freeMem(hostPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    context->destroy();
+}
+
 using ContextGetStatusTest = Test<DeviceFixture>;
 TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsReturnedWhenResourcesHaveBeenReleased) {
     ze_context_handle_t hContext;

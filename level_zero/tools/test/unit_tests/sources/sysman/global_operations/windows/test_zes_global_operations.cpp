@@ -20,9 +20,11 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
 
     Mock<GlobalOpsKmdSysManager> *pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
-    void SetUp(bool allowSetCalls) { // NOLINT(readability-identifier-naming)
+    void SetUp() override {
         SysmanDeviceFixture::SetUp();
+    }
 
+    void init(bool allowSetCalls) {
         pKmdSysManager = new Mock<GlobalOpsKmdSysManager>;
 
         pKmdSysManager->allowSetCalls = allowSetCalls;
@@ -55,14 +57,14 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
-    SetUp(true);
+    init(true);
     pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingResetThenSuccessIsReturned) {
-    SetUp(false);
+    init(false);
     pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
