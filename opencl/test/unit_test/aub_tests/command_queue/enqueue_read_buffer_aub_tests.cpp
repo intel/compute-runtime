@@ -35,7 +35,7 @@ struct ReadBufferHw
 
 typedef ReadBufferHw AUBReadBuffer;
 
-HWTEST_P(AUBReadBuffer, simple) {
+HWTEST_P(AUBReadBuffer, WhenReadingBufferThenExpectationsAreMet) {
     MockContext context(this->pClDevice);
 
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
@@ -107,7 +107,7 @@ INSTANTIATE_TEST_CASE_P(AUBReadBuffer_simple,
                             2 * sizeof(cl_float),
                             3 * sizeof(cl_float)));
 
-HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
+HWTEST_F(AUBReadBuffer, GivenReserveCanonicalGpuAddressWhenReadingBufferThenExpectationsAreMet) {
     if (!GetAubTestsConfig<FamilyType>().testCanonicalAddress) {
         return;
     }
@@ -214,7 +214,7 @@ struct AUBReadBufferUnaligned
     }
 };
 
-HWTEST_F(AUBReadBufferUnaligned, all) {
+HWTEST_F(AUBReadBufferUnaligned, GivenOffestAndSizeWhenReadingBufferThenExpectationsAreMet) {
     const std::vector<size_t> offsets = {0, 1, 2, 3};
     const std::vector<size_t> sizes = {4, 3, 2, 1};
     for (auto offset : offsets) {

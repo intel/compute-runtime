@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,7 @@ struct AUBReadImage
     std::unique_ptr<Image> srcImage;
 };
 
-HWTEST_P(AUBReadImage, simpleUnalignedMemory) {
+HWTEST_P(AUBReadImage, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMet) {
 
     const unsigned int testWidth = 5;
     const unsigned int testHeight =
@@ -239,7 +239,7 @@ INSTANTIATE_TEST_CASE_P(
 
 using AUBReadImageUnaligned = AUBImageUnaligned;
 
-HWTEST_F(AUBReadImageUnaligned, misalignedHostPtr) {
+HWTEST_F(AUBReadImageUnaligned, GivenMisalignedHostPtrWhenReadingImageThenExpectationsAreMet) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 1, 2, 3};
     const std::vector<size_t> sizes = {3, 2, 1};
