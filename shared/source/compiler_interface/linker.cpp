@@ -442,10 +442,16 @@ void Linker::applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64
 
         if (sectionName == Elf::SpecialSectionNames::text) {
             symbolAddress += text.gpuAddress;
-        } else if (ConstStringRef(sectionName.c_str()).startsWith(Elf::SpecialSectionNames::debug.data())) {
-            symbolAddress += reinterpret_cast<uint64_t>(inputOutputElf.begin() + decodedElf.sectionHeaders[reloc.symbolSectionIndex].header->offset);
+        } else if (ConstStringRef(sectionName.c_str()).startsWith(Elf::SectionsNamesZebin::dataConst.data())) {
+            symbolAddress += constData.gpuAddress;
+        } else if (ConstStringRef(sectionName.c_str()).startsWith(Elf::SectionsNamesZebin::dataGlobal.data())) {
+            symbolAddress += globalData.gpuAddress;
         } else {
-            continue;
+            // do not offset debug sections
+            if (!ConstStringRef(sectionName.c_str()).startsWith(Elf::SpecialSectionNames::debug.data())) {
+                // skip other sections
+                continue;
+            }
         }
 
         symbolAddress += reloc.addend;

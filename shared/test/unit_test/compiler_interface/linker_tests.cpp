@@ -1779,6 +1779,7 @@ TEST(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocationsA
     sectionNames[2] = ".debug_info";
     sectionNames[3] = ".debug_abbrev";
     sectionNames[4] = ".debug_line";
+    sectionNames[5] = ".data.const";
 
     elf64.setupSecionNames(std::move(sectionNames));
 
@@ -1837,10 +1838,23 @@ TEST(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocationsA
 
     elf64.debugInfoRelocations.emplace_back(reloc4);
 
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc5 = {};
+    reloc5.offset = 16;
+    reloc5.relocType = static_cast<uint32_t>(1);
+    reloc5.symbolName = ".data.const";
+    reloc5.symbolSectionIndex = 5;
+    reloc5.symbolTableIndex = 0;
+    reloc5.targetSectionIndex = 4;
+    reloc5.addend = 20;
+
+    elf64.debugInfoRelocations.emplace_back(reloc5);
+
     uint64_t *relocInDebugLine = reinterpret_cast<uint64_t *>(&storage[400]);
     *relocInDebugLine = 0;
     uint64_t *relocInDebugLine2 = reinterpret_cast<uint64_t *>(&storage[408]);
     *relocInDebugLine2 = 0;
+    uint64_t *relocInDebugLine5 = reinterpret_cast<uint64_t *>(&storage[416]);
+    *relocInDebugLine5 = 0;
 
     NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
     symbol.value = 0;
@@ -1857,15 +1871,18 @@ TEST(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocationsA
     auto reloc2Location = reinterpret_cast<const uint64_t *>(&elf64.sectionHeaders[reloc2.targetSectionIndex].data[static_cast<size_t>(reloc2.offset)]);
     auto reloc3Location = reinterpret_cast<const uint64_t *>(&elf64.sectionHeaders[reloc3.targetSectionIndex].data[static_cast<size_t>(reloc3.offset)]);
     auto reloc4Location = reinterpret_cast<const uint64_t *>(&elf64.sectionHeaders[reloc4.targetSectionIndex].data[static_cast<size_t>(reloc4.offset)]);
+    auto reloc5Location = reinterpret_cast<const uint64_t *>(&elf64.sectionHeaders[reloc5.targetSectionIndex].data[static_cast<size_t>(reloc5.offset)]);
 
-    auto expectedValue0 = reinterpret_cast<uint64_t>(&elf64.sectionHeaders[reloc0.symbolSectionIndex].data[0]) + reloc0.addend;
-    auto expectedValue1 = static_cast<uint32_t>(reinterpret_cast<uint64_t>(&elf64.sectionHeaders[reloc1.symbolSectionIndex].data[0]) + reloc1.addend);
+    uint64_t expectedValue0 = reloc0.addend;
+    uint64_t expectedValue1 = reloc1.addend;
     auto expectedValue2 = uint64_t(0x80001000) + reloc2.addend;
-    uint64_t expectedValue3 = 0; // skip relocation from .data
+    uint64_t expectedValue3 = dataGlobal.gpuAddress + reloc3.addend;
+    uint64_t expectedValue5 = dataConst.gpuAddress + reloc5.addend;
 
     EXPECT_EQ(expectedValue0, *reloc0Location);
     EXPECT_EQ(expectedValue1, *reloc1Location);
     EXPECT_EQ(expectedValue2, *reloc2Location);
     EXPECT_EQ(expectedValue3, *reloc3Location);
     EXPECT_EQ(0u, *reloc4Location);
+    EXPECT_EQ(expectedValue5, *reloc5Location);
 }
