@@ -11,6 +11,7 @@
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -624,8 +625,84 @@ TEST_F(MemoryIPCTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ipcPtr, ptr);
 
+    result = driverHandle->closeIpcMemHandle(ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
     result = driverHandle->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryIPCTests,
+       whenCallingOpenIpcHandleWithIpcHandleAndUsingContextThenDeviceAllocationIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+
+    ze_result_t res = driverHandle->createContext(&desc, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = contextImp->allocDeviceMem(device->toHandle(),
+                                                    &deviceDesc,
+                                                    size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    result = contextImp->getIpcMemHandle(ptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_ipc_memory_flag_t flags = {};
+    void *ipcPtr;
+    result = contextImp->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ipcPtr, ptr);
+
+    result = contextImp->closeIpcMemHandle(ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = contextImp->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MemoryIPCTests,
+       givenCallingGetIpcHandleWithDeviceAllocationAndUsingContextThenIpcHandleIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+
+    ze_result_t res = driverHandle->createContext(&desc, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = contextImp->allocDeviceMem(device->toHandle(),
+                                                    &deviceDesc,
+                                                    size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle;
+    result = contextImp->getIpcMemHandle(ptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = contextImp->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 TEST_F(MemoryIPCTests,
