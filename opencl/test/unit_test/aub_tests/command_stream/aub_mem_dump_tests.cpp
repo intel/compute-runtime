@@ -54,7 +54,7 @@ HWTEST_F(AubMemDumpTests, givenAubFileStreamWhenOpenAndCloseIsCalledThenFileName
     EXPECT_STREQ("", aubFile.getFileName().c_str());
 }
 
-HWTEST_F(AubMemDumpTests, testHeader) {
+HWTEST_F(AubMemDumpTests, GivenHeaderThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
     filePath.append(Os::fileSeparator);
@@ -69,7 +69,7 @@ HWTEST_F(AubMemDumpTests, testHeader) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
+HWTEST_F(AubMemDumpTests, GivenReserveMaxAddressThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
     filePath.append(Os::fileSeparator);
@@ -92,7 +92,7 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, writeVerifyOneBytePPGTT) {
+HWTEST_F(AubMemDumpTests, GivenWriteVerifyOneBytePpgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
     filePath.append(Os::fileSeparator);
@@ -117,7 +117,7 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneBytePPGTT) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, writeVerifyOneByteGGTT) {
+HWTEST_F(AubMemDumpTests, GivenWriteVerifyOneByteGgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
     filePath.append(Os::fileSeparator);
@@ -140,7 +140,7 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneByteGGTT) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, writeVerifySevenBytesPPGTT) {
+HWTEST_F(AubMemDumpTests, GivenWriteVerifySevenBytesPpgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
     filePath.append(Os::fileSeparator);
@@ -165,7 +165,7 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesPPGTT) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, writeVerifySevenBytesGGTT) {
+HWTEST_F(AubMemDumpTests, GivenWriteVerifySevenBytesGgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
     filePath.append(Os::fileSeparator);
@@ -188,19 +188,19 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesGGTT) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, simpleRCS) {
+HWTEST_F(AubMemDumpTests, GivenRcsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_RCS);
 }
 
-HWTEST_F(AubMemDumpTests, simpleBCS) {
+HWTEST_F(AubMemDumpTests, GivenBcsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_BCS);
 }
 
-HWTEST_F(AubMemDumpTests, simpleVCS) {
+HWTEST_F(AubMemDumpTests, GivenVcsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_VCS);
 }
 
-HWTEST_F(AubMemDumpTests, simpleVECS) {
+HWTEST_F(AubMemDumpTests, GivenVecsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_VECS);
 }
 
