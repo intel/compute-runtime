@@ -196,7 +196,11 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         }
 
         if (enableProgramDebugging) {
-            UNRECOVERABLE_IF(neoDevice->getDebugger() != nullptr && enableProgramDebugging);
+            if (neoDevice->getDebugger() != nullptr) {
+                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                      "%s", "Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n");
+                UNRECOVERABLE_IF(neoDevice->getDebugger() != nullptr && enableProgramDebugging);
+            }
             neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger = DebuggerL0::create(neoDevice.get());
         }
 

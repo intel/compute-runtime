@@ -271,5 +271,33 @@ TEST_F(TwoSubDevicesDebuggerEnabledTest, givenDebuggingEnabledWhenSubDevicesAreC
     EXPECT_EQ(deviceL0->getDebugSurface(), subDevice0->getDebugSurface());
 }
 
+TEST(Debugger, GivenLegacyDebuggerAndProgramDebuggingEnabledWhenInitializingDriverThenAbortIsCalledAfterPrintingError) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    ::testing::internal::CaptureStderr();
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockSourceLevelDebugger());
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->initializeMemoryManager();
+
+    executionEnvironment->setDebuggingEnabled();
+
+    auto neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
+
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->enableProgramDebugging = true;
+
+    EXPECT_THROW(driverHandle->initialize(std::move(devices)), std::exception);
+    std::string output = testing::internal::GetCapturedStderr();
+
+    EXPECT_EQ(std::string("Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n"), output);
+}
+
 } // namespace ult
 } // namespace L0
