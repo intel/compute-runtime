@@ -50,7 +50,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     }
     internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*this);
 
-    if (DebugManager.flags.EnableStaticPartitioning.get() == 1) {
+    if (deviceBitfield.count() > 1 && DebugManager.flags.EnableStaticPartitioning.get() != 0) {
         this->staticWorkPartitioningEnabled = true;
     }
 }

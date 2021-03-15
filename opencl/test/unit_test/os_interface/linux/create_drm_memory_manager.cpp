@@ -18,7 +18,7 @@ std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvir
     if (ultHwConfig.forceOsAgnosticMemoryManager) {
         return std::make_unique<OsAgnosticMemoryManager>(executionEnvironment);
     }
-    return std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerInactive,
+    return std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerActive,
                                               DebugManager.flags.EnableForcePin.get(),
                                               true,
                                               executionEnvironment);

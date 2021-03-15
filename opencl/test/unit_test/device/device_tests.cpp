@@ -335,9 +335,12 @@ HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithSubDevicesThenWorkP
     DebugManagerStateRestore restore{};
     {
         UltDeviceFactory deviceFactory{1, 2};
-        EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
         EXPECT_EQ(nullptr, deviceFactory.subDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
         EXPECT_EQ(nullptr, deviceFactory.subDevices[1]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_TRUE(deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled());
+        EXPECT_FALSE(deviceFactory.subDevices[0]->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled());
+        EXPECT_FALSE(deviceFactory.subDevices[1]->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled());
     }
     {
         DebugManager.flags.EnableStaticPartitioning.set(0);
@@ -345,6 +348,9 @@ HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithSubDevicesThenWorkP
         EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
         EXPECT_EQ(nullptr, deviceFactory.subDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
         EXPECT_EQ(nullptr, deviceFactory.subDevices[1]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_FALSE(deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled());
+        EXPECT_FALSE(deviceFactory.subDevices[0]->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled());
+        EXPECT_FALSE(deviceFactory.subDevices[1]->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled());
     }
     {
         DebugManager.flags.EnableStaticPartitioning.set(1);
@@ -352,6 +358,9 @@ HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithSubDevicesThenWorkP
         EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
         EXPECT_EQ(nullptr, deviceFactory.subDevices[0]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
         EXPECT_EQ(nullptr, deviceFactory.subDevices[1]->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation());
+        EXPECT_TRUE(deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled());
+        EXPECT_FALSE(deviceFactory.subDevices[0]->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled());
+        EXPECT_FALSE(deviceFactory.subDevices[1]->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled());
     }
 }
 

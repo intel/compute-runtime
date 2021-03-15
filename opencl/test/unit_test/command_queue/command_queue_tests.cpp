@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
@@ -247,19 +248,14 @@ HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportin
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
-    bool createBcsEngine = !hwInfo.capabilityTable.blitterOperationsSupported;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
+
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     EXPECT_EQ(2u, device->getNumAvailableDevices());
     std::unique_ptr<OsContext> bcsOsContext;
 
     auto subDevice = device->getDeviceById(0);
-    if (createBcsEngine) {
-        auto &engine = subDevice->getEngine(getChosenEngineType(subDevice->getHardwareInfo()), true, false);
-        bcsOsContext.reset(OsContext::create(nullptr, 1, 0, EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false));
-        engine.osContext = bcsOsContext.get();
-        engine.commandStreamReceiver->setupContext(*bcsOsContext);
-    }
     auto bcsEngine = subDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false);
 
     MockCommandQueue cmdQ(nullptr, device.get(), 0);
