@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/direct_submission_properties.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
@@ -50,7 +51,7 @@ bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &su
 bool OsContext::checkDirectSubmissionSupportsEngine(const DirectSubmissionProperties &directSubmissionProperty, aub_stream::EngineType contextEngineType, bool &startOnInit, bool &startInContext) {
     bool supported = directSubmissionProperty.engineSupported;
     startOnInit = directSubmissionProperty.submitOnInit;
-    if (contextEngineType == aub_stream::ENGINE_BCS) {
+    if (EngineHelpers::isBcs(contextEngineType)) {
         int32_t blitterOverrideKey = DebugManager.flags.DirectSubmissionOverrideBlitterSupport.get();
         if (blitterOverrideKey != -1) {
             supported = blitterOverrideKey == 0 ? false : true;
