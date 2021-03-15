@@ -1,6 +1,6 @@
 # Level Zero in Linux distributions
 
-## Centos* 7, 8, Red Hat Enterprise Linux* 7
+## Centos* 7, 8, Stream, Red Hat Enterprise Linux* 7
 
 ```
 yum install yum-plugin-copr
@@ -8,7 +8,7 @@ yum copr enable jdanecki/intel-opencl
 yum install level-zero intel-level-zero-gpu
 ```
 
-## Fedora* 31, 32, rawhide, Red Hat Enterprise Linux* 8, Mageia* 7
+## Fedora* 32, 33, 34, rawhide, Red Hat Enterprise Linux* 8, Mageia* 7, 8
 
 ```
 dnf install dnf-plugins-core
@@ -16,11 +16,12 @@ dnf copr enable jdanecki/intel-opencl
 dnf install level-zero intel-level-zero-gpu
 ```
 
-## OpenSUSE Leap 15.1
+## Mageia* Cauldron
 
 ```
-zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/repo/opensuse-leap-15.1/jdanecki-intel-opencl-opensuse-leap-15.1.repo
-zypper install level-zero intel-level-zero-gpu
+dnf install dnf-plugins-core
+dnf copr enable jdanecki/intel-opencl mageia-cauldron-x86_64
+dnf install level-zero intel-level-zero-gpu
 ```
 
 ## OpenSUSE Leap 15.2
@@ -37,7 +38,7 @@ zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/
 zypper install level-zero intel-level-zero-gpu
 ```
 
-## Ubuntu* ppa for 18.04, 20.04
+## Ubuntu* ppa for 18.04, 20.04, 20.10, 21.04
 
 ```
 add-apt-repository ppa:intel-opencl/intel-opencl
