@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,11 +26,11 @@ inline size_t getThreadsPerWG(uint32_t simd, size_t lws) {
     // This sequence is meant to avoid an CPU DIV instruction.
     result >>= simd == 32
                    ? 5
-                   : simd == 16
-                         ? 4
-                         : simd == 8
-                               ? 3
-                               : 0;
+               : simd == 16
+                   ? 4
+               : simd == 8
+                   ? 3
+                   : 0;
 
     return result;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ class ConditionVariableWithCounter {
         waitersCount = 0;
     }
     template <typename... Args>
-    void wait(Args &&... args) {
+    void wait(Args &&...args) {
         ++waitersCount;
         cond.wait(std::forward<Args>(args)...);
         --waitersCount;

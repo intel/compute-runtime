@@ -31,7 +31,7 @@ class Device : public ReferenceTrackedObject<Device> {
     ~Device() override;
 
     template <typename DeviceT, typename... ArgsT>
-    static DeviceT *create(ArgsT &&... args) {
+    static DeviceT *create(ArgsT &&...args) {
         DeviceT *device = new DeviceT(std::forward<ArgsT>(args)...);
         return createDeviceInternals(device);
     }

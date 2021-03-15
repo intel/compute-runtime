@@ -34,7 +34,7 @@ constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctiona
 
 namespace NEO {
 template <typename... Args>
-void printDebugString(bool showDebugLogs, Args &&... args) {
+void printDebugString(bool showDebugLogs, Args &&...args) {
     if (showDebugLogs) {
         fprintf(std::forward<Args>(args)...);
     }

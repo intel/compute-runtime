@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,7 @@ class FileLogger {
 
     // Expects pairs of args (even number of args)
     template <typename... Types>
-    void logInputs(Types &&... params) {
+    void logInputs(Types &&...params) {
         if (enabled()) {
             if (logApiCalls) {
                 std::unique_lock<std::mutex> theLock(mtx);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,7 +191,7 @@ ze_result_t APITracerWrapperImp(TFunction_pointer zeApiPtr,
                                 TTracer apiOrdinal,
                                 TTracerPrologCallbacks prologCallbacks,
                                 TTracerEpilogCallbacks epilogCallbacks,
-                                Args &&... args) {
+                                Args &&...args) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
     std::vector<APITracerCallbackStateImp<TTracer>> *callbacks_prologs = &prologCallbacks;
 

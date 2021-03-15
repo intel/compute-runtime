@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ struct LightMockConfig {
 };
 
 template <typename ConfigT, typename ObjT, typename... ArgsT>
-typename ConfigT::MockReturnT invokeMocked(ConfigT &config, ObjT obj, ArgsT &&... args) {
+typename ConfigT::MockReturnT invokeMocked(ConfigT &config, ObjT obj, ArgsT &&...args) {
     config.timesCalled += 1;
     if (config.overrideFunc) {
         return config.overrideFunc(obj, std::forward<ArgsT>(args)...);

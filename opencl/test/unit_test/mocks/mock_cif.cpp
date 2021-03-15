@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ namespace CIF {
 namespace Builtins {
 
 template <typename... ArgsT>
-Buffer<0>::Buffer(ArgsT &&... args) {
+Buffer<0>::Buffer(ArgsT &&...args) {
 }
 
 Buffer<0>::~Buffer() {

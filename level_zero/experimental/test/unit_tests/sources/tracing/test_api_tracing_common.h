@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ extern struct APITracerContextImp *pGlobalAPITracerContextImp;
 
 namespace ult {
 template <typename TFunctionPointer, typename... Args>
-ze_result_t callHandleTracerRecursion(TFunctionPointer zeApiPtr, Args &&... args) {
+ze_result_t callHandleTracerRecursion(TFunctionPointer zeApiPtr, Args &&...args) {
     ZE_HANDLE_TRACER_RECURSION(zeApiPtr, args...);
     return ZE_RESULT_ERROR_UNKNOWN;
 }

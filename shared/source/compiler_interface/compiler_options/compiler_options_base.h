@@ -71,7 +71,7 @@ constexpr size_t concatenationLength(const T &t) {
 }
 
 template <typename T, typename... RestT>
-constexpr size_t concatenationLength(const T &arg, const RestT &... rest) {
+constexpr size_t concatenationLength(const T &arg, const RestT &...rest) {
     return length(arg) + spaceSeparatorSize + concatenationLength(rest...);
 }
 
@@ -84,13 +84,13 @@ inline void concatenateAppend(ContainerT &out, T &&arg) {
 }
 
 template <typename ContainerT, typename T, typename... RestT>
-inline void concatenateAppend(ContainerT &out, T &&arg, RestT &&... rest) {
+inline void concatenateAppend(ContainerT &out, T &&arg, RestT &&...rest) {
     concatenateAppend(out, std::forward<T>(arg));
     concatenateAppend(out, std::forward<RestT>(rest)...);
 }
 
 template <typename T, typename... RestT>
-inline std::string concatenate(T &&arg, RestT &&... rest) {
+inline std::string concatenate(T &&arg, RestT &&...rest) {
     std::string ret;
     ret.reserve(nullterminateSize + concatenationLength(arg, rest...));
     concatenateAppend(ret, std::forward<T>(arg), std::forward<RestT>(rest)...);

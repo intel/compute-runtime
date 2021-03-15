@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,12 +33,12 @@ struct PatchTokensStreamReader {
     }
 
     template <typename... ArgsT>
-    bool enoughDataLeft(ArgsT &&... args) {
+    bool enoughDataLeft(ArgsT &&...args) {
         return false == notEnoughDataLeft(std::forward<ArgsT>(args)...);
     }
 
     template <typename T, typename... ArgsT>
-    bool enoughDataLeft(ArgsT &&... args) {
+    bool enoughDataLeft(ArgsT &&...args) {
         return false == notEnoughDataLeft<T>(std::forward<ArgsT>(args)...);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,14 +12,14 @@
 
 namespace NEO {
 
-#define FORWARD_CONSTRUCTOR(THIS_CLASS, BASE_CLASS)                           \
-    template <typename... ArgsT>                                              \
-    THIS_CLASS(ArgsT &&... args) : BASE_CLASS(std::forward<ArgsT>(args)...) { \
+#define FORWARD_CONSTRUCTOR(THIS_CLASS, BASE_CLASS)                          \
+    template <typename... ArgsT>                                             \
+    THIS_CLASS(ArgsT &&...args) : BASE_CLASS(std::forward<ArgsT>(args)...) { \
     }
 
 #define FORWARD_FUNC(FUNC_NAME, BASE_CLASS)                  \
     template <typename... ArgsT>                             \
-    void FUNC_NAME(ArgsT &&... args) {                       \
+    void FUNC_NAME(ArgsT &&...args) {                        \
         BASE_CLASS::FUNC_NAME(std::forward<ArgsT>(args)...); \
     }
 
@@ -52,7 +52,7 @@ struct MockEventBuilder : EventBuilder {
     }
 
     template <typename EventType, typename... ArgsT>
-    static EventType *createAndFinalize(ArgsT &&... args) {
+    static EventType *createAndFinalize(ArgsT &&...args) {
         MockEventBuilder mb;
         mb.create<EventType>(std::forward<ArgsT>(args)...);
         return static_cast<EventType *>(mb.finalizeAndRelease());
