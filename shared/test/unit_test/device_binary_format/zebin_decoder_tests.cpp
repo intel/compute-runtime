@@ -1024,10 +1024,11 @@ TEST(ReadEnumCheckedArgType, GivenValidStringRepresentationThenParseItCorrectly)
     NEO::Yaml::Token tokPrivateBaseStateless(privateBaseStateless, NEO::Yaml::Token::Token::LiteralString);
     NEO::Yaml::Token tokArgByValue(argByvalue, NEO::Yaml::Token::Token::LiteralString);
     NEO::Yaml::Token tokArgByPointer(argBypointer, NEO::Yaml::Token::Token::LiteralString);
+    NEO::Yaml::Token tokBufferOffset(bufferOffset, NEO::Yaml::Token::Token::LiteralString);
 
     using ArgType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgType;
     ArgType enumPackedLocalIds, enumLocalId, enumLocalSize, enumGroupCount, enumGlobalSize,
-        enumEnqueuedLocalSize, enumGlobalIdOffset, enumPrivateBaseStateless, enumArgByValue, enumArgByPointer;
+        enumEnqueuedLocalSize, enumGlobalIdOffset, enumPrivateBaseStateless, enumArgByValue, enumArgByPointer, enumBufferOffset;
     std::string errors;
     bool success;
 
@@ -1080,6 +1081,11 @@ TEST(ReadEnumCheckedArgType, GivenValidStringRepresentationThenParseItCorrectly)
     EXPECT_TRUE(success);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(ArgType::ArgTypeArgBypointer, enumArgByPointer);
+
+    success = NEO::readEnumChecked(&tokBufferOffset, enumBufferOffset, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(ArgType::ArgTypeBufferOffset, enumBufferOffset);
 }
 
 TEST(ReadEnumCheckedArgType, GivenNullTokenThenFail) {
@@ -4096,5 +4102,66 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobalSizeWhenArgSizeV
             EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
         }
+    }
+}
+
+TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenOffsetAndSizeValidThenPopulatesKernelDescriptor) {
+    NEO::ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:   
+                simd_size: 32
+              payload_arguments: 
+                - arg_type: buffer_offset
+                  offset: 8
+                  size: 4
+                  arg_index: 0
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+    const auto &arg = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>();
+    EXPECT_EQ(8, arg.bufferOffset);
+}
+
+TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenSizeIsInvalidThenPopulateArgDescriptorFails) {
+    NEO::KernelDescriptor kernelDescriptor;
+    kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    kernelDescriptor.kernelMetadata.kernelName = "some_kernel";
+
+    NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::PayloadArgumentBaseT bufferOffsetArg;
+    bufferOffsetArg.argType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeBufferOffset;
+    bufferOffsetArg.offset = 8;
+    bufferOffsetArg.argIndex = 0;
+
+    for (auto size : {1, 2, 8}) {
+        bufferOffsetArg.size = size;
+
+        uint32_t crossThreadData = 0;
+        std::string errors, warnings;
+
+        auto err = NEO::populateArgDescriptor(bufferOffsetArg, kernelDescriptor, crossThreadData, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        auto expectedError = "DeviceBinaryFormat::Zebin : Invalid size for argument of type buffer_offset in context of : some_kernel. Expected 4. Got : " + std::to_string(size) + "\n";
+        EXPECT_STREQ(expectedError.c_str(), errors.c_str());
+        EXPECT_TRUE(warnings.empty()) << warnings;
     }
 }

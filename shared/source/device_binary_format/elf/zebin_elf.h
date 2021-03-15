@@ -134,6 +134,7 @@ static constexpr ConstStringRef enqueuedLocalSize("enqueued_local_size");
 static constexpr ConstStringRef privateBaseStateless("private_base_stateless");
 static constexpr ConstStringRef argByvalue("arg_byvalue");
 static constexpr ConstStringRef argBypointer("arg_bypointer");
+static constexpr ConstStringRef bufferOffset("buffer_offset");
 } // namespace ArgType
 namespace MemoryAddressingMode {
 static constexpr ConstStringRef stateless("stateless");
@@ -296,6 +297,7 @@ enum ArgType : uint8_t {
     ArgTypePrivateBaseStateless,
     ArgTypeArgByvalue,
     ArgTypeArgBypointer,
+    ArgTypeBufferOffset
 };
 
 namespace PerThreadPayloadArgument {
