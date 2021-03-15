@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ class MockOclocArgHelper : public OclocArgHelper {
     using FileName = std::string;
     using FileData = std::string;
     using FilesMap = std::map<FileName, FileData>;
+    using OclocArgHelper::deviceProductTable;
     FilesMap &filesMap;
     MockOclocArgHelper(FilesMap &filesMap) : OclocArgHelper(
                                                  0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr),

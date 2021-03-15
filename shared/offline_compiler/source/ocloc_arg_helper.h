@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/offline_compiler/source/decoder/helper.h"
+
+#include "hw_cmds.h"
 
 #include <cctype>
 #include <fstream>
@@ -36,6 +38,11 @@ struct Output {
     Output(const std::string &name, const void *data, const size_t &size);
 };
 
+struct DeviceProduct {
+    unsigned short deviceId;
+    std::string product;
+};
+
 class OclocArgHelper {
   protected:
     std::vector<Source> inputs, headers;
@@ -45,6 +52,7 @@ class OclocArgHelper {
     uint8_t ***dataOutputs = nullptr;
     uint64_t **lenOutputs = nullptr;
     bool hasOutput = false;
+    const std::vector<DeviceProduct> deviceProductTable{{0u, std::string("")}};
     void moveOutputs();
     MessagePrinter messagePrinter;
     Source *findSourceFile(const std::string &filename);
@@ -93,4 +101,5 @@ class OclocArgHelper {
     void printf(const char *format, Args... args) {
         messagePrinter.printf(format, std::forward<Args>(args)...);
     }
+    std::string returnProductNameForDevice(unsigned short deviceId);
 };
