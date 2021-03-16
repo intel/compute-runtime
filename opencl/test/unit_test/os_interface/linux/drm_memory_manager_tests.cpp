@@ -1110,7 +1110,11 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
 
-    ASSERT_EQ(3u, hostPtrManager->getFragmentCount());
+    if (memoryManager->isLimitedRange(rootDeviceIndex)) {
+        ASSERT_EQ(6u, hostPtrManager->getFragmentCount());
+    } else {
+        ASSERT_EQ(3u, hostPtrManager->getFragmentCount());
+    }
 
     auto reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
 
@@ -1120,7 +1124,12 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
         EXPECT_EQ(reqs.allocationFragments[i].allocationPtr, reinterpret_cast<void *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekAddress()));
     }
     memoryManager->freeGraphicsMemory(graphicsAllocation);
-    EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
+
+    if (memoryManager->isLimitedRange(rootDeviceIndex)) {
+        EXPECT_EQ(3u, hostPtrManager->getFragmentCount());
+    } else {
+        EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
+    }
 }
 
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32BitDrmAllocationIsBeingReturned) {

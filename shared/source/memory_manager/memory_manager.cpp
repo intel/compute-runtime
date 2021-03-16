@@ -144,9 +144,14 @@ void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(std::vector
 
     for (auto &rootDeviceIndex : rootDeviceIndices) {
         properties.rootDeviceIndex = rootDeviceIndex;
+        properties.flags.isUSMHostAllocation = true;
+
+        if (isLimitedRange(properties.rootDeviceIndex)) {
+            properties.flags.isUSMHostAllocation = false;
+            DEBUG_BREAK_IF(rootDeviceIndices.size() > 1);
+        }
 
         if (!ptr) {
-            properties.flags.isUSMHostAllocation = true;
             auto graphicsAllocation = allocateGraphicsMemoryWithProperties(properties);
             if (!graphicsAllocation) {
                 return nullptr;
@@ -155,7 +160,6 @@ void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(std::vector
             ptr = reinterpret_cast<void *>(graphicsAllocation->getUnderlyingBuffer());
         } else {
             properties.flags.allocateMemory = false;
-            properties.flags.isUSMHostAllocation = true;
 
             auto graphicsAllocation = createGraphicsAllocationFromExistingStorage(properties, ptr, multiGraphicsAllocation);
 

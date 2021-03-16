@@ -85,3 +85,32 @@ TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGr
     }
     delete tagsMultiAllocation;
 }
+
+TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGraphicsMemoryIsCalledThenAllocationPropertiesUsmFlagIsSetAccordingToAddressRange) {
+    std::vector<uint32_t> rootDeviceIndices;
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < getNumRootDevices(); ++rootDeviceIndex) {
+        rootDeviceIndices.push_back(rootDeviceIndex);
+    }
+
+    auto maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
+    auto tagsMultiAllocation = new MultiGraphicsAllocation(maxRootDeviceIndex);
+
+    AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::TAG_BUFFER, systemMemoryBitfield};
+
+    memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *tagsMultiAllocation);
+    EXPECT_NE(nullptr, tagsMultiAllocation);
+
+    for (auto rootDeviceIndex : rootDeviceIndices) {
+        if (memoryManager->isLimitedRange(rootDeviceIndex)) {
+            EXPECT_EQ(unifiedMemoryProperties.flags.isUSMHostAllocation, false);
+        } else {
+            EXPECT_EQ(unifiedMemoryProperties.flags.isUSMHostAllocation, true);
+        }
+    }
+
+    for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
+        memoryManager->freeGraphicsMemory(graphicsAllocation);
+    }
+    delete tagsMultiAllocation;
+}
