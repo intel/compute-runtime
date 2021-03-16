@@ -81,7 +81,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         }
         if (bcsAllowed) {
             auto &selectorCopyEngine = device->getDeviceById(0)->getSelectorCopyEngine();
-            bcsEngine = &device->getDeviceById(0)->getEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), false, false);
+            bcsEngine = &device->getDeviceById(0)->getEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), EngineUsage::Regular);
         }
     }
 
@@ -870,11 +870,11 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType) {
     const bool isEngineCopyOnly = hwHelper.isCopyOnlyEngineType(engineGroupType);
 
     if (isEngineCopyOnly) {
-        bcsEngine = &device->getEngine(engineType, false, false);
+        bcsEngine = &device->getEngine(engineType, EngineUsage::Regular);
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;
     } else {
-        gpgpuEngine = &device->getEngine(engineType, false, false);
+        gpgpuEngine = &device->getEngine(engineType, EngineUsage::Regular);
     }
 }
 

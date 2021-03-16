@@ -42,7 +42,7 @@ class CommandQueueHw : public CommandQueue {
 
         if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) {
             priority = QueuePriority::LOW;
-            this->gpgpuEngine = &device->getDeviceById(0)->getEngine(getChosenEngineType(device->getHardwareInfo()), true, false);
+            this->gpgpuEngine = &device->getDeviceById(0)->getEngine(getChosenEngineType(device->getHardwareInfo()), EngineUsage::LowPriority);
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_MED_KHR)) {
             priority = QueuePriority::MEDIUM;
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_HIGH_KHR)) {

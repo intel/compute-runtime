@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,6 @@ EngineControl &Device::getInternalEngine() {
 
     auto engineType = getChosenEngineType(getHardwareInfo());
 
-    return this->getDeviceById(0)->getEngine(engineType, false, true);
+    return this->getDeviceById(0)->getEngine(engineType, EngineUsage::Internal);
 }
 } // namespace NEO

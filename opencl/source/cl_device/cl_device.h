@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include "opencl/source/api/cl_types.h"
@@ -65,7 +66,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     bool getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const;
     bool getHostTimer(uint64_t *hostTimestamp) const;
     const HardwareInfo &getHardwareInfo() const;
-    EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority, bool internalUsage);
+    EngineControl &getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage);
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
     std::atomic<uint32_t> &getSelectorCopyEngine();

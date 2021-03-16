@@ -1647,7 +1647,7 @@ HWTEST_F(TimestampPacketTests, givenBlockedEnqueueWithoutKernelWhenSubmittingThe
 
     auto cmdQ0 = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
 
-    auto &secondEngine = device->getEngine(getChosenEngineType(device->getHardwareInfo()), true, false);
+    auto &secondEngine = device->getEngine(getChosenEngineType(device->getHardwareInfo()), EngineUsage::LowPriority);
     static_cast<UltCommandStreamReceiver<FamilyType> *>(secondEngine.commandStreamReceiver)->timestampPacketWriteEnabled = true;
 
     auto cmdQ1 = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));

@@ -249,7 +249,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernel
 
     HwHelper &hwHelper = HwHelper::get(pClDevice->getDevice().getHardwareInfo().platform.eRenderCoreFamily);
     if (!hwHelper.isCooperativeDispatchSupported(pCmdQ2->getGpgpuEngine().getEngineType(), pClDevice->getDevice().getHardwareInfo().platform.eProductFamily)) {
-        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, true, false).osContext;
+        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
     auto kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
@@ -294,7 +294,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
 
     HwHelper &hwHelper = HwHelper::get(pClDevice->getDevice().getHardwareInfo().platform.eRenderCoreFamily);
     if (!hwHelper.isCooperativeDispatchSupported(pCmdQ2->getGpgpuEngine().getEngineType(), pClDevice->getDevice().getHardwareInfo().platform.eProductFamily)) {
-        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, true, false).osContext;
+        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
     auto kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
@@ -339,7 +339,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
 
     HwHelper &hwHelper = HwHelper::get(pClDevice->getDevice().getHardwareInfo().platform.eRenderCoreFamily);
     if (!hwHelper.isCooperativeDispatchSupported(pCmdQ2->getGpgpuEngine().getEngineType(), pClDevice->getDevice().getHardwareInfo().platform.eProductFamily)) {
-        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, true, false).osContext;
+        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
     auto kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);

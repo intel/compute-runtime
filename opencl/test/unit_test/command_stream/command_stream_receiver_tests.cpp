@@ -1218,9 +1218,9 @@ HWTEST_F(CommandStreamReceiverTest, whenCreatingWorkPartitionAllocationThenIniti
     rootDevice.getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.ftrBcsInfo = 1;
     UltCommandStreamReceiver<FamilyType> &csr = rootDevice.getUltCommandStreamReceiver<FamilyType>();
     UltCommandStreamReceiver<FamilyType> *bcsCsrs[] = {
-        reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice.getDeviceById(0)->getEngine(aub_stream::ENGINE_BCS, false, false).commandStreamReceiver),
-        reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice.getDeviceById(1)->getEngine(aub_stream::ENGINE_BCS, false, false).commandStreamReceiver),
-        reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice.getDeviceById(2)->getEngine(aub_stream::ENGINE_BCS, false, false).commandStreamReceiver),
+        reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice.getDeviceById(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver),
+        reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice.getDeviceById(1)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver),
+        reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice.getDeviceById(2)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver),
     };
     const size_t bcsStarts[] = {
         bcsCsrs[0]->commandStream.getUsed(),

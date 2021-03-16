@@ -994,7 +994,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllo
 
     KernelImmutableData kernelImmutableData(device);
 
-    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false).commandStreamReceiver;
+    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
     kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
@@ -1020,7 +1020,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowed
 
     KernelImmutableData kernelImmutableData(device);
 
-    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false).commandStreamReceiver;
+    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
     kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
@@ -1044,7 +1044,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallo
 
     KernelImmutableData kernelImmutableData(device);
 
-    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false).commandStreamReceiver;
+    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
     kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);

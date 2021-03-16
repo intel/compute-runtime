@@ -270,11 +270,11 @@ size_t Device::getIndexOfNonEmptyEngineGroup(EngineGroupType engineGroupType) co
     return result;
 }
 
-EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPriority, bool internalUsage) {
+EngineControl &Device::getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {
     for (auto &engine : engines) {
         if (engine.osContext->getEngineType() == engineType &&
-            engine.osContext->isLowPriority() == lowPriority &&
-            engine.osContext->isInternalEngine() == internalUsage) {
+            engine.osContext->isLowPriority() == (engineUsage == EngineUsage::LowPriority) &&
+            engine.osContext->isInternalEngine() == (engineUsage == EngineUsage::Internal)) {
             return engine;
         }
     }

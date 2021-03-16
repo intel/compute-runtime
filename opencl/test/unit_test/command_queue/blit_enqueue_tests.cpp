@@ -88,7 +88,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         capabilityTable.blitterOperationsSupported = true;
 
         if (createBcsEngine) {
-            auto &engine = device->getEngine(getChosenEngineType(device->getHardwareInfo()), true, false);
+            auto &engine = device->getEngine(getChosenEngineType(device->getHardwareInfo()), EngineUsage::LowPriority);
             bcsOsContext.reset(OsContext::create(nullptr, 1, device->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false));
             engine.osContext = bcsOsContext.get();
             engine.commandStreamReceiver->setupContext(*bcsOsContext);
