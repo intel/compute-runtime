@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/cache_info_impl.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/engine_info_impl.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "drm_neo.h"
 #include "drm_query_flags.h"
@@ -75,6 +76,15 @@ void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isDir
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     this->cacheInfo.reset(new CacheInfoImpl());
+}
+
+int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
+    drm_i915_gem_vm_control ctl = {};
+    auto ret = SysCalls::ioctl(getFileDescriptor(), DRM_IOCTL_I915_GEM_VM_CREATE, &ctl);
+    if (ret == 0) {
+        drmVmId = ctl.vm_id;
+    }
+    return ret;
 }
 
 } // namespace NEO

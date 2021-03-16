@@ -234,15 +234,6 @@ void Drm::destroyDrmContext(uint32_t drmContextId) {
     UNRECOVERABLE_IF(retVal != 0);
 }
 
-int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
-    drm_i915_gem_vm_control ctl = {};
-    auto ret = SysCalls::ioctl(getFileDescriptor(), DRM_IOCTL_I915_GEM_VM_CREATE, &ctl);
-    if (ret == 0) {
-        drmVmId = ctl.vm_id;
-    }
-    return ret;
-}
-
 void Drm::destroyDrmVirtualMemory(uint32_t drmVmId) {
     drm_i915_gem_vm_control ctl = {};
     ctl.vm_id = drmVmId;
@@ -449,7 +440,7 @@ std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId, uint32_t queryItemFlags,
 
 bool Drm::createVirtualMemoryAddressSpace(uint32_t vmCount) {
     for (auto i = 0u; i < vmCount; i++) {
-        uint32_t id = 0;
+        uint32_t id = i;
         if (0 != createDrmVirtualMemory(id)) {
             return false;
         }

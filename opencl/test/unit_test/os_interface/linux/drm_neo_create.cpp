@@ -37,12 +37,17 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
     }
     auto drm = new DrmMockDefault(rootDeviceEnvironment);
 
+    const HardwareInfo *hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    if (HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo)) {
+        drm->queryMemoryInfo();
+    }
+
     if (drm->isVmBindAvailable() && rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
         drm->setPerContextVMRequired(true);
     }
 
     if (!drm->isPerContextVMRequired()) {
-        drm->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+        drm->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(hwInfo));
     }
     return drm;
 }
