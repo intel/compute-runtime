@@ -183,7 +183,6 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
                 HwInfoConfig *hwConfig = HwInfoConfig::get(defaultHwInfo.platform.eProductFamily);
                 hwConfig->configureHardwareCustom(&defaultHwInfo, nullptr);
                 EXPECT_EQ(0, memcmp(&defaultHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));
-                EXPECT_EQ(0, memcmp(&defaultHwInfo.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
                 break;
             }
             default:
