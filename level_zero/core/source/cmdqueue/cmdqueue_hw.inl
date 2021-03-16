@@ -76,7 +76,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        if (isCopyOnlyCommandQueue != commandList->isCopyOnly()) {
+        if (peekIsCopyOnlyCommandQueue() != commandList->isCopyOnly()) {
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
     }

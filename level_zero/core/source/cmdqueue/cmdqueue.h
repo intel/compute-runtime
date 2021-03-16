@@ -53,6 +53,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
         commandQueuePreemptionMode = newPreemptionMode;
     }
 
+    bool peekIsCopyOnlyCommandQueue() const { return this->isCopyOnlyCommandQueue; }
+
   protected:
     NEO::PreemptionMode commandQueuePreemptionMode = NEO::PreemptionMode::Initial;
     bool commandQueueDebugCmdsProgrammed = false;
