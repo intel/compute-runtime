@@ -80,10 +80,11 @@ class ImageSetArgTest : public ClDeviceFixture,
         pKernelInfo->kernelArgInfo[0].isImage = true;
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
-        pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
+        retVal = CL_INVALID_VALUE;
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
+        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
-        ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
+        ASSERT_EQ(CL_SUCCESS, retVal);
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
         pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
@@ -942,10 +943,11 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
         pKernelInfo->kernelArgInfo[0].isMediaBlockImage = true;
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
-        pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
+        retVal = CL_INVALID_VALUE;
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
+        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
-        ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
+        ASSERT_EQ(CL_SUCCESS, retVal);
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
         pKernel->setKernelArgHandler(1, &Kernel::setArgImage);

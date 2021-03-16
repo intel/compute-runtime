@@ -81,7 +81,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritca
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(parentKernel);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
     MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -121,7 +121,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(parentKernel);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
     MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -184,7 +184,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(parentKernel);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
     MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -224,7 +224,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentK
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(parentKernel);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
     MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -264,7 +264,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(parentKernel);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
     MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -302,7 +302,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(parentKernel);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
     MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -358,7 +358,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhen
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(parentKernel);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
     MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -403,7 +403,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
 
     cl_queue_properties properties[3] = {0};
     auto parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(parentKernel);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
 
     MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();

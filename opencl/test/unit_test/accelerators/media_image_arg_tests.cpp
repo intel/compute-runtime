@@ -49,10 +49,11 @@ class MediaImageSetArgTest : public ClDeviceFixture,
         pKernelInfo->kernelArgInfo[1].isImage = true;
         pKernelInfo->kernelArgInfo[0].isImage = true;
 
-        pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
+        int32_t retVal = CL_INVALID_PLATFORM;
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
+        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
-        ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
+        ASSERT_EQ(CL_SUCCESS, retVal);
 
         ASSERT_EQ(true, pKernel->isVmeKernel());
 

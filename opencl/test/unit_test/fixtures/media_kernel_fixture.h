@@ -81,7 +81,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
 
         ASSERT_NE(nullptr, pVmeKernel);
         ASSERT_EQ(true, pVmeKernel->isVmeKernel());
-        pMultiDeviceVmeKernel = new MockMultiDeviceKernel(pVmeKernel);
+        pMultiDeviceVmeKernel = new MockMultiDeviceKernel(MockMultiDeviceKernel::toKernelVector(pVmeKernel));
     }
 
     void TearDown() override {

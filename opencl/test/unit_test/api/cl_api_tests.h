@@ -49,9 +49,9 @@ struct ApiFixture {
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pDevice));
 
-        pKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(pProgram->mockKernelInfo, testedRootDeviceIndex));
+        pMultiDeviceKernel = MockMultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(pProgram->mockKernelInfo, testedRootDeviceIndex));
+        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(testedRootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
-        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
     }
 
     virtual void TearDown() {

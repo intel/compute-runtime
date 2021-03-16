@@ -9,11 +9,22 @@
 namespace NEO {
 
 MultiDeviceKernel::~MultiDeviceKernel() {
-    kernel->decRefInternal();
+    for (auto &pKernel : kernels) {
+        if (pKernel) {
+            pKernel->decRefInternal();
+        }
+    }
 }
-MultiDeviceKernel::MultiDeviceKernel(Kernel *pKernel) : kernel(pKernel) {
-    pKernel->incRefInternal();
-    pKernel->setMultiDeviceKernel(this);
+MultiDeviceKernel::MultiDeviceKernel(KernelVectorType kernelVector) : kernels(std::move(kernelVector)) {
+    for (auto &pKernel : kernels) {
+        if (pKernel) {
+            if (!defaultKernel) {
+                defaultKernel = kernels[(*pKernel->getDevices().begin())->getRootDeviceIndex()];
+            }
+            pKernel->incRefInternal();
+            pKernel->setMultiDeviceKernel(this);
+        }
+    }
 };
 
 } // namespace NEO

@@ -51,14 +51,14 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
             ASSERT_EQ(CL_SUCCESS, retVal);
 
             // create a kernel
-            debugKernel = Kernel::create(
+            pMultiDeviceKernel = MultiDeviceKernel::create(
                 pProgram,
                 pProgram->getKernelInfosForKernel("CopyBuffer"),
                 &retVal);
+            debugKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
             ASSERT_EQ(CL_SUCCESS, retVal);
             ASSERT_NE(nullptr, debugKernel);
-            pMultiDeviceKernel = new MultiDeviceKernel(debugKernel);
 
             cl_mem src = &bufferSrc;
             cl_mem dst = &bufferDst;

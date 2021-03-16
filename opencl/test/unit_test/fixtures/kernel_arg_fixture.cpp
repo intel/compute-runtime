@@ -63,9 +63,10 @@ void KernelImageArgTest::SetUp() {
     ClDeviceFixture::SetUp();
     context.reset(new MockContext(pClDevice));
     program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pClDevice));
-    pKernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
-    ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-    pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(pKernel);
+    int32_t retVal = CL_INVALID_VALUE;
+    pMultiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal));
+    pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
+    ASSERT_EQ(CL_SUCCESS, retVal);
 
     pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
     pKernel->setKernelArgHandler(1, &Kernel::setArgImage);

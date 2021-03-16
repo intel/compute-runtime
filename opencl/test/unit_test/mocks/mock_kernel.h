@@ -73,8 +73,26 @@ struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
 
 class MockMultiDeviceKernel : public MultiDeviceKernel {
   public:
+    static KernelVectorType toKernelVector(Kernel *pKernel) {
+        KernelVectorType kernelVector;
+        kernelVector.resize(pKernel->getProgram()->getMaxRootDeviceIndex() + 1);
+        kernelVector[pKernel->getProgram()->getDevices()[0]->getRootDeviceIndex()] = pKernel;
+        return kernelVector;
+    }
     using MultiDeviceKernel::MultiDeviceKernel;
-
+    template <typename kernel_t = Kernel>
+    static MockMultiDeviceKernel *create(Program *programArg, const KernelInfoContainer &kernelInfoArg) {
+        KernelVectorType kernelVector;
+        kernelVector.resize(programArg->getMaxRootDeviceIndex() + 1);
+        for (auto &pDevice : programArg->getDevices()) {
+            auto rootDeviceIndex = pDevice->getRootDeviceIndex();
+            if (kernelVector[rootDeviceIndex]) {
+                continue;
+            }
+            kernelVector[rootDeviceIndex] = new kernel_t(programArg, kernelInfoArg);
+        }
+        return new MockMultiDeviceKernel(std::move(kernelVector));
+    }
     void takeOwnership() const override {
         MultiDeviceKernel::takeOwnership();
         takeOwnershipCalls++;
@@ -367,7 +385,15 @@ class MockKernelWithInternals {
         mockProgram = new MockProgram(context, false, deviceVector);
         mockKernel = new MockKernel(mockProgram, kernelInfos);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
-        mockMultiDeviceKernel = new MockMultiDeviceKernel(mockKernel);
+        KernelVectorType mockKernels;
+        mockKernels.resize(mockProgram->getMaxRootDeviceIndex() + 1);
+        for (const auto &pClDevice : deviceVector) {
+            auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+            if (mockKernels[rootDeviceIndex] == nullptr) {
+                mockKernels[rootDeviceIndex] = mockKernel;
+            }
+        }
+        mockMultiDeviceKernel = new MockMultiDeviceKernel(std::move(mockKernels));
 
         for (const auto &pClDevice : deviceVector) {
             mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal), pClDevice->getRootDeviceIndex());

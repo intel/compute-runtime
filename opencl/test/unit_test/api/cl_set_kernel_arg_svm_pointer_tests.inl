@@ -40,9 +40,9 @@ class KernelArgSvmFixture : public ApiFixture<> {
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
         pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrGlobal;
 
-        pMockKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex));
-        ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
-        pMockMultiDeviceKernel = new MultiDeviceKernel(pMockKernel);
+        pMockMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), nullptr);
+        pMockKernel = static_cast<MockKernel *>(pMockMultiDeviceKernel->getKernel(testedRootDeviceIndex));
+        ASSERT_NE(nullptr, pMockKernel);
         pMockKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
     }
 
@@ -88,8 +88,9 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKern
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrSvm = false;
 
-    auto pMockKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex));
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(pMockKernel);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(
+        MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), nullptr));
+
     auto retVal = clSetKernelArgSVMPointer(
         pMultiDeviceKernel.get(), // cl_kernel kernel
         (cl_uint)-1,              // cl_uint arg_index

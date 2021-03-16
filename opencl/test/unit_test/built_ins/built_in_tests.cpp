@@ -497,7 +497,7 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
 
     auto mockProgram = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
-    auto pMultiDeviceKernel = new MockMultiDeviceKernel(mockBuiltinKernel);
+    auto pMultiDeviceKernel = new MockMultiDeviceKernel(MockMultiDeviceKernel::toKernelVector(mockBuiltinKernel));
     mockAuxBuiltInOp->usedKernels.at(0).reset(pMultiDeviceKernel);
 
     MockKernelWithInternals mockKernel(*pClDevice, pContext);

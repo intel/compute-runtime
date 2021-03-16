@@ -348,8 +348,7 @@ TEST_F(KernelSubGroupInfoTest, GivenNullDeviceWhenGettingSubGroupInfoFromMultiDe
 
     MockUnrestrictiveContext context;
     auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
-    auto mockKernel = new MockKernel(mockProgram.get(), pKernel->getKernelInfos());
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(mockKernel);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create<MockKernel>(mockProgram.get(), pKernel->getKernelInfos(), nullptr));
 
     retVal = clGetKernelSubGroupInfo(
         pMultiDeviceKernel.get(),

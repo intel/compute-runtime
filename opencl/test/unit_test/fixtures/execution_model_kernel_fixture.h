@@ -43,7 +43,7 @@ struct ExecutionModelKernelFixture : public ProgramFromBinaryFixture,
             pProgram->getKernelInfosForKernel(kernelName),
             &retVal);
 
-        pMultiDeviceKernel = new MockMultiDeviceKernel(pKernel);
+        pMultiDeviceKernel = new MockMultiDeviceKernel(MockMultiDeviceKernel::toKernelVector(pKernel));
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, pKernel);
     }

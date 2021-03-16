@@ -44,11 +44,11 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
     const size_t n = 512;
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {64, 1, 1};
-    cl_int retVal = CL_SUCCESS;
+    cl_int retVal = CL_INVALID_KERNEL;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    auto kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernel);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
+    auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -88,8 +88,9 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    auto kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernel);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
+    auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -128,8 +129,9 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    auto kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernel);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
+    auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -252,8 +254,9 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernel
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
-    auto kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernel);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
+    auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -297,8 +300,9 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
-    auto kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernel);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
+    auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -342,8 +346,9 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
-    auto kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernel);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
+    auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
@@ -1268,8 +1273,9 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreNotAndEventExistSetThenClEnqu
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    auto kernel = Kernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal);
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernel);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), &retVal));
+    auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(kernel->isPatched());

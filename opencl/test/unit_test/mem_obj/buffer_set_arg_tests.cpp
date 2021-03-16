@@ -67,10 +67,11 @@ class BufferSetArgTest : public ContextFixture,
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
-        pKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
+        retVal = CL_INVALID_VALUE;
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
+        pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
-        ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-        pMultiDeviceKernel = new MultiDeviceKernel(pKernel);
+        ASSERT_EQ(CL_SUCCESS, retVal);
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
 
         pKernel->setKernelArgHandler(1, &Kernel::setArgBuffer);

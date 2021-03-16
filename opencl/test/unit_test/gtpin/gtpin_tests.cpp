@@ -1187,7 +1187,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GTPinTests, givenInitializedGTPinInterfaceWhenKernel
     size_t localWorkSize[3] = {1, 1, 1};
 
     MockParentKernel *parentKernel = MockParentKernel::create(*pContext);
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(parentKernel);
+    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(MockMultiDeviceKernel::toKernelVector(parentKernel));
 
     retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel.get(), workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -2406,8 +2406,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
 
     auto pProgramm = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pDevice));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(context.get(), pDevice, nullptr));
-    auto pKernel = new MockKernel(pProgramm.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex));
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(pKernel);
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MockMultiDeviceKernel::create<MockKernel>(pProgramm.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex)));
+    auto pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
 
     pKernel->setSshLocal(nullptr, sizeof(surfaceStateHeap), rootDeviceIndex);
 

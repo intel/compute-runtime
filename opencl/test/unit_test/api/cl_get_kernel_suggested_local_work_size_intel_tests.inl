@@ -98,7 +98,7 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenVariousInputWhenGettingSugge
 
 TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenKernelWithExecutionEnvironmentPatchedWhenGettingSuggestedLocalWorkSizeThenCorrectValuesAreReturned) {
     auto pKernelWithExecutionEnvironmentPatch = MockKernel::create(pCommandQueue->getDevice(), pProgram);
-    MultiDeviceKernel multiDeviceKernelWithExecutionEnvironmentPatch(pKernelWithExecutionEnvironmentPatch);
+    MultiDeviceKernel multiDeviceKernelWithExecutionEnvironmentPatch(MockMultiDeviceKernel::toKernelVector(pKernelWithExecutionEnvironmentPatch));
 
     size_t globalWorkOffset[] = {0, 0, 0};
     size_t globalWorkSize[] = {128, 128, 128};
