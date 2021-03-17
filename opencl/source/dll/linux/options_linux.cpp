@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,5 +20,5 @@ const char *pciDevicesDirectory = "/dev/dri/by-path";
 const char *sysFsProcPathPrefix = "/proc";
 
 // Metrics Library name
-const char *metricsLibraryDllName = "libigdml.so";
+const char *metricsLibraryDllName = "libigdml.so.1";
 } // namespace Os

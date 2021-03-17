@@ -127,11 +127,13 @@ void PerformanceCounters::closeMetricsLibrary() {
     // Destroy hw counters query.
     if (query.IsValid()) {
         metricsLibrary->hwCountersDelete(query);
+        query = {};
     }
 
     // Destroy metrics library context.
     if (context.IsValid()) {
         metricsLibrary->contextDelete(context);
+        context = {};
     }
 }
 
