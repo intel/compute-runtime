@@ -39,5 +39,29 @@ TEST_F(FenceTest, whenQueryingStatusThenCsrAllocationsAreDownloaded) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
 }
 
+TEST_F(FenceTest, whenQueryingStatusWithoutCsrAndFenceUnsignaledThenReturnsNotReady) {
+    Mock<CommandQueue> cmdQueue(device, nullptr);
+    auto fence = Fence::create(&cmdQueue, nullptr);
+
+    EXPECT_NE(nullptr, fence);
+    auto status = fence->queryStatus();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, status);
+    fence->destroy();
+}
+
+TEST_F(FenceTest, whenQueryingStatusAndStateSignaledThenReturnSuccess) {
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    Mock<CommandQueue> cmdQueue(device, csr.get());
+    auto fence = Fence::create(&cmdQueue, nullptr);
+    EXPECT_NE(nullptr, fence);
+
+    auto &graphicsAllocation = fence->getAllocation();
+    auto hostAddr = static_cast<uint64_t *>(graphicsAllocation.getUnderlyingBuffer());
+    *hostAddr = Fence::STATE_SIGNALED;
+    auto status = fence->queryStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+    fence->destroy();
+}
+
 } // namespace ult
 } // namespace L0
