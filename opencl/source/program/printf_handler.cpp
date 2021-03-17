@@ -77,7 +77,8 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 
 void PrintfHandler::printEnqueueOutput() {
     PrintFormatter printFormatter(reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer()), static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize()),
-                                  kernel->is32Bit(), kernel->getKernelInfo().kernelDescriptor.kernelMetadata.printfStringsMap);
+                                  kernel->is32Bit(),
+                                  kernel->getDescriptor().kernelAttributes.flags.usesStringMapForPrintf ? &kernel->getDescriptor().kernelMetadata.printfStringsMap : nullptr);
     printFormatter.printKernelOutput();
 }
 } // namespace NEO

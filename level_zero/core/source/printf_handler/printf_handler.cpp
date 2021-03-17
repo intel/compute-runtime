@@ -29,10 +29,11 @@ NEO::GraphicsAllocation *PrintfHandler::createPrintfBuffer(Device *device) {
 void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
                                 NEO::GraphicsAllocation *printfBuffer, Device *device) {
     bool using32BitGpuPointers = kernelData->getDescriptor().kernelAttributes.gpuPointerSize == 4u;
-    NEO::PrintFormatter printfFormatter{static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer()),
-                                        static_cast<uint32_t>(printfBuffer->getUnderlyingBufferSize()),
-                                        using32BitGpuPointers,
-                                        kernelData->getDescriptor().kernelMetadata.printfStringsMap};
+    NEO::PrintFormatter printfFormatter{
+        static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer()),
+        static_cast<uint32_t>(printfBuffer->getUnderlyingBufferSize()),
+        using32BitGpuPointers,
+        kernelData->getDescriptor().kernelAttributes.flags.usesStringMapForPrintf ? &kernelData->getDescriptor().kernelMetadata.printfStringsMap : nullptr};
     printfFormatter.printKernelOutput();
 
     *reinterpret_cast<uint32_t *>(printfBuffer->getUnderlyingBuffer()) =

@@ -45,7 +45,7 @@ enum class PRINTF_DATA_TYPE : int {
 class PrintFormatter {
   public:
     PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize,
-                   bool using32BitPointers, const StringMap &stringLiteralMap);
+                   bool using32BitPointers, const StringMap *stringLiteralMap = nullptr);
     void printKernelOutput(const std::function<void(char *)> &print = [](char *str) { printToSTDOUT(str); });
 
     constexpr static size_t maxSinglePrintStringLength = 16 * MemoryConstants::kiloByte;
@@ -118,8 +118,9 @@ class PrintFormatter {
     const uint8_t *printfOutputBuffer = nullptr; // buffer extracted from the kernel, contains values to be printed
     uint32_t printfOutputBufferSize = 0;         // size of the data contained in the buffer
 
-    const StringMap &stringLiteralMap;
     bool using32BitPointers = false;
+    const bool usesStringMap;
+    const StringMap *stringLiteralMap;
 
     uint32_t currentOffset = 0; // current position in currently parsed buffer
 };

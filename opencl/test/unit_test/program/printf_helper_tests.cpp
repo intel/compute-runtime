@@ -54,7 +54,7 @@ class PrintFormatterTest : public testing::Test {
         program = std::make_unique<MockProgram>(toClDeviceVector(*device));
         kernel = new MockKernel(program.get(), *kernelInfo, *device);
 
-        printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, is32bit, kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
+        printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, is32bit, &kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
 
         underlyingBuffer[0] = 0;
         underlyingBuffer[1] = 0;
@@ -259,7 +259,7 @@ TEST_P(PrintfUint32Test, GivenFormatContainingUintWhenPrintingThenValueIsInserte
 
 TEST_P(PrintfUint32Test, GivenBufferSizeGreaterThanPrintBufferWhenPrintingThenBufferIsTrimmed) {
     auto input = GetParam();
-    printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), 0, is32bit, kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
+    printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), 0, is32bit, &kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
 
     auto stringIndex = injectFormatString(input.format);
     storeData(stringIndex);
@@ -807,7 +807,7 @@ TEST_F(PrintFormatterTest, GivenPointerWhenPrintingThenValueIsInserted) {
 }
 
 TEST_F(PrintFormatterTest, GivenPointerWith32BitKernelWhenPrintingThen32BitPointerIsPrinted) {
-    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true, kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
+    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true, &kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
     auto stringIndex = injectFormatString("%p");
     storeData(stringIndex);
     kernelInfo->kernelDescriptor.kernelAttributes.gpuPointerSize = 4;
@@ -876,6 +876,34 @@ TEST_F(PrintFormatterTest, GivenEmptyBufferWhenPrintingThenFailSafely) {
     actualOutput[0] = 0;
     printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength); });
     EXPECT_STREQ("", actualOutput);
+}
+
+TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringThenItIsPrintedProperly) {
+    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true));
+    const char *formatString = "test string";
+    storeData(formatString);
+
+    char output[maxPrintfOutputLength];
+    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    EXPECT_STREQ(formatString, output);
+}
+
+TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringAnd2StringsThenDataIsParsedAndPrintedProperly) {
+    printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true));
+    const char *formatString = "%s %s";
+    storeData(formatString);
+
+    const char *string1 = "str1";
+    storeData(PRINTF_DATA_TYPE::STRING);
+    storeData(string1);
+    const char *string2 = "str2";
+    storeData(PRINTF_DATA_TYPE::STRING);
+    storeData(string2);
+
+    const char *expectedOutput = "str1 str2";
+    char output[maxPrintfOutputLength];
+    printFormatter->printKernelOutput([&output](char *str) { strncpy_s(output, maxPrintfOutputLength, str, maxPrintfOutputLength); });
+    EXPECT_STREQ(expectedOutput, output);
 }
 
 TEST(printToSTDOUTTest, GivenStringWhenPrintingToStdoutThenOutputOccurs) {

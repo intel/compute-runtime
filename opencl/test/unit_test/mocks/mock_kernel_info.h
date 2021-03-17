@@ -52,7 +52,10 @@ class MockKernelInfo : public KernelInfo {
 
     void addExtendedDeviceSideEnqueueDescriptor(uint32_t index, uint32_t objectId);
 
-    inline void addToPrintfStringsMap(uint32_t index, const std::string &string) { kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(index, string)); }
+    inline void addToPrintfStringsMap(uint32_t index, const std::string &string) {
+        kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
+        kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(index, string));
+    }
     void setPrintfSurface(uint8_t dataParamSize = sizeof(uintptr_t), CrossThreadDataOffset crossThreadDataOffset = undefined<CrossThreadDataOffset>, SurfaceStateHeapOffset sshOffset = undefined<SurfaceStateHeapOffset>);
     void setBindingTable(SurfaceStateHeapOffset tableOffset, uint8_t numEntries);
     void setGlobalVariablesSurface(uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful = undefined<CrossThreadDataOffset>);

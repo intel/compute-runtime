@@ -171,6 +171,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatele
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrintfSurface &token) {
     dst.kernelAttributes.flags.usesPrintf = true;
+    dst.kernelAttributes.flags.usesStringMapForPrintf = true;
     populatePointerKernelArg(dst.payloadMappings.implicitArgs.printfSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 

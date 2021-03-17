@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -4249,4 +4248,40 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenSizeIs
         EXPECT_STREQ(expectedError.c_str(), errors.c_str());
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
+}
+
+TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypePrintfBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
+    NEO::ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+                - arg_type: printf_buffer
+                  offset: 32
+                  size: 8
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    const auto printfSurfaceAddress = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
+    ASSERT_EQ(32U, printfSurfaceAddress.stateless);
+    EXPECT_EQ(8U, printfSurfaceAddress.pointerSize);
 }

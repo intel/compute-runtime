@@ -260,6 +260,8 @@ bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Ty
         out = ArgTypeT::ArgTypeArgBypointer;
     } else if (tokenValue == PayloadArgument::ArgType::bufferOffset) {
         out = ArgTypeT::ArgTypeBufferOffset;
+    } else if (tokenValue == PayloadArgument::ArgType::printfBuffer) {
+        out = ArgTypeT::ArgTypePrintfBuffer;
     } else {
         outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" argument type in context of " + context.str() + "\n");
         return false;
@@ -760,6 +762,13 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         }
         auto &argAsPointer = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
         argAsPointer.bufferOffset = src.offset;
+        break;
+    }
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypePrintfBuffer: {
+        dst.kernelAttributes.flags.usesPrintf = true;
+        dst.payloadMappings.implicitArgs.printfSurfaceAddress.stateless = src.offset;
+        dst.payloadMappings.implicitArgs.printfSurfaceAddress.pointerSize = src.size;
         break;
     }
     }

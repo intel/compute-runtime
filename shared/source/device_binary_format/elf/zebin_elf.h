@@ -136,6 +136,7 @@ static constexpr ConstStringRef privateBaseStateless("private_base_stateless");
 static constexpr ConstStringRef argByvalue("arg_byvalue");
 static constexpr ConstStringRef argBypointer("arg_bypointer");
 static constexpr ConstStringRef bufferOffset("buffer_offset");
+static constexpr ConstStringRef printfBuffer("printf_buffer");
 } // namespace ArgType
 namespace MemoryAddressingMode {
 static constexpr ConstStringRef stateless("stateless");
@@ -298,7 +299,8 @@ enum ArgType : uint8_t {
     ArgTypePrivateBaseStateless,
     ArgTypeArgByvalue,
     ArgTypeArgBypointer,
-    ArgTypeBufferOffset
+    ArgTypeBufferOffset,
+    ArgTypePrintfBuffer
 };
 
 namespace PerThreadPayloadArgument {

@@ -82,6 +82,7 @@ struct KernelDescriptor final {
 
         union {
             struct {
+                bool usesStringMapForPrintf : 1;
                 bool usesPrintf : 1;
                 bool usesFencesForReadWriteImages : 1;
                 bool usesFlattenedLocalIds;
