@@ -423,6 +423,7 @@ TEST_F(ContextTest, whenCallingMappingVirtualInterfacesThenUnsupportedIsReturned
     ze_memory_access_attribute_t outAccess = {};
     size_t outSize = 0;
     res = contextImp->getVirtualMemAccessAttribute(ptr, size, &outAccess, &outSize);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
 
     res = contextImp->unMapVirtualMem(ptr, size);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
