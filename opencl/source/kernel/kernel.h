@@ -142,7 +142,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     MOCKABLE_VIRTUAL bool isPatched() const;
 
     // API entry points
-    cl_int setArg(uint32_t argIndex, size_t argSize, const void *argVal);
+    cl_int setArgument(uint32_t argIndex, size_t argSize, const void *argVal) { return setArg(argIndex, argSize, argVal); }
     cl_int setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, GraphicsAllocation *svmAlloc, cl_mem_flags svmFlags);
     cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc);
 
@@ -241,6 +241,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     cl_int setArg(uint32_t argIndex, uint64_t argValue);
     cl_int setArg(uint32_t argIndex, cl_mem argValue);
     cl_int setArg(uint32_t argIndex, cl_mem argValue, uint32_t mipLevel);
+    cl_int setArg(uint32_t argIndex, size_t argSize, const void *argVal);
 
     // Handlers
     void setKernelArgHandler(uint32_t argIndex, KernelArgHandler handler);

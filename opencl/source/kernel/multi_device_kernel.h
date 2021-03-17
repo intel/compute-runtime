@@ -43,28 +43,50 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
         return pMultiDeviceKernel;
     }
 
-    cl_int cloneKernel(Kernel *pSourceKernel) { return defaultKernel->cloneKernel(pSourceKernel); }
-    const std::vector<Kernel::SimpleKernelArgInfo> &getKernelArguments() const { return defaultKernel->getKernelArguments(); }
-    cl_int checkCorrectImageAccessQualifier(cl_uint argIndex, size_t argSize, const void *argValue) const { return defaultKernel->checkCorrectImageAccessQualifier(argIndex, argSize, argValue); }
-    void unsetArg(uint32_t argIndex) { return defaultKernel->unsetArg(argIndex); }
-    cl_int setArg(uint32_t argIndex, size_t argSize, const void *argVal) { return defaultKernel->setArg(argIndex, argSize, argVal); }
-    cl_int getInfo(cl_kernel_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const { return defaultKernel->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet); }
-    cl_int getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const { return defaultKernel->getArgInfo(argIndx, paramName, paramValueSize, paramValue, paramValueSizeRet); }
-    const ClDeviceVector &getDevices() const { return defaultKernel->getDevices(); }
-    size_t getKernelArgsNumber() const { return defaultKernel->getKernelArgsNumber(); }
-    Context &getContext() const { return defaultKernel->getContext(); }
-    cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc) { return defaultKernel->setArgSvmAlloc(argIndex, svmPtr, svmAlloc); }
-    bool getHasIndirectAccess() const { return defaultKernel->getHasIndirectAccess(); }
-    void setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue) { return defaultKernel->setUnifiedMemoryProperty(infoType, infoValue); }
-    void setSvmKernelExecInfo(GraphicsAllocation *argValue) { return defaultKernel->setSvmKernelExecInfo(argValue); }
-    void clearSvmKernelExecInfo() { return defaultKernel->clearSvmKernelExecInfo(); }
-    void setUnifiedMemoryExecInfo(GraphicsAllocation *argValue) { return defaultKernel->setUnifiedMemoryExecInfo(argValue); }
-    void clearUnifiedMemoryExecInfo() { return defaultKernel->clearUnifiedMemoryExecInfo(); }
-    int setKernelThreadArbitrationPolicy(uint32_t propertyValue) { return defaultKernel->setKernelThreadArbitrationPolicy(propertyValue); }
-    cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType) { return defaultKernel->setKernelExecutionType(executionType); }
-    int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue) { return defaultKernel->setAdditionalKernelExecInfoWithParam(paramName, paramValueSize, paramValue); }
+    cl_int cloneKernel(Kernel *pSourceKernel);
+    const std::vector<Kernel::SimpleKernelArgInfo> &getKernelArguments() const;
+    cl_int checkCorrectImageAccessQualifier(cl_uint argIndex, size_t argSize, const void *argValue) const;
+    void unsetArg(uint32_t argIndex);
+    cl_int setArg(uint32_t argIndex, size_t argSize, const void *argVal);
+    cl_int getInfo(cl_kernel_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
+    cl_int getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
+    const ClDeviceVector &getDevices() const;
+    size_t getKernelArgsNumber() const;
+    Context &getContext() const;
+    cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc);
+    bool getHasIndirectAccess() const;
+    void setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue);
+    void setSvmKernelExecInfo(GraphicsAllocation *argValue);
+    void clearSvmKernelExecInfo();
+    void setUnifiedMemoryExecInfo(GraphicsAllocation *argValue);
+    void clearUnifiedMemoryExecInfo();
+    int setKernelThreadArbitrationPolicy(uint32_t propertyValue);
+    cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType);
+    int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue);
 
   protected:
+    template <typename FuncType, typename... Args>
+    cl_int getResultFromEachKernel(FuncType function, Args &&...args) const {
+        cl_int retVal = CL_INVALID_VALUE;
+
+        for (auto &pKernel : kernels) {
+            if (pKernel) {
+                retVal = (pKernel->*function)(std::forward<Args>(args)...);
+                if (CL_SUCCESS != retVal) {
+                    break;
+                }
+            }
+        }
+        return retVal;
+    }
+    template <typename FuncType, typename... Args>
+    void callOnEachKernel(FuncType function, Args &&...args) {
+        for (auto &pKernel : kernels) {
+            if (pKernel) {
+                (pKernel->*function)(std::forward<Args>(args)...);
+            }
+        }
+    }
     KernelVectorType kernels;
     Kernel *defaultKernel = nullptr;
 };
