@@ -13,6 +13,7 @@
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"
 
 #include "reg_configs_common.h"
@@ -164,10 +165,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenCopyingImageThenInterfaceD
 HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenSurfaceStateIsCorrect) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
+
     enqueueCopyImage<FamilyType>();
 
     for (uint32_t i = 0; i < 2; ++i) {
-        const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), i);
+        auto index = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo[i].offsetHeap / sizeof(RENDER_SURFACE_STATE);
+        const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), static_cast<uint32_t>(index));
         const auto &imageDesc = dstImage->getImageDesc();
         EXPECT_EQ(imageDesc.image_width, surfaceState.getWidth());
         EXPECT_EQ(imageDesc.image_height, surfaceState.getHeight());
@@ -185,10 +191,12 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenSurfaceStateIsCorrect) {
         EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState.getSurfaceVerticalAlignment());
     }
 
-    const auto &srcSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 0);
+    auto srcIndex = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].offsetHeap / sizeof(RENDER_SURFACE_STATE);
+    const auto &srcSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), static_cast<uint32_t>(srcIndex));
     EXPECT_EQ(srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), srcSurfaceState.getSurfaceBaseAddress());
 
-    const auto &dstSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 1);
+    auto dstIndex = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo[1].offsetHeap / sizeof(RENDER_SURFACE_STATE);
+    const auto &dstSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), static_cast<uint32_t>(dstIndex));
     EXPECT_EQ(dstImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstSurfaceState.getSurfaceBaseAddress());
 }
 

@@ -175,11 +175,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenWritingImageThenInterface
 HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenSurfaceStateIsProgrammedCorrectly) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
     enqueueWriteImage<FamilyType>();
 
-    // BufferToImage kernel uses BTI=1 for destSurface
-    uint32_t bindingTableIndex = 1;
-    const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), bindingTableIndex);
+    auto index = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo[1].offsetHeap / sizeof(RENDER_SURFACE_STATE);
+
+    const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), static_cast<uint32_t>(index));
 
     // EnqueueWriteImage uses  multi-byte copies depending on per-pixel-size-in-bytes
     const auto &imageDesc = dstImage->getImageDesc();
