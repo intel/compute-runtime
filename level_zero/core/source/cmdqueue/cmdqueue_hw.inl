@@ -223,6 +223,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (globalFenceAllocation) {
         residencyContainer.push_back(globalFenceAllocation);
     }
+    const auto workPartitionAllocation = csr->getWorkPartitionAllocation();
+    if (workPartitionAllocation) {
+        residencyContainer.push_back(workPartitionAllocation);
+    }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         NEO::SWTagsManager *tagsManager = neoDevice->getRootDeviceEnvironment().tagsManager.get();
