@@ -260,8 +260,8 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidatePmtReadValueWhenkeyOffsetMap
     auto pPmt = std::make_unique<NiceMock<Mock<TemperaturePmt>>>(pFsAccess.get(), 0, 0);
     pPmt->mockedInit(pFsAccess.get());
     pPmt->keyOffsetMap = deviceKeyOffsetMapTemperature;
-    uint8_t val = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pPmt->readValue("SOMETHING", val));
+    uint32_t val = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPmt->readValue("SOMETHING", val));
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenCreatePmtObjectsWhenRootTileIndexEnumeratesSuccessfulThenValidatePmtObjectsReceivedAndBranches) {
