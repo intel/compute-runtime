@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,15 @@
 
 #include "shared/source/helpers/hw_info.h"
 
+#include "test.h"
+
 namespace NEO {
 
 bool SpecialUltHelperGen12lp::additionalCoherencyCheck(PRODUCT_FAMILY productFamily, bool coherency) {
+    if (productFamily == IGFX_DG1) {
+        EXPECT_FALSE(coherency);
+        return true;
+    }
     return false;
 }
 
