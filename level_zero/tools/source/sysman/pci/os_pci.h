@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include <vector>
 
 namespace L0 {
+int64_t convertPcieSpeedFromGTsToBs(double maxLinkSpeedInGt);
 int32_t convertLinkSpeedToPciGen(double speed);
 double convertPciGenToLinkSpeed(uint32_t gen);
 class OsPci {
