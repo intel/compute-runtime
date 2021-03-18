@@ -215,7 +215,6 @@ int drmContextDestroy(drm_i915_gem_context_destroy *destroy) {
 
 int drmVirtualMemoryCreate(drm_i915_gem_vm_control *control) {
     assert(control);
-
     control->vm_id = ++vmId;
     return failOnVirtualMemoryCreate;
 }
