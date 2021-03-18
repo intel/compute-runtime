@@ -133,6 +133,7 @@ class HwHelper {
     virtual bool additionalKernelExecInfoSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isNewResidencyModelSupported() const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
     virtual uint32_t getDefaultRevisionId(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getNumCacheRegions(const HardwareInfo &hwInfo) const = 0;
@@ -331,6 +332,8 @@ class HwHelperHw : public HwHelper {
     bool isMediaBlockIOSupported(const HardwareInfo &hwInfo) const override;
 
     bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const override;
+
+    bool isNewResidencyModelSupported() const override;
 
     bool isCopyOnlyEngineType(EngineGroupType type) const override;
 

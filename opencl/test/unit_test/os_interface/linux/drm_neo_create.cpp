@@ -29,6 +29,7 @@ class DrmMockDefault : public DrmMock {
 };
 
 Drm **pDrmToReturnFromCreateFunc = nullptr;
+bool disableBindDefaultInTests = true;
 
 Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
     rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
@@ -53,7 +54,9 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
 }
 
 void Drm::overrideBindSupport(bool &useVmBind) {
-    useVmBind = false;
+    if (disableBindDefaultInTests) {
+        useVmBind = false;
+    }
     if (DebugManager.flags.UseVmBind.get() == 1) {
         useVmBind = true;
     }
