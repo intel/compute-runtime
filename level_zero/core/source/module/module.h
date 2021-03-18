@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ struct Module : _ze_module_handle_t {
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) = 0;
     virtual ze_result_t getFunctionPointer(const char *pKernelName, void **pfnFunction) = 0;
-    virtual ze_result_t getGlobalPointer(const char *pGlobalName, void **pPtr) = 0;
+    virtual ze_result_t getGlobalPointer(const char *pGlobalName, size_t *pSize, void **pPtr) = 0;
     virtual ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) = 0;
     virtual ze_result_t getKernelNames(uint32_t *pCount, const char **pNames) = 0;
     virtual ze_result_t getProperties(ze_module_properties_t *pModuleProperties) = 0;

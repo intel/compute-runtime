@@ -573,12 +573,17 @@ ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnF
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, void **pPtr) {
+ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, void **pPtr) {
     auto symbolIt = symbols.find(pGlobalName);
     if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment == NEO::SegmentType::Instructions)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    *pPtr = reinterpret_cast<void *>(symbolIt->second.gpuAddress);
+    if (pPtr) {
+        *pPtr = reinterpret_cast<void *>(symbolIt->second.gpuAddress);
+    }
+    if (pSize) {
+        *pSize = symbolIt->second.symbol.size;
+    }
     return ZE_RESULT_SUCCESS;
 }
 

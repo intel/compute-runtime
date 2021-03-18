@@ -83,7 +83,7 @@ struct ModuleImp : public Module {
 
     ze_result_t getFunctionPointer(const char *pFunctionName, void **pfnFunction) override;
 
-    ze_result_t getGlobalPointer(const char *pGlobalName, void **pPtr) override;
+    ze_result_t getGlobalPointer(const char *pGlobalName, size_t *pSize, void **pPtr) override;
 
     ze_result_t getKernelNames(uint32_t *pCount, const char **pNames) override;
 

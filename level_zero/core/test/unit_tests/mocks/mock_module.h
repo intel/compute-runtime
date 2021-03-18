@@ -50,7 +50,7 @@ struct Mock<Module> : public Module {
                 (uint32_t numModules, ze_module_handle_t *phModules, ze_module_build_log_handle_t *phLinkLog),
                 (override));
     MOCK_METHOD(ze_result_t, getProperties, (ze_module_properties_t * pModuleProperties), (override));
-    MOCK_METHOD(ze_result_t, getGlobalPointer, (const char *pGlobalName, void **pPtr), (override));
+    MOCK_METHOD(ze_result_t, getGlobalPointer, (const char *pGlobalName, size_t *pSize, void **pPtr), (override));
     MOCK_METHOD(bool, isDebugEnabled, (), (const, override));
 };
 

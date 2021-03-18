@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ zeModuleGetGlobalPointer(
     const char *pGlobalName,
     size_t *pSize,
     void **pptr) {
-    return L0::Module::fromHandle(hModule)->getGlobalPointer(pGlobalName, pptr);
+    return L0::Module::fromHandle(hModule)->getGlobalPointer(pGlobalName, pSize, pptr);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
