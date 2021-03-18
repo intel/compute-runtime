@@ -211,6 +211,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceDeviceEnqueueSupport, -1, "-1: default, 0: 
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePipeSupport, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, UseAsyncDrmExec, -1, "-1: default, 0: Disabled 1: Enabled. If enabled, pass EXEC_OBJECT_ASYNC to exec ioctl.")
 DECLARE_DEBUG_VARIABLE(int32_t, UseBindlessMode, -1, "Use precompiled builtins in bindless mode, -1: api dependent, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideSlmSize, -1, "Force different slm size than default in kB")
 
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")

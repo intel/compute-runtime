@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,9 @@ void Device::initializeCaps() {
     deviceInfo.maxFrontEndThreads = HwHelper::getMaxThreadsForVfe(hwInfo);
 
     deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * KB;
+    if (DebugManager.flags.OverrideSlmSize.get() != -1) {
+        deviceInfo.localMemSize = DebugManager.flags.OverrideSlmSize.get() * KB;
+    }
 
     deviceInfo.imageSupport = hwInfo.capabilityTable.supportsImages;
     deviceInfo.image2DMaxWidth = 16384;

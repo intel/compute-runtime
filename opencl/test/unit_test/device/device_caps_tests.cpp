@@ -1517,6 +1517,27 @@ TEST(Device_UseCaps, givenCapabilityTableWhenDeviceInitializeCapsThenVmeVersions
     }
 }
 
+TEST(Device_UseCaps, givenOverrideSlmSizeWhenWhenInitializeDeviceThenSlmSizeInDeviceInfoIsCorrect) {
+    DebugManagerStateRestore restorer;
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+
+    uint32_t defaultSlmSize = hardwareInfo.capabilityTable.slmSize;
+    DebugManager.flags.OverrideSlmSize.set(-1);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
+    auto &deviceInfoWithoutForceSlmFlag = device->getSharedDeviceInfo();
+
+    EXPECT_EQ(defaultSlmSize, static_cast<uint32_t>(deviceInfoWithoutForceSlmFlag.localMemSize / KB));
+
+    uint32_t newSlmSize = 1;
+    EXPECT_NE(defaultSlmSize, newSlmSize);
+
+    DebugManager.flags.OverrideSlmSize.set(newSlmSize);
+    device.reset(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo)});
+    auto &deviceInfoWithForceSlmFlag = device->getSharedDeviceInfo();
+
+    EXPECT_EQ(newSlmSize, static_cast<uint32_t>(deviceInfoWithForceSlmFlag.localMemSize / KB));
+}
+
 typedef HwHelperTest DeviceCapsWithModifiedHwInfoTest;
 
 TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {
