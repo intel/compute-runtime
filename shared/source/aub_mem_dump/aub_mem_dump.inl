@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,8 @@ void AubDump<Traits>::addMemoryWrite(typename Traits::Stream &stream, uint64_t a
     if (hint == CmdServicesMemTraceMemoryWrite::DataTypeHintValues::TraceLogicalRingContextRcs ||
         hint == CmdServicesMemTraceMemoryWrite::DataTypeHintValues::TraceLogicalRingContextBcs ||
         hint == CmdServicesMemTraceMemoryWrite::DataTypeHintValues::TraceLogicalRingContextVcs ||
-        hint == CmdServicesMemTraceMemoryWrite::DataTypeHintValues::TraceLogicalRingContextVecs) {
+        hint == CmdServicesMemTraceMemoryWrite::DataTypeHintValues::TraceLogicalRingContextVecs ||
+        hint == CmdServicesMemTraceMemoryWrite::DataTypeHintValues::TraceLogicalRingContextCcs) {
         DEBUG_BREAK_IF(sizeRemaining <= 0x10cc);
         uint8_t *pLRC = reinterpret_cast<uint8_t *>(const_cast<void *>(memory));
         BaseHelper::fixupLRC(pLRC);
