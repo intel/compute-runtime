@@ -238,38 +238,6 @@ HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenCsrBaseAddressIsNotProgrammed
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
-HWTEST_P(PreemptionTest, whenFailToCreatePreemptionAllocationThenFailToCreateDevice) {
-
-    class MockUltCsr : public UltCommandStreamReceiver<FamilyType> {
-
-      public:
-        MockUltCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
-            : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield) {
-        }
-
-        bool createPreemptionAllocation() override {
-            return false;
-        }
-    };
-
-    class MockDeviceReturnedDebuggerActive : public MockDevice {
-      public:
-        MockDeviceReturnedDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
-            : MockDevice(executionEnvironment, deviceIndex) {}
-        bool isDebuggerActive() const override {
-            return true;
-        }
-        std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
-            return std::make_unique<MockUltCsr>(*executionEnvironment, getDeviceBitfield());
-        }
-    };
-
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-
-    std::unique_ptr<MockDevice> mockDevice(MockDevice::create<MockDeviceReturnedDebuggerActive>(executionEnvironment, 0));
-    EXPECT_EQ(nullptr, mockDevice);
-}
-
 INSTANTIATE_TEST_CASE_P(
     NonMidThread,
     PreemptionTest,

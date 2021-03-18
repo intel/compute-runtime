@@ -182,8 +182,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         defaultEngineIndex = deviceCsrIndex;
     }
 
-    bool debuggingEnabled = getDebugger() != nullptr || isDebuggerActive();
-    if ((preemptionMode == PreemptionMode::MidThread || debuggingEnabled) && !commandStreamReceiver->createPreemptionAllocation()) {
+    if (preemptionMode == PreemptionMode::MidThread && !commandStreamReceiver->createPreemptionAllocation()) {
         return false;
     }
 
