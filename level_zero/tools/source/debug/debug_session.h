@@ -18,7 +18,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual ~DebugSession() = default;
     DebugSession() = delete;
 
-    static DebugSession *create(const zet_debug_config_t &config, Device *device);
+    static DebugSession *create(const zet_debug_config_t &config, Device *device, ze_result_t &result);
 
     static DebugSession *fromHandle(zet_debug_session_handle_t handle) { return static_cast<DebugSession *>(handle); }
     inline zet_debug_session_handle_t toHandle() { return this; }

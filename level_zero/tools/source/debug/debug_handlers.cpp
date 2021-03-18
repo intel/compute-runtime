@@ -11,7 +11,8 @@
 
 namespace L0 {
 
-DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device) {
+DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result) {
+    result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     return nullptr;
 }
 

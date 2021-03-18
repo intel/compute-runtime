@@ -16,8 +16,10 @@ class OsInterfaceWithDebugAttach : public NEO::OSInterface {
   public:
     OsInterfaceWithDebugAttach() : OSInterface() {}
     bool isDebugAttachAvailable() const override {
-        return true;
+        return debugAttachAvailable;
     }
+
+    bool debugAttachAvailable = true;
 };
 
 struct DebugSessionMock : public L0::DebugSession {

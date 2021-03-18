@@ -837,13 +837,15 @@ ze_result_t DeviceImp::mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) {
 };
 
 DebugSession *DeviceImp::getDebugSession(const zet_debug_config_t &config) {
-    if (debugSession != nullptr) {
-        return debugSession.get();
-    }
+    return debugSession.get();
+}
 
+DebugSession *DeviceImp::createDebugSession(const zet_debug_config_t &config, ze_result_t &result) {
     if (!this->isSubdevice) {
-        auto session = DebugSession::create(config, this);
+        auto session = DebugSession::create(config, this, result);
         debugSession.reset(session);
+    } else {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     return debugSession.get();
 }

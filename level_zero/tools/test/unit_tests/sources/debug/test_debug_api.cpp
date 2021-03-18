@@ -56,10 +56,12 @@ TEST_F(DebugApiTest, givenSubdeviceWhenGettingDebugSessionThenNullptrIsReturned)
 }
 
 TEST(DebugSessionTest, WhenDebugSessionCreateIsCalledThenNullptrReturned) {
+    ze_result_t result;
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    L0::DebugSession *session = L0::DebugSession::create(config, nullptr);
+    L0::DebugSession *session = L0::DebugSession::create(config, nullptr, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_EQ(nullptr, session);
 }
 

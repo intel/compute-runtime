@@ -135,5 +135,40 @@ TEST(DebugSessionTest, givenDeviceWithDebugSessionWhenRemoveCalledThenSessionIsN
     EXPECT_EQ(nullptr, deviceImp.debugSession.get());
 }
 
+TEST(DebugSessionTest, givenSubDeviceWhenCreateingSessionThenNullptrReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    deviceImp.isSubdevice = true;
+
+    ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
+    auto session = deviceImp.createDebugSession(config, result);
+
+    EXPECT_EQ(nullptr, session);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST(DebugSessionTest, givenRootDeviceWhenCreateingSessionThenResultReturnedIsCorrect) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+
+    auto osInterface = new OsInterfaceWithDebugAttach;
+    osInterface->debugAttachAvailable = false;
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    deviceImp.isSubdevice = false;
+
+    ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
+    auto session = deviceImp.createDebugSession(config, result);
+
+    EXPECT_EQ(nullptr, session);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
 } // namespace ult
 } // namespace L0

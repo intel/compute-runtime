@@ -256,6 +256,11 @@ struct Mock<Device> : public Device {
         return nullptr;
     }
 
+    DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result) override {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return nullptr;
+    }
+
     void removeDebugSession() override {}
 };
 
