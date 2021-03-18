@@ -70,6 +70,58 @@ TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsD
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
 }
 
+TEST_F(EventPoolCreate, GivenNoDeviceThenEventPoolIsCreated) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        4};
+
+    auto eventPool = EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc);
+
+    ASSERT_NE(nullptr, eventPool);
+    eventPool->destroy();
+}
+
+TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        4};
+
+    auto deviceHandle = device->toHandle();
+    auto eventPool = EventPool::create(driverHandle.get(), 1, &deviceHandle, &eventPoolDesc);
+
+    ASSERT_NE(nullptr, eventPool);
+    eventPool->destroy();
+}
+
+TEST_F(EventPoolCreate, givenGetIpcHandleCalledReturnsNotSupported) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle;
+    ze_result_t result = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST_F(EventPoolCreate, givenCloseIpcHandleCalledReturnsNotSupported) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_result_t result = eventPool->closeIpcHandle();
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
 TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamReceiverSet) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -116,31 +168,55 @@ TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErro
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, value);
 }
 
-TEST_F(EventPoolCreate, GivenNoDeviceThenEventPoolIsCreated) {
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        nullptr,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-        4};
+class EventSynchronizeTest : public Test<DeviceFixture> {
+  public:
+    void SetUp() override {
+        DeviceFixture::SetUp();
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.count = 1;
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
 
-    auto eventPool = EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc);
+        ze_event_desc_t eventDesc = {};
+        eventDesc.index = 0;
+        eventDesc.signal = 0;
+        eventDesc.wait = 0;
 
-    ASSERT_NE(nullptr, eventPool);
-    eventPool->destroy();
+        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+        ASSERT_NE(nullptr, eventPool);
+        event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+        ASSERT_NE(nullptr, event);
+    }
+
+    void TearDown() override {
+        DeviceFixture::TearDown();
+    }
+
+    std::unique_ptr<L0::EventPool> eventPool = nullptr;
+    std::unique_ptr<L0::Event> event;
+};
+
+TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroAndStateInitialHostSynchronizeReturnsNotReady) {
+    ze_result_t result = event->hostSynchronize(0);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
-TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        nullptr,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-        4};
+TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithNonZeroTimeoutAndStateInitialHostSynchronizeReturnsNotReady) {
+    ze_result_t result = event->hostSynchronize(10);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
 
-    auto deviceHandle = device->toHandle();
-    auto eventPool = EventPool::create(driverHandle.get(), 1, &deviceHandle, &eventPoolDesc);
+TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroAndStateSignaledHostSynchronizeReturnsSuccess) {
+    uint64_t *hostAddr = static_cast<uint64_t *>(event->getHostAddress());
+    *hostAddr = Event::STATE_SIGNALED;
+    ze_result_t result = event->hostSynchronize(0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
 
-    ASSERT_NE(nullptr, eventPool);
-    eventPool->destroy();
+TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroAndStateSignaledHostSynchronizeReturnsSuccess) {
+    uint64_t *hostAddr = static_cast<uint64_t *>(event->getHostAddress());
+    *hostAddr = Event::STATE_SIGNALED;
+    ze_result_t result = event->hostSynchronize(10);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 struct EventCreateAllocationResidencyTest : public ::testing::Test {

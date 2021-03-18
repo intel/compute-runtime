@@ -49,6 +49,7 @@ struct Event : _ze_event_handle_t {
     void increasePacketsInUse() { packetsInUse++; }
     void resetPackets() { packetsInUse = 0; }
     uint64_t getGpuAddress() { return gpuAddress; }
+    void *getHostAddress() { return hostAddress; }
     uint32_t getPacketsInUse() { return packetsInUse; }
     uint64_t getTimestampPacketAddress();
 
