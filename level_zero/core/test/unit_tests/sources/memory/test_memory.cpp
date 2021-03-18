@@ -682,15 +682,15 @@ TEST_F(MemoryIPCTests,
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
 
-    ze_result_t res = driverHandle->createContext(&desc, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_result_t result = driverHandle->createContext(&desc, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = contextImp->allocDeviceMem(device->toHandle(),
-                                                    &deviceDesc,
-                                                    size, alignment, &ptr);
+    result = contextImp->allocDeviceMem(device->toHandle(),
+                                        &deviceDesc,
+                                        size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
@@ -702,7 +702,7 @@ TEST_F(MemoryIPCTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = contextImp->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(MemoryIPCTests,
