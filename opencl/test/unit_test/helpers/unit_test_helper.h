@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ struct UnitTestHelper {
 
     static bool isAdditionalSynchronizationRequired();
 
-    static bool isAdditionalMiSemaphoreWaitRequired();
+    static bool isAdditionalMiSemaphoreWaitRequired(const HardwareInfo &hwInfo);
 
     static bool isAdditionalMiSemaphoreWait(const typename GfxFamily::MI_SEMAPHORE_WAIT &semaphoreWait);
 

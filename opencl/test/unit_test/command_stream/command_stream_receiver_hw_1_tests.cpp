@@ -900,7 +900,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     }
 
     if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
-        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired()) {
+        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(*defaultHwInfo)) {
             auto miSemaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(cmdIterator++));
             EXPECT_NE(nullptr, miSemaphoreWaitCmd);
             EXPECT_TRUE(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*miSemaphoreWaitCmd));
@@ -929,7 +929,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     EXPECT_EQ(newTaskCount, miFlushCmd->getImmediateData());
 
     if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
-        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired()) {
+        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(*defaultHwInfo)) {
             auto miSemaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(cmdIterator++));
             EXPECT_NE(nullptr, miSemaphoreWaitCmd);
             EXPECT_TRUE(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*miSemaphoreWaitCmd));
