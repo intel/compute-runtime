@@ -26,7 +26,7 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                           const void *pThreadGroupDimensions, bool isIndirect, bool isPredicate, DispatchKernelEncoderI *dispatchInterface,
                                           uint64_t eventAddress, Device *device, PreemptionMode preemptionMode, bool &requiresUncachedMocs,
-                                          uint32_t &partitionCount) {
+                                          uint32_t &partitionCount, bool isInternal) {
 
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -49,7 +49,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     if (!isIndirect) {
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
-    size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device, threadStartVec, threadDimsVec);
+    size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device, threadStartVec, threadDimsVec, isInternal);
     if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
         auto bbEnd = listCmdBufferStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *bbEnd = Family::cmdInitBatchBufferEnd;
@@ -322,7 +322,7 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
 
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, Vec3<size_t> groupStart, Vec3<size_t> groupCount) {
+size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, Vec3<size_t> groupStart, Vec3<size_t> groupCount, bool isInternal) {
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using MI_BATCH_BUFFER_END = typename Family::MI_BATCH_BUFFER_END;
