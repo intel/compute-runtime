@@ -167,6 +167,7 @@ endfunction()
 function(neo_copy_test_files_with_revision target product revision_id)
   set(outputdir "${TargetDir}/${product}/${revision_id}")
   add_custom_target(${target})
+  add_dependencies(${target} copy_test_kernel_${product}_${revision_id})
   add_custom_command(
                      TARGET ${target}
                      POST_BUILD
