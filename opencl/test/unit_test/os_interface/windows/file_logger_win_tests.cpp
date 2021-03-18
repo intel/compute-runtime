@@ -48,12 +48,16 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     std::stringstream gpuAddressCheck;
     gpuAddressCheck << " GPU address: 0x" << std::hex << allocation.getGpuAddress();
 
+    std::stringstream rootDeviceIndexCheck;
+    rootDeviceIndexCheck << " Root device index: " << allocation.getRootDeviceIndex();
+
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());
         EXPECT_TRUE(str.find(threadIDCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find("Handle: 4") != std::string::npos);
         EXPECT_TRUE(str.find(memoryPoolCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find(gpuAddressCheck.str()) != std::string::npos);
+        EXPECT_TRUE(str.find(rootDeviceIndexCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find("AllocationType: BUFFER") != std::string::npos);
     }
 }

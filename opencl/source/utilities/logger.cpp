@@ -97,6 +97,7 @@ void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
         ss << " ThreadID: " << thisThread;
         ss << " AllocationType: " << getAllocationTypeString(graphicsAllocation);
         ss << " MemoryPool: " << graphicsAllocation->getMemoryPool();
+        ss << " Root device index: " << graphicsAllocation->getRootDeviceIndex();
         ss << " GPU address: 0x" << std::hex << graphicsAllocation->getGpuAddress();
         ss << graphicsAllocation->getAllocationInfoString();
         ss << std::endl;
