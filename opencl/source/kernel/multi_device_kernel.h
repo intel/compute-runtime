@@ -43,7 +43,7 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
         return pMultiDeviceKernel;
     }
 
-    cl_int cloneKernel(Kernel *pSourceKernel);
+    cl_int cloneKernel(MultiDeviceKernel *pSourceMultiDeviceKernel);
     const std::vector<Kernel::SimpleKernelArgInfo> &getKernelArguments() const;
     cl_int checkCorrectImageAccessQualifier(cl_uint argIndex, size_t argSize, const void *argValue) const;
     void unsetArg(uint32_t argIndex);
@@ -63,6 +63,8 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     int setKernelThreadArbitrationPolicy(uint32_t propertyValue);
     cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType);
     int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue);
+    Program *getProgram() const { return program; }
+    const KernelInfoContainer &getKernelInfos() const { return kernelInfos; }
 
   protected:
     template <typename FuncType, typename... Args>
@@ -87,8 +89,11 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
             }
         }
     }
+    static Kernel *determineDefaultKernel(KernelVectorType &kernelVector);
     KernelVectorType kernels;
     Kernel *defaultKernel = nullptr;
+    Program *program = nullptr;
+    const KernelInfoContainer &kernelInfos;
 };
 
 } // namespace NEO

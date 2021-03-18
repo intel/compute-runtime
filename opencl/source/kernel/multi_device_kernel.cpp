@@ -15,12 +15,21 @@ MultiDeviceKernel::~MultiDeviceKernel() {
         }
     }
 }
-MultiDeviceKernel::MultiDeviceKernel(KernelVectorType kernelVector) : kernels(std::move(kernelVector)) {
+
+Kernel *MultiDeviceKernel::determineDefaultKernel(KernelVectorType &kernelVector) {
+    for (auto &pKernel : kernelVector) {
+        if (pKernel) {
+            return kernelVector[(*pKernel->getDevices().begin())->getRootDeviceIndex()];
+        }
+    }
+    return nullptr;
+}
+MultiDeviceKernel::MultiDeviceKernel(KernelVectorType kernelVector) : kernels(std::move(kernelVector)),
+                                                                      defaultKernel(MultiDeviceKernel::determineDefaultKernel(kernels)),
+                                                                      program(defaultKernel->getProgram()),
+                                                                      kernelInfos(defaultKernel->getKernelInfos()) {
     for (auto &pKernel : kernels) {
         if (pKernel) {
-            if (!defaultKernel) {
-                defaultKernel = kernels[(*pKernel->getDevices().begin())->getRootDeviceIndex()];
-            }
             pKernel->incRefInternal();
             pKernel->setMultiDeviceKernel(this);
         }
@@ -35,7 +44,6 @@ size_t MultiDeviceKernel::getKernelArgsNumber() const { return defaultKernel->ge
 Context &MultiDeviceKernel::getContext() const { return defaultKernel->getContext(); }
 bool MultiDeviceKernel::getHasIndirectAccess() const { return defaultKernel->getHasIndirectAccess(); }
 
-cl_int MultiDeviceKernel::cloneKernel(Kernel *pSourceKernel) { return getResultFromEachKernel(&Kernel::cloneKernel, pSourceKernel); }
 cl_int MultiDeviceKernel::checkCorrectImageAccessQualifier(cl_uint argIndex, size_t argSize, const void *argValue) const { return getResultFromEachKernel(&Kernel::checkCorrectImageAccessQualifier, argIndex, argSize, argValue); }
 void MultiDeviceKernel::unsetArg(uint32_t argIndex) { callOnEachKernel(&Kernel::unsetArg, argIndex); }
 cl_int MultiDeviceKernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) { return getResultFromEachKernel(&Kernel::setArgument, argIndex, argSize, argVal); }
@@ -49,4 +57,14 @@ int MultiDeviceKernel::setKernelThreadArbitrationPolicy(uint32_t propertyValue) 
 cl_int MultiDeviceKernel::setKernelExecutionType(cl_execution_info_kernel_type_intel executionType) { return getResultFromEachKernel(&Kernel::setKernelExecutionType, executionType); }
 int32_t MultiDeviceKernel::setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue) { return getResultFromEachKernel(&Kernel::setAdditionalKernelExecInfoWithParam, paramName, paramValueSize, paramValue); }
 
+cl_int MultiDeviceKernel::cloneKernel(MultiDeviceKernel *pSourceMultiDeviceKernel) {
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < kernels.size(); rootDeviceIndex++) {
+        auto pSrcKernel = pSourceMultiDeviceKernel->getKernel(rootDeviceIndex);
+        auto pDstKernel = getKernel(rootDeviceIndex);
+        if (pSrcKernel) {
+            pDstKernel->cloneKernel(pSrcKernel);
+        }
+    }
+    return CL_SUCCESS;
+}
 } // namespace NEO

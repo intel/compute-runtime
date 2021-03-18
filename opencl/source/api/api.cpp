@@ -5565,7 +5565,6 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
 cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
                                     cl_int *errcodeRet) {
     TRACING_ENTER(clCloneKernel, &sourceKernel, &errcodeRet);
-    Kernel *pSourceKernel = nullptr;
     MultiDeviceKernel *pSourceMultiDeviceKernel = nullptr;
     MultiDeviceKernel *pClonedMultiDeviceKernel = nullptr;
 
@@ -5574,13 +5573,12 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
     DBG_LOG_INPUTS("sourceKernel", sourceKernel);
 
     if (CL_SUCCESS == retVal) {
-        pSourceKernel = pSourceMultiDeviceKernel->getDefaultKernel();
-        pClonedMultiDeviceKernel = MultiDeviceKernel::create(pSourceKernel->getProgram(),
-                                                             pSourceKernel->getKernelInfos(),
+        pClonedMultiDeviceKernel = MultiDeviceKernel::create(pSourceMultiDeviceKernel->getProgram(),
+                                                             pSourceMultiDeviceKernel->getKernelInfos(),
                                                              &retVal);
         UNRECOVERABLE_IF((pClonedMultiDeviceKernel == nullptr) || (retVal != CL_SUCCESS));
 
-        retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceKernel);
+        retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel);
     }
 
     if (errcodeRet) {

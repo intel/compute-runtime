@@ -636,7 +636,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool singleSubdevicePreferedInCurrentEnqueue = false;
 
     bool kernelHasIndirectAccess = true;
-    MultiDeviceKernel *pMultiDeviceKernel;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
 };
 
 } // namespace NEO
