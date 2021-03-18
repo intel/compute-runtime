@@ -252,7 +252,9 @@ int main(int argc, char *argv[]) {
     verbose = isVerbose(argc, argv);
     ze_driver_handle_t driverHandle;
     ze_context_handle_t context = nullptr;
-    auto device = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto device = devices[0];
+
     bool outputValidationSuccessful;
 
     const char *defaultPath = "/usr/local/lib/";

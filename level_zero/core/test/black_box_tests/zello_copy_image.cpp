@@ -110,7 +110,8 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
 int main(int argc, char *argv[]) {
     verbose = isVerbose(argc, argv);
     ze_context_handle_t context = nullptr;
-    auto device = zelloInitContextAndGetDevices(context);
+    auto devices = zelloInitContextAndGetDevices(context);
+    auto device = devices[0];
     bool outputValidationSuccessful;
 
     ze_device_properties_t deviceProperties = {};

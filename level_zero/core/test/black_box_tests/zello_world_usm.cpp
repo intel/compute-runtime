@@ -39,7 +39,8 @@ int main(int argc, char *argv[]) {
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    auto device = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto device = devices[0];
 
     ze_device_properties_t deviceProperties = {};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));

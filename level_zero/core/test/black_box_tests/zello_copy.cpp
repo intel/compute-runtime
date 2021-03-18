@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -450,7 +450,8 @@ int main(int argc, char *argv[]) {
     verbose = isVerbose(argc, argv);
 
     ze_context_handle_t context = nullptr;
-    auto device = zelloInitContextAndGetDevices(context);
+    auto devices = zelloInitContextAndGetDevices(context);
+    auto device = devices[0];
     bool outputValidationSuccessful = false;
 
     ze_device_properties_t deviceProperties = {};
