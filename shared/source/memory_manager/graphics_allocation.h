@@ -183,6 +183,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void decReuseCount() { sharingInfo.reuseCount--; }
     uint32_t peekReuseCount() const { return sharingInfo.reuseCount; }
     osHandle peekSharedHandle() const { return sharingInfo.sharedHandle; }
+    void setSharedHandle(osHandle handle) { sharingInfo.sharedHandle = handle; }
 
     void setAllocationType(AllocationType allocationType);
     AllocationType getAllocationType() const { return allocationType; }

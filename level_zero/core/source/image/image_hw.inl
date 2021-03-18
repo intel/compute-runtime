@@ -75,7 +75,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::SHARED_IMAGE, device->getNEODevice()->getDeviceBitfield());
 
             allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(externalMemoryImportDesc->fd, properties, false);
-            device->getNEODevice()->getMemoryManager()->closeSharedHandle(externalMemoryImportDesc->fd);
+            device->getNEODevice()->getMemoryManager()->closeSharedHandle(allocation);
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }

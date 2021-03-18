@@ -628,8 +628,12 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     return drmAllocation;
 }
 
-void DrmMemoryManager::closeSharedHandle(osHandle handle) {
-    closeFunction(handle);
+void DrmMemoryManager::closeSharedHandle(GraphicsAllocation *gfxAllocation) {
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+    if (drmAllocation->peekSharedHandle() != Sharing::nonSharedResource) {
+        closeFunction(drmAllocation->peekSharedHandle());
+        drmAllocation->setSharedHandle(Sharing::nonSharedResource);
+    }
 }
 
 GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
@@ -707,9 +711,7 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
         for (auto bo : bos) {
             unreference(bo, bo && bo->isReused ? false : true);
         }
-        if (gfxAllocation->peekSharedHandle() != Sharing::nonSharedResource) {
-            closeFunction(gfxAllocation->peekSharedHandle());
-        }
+        closeSharedHandle(gfxAllocation);
     }
 
     releaseGpuRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());

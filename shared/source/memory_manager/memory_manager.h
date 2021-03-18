@@ -87,7 +87,7 @@ class MemoryManager {
 
     virtual bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool) { return true; }
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) = 0;
-    virtual void closeSharedHandle(osHandle handle){};
+    virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation){};
     virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) = 0;
 
     virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation);

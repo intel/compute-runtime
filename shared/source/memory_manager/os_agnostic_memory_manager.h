@@ -18,8 +18,6 @@ class MemoryAllocation : public GraphicsAllocation {
     size_t sizeToFree = 0;
     const bool uncacheable;
 
-    void setSharedHandle(osHandle handle) { sharingInfo.sharedHandle = handle; }
-
     MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn,
                      MemoryPool::Type pool, size_t maxOsContextCount)
         : MemoryAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool, maxOsContextCount) {}

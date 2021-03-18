@@ -118,7 +118,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false);
 
-    memoryManager->closeSharedHandle(sharedHandle);
+    memoryManager->closeSharedHandle(alloc);
 
     lock.unlock();
 
