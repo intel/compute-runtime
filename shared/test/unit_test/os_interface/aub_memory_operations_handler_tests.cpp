@@ -7,10 +7,10 @@
 
 #include "shared/test/unit_test/os_interface/aub_memory_operations_handler_tests.h"
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
-
 #include "opencl/test/unit_test/mocks/mock_aub_manager.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
+
+#include "aub_mem_dump.h"
 
 TEST_F(AubMemoryOperationsHandlerTests, givenNullPtrAsAubManagerWhenMakeResidentCalledThenFalseReturned) {
     getMemoryOperationsHandler()->setAubManager(nullptr);

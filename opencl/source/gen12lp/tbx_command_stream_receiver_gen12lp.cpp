@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/gen12lp/hw_cmds.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/populate_factory.h"
@@ -14,6 +13,8 @@
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.inl"
+
+#include "aub_mem_dump.h"
 
 namespace NEO {
 typedef TGLLPFamily Family;

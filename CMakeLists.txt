@@ -881,6 +881,7 @@ endif()
 # Please keep alphabetical order
 include_directories(${NEO_BUILD_DIR})
 include_directories(${NEO_SOURCE_DIR})
+include_directories(${NEO_SHARED_DIRECTORY}/aub_mem_dump/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/built_ins/builtinops${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/command_stream/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options${BRANCH_DIR_SUFFIX})

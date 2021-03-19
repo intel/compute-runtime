@@ -7,10 +7,10 @@
 
 #include "opencl/source/helpers/hardware_context_controller.h"
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/os_context.h"
 
+#include "aub_mem_dump.h"
 #include "third_party/aub_stream/headers/allocation_params.h"
 using namespace NEO;
 

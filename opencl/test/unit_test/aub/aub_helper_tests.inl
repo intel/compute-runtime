@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/aub/aub_helper.h"
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -17,6 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_lrca_helper.h"
 #include "test.h"
 
+#include "aub_mem_dump.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

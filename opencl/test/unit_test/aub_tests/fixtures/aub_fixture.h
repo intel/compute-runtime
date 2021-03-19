@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -22,6 +21,7 @@
 #include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
+#include "aub_mem_dump.h"
 #include "gtest/gtest.h"
 
 #include <sstream>

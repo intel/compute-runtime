@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/aub/aub_helper.h"
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
+
+#include "aub_mem_dump.h"
 
 namespace NEO {
 

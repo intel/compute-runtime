@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -19,6 +18,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "aub_mem_dump.h"
 #include "pipe_control_args.h"
 
 namespace NEO {

@@ -1,28 +1,10 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#pragma once
-#include <cstdint>
-#include <cstdio>
-#include <fstream>
-#include <mutex>
-#include <string>
-
-#ifndef BIT
-#define BIT(x) (((uint64_t)1) << (x))
-#endif
-
-#include "shared/source/aub_mem_dump/aub_data.h"
-
-namespace NEO {
-class AubHelper;
-}
-
-namespace AubMemDump {
 #include "aub_services.h"
 
 constexpr uint32_t rcsRegisterBase = 0x2000;
@@ -402,4 +384,3 @@ struct LrcaHelperCcs : public LrcaHelper {
 
 extern const uint64_t g_pageMask;
 extern const size_t g_dwordCountMax;
-} // namespace AubMemDump

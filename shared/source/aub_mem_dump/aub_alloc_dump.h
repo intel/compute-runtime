@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,11 @@
 
 #pragma once
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+
+#include "aub_mem_dump.h"
 
 using namespace NEO;
 

@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -15,6 +14,7 @@
 #include "test.h"
 
 #include "aub_mapper.h"
+#include "aub_mem_dump.h"
 
 namespace Os {
 extern const char *fileSeparator;

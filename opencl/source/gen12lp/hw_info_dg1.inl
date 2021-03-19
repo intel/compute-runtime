@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_services.h"
+#include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/helpers/constants.h"

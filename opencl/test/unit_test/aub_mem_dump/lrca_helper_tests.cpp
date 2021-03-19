@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
-
 #include "test.h"
+
+#include "aub_mem_dump.h"
 
 #include <memory>
 

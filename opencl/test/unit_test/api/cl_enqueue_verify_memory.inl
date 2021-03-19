@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
-
-#include "shared/source/aub_mem_dump/aub_services.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"

@@ -7,10 +7,10 @@
 
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
+#include "aub_mem_dump.h"
 #include "third_party/aub_stream/headers/allocation_params.h"
 
 #include <algorithm>

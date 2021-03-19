@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "aub_header.h"
+#include "shared/source/aub_mem_dump/aub_header.h"
 
 #include <cstdint>
 
@@ -97,11 +97,11 @@ struct CmdServicesMemTraceVersion {
             Kbl = 16,
             Bdw = 11,
             Icllp = 19,
+            Tgllp = 22,
             Cfl = 24,
             Lkf = 25,
             Ehl = 28,
             Dg1 = 30,
-            Tgllp = 22,
             Adls = 37
         };
     };
