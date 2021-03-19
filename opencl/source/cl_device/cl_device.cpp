@@ -15,7 +15,6 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
@@ -68,7 +67,6 @@ ClDevice::~ClDevice() {
         getSourceLevelDebugger()->notifyDeviceDestruction();
     }
 
-    syncBufferHandler.reset();
     for (auto &subDevice : subDevices) {
         subDevice.reset();
     }
@@ -96,14 +94,6 @@ bool ClDevice::isOcl21Conformant() const {
     auto &hwInfo = device.getHardwareInfo();
     return (hwInfo.capabilityTable.supportsOcl21Features && hwInfo.capabilityTable.supportsDeviceEnqueue &&
             hwInfo.capabilityTable.supportsPipes && hwInfo.capabilityTable.supportsIndependentForwardProgress);
-}
-
-void ClDevice::allocateSyncBufferHandler() {
-    TakeOwnershipWrapper<ClDevice> lock(*this);
-    if (syncBufferHandler.get() == nullptr) {
-        syncBufferHandler = std::make_unique<SyncBufferHandler>(this->getDevice());
-        UNRECOVERABLE_IF(syncBufferHandler.get() == nullptr);
-    }
 }
 
 void ClDevice::retainApi() {

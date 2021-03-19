@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,6 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "opencl/source/kernel/kernel.h"
-
 namespace NEO {
 
 SyncBufferHandler::~SyncBufferHandler() {
@@ -22,22 +20,6 @@ SyncBufferHandler::SyncBufferHandler(Device &device)
     : device(device), memoryManager(*device.getMemoryManager()) {
 
     allocateNewBuffer();
-}
-
-void SyncBufferHandler::prepareForEnqueue(size_t workGroupsCount, Kernel &kernel) {
-    auto requiredSize = workGroupsCount;
-    std::lock_guard<std::mutex> guard(this->mutex);
-
-    bool isCurrentBufferFull = (usedBufferSize + requiredSize > bufferSize);
-    if (isCurrentBufferFull) {
-        memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
-        allocateNewBuffer();
-        usedBufferSize = 0;
-    }
-
-    kernel.patchSyncBuffer(device, graphicsAllocation, usedBufferSize);
-
-    usedBufferSize += requiredSize;
 }
 
 void SyncBufferHandler::makeResident(CommandStreamReceiver &csr) {

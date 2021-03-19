@@ -774,6 +774,17 @@ void KernelImp::printPrintfOutput() {
     PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice());
 }
 
+bool KernelImp::usesSyncBuffer() {
+    return this->kernelImmData->getDescriptor().kernelAttributes.flags.usesSyncBuffer;
+}
+
+void KernelImp::patchSyncBuffer(NEO::Device &device, NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
+    this->residencyContainer.push_back(gfxAllocation);
+    NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
+                      this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.syncBufferAddress,
+                      static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
+}
+
 void KernelImp::setDebugSurface() {
     auto device = module->getDevice();
     if (module->isDebugEnabled() && device->getNEODevice()->getDebugger()) {

@@ -49,7 +49,8 @@ class AppendFillFixture : public DeviceFixture, public ::testing::Test {
                                                  const ze_group_count_t *pThreadGroupDimensions,
                                                  ze_event_handle_t hEvent,
                                                  bool isIndirect,
-                                                 bool isPredicate) override {
+                                                 bool isPredicate,
+                                                 bool isCooperative) override {
             if (numberOfCallsToAppendLaunchKernelWithParams == thresholdOfCallsToAppendLaunchKernelWithParamsToFail) {
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
@@ -59,7 +60,8 @@ class AppendFillFixture : public DeviceFixture, public ::testing::Test {
                                                                                       pThreadGroupDimensions,
                                                                                       hEvent,
                                                                                       isIndirect,
-                                                                                      isPredicate);
+                                                                                      isPredicate,
+                                                                                      isCooperative);
         }
 
         uint32_t thresholdOfCallsToAppendLaunchKernelWithParamsToFail = std::numeric_limits<uint32_t>::max();

@@ -44,6 +44,7 @@ Device::~Device() {
         engine.commandStreamReceiver->flushBatchedSubmissions();
     }
 
+    syncBufferHandler.reset();
     commandStreamReceivers.clear();
     executionEnvironment->memoryManager->waitForDeletions();
 
@@ -306,6 +307,15 @@ bool Device::getHostTimer(uint64_t *hostTimestamp) const {
 
 GmmClientContext *Device::getGmmClientContext() const {
     return getGmmHelper()->getClientContext();
+}
+
+void Device::allocateSyncBufferHandler() {
+    static std::mutex mutex;
+    std::unique_lock<std::mutex> lock(mutex);
+    if (syncBufferHandler.get() == nullptr) {
+        syncBufferHandler = std::make_unique<SyncBufferHandler>(*this);
+        UNRECOVERABLE_IF(syncBufferHandler.get() == nullptr);
+    }
 }
 
 uint64_t Device::getGlobalMemorySize(uint32_t deviceBitfield) const {

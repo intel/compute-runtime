@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/program/sync_buffer_handler.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
@@ -86,7 +86,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     MockSyncBufferHandler *getSyncBufferHandler() {
-        return reinterpret_cast<MockSyncBufferHandler *>(pClDevice->syncBufferHandler.get());
+        return reinterpret_cast<MockSyncBufferHandler *>(pDevice->syncBufferHandler.get());
     }
 
     cl_int enqueueNDCount() {
@@ -94,7 +94,8 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     bool isCooperativeDispatchSupported() {
-        return hwHelper->isCooperativeDispatchSupported(commandQueue->getGpgpuEngine().getEngineType(), commandQueue->getDevice().getHardwareInfo().platform.eProductFamily);
+        auto engineGroupType = hwHelper->getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(), hardwareInfo);
+        return hwHelper->isCooperativeDispatchSupported(engineGroupType, commandQueue->getDevice().getHardwareInfo().platform.eProductFamily);
     }
 
     const cl_uint workDim = 1;
@@ -157,7 +158,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenMaxWorkgroupCountWhenEnqueuingCon
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenTooHighWorkgroupCountWhenEnqueuingConcurrentKernelThenErrorIsReturned) {
     size_t maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws, commandQueue);
     workgroupCount[0] = maxWorkGroupCount + 1;
-    globalWorkSize[0] = maxWorkGroupCount * lws[0] + 1;
+    globalWorkSize[0] = maxWorkGroupCount * lws[0];
 
     auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -180,7 +181,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSshRequiredWhenPatchingSyncBuffer
     kernelInternals->kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindfulAndStateless;
     patchAllocateSyncBuffer();
 
-    pClDevice->allocateSyncBufferHandler();
+    pDevice->allocateSyncBufferHandler();
     auto syncBufferHandler = getSyncBufferHandler();
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(kernel->getSurfaceStateHeap(rootDeviceIndex),
                                                                            sPatchAllocateSyncBuffer.SurfaceStateHeapOffset));
@@ -196,7 +197,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSshRequiredWhenPatchingSyncBuffer
 
 TEST(SyncBufferHandlerDeviceTest, GivenRootDeviceWhenAllocateSyncBufferIsCalledTwiceThenTheObjectIsCreatedOnlyOnce) {
     const size_t testUsedBufferSize = 100;
-    MockClDevice rootDevice{new MockDevice};
+    MockDevice rootDevice;
     rootDevice.allocateSyncBufferHandler();
     auto syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(rootDevice.syncBufferHandler.get());
 
@@ -210,20 +211,17 @@ TEST(SyncBufferHandlerDeviceTest, GivenRootDeviceWhenAllocateSyncBufferIsCalledT
 }
 
 TEST(SyncBufferHandlerDeviceTest, GivenSubDeviceWhenAllocateSyncBufferIsCalledTwiceThenTheObjectIsCreatedOnlyOnce) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
-    auto rootDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto &subDevice = rootDevice->subDevices[0];
-    subDevice->allocateSyncBufferHandler();
-    auto syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice->syncBufferHandler.get());
+    UltDeviceFactory ultDeviceFactory{1, 2};
+    auto pSubDevice = ultDeviceFactory.subDevices[0];
+    pSubDevice->allocateSyncBufferHandler();
+    auto syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(pSubDevice->syncBufferHandler.get());
 
     const size_t testUsedBufferSize = 100;
     ASSERT_NE(syncBufferHandler->usedBufferSize, testUsedBufferSize);
     syncBufferHandler->usedBufferSize = testUsedBufferSize;
 
-    subDevice->allocateSyncBufferHandler();
-    syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice->syncBufferHandler.get());
+    pSubDevice->allocateSyncBufferHandler();
+    syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(pSubDevice->syncBufferHandler.get());
 
     EXPECT_EQ(testUsedBufferSize, syncBufferHandler->usedBufferSize);
 }

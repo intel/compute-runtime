@@ -31,7 +31,6 @@ class MemoryManager;
 class PerformanceCounters;
 class Platform;
 class SourceLevelDebugger;
-class SyncBufferHandler;
 struct DeviceInfo;
 struct EngineControl;
 struct HardwareCapabilities;
@@ -77,7 +76,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     double getPlatformHostTimerResolution() const;
     bool isSimulation() const;
     GFXCORE_FAMILY getRenderCoreFamily() const;
-    void allocateSyncBufferHandler();
     PerformanceCounters *getPerformanceCounters();
     PreemptionMode getPreemptionMode() const;
     bool isDebuggerActive() const;
@@ -119,7 +117,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     ClDevice *getDeviceById(uint32_t deviceId);
     const std::string &peekCompilerExtensions() const;
     const std::string &peekCompilerExtensionsWithFeatures() const;
-    std::unique_ptr<SyncBufferHandler> syncBufferHandler;
     DeviceBitfield getDeviceBitfield() const;
     bool isDeviceEnqueueSupported() const;
     bool arePipesSupported() const;

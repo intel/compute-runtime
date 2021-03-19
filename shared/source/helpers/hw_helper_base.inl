@@ -536,7 +536,7 @@ bool MemorySynchronizationCommands<GfxFamily>::isPipeControlPriorToPipelineSelec
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isCooperativeDispatchSupported(const aub_stream::EngineType engine, const PRODUCT_FAMILY productFamily) const {
+bool HwHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const PRODUCT_FAMILY productFamily) const {
     return true;
 }
 

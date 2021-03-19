@@ -18,6 +18,8 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
 namespace L0 {
 namespace ult {
 
@@ -250,7 +252,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
 
     auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
-    auto result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false);
+    auto result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
@@ -260,7 +262,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
 
     sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
-    result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, true, false);
+    result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, true, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
@@ -1007,6 +1009,60 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
     itor = find<MI_MATH *>(itor, cmdList.end());
     ASSERT_EQ(cmdList.end(), itor);
     device->getDriverHandle()->freeMem(reinterpret_cast<void *>(numLaunchArgs));
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenInvalidEventListWhenAppendLaunchCooperativeKernelIsCalledThenErrorIsReturned) {
+    createKernel();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+    returnValue = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 1, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, SklPlusMatcher) {
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
+    kernelAttributes.flags.usesSyncBuffer = true;
+    kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    bool isCooperative = true;
+    result = pCommandList->appendLaunchCooperativeKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    {
+        VariableBackup<uint32_t> usesSyncBuffer{&kernelAttributes.flags.packed};
+        usesSyncBuffer = false;
+        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+    {
+        VariableBackup<uint32_t> groupCountX{&groupCount.groupCountX};
+        uint32_t maximalNumberOfWorkgroupsAllowed;
+        kernel.suggestMaxCooperativeGroupCount(&maximalNumberOfWorkgroupsAllowed);
+        groupCountX = maximalNumberOfWorkgroupsAllowed + 1;
+        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    }
+    {
+        VariableBackup<bool> cooperative{&isCooperative};
+        cooperative = false;
+        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    }
 }
 
 } // namespace ult

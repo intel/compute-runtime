@@ -203,7 +203,8 @@ struct CommandListCoreFamily : CommandListImp {
                                                               const ze_group_count_t *pThreadGroupDimensions,
                                                               ze_event_handle_t hEvent,
                                                               bool isIndirect,
-                                                              bool isPredicate);
+                                                              bool isPredicate,
+                                                              bool isCooperative);
     ze_result_t appendLaunchKernelSplit(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions, ze_event_handle_t hEvent);
     ze_result_t prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions);
 
@@ -211,6 +212,7 @@ struct CommandListCoreFamily : CommandListImp {
                                   const void **pRanges);
 
     ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, uint32_t lws[3]);
+    ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t *pThreadGroupDimensions);
     void appendWriteKernelTimestamp(ze_event_handle_t hEvent, bool beforeWalker, bool maskLsb);
     void appendEventForProfiling(ze_event_handle_t hEvent, bool beforeWalker);
     void appendEventForProfilingAllWalkers(ze_event_handle_t hEvent, bool beforeWalker);

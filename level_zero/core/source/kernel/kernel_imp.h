@@ -16,8 +16,6 @@
 
 namespace L0 {
 
-struct GraphicsAllocation;
-
 struct KernelImp : Kernel {
     KernelImp(Module *module);
 
@@ -81,6 +79,9 @@ struct KernelImp : Kernel {
 
     NEO::GraphicsAllocation *getPrintfBufferAllocation() override { return this->printfBuffer; }
     void printPrintfOutput() override;
+
+    bool usesSyncBuffer() override;
+    void patchSyncBuffer(NEO::Device &device, NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
 
     const uint8_t *getSurfaceStateHeapData() const override { return surfaceStateHeapData.get(); }
     uint32_t getSurfaceStateHeapDataSize() const override { return surfaceStateHeapDataSize; }

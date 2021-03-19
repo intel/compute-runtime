@@ -132,6 +132,9 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual NEO::GraphicsAllocation *getPrintfBufferAllocation() = 0;
     virtual void printPrintfOutput() = 0;
 
+    virtual bool usesSyncBuffer() = 0;
+    virtual void patchSyncBuffer(NEO::Device &device, NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) = 0;
+
     Kernel() = default;
     Kernel(const Kernel &) = delete;
     Kernel(Kernel &&) = delete;

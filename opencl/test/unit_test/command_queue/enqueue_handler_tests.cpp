@@ -547,7 +547,7 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
     sPatchBindingTableState.Count = 1;
     sPatchBindingTableState.SurfaceStateOffset = 0;
 
-    pClDevice->allocateSyncBufferHandler();
+    pDevice->allocateSyncBufferHandler();
 
     size_t offset = 0;
     size_t size = 1;
@@ -591,7 +591,7 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
         hwParser.parseCommands<FamilyType>(*mockCmdQ);
 
         auto &surfaceState = hwParser.getSurfaceState<FamilyType>(&surfaceStateHeap, 0);
-        auto pSyncBufferHandler = static_cast<MockSyncBufferHandler *>(pClDevice->syncBufferHandler.get());
+        auto pSyncBufferHandler = static_cast<MockSyncBufferHandler *>(pDevice->syncBufferHandler.get());
         EXPECT_EQ(pSyncBufferHandler->graphicsAllocation->getGpuAddress(), surfaceState.getSurfaceBaseAddress());
     }
 }

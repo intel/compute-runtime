@@ -124,7 +124,7 @@ class HwHelper {
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
-    virtual bool isCooperativeDispatchSupported(const aub_stream::EngineType engine, const PRODUCT_FAMILY productFamily) const = 0;
+    virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const PRODUCT_FAMILY productFamily) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual bool isMediaBlockIOSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCopyOnlyEngineType(EngineGroupType type) const = 0;
@@ -325,7 +325,7 @@ class HwHelperHw : public HwHelper {
 
     bool packedFormatsSupported() const override;
 
-    bool isCooperativeDispatchSupported(const aub_stream::EngineType engine, const PRODUCT_FAMILY productFamily) const override;
+    bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const PRODUCT_FAMILY productFamily) const override;
 
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 

@@ -24,6 +24,8 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/program/sync_buffer_handler.h"
+#include "shared/source/program/sync_buffer_handler.inl"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -146,7 +148,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     }
 
     return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions,
-                                        hEvent, false, false);
+                                        hEvent, false, false, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -156,7 +158,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
                                                                                 uint32_t numWaitEvents,
                                                                                 ze_event_handle_t *phWaitEvents) {
 
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents);
+    if (ret) {
+        return ret;
+    }
+
+    return appendLaunchKernelWithParams(hKernel, pLaunchFuncArgs,
+                                        hSignalEvent, false, false, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -172,7 +180,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     }
     appendEventForProfiling(hEvent, true);
     ret = appendLaunchKernelWithParams(hKernel, pDispatchArgumentsBuffer,
-                                       nullptr, true, false);
+                                       nullptr, true, false, false);
     appendSignalEventPostWalker(hEvent);
 
     return ret;
@@ -203,7 +211,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
 
         ret = appendLaunchKernelWithParams(phKernels[i],
                                            haveLaunchArguments ? &pLaunchArgumentsBuffer[i] : nullptr,
-                                           nullptr, true, true);
+                                           nullptr, true, true, false);
         if (ret) {
             return ret;
         }
@@ -668,7 +676,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
                                                                           const ze_group_count_t *pThreadGroupDimensions,
                                                                           ze_event_handle_t hEvent) {
-    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, nullptr, false, false);
+    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, nullptr, false, false, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -850,7 +858,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
     ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
 
     ze_result_t ret = appendLaunchKernelWithParams(builtinFunction->toHandle(), &dispatchFuncArgs,
-                                                   nullptr, false, false);
+                                                   nullptr, false, false, false);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -1535,6 +1543,30 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
                                                                    eventStateClear,
                                                                    COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
     }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kernel, NEO::Device &device,
+                                                                    const ze_group_count_t *pThreadGroupDimensions) {
+    auto &hwInfo = device.getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (!hwHelper.isCooperativeDispatchSupported(this->engineGroupType, hwInfo.platform.eProductFamily)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    uint32_t maximalNumberOfWorkgroupsAllowed;
+    auto ret = kernel.suggestMaxCooperativeGroupCount(&maximalNumberOfWorkgroupsAllowed);
+    UNRECOVERABLE_IF(ret != ZE_RESULT_SUCCESS);
+    size_t requestedNumberOfWorkgroups = (pThreadGroupDimensions->groupCountX * pThreadGroupDimensions->groupCountY *
+                                          pThreadGroupDimensions->groupCountZ);
+    if (requestedNumberOfWorkgroups > maximalNumberOfWorkgroupsAllowed) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    device.allocateSyncBufferHandler();
+    device.syncBufferHandler->prepareForEnqueue(requestedNumberOfWorkgroups, kernel);
 
     return ZE_RESULT_SUCCESS;
 }

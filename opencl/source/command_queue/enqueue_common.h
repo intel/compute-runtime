@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/sync_buffer_handler.h"
+#include "shared/source/program/sync_buffer_handler.inl"
 #include "shared/source/utilities/range.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -404,7 +405,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
         auto &lws = multiDispatchInfo.begin()->getLocalWorkgroupSize();
         size_t workGroupsCount = (gws.x * gws.y * gws.z) /
                                  (lws.x * lws.y * lws.z);
-        device->syncBufferHandler->prepareForEnqueue(workGroupsCount, *multiDispatchInfo.peekMainKernel());
+        device->getDevice().syncBufferHandler->prepareForEnqueue(workGroupsCount, *multiDispatchInfo.peekMainKernel());
     }
 
     if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
@@ -685,7 +686,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     auto rootDeviceIndex = device->getRootDeviceIndex();
     if (multiDispatchInfo.peekMainKernel()->usesSyncBuffer(rootDeviceIndex)) {
-        device->syncBufferHandler->makeResident(getGpgpuCommandStreamReceiver());
+        device->getDevice().syncBufferHandler->makeResident(getGpgpuCommandStreamReceiver());
     }
 
     if (timestampPacketContainer) {

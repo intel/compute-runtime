@@ -1117,7 +1117,8 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
     auto &hardwareInfo = getHardwareInfo(rootDeviceIndex);
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
-    if (!hwHelper.isCooperativeDispatchSupported(commandQueue->getGpgpuEngine().getEngineType(), hardwareInfo.platform.eProductFamily)) {
+    auto engineGroupType = hwHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(), hardwareInfo);
+    if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo.platform.eProductFamily)) {
         return 0;
     }
 

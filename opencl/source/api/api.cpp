@@ -5892,7 +5892,8 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
     auto rootDeviceIndex = device.getRootDeviceIndex();
     auto &hardwareInfo = device.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    if (!hwHelper.isCooperativeDispatchSupported(pCommandQueue->getGpgpuEngine().getEngineType(), hardwareInfo.platform.eProductFamily)) {
+    auto engineGroupType = hwHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(), hardwareInfo);
+    if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo.platform.eProductFamily)) {
         retVal = CL_INVALID_COMMAND_QUEUE;
         return retVal;
     }
@@ -5921,7 +5922,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
             return retVal;
         }
 
-        device.allocateSyncBufferHandler();
+        device.getDevice().allocateSyncBufferHandler();
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_KERNEL_INTEL, numEventsInWaitList, eventWaitList, event)) {

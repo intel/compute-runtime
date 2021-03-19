@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::commandListPerThreadScratchSize;
     using BaseClass::commandListPreemptionMode;
+    using BaseClass::engineGroupType;
     using BaseClass::getAlignedAllocation;
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getHostPtrAlloc;

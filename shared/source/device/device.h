@@ -15,6 +15,7 @@
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/program/sync_buffer_handler.h"
 
 #include "opencl/source/os_interface/performance_counters.h"
 
@@ -92,6 +93,7 @@ class Device : public ReferenceTrackedObject<Device> {
     }
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface() const;
     BuiltIns *getBuiltIns() const;
+    void allocateSyncBufferHandler();
 
     virtual uint32_t getRootDeviceIndex() const = 0;
     virtual uint32_t getNumAvailableDevices() const = 0;
@@ -101,6 +103,7 @@ class Device : public ReferenceTrackedObject<Device> {
     virtual BindlessHeapsHelper *getBindlessHeapsHelper() const = 0;
 
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
+    std::unique_ptr<SyncBufferHandler> syncBufferHandler;
 
   protected:
     Device() = delete;
