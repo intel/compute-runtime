@@ -265,10 +265,11 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenDebugVariableToDisableCpuCopiesWhenBuf
 TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInNonSystemMemoryPoolThenIsReadWriteOnCpuAllowedReturnsFalse) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto memoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
+    MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment(nullptr, false, 1u);
+    MockMemoryManager *memoryManager = new MockMemoryManager(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
 
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
     cl_int retVal = 0;
@@ -288,10 +289,11 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
 TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyWhenCpuCopyIsEvaluatedThenTrueIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto memoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
+    MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment(nullptr, false, 1u);
+    MockMemoryManager *memoryManager = new MockMemoryManager(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
 
-    device->injectMemoryManager(memoryManager);
     MockContext context(device.get());
 
     cl_int retVal = 0;
@@ -310,10 +312,11 @@ TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyWhenCpuCopyIsEvaluated
 TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyButItIsNotPossibleWhenCpuCopyIsEvaluatedThenFalseIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto memoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
+    MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment(nullptr, false, 1u);
+    MockMemoryManager *memoryManager = new MockMemoryManager(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
 
-    device->injectMemoryManager(memoryManager);
     MockContext context(device.get());
 
     cl_int retVal = 0;

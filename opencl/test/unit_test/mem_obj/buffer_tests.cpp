@@ -206,20 +206,20 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsThenB
     memset(memory, 0xAA, MemoryConstants::pageSize);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
+    auto memoryManager = std::make_unique<::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>>(*device->getExecutionEnvironment());
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr))
-        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
+        .WillRepeatedly(::testing::Invoke(memoryManager.get(), &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
 
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR;
 
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, (void *)memory, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     EXPECT_FALSE(buffer->isMemObjZeroCopy());
     void *memoryStorage = buffer->getCpuAddressForMemoryTransfer();
@@ -236,20 +236,20 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsAndSe
     memset(memory, 0xAA, MemoryConstants::pageSize);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
     // Second fail returns nullptr
+    auto memoryManager = std::make_unique<::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>>(*device->getExecutionEnvironment());
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillRepeatedly(::testing::Return(nullptr));
 
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR;
 
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, (void *)memory, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     EXPECT_EQ(nullptr, buffer.get());
     alignedFree(memory);
@@ -262,19 +262,19 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThe
     memset(memory, 0xAA, MemoryConstants::pageSize);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
+    auto memoryManager = std::make_unique<::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>>(*device->getExecutionEnvironment());
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr));
 
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
 
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, (void *)memory, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     EXPECT_EQ(nullptr, buffer.get());
     alignedFree(memory);
@@ -282,37 +282,37 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThe
 
 TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAllocationFailsAndReturnsNullptr) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
+    auto memoryManager = std::make_unique<::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>>(*device->getExecutionEnvironment());
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr));
 
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY;
 
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     EXPECT_EQ(nullptr, buffer.get());
 }
 
 TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPoolThenBufferIsNotZeroCopy) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
+    auto memoryManager = std::make_unique<::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>>(*device->getExecutionEnvironment());
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool));
+        .WillOnce(::testing::Invoke(memoryManager.get(), &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool));
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     ASSERT_NE(nullptr, buffer.get());
     EXPECT_FALSE(buffer->isMemObjZeroCopy());
@@ -320,20 +320,20 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPool
 
 TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPoolThenAllocationIsNotAddedToHostPtrManager) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
-
-    device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
+    auto memoryManager = std::make_unique<::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>>(*device->getExecutionEnvironment());
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool));
+        .WillOnce(::testing::Invoke(memoryManager.get(), &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool));
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
     auto hostPtrAllocationCountBefore = hostPtrManager->getFragmentCount();
+    ctx.memoryManager = memoryManager.get();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+    ctx.memoryManager = device->getMemoryManager();
 
     ASSERT_NE(nullptr, buffer.get());
     auto hostPtrAllocationCountAfter = hostPtrManager->getFragmentCount();

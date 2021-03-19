@@ -13,16 +13,6 @@ using namespace NEO;
 struct BcsTests : public Test<ClDeviceFixture> {
     void SetUp() override {
         Test<ClDeviceFixture>::SetUp();
-
-        auto &csr = pDevice->getGpgpuCommandStreamReceiver();
-        auto engine = csr.getMemoryManager()->getRegisteredEngineForCsr(&csr);
-        auto contextId = engine->osContext->getContextId();
-
-        delete engine->osContext;
-        engine->osContext = OsContext::create(nullptr, contextId, pDevice->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
-        engine->osContext->incRefInternal();
-        csr.setupContext(*engine->osContext);
-
         context = std::make_unique<MockContext>(pClDevice);
     }
 

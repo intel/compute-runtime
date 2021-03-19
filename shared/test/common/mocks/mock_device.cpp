@@ -30,8 +30,13 @@ MockDevice::MockDevice()
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(*executionEnvironment, this->getRootDeviceIndex(), this->getDeviceBitfield());
     commandStreamReceivers.resize(1);
     commandStreamReceivers[0].reset(commandStreamReceiver);
+    OsContext *osContext = getMemoryManager()->createAndRegisterOsContext(commandStreamReceiver,
+                                                                          EngineTypeUsage{aub_stream::ENGINE_CCS, EngineUsage::Regular},
+                                                                          this->getDeviceBitfield(),
+                                                                          PreemptionMode::Disabled, true);
+    commandStreamReceiver->setupContext(*osContext);
     this->engines.resize(1);
-    this->engines[0] = {commandStreamReceiver, nullptr};
+    this->engines[0] = {commandStreamReceiver, osContext};
     this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
     initializeCaps();
 }

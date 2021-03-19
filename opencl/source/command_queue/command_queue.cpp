@@ -73,6 +73,8 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         gpgpuEngine = &device->getDefaultEngine();
+        UNRECOVERABLE_IF(gpgpuEngine->getEngineType() >= aub_stream::EngineType::NUM_ENGINES);
+
         bool bcsAllowed = hwInfo.capabilityTable.blitterOperationsSupported &&
                           hwHelper.isSubDeviceEngineSupported(hwInfo, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
 
