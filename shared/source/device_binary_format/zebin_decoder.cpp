@@ -887,9 +887,11 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
         }
     }
 
-    kernelDescriptor.payloadMappings.explicitArgs.resize(maxArgumentIndex + 1);
-    kernelDescriptor.explicitArgsExtendedMetadata.resize(maxArgumentIndex + 1);
-    kernelDescriptor.kernelAttributes.numArgsToPatch = maxArgumentIndex + 1;
+    if (!payloadArguments.empty()) {
+        kernelDescriptor.payloadMappings.explicitArgs.resize(maxArgumentIndex + 1);
+        kernelDescriptor.explicitArgsExtendedMetadata.resize(maxArgumentIndex + 1);
+        kernelDescriptor.kernelAttributes.numArgsToPatch = maxArgumentIndex + 1;
+    }
 
     uint32_t crossThreadDataSize = 0;
     for (const auto &arg : payloadArguments) {
