@@ -165,6 +165,7 @@ SchedulerKernel &MockContext::getSchedulerKernel() {
         schedulerBuiltIn->pKernel = Kernel::create<MockSchedulerKernel>(
             schedulerBuiltIn->pProgram,
             kernelInfos,
+            *clDevice,
             &retVal);
 
         UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize(clDevice->getRootDeviceIndex()) != 0);

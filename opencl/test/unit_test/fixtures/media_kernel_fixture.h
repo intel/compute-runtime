@@ -74,14 +74,14 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
         cl_int retVal;
 
         // create the VME kernel
-        pVmeKernel = Kernel::create<MockKernel>(
+        pMultiDeviceVmeKernel = MultiDeviceKernel::create<MockKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel("device_side_block_motion_estimate_intel"),
             &retVal);
 
+        pVmeKernel = pMultiDeviceVmeKernel->getKernel(pDevice->getRootDeviceIndex());
         ASSERT_NE(nullptr, pVmeKernel);
         ASSERT_EQ(true, pVmeKernel->isVmeKernel());
-        pMultiDeviceVmeKernel = new MockMultiDeviceKernel(MockMultiDeviceKernel::toKernelVector(pVmeKernel));
     }
 
     void TearDown() override {
@@ -97,7 +97,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
     GenCmdList::iterator itorWalker1;
     GenCmdList::iterator itorWalker2;
 
-    MockMultiDeviceKernel *pMultiDeviceVmeKernel = nullptr;
+    MultiDeviceKernel *pMultiDeviceVmeKernel = nullptr;
     Kernel *pVmeKernel = nullptr;
     bool skipVmeTest = false;
 };

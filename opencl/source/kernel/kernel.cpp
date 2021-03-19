@@ -64,14 +64,15 @@ class Surface;
 
 uint32_t Kernel::dummyPatchLocation = 0xbaddf00d;
 
-Kernel::Kernel(Program *programArg, const KernelInfoContainer &kernelInfosArg, bool schedulerKernel)
+Kernel::Kernel(Program *programArg, const KernelInfoContainer &kernelInfosArg, ClDevice &clDeviceArg, bool schedulerKernel)
     : isParentKernel(kernelInfosArg[programArg->getDevices()[0]->getRootDeviceIndex()]->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue),
       isSchedulerKernel(schedulerKernel),
       executionEnvironment(programArg->getExecutionEnvironment()),
       program(programArg),
+      clDevice(clDeviceArg),
       deviceVector(programArg->getDevices()),
       kernelInfos(kernelInfosArg),
-      defaultRootDeviceIndex(programArg->getDevices()[0]->getRootDeviceIndex()) {
+      defaultRootDeviceIndex(clDeviceArg.getRootDeviceIndex()) {
     kernelDeviceInfos.resize(program->getMaxRootDeviceIndex() + 1);
     program->retain();
     program->retainForKernel();

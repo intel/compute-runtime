@@ -111,6 +111,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
         pKernel = Kernel::create<MockKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel("SimpleArg"),
+            *pDevice,
             &retVal);
 
         ASSERT_NE(nullptr, pKernel);
@@ -157,6 +158,7 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
         kernel = Kernel::create<MockKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel("simpleNonUniform"),
+            *device,
             &retVal);
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -203,6 +205,7 @@ class SimpleKernelFixture : public ProgramFixture {
                 kernels[i].reset(Kernel::create<MockKernel>(
                     pProgram,
                     pProgram->getKernelInfosForKernel(kernelName.c_str()),
+                    *device,
                     &retVal));
                 ASSERT_NE(nullptr, kernels[i]);
                 ASSERT_EQ(CL_SUCCESS, retVal);
@@ -252,6 +255,7 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
         kernel.reset(Kernel::create<MockKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel("statelessKernel"),
+            *device,
             &retVal));
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -375,6 +379,7 @@ class BindlessKernelFixture : public ProgramFixture {
         kernel.reset(Kernel::create<MockKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel(kernelName.c_str()),
+            *deviceCl,
             &retVal));
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);

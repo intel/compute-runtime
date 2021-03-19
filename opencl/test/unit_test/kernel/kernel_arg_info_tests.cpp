@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,7 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
         pKernel = Kernel::create(
             pProgram,
             pProgram->getKernelInfosForKernel(kernelName),
+            *pPlatform->getClDevice(0),
             &retVal);
 
         ASSERT_EQ(CL_SUCCESS, retVal);

@@ -37,13 +37,11 @@ struct ExecutionModelKernelFixture : public ProgramFromBinaryFixture,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        // create a kernel
-        pKernel = Kernel::create<MockKernel>(
-            pProgram,
-            pProgram->getKernelInfosForKernel(kernelName),
-            &retVal);
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(pProgram,
+                                                                   pProgram->getKernelInfosForKernel(kernelName),
+                                                                   &retVal);
+        pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
-        pMultiDeviceKernel = new MockMultiDeviceKernel(MockMultiDeviceKernel::toKernelVector(pKernel));
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, pKernel);
     }
@@ -69,7 +67,7 @@ struct ExecutionModelKernelFixture : public ProgramFromBinaryFixture,
         }
     }
 
-    MockMultiDeviceKernel *pMultiDeviceKernel = nullptr;
+    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
     Kernel *pKernel = nullptr;
     cl_int retVal = CL_SUCCESS;
 };

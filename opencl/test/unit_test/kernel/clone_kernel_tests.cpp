@@ -95,12 +95,12 @@ class CloneKernelTest : public MultiRootDeviceWithSubDevicesFixture {
 
         for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
 
-            pSourceKernel[rootDeviceIndex] = new MockKernel(pProgram.get(), kernelInfos, rootDeviceIndex);
+            pSourceKernel[rootDeviceIndex] = new MockKernel(pProgram.get(), kernelInfos, *deviceFactory->rootDevices[rootDeviceIndex]);
             ASSERT_EQ(CL_SUCCESS, pSourceKernel[rootDeviceIndex]->initialize());
             char pSourceCrossThreadData[64] = {};
             sourceKernels[rootDeviceIndex] = pSourceKernel[rootDeviceIndex];
 
-            pClonedKernel[rootDeviceIndex] = new MockKernel(pProgram.get(), kernelInfos, rootDeviceIndex);
+            pClonedKernel[rootDeviceIndex] = new MockKernel(pProgram.get(), kernelInfos, *deviceFactory->rootDevices[rootDeviceIndex]);
             ASSERT_EQ(CL_SUCCESS, pClonedKernel[rootDeviceIndex]->initialize());
             char pClonedCrossThreadData[64] = {};
             clonedKernels[rootDeviceIndex] = pClonedKernel[rootDeviceIndex];

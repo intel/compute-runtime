@@ -37,7 +37,7 @@ GEN12LPTEST_F(GpgpuWalkerTests, givenMiStoreRegMemWhenAdjustMiStoreRegMemModeThe
 
 class MockKernelWithApplicableWa : public MockKernel {
   public:
-    MockKernelWithApplicableWa(Program *program, const KernelInfoContainer &kernelInfos) : MockKernel(program, kernelInfos) {}
+    MockKernelWithApplicableWa(Program *program, const KernelInfoContainer &kernelInfos, ClDevice &clDeviceArg) : MockKernel(program, kernelInfos, clDeviceArg) {}
     bool requiresWaDisableRccRhwoOptimization(uint32_t rootDeviceIndex) const override {
         return waApplicable;
     }

@@ -56,7 +56,7 @@ class SchedulerKernel : public Kernel {
     static BuiltinCode loadSchedulerKernel(Device *device);
 
   protected:
-    SchedulerKernel(Program *programArg, const KernelInfoContainer &kernelInfosArg) : Kernel(programArg, kernelInfosArg, true) {
+    SchedulerKernel(Program *programArg, const KernelInfoContainer &kernelInfosArg, ClDevice &clDeviceArg) : Kernel(programArg, kernelInfosArg, clDeviceArg, true) {
         computeGws();
     };
 

@@ -89,7 +89,7 @@ class MockMultiDeviceKernel : public MultiDeviceKernel {
             if (kernelVector[rootDeviceIndex]) {
                 continue;
             }
-            kernelVector[rootDeviceIndex] = new kernel_t(programArg, kernelInfoArg);
+            kernelVector[rootDeviceIndex] = new kernel_t(programArg, kernelInfoArg, *pDevice);
         }
         return new MockMultiDeviceKernel(std::move(kernelVector));
     }
@@ -183,8 +183,8 @@ class MockKernel : public Kernel {
         }
     };
 
-    MockKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg, bool scheduler = false)
-        : Kernel(programArg, kernelInfoArg, scheduler) {
+    MockKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg, ClDevice &clDeviceArg, bool scheduler = false)
+        : Kernel(programArg, kernelInfoArg, clDeviceArg, scheduler) {
         mockCrossThreadDatas.resize(kernelInfoArg.size());
     }
 
@@ -229,7 +229,7 @@ class MockKernel : public Kernel {
         KernelInfoContainer kernelInfos;
         kernelInfos.resize(rootDeviceIndex + 1);
         kernelInfos[rootDeviceIndex] = info;
-        auto kernel = new KernelType(program, kernelInfos);
+        auto kernel = new KernelType(program, kernelInfos, *device.getSpecializedDevice<ClDevice>());
         kernel->kernelDeviceInfos[rootDeviceIndex].crossThreadData = new char[crossThreadSize];
         memset(kernel->kernelDeviceInfos[rootDeviceIndex].crossThreadData, 0, crossThreadSize);
         kernel->kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = crossThreadSize;
@@ -383,7 +383,7 @@ class MockKernelWithInternals {
         }
 
         mockProgram = new MockProgram(context, false, deviceVector);
-        mockKernel = new MockKernel(mockProgram, kernelInfos);
+        mockKernel = new MockKernel(mockProgram, kernelInfos, *deviceVector[0]);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
         KernelVectorType mockKernels;
         mockKernels.resize(mockProgram->getMaxRootDeviceIndex() + 1);
@@ -633,7 +633,7 @@ class MockParentKernel : public Kernel {
         return parent;
     }
 
-    MockParentKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg) : Kernel(programArg, kernelInfoArg, false) {
+    MockParentKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg) : Kernel(programArg, kernelInfoArg, *programArg->getDevices()[0], false) {
     }
 
     ~MockParentKernel() override {
@@ -670,12 +670,12 @@ class MockParentKernel : public Kernel {
 class MockSchedulerKernel : public SchedulerKernel {
   public:
     using SchedulerKernel::kernelDeviceInfos;
-    MockSchedulerKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg) : SchedulerKernel(programArg, kernelInfoArg){};
+    MockSchedulerKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg, ClDevice &clDeviceArg) : SchedulerKernel(programArg, kernelInfoArg, clDeviceArg){};
 };
 
 class MockDebugKernel : public MockKernel {
   public:
-    MockDebugKernel(Program *program, KernelInfoContainer &kernelInfos) : MockKernel(program, kernelInfos) {
+    MockDebugKernel(Program *program, KernelInfoContainer &kernelInfos, ClDevice &clDeviceArg) : MockKernel(program, kernelInfos, clDeviceArg) {
         if (!isValidOffset(kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful)) {
             SPatchAllocateSystemThreadSurface allocateSystemThreadSurface = {};
             allocateSystemThreadSurface.Offset = 0;

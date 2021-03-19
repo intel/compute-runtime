@@ -88,11 +88,11 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
                                                 const void *argVal);
 
     template <typename kernel_t = Kernel, typename program_t = Program>
-    static kernel_t *create(program_t *program, const KernelInfoContainer &kernelInfos, cl_int *errcodeRet) {
+    static kernel_t *create(program_t *program, const KernelInfoContainer &kernelInfos, ClDevice &clDevice, cl_int *errcodeRet) {
         cl_int retVal;
         kernel_t *pKernel = nullptr;
 
-        pKernel = new kernel_t(program, kernelInfos);
+        pKernel = new kernel_t(program, kernelInfos, clDevice);
         retVal = pKernel->initialize();
 
         if (retVal != CL_SUCCESS) {
@@ -490,7 +490,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const Device &device, const PatchTokenT &patch);
 
     void getParentObjectCounts(ObjectCounts &objectCount);
-    Kernel(Program *programArg, const KernelInfoContainer &kernelInfsoArg, bool schedulerKernel = false);
+    Kernel(Program *programArg, const KernelInfoContainer &kernelInfsoArg, ClDevice &clDevice, bool schedulerKernel = false);
     void provideInitializationHints();
 
     void patchBlocksCurbeWithConstantValues();
@@ -507,11 +507,12 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     const HardwareInfo &getHardwareInfo(uint32_t rootDeviceIndex) const;
 
     const ClDevice &getDevice() const {
-        return *deviceVector[0];
+        return clDevice;
     }
 
     const ExecutionEnvironment &executionEnvironment;
     Program *program;
+    ClDevice &clDevice;
     const ClDeviceVector &deviceVector;
     const KernelInfoContainer kernelInfos;
 

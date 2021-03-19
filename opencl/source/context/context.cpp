@@ -404,6 +404,7 @@ SchedulerKernel &Context::getSchedulerKernel() {
         schedulerBuiltIn->pKernel = Kernel::create<SchedulerKernel>(
             schedulerBuiltIn->pProgram,
             kernelInfos,
+            *clDevice,
             &retVal);
 
         UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize(clDevice->getRootDeviceIndex()) != 0);

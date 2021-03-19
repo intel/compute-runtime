@@ -35,7 +35,7 @@ void api_fixture_using_aligned_memory_manager::SetUp() {
     program = new MockProgram(ctxPtr, false, toClDeviceVector(*device));
     Program *prgPtr = reinterpret_cast<Program *>(program);
 
-    kernel = new MockKernel(prgPtr, MockKernel::toKernelInfoContainer(program->mockKernelInfo, 0));
+    kernel = new MockKernel(prgPtr, MockKernel::toKernelInfoContainer(program->mockKernelInfo, 0), *device);
     ASSERT_NE(nullptr, kernel);
 }
 

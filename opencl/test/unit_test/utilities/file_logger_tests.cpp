@@ -349,7 +349,7 @@ TEST(FileLogger, GivenDebugFunctionalityWhenDebugFlagIsDisabledThenDoNotDumpKern
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
-    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
+    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex), *device));
     auto multiDispatchInfo = std::unique_ptr<MockMultiDispatchInfo>(new MockMultiDispatchInfo(device.get(), kernel.get()));
 
     KernelArgPatchInfo kernelArgPatchInfo;
@@ -385,7 +385,7 @@ TEST(FileLogger, GivenMdiWhenDumpingKernelArgsThenFileIsCreated) {
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
-    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
+    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex), *device));
     auto multiDispatchInfo = std::unique_ptr<MockMultiDispatchInfo>(new MockMultiDispatchInfo(device.get(), kernel.get()));
 
     KernelArgPatchInfo kernelArgPatchInfo;
@@ -431,7 +431,7 @@ TEST(FileLogger, GivenEmptyKernelWhenDumpingKernelArgsThenFileIsNotCreated) {
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
-    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
+    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex), *device));
 
     std::string testFile = "testfile";
     DebugVariables flags;
@@ -449,7 +449,7 @@ TEST(FileLogger, GivenImmediateWhenDumpingKernelArgsThenFileIsCreated) {
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
-    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
+    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex), *device));
 
     KernelArgPatchInfo kernelArgPatchInfo;
 
@@ -483,7 +483,7 @@ TEST(FileLogger, GivenImmediateZeroSizeWhenDumpingKernelArgsThenFileIsNotCreated
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
-    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
+    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex), *device));
 
     KernelArgPatchInfo kernelArgPatchInfo;
 
@@ -513,7 +513,7 @@ TEST(FileLogger, GivenLocalBufferWhenDumpingKernelArgsThenFileIsNotCreated) {
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
-    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex)));
+    auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex), *device));
 
     KernelArgPatchInfo kernelArgPatchInfo;
 
@@ -537,7 +537,7 @@ TEST(FileLogger, GivenBufferNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
-    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex));
+    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex), *device);
 
     KernelArgPatchInfo kernelArgPatchInfo;
 
@@ -572,7 +572,7 @@ TEST(FileLogger, GivenBufferWhenDumpingKernelArgsThenFileIsCreated) {
     auto kernelInfo = std::make_unique<KernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
-    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex));
+    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex), *device);
 
     KernelArgPatchInfo kernelArgPatchInfo;
 
@@ -612,7 +612,7 @@ TEST(FileLogger, GivenSamplerWhenDumpingKernelArgsThenFileIsNotCreated) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
-    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex));
+    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex), *device);
 
     KernelArgPatchInfo kernelArgPatchInfo;
 
@@ -640,7 +640,7 @@ TEST(FileLogger, GivenImageNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
-    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex));
+    auto kernel = std::make_unique<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, mockRootDeviceIndex), *device);
 
     char surfaceStateHeap[0x80];
     kernelInfo->heapInfo.pSsh = surfaceStateHeap;

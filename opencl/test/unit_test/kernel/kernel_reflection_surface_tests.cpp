@@ -612,7 +612,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNonParentKernelWhenCreatingKernelRe
     MockClDevice device{new MockDevice};
     MockProgram program(toClDeviceVector(device));
     KernelInfo info;
-    MockKernel kernel(&program, MockKernel::toKernelInfoContainer(info, device.getRootDeviceIndex()));
+    MockKernel kernel(&program, MockKernel::toKernelInfoContainer(info, device.getRootDeviceIndex()), device);
 
     EXPECT_FALSE(kernel.isParentKernel);
 
@@ -632,7 +632,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNonSchedulerKernelWithForcedSchedul
     KernelInfoContainer kernelInfos;
     KernelInfo info;
     kernelInfos.push_back(&info);
-    MockKernel kernel(&program, kernelInfos);
+    MockKernel kernel(&program, kernelInfos, device);
 
     EXPECT_FALSE(kernel.isParentKernel);
 
@@ -669,7 +669,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNoKernelArgsWhenObtainingKernelRefl
 
     KernelInfoContainer kernelInfos;
     kernelInfos.push_back(&info);
-    MockKernel kernel(&program, kernelInfos);
+    MockKernel kernel(&program, kernelInfos, *device);
 
     EXPECT_TRUE(kernel.isParentKernel);
 
@@ -732,7 +732,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKe
 
     KernelInfoContainer kernelInfos;
     kernelInfos.push_back(&info);
-    MockKernel kernel(&program, kernelInfos);
+    MockKernel kernel(&program, kernelInfos, *device);
 
     EXPECT_TRUE(kernel.isParentKernel);
 
@@ -2099,7 +2099,7 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelRefl
     KernelInfoContainer kernelInfos;
     kernelInfos.resize(rootDeviceIndex + 1);
     kernelInfos[rootDeviceIndex] = &info;
-    MockKernel kernel(&program, kernelInfos);
+    MockKernel kernel(&program, kernelInfos, *device1);
 
     EXPECT_TRUE(kernel.isParentKernel);
 
@@ -2164,7 +2164,7 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKe
     KernelInfoContainer kernelInfos;
     kernelInfos.resize(rootDeviceIndex + 1);
     kernelInfos[rootDeviceIndex] = &info;
-    MockKernel kernel(&program, kernelInfos);
+    MockKernel kernel(&program, kernelInfos, *device1);
 
     EXPECT_TRUE(kernel.isParentKernel);
 

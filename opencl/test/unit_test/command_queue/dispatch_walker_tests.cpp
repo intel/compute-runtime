@@ -153,7 +153,7 @@ HWTEST_F(DispatchWalkerTest, givenSimd1WhenSetGpgpuWalkerThreadDataThenSimdInWal
 }
 
 HWTEST_F(DispatchWalkerTest, WhenDispatchingWalkerThenCommandStreamMemoryIsntChanged) {
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     auto &commandStream = pCmdQ->getCS(4096);
@@ -204,7 +204,7 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalIdsWhenDispatchingWalkerThenWalkerIsDis
     threadPayload.UnusedPerThreadConstantPresent = 1;
     populateKernelDescriptor(kernelInfo.kernelDescriptor, threadPayload);
 
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     auto &commandStream = pCmdQ->getCS(4096);
@@ -248,7 +248,7 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalIdsWhenDispatchingWalkerThenWalkerIsDis
 }
 
 HWTEST_F(DispatchWalkerTest, GivenDefaultLwsAlgorithmWhenDispatchingWalkerThenDimensionsAreCorrect) {
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.workDimOffset = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -281,7 +281,7 @@ HWTEST_F(DispatchWalkerTest, GivenSquaredLwsAlgorithmWhenDispatchingWalkerThenDi
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.workDimOffset = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -311,7 +311,7 @@ HWTEST_F(DispatchWalkerTest, GivenSquaredLwsAlgorithmWhenDispatchingWalkerThenDi
 HWTEST_F(DispatchWalkerTest, GivenNdLwsAlgorithmWhenDispatchingWalkerThenDimensionsAreCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.workDimOffset = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -342,7 +342,7 @@ HWTEST_F(DispatchWalkerTest, GivenOldLwsAlgorithmWhenDispatchingWalkerThenDimens
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.workDimOffset = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -370,7 +370,7 @@ HWTEST_F(DispatchWalkerTest, GivenOldLwsAlgorithmWhenDispatchingWalkerThenDimens
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNumWorkGroupsWhenDispatchingWalkerThenNumWorkGroupsIsCorrectlySet) {
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.numWorkGroupsOffset[0] = 0;
     kernelInfo.workloadInfo.numWorkGroupsOffset[1] = 4;
     kernelInfo.workloadInfo.numWorkGroupsOffset[2] = 8;
@@ -406,7 +406,7 @@ HWTEST_F(DispatchWalkerTest, GivenGlobalWorkOffsetWhenDispatchingWalkerThenGloba
     kernelInfo.workloadInfo.globalWorkOffsetOffsets[0] = 0u;
     kernelInfo.workloadInfo.globalWorkOffsetOffsets[1] = 4u;
     kernelInfo.workloadInfo.globalWorkOffsetOffsets[2] = 8u;
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {1, 2, 3};
@@ -438,7 +438,7 @@ HWTEST_F(DispatchWalkerTest, GivenGlobalWorkOffsetWhenDispatchingWalkerThenGloba
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndDefaultAlgorithmWhenDispatchingWalkerThenLwsIsCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
     kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
@@ -470,7 +470,7 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndDefaultAlgorithmWhenDispatch
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndNdOnWhenDispatchingWalkerThenLwsIsCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
     kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
@@ -503,7 +503,7 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmWhenDispatch
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
     kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
@@ -536,7 +536,7 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmOffAndNdOffW
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
     kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
@@ -566,7 +566,7 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmOffAndNdOffW
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeWhenDispatchingWalkerThenLwsIsCorrect) {
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
     kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
@@ -597,7 +597,7 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeWhenDispatchingWalkerThenLwsIsC
 }
 
 HWTEST_F(DispatchWalkerTest, GivenTwoSetsOfLwsOffsetsWhenDispatchingWalkerThenLwsIsCorrect) {
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
     kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
@@ -634,13 +634,13 @@ HWTEST_F(DispatchWalkerTest, GivenTwoSetsOfLwsOffsetsWhenDispatchingWalkerThenLw
 }
 
 HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorrect) {
-    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
     kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
 
-    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex));
+    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex), *pClDevice);
     kernelInfoWithSampler.workloadInfo.localWorkSizeOffsets[0] = 12;
     kernelInfoWithSampler.workloadInfo.localWorkSizeOffsets[1] = 16;
     kernelInfoWithSampler.workloadInfo.localWorkSizeOffsets[2] = 20;
@@ -684,8 +684,8 @@ HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorre
 }
 
 HWTEST_F(DispatchWalkerTest, GivenSplitWalkerWhenDispatchingWalkerThenLwsIsCorrect) {
-    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
-    MockKernel mainKernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
+    MockKernel mainKernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
     kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
@@ -747,7 +747,7 @@ HWTEST_F(DispatchWalkerTest, GivenSplitWalkerWhenDispatchingWalkerThenLwsIsCorre
 }
 
 HWTEST_F(DispatchWalkerTest, GivenBlockedQueueWhenDispatchingWalkerThenCommandSteamIsNotConsumed) {
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -783,7 +783,7 @@ HWTEST_F(DispatchWalkerTest, GivenBlockedQueueWhenDispatchingWalkerThenCommandSt
 }
 
 HWTEST_F(DispatchWalkerTest, GivenBlockedQueueWhenDispatchingWalkerThenRequiredHeaSizesAreTakenFromKernel) {
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -843,7 +843,7 @@ HWTEST_F(DispatchWalkerTest, givenBlockedEnqueueWhenObtainingCommandStreamThenAl
 }
 
 HWTEST_F(DispatchWalkerTest, GivenBlockedQueueWhenDispatchingWalkerThenRequiredHeapSizesAreTakenFromMdi) {
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, &kernel);
@@ -871,7 +871,7 @@ HWTEST_F(DispatchWalkerTest, GivenBlockedQueueWhenDispatchingWalkerThenRequiredH
 }
 
 HWTEST_F(DispatchWalkerTest, givenBlockedQueueWhenDispatchWalkerIsCalledThenCommandStreamHasGpuAddress) {
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, &kernel);
 
@@ -892,7 +892,7 @@ HWTEST_F(DispatchWalkerTest, givenBlockedQueueWhenDispatchWalkerIsCalledThenComm
 }
 
 HWTEST_F(DispatchWalkerTest, givenThereAreAllocationsForReuseWhenDispatchWalkerIsCalledThenCommandStreamObtainsReusableAllocation) {
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, &kernel);
 
@@ -919,9 +919,9 @@ HWTEST_F(DispatchWalkerTest, givenThereAreAllocationsForReuseWhenDispatchWalkerI
 }
 
 HWTEST_F(DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenWorkDimensionsAreCorrect) {
-    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
-    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({&kernel1, &kernel2}));
@@ -954,9 +954,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatch
     auto gpuAddress1 = kernelIsaAllocation->getGpuAddressToPatch();
     auto gpuAddress2 = kernelIsaWithSamplerAllocation->getGpuAddressToPatch();
 
-    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
-    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex));
+    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({&kernel1, &kernel2}));
@@ -1045,9 +1045,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatch
 HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenGpgpuWalkerIdOffsetIsProgrammedCorrectly) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
-    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
-    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex));
+    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({&kernel1, &kernel2}));
@@ -1090,9 +1090,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatch
 HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenThreadGroupIdStartingCoordinatesAreProgrammedCorrectly) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
-    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
-    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex));
+    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({&kernel1, &kernel2}));
@@ -1139,7 +1139,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatch
 HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleDispatchInfoAndSameKernelWhenDispatchingWalkerThenGpgpuWalkerThreadGroupIdStartingCoordinatesAreCorrectlyProgrammed) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     DispatchInfo di1(pClDevice, &kernel, 1, {100, 1, 1}, {10, 1, 1}, {0, 0, 0}, {100, 1, 1}, {10, 1, 1}, {10, 1, 1}, {10, 1, 1}, {0, 0, 0});
@@ -1192,7 +1192,7 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerDisabledWhenAllocationReq
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
 
-    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
     kernel1.kernelArgRequiresCacheFlush.resize(1);
     MockGraphicsAllocation cacheRequiringAllocation;
@@ -1225,9 +1225,9 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenWalkerWithTwoK
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
 
-    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
-    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex));
+    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
     kernel1.kernelArgRequiresCacheFlush.resize(1);
@@ -1263,9 +1263,9 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenTwoWalkersForQ
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
 
-    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel1(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
-    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex));
+    MockKernel kernel2(program.get(), MockKernel::toKernelInfoContainer(kernelInfoWithSampler, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
     kernel1.kernelArgRequiresCacheFlush.resize(1);
@@ -1328,7 +1328,7 @@ HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTran
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.workDimOffset = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -1382,7 +1382,7 @@ HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTran
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex));
+    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
     kernelInfo.workloadInfo.workDimOffset = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 

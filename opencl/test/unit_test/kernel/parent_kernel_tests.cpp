@@ -25,7 +25,7 @@ class MockKernelWithArgumentAccess : public Kernel {
     class ObjectCountsPublic : public Kernel::ObjectCounts {
     };
 
-    MockKernelWithArgumentAccess(Program *programArg, const KernelInfoContainer &kernelInfoArg) : Kernel(programArg, kernelInfoArg, false) {
+    MockKernelWithArgumentAccess(Program *programArg, const KernelInfoContainer &kernelInfoArg, ClDevice &clDeviceArg) : Kernel(programArg, kernelInfoArg, clDeviceArg, false) {
     }
 
     void getParentObjectCountsPublic(MockKernelWithArgumentAccess::ObjectCountsPublic &objectCount) {
@@ -39,7 +39,7 @@ TEST(ParentKernelTest, WhenArgsAddedThenObjectCountsAreIncremented) {
     KernelInfo info;
     info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
 
-    MockKernelWithArgumentAccess kernel(&program, MockKernel::toKernelInfoContainer(info, device->getRootDeviceIndex()));
+    MockKernelWithArgumentAccess kernel(&program, MockKernel::toKernelInfoContainer(info, device->getRootDeviceIndex()), *device);
 
     std::vector<Kernel::SimpleKernelArgInfo> &args = kernel.getKernelArguments();
 

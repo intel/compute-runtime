@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,12 +106,12 @@ TEST(KernelNonUniform, WhenSettingAllowNonUniformThenGettingAllowNonUniformRetur
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));
     struct KernelMock : Kernel {
-        KernelMock(Program *program, KernelInfoContainer &kernelInfos)
-            : Kernel(program, kernelInfos, false) {
+        KernelMock(Program *program, KernelInfoContainer &kernelInfos, ClDevice &clDeviceArg)
+            : Kernel(program, kernelInfos, clDeviceArg, false) {
         }
     };
     auto kernelInfos = MockKernel::toKernelInfoContainer(kernelInfo, device.getRootDeviceIndex());
-    KernelMock k{&program, kernelInfos};
+    KernelMock k{&program, kernelInfos, device};
     program.setAllowNonUniform(false);
     EXPECT_FALSE(k.getAllowNonUniform());
     program.setAllowNonUniform(true);
@@ -202,7 +202,9 @@ TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqu
 
     // create a kernel
     auto pKernel = Kernel::create<MockKernel>(mockProgram,
-                                              MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
+                                              MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex),
+                                              *pPlatform->getClDevice(0),
+                                              &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 
@@ -242,7 +244,9 @@ TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqu
 
     // create a kernel
     auto pKernel = Kernel::create<MockKernel>(mockProgram,
-                                              MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
+                                              MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex),
+                                              *pPlatform->getClDevice(0),
+                                              &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 
@@ -280,7 +284,9 @@ TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInva
 
     // create a kernel
     auto pKernel = Kernel::create<MockKernel>(mockProgram,
-                                              MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
+                                              MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex),
+                                              *pPlatform->getClDevice(0),
+                                              &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 
