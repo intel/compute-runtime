@@ -20,4 +20,9 @@ EngineControl &Device::getInternalEngine() {
 
     return this->getDeviceById(0)->getEngine(engineType, EngineUsage::Internal);
 }
+
+EngineControl *Device::getInternalCopyEngine() {
+    return nullptr;
+}
+
 } // namespace NEO

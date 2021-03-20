@@ -152,6 +152,16 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeNotSetWhenGetGpgpuEnginesThenR
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[2].first);
 }
 
+GEN12LPTEST_F(HwHelperTestGen12Lp,
+              whenCallingGetInternalCopyEngineThenNullptrIsReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 1;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    auto internalCopyEngine = device->getInternalCopyEngine();
+    EXPECT_EQ(internalCopyEngine, nullptr);
+}
+
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenEvenContextCountRequiredWhenGetGpgpuEnginesIsCalledThenInsertAdditionalEngineAtTheEndIfNeeded) {
     struct MockHwInfoConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
         MockHwInfoConfig() {}
