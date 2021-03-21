@@ -655,6 +655,46 @@ TEST_F(DeviceCreateCommandQueueTest, givenNormalPriorityDescWhenCreateCommandQue
     commandQueue->destroy();
 }
 
+TEST_F(DeviceCreateCommandQueueTest,
+       whenCallingGetCsrForOrdinalAndIndexWithInvalidOrdinalThenInvalidArgumentIsReturned) {
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    EXPECT_NE(commandQueue, nullptr);
+    EXPECT_FALSE(commandQueue->getCsr()->getOsContext().isLowPriority());
+    NEO::CommandStreamReceiver *csr = nullptr;
+    res = device->getCsrForOrdinalAndIndex(&csr, std::numeric_limits<uint32_t>::max(), 0u);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    commandQueue->destroy();
+}
+
+TEST_F(DeviceCreateCommandQueueTest,
+       whenCallingGetCsrForOrdinalAndIndexWithInvalidIndexThenInvalidArgumentIsReturned) {
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    EXPECT_NE(commandQueue, nullptr);
+    EXPECT_FALSE(commandQueue->getCsr()->getOsContext().isLowPriority());
+    NEO::CommandStreamReceiver *csr = nullptr;
+    res = device->getCsrForOrdinalAndIndex(&csr, 0u, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    commandQueue->destroy();
+}
+
 TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCsrWhenCreateCommandQueueIsCalledThenAbortIsThrown) {
     // remove low priority EngineControl objects for negative testing
     neoDevice->engines.erase(std::remove_if(
