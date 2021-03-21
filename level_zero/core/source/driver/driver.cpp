@@ -102,7 +102,7 @@ ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandle
     }
 
     if (phDriverHandles == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
     }
 
     for (uint32_t i = 0; i < *pCount; i++) {

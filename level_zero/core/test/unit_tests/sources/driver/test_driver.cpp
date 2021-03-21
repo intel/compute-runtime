@@ -356,6 +356,32 @@ TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenDriver
     EXPECT_EQ(1U, count);
 }
 
+TEST_F(DriverHandleTest,
+       givenInitializedDriverWhenZeDriverGetIsCalledWithGreaterThanCountAvailableThenCorrectCountIsReturned) {
+    uint32_t count = 0;
+    ze_result_t result = zeDriverGet(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1U, count);
+
+    count++;
+    ze_driver_handle_t driverHandle = {};
+    result = zeDriverGet(&count, &driverHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1U, count);
+    EXPECT_NE(nullptr, driverHandle);
+}
+
+TEST_F(DriverHandleTest,
+       givenInitializedDriverWhenZeDriverGetIsCalledWithGreaterThanZeroCountAndNullDriverHandleThenInvalidNullPointerIsReturned) {
+    uint32_t count = 0;
+    ze_result_t result = zeDriverGet(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1U, count);
+
+    result = zeDriverGet(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
+}
+
 TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenDriverHandleIsObtained) {
     ze_result_t result;
     uint32_t count = 0;
