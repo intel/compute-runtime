@@ -17,9 +17,13 @@ namespace ult {
 constexpr uint64_t memSize1 = 2048;
 constexpr uint64_t memSize2 = 1024;
 constexpr uint64_t memSize4 = 1024;
+constexpr uint64_t memSize6 = 1024;
+constexpr uint64_t memSize7 = 0;
 constexpr uint64_t sharedMemSize1 = 1024;
 constexpr uint64_t sharedMemSize2 = 512;
 constexpr uint64_t sharedMemSize4 = 512;
+constexpr uint64_t sharedMemSize6 = 512;
+constexpr uint64_t sharedMemSize7 = 0;
 // In mock function getValUnsignedLong, we have set the engines used as 0, 3 and 1.
 // Hence, expecting 28 as engine field because 28 in binary would be 00011100
 // This indicates bit number 2, 3 and 4 are set, thus this indicates, this process
@@ -30,7 +34,10 @@ constexpr int64_t engines1 = 28u;
 // Corresponding i915 mapped value in mocked getValUnsignedLong() is 0.
 constexpr int64_t engines2 = 4u;
 constexpr int64_t engines4 = 20u;
-constexpr uint32_t totalProcessStates = 3u; // Three process States for three pids
+constexpr int64_t engines6 = 1u;
+constexpr int64_t engines7 = 1u;
+constexpr uint32_t totalProcessStates = 5u; // Three process States for three pids
+constexpr uint32_t totalProcessStatesForFaultyClients = 3u;
 const std::string expectedModelName("0x3ea5");
 class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
   protected:
@@ -185,6 +192,14 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInfor
     EXPECT_EQ(processes[2].engines, engines4);
     EXPECT_EQ(processes[2].memSize, memSize4);
     EXPECT_EQ(processes[2].sharedSize, sharedMemSize4);
+    EXPECT_EQ(processes[3].processId, pid6);
+    EXPECT_EQ(processes[3].engines, engines6);
+    EXPECT_EQ(processes[3].memSize, memSize6);
+    EXPECT_EQ(processes[3].sharedSize, sharedMemSize6);
+    EXPECT_EQ(processes[4].processId, pid7);
+    EXPECT_EQ(processes[4].engines, engines7);
+    EXPECT_EQ(processes[4].memSize, memSize7);
+    EXPECT_EQ(processes[4].sharedSize, sharedMemSize7);
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingDeviceThenSuccessIsReturnedEvenwithFaultyClient) {
@@ -195,7 +210,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInfor
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getValUnsignedLongCreatedBytesSuccess));
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
-    EXPECT_EQ(count, totalProcessStates);
+    EXPECT_EQ(count, totalProcessStatesForFaultyClients);
     std::vector<zes_process_state_t> processes(count);
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
     EXPECT_EQ(processes[0].processId, pid1);

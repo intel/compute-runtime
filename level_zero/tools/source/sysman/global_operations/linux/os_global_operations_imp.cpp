@@ -302,7 +302,8 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
             }
         }
         // Traverse the clients/<clientId>/busy directory to get accelerator engines used by process
-        std::vector<std::string> engineNums;
+        std::vector<std::string> engineNums = {};
+        int64_t engineType = 0;
         std::string busyDirForEngines = clientsDir + "/" + clientId + "/" + "busy";
         result = pSysfsAccess->scanDirEntries(busyDirForEngines, engineNums);
         if (ZE_RESULT_SUCCESS != result) {
@@ -311,13 +312,11 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
                 //this condition(when encountered) must not prevent the information accumulated for other clientIds
                 //this situation occurs when there is no call modifying result,
                 //Here its seen when the last element of clientIds returns ZE_RESULT_ERROR_NOT_AVAILABLE for some reason.
-                result = ZE_RESULT_SUCCESS;
-                continue;
+                engineType = ZES_ENGINE_TYPE_FLAG_OTHER; // When busy node is absent assign engine type with ZES_ENGINE_TYPE_FLAG_OTHER
             } else {
                 return result;
             }
         }
-        int64_t engineType = 0;
         // Scan all engine files present in /sys/class/drm/card0/clients/<ClientId>/busy and check
         // whether that engine is used by process
         for (const auto &engineNum : engineNums) {
@@ -348,10 +347,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         std::string realClientTotalMemoryPath = clientsDir + "/" + clientId + "/" + "total_device_memory_buffer_objects" + "/" + "created_bytes";
         result = pSysfsAccess->read(realClientTotalMemoryPath, memSize);
         if (ZE_RESULT_SUCCESS != result) {
-            if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
-                result = ZE_RESULT_SUCCESS;
-                continue;
-            } else {
+            if (ZE_RESULT_ERROR_NOT_AVAILABLE != result) {
                 return result;
             }
         }
@@ -360,10 +356,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         std::string realClientTotalSharedMemoryPath = clientsDir + "/" + clientId + "/" + "total_device_memory_buffer_objects" + "/" + "imported_bytes";
         result = pSysfsAccess->read(realClientTotalSharedMemoryPath, sharedMemSize);
         if (ZE_RESULT_SUCCESS != result) {
-            if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
-                result = ZE_RESULT_SUCCESS;
-                continue;
-            } else {
+            if (ZE_RESULT_ERROR_NOT_AVAILABLE != result) {
                 return result;
             }
         }
@@ -383,6 +376,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
             updateEngineMemoryPair.deviceMemStructField.deviceSharedMemorySize = existingdeviceSharedMemorySize + engineMemoryPair.deviceMemStructField.deviceSharedMemorySize;
             pidClientMap[pid] = updateEngineMemoryPair;
         }
+        result = ZE_RESULT_SUCCESS;
     }
 
     // iterate through all elements of pidClientMap
