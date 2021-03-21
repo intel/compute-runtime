@@ -285,6 +285,55 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
     EXPECT_EQ(deviceProperties.maxMemAllocSize, this->neoDevice->getDeviceInfo().maxMemAllocSize);
 }
 
+struct DeviceHwInfoTest : public ::testing::Test {
+    void SetUp() override {
+        executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(1U);
+    }
+
+    void TearDown() override {
+    }
+
+    void setDriverAndDevice() {
+        std::vector<std::unique_ptr<NEO::Device>> devices;
+        neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0);
+        EXPECT_NE(neoDevice, nullptr);
+
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        ze_result_t res = driverHandle->initialize(std::move(devices));
+        EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+        device = driverHandle->devices[0];
+    }
+
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+};
+
+TEST_F(DeviceHwInfoTest, givenDeviceWithNoPageFaultSupportThenFlagIsNotSet) {
+    NEO::HardwareInfo hardwareInfo = *NEO::defaultHwInfo;
+    hardwareInfo.capabilityTable.supportsOnDemandPageFaults = false;
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    setDriverAndDevice();
+
+    ze_device_properties_t deviceProps;
+    device->getProperties(&deviceProps);
+    EXPECT_FALSE(deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
+}
+
+TEST_F(DeviceHwInfoTest, givenDeviceWithPageFaultSupportThenFlagIsSet) {
+    NEO::HardwareInfo hardwareInfo = *NEO::defaultHwInfo;
+    hardwareInfo.capabilityTable.supportsOnDemandPageFaults = true;
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    setDriverAndDevice();
+
+    ze_device_properties_t deviceProps;
+    device->getProperties(&deviceProps);
+    EXPECT_TRUE(deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
+}
+
 TEST_F(DeviceTest, whenGetDevicePropertiesCalledThenCorrectDevicePropertyEccFlagSet) {
     ze_device_properties_t deviceProps;
 
