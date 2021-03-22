@@ -48,7 +48,7 @@ TEST(DebugSip, givenDebuggingActiveWhenSipTypeIsQueriedThenDbgCsrSipTypeIsReturn
     EXPECT_LE(SipKernelType::DbgCsr, sipType);
 }
 
-TEST(DebugSip, givenBuiltInsWhenDbgCsrSipIsRequestedThanCorrectSipKernelIsReturned) {
+TEST(DebugSip, givenBuiltInsWhenDbgCsrSipIsRequestedThenCorrectSipKernelIsReturned) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
 
