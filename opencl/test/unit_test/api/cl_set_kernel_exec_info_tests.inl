@@ -17,7 +17,6 @@ class KernelExecInfoFixture : public ApiFixture<> {
   protected:
     void SetUp() override {
         ApiFixture::SetUp();
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
 
         pKernelInfo = std::make_unique<KernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
@@ -66,21 +65,36 @@ TEST_F(clSetKernelExecInfoTests, GivenNullKernelWhenSettingAdditionalKernelInfoT
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKernelExecInfoThenInvalidOperationErrorIsReturned) {
+TEST_F(clSetKernelExecInfoTests, GivenDeviceNotSupportingSvmWhenSettingKernelExecInfoThenErrorIsReturnedOnSvmRelatedParams) {
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
-    hwInfo->capabilityTable.ftrSvm = false;
+    VariableBackup<bool> ftrSvm{&hwInfo->capabilityTable.ftrSvm, false};
 
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), nullptr));
-    auto retVal = clSetKernelExecInfo(
-        pMultiDeviceKernel.get(),     // cl_kernel kernel
-        CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-        0,                            // size_t param_value_size
-        nullptr                       // const void *param_value
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create<MockKernel>(
+        pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), nullptr));
+
+    uint32_t newPolicy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
+    retVal = clSetKernelExecInfo(
+        pMockMultiDeviceKernel,                              // cl_kernel kernel
+        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, // cl_kernel_exec_info param_name
+        sizeof(newPolicy),                                   // size_t param_value_size
+        &newPolicy                                           // const void *param_value
     );
-    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_kernel_exec_info svmParams[] = {CL_KERNEL_EXEC_INFO_SVM_PTRS, CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM};
+    for (auto svmParam : svmParams) {
+        retVal = clSetKernelExecInfo(
+            pMockMultiDeviceKernel, // cl_kernel kernel
+            svmParam,               // cl_kernel_exec_info param_name
+            0,                      // size_t param_value_size
+            nullptr                 // const void *param_value
+        );
+        EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    }
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenNullParamValueWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
+    REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void **pSvmPtrList = nullptr;
     size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
@@ -94,6 +108,7 @@ TEST_F(clSetKernelExecInfoTests, GivenNullParamValueWhenSettingAdditionalKernelI
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenNullPointerInParamValueWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
+    REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void *pSvmPtrList[] = {nullptr};
     size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
@@ -107,6 +122,7 @@ TEST_F(clSetKernelExecInfoTests, GivenNullPointerInParamValueWhenSettingAddition
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenParamSizeZeroWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
+    REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void *pSvmPtrList[] = {ptrSvm};
     size_t SvmPtrListSizeInBytes = 0;
 
@@ -120,6 +136,7 @@ TEST_F(clSetKernelExecInfoTests, GivenParamSizeZeroWhenSettingAdditionalKernelIn
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenInvalidParamSizeWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
+    REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void *pSvmPtrList[] = {ptrSvm};
     size_t SvmPtrListSizeInBytes = (size_t)(-1);
 

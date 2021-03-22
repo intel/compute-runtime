@@ -4869,12 +4869,16 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         return retVal;
     }
 
-    for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
-        const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
-        if (!hwInfo.capabilityTable.ftrSvm) {
-            retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clSetKernelExecInfo, &retVal);
-            return retVal;
+    switch (paramName) {
+    case CL_KERNEL_EXEC_INFO_SVM_PTRS:
+    case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
+        for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
+            const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
+            if (!hwInfo.capabilityTable.ftrSvm) {
+                retVal = CL_INVALID_OPERATION;
+                TRACING_EXIT(clSetKernelExecInfo, &retVal);
+                return retVal;
+            }
         }
     }
 
