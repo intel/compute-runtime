@@ -47,7 +47,7 @@ struct HwPerfCounter;
 struct HwTimeStamps;
 
 template <typename TSize>
-struct TimestampPackets;
+class TimestampPackets;
 
 template <typename T1>
 class TagAllocator;

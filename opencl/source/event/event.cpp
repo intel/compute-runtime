@@ -258,13 +258,12 @@ bool Event::calcProfilingData() {
                 for (auto i = 0u; i < timestamps.size(); i++) {
                     std::cout << "Timestamp " << i << ", "
                               << "profiling capable: " << timestamps[i]->isProfilingCapable() << ", ";
-                    for (auto j = 0u; j < timestamps[i]->tagForCpuAccess->packetsUsed; j++) {
-                        const auto &packet = timestamps[i]->tagForCpuAccess->packets[j];
+                    for (auto j = 0u; j < timestamps[i]->tagForCpuAccess->getPacketsUsed(); j++) {
                         std::cout << "packet " << j << ": "
-                                  << "global start: " << packet.globalStart << ", "
-                                  << "global end: " << packet.globalEnd << ", "
-                                  << "context start: " << packet.contextStart << ", "
-                                  << "context end: " << packet.contextEnd << std::endl;
+                                  << "global start: " << timestamps[i]->tagForCpuAccess->getGlobalStartValue(j) << ", "
+                                  << "global end: " << timestamps[i]->tagForCpuAccess->getGlobalEndValue(j) << ", "
+                                  << "context start: " << timestamps[i]->tagForCpuAccess->getContextStartValue(j) << ", "
+                                  << "context end: " << timestamps[i]->tagForCpuAccess->getContextEndValue(j) << std::endl;
                     }
                 }
             }
@@ -347,20 +346,19 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
 void Event::getBoundaryTimestampValues(TimestampPacketContainer *timestampContainer, uint64_t &globalStartTS, uint64_t &globalEndTS) {
     const auto timestamps = timestampContainer->peekNodes();
 
-    globalStartTS = timestamps[0]->tagForCpuAccess->packets[0].globalStart;
-    globalEndTS = timestamps[0]->tagForCpuAccess->packets[0].globalEnd;
+    globalStartTS = timestamps[0]->tagForCpuAccess->getGlobalStartValue(0);
+    globalEndTS = timestamps[0]->tagForCpuAccess->getGlobalEndValue(0);
 
     for (const auto &timestamp : timestamps) {
         if (!timestamp->isProfilingCapable()) {
             continue;
         }
-        for (auto i = 0u; i < timestamp->tagForCpuAccess->packetsUsed; ++i) {
-            const auto &packet = timestamp->tagForCpuAccess->packets[i];
-            if (globalStartTS > packet.globalStart) {
-                globalStartTS = packet.globalStart;
+        for (auto i = 0u; i < timestamp->tagForCpuAccess->getPacketsUsed(); ++i) {
+            if (globalStartTS > timestamp->tagForCpuAccess->getGlobalStartValue(i)) {
+                globalStartTS = timestamp->tagForCpuAccess->getGlobalStartValue(i);
             }
-            if (globalEndTS < packet.globalEnd) {
-                globalEndTS = packet.globalEnd;
+            if (globalEndTS < timestamp->tagForCpuAccess->getGlobalEndValue(i)) {
+                globalEndTS = timestamp->tagForCpuAccess->getGlobalEndValue(i);
             }
         }
     }

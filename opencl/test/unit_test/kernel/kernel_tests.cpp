@@ -2183,8 +2183,12 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
     EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
 
-    container.getNode(0u)->tagForCpuAccess->packets->globalEnd = 2u;
-    container.getNode(0u)->tagForCpuAccess->packets->contextEnd = 2u;
+    uint32_t data[4] = {static_cast<uint32_t>(container.getNode(0u)->tagForCpuAccess->getContextStartValue(0)),
+                        static_cast<uint32_t>(container.getNode(0u)->tagForCpuAccess->getGlobalStartValue(0)),
+                        2, 2};
+
+    container.getNode(0u)->tagForCpuAccess->assignDataToAllTimestamps(0, data);
+
     mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
@@ -2192,8 +2196,13 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
     EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
 
-    subdeviceContainer.getNode(0u)->tagForCpuAccess->packets->globalEnd = 2u;
-    subdeviceContainer.getNode(0u)->tagForCpuAccess->packets->contextEnd = 2u;
+    data[0] = static_cast<uint32_t>(subdeviceContainer.getNode(0u)->tagForCpuAccess->getContextStartValue(0));
+    data[1] = static_cast<uint32_t>(subdeviceContainer.getNode(0u)->tagForCpuAccess->getGlobalStartValue(0));
+    data[2] = 2;
+    data[3] = 2;
+
+    subdeviceContainer.getNode(0u)->tagForCpuAccess->assignDataToAllTimestamps(0, data);
+
     mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
@@ -2203,8 +2212,13 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
     EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
 
-    subdeviceContainer.getNode(1u)->tagForCpuAccess->packets->globalEnd = 2u;
-    subdeviceContainer.getNode(1u)->tagForCpuAccess->packets->contextEnd = 2u;
+    data[0] = static_cast<uint32_t>(subdeviceContainer.getNode(1u)->tagForCpuAccess->getContextStartValue(0));
+    data[1] = static_cast<uint32_t>(subdeviceContainer.getNode(1u)->tagForCpuAccess->getGlobalStartValue(0));
+    data[2] = 2;
+    data[3] = 2;
+
+    subdeviceContainer.getNode(1u)->tagForCpuAccess->assignDataToAllTimestamps(0, data);
+
     mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);

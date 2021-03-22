@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "pipe_control_args.h"
@@ -30,7 +31,8 @@ constexpr uint32_t preferredPacketCount = 16u;
 
 #pragma pack(1)
 template <typename TSize>
-struct TimestampPackets {
+class TimestampPackets {
+  public:
     struct Packet {
         TSize contextStart = 1u;
         TSize globalStart = 1u;
@@ -67,8 +69,27 @@ struct TimestampPackets {
         implicitGpuDependenciesCount = 0;
     }
 
+    void assignDataToAllTimestamps(uint32_t packetIndex, void *source) {
+        memcpy_s(&packets[packetIndex], sizeof(Packet), source, sizeof(Packet));
+    }
+
+    size_t getGlobalStartOffset() const { return ptrDiff(&packets[0].globalStart, this); }
+    size_t getContextStartOffset() const { return ptrDiff(&packets[0].contextStart, this); }
+    size_t getContextEndOffset() const { return ptrDiff(&packets[0].contextEnd, this); }
+    size_t getGlobalEndOffset() const { return ptrDiff(&packets[0].globalEnd, this); }
+    size_t getImplicitGpuDependenciesCountOffset() const { return ptrDiff(&implicitGpuDependenciesCount, this); }
+
+    uint64_t getContextStartValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].contextStart); }
+    uint64_t getGlobalStartValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].globalStart); }
+    uint64_t getContextEndValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].contextEnd); }
+    uint64_t getGlobalEndValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].globalEnd); }
+
+    void setPacketsUsed(uint32_t used) { packetsUsed = used; }
+    uint32_t getPacketsUsed() const { return packetsUsed; }
+
     uint32_t getImplicitGpuDependenciesCount() const { return implicitGpuDependenciesCount; }
 
+  protected:
     Packet packets[TimestampPacketSizeControl::preferredPacketCount];
     uint32_t implicitGpuDependenciesCount = 0;
     uint32_t packetsUsed = 1;
@@ -110,11 +131,20 @@ struct TimestampPacketDependencies : public NonCopyableClass {
 
 struct TimestampPacketHelper {
     static uint64_t getContextEndGpuAddress(const TagNode<TimestampPacketStorage> &timestampPacketNode) {
-        return timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+        return timestampPacketNode.getGpuAddress() + timestampPacketNode.tagForCpuAccess->getContextEndOffset();
+    }
+    static uint64_t getContextStartGpuAddress(const TagNode<TimestampPacketStorage> &timestampPacketNode) {
+        return timestampPacketNode.getGpuAddress() + timestampPacketNode.tagForCpuAccess->getContextStartOffset();
+    }
+    static uint64_t getGlobalEndGpuAddress(const TagNode<TimestampPacketStorage> &timestampPacketNode) {
+        return timestampPacketNode.getGpuAddress() + timestampPacketNode.tagForCpuAccess->getGlobalEndOffset();
+    }
+    static uint64_t getGlobalStartGpuAddress(const TagNode<TimestampPacketStorage> &timestampPacketNode) {
+        return timestampPacketNode.getGpuAddress() + timestampPacketNode.tagForCpuAccess->getGlobalStartOffset();
     }
 
     static uint64_t getGpuDependenciesCountGpuAddress(const TagNode<TimestampPacketStorage> &timestampPacketNode) {
-        return timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitGpuDependenciesCount);
+        return timestampPacketNode.getGpuAddress() + timestampPacketNode.tagForCpuAccess->getImplicitGpuDependenciesCountOffset();
     }
 
     static void overrideSupportedDevicesCount(uint32_t &numSupportedDevices);
@@ -128,7 +158,7 @@ struct TimestampPacketHelper {
         auto compareAddress = getContextEndGpuAddress(timestampPacketNode);
         auto dependenciesCountAddress = getGpuDependenciesCountGpuAddress(timestampPacketNode);
 
-        for (uint32_t packetId = 0; packetId < timestampPacketNode.tagForCpuAccess->packetsUsed; packetId++) {
+        for (uint32_t packetId = 0; packetId < timestampPacketNode.tagForCpuAccess->getPacketsUsed(); packetId++) {
             uint64_t compareOffset = packetId * sizeof(TimestampPacketStorage::Packet);
             EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
@@ -202,7 +232,7 @@ struct TimestampPacketHelper {
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForNodeDependency(TagNode<TimestampPacketStorage> &timestampPacketNode) {
-        size_t totalMiSemaphoreWaitSize = timestampPacketNode.tagForCpuAccess->packetsUsed * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+        size_t totalMiSemaphoreWaitSize = timestampPacketNode.tagForCpuAccess->getPacketsUsed() * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
 
         return totalMiSemaphoreWaitSize + sizeof(typename GfxFamily::MI_ATOMIC);
     }

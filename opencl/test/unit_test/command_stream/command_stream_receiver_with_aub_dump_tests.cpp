@@ -290,12 +290,13 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
 
         auto allocator = csr.getTimestampPacketAllocator();
         auto tag = allocator->getTag();
-        for (auto &packet : tag->tagForCpuAccess->packets) {
-            packet.contextStart = 0;
-            packet.globalStart = 0;
-            packet.contextEnd = 0;
-            packet.globalEnd = 0;
+
+        uint32_t zeros[4] = {};
+
+        for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
+            tag->tagForCpuAccess->assignDataToAllTimestamps(i, zeros);
         }
+
         EXPECT_TRUE(tag->tagForCpuAccess->isCompleted());
 
         bool canBeReleased = tag->canBeReleased();

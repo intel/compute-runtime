@@ -36,17 +36,23 @@
 using namespace NEO;
 
 struct TimestampPacketSimpleTests : public ::testing::Test {
-    void setTagToReadyState(TagNode<TimestampPacketStorage> *tagNode) {
-        auto packetsUsed = tagNode->tagForCpuAccess->packetsUsed;
+    class MockTimestampPacketStorage : public TimestampPacketStorage {
+      public:
+        using TimestampPacketStorage::implicitGpuDependenciesCount;
+        using TimestampPacketStorage::packets;
+    };
+
+    template <typename TimestampPacketStorageT>
+    void setTagToReadyState(TagNode<TimestampPacketStorageT> *tagNode) {
+        auto packetsUsed = tagNode->tagForCpuAccess->getPacketsUsed();
         tagNode->initialize();
 
-        for (auto &packet : tagNode->tagForCpuAccess->packets) {
-            packet.contextStart = 0u;
-            packet.globalStart = 0u;
-            packet.contextEnd = 0u;
-            packet.globalEnd = 0u;
+        uint32_t zeros[4] = {};
+
+        for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
+            tagNode->tagForCpuAccess->assignDataToAllTimestamps(i, zeros);
         }
-        tagNode->tagForCpuAccess->packetsUsed = packetsUsed;
+        tagNode->tagForCpuAccess->setPacketsUsed(packetsUsed);
     }
 
     const size_t gws[3] = {1, 1, 1};
@@ -139,7 +145,7 @@ HWTEST_F(TimestampPacketTests, givenDebugModeWhereAtomicsAreNotEmittedWhenComman
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
-    TimestampPacketStorage tag;
+    MockTimestampPacketStorage tag;
     MockTagNode mockNode;
     mockNode.tagForCpuAccess = &tag;
     mockNode.gpuAddress = 0x1230000;
@@ -178,7 +184,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreAndAtomi
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
     TimestampPacketStorage tag;
-    tag.packetsUsed = 2;
+    tag.setPacketsUsed(2);
     MockTagNode mockNode;
     mockNode.tagForCpuAccess = &tag;
     mockNode.gpuAddress = 0x1230000;
@@ -189,7 +195,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreAndAtomi
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
     auto it = hwParser.cmdList.begin();
-    for (uint32_t packetId = 0; packetId < tag.packetsUsed; packetId++) {
+    for (uint32_t packetId = 0; packetId < tag.getPacketsUsed(); packetId++) {
         verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &mockNode, packetId);
     }
     verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), &mockNode);
@@ -201,15 +207,15 @@ TEST_F(TimestampPacketTests, givenTagNodeWhatAskingForGpuAddressesThenReturnCorr
     mockNode.tagForCpuAccess = &tag;
     mockNode.gpuAddress = 0x1230000;
 
-    auto expectedEndAddress = mockNode.getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    auto expectedEndAddress = mockNode.getGpuAddress() + (2 * sizeof(uint32_t));
     EXPECT_EQ(expectedEndAddress, TimestampPacketHelper::getContextEndGpuAddress(mockNode));
 
-    auto expectedCounterAddress = mockNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitGpuDependenciesCount);
+    auto expectedCounterAddress = mockNode.getGpuAddress() + (TimestampPacketSizeControl::preferredPacketCount * 4 * sizeof(uint32_t));
     EXPECT_EQ(expectedCounterAddress, TimestampPacketHelper::getGpuDependenciesCountGpuAddress(mockNode));
 }
 
 TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenMarkAsCompleted) {
-    TimestampPacketStorage timestampPacketStorage;
+    MockTimestampPacketStorage timestampPacketStorage;
     auto &packet = timestampPacketStorage.packets[0];
     timestampPacketStorage.initialize();
 
@@ -266,7 +272,7 @@ TEST_F(TimestampPacketSimpleTests, givenTimestampPacketContainerWhenMovedThenMov
 }
 
 TEST_F(TimestampPacketSimpleTests, whenIsCompletedIsCalledThenItReturnsProperTimestampPacketStatus) {
-    TimestampPacketStorage timestampPacketStorage;
+    MockTimestampPacketStorage timestampPacketStorage;
     auto &packet = timestampPacketStorage.packets[0];
     timestampPacketStorage.initialize();
 
@@ -278,29 +284,29 @@ TEST_F(TimestampPacketSimpleTests, whenIsCompletedIsCalledThenItReturnsProperTim
 }
 
 TEST_F(TimestampPacketSimpleTests, givenMultiplePacketsInUseWhenCompletionIsCheckedThenVerifyAllUsedNodes) {
-    TimestampPacketStorage timestampPacketStorage;
+    MockTimestampPacketStorage timestampPacketStorage;
     auto &packets = timestampPacketStorage.packets;
     timestampPacketStorage.initialize();
 
-    timestampPacketStorage.packetsUsed = TimestampPacketSizeControl::preferredPacketCount - 1;
+    timestampPacketStorage.setPacketsUsed(TimestampPacketSizeControl::preferredPacketCount - 1);
 
-    for (uint32_t i = 0; i < timestampPacketStorage.packetsUsed - 1; i++) {
+    for (uint32_t i = 0; i < timestampPacketStorage.getPacketsUsed() - 1; i++) {
         packets[i].contextEnd = 0;
         packets[i].globalEnd = 0;
         EXPECT_FALSE(timestampPacketStorage.isCompleted());
     }
 
-    packets[timestampPacketStorage.packetsUsed - 1].contextEnd = 0;
+    packets[timestampPacketStorage.getPacketsUsed() - 1].contextEnd = 0;
     EXPECT_FALSE(timestampPacketStorage.isCompleted());
 
-    packets[timestampPacketStorage.packetsUsed - 1].globalEnd = 0;
+    packets[timestampPacketStorage.getPacketsUsed() - 1].globalEnd = 0;
     EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
 TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(executionEnvironment);
-    MockTagAllocator<TimestampPacketStorage> allocator(0, &memoryManager, 1);
+    MockTagAllocator<MockTimestampPacketStorage> allocator(0, &memoryManager, 1);
 
     auto firstNode = allocator.getTag();
     auto i = 0u;
@@ -328,11 +334,11 @@ TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
         EXPECT_EQ(1u, packet.contextEnd);
         EXPECT_EQ(1u, packet.globalEnd);
     }
-    EXPECT_EQ(1u, firstNode->tagForCpuAccess->packetsUsed);
+    EXPECT_EQ(1u, firstNode->tagForCpuAccess->getPacketsUsed());
 }
 
 TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
-    TimestampPacketStorage timestampPacketStorage;
+    MockTimestampPacketStorage timestampPacketStorage;
     EXPECT_EQ(TimestampPacketSizeControl::preferredPacketCount * sizeof(timestampPacketStorage.packets[0]), sizeof(timestampPacketStorage.packets));
 
     for (const auto &packet : timestampPacketStorage.packets) {
@@ -341,7 +347,7 @@ TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
         EXPECT_EQ(1u, packet.contextEnd);
         EXPECT_EQ(1u, packet.globalEnd);
     }
-    EXPECT_EQ(1u, timestampPacketStorage.packetsUsed);
+    EXPECT_EQ(1u, timestampPacketStorage.getPacketsUsed());
 }
 
 HWTEST_F(TimestampPacketTests, givenCommandStreamReceiverHwWhenObtainingPreferredTagPoolSizeThenReturnCorrectValue) {
@@ -361,12 +367,8 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAlloc
     EXPECT_EQ(1u, csr.getPreferredTagPoolSize());
 
     auto tag = csr.getTimestampPacketAllocator()->getTag();
-    for (auto &packet : tag->tagForCpuAccess->packets) {
-        packet.contextStart = 0;
-        packet.globalStart = 0;
-        packet.contextEnd = 0;
-        packet.globalEnd = 0;
-    }
+    setTagToReadyState(tag);
+
     EXPECT_TRUE(tag->tagForCpuAccess->isCompleted());
     EXPECT_FALSE(tag->canBeReleased());
 }
@@ -556,13 +558,13 @@ HWTEST_F(TimestampPacketTests, whenEstimatingSizeForNodeDependencyThenReturnCorr
     size_t sizeForNodeDependency = 0;
     sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(mockNode);
 
-    size_t expectedSize = mockNode.tagForCpuAccess->packetsUsed * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT) + sizeof(typename FamilyType::MI_ATOMIC);
+    size_t expectedSize = mockNode.tagForCpuAccess->getPacketsUsed() * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT) + sizeof(typename FamilyType::MI_ATOMIC);
 
     EXPECT_EQ(expectedSize, sizeForNodeDependency);
 }
 
 HWTEST_F(TimestampPacketTests, givenTagNodeWhenCpuAndGpuDependenciesCountAreEqualThenCanBeReleased) {
-    TimestampPacketStorage tag;
+    MockTimestampPacketStorage tag;
     MockTagNode mockNode;
     mockNode.tagForCpuAccess = &tag;
     mockNode.gpuAddress = 0x1230000;

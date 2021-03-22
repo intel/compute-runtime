@@ -29,7 +29,7 @@ template <typename TagType>
 struct TagNode;
 
 template <typename TSize>
-struct TimestampPackets;
+class TimestampPackets;
 
 struct BlitProperties;
 struct HardwareInfo;

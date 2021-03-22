@@ -276,11 +276,10 @@ TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCor
     EXPECT_NE(nullptr, event->timestampsData);
 
     for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
-        auto &packet = event->timestampsData->packets[i];
-        EXPECT_EQ(Event::State::STATE_INITIAL, packet.contextStart);
-        EXPECT_EQ(Event::State::STATE_INITIAL, packet.globalStart);
-        EXPECT_EQ(Event::State::STATE_INITIAL, packet.contextEnd);
-        EXPECT_EQ(Event::State::STATE_INITIAL, packet.globalEnd);
+        EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->timestampsData->getContextStartValue(i));
+        EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->timestampsData->getGlobalStartValue(i));
+        EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->timestampsData->getContextEndValue(i));
+        EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->timestampsData->getGlobalEndValue(i));
     }
 
     EXPECT_EQ(0u, event->getPacketsInUse());

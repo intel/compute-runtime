@@ -1078,36 +1078,33 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
         ev->timestampPacketContainer = std::make_unique<MockTimestampContainer>();
     }
 
-    void addTimestampNode(int contextStart, int contextEnd, int globalStart, int globalEnd) {
+    void addTimestampNode(uint32_t contextStart, uint32_t contextEnd, uint32_t globalStart, uint32_t globalEnd) {
         auto node = new MockTagNode<TimestampPacketStorage>();
         auto timestampPacketStorage = new TimestampPacketStorage();
         node->tagForCpuAccess = timestampPacketStorage;
 
-        timestampPacketStorage->packets[0].contextStart = contextStart;
-        timestampPacketStorage->packets[0].contextEnd = contextEnd;
-        timestampPacketStorage->packets[0].globalStart = globalStart;
-        timestampPacketStorage->packets[0].globalEnd = globalEnd;
+        uint32_t values[4] = {contextStart, globalStart, contextEnd, globalEnd};
+        timestampPacketStorage->assignDataToAllTimestamps(0, values);
 
         ev->timestampPacketContainer->add(node);
     }
 
-    void addTimestampNodeMultiOsContext(int globalStart[16], int globalEnd[16], int contextStart[16], int contextEnd[16], uint32_t size) {
+    void addTimestampNodeMultiOsContext(uint32_t globalStart[16], uint32_t globalEnd[16], uint32_t contextStart[16], uint32_t contextEnd[16], uint32_t size) {
         auto node = new MockTagNode<TimestampPacketStorage>();
         auto timestampPacketStorage = new TimestampPacketStorage();
-        timestampPacketStorage->packetsUsed = size;
+        timestampPacketStorage->setPacketsUsed(size);
 
-        for (uint32_t i = 0u; i < timestampPacketStorage->packetsUsed; ++i) {
-            timestampPacketStorage->packets[i].globalStart = globalStart[i];
-            timestampPacketStorage->packets[i].globalEnd = globalEnd[i];
-            timestampPacketStorage->packets[i].contextStart = contextStart[i];
-            timestampPacketStorage->packets[i].contextEnd = contextEnd[i];
+        for (uint32_t i = 0u; i < timestampPacketStorage->getPacketsUsed(); ++i) {
+            uint32_t values[4] = {contextStart[i], globalStart[i], contextEnd[i], globalEnd[i]};
+
+            timestampPacketStorage->assignDataToAllTimestamps(i, values);
         }
 
         node->tagForCpuAccess = timestampPacketStorage;
         ev->timestampPacketContainer->add(node);
     }
 
-    void initTimestampNodeMultiOsContextData(int globalStart[16], int globalEnd[16], uint32_t size) {
+    void initTimestampNodeMultiOsContextData(uint32_t globalStart[16], uint32_t globalEnd[16], uint32_t size) {
 
         for (uint32_t i = 0u; i < size; ++i) {
             globalStart[i] = 100;
@@ -1149,10 +1146,10 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithOneEleme
 }
 
 TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCalcProfilingDataIsCalledThenCorrectedValuesAreReturned) {
-    int globalStart[16] = {0};
-    int globalEnd[16] = {0};
-    int contextStart[16] = {0};
-    int contextEnd[16] = {0};
+    uint32_t globalStart[16] = {0};
+    uint32_t globalEnd[16] = {0};
+    uint32_t contextStart[16] = {0};
+    uint32_t contextEnd[16] = {0};
     initTimestampNodeMultiOsContextData(globalStart, globalEnd, 16u);
     addTimestampNodeMultiOsContext(globalStart, globalEnd, contextStart, contextEnd, 16u);
     auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
@@ -1165,15 +1162,15 @@ TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCal
 }
 
 TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWhenCalculatingThenDontUseThatPacket) {
-    int globalStart0 = 20;
-    int globalEnd0 = 51;
-    int contextStart0 = 21;
-    int contextEnd0 = 50;
+    uint32_t globalStart0 = 20;
+    uint32_t globalEnd0 = 51;
+    uint32_t contextStart0 = 21;
+    uint32_t contextEnd0 = 50;
 
-    int globalStart1 = globalStart0 - 1;
-    int globalEnd1 = globalEnd0 + 1;
-    int contextStart1 = contextStart0 - 1;
-    int contextEnd1 = contextEnd0 + 1;
+    uint32_t globalStart1 = globalStart0 - 1;
+    uint32_t globalEnd1 = globalEnd0 + 1;
+    uint32_t contextStart1 = contextStart0 - 1;
+    uint32_t contextEnd1 = contextEnd0 + 1;
 
     addTimestampNodeMultiOsContext(&globalStart0, &globalEnd0, &contextStart0, &contextEnd0, 1);
     addTimestampNodeMultiOsContext(&globalStart1, &globalEnd1, &contextStart1, &contextEnd1, 1);
@@ -1197,10 +1194,10 @@ TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCa
     auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
     csr.multiOsContextCapable = true;
 
-    int globalStart[16] = {0};
-    int globalEnd[16] = {0};
-    int contextStart[16] = {0};
-    int contextEnd[16] = {0};
+    uint32_t globalStart[16] = {0};
+    uint32_t globalEnd[16] = {0};
+    uint32_t contextStart[16] = {0};
+    uint32_t contextEnd[16] = {0};
     for (int i = 0; i < 16; i++) {
         globalStart[i] = 2 * i;
         globalEnd[i] = 500 * i;
