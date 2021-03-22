@@ -26,7 +26,7 @@ class AUBRunKernelIntegrateTest : public RunKernelFixture<AUBRunKernelFixtureFac
     }
 };
 
-SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
+SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {16, 1, 1};
@@ -239,7 +239,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
     delete pCmdQ2;
 }
 
-SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
+SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     const cl_int testWidth = 32;
     const cl_int testHeight = 16;
     const cl_uint workDim = 2;
