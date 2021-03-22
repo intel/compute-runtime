@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ struct PipeControlArgsBase {
     bool stateCacheInvalidationEnable = false;
     bool genericMediaStateClear = false;
     bool hdcPipelineFlush = false;
+    bool tlbInvalidation = false;
 
   protected:
     PipeControlArgsBase() = default;

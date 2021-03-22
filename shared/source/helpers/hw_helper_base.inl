@@ -243,6 +243,7 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
     pipeControl.setTextureCacheInvalidationEnable(args.textureCacheInvalidationEnable);
     pipeControl.setVfCacheInvalidationEnable(args.vfCacheInvalidationEnable);
     pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
+    pipeControl.setTlbInvalidate(args.tlbInvalidation);
 
     setPipeControlExtraProperties(pipeControl, args);
 
@@ -487,6 +488,7 @@ void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &c
     args.pipeControlFlushEnable = true;
     args.constantCacheInvalidationEnable = true;
     args.stateCacheInvalidationEnable = true;
+    args.tlbInvalidation = true;
     MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperties(args);
     MemorySynchronizationCommands<GfxFamily>::setPipeControl(cmd, args);
     *pipeControl = cmd;

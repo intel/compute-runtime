@@ -1027,6 +1027,7 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsS
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
     EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getTlbInvalidate());
 }
 
 using HwInfoConfigCommonTest = ::testing::Test;
