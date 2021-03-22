@@ -80,7 +80,7 @@ struct AUBCreateImageArray : public AUBCreateImage,
     }
 };
 
-HWTEST_F(AUBCreateImageArray, CheckArrayImages) {
+HWTEST_F(AUBCreateImageArray, GivenImageArrayThenExpectationsMet) {
     cl_mem_object_type ImgArrayTypes[] = {
         CL_MEM_OBJECT_IMAGE1D_ARRAY,
         CL_MEM_OBJECT_IMAGE2D_ARRAY};
@@ -218,7 +218,7 @@ INSTANTIATE_TEST_CASE_P(
     CopyHostPtrTest,
     testing::ValuesIn(copyHostPtrFlags));
 
-HWTEST_P(CopyHostPtrTest, imageWithDoubledRowPitchThatIsCreatedWithCopyHostPtrFlagHasProperRowPitchSet) {
+HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPtrFlagThenHasProperRowPitchSet) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
 
@@ -286,7 +286,7 @@ HWTEST_P(CopyHostPtrTest, imageWithDoubledRowPitchThatIsCreatedWithCopyHostPtrFl
         delete readMemory;
 }
 
-HWTEST_P(UseHostPtrTest, imageWithRowPitchCreatedWithUseHostPtrFlagCopiedActuallyVerifyMapImageData) {
+HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThenExpectationsMet) {
     imageDesc.image_width = 546;
     imageDesc.image_height = 1;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
@@ -381,7 +381,7 @@ HWTEST_P(UseHostPtrTest, imageWithRowPitchCreatedWithUseHostPtrFlagCopiedActuall
     delete[] pUseHostPtr;
 }
 
-HWTEST_F(AUBCreateImage, image3DCreatedWithDoubledSlicePitchWhenQueriedForDataReturnsProperData) {
+HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForDataThenReturnsProperData) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
     imageDesc.image_depth = testImageDimensions;
 
