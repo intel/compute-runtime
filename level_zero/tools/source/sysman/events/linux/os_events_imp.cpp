@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ bool LinuxEventsImp::isResetRequired(zes_event_type_flags_t &pEvent) {
         return false;
     }
     if (pState.reset) {
-        pEvent = ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED;
+        pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED;
         return true;
     }
     return false;
@@ -40,7 +40,7 @@ bool LinuxEventsImp::checkDeviceDetachEvent(zes_event_type_flags_t &pEvent) {
         return false;
     }
     if (val == 1) {
-        pEvent = ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
+        pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
         return true;
     }
     return false;
@@ -58,7 +58,7 @@ bool LinuxEventsImp::checkDeviceAttachEvent(zes_event_type_flags_t &pEvent) {
         return false;
     }
     if (val == 1) {
-        pEvent = ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH;
+        pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH;
         return true;
     }
     return false;
@@ -66,7 +66,7 @@ bool LinuxEventsImp::checkDeviceAttachEvent(zes_event_type_flags_t &pEvent) {
 
 bool LinuxEventsImp::checkIfMemHealthChanged(zes_event_type_flags_t &pEvent) {
     if (currentMemHealth() != memHealthAtEventRegister) {
-        pEvent = ZES_EVENT_TYPE_FLAG_MEM_HEALTH;
+        pEvent |= ZES_EVENT_TYPE_FLAG_MEM_HEALTH;
         return true;
     }
     return false;
@@ -75,21 +75,25 @@ bool LinuxEventsImp::checkIfMemHealthChanged(zes_event_type_flags_t &pEvent) {
 bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) {
     if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
         if (isResetRequired(pEvent)) {
+            registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED); //After receiving event unregister it
             return true;
         }
     }
     if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
         if (checkDeviceDetachEvent(pEvent)) {
+            registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH);
             return true;
         }
     }
     if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
         if (checkDeviceAttachEvent(pEvent)) {
+            registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH);
             return true;
         }
     }
     if (registeredEvents & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
         if (checkIfMemHealthChanged(pEvent)) {
+            registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_MEM_HEALTH);
             return true;
         }
     }
@@ -100,7 +104,7 @@ ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
     if (0x7fff < events) {
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
-    registeredEvents = events;
+    registeredEvents |= events;
     if (registeredEvents & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
         memHealthAtEventRegister = currentMemHealth();
     }

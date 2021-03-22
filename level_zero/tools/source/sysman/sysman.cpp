@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,7 @@ ze_result_t DriverHandleImp::sysmanEventsListen(
     uint32_t *pNumDeviceEvents,
     zes_event_type_flags_t *pEvents) {
     bool gotSysmanEvent = false;
+    memset(pEvents, 0, count * sizeof(zes_event_type_flags_t));
     auto timeToExitLoop = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
     do {
         for (uint32_t devIndex = 0; devIndex < count; devIndex++) {

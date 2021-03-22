@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,6 +133,28 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
     delete[] pDeviceEvents;
 }
 
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEventsThenAfterReceivingEventRegisterEventAgainToReceiveEvent) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
+    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsOne));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 100u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH, pDeviceEvents[0]);
+    numDeviceEvents = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 100u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 100u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH, pDeviceEvents[0]);
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+}
+
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEventsThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
     ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
@@ -192,7 +214,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEvent
     PublicLinuxEventsImp *pLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
     pLinuxEventsImp->eventRegister(ZES_EVENT_TYPE_FLAG_MEM_HEALTH);
     pLinuxEventsImp->memHealthAtEventRegister = ZES_MEM_HEALTH_OK;
-    zes_event_type_flags_t events;
+    zes_event_type_flags_t events = 0;
     uint32_t timeout = 100u;
     EXPECT_TRUE(pLinuxEventsImp->eventListen(events, timeout));
     EXPECT_EQ(events, ZES_EVENT_TYPE_FLAG_MEM_HEALTH);
