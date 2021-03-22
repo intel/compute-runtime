@@ -117,6 +117,7 @@ class MockKernel : public Kernel {
     using Kernel::auxTranslationRequired;
     using Kernel::containsStatelessWrites;
     using Kernel::executionType;
+    using Kernel::getDevice;
     using Kernel::hasDirectStatelessAccessToHostMemory;
     using Kernel::hasIndirectStatelessAccessToHostMemory;
     using Kernel::isSchedulerKernel;
@@ -185,13 +186,12 @@ class MockKernel : public Kernel {
 
     MockKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg, ClDevice &clDeviceArg, bool scheduler = false)
         : Kernel(programArg, kernelInfoArg, clDeviceArg, scheduler) {
-        mockCrossThreadDatas.resize(kernelInfoArg.size());
     }
 
     ~MockKernel() override {
         // prevent double deletion
         for (auto rootDeviceIndex = 0u; rootDeviceIndex < kernelDeviceInfos.size(); rootDeviceIndex++) {
-            if (kernelDeviceInfos[rootDeviceIndex].crossThreadData == mockCrossThreadDatas[rootDeviceIndex].data()) {
+            if (kernelDeviceInfos[rootDeviceIndex].crossThreadData == mockCrossThreadData.data()) {
                 kernelDeviceInfos[rootDeviceIndex].crossThreadData = nullptr;
             }
         }
@@ -248,17 +248,18 @@ class MockKernel : public Kernel {
     bool canTransformImages() const override;
 
     ////////////////////////////////////////////////////////////////////////////////
-    void setCrossThreadDataForRootDeviceIndex(uint32_t rootDeviceIndex, const void *crossThreadDataPattern, uint32_t newCrossThreadDataSize) {
-        if ((kernelDeviceInfos[rootDeviceIndex].crossThreadData != nullptr) && (kernelDeviceInfos[rootDeviceIndex].crossThreadData != mockCrossThreadDatas[rootDeviceIndex].data())) {
+    void setCrossThreadData(const void *crossThreadDataPattern, uint32_t newCrossThreadDataSize) {
+        auto rootDeviceIndex = defaultRootDeviceIndex;
+        if ((kernelDeviceInfos[rootDeviceIndex].crossThreadData != nullptr) && (kernelDeviceInfos[rootDeviceIndex].crossThreadData != mockCrossThreadData.data())) {
             delete[] kernelDeviceInfos[rootDeviceIndex].crossThreadData;
             kernelDeviceInfos[rootDeviceIndex].crossThreadData = nullptr;
             kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = 0;
         }
         if (crossThreadDataPattern && (newCrossThreadDataSize > 0)) {
-            mockCrossThreadDatas[rootDeviceIndex].clear();
-            mockCrossThreadDatas[rootDeviceIndex].insert(mockCrossThreadDatas[rootDeviceIndex].begin(), (char *)crossThreadDataPattern, ((char *)crossThreadDataPattern) + newCrossThreadDataSize);
+            mockCrossThreadData.clear();
+            mockCrossThreadData.insert(mockCrossThreadData.begin(), (char *)crossThreadDataPattern, ((char *)crossThreadDataPattern) + newCrossThreadDataSize);
         } else {
-            mockCrossThreadDatas[rootDeviceIndex].resize(newCrossThreadDataSize, 0);
+            mockCrossThreadData.resize(newCrossThreadDataSize, 0);
         }
 
         if (newCrossThreadDataSize == 0) {
@@ -266,13 +267,8 @@ class MockKernel : public Kernel {
             kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = 0;
             return;
         }
-        kernelDeviceInfos[rootDeviceIndex].crossThreadData = mockCrossThreadDatas[rootDeviceIndex].data();
-        kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = static_cast<uint32_t>(mockCrossThreadDatas[rootDeviceIndex].size());
-    }
-
-    void setCrossThreadData(const void *crossThreadDataPattern, uint32_t newCrossThreadDataSize) {
-        auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-        setCrossThreadDataForRootDeviceIndex(rootDeviceIndex, crossThreadDataPattern, newCrossThreadDataSize);
+        kernelDeviceInfos[rootDeviceIndex].crossThreadData = mockCrossThreadData.data();
+        kernelDeviceInfos[rootDeviceIndex].crossThreadDataSize = static_cast<uint32_t>(mockCrossThreadData.size());
     }
 
     void setSshLocal(const void *sshPattern, uint32_t newSshSize, uint32_t rootDeviceIndex) {
@@ -312,7 +308,7 @@ class MockKernel : public Kernel {
         return kernelInfoAllocated;
     }
 
-    StackVec<std::vector<char>, 3> mockCrossThreadDatas;
+    std::vector<char> mockCrossThreadData;
     std::vector<char> mockSshLocal;
 
     void setUsingSharedArgs(bool usingSharedArgValue) { this->usingSharedObjArgs = usingSharedArgValue; }

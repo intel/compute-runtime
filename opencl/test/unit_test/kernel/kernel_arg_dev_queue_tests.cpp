@@ -53,7 +53,7 @@ struct KernelArgDevQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
 
     bool crossThreadDataUnchanged() {
         for (uint32_t i = 0; i < crossThreadDataSize; i++) {
-            if (pKernel->mockCrossThreadDatas[testedRootDeviceIndex][i] != crossThreadDataInit) {
+            if (pKernel->mockCrossThreadData[i] != crossThreadDataInit) {
                 return false;
             }
         }
@@ -82,7 +82,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GivenDeviceQueueWhenSettingAr
     EXPECT_EQ(ret, CL_SUCCESS);
 
     auto gpuAddress = static_cast<uint32_t>(pDeviceQueue->getQueueBuffer()->getGpuAddressToPatch());
-    auto patchLocation = ptrOffset(pKernel->mockCrossThreadDatas[testedRootDeviceIndex].data(), kernelArgPatchInfo.crossthreadOffset);
+    auto patchLocation = ptrOffset(pKernel->mockCrossThreadData.data(), kernelArgPatchInfo.crossthreadOffset);
     EXPECT_EQ(*(reinterpret_cast<uint32_t *>(patchLocation)), gpuAddress);
 }
 

@@ -63,9 +63,7 @@ class KernelSlmArgTest : public MultiRootDeviceWithSubDevicesFixture {
         for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
             crossThreadData[rootDeviceIndex][0x20 / sizeof(uint32_t)] = 0x12344321;
 
-            for (auto &rootDeviceIndex2 : this->context->getRootDeviceIndices()) {
-                pKernel[rootDeviceIndex]->setCrossThreadDataForRootDeviceIndex(rootDeviceIndex2, &crossThreadData[rootDeviceIndex], sizeof(crossThreadData[rootDeviceIndex]));
-            }
+            pKernel[rootDeviceIndex]->setCrossThreadData(&crossThreadData[rootDeviceIndex], sizeof(crossThreadData[rootDeviceIndex]));
         }
     }
 

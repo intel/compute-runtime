@@ -72,9 +72,7 @@ class KernelArgImmediateTest : public MultiRootDeviceWithSubDevicesFixture {
         pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernels);
 
         for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-            for (auto &rootDeviceIndex2 : this->context->getRootDeviceIndices()) {
-                pKernel[rootDeviceIndex]->setCrossThreadDataForRootDeviceIndex(rootDeviceIndex2, &pCrossThreadData[rootDeviceIndex], sizeof(pCrossThreadData[rootDeviceIndex]));
-            }
+            pKernel[rootDeviceIndex]->setCrossThreadData(&pCrossThreadData[rootDeviceIndex], sizeof(pCrossThreadData[rootDeviceIndex]));
         }
     }
 

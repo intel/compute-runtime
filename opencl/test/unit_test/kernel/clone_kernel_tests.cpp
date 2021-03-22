@@ -105,10 +105,8 @@ class CloneKernelTest : public MultiRootDeviceWithSubDevicesFixture {
             char pClonedCrossThreadData[64] = {};
             clonedKernels[rootDeviceIndex] = pClonedKernel[rootDeviceIndex];
 
-            for (auto &rootDeviceIndex2 : this->context->getRootDeviceIndices()) {
-                pSourceKernel[rootDeviceIndex]->setCrossThreadDataForRootDeviceIndex(rootDeviceIndex2, pSourceCrossThreadData, sizeof(pSourceCrossThreadData));
-                pClonedKernel[rootDeviceIndex]->setCrossThreadDataForRootDeviceIndex(rootDeviceIndex2, pClonedCrossThreadData, sizeof(pClonedCrossThreadData));
-            }
+            pSourceKernel[rootDeviceIndex]->setCrossThreadData(pSourceCrossThreadData, sizeof(pSourceCrossThreadData));
+            pClonedKernel[rootDeviceIndex]->setCrossThreadData(pClonedCrossThreadData, sizeof(pClonedCrossThreadData));
         }
 
         pSourceMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(sourceKernels);

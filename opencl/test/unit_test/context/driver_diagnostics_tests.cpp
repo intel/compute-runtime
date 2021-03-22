@@ -830,20 +830,17 @@ TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenConte
     populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
     uint32_t computeUnitsForScratch[] = {0x10, 0x20};
-    for (auto &pClDevice : context->getDevices()) {
-        auto &deviceInfo = const_cast<DeviceInfo &>(pClDevice->getSharedDeviceInfo());
-        deviceInfo.computeUnitsUsedForScratch = computeUnitsForScratch[pClDevice->getRootDeviceIndex()];
-    }
+    auto pClDevice = &mockKernel.mockKernel->getDevice();
+    auto &deviceInfo = const_cast<DeviceInfo &>(pClDevice->getSharedDeviceInfo());
+    deviceInfo.computeUnitsUsedForScratch = computeUnitsForScratch[pClDevice->getRootDeviceIndex()];
 
     mockKernel.mockKernel->initialize();
 
-    for (auto &pClDevice : context->getDevices()) {
-        auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
-        auto expectedSize = size * pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize();
-        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[REGISTER_PRESSURE_TOO_HIGH],
-                 mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(), expectedSize);
-        EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
-    }
+    auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    auto expectedSize = size * pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize();
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[REGISTER_PRESSURE_TOO_HIGH],
+             mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(), expectedSize);
+    EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
 }
 
 TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThenContextProvidesProperHint) {
