@@ -24,10 +24,10 @@ Kernel *MultiDeviceKernel::determineDefaultKernel(KernelVectorType &kernelVector
     }
     return nullptr;
 }
-MultiDeviceKernel::MultiDeviceKernel(KernelVectorType kernelVector) : kernels(std::move(kernelVector)),
-                                                                      defaultKernel(MultiDeviceKernel::determineDefaultKernel(kernels)),
-                                                                      program(defaultKernel->getProgram()),
-                                                                      kernelInfos(defaultKernel->getKernelInfos()) {
+MultiDeviceKernel::MultiDeviceKernel(KernelVectorType kernelVector, const KernelInfoContainer kernelInfosArg) : kernels(std::move(kernelVector)),
+                                                                                                                defaultKernel(MultiDeviceKernel::determineDefaultKernel(kernels)),
+                                                                                                                program(defaultKernel->getProgram()),
+                                                                                                                kernelInfos(kernelInfosArg) {
     for (auto &pKernel : kernels) {
         if (pKernel) {
             pKernel->incRefInternal();

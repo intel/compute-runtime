@@ -86,7 +86,7 @@ HWTEST_F(MediaImageSetArgTest, WhenSettingMediaImageArgThenArgsSetCorrectly) {
     typedef typename FamilyType::MEDIA_SURFACE_STATE MEDIA_SURFACE_STATE;
 
     auto pSurfaceState = reinterpret_cast<const MEDIA_SURFACE_STATE *>(
-        ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
+        ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     srcImage->setMediaImageArg(const_cast<MEDIA_SURFACE_STATE *>(pSurfaceState), pClDevice->getRootDeviceIndex());
@@ -114,7 +114,7 @@ HWTEST_F(MediaImageSetArgTest, WhenSettingKernelArgImageThenArgsSetCorrectly) {
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto pSurfaceState = reinterpret_cast<const MEDIA_SURFACE_STATE *>(
-        ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex),
+        ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     uint64_t surfaceAddress = pSurfaceState->getSurfaceBaseAddress();

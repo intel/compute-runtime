@@ -25,8 +25,7 @@ typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *HardwareC
 
 template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const Kernel &kernel,
-                                                   const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
-                                                   uint32_t rootDeviceIndex) {
+                                                   const size_t &sizeCrossThreadData, const size_t &sizePerThreadData) {
     auto grfSize = sizeof(typename GfxFamily::GRF);
     DEBUG_BREAK_IF((sizeCrossThreadData % grfSize) != 0);
     auto numGrfCrossThreadData = static_cast<uint32_t>(sizeCrossThreadData / grfSize);
@@ -113,9 +112,9 @@ void HardwareCommandsHelper<GfxFamily>::programPerThreadData(
         grfSize,
         numChannels,
         std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSize[0]), static_cast<uint16_t>(localWorkSize[1]), static_cast<uint16_t>(localWorkSize[2])}},
-        std::array<uint8_t, 3>{{kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
-                                kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
-                                kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
+        std::array<uint8_t, 3>{{kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
+                                kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
+                                kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
         kernel.usesOnlyImages());
 
     updatePerThreadDataTotal(sizePerThreadData, simd, numChannels, sizePerThreadDataTotal, localWorkItems);

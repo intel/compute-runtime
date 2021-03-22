@@ -102,7 +102,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         size_t sizeToPatch = debugSurface->getUnderlyingBufferSize();
         Buffer::setSurfaceState(&commandQueue.getDevice(), commandQueue.getDevice().getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh),
                                 false, false, sizeToPatch, addressToPatch, 0, debugSurface, 0, 0,
-                                mainKernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
+                                mainKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
                                 mainKernel->getTotalNumDevicesInContext());
     }
 
@@ -244,7 +244,6 @@ template <typename GfxFamily>
 void HardwareInterface<GfxFamily>::obtainIndirectHeaps(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo,
                                                        bool blockedQueue, IndirectHeap *&dsh, IndirectHeap *&ioh, IndirectHeap *&ssh) {
     auto parentKernel = multiDispatchInfo.peekParentKernel();
-    auto rootDeviceIndex = commandQueue.getDevice().getRootDeviceIndex();
 
     if (blockedQueue) {
         size_t dshSize = 0;
@@ -254,7 +253,7 @@ void HardwareInterface<GfxFamily>::obtainIndirectHeaps(CommandQueue &commandQueu
 
         if (parentKernel) {
             dshSize = commandQueue.getContext().getDefaultDeviceQueue()->getDshBuffer()->getUnderlyingBufferSize();
-            sshSize += HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(*parentKernel, rootDeviceIndex);
+            sshSize += HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(*parentKernel);
             iohEqualsDsh = true;
             colorCalcSize = static_cast<size_t>(commandQueue.getContext().getDefaultDeviceQueue()->colorCalcStateSize);
         } else {

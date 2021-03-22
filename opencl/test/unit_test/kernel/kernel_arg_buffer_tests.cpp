@@ -174,7 +174,7 @@ TEST_F(KernelArgBufferTest, GivenSvmPtrStatelessWhenSettingKernelArgThenArgument
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(pKernel->requiresCoherency());
 
-    EXPECT_EQ(0u, pKernel->getSurfaceStateHeapSize(rootDeviceIndex));
+    EXPECT_EQ(0u, pKernel->getSurfaceStateHeapSize());
 
     delete buffer;
 }
@@ -192,11 +192,11 @@ HWTEST_F(KernelArgBufferTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArgumen
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(pKernel->requiresCoherency());
 
-    EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize(rootDeviceIndex));
+    EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize());
 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
-        ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex), pKernelInfo->kernelArgInfo[0].offsetHeap));
+        ptrOffset(pKernel->getSurfaceStateHeap(), pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
     EXPECT_EQ(buffer->getGraphicsAllocation(mockRootDeviceIndex)->getGpuAddress(), surfaceAddress);
@@ -224,11 +224,11 @@ HWTEST_F(MultiDeviceKernelArgBufferTest, GivenSvmPtrStatefulWhenSettingKernelArg
     for (auto &rootDeviceIndex : pContext->getRootDeviceIndices()) {
         auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
         EXPECT_FALSE(pKernel->requiresCoherency());
-        EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize(rootDeviceIndex));
+        EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize());
 
         typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
         auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
-            ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex), kernelInfos[rootDeviceIndex]->kernelArgInfo[0].offsetHeap));
+            ptrOffset(pKernel->getSurfaceStateHeap(), kernelInfos[rootDeviceIndex]->kernelArgInfo[0].offsetHeap));
 
         auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
         EXPECT_EQ(pBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), surfaceAddress);
@@ -433,7 +433,7 @@ TEST_F(KernelArgBufferTest, givenGfxAllocationInHostMemoryWhenHasDirectStateless
 
 TEST_F(KernelArgBufferTest, givenInvalidKernelObjWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnFalse) {
     KernelInfo kernelInfo;
-    MockKernel emptyKernel(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0), *pClDevice);
+    MockKernel emptyKernel(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(emptyKernel.hasDirectStatelessAccessToHostMemory());
 
     pKernel->kernelArguments.at(0).type = Kernel::NONE_OBJ;
@@ -450,19 +450,19 @@ TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirec
     KernelInfo kernelInfo;
     EXPECT_FALSE(kernelInfo.hasIndirectStatelessAccess);
 
-    MockKernel kernelWithNoIndirectStatelessAccess(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0), *pClDevice);
+    MockKernel kernelWithNoIndirectStatelessAccess(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(kernelWithNoIndirectStatelessAccess.hasIndirectStatelessAccessToHostMemory());
 
     kernelInfo.hasIndirectStatelessAccess = true;
 
-    MockKernel kernelWithNoIndirectHostAllocations(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0), *pClDevice);
+    MockKernel kernelWithNoIndirectHostAllocations(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(kernelWithNoIndirectHostAllocations.hasIndirectStatelessAccessToHostMemory());
 
     const auto allocationTypes = {GraphicsAllocation::AllocationType::BUFFER,
                                   GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
                                   GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY};
 
-    MockKernel kernelWithIndirectUnifiedMemoryAllocation(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0), *pClDevice);
+    MockKernel kernelWithIndirectUnifiedMemoryAllocation(pProgram, kernelInfo, *pClDevice);
     MockGraphicsAllocation gfxAllocation;
     for (const auto type : allocationTypes) {
         gfxAllocation.setAllocationType(type);
@@ -480,7 +480,7 @@ TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectStatelessAccessWhenHa
     KernelInfo kernelInfo;
     kernelInfo.hasIndirectStatelessAccess = true;
 
-    MockKernel mockKernel(pProgram, MockKernel::toKernelInfoContainer(kernelInfo, 0), *pClDevice);
+    MockKernel mockKernel(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed);
     EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
 

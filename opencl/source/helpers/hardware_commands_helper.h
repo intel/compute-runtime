@@ -42,8 +42,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
         const Kernel &kernel,
         const size_t &sizeCrossThreadData,
-        const size_t &sizePerThreadData,
-        uint32_t rootDeviceIndex);
+        const size_t &sizePerThreadData);
 
     inline static uint32_t additionalSizeRequiredDsh();
 
@@ -121,14 +120,12 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);
 
     static size_t getSizeRequiredDSH(
-        uint32_t rootDeviceIndex,
         const Kernel &kernel);
     static size_t getSizeRequiredIOH(
-        uint32_t rootDeviceIndex,
         const Kernel &kernel,
         size_t localWorkSize = 256);
     static size_t getSizeRequiredSSH(
-        const Kernel &kernel, uint32_t rootDeviceIndex);
+        const Kernel &kernel);
 
     static size_t getTotalSizeRequiredDSH(
         const MultiDispatchInfo &multiDispatchInfo);
@@ -137,14 +134,14 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     static size_t getTotalSizeRequiredSSH(
         const MultiDispatchInfo &multiDispatchInfo);
 
-    static size_t getSshSizeForExecutionModel(const Kernel &kernel, uint32_t rootDeviceIndex);
+    static size_t getSshSizeForExecutionModel(const Kernel &kernel);
     static void setInterfaceDescriptorOffset(
         WALKER_TYPE<GfxFamily> *walkerCmd,
         uint32_t &interfaceDescriptorIndex);
 
     static void programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);
 
-    static bool inlineDataProgrammingRequired(const Kernel &kernel, uint32_t rootDeviceIndex);
-    static bool kernelUsesLocalIds(const Kernel &kernel, uint32_t rootDeviceIndex);
+    static bool inlineDataProgrammingRequired(const Kernel &kernel);
+    static bool kernelUsesLocalIds(const Kernel &kernel);
 };
 } // namespace NEO

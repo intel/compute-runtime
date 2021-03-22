@@ -16,18 +16,18 @@ struct KernelSubGroupInfoFixture : HelloWorldFixture<HelloWorldFixtureFactory> {
     void SetUp() override {
         ParentClass::SetUp();
         pKernel->maxKernelWorkGroupSize = static_cast<uint32_t>(pDevice->getDeviceInfo().maxWorkGroupSize / 2);
-        maxSimdSize = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize());
+        maxSimdSize = static_cast<size_t>(pKernel->getKernelInfo().getMaxSimdSize());
         ASSERT_LE(8u, maxSimdSize);
         maxWorkDim = static_cast<size_t>(pClDevice->getDeviceInfo().maxWorkItemDimensions);
         ASSERT_EQ(3u, maxWorkDim);
         maxWorkGroupSize = static_cast<size_t>(pKernel->maxKernelWorkGroupSize);
         ASSERT_GE(1024u, maxWorkGroupSize);
-        largestCompiledSIMDSize = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize());
+        largestCompiledSIMDSize = static_cast<size_t>(pKernel->getKernelInfo().getMaxSimdSize());
         ASSERT_EQ(32u, largestCompiledSIMDSize);
 
-        auto requiredWorkGroupSizeX = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
-        auto requiredWorkGroupSizeY = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
-        auto requiredWorkGroupSizeZ = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
+        auto requiredWorkGroupSizeX = static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
+        auto requiredWorkGroupSizeY = static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
+        auto requiredWorkGroupSizeZ = static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
 
         calculatedMaxWorkgroupSize = requiredWorkGroupSizeX * requiredWorkGroupSizeY * requiredWorkGroupSizeZ;
         if ((calculatedMaxWorkgroupSize == 0) || (calculatedMaxWorkgroupSize > static_cast<size_t>(pKernel->maxKernelWorkGroupSize))) {
@@ -263,7 +263,7 @@ TEST_F(KernelSubGroupInfoReturnCompileNumberTest, GivenKernelWhenGettingCompileN
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-    EXPECT_EQ(paramValue[0], static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.compiledSubGroupsNumber));
+    EXPECT_EQ(paramValue[0], static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.compiledSubGroupsNumber));
 }
 
 typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnCompileSizeTest;
@@ -286,11 +286,11 @@ TEST_F(KernelSubGroupInfoReturnCompileSizeTest, GivenKernelWhenGettingCompileSub
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
     size_t requiredSubGroupSize = 0;
-    auto start = pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find("intel_reqd_sub_group_size(");
+    auto start = pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find("intel_reqd_sub_group_size(");
     if (start != std::string::npos) {
         start += strlen("intel_reqd_sub_group_size(");
-        auto stop = pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find(")", start);
-        requiredSubGroupSize = stoi(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelLanguageAttributes.substr(start, stop - start));
+        auto stop = pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find(")", start);
+        requiredSubGroupSize = stoi(pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.substr(start, stop - start));
     }
 
     EXPECT_EQ(paramValue[0], requiredSubGroupSize);
@@ -348,7 +348,7 @@ TEST_F(KernelSubGroupInfoTest, GivenNullDeviceWhenGettingSubGroupInfoFromMultiDe
 
     MockUnrestrictiveContext context;
     auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create<MockKernel>(mockProgram.get(), pKernel->getKernelInfos(), nullptr));
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create<MockKernel>(mockProgram.get(), this->pMultiDeviceKernel->getKernelInfos(), nullptr));
 
     retVal = clGetKernelSubGroupInfo(
         pMultiDeviceKernel.get(),

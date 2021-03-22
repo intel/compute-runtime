@@ -3454,7 +3454,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
 
     Kernel *pKernel = pMultiDeviceKernel->getKernel(pCommandQueue->getDevice().getRootDeviceIndex());
     if ((pKernel->getExecutionType() != KernelExecutionType::Default) ||
-        pKernel->usesSyncBuffer(pCommandQueue->getDevice().getRootDeviceIndex())) {
+        pKernel->usesSyncBuffer()) {
         retVal = CL_INVALID_KERNEL;
         TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
         return retVal;
@@ -4820,7 +4820,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
 
     for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
         auto pKernel = pMultiDeviceKernel->getKernel(pDevice->getRootDeviceIndex());
-        cl_int kernelArgAddressQualifier = asClKernelArgAddressQualifier(pKernel->getKernelInfo(pDevice->getRootDeviceIndex()).kernelArgInfo[argIndex].metadata.getAddressQualifier());
+        cl_int kernelArgAddressQualifier = asClKernelArgAddressQualifier(pKernel->getKernelInfo().kernelArgInfo[argIndex].metadata.getAddressQualifier());
         if ((kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_GLOBAL) &&
             (kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_CONSTANT)) {
             retVal = CL_INVALID_ARG_VALUE;
@@ -5920,7 +5920,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         }
     }
 
-    if (pKernel->usesSyncBuffer(rootDeviceIndex)) {
+    if (pKernel->usesSyncBuffer()) {
         if (pKernel->getExecutionType() != KernelExecutionType::Concurrent) {
             retVal = CL_INVALID_KERNEL;
             return retVal;

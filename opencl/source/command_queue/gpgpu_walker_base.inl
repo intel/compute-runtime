@@ -172,7 +172,7 @@ size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(const K
 }
 
 template <typename GfxFamily>
-size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel, uint32_t rootDeviceIndex) {
+size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel) {
     return 0u;
 }
 

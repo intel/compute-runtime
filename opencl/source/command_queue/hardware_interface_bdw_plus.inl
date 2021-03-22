@@ -70,11 +70,10 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     Vec3<size_t> &numberOfWorkgroups,
     Vec3<size_t> &startOfWorkgroups) {
 
-    auto rootDeviceIndex = commandQueue.getDevice().getRootDeviceIndex();
     auto walkerCmdBuf = allocateWalkerSpace(commandStream, kernel);
     WALKER_TYPE<GfxFamily> walkerCmd = GfxFamily::cmdInitGpgpuWalker;
     uint32_t dim = dispatchInfo.getDim();
-    uint32_t simd = kernel.getKernelInfo(rootDeviceIndex).getMaxSimdSize();
+    uint32_t simd = kernel.getKernelInfo().getMaxSimdSize();
 
     size_t globalOffsets[3] = {dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z};
     size_t startWorkGroups[3] = {startOfWorkgroups.x, startOfWorkgroups.y, startOfWorkgroups.z};
@@ -86,7 +85,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel, rootDeviceIndex);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
 
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
@@ -94,7 +93,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         ioh,
         ssh,
         kernel,
-        kernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed, rootDeviceIndex),
+        kernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         simd,
         localWorkSizes,
         offsetInterfaceDescriptorTable,
@@ -105,7 +104,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         true,
         commandQueue.getDevice());
 
-    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor,
+    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernel.getKernelInfo().kernelDescriptor,
                                                            globalOffsets, startWorkGroups,
                                                            numWorkGroups, localWorkSizes, simd, dim,
                                                            false, false, 0u);

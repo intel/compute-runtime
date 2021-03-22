@@ -137,7 +137,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
 
     auto kernel = mdi->begin()->getKernel();
-    EXPECT_EQ("CopyBufferToBufferMiddle", kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName);
+    EXPECT_EQ("CopyBufferToBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderAndSrcHostPtrThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {

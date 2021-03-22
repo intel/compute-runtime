@@ -37,8 +37,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     size_t enqueuedLocalWorkSize[3] = {0, 0, 0};
 
     auto &kernel = *pKernel;
-    auto rootDeviceIndex = device->getRootDeviceIndex();
-    const auto &kernelInfo = kernel.getKernelInfo(rootDeviceIndex);
+    const auto &kernelInfo = kernel.getKernelInfo();
 
     if (kernel.isParentKernel && !this->context->getDefaultDeviceQueue()) {
         return CL_INVALID_OPERATION;
@@ -109,7 +108,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     Surface *surfaces[] = {&s};
 
     if (context->isProvidingPerformanceHints()) {
-        if (kernel.hasPrintfOutput(rootDeviceIndex)) {
+        if (kernel.hasPrintfOutput()) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PRINTF_DETECTED_IN_KERNEL, kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str());
         }
         if (kernel.requiresCoherency()) {

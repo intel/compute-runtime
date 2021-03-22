@@ -612,7 +612,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNonParentKernelWhenCreatingKernelRe
     MockClDevice device{new MockDevice};
     MockProgram program(toClDeviceVector(device));
     KernelInfo info;
-    MockKernel kernel(&program, MockKernel::toKernelInfoContainer(info, device.getRootDeviceIndex()), device);
+    MockKernel kernel(&program, info, device);
 
     EXPECT_FALSE(kernel.isParentKernel);
 
@@ -629,10 +629,8 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNonSchedulerKernelWithForcedSchedul
 
     MockClDevice device{new MockDevice};
     MockProgram program(toClDeviceVector(device));
-    KernelInfoContainer kernelInfos;
     KernelInfo info;
-    kernelInfos.push_back(&info);
-    MockKernel kernel(&program, kernelInfos, device);
+    MockKernel kernel(&program, info, device);
 
     EXPECT_FALSE(kernel.isParentKernel);
 
@@ -667,9 +665,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNoKernelArgsWhenObtainingKernelRefl
     bindingTableState.SurfaceStateOffset = 0;
     populateKernelDescriptor(info.kernelDescriptor, bindingTableState);
 
-    KernelInfoContainer kernelInfos;
-    kernelInfos.push_back(&info);
-    MockKernel kernel(&program, kernelInfos, *device);
+    MockKernel kernel(&program, info, *device);
 
     EXPECT_TRUE(kernel.isParentKernel);
 
@@ -730,9 +726,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKe
     info.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = devQueueCurbeOffset;
     info.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = devQueueCurbeSize;
 
-    KernelInfoContainer kernelInfos;
-    kernelInfos.push_back(&info);
-    MockKernel kernel(&program, kernelInfos, *device);
+    MockKernel kernel(&program, info, *device);
 
     EXPECT_TRUE(kernel.isParentKernel);
 
@@ -766,7 +760,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelReflectionSurfaceThenKerne
     size_t parentImageCount = 0;
     size_t parentSamplerCount = 0;
 
-    if (pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
+    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         parentImageCount = 1;
         parentSamplerCount = 1;
     }
@@ -819,7 +813,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelReflectionSurfaceThenKerne
     uint32_t parentImages = 0;
     uint32_t parentSamplers = 0;
 
-    if (pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
+    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         parentImages = 1;
         parentSamplers = 1;
         EXPECT_LT(sizeof(IGIL_KernelDataHeader), pKernelHeader->m_ParentSamplerParamsOffset);
@@ -1111,7 +1105,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
     cl_sampler samplerCl = sampler.get();
     cl_mem imageCl = image3d.get();
 
-    if (pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
+    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         pKernel->setArgSampler(0, sizeof(cl_sampler), &samplerCl);
         pKernel->setArgImage(1, sizeof(cl_mem), &imageCl);
     }
@@ -1136,7 +1130,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
 
         if (pKernelHeader->m_ParentKernelImageCount > 0) {
             uint32_t imageIndex = 0;
-            for (const auto &arg : pKernel->getKernelInfo(rootDeviceIndex).kernelArgInfo) {
+            for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
                 if (arg.isImage) {
                     EXPECT_EQ(arg.offsetHeap, pParentImageParams[imageIndex].m_ObjectID);
                     imageIndex++;
@@ -1146,7 +1140,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
 
         if (pKernelHeader->m_ParentSamplerCount > 0) {
             uint32_t samplerIndex = 0;
-            for (const auto &arg : pKernel->getKernelInfo(rootDeviceIndex).kernelArgInfo) {
+            for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
                 if (arg.isSampler) {
                     EXPECT_EQ(OCLRT_ARG_OFFSET_TO_SAMPLER_OBJECT_ID(arg.offsetHeap), pParentSamplerParams[samplerIndex].m_ObjectID);
                     samplerIndex++;
@@ -2095,11 +2089,7 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelRefl
     bindingTableState.SurfaceStateOffset = 0;
     populateKernelDescriptor(info.kernelDescriptor, bindingTableState);
 
-    auto rootDeviceIndex = device1->getRootDeviceIndex();
-    KernelInfoContainer kernelInfos;
-    kernelInfos.resize(rootDeviceIndex + 1);
-    kernelInfos[rootDeviceIndex] = &info;
-    MockKernel kernel(&program, kernelInfos, *device1);
+    MockKernel kernel(&program, info, *device1);
 
     EXPECT_TRUE(kernel.isParentKernel);
 
@@ -2160,11 +2150,7 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKe
     info.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = devQueueCurbeOffset;
     info.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = devQueueCurbeSize;
 
-    auto rootDeviceIndex = device1->getRootDeviceIndex();
-    KernelInfoContainer kernelInfos;
-    kernelInfos.resize(rootDeviceIndex + 1);
-    kernelInfos[rootDeviceIndex] = &info;
-    MockKernel kernel(&program, kernelInfos, *device1);
+    MockKernel kernel(&program, info, *device1);
 
     EXPECT_TRUE(kernel.isParentKernel);
 

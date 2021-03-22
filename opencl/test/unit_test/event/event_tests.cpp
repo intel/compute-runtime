@@ -564,7 +564,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
-    KernelInfo *kernelInfo = const_cast<KernelInfo *>(&pKernel->getKernelInfo(rootDeviceIndex));
+    KernelInfo *kernelInfo = const_cast<KernelInfo *>(&pKernel->getKernelInfo());
     kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
 
     SPatchAllocateStatelessPrintfSurface sPatchPrintfSurface = {};

@@ -54,12 +54,12 @@ class KernelSlmArgTest : public MultiRootDeviceWithSubDevicesFixture {
         }
 
         for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-            pKernel[rootDeviceIndex] = new MockKernel(program.get(), kernelInfos, *deviceFactory->rootDevices[rootDeviceIndex]);
+            pKernel[rootDeviceIndex] = new MockKernel(program.get(), *pKernelInfo[rootDeviceIndex], *deviceFactory->rootDevices[rootDeviceIndex]);
             kernels[rootDeviceIndex] = pKernel[rootDeviceIndex];
             ASSERT_EQ(CL_SUCCESS, pKernel[rootDeviceIndex]->initialize());
         }
 
-        pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernels);
+        pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(kernels, kernelInfos);
         for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
             crossThreadData[rootDeviceIndex][0x20 / sizeof(uint32_t)] = 0x12344321;
 

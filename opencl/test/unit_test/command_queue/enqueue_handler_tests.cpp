@@ -578,7 +578,7 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
         kernel->initialize();
 
         auto bindingTableState = reinterpret_cast<BINDING_TABLE_STATE *>(
-            ptrOffset(kernel->getSurfaceStateHeap(rootDeviceIndex), sPatchBindingTableState.Offset));
+            ptrOffset(kernel->getSurfaceStateHeap(), sPatchBindingTableState.Offset));
         bindingTableState->setSurfaceStatePointer(0);
 
         auto mockCmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));

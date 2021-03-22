@@ -137,7 +137,7 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithAllocateSyncBufferPatchWhenEx
     SPatchAllocateSyncBuffer patchAllocateSyncBuffer;
     populateKernelDescriptor(pProgram->mockKernelInfo.kernelDescriptor, patchAllocateSyncBuffer);
 
-    EXPECT_TRUE(pKernel->usesSyncBuffer(testedRootDeviceIndex));
+    EXPECT_TRUE(pKernel->usesSyncBuffer());
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,

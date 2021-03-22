@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ GEN12LPTEST_F(Gen12LpKernelTest, givenKernelWhenCanTransformImagesIsCalledThenRe
 
 GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenNotUsingSharedObjArgsThenWaDisableRccRhwoOptimizationIsNotRequired) {
     MockKernelWithInternals kernel(*pClDevice);
-    EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization(rootDeviceIndex));
+    EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization());
 }
 
 GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedThenWaDisableRccRhwoOptimizationIsRequired) {
@@ -56,5 +56,5 @@ GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedTh
     cl_mem clMem2 = &bufferMediaCompressed;
     kernel.mockKernel->setArgBuffer(2, sizeof(cl_mem *), &clMem2);
 
-    EXPECT_TRUE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization(rootDeviceIndex));
+    EXPECT_TRUE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization());
 }

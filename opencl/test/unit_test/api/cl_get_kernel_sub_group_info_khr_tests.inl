@@ -14,7 +14,7 @@ struct KernelSubGroupInfoKhrFixture : HelloWorldFixture<HelloWorldFixtureFactory
 
     void SetUp() override {
         ParentClass::SetUp();
-        MaxSimdSize = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize());
+        MaxSimdSize = static_cast<size_t>(pKernel->getKernelInfo().getMaxSimdSize());
         ASSERT_GE(MaxSimdSize, 8u);
         MaxWorkDim = static_cast<size_t>(pClDevice->getDeviceInfo().maxWorkItemDimensions);
         ASSERT_EQ(MaxWorkDim, 3u);
@@ -141,11 +141,11 @@ TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, GivenKernelWhenGettingRequire
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
     size_t requiredSubGroupSize = 0;
-    auto start = pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find("intel_reqd_sub_group_size(");
+    auto start = pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find("intel_reqd_sub_group_size(");
     if (start != std::string::npos) {
         start += strlen("intel_reqd_sub_group_size(");
-        auto stop = pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find(")", start);
-        requiredSubGroupSize = stoi(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelLanguageAttributes.substr(start, stop - start));
+        auto stop = pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find(")", start);
+        requiredSubGroupSize = stoi(pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.substr(start, stop - start));
     }
 
     EXPECT_EQ(paramValue, requiredSubGroupSize);
@@ -200,7 +200,7 @@ TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingSubGroupInfoFromMult
     MockUnrestrictiveContext context;
     auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
     std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(
-        MultiDeviceKernel::create<MockKernel>(mockProgram.get(), pKernel->getKernelInfos(), nullptr));
+        MultiDeviceKernel::create<MockKernel>(mockProgram.get(), this->pMultiDeviceKernel->getKernelInfos(), nullptr));
 
     retVal = clGetKernelSubGroupInfoKHR(
         pMultiDeviceKernel.get(),

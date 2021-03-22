@@ -15,15 +15,15 @@ bool DispatchInfo::usesSlm() const {
 }
 
 bool DispatchInfo::usesStatelessPrintfSurface() const {
-    return (kernel == nullptr) ? false : kernel->hasPrintfOutput(pClDevice->getRootDeviceIndex());
+    return (kernel == nullptr) ? false : kernel->hasPrintfOutput();
 }
 
 uint32_t DispatchInfo::getRequiredScratchSize() const {
-    return (kernel == nullptr) ? 0 : kernel->getScratchSize(pClDevice->getRootDeviceIndex());
+    return (kernel == nullptr) ? 0 : kernel->getScratchSize();
 }
 
 uint32_t DispatchInfo::getRequiredPrivateScratchSize() const {
-    return (kernel == nullptr) ? 0 : kernel->getPrivateScratchSize(pClDevice->getRootDeviceIndex());
+    return (kernel == nullptr) ? 0 : kernel->getPrivateScratchSize();
 }
 
 Kernel *MultiDispatchInfo::peekMainKernel() const {

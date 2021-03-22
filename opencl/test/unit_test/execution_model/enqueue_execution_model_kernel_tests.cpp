@@ -61,19 +61,19 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
 
-    auto graphicsAllocation = pKernel->getKernelInfo(rootDeviceIndex).getGraphicsAllocation();
+    auto graphicsAllocation = pKernel->getKernelInfo().getGraphicsAllocation();
     auto kernelIsaAddress = graphicsAllocation->getGpuAddressToPatch();
 
     auto &hardwareInfo = pClDevice->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     if (EngineHelpers::isCcs(pCmdQ->getGpgpuEngine().osContext->getEngineType()) && hwHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
-        kernelIsaAddress += pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.entryPoints.skipSetFFIDGP;
+        kernelIsaAddress += pKernel->getKernelInfo().kernelDescriptor.entryPoints.skipSetFFIDGP;
     }
 
     pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 0, nullptr, nullptr);
 
-    if (pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
+    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
             EXPECT_NE(0u, idData[0].getSamplerCount());
         } else {
@@ -298,7 +298,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
     uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
 
-    size_t parentKernelSSHSize = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
+    size_t parentKernelSSHSize = pKernel->getSurfaceStateHeapSize();
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
 
@@ -320,7 +320,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
         ASSERT_NE(nullptr, pBlockInfo);
 
-        Kernel *blockKernel = Kernel::create(pKernel->getProgram(), MockKernel::toKernelInfoContainer(*pBlockInfo, rootDeviceIndex), *pClDevice, nullptr);
+        Kernel *blockKernel = Kernel::create(pKernel->getProgram(), *pBlockInfo, *pClDevice, nullptr);
         blockSSH = alignUp(blockSSH, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
         if (blockKernel->getNumberOfBindingTableStates() > 0) {
             ASSERT_TRUE(isValidOffset(pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.tableOffset));
@@ -338,7 +338,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
                 EXPECT_EQ(0, memcmp(srcSurfaceState, dstSurfaceState, sizeof(RENDER_SURFACE_STATE)));
             }
 
-            blockSSH = ptrOffset(blockSSH, blockKernel->getSurfaceStateHeapSize(rootDeviceIndex));
+            blockSSH = ptrOffset(blockSSH, blockKernel->getSurfaceStateHeapSize());
         }
 
         delete blockKernel;
@@ -450,7 +450,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
 
         pCmdQ->enqueueKernel(parentKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
 
-        const auto &implicitArgs = parentKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.implicitArgs;
+        const auto &implicitArgs = parentKernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs;
 
         const auto &defaultQueueSurfaceAddress = implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress;
         if (isValidOffset(defaultQueueSurfaceAddress.stateless)) {

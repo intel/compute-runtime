@@ -89,9 +89,9 @@ class MockMultiDeviceKernel : public MultiDeviceKernel {
             if (kernelVector[rootDeviceIndex]) {
                 continue;
             }
-            kernelVector[rootDeviceIndex] = new kernel_t(programArg, kernelInfoArg, *pDevice);
+            kernelVector[rootDeviceIndex] = new kernel_t(programArg, *kernelInfoArg[rootDeviceIndex], *pDevice);
         }
-        return new MockMultiDeviceKernel(std::move(kernelVector));
+        return new MockMultiDeviceKernel(std::move(kernelVector), kernelInfoArg);
     }
     void takeOwnership() const override {
         MultiDeviceKernel::takeOwnership();
@@ -212,7 +212,7 @@ class MockKernel : public Kernel {
         }
     };
 
-    MockKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg, ClDevice &clDeviceArg, bool scheduler = false)
+    MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg, bool scheduler = false)
         : Kernel(programArg, kernelInfoArg, clDeviceArg, scheduler) {
     }
 
@@ -251,11 +251,7 @@ class MockKernel : public Kernel {
 
         info->crossThreadData = new char[crossThreadSize];
 
-        auto rootDeviceIndex = device.getRootDeviceIndex();
-        KernelInfoContainer kernelInfos;
-        kernelInfos.resize(rootDeviceIndex + 1);
-        kernelInfos[rootDeviceIndex] = info;
-        auto kernel = new KernelType(program, kernelInfos, *device.getSpecializedDevice<ClDevice>());
+        auto kernel = new KernelType(program, *info, *device.getSpecializedDevice<ClDevice>());
         kernel->crossThreadData = new char[crossThreadSize];
         memset(kernel->crossThreadData, 0, crossThreadSize);
         kernel->crossThreadDataSize = crossThreadSize;
@@ -397,7 +393,7 @@ class MockKernelWithInternals {
         }
 
         mockProgram = new MockProgram(context, false, deviceVector);
-        mockKernel = new MockKernel(mockProgram, kernelInfos, *deviceVector[0]);
+        mockKernel = new MockKernel(mockProgram, kernelInfo, *deviceVector[0]);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
         KernelVectorType mockKernels;
         mockKernels.resize(mockProgram->getMaxRootDeviceIndex() + 1);
@@ -407,7 +403,7 @@ class MockKernelWithInternals {
                 mockKernels[rootDeviceIndex] = mockKernel;
             }
         }
-        mockMultiDeviceKernel = new MockMultiDeviceKernel(std::move(mockKernels));
+        mockMultiDeviceKernel = new MockMultiDeviceKernel(std::move(mockKernels), kernelInfos);
 
         mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal));
 
@@ -478,19 +474,15 @@ class MockKernelWithInternals {
 class MockParentKernel : public Kernel {
   public:
     using Kernel::auxTranslationRequired;
-    using Kernel::kernelInfos;
+    using Kernel::kernelInfo;
     using Kernel::patchBlocksCurbeWithConstantValues;
     using Kernel::pSshLocal;
     using Kernel::sshLocalSize;
 
     static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
         auto clDevice = context.getDevice(0);
-        auto rootDeviceIndex = clDevice->getRootDeviceIndex();
 
-        KernelInfoContainer kernelInfos;
-        kernelInfos.resize(rootDeviceIndex + 1);
         auto info = new KernelInfo();
-        kernelInfos[rootDeviceIndex] = info;
         const size_t crossThreadSize = 160;
         uint32_t crossThreadOffset = 0;
         uint32_t crossThreadOffsetBlock = 0;
@@ -547,7 +539,7 @@ class MockParentKernel : public Kernel {
         UNRECOVERABLE_IF(crossThreadSize < crossThreadOffset + 8);
         info->crossThreadData = new char[crossThreadSize];
 
-        auto parent = new MockParentKernel(mockProgram, kernelInfos);
+        auto parent = new MockParentKernel(mockProgram, *info);
         parent->crossThreadData = new char[crossThreadSize];
         memset(parent->crossThreadData, 0, crossThreadSize);
         parent->crossThreadDataSize = crossThreadSize;
@@ -646,23 +638,18 @@ class MockParentKernel : public Kernel {
         return parent;
     }
 
-    MockParentKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg) : Kernel(programArg, kernelInfoArg, *programArg->getDevices()[0], false) {
+    MockParentKernel(Program *programArg, const KernelInfo &kernelInfoArg) : Kernel(programArg, kernelInfoArg, *programArg->getDevices()[0], false) {
     }
 
     ~MockParentKernel() override {
-        for (auto &pKernelInfo : kernelInfos) {
-            if (!pKernelInfo) {
-                continue;
-            }
-            auto &kernelInfo = *pKernelInfo;
-            delete &kernelInfo;
-            BlockKernelManager *blockManager = program->getBlockKernelManager();
+        delete &kernelInfo;
+        BlockKernelManager *blockManager = program->getBlockKernelManager();
 
-            for (uint32_t i = 0; i < blockManager->getCount(); i++) {
-                const KernelInfo *blockInfo = blockManager->getBlockKernelInfo(i);
-                delete[](uint64_t *) blockInfo->heapInfo.pDsh;
-            }
+        for (uint32_t i = 0; i < blockManager->getCount(); i++) {
+            const KernelInfo *blockInfo = blockManager->getBlockKernelInfo(i);
+            delete[](uint64_t *) blockInfo->heapInfo.pDsh;
         }
+
         if (mockProgram) {
             mockProgram->decRefInternal();
         }
@@ -700,17 +687,17 @@ class MockSchedulerKernel : public SchedulerKernel {
     using Kernel::numWorkGroupsX;
     using Kernel::numWorkGroupsY;
     using Kernel::numWorkGroupsZ;
-    MockSchedulerKernel(Program *programArg, const KernelInfoContainer &kernelInfoArg, ClDevice &clDeviceArg) : SchedulerKernel(programArg, kernelInfoArg, clDeviceArg){};
+    MockSchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg) : SchedulerKernel(programArg, kernelInfoArg, clDeviceArg){};
 };
 
 class MockDebugKernel : public MockKernel {
   public:
-    MockDebugKernel(Program *program, KernelInfoContainer &kernelInfos, ClDevice &clDeviceArg) : MockKernel(program, kernelInfos, clDeviceArg) {
-        if (!isValidOffset(kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful)) {
+    MockDebugKernel(Program *program, const KernelInfo &kernelInfo, ClDevice &clDeviceArg) : MockKernel(program, kernelInfo, clDeviceArg) {
+        if (!isValidOffset(kernelInfo.kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful)) {
             SPatchAllocateSystemThreadSurface allocateSystemThreadSurface = {};
             allocateSystemThreadSurface.Offset = 0;
             allocateSystemThreadSurface.PerThreadSystemThreadSurfaceSize = MockDebugKernel::perThreadSystemThreadSurfaceSize;
-            populateKernelDescriptor(const_cast<KernelDescriptor &>(kernelInfos[0]->kernelDescriptor), allocateSystemThreadSurface);
+            populateKernelDescriptor(const_cast<KernelDescriptor &>(kernelInfo.kernelDescriptor), allocateSystemThreadSurface);
         }
     }
 

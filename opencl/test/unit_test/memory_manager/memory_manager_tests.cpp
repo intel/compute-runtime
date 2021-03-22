@@ -517,7 +517,6 @@ class MockPrintfHandler : public PrintfHandler {
 
 TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithBaseAddressOffset) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto rootDeviceIndex = device->getRootDeviceIndex();
     MockKernelWithInternals kernel(*device);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
 
@@ -542,11 +541,11 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
     auto allocationAddress = printfAllocation->getGpuAddressToPatch();
 
     auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel.mockKernel->getCrossThreadData()),
-                                        kernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.stateless);
+                                        kernel.mockKernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.stateless);
 
     EXPECT_EQ(allocationAddress, *(uintptr_t *)printfPatchAddress);
 
-    EXPECT_EQ(0u, kernel.mockKernel->getSurfaceStateHeapSize(rootDeviceIndex));
+    EXPECT_EQ(0u, kernel.mockKernel->getSurfaceStateHeapSize());
 
     delete printfHandler;
 }
@@ -577,12 +576,12 @@ HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCr
     auto printfAllocation = printfHandler->getSurface();
     auto allocationAddress = printfAllocation->getGpuAddress();
 
-    EXPECT_NE(0u, kernel.mockKernel->getSurfaceStateHeapSize(device->getRootDeviceIndex()));
+    EXPECT_NE(0u, kernel.mockKernel->getSurfaceStateHeapSize());
 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
-        ptrOffset(kernel.mockKernel->getSurfaceStateHeap(device->getRootDeviceIndex()),
-                  kernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.bindful));
+        ptrOffset(kernel.mockKernel->getSurfaceStateHeap(),
+                  kernel.mockKernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(allocationAddress, surfaceAddress);

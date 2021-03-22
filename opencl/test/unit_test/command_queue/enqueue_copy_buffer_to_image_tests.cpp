@@ -170,7 +170,7 @@ HWTEST_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenSurfaceStateI
     mockCmdQ->storeMultiDispatchInfo = true;
     enqueueCopyBufferToImage<FamilyType>();
 
-    auto index = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo[1].offsetHeap / sizeof(RENDER_SURFACE_STATE);
+    auto index = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo().kernelArgInfo[1].offsetHeap / sizeof(RENDER_SURFACE_STATE);
 
     const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), static_cast<uint32_t>(index));
     const auto &imageDesc = dstImage->getImageDesc();

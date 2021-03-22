@@ -21,7 +21,7 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     static const cl_ulong objectMagic = 0x3284ADC8EA0AFE25LL;
 
     ~MultiDeviceKernel() override;
-    MultiDeviceKernel(KernelVectorType kernelVector);
+    MultiDeviceKernel(KernelVectorType kernelVector, const KernelInfoContainer kernelInfosArg);
 
     Kernel *getKernel(uint32_t rootDeviceIndex) const { return kernels[rootDeviceIndex]; }
     Kernel *getDefaultKernel() const { return defaultKernel; }
@@ -36,9 +36,9 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
             if (kernels[rootDeviceIndex]) {
                 continue;
             }
-            kernels[rootDeviceIndex] = Kernel::create<kernel_t, program_t>(program, kernelInfos, *pDevice, errcodeRet);
+            kernels[rootDeviceIndex] = Kernel::create<kernel_t, program_t>(program, *kernelInfos[rootDeviceIndex], *pDevice, errcodeRet);
         }
-        auto pMultiDeviceKernel = new multi_device_kernel_t(std::move(kernels));
+        auto pMultiDeviceKernel = new multi_device_kernel_t(std::move(kernels), kernelInfos);
 
         return pMultiDeviceKernel;
     }
@@ -93,7 +93,7 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     KernelVectorType kernels;
     Kernel *defaultKernel = nullptr;
     Program *program = nullptr;
-    const KernelInfoContainer &kernelInfos;
+    const KernelInfoContainer kernelInfos;
 };
 
 } // namespace NEO

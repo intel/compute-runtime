@@ -25,7 +25,7 @@ class MockKernelWithArgumentAccess : public Kernel {
     class ObjectCountsPublic : public Kernel::ObjectCounts {
     };
 
-    MockKernelWithArgumentAccess(Program *programArg, const KernelInfoContainer &kernelInfoArg, ClDevice &clDeviceArg) : Kernel(programArg, kernelInfoArg, clDeviceArg, false) {
+    MockKernelWithArgumentAccess(Program *programArg, KernelInfo &kernelInfoArg, ClDevice &clDeviceArg) : Kernel(programArg, kernelInfoArg, clDeviceArg, false) {
     }
 
     void getParentObjectCountsPublic(MockKernelWithArgumentAccess::ObjectCountsPublic &objectCount) {
@@ -39,7 +39,7 @@ TEST(ParentKernelTest, WhenArgsAddedThenObjectCountsAreIncremented) {
     KernelInfo info;
     info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
 
-    MockKernelWithArgumentAccess kernel(&program, MockKernel::toKernelInfoContainer(info, device->getRootDeviceIndex()), *device);
+    MockKernelWithArgumentAccess kernel(&program, info, *device);
 
     std::vector<Kernel::SimpleKernelArgInfo> &args = kernel.getKernelArguments();
 
@@ -61,14 +61,13 @@ TEST(ParentKernelTest, WhenArgsAddedThenObjectCountsAreIncremented) {
 
 TEST(ParentKernelTest, WhenPatchingBlocksSimdSizeThenPatchIsAppliedCorrectly) {
     MockClDevice device{new MockDevice};
-    auto rootDeviceIndex = device.getRootDeviceIndex();
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
 
-    parentKernel->patchBlocksSimdSize(rootDeviceIndex);
+    parentKernel->patchBlocksSimdSize();
 
-    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(), parentKernel->getKernelInfo(rootDeviceIndex).childrenKernelsIdOffset[0].second);
+    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(), parentKernel->getKernelInfo().childrenKernelsIdOffset[0].second);
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     EXPECT_EQ(program->blockKernelManager->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
@@ -79,8 +78,7 @@ TEST(ParentKernelTest, GivenParentKernelWhenCheckingForDeviceEnqueueThenTrueIsRe
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context));
 
-    auto rootDeviceIndex = device.getRootDeviceIndex();
-    EXPECT_TRUE(parentKernel->getKernelInfo(rootDeviceIndex).hasDeviceEnqueue());
+    EXPECT_TRUE(parentKernel->getKernelInfo().hasDeviceEnqueue());
 }
 
 TEST(ParentKernelTest, GivenNormalKernelWhenCheckingForDeviceEnqueueThenFalseIsReturned) {
@@ -92,14 +90,13 @@ TEST(ParentKernelTest, GivenNormalKernelWhenCheckingForDeviceEnqueueThenFalseIsR
 
 TEST(ParentKernelTest, WhenInitializingParentKernelThenBlocksSimdSizeIsPatched) {
     MockClDevice device{new MockDevice};
-    auto rootDeviceIndex = device.getRootDeviceIndex();
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
 
     parentKernel->initialize();
 
-    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(), parentKernel->getKernelInfo(rootDeviceIndex).childrenKernelsIdOffset[0].second);
+    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(), parentKernel->getKernelInfo().childrenKernelsIdOffset[0].second);
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     EXPECT_EQ(program->blockKernelManager->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);

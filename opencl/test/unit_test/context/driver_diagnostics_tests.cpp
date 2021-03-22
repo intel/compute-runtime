@@ -434,7 +434,6 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     DebugManager.flags.PrintDriverDiagnostics.set(1);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     MockKernelWithInternals mockKernel(*pDevice, context);
     MockBuffer buffer;
     cl_mem clMem = &buffer;
@@ -451,10 +450,10 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
 
     testing::internal::CaptureStdout();
     KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects, rootDeviceIndex);
+    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ARGUMENT_AUX_TRANSLATION],
-             mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(), 0, mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelArgInfo.at(0).metadataExtended->argName.c_str());
+             mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), 0, mockKernel.mockKernel->getKernelInfo().kernelArgInfo.at(0).metadataExtended->argName.c_str());
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(0u, output.size());
@@ -466,7 +465,6 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     DebugManager.flags.PrintDriverDiagnostics.set(1);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     MockKernelWithInternals mockKernel(*pDevice, context);
     char data[128];
     void *ptr = &data;
@@ -484,10 +482,10 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
 
     testing::internal::CaptureStdout();
     KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects, rootDeviceIndex);
+    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ARGUMENT_AUX_TRANSLATION],
-             mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(), 0, mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelArgInfo.at(0).metadataExtended->argName.c_str());
+             mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), 0, mockKernel.mockKernel->getKernelInfo().kernelArgInfo.at(0).metadataExtended->argName.c_str());
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(0u, output.size());
@@ -499,7 +497,6 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
     DebugManager.flags.PrintDriverDiagnostics.set(1);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     MockKernelWithInternals mockKernel(*pDevice, context);
     char data[128];
     void *ptr = &data;
@@ -518,7 +515,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
     testing::internal::CaptureStdout();
 
     KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects, rootDeviceIndex);
+    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());
@@ -528,7 +525,6 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     auto pDevice = castToObject<ClDevice>(devices[0]);
     cl_device_id clDevice = pDevice;
     auto context = Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
-    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     MockKernelWithInternals mockKernel(*pDevice, context);
     char data[128];
     void *ptr = &data;
@@ -547,7 +543,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     testing::internal::CaptureStdout();
 
     KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects, rootDeviceIndex);
+    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());
@@ -557,7 +553,6 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
 
 TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNullGfxAllocationThenDontReportAnyHint) {
     auto pDevice = castToObject<ClDevice>(devices[0]);
-    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     MockKernelWithInternals mockKernel(*pDevice, context);
 
     mockKernel.kernelInfo.kernelArgInfo.resize(1);
@@ -571,7 +566,7 @@ TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNull
     testing::internal::CaptureStdout();
 
     KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects, rootDeviceIndex);
+    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());
@@ -836,16 +831,14 @@ TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenConte
 
     mockKernel.mockKernel->initialize();
 
-    auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
-    auto expectedSize = size * pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize();
+    auto expectedSize = size * pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[REGISTER_PRESSURE_TOO_HIGH],
-             mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(), expectedSize);
+             mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), expectedSize);
     EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
 }
 
 TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThenContextProvidesProperHint) {
     auto pDevice = castToObject<ClDevice>(devices[1]);
-    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager())->turnOnFakingBigAllocations();
 
     for (auto isSmitThread : {false, true}) {
@@ -862,12 +855,12 @@ TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThen
         populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, allocateStatelessPrivateMemorySurface);
 
         size *= pDevice->getSharedDeviceInfo().computeUnitsUsedForScratch;
-        size *= isSmitThread ? mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize() : 1;
+        size *= isSmitThread ? mockKernel.mockKernel->getKernelInfo().getMaxSimdSize() : 1;
 
         mockKernel.mockKernel->initialize();
 
         snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PRIVATE_MEMORY_USAGE_TOO_HIGH],
-                 mockKernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str(), size);
+                 mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), size);
         EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
     }
 }

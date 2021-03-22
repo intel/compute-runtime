@@ -171,7 +171,7 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
     if (dumpKernelArgsEnabled && kernel != nullptr) {
         std::unique_lock<std::mutex> theLock(mtx);
         std::ofstream outFile;
-        const auto &kernelInfo = kernel->getDefaultKernelInfo();
+        const auto &kernelInfo = kernel->getKernelInfo();
         for (unsigned int i = 0; i < kernelInfo.kernelArgInfo.size(); i++) {
             std::string type;
             std::string fileName;

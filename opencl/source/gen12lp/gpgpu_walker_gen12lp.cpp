@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ void HardwareInterface<TGLLPFamily>::dispatchWorkarounds(
     using MI_LOAD_REGISTER_IMM = typename TGLLPFamily::MI_LOAD_REGISTER_IMM;
     using PIPE_CONTROL = typename TGLLPFamily::PIPE_CONTROL;
 
-    if (kernel.requiresWaDisableRccRhwoOptimization(commandQueue.getDevice().getRootDeviceIndex())) {
+    if (kernel.requiresWaDisableRccRhwoOptimization()) {
 
         PIPE_CONTROL cmdPipeControl = TGLLPFamily::cmdInitPipeControl;
         cmdPipeControl.setCommandStreamerStallEnable(true);
@@ -46,8 +46,8 @@ void HardwareInterface<TGLLPFamily>::dispatchWorkarounds(
 }
 
 template <>
-size_t GpgpuWalkerHelper<TGLLPFamily>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel, uint32_t rootDeviceIndex) {
-    if (pKernel->requiresWaDisableRccRhwoOptimization(rootDeviceIndex)) {
+size_t GpgpuWalkerHelper<TGLLPFamily>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel) {
+    if (pKernel->requiresWaDisableRccRhwoOptimization()) {
         return (2 * (sizeof(TGLLPFamily::PIPE_CONTROL) + sizeof(TGLLPFamily::MI_LOAD_REGISTER_IMM)));
     }
     return 0u;

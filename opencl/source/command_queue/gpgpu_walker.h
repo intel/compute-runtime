@@ -102,7 +102,7 @@ class GpgpuWalkerHelper {
                                                bool disablePerfMode);
 
     static size_t getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel);
-    static size_t getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel, uint32_t rootDeviceIndex);
+    static size_t getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel);
 
     static size_t setGpgpuWalkerThreadData(
         WALKER_TYPE<GfxFamily> *walkerCmd,
@@ -200,7 +200,7 @@ IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const MultiDispatchInf
 
     if (Kernel *parentKernel = multiDispatchInfo.peekParentKernel()) {
         if (heapType == IndirectHeap::SURFACE_STATE) {
-            expectedSize += HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(*parentKernel, commandQueue.getDevice().getRootDeviceIndex());
+            expectedSize += HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(*parentKernel);
         } else //if (heapType == IndirectHeap::DYNAMIC_STATE || heapType == IndirectHeap::INDIRECT_OBJECT)
         {
             DeviceQueueHw<GfxFamily> *pDevQueue = castToObject<DeviceQueueHw<GfxFamily>>(commandQueue.getContext().getDefaultDeviceQueue());

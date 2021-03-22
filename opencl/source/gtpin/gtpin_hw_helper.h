@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,8 @@ class GTPinHwHelper {
   public:
     static GTPinHwHelper &get(GFXCORE_FAMILY gfxCore);
     virtual uint32_t getGenVersion() = 0;
-    virtual bool addSurfaceState(Kernel *pKernel, uint32_t rootDeviceIndex) = 0;
-    virtual void *getSurfaceState(Kernel *pKernel, size_t bti, uint32_t rootDeviceIndex) = 0;
+    virtual bool addSurfaceState(Kernel *pKernel) = 0;
+    virtual void *getSurfaceState(Kernel *pKernel, size_t bti) = 0;
 
   protected:
     GTPinHwHelper(){};
@@ -30,8 +30,8 @@ class GTPinHwHelperHw : public GTPinHwHelper {
         return gtpinHwHelper;
     }
     uint32_t getGenVersion() override;
-    bool addSurfaceState(Kernel *pKernel, uint32_t rootDeviceIndex) override;
-    void *getSurfaceState(Kernel *pKernel, size_t bti, uint32_t rootDeviceIndex) override;
+    bool addSurfaceState(Kernel *pKernel) override;
+    void *getSurfaceState(Kernel *pKernel, size_t bti) override;
 
   private:
     GTPinHwHelperHw(){};

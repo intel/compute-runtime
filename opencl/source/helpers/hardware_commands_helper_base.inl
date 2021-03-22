@@ -30,12 +30,10 @@
 namespace NEO {
 
 template <typename GfxFamily>
-size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(
-    uint32_t rootDeviceIndex,
-    const Kernel &kernel) {
+size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(const Kernel &kernel) {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-    const auto &samplerTable = kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.samplerTable;
+    const auto &samplerTable = kernel.getKernelInfo().kernelDescriptor.payloadMappings.samplerTable;
 
     auto samplerCount = samplerTable.numSamplers;
     auto totalSize = samplerCount
@@ -48,18 +46,16 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(
 
     totalSize += borderColorSize + additionalSizeRequiredDsh();
 
-    DEBUG_BREAK_IF(!(totalSize >= kernel.getDynamicStateHeapSize(rootDeviceIndex) || kernel.getKernelInfo(rootDeviceIndex).isVmeWorkload));
+    DEBUG_BREAK_IF(!(totalSize >= kernel.getDynamicStateHeapSize() || kernel.getKernelInfo().isVmeWorkload));
 
     return alignUp(totalSize, EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
 }
 
 template <typename GfxFamily>
-size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(
-    uint32_t rootDeviceIndex,
-    const Kernel &kernel,
-    size_t localWorkSize) {
+size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kernel,
+                                                             size_t localWorkSize) {
     typedef typename GfxFamily::WALKER_TYPE WALKER_TYPE;
-    const auto &kernelInfo = kernel.getKernelInfo(rootDeviceIndex);
+    const auto &kernelInfo = kernel.getKernelInfo();
 
     auto numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
     uint32_t grfSize = sizeof(typename GfxFamily::GRF);
@@ -69,10 +65,9 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(
 }
 
 template <typename GfxFamily>
-size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredSSH(
-    const Kernel &kernel, uint32_t rootDeviceIndex) {
+size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredSSH(const Kernel &kernel) {
     typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
-    auto sizeSSH = kernel.getSurfaceStateHeapSize(rootDeviceIndex);
+    auto sizeSSH = kernel.getSurfaceStateHeapSize();
     sizeSSH += sizeSSH ? BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE : 0;
     return sizeSSH;
 }
@@ -92,14 +87,13 @@ size_t getSizeRequired(const MultiDispatchInfo &multiDispatchInfo, SizeGetterT &
 template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(
     const MultiDispatchInfo &multiDispatchInfo) {
-    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredDSH(dispatchInfo.getClDevice().getRootDeviceIndex(), *dispatchInfo.getKernel()); });
+    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredDSH(*dispatchInfo.getKernel()); });
 }
 
 template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(
     const MultiDispatchInfo &multiDispatchInfo) {
     return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredIOH(
-                                                                                         dispatchInfo.getClDevice().getRootDeviceIndex(),
                                                                                          *dispatchInfo.getKernel(),
                                                                                          Math::computeTotalElementsCount(dispatchInfo.getLocalWorkgroupSize())); });
 }
@@ -107,11 +101,11 @@ size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(
 template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(
     const MultiDispatchInfo &multiDispatchInfo) {
-    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredSSH(*dispatchInfo.getKernel(), dispatchInfo.getClDevice().getRootDeviceIndex()); });
+    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredSSH(*dispatchInfo.getKernel()); });
 }
 
 template <typename GfxFamily>
-size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kernel &kernel, uint32_t rootDeviceIndex) {
+size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kernel &kernel) {
     typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
 
     size_t totalSize = 0;
@@ -131,7 +125,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kern
 
     SchedulerKernel &scheduler = kernel.getContext().getSchedulerKernel();
 
-    totalSize += getSizeRequiredSSH(scheduler, rootDeviceIndex);
+    totalSize += getSizeRequiredSSH(scheduler);
 
     totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
     totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
@@ -159,7 +153,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     const auto &hardwareInfo = device.getHardwareInfo();
-    auto rootDeviceIndex = device.getRootDeviceIndex();
 
     // Allocate some memory for the interface descriptor
     auto pInterfaceDescriptor = getInterfaceDescriptor(indirectHeap, offsetInterfaceDescriptor, inlineInterfaceDescriptor);
@@ -176,7 +169,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     auto slmTotalSize = kernel.getSlmTotalSize();
 
-    setGrfInfo(&interfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData, rootDeviceIndex);
+    setGrfInfo(&interfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData);
     EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, hardwareInfo, threadsPerThreadGroup, slmTotalSize, SlmPolicy::SlmPolicyNone);
 
     interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
@@ -194,7 +187,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
     EncodeDispatchKernel<GfxFamily>::programBarrierEnable(interfaceDescriptor,
-                                                          kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.barrierCount,
+                                                          kernel.getKernelInfo().kernelDescriptor.kernelAttributes.barrierCount,
                                                           hardwareInfo);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
@@ -227,16 +220,16 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     auto rootDeviceIndex = device.getRootDeviceIndex();
 
     DEBUG_BREAK_IF(simd != 1 && simd != 8 && simd != 16 && simd != 32);
-    auto inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel, rootDeviceIndex);
+    auto inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
 
     // Copy the kernel over to the ISH
-    const auto &kernelInfo = kernel.getKernelInfo(rootDeviceIndex);
+    const auto &kernelInfo = kernel.getKernelInfo();
 
     ssh.align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
     kernel.patchBindlessSurfaceStateOffsets(device, ssh.getUsed());
 
     auto dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh, kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries,
-                                                                                                  kernel.getSurfaceStateHeap(rootDeviceIndex), kernel.getSurfaceStateHeapSize(rootDeviceIndex),
+                                                                                                  kernel.getSurfaceStateHeap(), kernel.getSurfaceStateHeapSize(),
                                                                                                   kernel.getNumberOfBindingTableStates(), kernel.getBindingTableOffset());
 
     // Copy our sampler state if it exists
@@ -247,7 +240,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         samplerCount = samplerTable.numSamplers;
         samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, samplerTable.tableOffset,
                                                                        samplerCount, samplerTable.borderColor,
-                                                                       kernel.getDynamicStateHeap(rootDeviceIndex), device.getBindlessHeapsHelper());
+                                                                       kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper());
     }
 
     auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];
@@ -337,20 +330,20 @@ void HardwareCommandsHelper<GfxFamily>::updatePerThreadDataTotal(
 }
 
 template <typename GfxFamily>
-bool HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kernel &kernel, uint32_t rootDeviceIndex) {
+bool HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kernel &kernel) {
     auto checkKernelForInlineData = true;
     if (DebugManager.flags.EnablePassInlineData.get() != -1) {
         checkKernelForInlineData = !!DebugManager.flags.EnablePassInlineData.get();
     }
     if (checkKernelForInlineData) {
-        return kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.flags.passInlineData;
+        return kernel.getKernelInfo().kernelDescriptor.kernelAttributes.flags.passInlineData;
     }
     return false;
 }
 
 template <typename GfxFamily>
-bool HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(const Kernel &kernel, uint32_t rootDeviceIndex) {
-    return kernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.numLocalIdChannels > 0;
+bool HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(const Kernel &kernel) {
+    return kernel.getKernelInfo().kernelDescriptor.kernelAttributes.numLocalIdChannels > 0;
 }
 
 } // namespace NEO

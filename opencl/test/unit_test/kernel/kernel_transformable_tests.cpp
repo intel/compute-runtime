@@ -48,7 +48,7 @@ class KernelTransformableTest : public ::testing::Test {
         pKernelInfo->argumentsToPatchNum = 4;
 
         program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*context->getDevice(0)));
-        pKernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *deviceFactory.rootDevices[rootDeviceIndex]));
+        pKernel.reset(new MockKernel(program.get(), *pKernelInfo, *deviceFactory.rootDevices[rootDeviceIndex]));
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgSampler);
@@ -98,7 +98,7 @@ HWTEST_F(KernelTransformableTest, givenKernelThatCannotTranformImagesWithTwoTran
     pKernel->setArg(2, sizeof(clImage), &clImage);
     pKernel->setArg(3, sizeof(clImage), &clImage);
 
-    auto ssh = pKernel->getSurfaceStateHeap(rootDeviceIndex);
+    auto ssh = pKernel->getSurfaceStateHeap();
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     EXPECT_EQ(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D, firstSurfaceState->getSurfaceType());
@@ -125,7 +125,7 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     pKernel->setArg(2, sizeof(clImage), &clImage);
     pKernel->setArg(3, sizeof(clImage), &clImage);
 
-    auto ssh = pKernel->getSurfaceStateHeap(rootDeviceIndex);
+    auto ssh = pKernel->getSurfaceStateHeap();
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     EXPECT_EQ(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D, firstSurfaceState->getSurfaceType());
@@ -152,7 +152,7 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     pKernel->setArg(2, sizeof(clImage), &clImage);
     pKernel->setArg(3, sizeof(clImage), &clImage);
 
-    auto ssh = pKernel->getSurfaceStateHeap(rootDeviceIndex);
+    auto ssh = pKernel->getSurfaceStateHeap();
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     auto secondSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, secondImageOffset));
@@ -184,7 +184,7 @@ HWTEST_F(KernelTransformableTest, givenKernelWithOneTransformableImageAndTwoTran
     pKernel->setArg(2, sizeof(clImage), &clImage);
     pKernel->setArg(3, sizeof(clImage), &clImage);
 
-    auto ssh = pKernel->getSurfaceStateHeap(rootDeviceIndex);
+    auto ssh = pKernel->getSurfaceStateHeap();
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     auto secondSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, secondImageOffset));
@@ -206,7 +206,7 @@ HWTEST_F(KernelTransformableTest, givenKernelWithImages2dAndTwoTransformableSamp
     pKernelInfo->kernelArgInfo[2].isTransformable = true;
     pKernelInfo->kernelArgInfo[3].isTransformable = true;
 
-    auto ssh = pKernel->getSurfaceStateHeap(rootDeviceIndex);
+    auto ssh = pKernel->getSurfaceStateHeap();
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     auto secondSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, secondImageOffset));
@@ -238,7 +238,7 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     pKernel->setArg(2, sizeof(clImage), &clImage);
     pKernel->setArg(3, sizeof(clImage), &clImage);
 
-    auto ssh = pKernel->getSurfaceStateHeap(rootDeviceIndex);
+    auto ssh = pKernel->getSurfaceStateHeap();
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     auto secondSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, secondImageOffset));
@@ -270,7 +270,7 @@ HWTEST_F(KernelTransformableTest, givenKernelWithNonTransformableSamplersWhenRes
     pKernel->setArg(2, sizeof(clImage), &clImage);
     pKernel->setArg(3, sizeof(clImage), &clImage);
 
-    auto ssh = pKernel->getSurfaceStateHeap(rootDeviceIndex);
+    auto ssh = pKernel->getSurfaceStateHeap();
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     auto secondSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, secondImageOffset));
@@ -308,7 +308,7 @@ HWTEST_F(KernelTransformableTest, givenKernelWithoutSamplersAndTransformableImag
     pKernel->setArg(2, sizeof(clImage), &clImage);
     pKernel->setArg(3, sizeof(clImage), &clImage);
 
-    auto ssh = pKernel->getSurfaceStateHeap(rootDeviceIndex);
+    auto ssh = pKernel->getSurfaceStateHeap();
 
     auto firstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, firstImageOffset));
     auto secondSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh, secondImageOffset));

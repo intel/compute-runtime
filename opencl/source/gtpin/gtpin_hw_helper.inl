@@ -15,11 +15,11 @@
 namespace NEO {
 
 template <typename GfxFamily>
-bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel, uint32_t rootDeviceIndex) {
+bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
-    size_t sshSize = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
+    size_t sshSize = pKernel->getSurfaceStateHeapSize();
     if ((sshSize == 0) || pKernel->isParentKernel) {
         // Kernels which do not use SSH or use Execution Model are not supported (yet)
         return false;
@@ -29,7 +29,7 @@ bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel, uint32_t rootD
     size_t sizeToEnlarge = ssSize + btsSize;
     size_t currBTOffset = pKernel->getBindingTableOffset();
     size_t currSurfaceStateSize = currBTOffset;
-    char *pSsh = static_cast<char *>(pKernel->getSurfaceStateHeap(rootDeviceIndex));
+    char *pSsh = static_cast<char *>(pKernel->getSurfaceStateHeap());
     char *pNewSsh = new char[sshSize + sizeToEnlarge];
     memcpy_s(pNewSsh, sshSize + sizeToEnlarge, pSsh, currSurfaceStateSize);
     RENDER_SURFACE_STATE *pSS = reinterpret_cast<RENDER_SURFACE_STATE *>(pNewSsh + currSurfaceStateSize);
@@ -45,14 +45,14 @@ bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel, uint32_t rootD
 }
 
 template <typename GfxFamily>
-void *GTPinHwHelperHw<GfxFamily>::getSurfaceState(Kernel *pKernel, size_t bti, uint32_t rootDeviceIndex) {
+void *GTPinHwHelperHw<GfxFamily>::getSurfaceState(Kernel *pKernel, size_t bti) {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
-    if ((nullptr == pKernel->getSurfaceStateHeap(rootDeviceIndex)) || (bti >= pKernel->getNumberOfBindingTableStates())) {
+    if ((nullptr == pKernel->getSurfaceStateHeap()) || (bti >= pKernel->getNumberOfBindingTableStates())) {
         return nullptr;
     }
-    auto *pBts = reinterpret_cast<BINDING_TABLE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex), (pKernel->getBindingTableOffset() + bti * sizeof(BINDING_TABLE_STATE))));
-    auto pSurfaceState = ptrOffset(pKernel->getSurfaceStateHeap(rootDeviceIndex), pBts->getSurfaceStatePointer());
+    auto *pBts = reinterpret_cast<BINDING_TABLE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(), (pKernel->getBindingTableOffset() + bti * sizeof(BINDING_TABLE_STATE))));
+    auto pSurfaceState = ptrOffset(pKernel->getSurfaceStateHeap(), pBts->getSurfaceStatePointer());
     return pSurfaceState;
 }
 

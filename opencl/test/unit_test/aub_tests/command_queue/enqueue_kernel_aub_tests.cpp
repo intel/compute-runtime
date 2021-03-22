@@ -109,12 +109,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBHelloWorld, WhenEnqueuingKernelThenAdressesAreAli
     EXPECT_EQ(0u, addrIDD % alignmentIDD);
 
     // Check kernel start pointer matches hard-coded kernel.
-    auto pExpectedISA = pKernel->getKernelHeap(rootDeviceIndex);
-    auto expectedSize = pKernel->getKernelHeapSize(rootDeviceIndex);
+    auto pExpectedISA = pKernel->getKernelHeap();
+    auto expectedSize = pKernel->getKernelHeapSize();
 
     auto pSBA = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
     ASSERT_NE(nullptr, pSBA);
-    auto pISA = pKernel->getKernelInfo(rootDeviceIndex).getGraphicsAllocation()->getUnderlyingBuffer();
+    auto pISA = pKernel->getKernelInfo().getGraphicsAllocation()->getUnderlyingBuffer();
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
 }
 
@@ -268,12 +268,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, WhenEnqueingKernelThenAdressesAreAlign
     EXPECT_EQ(0u, addrIDD % alignmentIDD);
 
     // Check kernel start pointer matches hard-coded kernel.
-    auto pExpectedISA = pKernel->getKernelHeap(rootDeviceIndex);
-    auto expectedSize = pKernel->getKernelHeapSize(rootDeviceIndex);
+    auto pExpectedISA = pKernel->getKernelHeap();
+    auto expectedSize = pKernel->getKernelHeapSize();
 
     auto pSBA = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
     ASSERT_NE(nullptr, pSBA);
-    auto pISA = pKernel->getKernelInfo(rootDeviceIndex).getGraphicsAllocation()->getUnderlyingBuffer();
+    auto pISA = pKernel->getKernelInfo().getGraphicsAllocation()->getUnderlyingBuffer();
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
 }
 
@@ -502,8 +502,8 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_FALSE(this->kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].pureStatefulBufferAccess);
-    EXPECT_TRUE(this->kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_FALSE(this->kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
+    EXPECT_TRUE(this->kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
 
     this->pCmdQ->flush();
     expectMemory<FamilyType>(reinterpret_cast<void *>(pBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
@@ -937,7 +937,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenRes
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_TRUE(this->kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].pureStatefulBufferAccess);
+    EXPECT_TRUE(this->kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
 
     this->pCmdQ->finish();
     expectMemory<FamilyType>(reinterpret_cast<void *>(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ PreemptionMode PreemptionHelper::taskPreemptionMode(PreemptionMode devicePreempt
 
 void PreemptionHelper::setPreemptionLevelFlags(PreemptionFlags &flags, Device &device, Kernel *kernel) {
     if (kernel) {
-        const auto &kernelDescriptor = kernel->getKernelInfo(device.getRootDeviceIndex()).kernelDescriptor;
+        const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
         flags.flags.disabledMidThreadPreemptionKernel = kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption;
         flags.flags.vmeKernel = kernel->isVmeKernel();
         flags.flags.usesFencesForReadWriteImages = kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages;

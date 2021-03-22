@@ -168,7 +168,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         printfHandler.get()->makeResident(commandStreamReceiver);
     }
     makeTimestampPacketsResident(commandStreamReceiver);
-    auto rootDeviceIndex = commandQueue.getDevice().getRootDeviceIndex();
 
     if (executionModelKernel) {
         uint32_t taskCount = commandStreamReceiver.peekTaskCount() + 1;
@@ -213,38 +212,38 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                            commandQueue.getGpgpuCommandStreamReceiver(), bcsCsr);
     }
 
-    const auto &kernelDescriptor = kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor;
+    const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
 
     auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired());
 
     DispatchFlags dispatchFlags(
-        {},                                                                                      //csrDependencies
-        nullptr,                                                                                 //barrierTimestampPacketNodes
-        {false, kernel->isVmeKernel()},                                                          //pipelineSelectArgs
-        commandQueue.flushStamp->getStampReference(),                                            //flushStampReference
-        commandQueue.getThrottle(),                                                              //throttle
-        preemptionMode,                                                                          //preemptionMode
-        kernelDescriptor.kernelAttributes.numGrfRequired,                                        //numGrfRequired
-        L3CachingSettings::l3CacheOn,                                                            //l3CacheSettings
-        kernel->getThreadArbitrationPolicy(),                                                    //threadArbitrationPolicy
-        kernel->getAdditionalKernelExecInfo(),                                                   //additionalKernelExecInfo
-        kernel->getExecutionType(),                                                              //kernelExecutionType
-        memoryCompressionState,                                                                  //memoryCompressionState
-        commandQueue.getSliceCount(),                                                            //sliceCount
-        true,                                                                                    //blocking
-        flushDC,                                                                                 //dcFlush
-        slmUsed,                                                                                 //useSLM
-        true,                                                                                    //guardCommandBufferWithPipeControl
-        NDRangeKernel,                                                                           //GSBA32BitRequired
-        requiresCoherency,                                                                       //requiresCoherency
-        commandQueue.getPriority() == QueuePriority::LOW,                                        //lowPriority
-        false,                                                                                   //implicitFlush
-        commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),             //outOfOrderExecutionAllowed
-        false,                                                                                   //epilogueRequired
-        kernel->requiresPerDssBackedBuffer(rootDeviceIndex),                                     //usePerDssBackedBuffer
-        kernel->isSingleSubdevicePreferred(),                                                    //useSingleSubdevice
-        kernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
-        kernel->getTotalNumDevicesInContext());                                                  //numDevicesInContext
+        {},                                                                               //csrDependencies
+        nullptr,                                                                          //barrierTimestampPacketNodes
+        {false, kernel->isVmeKernel()},                                                   //pipelineSelectArgs
+        commandQueue.flushStamp->getStampReference(),                                     //flushStampReference
+        commandQueue.getThrottle(),                                                       //throttle
+        preemptionMode,                                                                   //preemptionMode
+        kernelDescriptor.kernelAttributes.numGrfRequired,                                 //numGrfRequired
+        L3CachingSettings::l3CacheOn,                                                     //l3CacheSettings
+        kernel->getThreadArbitrationPolicy(),                                             //threadArbitrationPolicy
+        kernel->getAdditionalKernelExecInfo(),                                            //additionalKernelExecInfo
+        kernel->getExecutionType(),                                                       //kernelExecutionType
+        memoryCompressionState,                                                           //memoryCompressionState
+        commandQueue.getSliceCount(),                                                     //sliceCount
+        true,                                                                             //blocking
+        flushDC,                                                                          //dcFlush
+        slmUsed,                                                                          //useSLM
+        true,                                                                             //guardCommandBufferWithPipeControl
+        NDRangeKernel,                                                                    //GSBA32BitRequired
+        requiresCoherency,                                                                //requiresCoherency
+        commandQueue.getPriority() == QueuePriority::LOW,                                 //lowPriority
+        false,                                                                            //implicitFlush
+        commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
+        false,                                                                            //epilogueRequired
+        kernel->requiresPerDssBackedBuffer(),                                             //usePerDssBackedBuffer
+        kernel->isSingleSubdevicePreferred(),                                             //useSingleSubdevice
+        kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
+        kernel->getTotalNumDevicesInContext());                                           //numDevicesInContext
 
     if (timestampPacketDependencies) {
         eventsRequest.fillCsrDependencies(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);

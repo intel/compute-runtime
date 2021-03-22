@@ -66,29 +66,28 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         auto pMultiDeviceKernel = castToObjectOrAbort<MultiDeviceKernel>(kernel);
         auto pKernel = pMultiDeviceKernel->getDefaultKernel();
         auto &device = pKernel->getDevices()[0]->getDevice();
-        auto rootDeviceIndex = device.getRootDeviceIndex();
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates();
         // Enlarge local copy of SSH by 1 SS
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
-        if (pKernel->isParentKernel || !gtpinHelper.addSurfaceState(pKernel, rootDeviceIndex)) {
+        if (pKernel->isParentKernel || !gtpinHelper.addSurfaceState(pKernel)) {
             // Kernel with no SSH or Kernel EM, not supported
             return;
         }
-        if (pKernel->isKernelHeapSubstituted(rootDeviceIndex)) {
+        if (pKernel->isKernelHeapSubstituted()) {
             // ISA for this kernel was already substituted
             return;
         }
         // Notify GT-Pin that new kernel was created
         Context *pContext = &(pKernel->getContext());
         cl_context context = pContext;
-        auto &kernelInfo = pKernel->getKernelInfo(rootDeviceIndex);
+        auto &kernelInfo = pKernel->getKernelInfo();
         instrument_params_in_t paramsIn = {};
 
         paramsIn.kernel_type = GTPIN_KERNEL_TYPE_CS;
         paramsIn.simd = (GTPIN_SIMD_WIDTH)kernelInfo.getMaxSimdSize();
-        paramsIn.orig_kernel_binary = (uint8_t *)pKernel->getKernelHeap(rootDeviceIndex);
-        paramsIn.orig_kernel_size = static_cast<uint32_t>(pKernel->getKernelHeapSize(rootDeviceIndex));
+        paramsIn.orig_kernel_binary = (uint8_t *)pKernel->getKernelHeap();
+        paramsIn.orig_kernel_size = static_cast<uint32_t>(pKernel->getKernelHeapSize());
         paramsIn.buffer_type = GTPIN_BUFFER_BINDFULL;
         paramsIn.buffer_desc.BTI = static_cast<uint32_t>(gtpinBTI);
         paramsIn.igc_hash_id = kernelInfo.shaderHashCode;
@@ -100,7 +99,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         (*GTPinCallbacks.onKernelCreate)((context_handle_t)(cl_context)context, &paramsIn, &paramsOut);
         // Substitute ISA of created kernel with instrumented code
         pKernel->substituteKernelHeap(device, paramsOut.inst_kernel_binary, paramsOut.inst_kernel_size);
-        pKernel->setKernelId(rootDeviceIndex, paramsOut.kernel_id);
+        pKernel->setKernelId(paramsOut.kernel_id);
     }
 }
 
@@ -111,13 +110,13 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         auto rootDeviceIndex = device.getRootDeviceIndex();
         auto pMultiDeviceKernel = castToObjectOrAbort<MultiDeviceKernel>(kernel);
         auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
-        if (pKernel->isParentKernel || pKernel->getSurfaceStateHeapSize(rootDeviceIndex) == 0) {
+        if (pKernel->isParentKernel || pKernel->getSurfaceStateHeapSize() == 0) {
             // Kernel with no SSH, not supported
             return;
         }
         Context *pContext = &(pKernel->getContext());
         cl_context context = (cl_context)pContext;
-        uint64_t kernelId = pKernel->getKernelId(rootDeviceIndex);
+        uint64_t kernelId = pKernel->getKernelId();
         command_buffer_handle_t commandBuffer = (command_buffer_handle_t)((uintptr_t)(sequenceCount++));
         uint32_t kernelOffset = 0;
         resource_handle_t resource = 0;
@@ -142,11 +141,11 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
-        void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI, rootDeviceIndex);
+        void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);
         cl_mem buffer = (cl_mem)resource;
         auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
         pBuffer->setArgStateful(pSurfaceState, false, false, false, false, device,
-                                pKernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
+                                pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
     }
 }
 

@@ -34,14 +34,13 @@ class SchedulerKernel : public Kernel {
     }
 
     size_t getCurbeSize() {
-        auto &defaultKernelInfo = getDefaultKernelInfo();
-        size_t crossTrheadDataSize = defaultKernelInfo.kernelDescriptor.kernelAttributes.crossThreadDataSize;
-        size_t dshSize = defaultKernelInfo.heapInfo.DynamicStateHeapSize;
+        size_t crossThreadDataSize = kernelInfo.kernelDescriptor.kernelAttributes.crossThreadDataSize;
+        size_t dshSize = kernelInfo.heapInfo.DynamicStateHeapSize;
 
-        crossTrheadDataSize = alignUp(crossTrheadDataSize, 64);
+        crossThreadDataSize = alignUp(crossThreadDataSize, 64);
         dshSize = alignUp(dshSize, 64);
 
-        return alignUp(SCHEDULER_DYNAMIC_PAYLOAD_SIZE, 64) + crossTrheadDataSize + dshSize;
+        return alignUp(SCHEDULER_DYNAMIC_PAYLOAD_SIZE, 64) + crossThreadDataSize + dshSize;
     }
 
     void setArgs(GraphicsAllocation *queue,
@@ -56,7 +55,7 @@ class SchedulerKernel : public Kernel {
     static BuiltinCode loadSchedulerKernel(Device *device);
 
   protected:
-    SchedulerKernel(Program *programArg, const KernelInfoContainer &kernelInfosArg, ClDevice &clDeviceArg) : Kernel(programArg, kernelInfosArg, clDeviceArg, true) {
+    SchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg) : Kernel(programArg, kernelInfoArg, clDeviceArg, true) {
         computeGws();
     };
 

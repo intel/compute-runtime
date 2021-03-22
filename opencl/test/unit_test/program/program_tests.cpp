@@ -1348,8 +1348,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     EXPECT_EQ(expected_values[0], constBuff[0]);
     EXPECT_EQ(expected_values[1], constBuff[1]);
 
-    std::unique_ptr<Kernel> pKernel(Kernel::create(pProgram,
-                                                   MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice, &retVal));
+    std::unique_ptr<Kernel> pKernel(Kernel::create(pProgram, *pKernelInfo, *pClDevice, &retVal));
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
@@ -1366,7 +1365,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     auto &residencyVector = pCommandStreamReceiver->getResidencyAllocations();
 
     //we expect kernel ISA here and constant allocation
-    auto kernelIsa = pKernel->getKernelInfo(rootDeviceIndex).getGraphicsAllocation();
+    auto kernelIsa = pKernel->getKernelInfo().getGraphicsAllocation();
     auto constantAllocation = pProgram->getConstantSurface(pDevice->getRootDeviceIndex());
 
     auto element = std::find(residencyVector.begin(), residencyVector.end(), kernelIsa);
@@ -1455,7 +1454,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
 
     auto pKernel = Kernel::create(
         pProgram,
-        MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex),
+        *pKernelInfo,
         *pClDevice,
         &retVal);
 
@@ -1496,7 +1495,7 @@ TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
 
     auto pKernel = Kernel::create(
         pProgram,
-        MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex),
+        *pKernelInfo,
         *pClDevice,
         &retVal);
 

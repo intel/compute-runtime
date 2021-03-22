@@ -22,7 +22,7 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThrea
     program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(device->getDevice(), &program));
 
-    EXPECT_EQ(MockDebugKernel::perThreadSystemThreadSurfaceSize, kernel->getPerThreadSystemThreadSurfaceSize(device->getRootDeviceIndex()));
+    EXPECT_EQ(MockDebugKernel::perThreadSystemThreadSurfaceSize, kernel->getPerThreadSystemThreadSurfaceSize());
 }
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenQueryingIsKernelDebugEnabledThenTrueIsReturned) {
@@ -51,5 +51,5 @@ TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetPerThreadSystemThreadSur
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(device->getDevice(), &program));
 
-    EXPECT_EQ(0u, kernel->getPerThreadSystemThreadSurfaceSize(device->getRootDeviceIndex()));
+    EXPECT_EQ(0u, kernel->getPerThreadSystemThreadSurfaceSize());
 }

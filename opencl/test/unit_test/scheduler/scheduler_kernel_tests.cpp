@@ -29,7 +29,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchDataParameterSt
 
 class MockSchedulerKernel : public SchedulerKernel {
   public:
-    MockSchedulerKernel(Program *program, const KernelInfoContainer &info, ClDevice &clDeviceArg) : SchedulerKernel(program, info, clDeviceArg) {
+    MockSchedulerKernel(Program *program, const KernelInfo &info, ClDevice &clDeviceArg) : SchedulerKernel(program, info, clDeviceArg) {
     }
 
     static MockSchedulerKernel *create(Program &program, KernelInfo *&info) {
@@ -53,12 +53,7 @@ class MockSchedulerKernel : public SchedulerKernel {
             info->kernelArgInfo.push_back(std::move(bufferArg));
         }
 
-        KernelInfoContainer kernelInfos;
-        auto rootDeviceIndex = program.getDevices()[0]->getRootDeviceIndex();
-        kernelInfos.resize(rootDeviceIndex + 1);
-        kernelInfos[rootDeviceIndex] = info;
-
-        MockSchedulerKernel *mock = Kernel::create<MockSchedulerKernel>(&program, kernelInfos, *program.getDevices()[0], nullptr);
+        MockSchedulerKernel *mock = Kernel::create<MockSchedulerKernel>(&program, *info, *program.getDevices()[0], nullptr);
         return mock;
     }
 };
@@ -67,9 +62,7 @@ TEST(SchedulerKernelTest, WhenSchedulerKernelIsCreatedThenLwsIs24) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     KernelInfo info;
-    KernelInfoContainer kernelInfos;
-    kernelInfos.push_back(&info);
-    MockSchedulerKernel kernel(&program, kernelInfos, *device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     size_t lws = kernel.getLws();
     EXPECT_EQ((size_t)24u, lws);
@@ -79,9 +72,7 @@ TEST(SchedulerKernelTest, WhenSchedulerKernelIsCreatedThenGwsIs24) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     KernelInfo info;
-    KernelInfoContainer kernelInfos;
-    kernelInfos.push_back(&info);
-    MockSchedulerKernel kernel(&program, kernelInfos, *device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     const size_t hwThreads = 3;
     const size_t simdSize = 8;
@@ -97,9 +88,7 @@ TEST(SchedulerKernelTest, WhenSettingGwsThenGetGwsReturnedSetValue) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     KernelInfo info;
-    KernelInfoContainer kernelInfos;
-    kernelInfos.push_back(&info);
-    MockSchedulerKernel kernel(&program, kernelInfos, *device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     kernel.setGws(24);
 
@@ -121,9 +110,7 @@ TEST(SchedulerKernelTest, WhenSchedulerKernelIsCreatedThenCurbeSizeIsCorrect) {
 
     info.heapInfo.DynamicStateHeapSize = dshSize;
 
-    KernelInfoContainer kernelInfos;
-    kernelInfos.push_back(&info);
-    MockSchedulerKernel kernel(&program, kernelInfos, *device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     uint32_t expectedCurbeSize = alignUp(crossTrheadDataSize, 64) + alignUp(dshSize, 64) + alignUp(SCHEDULER_DYNAMIC_PAYLOAD_SIZE, 64);
     EXPECT_GE((size_t)expectedCurbeSize, kernel.getCurbeSize());
@@ -282,9 +269,7 @@ TEST(SchedulerKernelTest, GivenNullKernelInfoWhenGettingCurbeSizeThenSizeIsCorre
     MockProgram program(toClDeviceVector(*device));
     KernelInfo info;
 
-    KernelInfoContainer kernelInfos;
-    kernelInfos.push_back(&info);
-    MockSchedulerKernel kernel(&program, kernelInfos, *device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     uint32_t expectedCurbeSize = alignUp(SCHEDULER_DYNAMIC_PAYLOAD_SIZE, 64);
     EXPECT_GE((size_t)expectedCurbeSize, kernel.getCurbeSize());
@@ -297,9 +282,7 @@ TEST(SchedulerKernelTest, givenForcedSchedulerGwsByDebugVariableWhenSchedulerKer
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     KernelInfo info;
-    KernelInfoContainer kernelInfos;
-    kernelInfos.push_back(&info);
-    MockSchedulerKernel kernel(&program, kernelInfos, *device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     size_t gws = kernel.getGws();
     EXPECT_EQ(static_cast<size_t>(48u), gws);
@@ -313,9 +296,7 @@ TEST(SchedulerKernelTest, givenSimulationModeWhenSchedulerKernelIsCreatedThenGws
     MockProgram program(toClDeviceVector(*device));
 
     KernelInfo info;
-    KernelInfoContainer kernelInfos;
-    kernelInfos.push_back(&info);
-    MockSchedulerKernel kernel(&program, kernelInfos, *device);
+    MockSchedulerKernel kernel(&program, info, *device);
     size_t gws = kernel.getGws();
     EXPECT_EQ(static_cast<size_t>(24u), gws);
 }
@@ -331,9 +312,7 @@ TEST(SchedulerKernelTest, givenForcedSchedulerGwsByDebugVariableAndSimulationMod
     MockProgram program(toClDeviceVector(*device));
 
     KernelInfo info;
-    KernelInfoContainer kernelInfos;
-    kernelInfos.push_back(&info);
-    MockSchedulerKernel kernel(&program, kernelInfos, *device);
+    MockSchedulerKernel kernel(&program, info, *device);
     size_t gws = kernel.getGws();
     EXPECT_EQ(static_cast<size_t>(48u), gws);
 }

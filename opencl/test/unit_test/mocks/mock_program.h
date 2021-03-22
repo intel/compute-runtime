@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -170,6 +170,10 @@ class MockProgram : public Program {
         initInternalOptionsCalled++;
         Program::initInternalOptions(internalOptions);
     };
+
+    const KernelInfo &getKernelInfoForKernel(const char *kernelName) const {
+        return *getKernelInfo(kernelName, getDevices()[0]->getRootDeviceIndex());
+    }
 
     const KernelInfoContainer getKernelInfosForKernel(const char *kernelName) const {
         KernelInfoContainer kernelInfos;

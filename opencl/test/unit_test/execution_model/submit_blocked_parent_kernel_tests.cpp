@@ -81,7 +81,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritca
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(parentKernel->getKernelInfo(), rootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel), kernelInfos);
     MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -98,7 +99,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritca
 
     dsh->getSpace(mockDevQueue.getDshOffset());
 
-    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel, rootDeviceIndex);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
     auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()});
     auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
@@ -121,7 +122,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(parentKernel->getKernelInfo(), rootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel), kernelInfos);
     MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -163,7 +165,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
                                                                 *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel, rootDeviceIndex);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
     blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
     PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -184,7 +186,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(parentKernel->getKernelInfo(), rootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel), kernelInfos);
     MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -204,7 +207,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
                                                                 *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel, rootDeviceIndex);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
     blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
     PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -224,7 +227,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentK
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(parentKernel->getKernelInfo(), rootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel), kernelInfos);
     MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -242,7 +246,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentK
                                                                 *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel, rootDeviceIndex);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
     blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
     PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -264,7 +268,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(parentKernel->getKernelInfo(), rootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel), kernelInfos);
     MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
@@ -283,7 +288,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
                                                                 *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel, rootDeviceIndex);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
     blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
     PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -302,14 +307,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(parentKernel->getKernelInfo(), rootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel), kernelInfos);
     MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
 
     MockCommandQueue cmdQ(context, device, properties);
 
-    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel, rootDeviceIndex);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
     size_t heapSize = 20;
 
@@ -358,12 +364,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhen
 
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(parentKernel->getKernelInfo(), rootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel), kernelInfos);
     MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();
     context->setDefaultDeviceQueue(&mockDevQueue);
 
-    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel, rootDeviceIndex);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
     size_t heapSize = 20;
 
@@ -403,7 +410,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
 
     cl_queue_properties properties[3] = {0};
     auto parentKernel = MockParentKernel::create(*context);
-    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(parentKernel->getKernelInfo(), rootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(parentKernel), kernelInfos);
 
     MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
     parentKernel->createReflectionSurface();

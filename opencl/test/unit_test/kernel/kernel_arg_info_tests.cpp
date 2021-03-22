@@ -40,7 +40,7 @@ class KernelArgInfoTest : public ProgramFromSourceTest {
         // create a kernel
         pKernel = Kernel::create(
             pProgram,
-            pProgram->getKernelInfosForKernel(kernelName),
+            pProgram->getKernelInfoForKernel(kernelName),
             *pPlatform->getClDevice(0),
             &retVal);
 

@@ -118,7 +118,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
 
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), kernel, rootDeviceIndex));
     EXPECT_NE(iohBefore, pIOH->getUsed());
-    if (kernel->requiresSshForBuffers(rootDeviceIndex)) {
+    if (kernel->requiresSshForBuffers()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
 
@@ -147,7 +147,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferRightLeftover) {
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
-    EXPECT_STREQ("FillBufferRightLeftover", kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str());
+    EXPECT_STREQ("FillBufferRightLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -174,7 +174,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferMiddle) {
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
-    EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str());
+    EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -201,7 +201,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferLeftLeftover) {
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
-    EXPECT_STREQ("FillBufferLeftLeftover", kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName.c_str());
+    EXPECT_STREQ("FillBufferLeftLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -364,8 +364,8 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessThenStatelessKerne
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
-    EXPECT_FALSE(kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].pureStatefulBufferAccess);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }

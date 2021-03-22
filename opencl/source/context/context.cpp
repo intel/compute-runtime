@@ -393,21 +393,16 @@ SchedulerKernel &Context::getSchedulerKernel() {
 
         schedulerBuiltIn->pProgram = program;
 
-        KernelInfoContainer kernelInfos;
-        kernelInfos.resize(getMaxRootDeviceIndex() + 1);
-        for (auto rootDeviceIndex : rootDeviceIndices) {
-            auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName, rootDeviceIndex);
-            DEBUG_BREAK_IF(!kernelInfo);
-            kernelInfos[rootDeviceIndex] = kernelInfo;
-        }
+        auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName, clDevice->getRootDeviceIndex());
+        DEBUG_BREAK_IF(!kernelInfo);
 
         schedulerBuiltIn->pKernel = Kernel::create<SchedulerKernel>(
             schedulerBuiltIn->pProgram,
-            kernelInfos,
+            *kernelInfo,
             *clDevice,
             &retVal);
 
-        UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize(clDevice->getRootDeviceIndex()) != 0);
+        UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize() != 0);
 
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
     };

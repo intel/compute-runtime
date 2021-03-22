@@ -214,11 +214,11 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKer
 
     auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
     auto kernNeo = pMultiDeviceKernel->getKernel(testedRootDeviceIndex);
-    EXPECT_NE(nullptr, kernNeo->getKernelInfo(testedRootDeviceIndex).builtinDispatchBuilder);
+    EXPECT_NE(nullptr, kernNeo->getKernelInfo().builtinDispatchBuilder);
     EXPECT_EQ(6U, kernNeo->getKernelArgsNumber());
 
     auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pClDevice);
-    EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo(testedRootDeviceIndex).builtinDispatchBuilder);
+    EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
     clReleaseKernel(kernel);
     clReleaseProgram(program);
@@ -251,11 +251,11 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
 
     auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
     auto kernNeo = pMultiDeviceKernel->getKernel(testedRootDeviceIndex);
-    EXPECT_NE(nullptr, kernNeo->getKernelInfo(testedRootDeviceIndex).builtinDispatchBuilder);
+    EXPECT_NE(nullptr, kernNeo->getKernelInfo().builtinDispatchBuilder);
     EXPECT_EQ(15U, kernNeo->getKernelArgsNumber());
 
     auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *pClDevice);
-    EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo(testedRootDeviceIndex).builtinDispatchBuilder);
+    EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
     clReleaseKernel(kernel);
     clReleaseProgram(program);
@@ -288,12 +288,12 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
 
     auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
     auto kernNeo = pMultiDeviceKernel->getKernel(testedRootDeviceIndex);
-    EXPECT_NE(nullptr, kernNeo->getKernelInfo(testedRootDeviceIndex).builtinDispatchBuilder);
+    EXPECT_NE(nullptr, kernNeo->getKernelInfo().builtinDispatchBuilder);
     EXPECT_EQ(20U, kernNeo->getKernelArgsNumber());
 
     auto ctxNeo = castToObject<Context>(pContext);
     auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *ctxNeo->getDevice(0));
-    EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo(testedRootDeviceIndex).builtinDispatchBuilder);
+    EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
     clReleaseKernel(kernel);
     clReleaseProgram(program);

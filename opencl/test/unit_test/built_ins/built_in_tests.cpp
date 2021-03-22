@@ -481,12 +481,12 @@ TEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesF
 
     EXPECT_EQ(newSize, mockAuxBuiltInOp.convertToAuxKernel.size());
     for (auto &convertToAuxKernel : mockAuxBuiltInOp.convertToAuxKernel) {
-        EXPECT_EQ(&mockAuxBuiltInOp.baseKernel->getKernelInfo(rootDeviceIndex), &convertToAuxKernel->getKernelInfo(rootDeviceIndex));
+        EXPECT_EQ(&mockAuxBuiltInOp.baseKernel->getKernelInfo(), &convertToAuxKernel->getKernelInfo());
     }
 
     EXPECT_EQ(newSize, mockAuxBuiltInOp.convertToNonAuxKernel.size());
     for (auto &convertToNonAuxKernel : mockAuxBuiltInOp.convertToNonAuxKernel) {
-        EXPECT_EQ(&mockAuxBuiltInOp.baseKernel->getKernelInfo(rootDeviceIndex), &convertToNonAuxKernel->getKernelInfo(rootDeviceIndex));
+        EXPECT_EQ(&mockAuxBuiltInOp.baseKernel->getKernelInfo(), &convertToNonAuxKernel->getKernelInfo());
     }
 }
 
@@ -497,7 +497,8 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
 
     auto mockProgram = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
-    auto pMultiDeviceKernel = new MockMultiDeviceKernel(MockMultiDeviceKernel::toKernelVector(mockBuiltinKernel));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(mockBuiltinKernel->getKernelInfo(), rootDeviceIndex);
+    auto pMultiDeviceKernel = new MockMultiDeviceKernel(MockMultiDeviceKernel::toKernelVector(mockBuiltinKernel), kernelInfos);
     mockAuxBuiltInOp->usedKernels.at(0).reset(pMultiDeviceKernel);
 
     MockKernelWithInternals mockKernel(*pClDevice, pContext);
@@ -569,13 +570,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettin
         // read args
         auto argNum = 0;
         auto expectedMocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
-        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap(rootDeviceIndex);
-        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo(rootDeviceIndex).kernelArgInfo[argNum].offsetHeap;
+        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().kernelArgInfo[argNum].offsetHeap;
         auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
         EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
 
-        sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap(rootDeviceIndex);
-        sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo(rootDeviceIndex).kernelArgInfo[argNum].offsetHeap;
+        sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+        sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().kernelArgInfo[argNum].offsetHeap;
         surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
         EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
     }
@@ -584,13 +585,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettin
         // write args
         auto argNum = 1;
         auto expectedMocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap(rootDeviceIndex);
-        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo(rootDeviceIndex).kernelArgInfo[argNum].offsetHeap;
+        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().kernelArgInfo[argNum].offsetHeap;
         auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
         EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
 
-        sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap(rootDeviceIndex);
-        sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo(rootDeviceIndex).kernelArgInfo[argNum].offsetHeap;
+        sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+        sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().kernelArgInfo[argNum].offsetHeap;
         surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
         EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
     }
@@ -638,8 +639,8 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
     {
         // read arg
         auto argNum = 0;
-        auto sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap(rootDeviceIndex);
-        auto sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo(rootDeviceIndex).kernelArgInfo[argNum].offsetHeap;
+        auto sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+        auto sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().kernelArgInfo[argNum].offsetHeap;
         auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E, surfaceState->getAuxiliarySurfaceMode());
     }
@@ -647,8 +648,8 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
     {
         // write arg
         auto argNum = 1;
-        auto sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap(rootDeviceIndex);
-        auto sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo(rootDeviceIndex).kernelArgInfo[argNum].offsetHeap;
+        auto sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+        auto sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().kernelArgInfo[argNum].offsetHeap;
         auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState->getAuxiliarySurfaceMode());
     }
@@ -685,8 +686,8 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
     {
         // read arg
         auto argNum = 0;
-        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap(rootDeviceIndex);
-        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo(rootDeviceIndex).kernelArgInfo[argNum].offsetHeap;
+        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().kernelArgInfo[argNum].offsetHeap;
         auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState->getAuxiliarySurfaceMode());
     }
@@ -694,8 +695,8 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
     {
         // write arg
         auto argNum = 1;
-        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap(rootDeviceIndex);
-        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo(rootDeviceIndex).kernelArgInfo[argNum].offsetHeap;
+        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().kernelArgInfo[argNum].offsetHeap;
         auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E, surfaceState->getAuxiliarySurfaceMode());
     }
@@ -859,8 +860,8 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStateles
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
-    EXPECT_FALSE(kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].pureStatefulBufferAccess);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
 }
 
 HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStatelessIsUsedThenParamsAreCorrect) {
@@ -893,8 +894,8 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStateles
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
-    EXPECT_FALSE(kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].pureStatefulBufferAccess);
+    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
 }
 
 TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
@@ -917,10 +918,10 @@ TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedTh
 
     const Kernel *kernel = multiDispatchInfo.begin()->getKernel();
 
-    EXPECT_EQ(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName, "CopyBufferToBufferMiddleMisaligned");
+    EXPECT_EQ(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName, "CopyBufferToBufferMiddleMisaligned");
 
     const auto crossThreadData = kernel->getCrossThreadData();
-    const auto crossThreadOffset = kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[4].kernelArgPatchInfoVector[0].crossthreadOffset;
+    const auto crossThreadOffset = kernel->getKernelInfo().kernelArgInfo[4].kernelArgPatchInfoVector[0].crossthreadOffset;
     EXPECT_EQ(8u, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, crossThreadOffset)));
 
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
@@ -1017,7 +1018,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, WhenGettingSchedulerKernelThenCorrectK
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
     SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
     std::string name = SchedulerKernel::schedulerName;
-    EXPECT_EQ(name, schedulerKernel.getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName);
+    EXPECT_EQ(name, schedulerKernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, WhenGetttingSchedulerKernelForSecondTimeThenReuseKernel) {
@@ -1141,10 +1142,10 @@ TEST_F(VmeBuiltInTests, GivenVmeBuilderWhenGettingDispatchInfoThenParamsAreCorre
 
     constexpr uint32_t vmeImplicitArgsBase = 6;
     constexpr uint32_t vmeImplicitArgs = 3;
-    ASSERT_EQ(vmeImplicitArgsBase + vmeImplicitArgs, outDi->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo.size());
+    ASSERT_EQ(vmeImplicitArgsBase + vmeImplicitArgs, outDi->getKernel()->getKernelInfo().kernelArgInfo.size());
     uint32_t vmeExtraArgsExpectedVals[] = {18, 22, 18}; // height, width, stride
     for (uint32_t i = 0; i < vmeImplicitArgs; ++i) {
-        auto &argInfo = outDi->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo[vmeImplicitArgsBase + i];
+        auto &argInfo = outDi->getKernel()->getKernelInfo().kernelArgInfo[vmeImplicitArgsBase + i];
         ASSERT_EQ(1U, argInfo.kernelArgPatchInfoVector.size());
         auto off = argInfo.kernelArgPatchInfoVector[0].crossthreadOffset;
         EXPECT_EQ(vmeExtraArgsExpectedVals[i], *((uint32_t *)(outDi->getKernel()->getCrossThreadData() + off)));
@@ -1198,15 +1199,15 @@ TEST_F(VmeBuiltInTests, GivenAdvancedVmeBuilderWhenGettingDispatchInfoThenParams
 
         EXPECT_EQ(srcImageArg, outDi->getKernel()->getKernelArg(srcImageArgNum));
 
-        uint32_t vmeImplicitArgsBase = outDi->getKernel()->getKernelInfo(rootDeviceIndex).getArgNumByName("intraSrcImg");
+        uint32_t vmeImplicitArgsBase = outDi->getKernel()->getKernelInfo().getArgNumByName("intraSrcImg");
         uint32_t vmeImplicitArgs = 4;
-        ASSERT_EQ(vmeImplicitArgsBase + vmeImplicitArgs, outDi->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo.size());
+        ASSERT_EQ(vmeImplicitArgsBase + vmeImplicitArgs, outDi->getKernel()->getKernelInfo().kernelArgInfo.size());
         EXPECT_EQ(srcImageArg, outDi->getKernel()->getKernelArg(vmeImplicitArgsBase));
         ++vmeImplicitArgsBase;
         --vmeImplicitArgs;
         uint32_t vmeExtraArgsExpectedVals[] = {18, 22, 18}; // height, width, stride
         for (uint32_t i = 0; i < vmeImplicitArgs; ++i) {
-            auto &argInfo = outDi->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo[vmeImplicitArgsBase + i];
+            auto &argInfo = outDi->getKernel()->getKernelInfo().kernelArgInfo[vmeImplicitArgsBase + i];
             ASSERT_EQ(1U, argInfo.kernelArgPatchInfoVector.size());
             auto off = argInfo.kernelArgPatchInfoVector[0].crossthreadOffset;
             EXPECT_EQ(vmeExtraArgsExpectedVals[i], *((uint32_t *)(outDi->getKernel()->getCrossThreadData() + off)));

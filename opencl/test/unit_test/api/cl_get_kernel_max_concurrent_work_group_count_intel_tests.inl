@@ -63,7 +63,7 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenVariousInputWhenGetting
     size_t globalWorkOffset[] = {0, 0, 0};
     size_t localWorkSize[] = {8, 8, 8};
     size_t maxConcurrentWorkGroupCount = 0;
-    const_cast<KernelInfo &>(pKernel->getKernelInfo(pDevice->getRootDeviceIndex())).kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    const_cast<KernelInfo &>(pKernel->getKernelInfo()).kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
 
     retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim, globalWorkOffset, localWorkSize,
                                                          &maxConcurrentWorkGroupCount);
@@ -72,7 +72,8 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenVariousInputWhenGetting
     EXPECT_EQ(expectedMaxConcurrentWorkGroupCount, maxConcurrentWorkGroupCount);
 
     auto pKernelWithExecutionEnvironmentPatch = MockKernel::create(pCommandQueue->getDevice(), pProgram);
-    MultiDeviceKernel multiDeviceKernelWithExecutionEnvironmentPatch(MockMultiDeviceKernel::toKernelVector(pKernelWithExecutionEnvironmentPatch));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(pKernelWithExecutionEnvironmentPatch->getKernelInfo(), testedRootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernelWithExecutionEnvironmentPatch(MockMultiDeviceKernel::toKernelVector(pKernelWithExecutionEnvironmentPatch), kernelInfos);
     retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, &multiDeviceKernelWithExecutionEnvironmentPatch, workDim,
                                                          globalWorkOffset, localWorkSize,
                                                          &maxConcurrentWorkGroupCount);

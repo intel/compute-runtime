@@ -69,7 +69,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
     kernelInfo.workloadInfo.slmStaticSize = GetParam() * KB;
 
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     // After creating Mock Kernel now create Indirect Heap
@@ -156,7 +156,7 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
 
     kernelInfo.workloadInfo.slmStaticSize = 0;
 
-    MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(kernelInfo, rootDeviceIndex), *pClDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);

@@ -62,7 +62,7 @@ TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
     MockUnrestrictiveContext context;
     auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
     std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(
-        MockMultiDeviceKernel::create<MockKernel>(mockProgram.get(), MockKernel::toKernelInfoContainer(pKernel->getKernelInfo(testedRootDeviceIndex), context.getDevice(0)->getRootDeviceIndex())));
+        MockMultiDeviceKernel::create<MockKernel>(mockProgram.get(), MockKernel::toKernelInfoContainer(pKernel->getKernelInfo(), context.getDevice(0)->getRootDeviceIndex())));
 
     retVal = clGetKernelWorkGroupInfo(
         pMultiDeviceKernel.get(),
@@ -84,7 +84,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
     mediaVFEstate.PerThreadScratchSpace = 1024; //whatever greater than 0
     populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
 
-    cl_ulong scratchSpaceSize = static_cast<cl_ulong>(mockKernel.mockKernel->getScratchSize(testedRootDeviceIndex));
+    cl_ulong scratchSpaceSize = static_cast<cl_ulong>(mockKernel.mockKernel->getScratchSize());
     EXPECT_EQ(scratchSpaceSize, 1024u);
 
     retVal = clGetKernelWorkGroupInfo(

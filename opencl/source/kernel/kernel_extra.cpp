@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ namespace NEO {
 bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
     return false;
 }
-void Kernel::reconfigureKernel(uint32_t rootDeviceIndex) {
+void Kernel::reconfigureKernel() {
 }
 int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
     if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL) {
@@ -29,11 +29,11 @@ int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
     return CL_SUCCESS;
 }
 
-bool Kernel::requiresPerDssBackedBuffer(uint32_t rootDeviceIndex) const {
+bool Kernel::requiresPerDssBackedBuffer() const {
     return DebugManager.flags.ForcePerDssBackedBufferProgramming.get();
 }
 
-bool Kernel::requiresLimitedWorkgroupSize(uint32_t rootDeviceIndex) const {
+bool Kernel::requiresLimitedWorkgroupSize() const {
     return this->isBuiltIn;
 }
 

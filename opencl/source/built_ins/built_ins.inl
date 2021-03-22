@@ -22,10 +22,10 @@ void BuiltInOp<EBuiltInOps::AuxTranslation>::resizeKernelInstances(size_t size) 
     convertToAuxKernel.reserve(size);
 
     for (size_t i = convertToNonAuxKernel.size(); i < size; i++) {
-        auto clonedNonAuxToAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfos(), clDevice, nullptr);
+        auto clonedNonAuxToAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), clDevice, nullptr);
         clonedNonAuxToAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::NonAuxToAux);
 
-        auto clonedAuxToNonAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfos(), clDevice, nullptr);
+        auto clonedAuxToNonAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), clDevice, nullptr);
         clonedAuxToNonAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::AuxToNonAux);
 
         clonedNonAuxToAuxKernel->cloneKernel(baseKernel);

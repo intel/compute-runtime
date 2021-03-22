@@ -40,7 +40,7 @@ void DevicePreemptionTests::SetUp() {
     context.reset(new MockContext(device.get()));
     cmdQ.reset(new MockCommandQueue(context.get(), device.get(), properties));
     program = std::make_unique<MockProgram>(toClDeviceVector(*device));
-    kernel.reset(new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*kernelInfo, rootDeviceIndex), *device));
+    kernel.reset(new MockKernel(program.get(), *kernelInfo, *device));
     dispatchInfo.reset(new DispatchInfo(device.get(), kernel.get(), 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0)));
 
     ASSERT_NE(nullptr, device);

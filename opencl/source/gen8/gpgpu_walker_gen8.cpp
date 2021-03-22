@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,12 +15,12 @@ namespace NEO {
 template <>
 void GpgpuWalkerHelper<BDWFamily>::applyWADisableLSQCROPERFforOCL(NEO::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
     if (disablePerfMode) {
-        if (kernel.getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
+        if (kernel.getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
             // Set bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
             GpgpuWalkerHelper<BDWFamily>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_OR, L3SQC_BIT_LQSC_RO_PERF_DIS);
         }
     } else {
-        if (kernel.getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
+        if (kernel.getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
             // Add PIPE_CONTROL with CS_Stall to wait till GPU finishes its work
             typedef typename BDWFamily::PIPE_CONTROL PIPE_CONTROL;
             auto pCmd = reinterpret_cast<PIPE_CONTROL *>(pCommandStream->getSpace(sizeof(PIPE_CONTROL)));
@@ -40,7 +40,7 @@ size_t GpgpuWalkerHelper<BDWFamily>::getSizeForWADisableLSQCROPERFforOCL(const K
     typedef typename BDWFamily::MI_MATH MI_MATH;
     typedef typename BDWFamily::MI_MATH_ALU_INST_INLINE MI_MATH_ALU_INST_INLINE;
     size_t n = 0;
-    if (pKernel->getDefaultKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
+    if (pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
         n += sizeof(PIPE_CONTROL) +
              (2 * sizeof(MI_LOAD_REGISTER_REG) +
               sizeof(MI_LOAD_REGISTER_IMM) +

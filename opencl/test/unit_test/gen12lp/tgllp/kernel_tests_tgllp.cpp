@@ -29,12 +29,11 @@ TGLLPTEST_F(KernelTgllpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenS
 
         hwInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(stepping, hwInfo);
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-        auto rootDeviceIndex = device->getRootDeviceIndex();
         MockKernelWithInternals mockKernelWithInternals{*device};
         populateKernelDescriptor(mockKernelWithInternals.kernelInfo.kernelDescriptor, threadPayload);
 
         for (auto isCcsUsed : ::testing::Bool()) {
-            uint64_t kernelStartOffset = mockKernelWithInternals.mockKernel->getKernelStartOffset(false, false, isCcsUsed, rootDeviceIndex);
+            uint64_t kernelStartOffset = mockKernelWithInternals.mockKernel->getKernelStartOffset(false, false, isCcsUsed);
 
             if (stepping == REVISION_A0 && isCcsUsed) {
                 EXPECT_EQ(defaultKernelStartOffset + additionalOffsetDueToFfid, kernelStartOffset);

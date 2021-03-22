@@ -23,7 +23,7 @@ class PatchedKernelTest : public ::testing::Test {
         program.reset(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
         program->build(program->getDevices(), nullptr, false);
-        kernel.reset(Kernel::create(program.get(), program->getKernelInfosForKernel("FillBufferBytes"), *device, &retVal));
+        kernel.reset(Kernel::create(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *device, &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
     void TearDown() override {

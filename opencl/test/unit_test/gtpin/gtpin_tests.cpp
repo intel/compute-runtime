@@ -763,8 +763,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
 
     MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
     Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
-    const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId1 = pKernel1->getKernelId(rootDeviceIndex);
+    const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
+    uint64_t gtpinKernelId1 = pKernel1->getKernelId();
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
     constexpr size_t n = 256;
@@ -798,8 +798,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
 
     MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
     Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
-    const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId2 = pKernel2->getKernelId(rootDeviceIndex);
+    const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
+    uint64_t gtpinKernelId2 = pKernel2->getKernelId();
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -913,8 +913,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
 
     MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
     Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
-    const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId1 = pKernel1->getKernelId(rootDeviceIndex);
+    const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
+    uint64_t gtpinKernelId1 = pKernel1->getKernelId();
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
     cl_uint workDim = 1;
@@ -956,8 +956,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
 
     MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
     Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
-    const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId2 = pKernel2->getKernelId(rootDeviceIndex);
+    const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
+    uint64_t gtpinKernelId2 = pKernel2->getKernelId();
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -1189,7 +1189,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GTPinTests, givenInitializedGTPinInterfaceWhenKernel
     size_t localWorkSize[3] = {1, 1, 1};
 
     MockParentKernel *parentKernel = MockParentKernel::create(*pContext);
-    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(MockMultiDeviceKernel::toKernelVector(parentKernel));
+    auto kernelInfos = MockKernel::toKernelInfoContainer(parentKernel->getKernelInfo(), rootDeviceIndex);
+    auto pMultiDeviceKernel = std::make_unique<MultiDeviceKernel>(MockMultiDeviceKernel::toKernelVector(parentKernel), kernelInfos);
 
     retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel.get(), workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1269,8 +1270,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
 
     MultiDeviceKernel *pMultiDeviceKernel = static_cast<MultiDeviceKernel *>(kernel);
     Kernel *pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
-    const KernelInfo &kInfo = pKernel->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId = pKernel->getKernelId(rootDeviceIndex);
+    const KernelInfo &kInfo = pKernel->getKernelInfo();
+    uint64_t gtpinKernelId = pKernel->getKernelId();
     EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
 
     constexpr size_t n = 256;
@@ -1383,8 +1384,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
 
     MultiDeviceKernel *pMultiDeviceKernel = static_cast<MultiDeviceKernel *>(kernel);
     Kernel *pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
-    const KernelInfo &kInfo = pKernel->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId = pKernel->getKernelId(rootDeviceIndex);
+    const KernelInfo &kInfo = pKernel->getKernelInfo();
+    uint64_t gtpinKernelId = pKernel->getKernelId();
     EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
 
     constexpr size_t n = 256;
@@ -1508,8 +1509,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
 
     MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
     Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
-    const KernelInfo &kInfo1 = pKernel1->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId1 = pKernel1->getKernelId(rootDeviceIndex);
+    const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
+    uint64_t gtpinKernelId1 = pKernel1->getKernelId();
     EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
     constexpr size_t n = 256;
@@ -1547,8 +1548,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
 
     MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
     Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
-    const KernelInfo &kInfo2 = pKernel2->getKernelInfo(rootDeviceIndex);
-    uint64_t gtpinKernelId2 = pKernel2->getKernelId(rootDeviceIndex);
+    const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
+    uint64_t gtpinKernelId2 = pKernel2->getKernelId();
     EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -2182,12 +2183,12 @@ TEST_F(GTPinTests, givenParentKernelWhenGtPinAddingSurfaceStateThenItIsNotAddedA
     parentKernel->sshLocalSize = 64;
     parentKernel->pSshLocal.reset(new char[64]);
 
-    size_t sizeSurfaceStates1 = parentKernel->getSurfaceStateHeapSize(rootDeviceIndex);
+    size_t sizeSurfaceStates1 = parentKernel->getSurfaceStateHeapSize();
 
-    bool surfaceAdded = gtpinHelper.addSurfaceState(parentKernel.get(), rootDeviceIndex);
+    bool surfaceAdded = gtpinHelper.addSurfaceState(parentKernel.get());
     EXPECT_FALSE(surfaceAdded);
 
-    size_t sizeSurfaceStates2 = parentKernel->getSurfaceStateHeapSize(rootDeviceIndex);
+    size_t sizeSurfaceStates2 = parentKernel->getSurfaceStateHeapSize();
     EXPECT_EQ(sizeSurfaceStates2, sizeSurfaceStates1);
 }
 
@@ -2238,47 +2239,47 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
 
     size_t numBTS1 = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(2u, numBTS1);
-    size_t sizeSurfaceStates1 = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
+    size_t sizeSurfaceStates1 = pKernel->getSurfaceStateHeapSize();
     EXPECT_NE(0u, sizeSurfaceStates1);
     size_t offsetBTS1 = pKernel->getBindingTableOffset();
     EXPECT_NE(0u, offsetBTS1);
 
     GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
     GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
-    void *pSS1 = gtpinHelper.getSurfaceState(pKernel, 0, rootDeviceIndex);
+    void *pSS1 = gtpinHelper.getSurfaceState(pKernel, 0);
     EXPECT_NE(nullptr, pSS1);
 
     // Enlarge SSH by one SURFACE STATE element
-    bool surfaceAdded = gtpinHelper.addSurfaceState(pKernel, rootDeviceIndex);
+    bool surfaceAdded = gtpinHelper.addSurfaceState(pKernel);
     EXPECT_TRUE(surfaceAdded);
 
     size_t numBTS2 = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(numBTS1 + 1, numBTS2);
-    size_t sizeSurfaceStates2 = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
+    size_t sizeSurfaceStates2 = pKernel->getSurfaceStateHeapSize();
     EXPECT_GT(sizeSurfaceStates2, sizeSurfaceStates1);
     size_t offsetBTS2 = pKernel->getBindingTableOffset();
     EXPECT_GT(offsetBTS2, offsetBTS1);
 
-    void *pSS2 = gtpinHelper.getSurfaceState(pKernel, 0, rootDeviceIndex);
+    void *pSS2 = gtpinHelper.getSurfaceState(pKernel, 0);
     EXPECT_NE(pSS2, pSS1);
 
-    pSS2 = gtpinHelper.getSurfaceState(pKernel, numBTS2, rootDeviceIndex);
+    pSS2 = gtpinHelper.getSurfaceState(pKernel, numBTS2);
     EXPECT_EQ(nullptr, pSS2);
 
     // Remove kernel's SSH
     pKernel->resizeSurfaceStateHeap(nullptr, 0, 0, 0);
 
     // Try to enlarge SSH once again, this time the operation must fail
-    surfaceAdded = gtpinHelper.addSurfaceState(pKernel, rootDeviceIndex);
+    surfaceAdded = gtpinHelper.addSurfaceState(pKernel);
     EXPECT_FALSE(surfaceAdded);
 
     size_t numBTS3 = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numBTS3);
-    size_t sizeSurfaceStates3 = pKernel->getSurfaceStateHeapSize(rootDeviceIndex);
+    size_t sizeSurfaceStates3 = pKernel->getSurfaceStateHeapSize();
     EXPECT_EQ(0u, sizeSurfaceStates3);
     size_t offsetBTS3 = pKernel->getBindingTableOffset();
     EXPECT_EQ(0u, offsetBTS3);
-    void *pSS3 = gtpinHelper.getSurfaceState(pKernel, 0, rootDeviceIndex);
+    void *pSS3 = gtpinHelper.getSurfaceState(pKernel, 0);
     EXPECT_EQ(nullptr, pSS3);
 
     // Cleanup
@@ -2337,7 +2338,7 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     ASSERT_NE(nullptr, pKernel);
 
-    bool isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted(rootDeviceIndex);
+    bool isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted();
     EXPECT_FALSE(isKernelCodeSubstituted);
 
     // Substitute new kernel code
@@ -2346,12 +2347,12 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     pKernel->substituteKernelHeap(pDevice->getDevice(), &newCode[0], newCodeSize);
 
     // Verify that substitution went properly
-    isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted(rootDeviceIndex);
+    isKernelCodeSubstituted = pKernel->isKernelHeapSubstituted();
     EXPECT_TRUE(isKernelCodeSubstituted);
-    uint8_t *pBin2 = reinterpret_cast<uint8_t *>(const_cast<void *>(pKernel->getKernelHeap(rootDeviceIndex)));
+    uint8_t *pBin2 = reinterpret_cast<uint8_t *>(const_cast<void *>(pKernel->getKernelHeap()));
     EXPECT_EQ(pBin2, &newCode[0]);
 
-    auto kernelIsa = pKernel->getKernelInfo(rootDeviceIndex).kernelAllocation->getUnderlyingBuffer();
+    auto kernelIsa = pKernel->getKernelInfo().kernelAllocation->getUnderlyingBuffer();
 
     EXPECT_EQ(0, memcmp(kernelIsa, newCode, newCodeSize));
 

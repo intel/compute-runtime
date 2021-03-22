@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -233,14 +233,13 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     }
     std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, ndRangeKernel, nullptr, preemptionMode, kernel, 1));
     command->submit(20, false);
-    auto rootDeviceIndex = mockCsr->getRootDeviceIndex();
 
     EXPECT_FALSE(mockCsr->passedDispatchFlags.pipelineSelectArgs.specialPipelineSelectMode);
     EXPECT_EQ(kernel.mockKernel->isVmeKernel(), mockCsr->passedDispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     EXPECT_EQ(mockCmdQ->flushStamp->getStampReference(), mockCsr->passedDispatchFlags.flushStampReference);
     EXPECT_EQ(mockCmdQ->getThrottle(), mockCsr->passedDispatchFlags.throttle);
     EXPECT_EQ(preemptionMode, mockCsr->passedDispatchFlags.preemptionMode);
-    EXPECT_EQ(kernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.numGrfRequired, mockCsr->passedDispatchFlags.numGrfRequired);
+    EXPECT_EQ(kernel.mockKernel->getKernelInfo().kernelDescriptor.kernelAttributes.numGrfRequired, mockCsr->passedDispatchFlags.numGrfRequired);
     EXPECT_EQ(L3CachingSettings::l3CacheOn, mockCsr->passedDispatchFlags.l3CacheSettings);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
     EXPECT_EQ(flushDC, mockCsr->passedDispatchFlags.dcFlush);

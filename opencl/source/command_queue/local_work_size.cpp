@@ -416,11 +416,10 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
 
     if (kernel != nullptr) {
         auto &device = dispatchInfo.getClDevice();
-        auto rootDeviceIndex = device.getRootDeviceIndex();
         const auto &hwInfo = device.getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto isSimulation = device.isSimulation();
-        if (kernel->requiresLimitedWorkgroupSize(rootDeviceIndex) && hwHelper.isSpecialWorkgroupSizeRequired(hwInfo, isSimulation)) {
+        if (kernel->requiresLimitedWorkgroupSize() && hwHelper.isSpecialWorkgroupSizeRequired(hwInfo, isSimulation)) {
             setSpecialWorkgroupSize(workGroupSize);
         } else if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
             WorkSizeInfo wsInfo(dispatchInfo);
@@ -428,7 +427,7 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dispatchInfo.getDim());
         } else {
             auto maxWorkGroupSize = kernel->getMaxKernelWorkGroupSize();
-            auto simd = kernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize();
+            auto simd = kernel->getKernelInfo().getMaxSimdSize();
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             if (dispatchInfo.getDim() == 1) {
                 computeWorkgroupSize1D(maxWorkGroupSize, workGroupSize, workItems, simd);
@@ -476,7 +475,7 @@ void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo)
         preferredWorkGroupSize[1] = lws.y;
         preferredWorkGroupSize[2] = lws.z;
 
-        const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo(dispatchInfo.getClDevice().getRootDeviceIndex());
+        const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo();
         if (dispatchInfo.getEnqueuedWorkgroupSize().x == 0) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, NULL_LOCAL_WORKGROUP_SIZE, kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(),
                                             preferredWorkGroupSize[0], preferredWorkGroupSize[1], preferredWorkGroupSize[2]);
