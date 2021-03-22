@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenKernelWithSlmWhenPreviousNOSLM
     commandStreamReceiver->isPreambleSent = true;
     commandStreamReceiver->lastSentL3Config = 0;
 
-    static_cast<MockKernel *>(kernel)->setTotalSLMSize(rootDeviceIndex, 1024);
+    static_cast<MockKernel *>(kernel)->setTotalSLMSize(1024);
 
     cmdList.clear();
     commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
@@ -89,7 +89,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPrevio
     commandStreamReceiver->isPreambleSent = true;
     commandStreamReceiver->lastSentL3Config = 0;
 
-    static_cast<MockKernel *>(kernel)->setTotalSLMSize(rootDeviceIndex, 1024);
+    static_cast<MockKernel *>(kernel)->setTotalSLMSize(1024);
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 1, &blockingEvent, nullptr);
 

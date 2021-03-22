@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -427,7 +427,7 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dispatchInfo.getDim());
         } else {
-            auto maxWorkGroupSize = kernel->getMaxKernelWorkGroupSize(rootDeviceIndex);
+            auto maxWorkGroupSize = kernel->getMaxKernelWorkGroupSize();
             auto simd = kernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize();
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             if (dispatchInfo.getDim() == 1) {

@@ -11,7 +11,7 @@
 
 namespace NEO {
 bool DispatchInfo::usesSlm() const {
-    return (kernel == nullptr) ? false : kernel->getSlmTotalSize(pClDevice->getRootDeviceIndex()) > 0;
+    return (kernel == nullptr) ? false : kernel->getSlmTotalSize() > 0;
 }
 
 bool DispatchInfo::usesStatelessPrintfSurface() const {

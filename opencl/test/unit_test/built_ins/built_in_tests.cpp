@@ -919,7 +919,7 @@ TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedTh
 
     EXPECT_EQ(kernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelMetadata.kernelName, "CopyBufferToBufferMiddleMisaligned");
 
-    const auto crossThreadData = kernel->getCrossThreadData(rootDeviceIndex);
+    const auto crossThreadData = kernel->getCrossThreadData();
     const auto crossThreadOffset = kernel->getKernelInfo(rootDeviceIndex).kernelArgInfo[4].kernelArgPatchInfoVector[0].crossthreadOffset;
     EXPECT_EQ(8u, *reinterpret_cast<uint32_t *>(ptrOffset(crossThreadData, crossThreadOffset)));
 
@@ -1147,7 +1147,7 @@ TEST_F(VmeBuiltInTests, GivenVmeBuilderWhenGettingDispatchInfoThenParamsAreCorre
         auto &argInfo = outDi->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo[vmeImplicitArgsBase + i];
         ASSERT_EQ(1U, argInfo.kernelArgPatchInfoVector.size());
         auto off = argInfo.kernelArgPatchInfoVector[0].crossthreadOffset;
-        EXPECT_EQ(vmeExtraArgsExpectedVals[i], *((uint32_t *)(outDi->getKernel()->getCrossThreadData(rootDeviceIndex) + off)));
+        EXPECT_EQ(vmeExtraArgsExpectedVals[i], *((uint32_t *)(outDi->getKernel()->getCrossThreadData() + off)));
     }
 }
 
@@ -1209,7 +1209,7 @@ TEST_F(VmeBuiltInTests, GivenAdvancedVmeBuilderWhenGettingDispatchInfoThenParams
             auto &argInfo = outDi->getKernel()->getKernelInfo(rootDeviceIndex).kernelArgInfo[vmeImplicitArgsBase + i];
             ASSERT_EQ(1U, argInfo.kernelArgPatchInfoVector.size());
             auto off = argInfo.kernelArgPatchInfoVector[0].crossthreadOffset;
-            EXPECT_EQ(vmeExtraArgsExpectedVals[i], *((uint32_t *)(outDi->getKernel()->getCrossThreadData(rootDeviceIndex) + off)));
+            EXPECT_EQ(vmeExtraArgsExpectedVals[i], *((uint32_t *)(outDi->getKernel()->getCrossThreadData() + off)));
         }
     }
 }

@@ -41,7 +41,7 @@ TEST_F(KernelArgBufferTest, GivenValidBufferWhenSettingKernelArgThenBufferAddres
     auto retVal = this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData(rootDeviceIndex) +
+    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData() +
                                   this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
     EXPECT_EQ(buffer->getCpuAddress(), *pKernelArg);
 
@@ -127,7 +127,7 @@ TEST_F(MultiDeviceKernelArgBufferTest, GivenValidBufferWhenSettingKernelArgThenB
 
     for (auto &rootDeviceIndex : pContext->getRootDeviceIndices()) {
         auto pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
-        auto pKernelArg = reinterpret_cast<size_t *>(pKernel->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = reinterpret_cast<size_t *>(pKernel->getCrossThreadData() +
                                                      kernelInfos[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
         EXPECT_EQ(pBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch(), *pKernelArg);
     }
@@ -266,7 +266,7 @@ TEST_F(KernelArgBufferTest, GivenNullPtrWhenSettingKernelArgThenKernelArgIsNull)
     auto pVal = &val;
     this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
 
-    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData(rootDeviceIndex) +
+    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData() +
                                   this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
     EXPECT_EQ(nullptr, *pKernelArg);
@@ -283,7 +283,7 @@ TEST_F(MultiDeviceKernelArgBufferTest, GivenNullPtrWhenSettingKernelArgThenKerne
     pMultiDeviceKernel->setArg(0, sizeof(cl_mem *), pVal);
     for (auto &rootDeviceIndex : pContext->getRootDeviceIndices()) {
         auto pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
-        auto pKernelArg = reinterpret_cast<void **>(pKernel->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = reinterpret_cast<void **>(pKernel->getCrossThreadData() +
                                                     kernelInfos[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
         EXPECT_EQ(nullptr, *pKernelArg);
     }
@@ -295,7 +295,7 @@ TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPtrPassedIsNullThenOnly4Bytes
 
     this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = 4;
 
-    auto pKernelArg64bit = (uint64_t *)(this->pKernel->getCrossThreadData(rootDeviceIndex) +
+    auto pKernelArg64bit = (uint64_t *)(this->pKernel->getCrossThreadData() +
                                         this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
     uint32_t *pKernelArg32bit = (uint32_t *)pKernelArg64bit;
@@ -312,7 +312,7 @@ TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPtrPassedIsNullThenOnly4Bytes
 TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPassedIsNullThenOnly4BytesAreBeingPatched) {
     auto pVal = nullptr;
     this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = 4;
-    auto pKernelArg64bit = (uint64_t *)(this->pKernel->getCrossThreadData(rootDeviceIndex) +
+    auto pKernelArg64bit = (uint64_t *)(this->pKernel->getCrossThreadData() +
                                         this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
     *pKernelArg64bit = 0xffffffffffffffff;
@@ -537,7 +537,7 @@ HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenPatchingSurfac
     pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
     pKernelInfo->kernelArgInfo[0].isBuffer = true;
 
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
     *patchLocation = 0xdead;
 
     uint32_t sshOffset = 0x1000;
@@ -565,7 +565,7 @@ TEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndNonBufferArgWhenPatchingS
     pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
     pKernelInfo->kernelArgInfo[0].isBuffer = false;
 
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
     *patchLocation = 0xdead;
 
     uint32_t sshOffset = 4000;
@@ -584,7 +584,7 @@ TEST_F(KernelArgBufferTest, givenNotUsedBindlessBuffersAndBufferArgWhenPatchingS
     pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
     pKernelInfo->kernelArgInfo[0].isBuffer = true;
 
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
     *patchLocation = 0xdead;
 
     uint32_t sshOffset = 4000;
@@ -602,7 +602,7 @@ HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersAndBuiltinKernelWh
     pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
     pKernelInfo->kernelArgInfo[0].isBuffer = true;
 
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(rootDeviceIndex), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
     *patchLocation = 0xdead;
 
     pKernel->isBuiltIn = true;

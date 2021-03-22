@@ -70,27 +70,27 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
         pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
         false);
 
-    EXPECT_EQ(0u, *scheduler.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetX);
-    EXPECT_EQ(0u, *scheduler.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetY);
-    EXPECT_EQ(0u, *scheduler.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetZ);
+    EXPECT_EQ(0u, *scheduler.globalWorkOffsetX);
+    EXPECT_EQ(0u, *scheduler.globalWorkOffsetY);
+    EXPECT_EQ(0u, *scheduler.globalWorkOffsetZ);
 
-    EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
+    EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.localWorkSizeX);
+    EXPECT_EQ(1u, *scheduler.localWorkSizeY);
+    EXPECT_EQ(1u, *scheduler.localWorkSizeZ);
 
-    EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX2);
-    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY2);
-    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ2);
+    EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.localWorkSizeX2);
+    EXPECT_EQ(1u, *scheduler.localWorkSizeY2);
+    EXPECT_EQ(1u, *scheduler.localWorkSizeZ2);
 
-    if (scheduler.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeX != &Kernel::dummyPatchLocation) {
-        EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeX);
+    if (scheduler.enqueuedLocalWorkSizeX != &Kernel::dummyPatchLocation) {
+        EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.enqueuedLocalWorkSizeX);
     }
-    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeY);
-    EXPECT_EQ(1u, *scheduler.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeZ);
+    EXPECT_EQ(1u, *scheduler.enqueuedLocalWorkSizeY);
+    EXPECT_EQ(1u, *scheduler.enqueuedLocalWorkSizeZ);
 
-    EXPECT_EQ((uint32_t)(scheduler.getGws() / scheduler.getLws()), *scheduler.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsX);
-    EXPECT_EQ(0u, *scheduler.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsY);
-    EXPECT_EQ(0u, *scheduler.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsZ);
+    EXPECT_EQ((uint32_t)(scheduler.getGws() / scheduler.getLws()), *scheduler.numWorkGroupsX);
+    EXPECT_EQ(0u, *scheduler.numWorkGroupsY);
+    EXPECT_EQ(0u, *scheduler.numWorkGroupsZ);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream, 0);
@@ -151,7 +151,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
     auto grfSize = pDevice->getHardwareInfo().capabilityTable.grfSize;
     auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(scheduler.getKernelInfo(rootDeviceIndex).getMaxSimdSize(), grfSize, numChannels, scheduler.getLws());
 
-    auto sizeCrossThreadData = scheduler.getCrossThreadDataSize(rootDeviceIndex);
+    auto sizeCrossThreadData = scheduler.getCrossThreadDataSize();
     auto IndirectDataLength = alignUp((uint32_t)(sizeCrossThreadData + sizePerThreadDataTotal), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     EXPECT_EQ(IndirectDataLength, walker->getIndirectDataLength());
 

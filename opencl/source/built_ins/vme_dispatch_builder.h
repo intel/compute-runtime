@@ -173,7 +173,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         DEBUG_BREAK_IF(kernelArgInfo.kernelArgPatchInfoVector.size() != 1);
         const KernelArgPatchInfo &patchInfo = kernelArgInfo.kernelArgPatchInfoVector[0];
         DEBUG_BREAK_IF(sizeof(RetType) > patchInfo.size);
-        return *(RetType *)(vmeKernel->getCrossThreadData(clDevice.getRootDeviceIndex()) + patchInfo.crossthreadOffset);
+        return *(RetType *)(vmeKernel->getCrossThreadData() + patchInfo.crossthreadOffset);
     }
 
     cl_int validateImages(Vec3<size_t> inputRegion, Vec3<size_t> offset) const {

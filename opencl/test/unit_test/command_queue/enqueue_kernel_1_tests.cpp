@@ -1290,9 +1290,9 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreNotAndEventExistSetThenClEnqu
 TEST_F(EnqueueKernelTest, givenEnqueueCommandThatLwsExceedsDeviceCapabilitiesWhenEnqueueNDRangeKernelIsCalledThenErrorIsReturned) {
     MockKernelWithInternals mockKernel(*pClDevice);
 
-    mockKernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize = static_cast<uint32_t>(pDevice->getDeviceInfo().maxWorkGroupSize / 2);
+    mockKernel.mockKernel->maxKernelWorkGroupSize = static_cast<uint32_t>(pDevice->getDeviceInfo().maxWorkGroupSize / 2);
 
-    auto maxKernelWorkgroupSize = mockKernel.mockKernel->kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize;
+    auto maxKernelWorkgroupSize = mockKernel.mockKernel->maxKernelWorkGroupSize;
     size_t globalWorkSize[3] = {maxKernelWorkgroupSize + 1, 1, 1};
     size_t localWorkSize[3] = {maxKernelWorkgroupSize + 1, 1, 1};
 

@@ -110,13 +110,13 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
         const auto &surfaceStateDst = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 1);
 
         if (kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
-            auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData(rootDeviceIndex) +
+            auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() +
                                            kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
             EXPECT_EQ(alignDown(gpuVa, 4), static_cast<uint64_t>(*pKernelArg));
             EXPECT_EQ(*pKernelArg, surfaceStateDst.getSurfaceBaseAddress());
 
         } else if (kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
-            auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData(rootDeviceIndex) +
+            auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() +
                                            kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
             EXPECT_EQ(alignDown(gpuVa, 4), static_cast<uint64_t>(*pKernelArg));
             EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceStateDst.getSurfaceBaseAddress());
@@ -124,7 +124,7 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
     }
 
     if (kernelInfo.kernelArgInfo[3].kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
-        auto dstOffset = (uint32_t *)(kernel->getCrossThreadData(rootDeviceIndex) +
+        auto dstOffset = (uint32_t *)(kernel->getCrossThreadData() +
                                       kernelInfo.kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset);
         EXPECT_EQ(ptrDiff(misalignedPtr, alignDown(misalignedPtr, 4)), *dstOffset);
     } else {

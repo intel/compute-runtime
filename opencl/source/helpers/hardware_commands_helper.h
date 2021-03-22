@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,8 +77,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         Kernel &kernel,
         bool inlineDataProgrammingRequired,
         WALKER_TYPE<GfxFamily> *walkerCmd,
-        uint32_t &sizeCrossThreadData,
-        uint32_t rootDeviceIndex);
+        uint32_t &sizeCrossThreadData);
 
     static size_t sendIndirectState(
         LinearStream &commandStream,

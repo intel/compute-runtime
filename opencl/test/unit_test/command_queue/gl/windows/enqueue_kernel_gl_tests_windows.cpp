@@ -45,7 +45,7 @@ TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenRes
     auto &kernelInfo = pKernel->getKernelInfo(rootDeviceIndex);
 
     auto pKernelArg =
-        (uint32_t *)(pKernel->getCrossThreadData(rootDeviceIndex) + kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+        (uint32_t *)(pKernel->getCrossThreadData() + kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
     auto address1 = static_cast<uint64_t>(*pKernelArg);
     auto sharedBufferGpuAddress =

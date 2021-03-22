@@ -91,7 +91,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
     auto usedIndirectHeapBefore = indirectHeap.getUsed();
     indirectHeap.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 
-    size_t crossThreadDataSize = kernel->getCrossThreadDataSize(rootDeviceIndex);
+    size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
     HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
         indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, *kernel, 0, pDevice->getPreemptionMode(), nullptr, *pDevice);
 
@@ -163,17 +163,16 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto usedBefore = indirectHeap.getUsed();
-    auto sizeCrossThreadData = kernel->getCrossThreadDataSize(rootDeviceIndex);
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
     HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *kernel,
         false,
         nullptr,
-        sizeCrossThreadData,
-        rootDeviceIndex);
+        sizeCrossThreadData);
 
     auto usedAfter = indirectHeap.getUsed();
-    EXPECT_EQ(kernel->getCrossThreadDataSize(rootDeviceIndex), usedAfter - usedBefore);
+    EXPECT_EQ(kernel->getCrossThreadDataSize(), usedAfter - usedBefore);
 }
 
 HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoDataOffsetsAreNotMoved) {
@@ -190,14 +189,13 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
 
     PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
     kernel->getPatchInfoDataList().push_back(patchInfoData);
-    auto sizeCrossThreadData = kernel->getCrossThreadDataSize(rootDeviceIndex);
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
     HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *kernel,
         false,
         nullptr,
-        sizeCrossThreadData,
-        rootDeviceIndex);
+        sizeCrossThreadData);
 
     ASSERT_EQ(1u, kernel->getPatchInfoDataList().size());
     EXPECT_EQ(0xaaaaaaaa, kernel->getPatchInfoDataList()[0].sourceAllocation);
@@ -212,14 +210,13 @@ HWTEST_F(HardwareCommandsTest, givenIndirectHeapNotAllocatedFromInternalPoolWhen
     auto nonInternalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap indirectHeap(nonInternalAllocation, false);
 
-    auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize(rootDeviceIndex);
+    auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize();
     auto offset = HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
         nullptr,
-        sizeCrossThreadData,
-        rootDeviceIndex);
+        sizeCrossThreadData);
     EXPECT_EQ(0u, offset);
     pDevice->getMemoryManager()->freeGraphicsMemory(nonInternalAllocation);
 }
@@ -229,14 +226,13 @@ HWTEST_F(HardwareCommandsTest, givenIndirectHeapAllocatedFromInternalPoolWhenSen
     IndirectHeap indirectHeap(internalAllocation, true);
     auto expectedOffset = internalAllocation->getGpuAddressToPatch();
 
-    auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize(rootDeviceIndex);
+    auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize();
     auto offset = HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
         nullptr,
-        sizeCrossThreadData,
-        rootDeviceIndex);
+        sizeCrossThreadData);
     EXPECT_EQ(expectedOffset, offset);
 
     pDevice->getMemoryManager()->freeGraphicsMemory(internalAllocation);
@@ -263,14 +259,13 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
 
     kernel->getPatchInfoDataList().push_back(patchInfoData1);
     kernel->getPatchInfoDataList().push_back(patchInfoData2);
-    auto sizeCrossThreadData = kernel->getCrossThreadDataSize(rootDeviceIndex);
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
     auto offsetCrossThreadData = HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *kernel,
         false,
         nullptr,
-        sizeCrossThreadData,
-        rootDeviceIndex);
+        sizeCrossThreadData);
 
     ASSERT_NE(0u, offsetCrossThreadData);
     EXPECT_EQ(128u, offsetCrossThreadData);
@@ -386,7 +381,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     auto expectedBindingTableCount = 3u;
-    mockKernelWithInternal->mockKernel->kernelDeviceInfos[rootDeviceIndex].numberOfBindingTableStates = expectedBindingTableCount;
+    mockKernelWithInternal->mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
 
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
@@ -432,7 +427,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhen
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     auto expectedBindingTableCount = 3u;
-    mockKernelWithInternal->mockKernel->kernelDeviceInfos[rootDeviceIndex].numberOfBindingTableStates = expectedBindingTableCount;
+    mockKernelWithInternal->mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
     auto isScheduler = const_cast<bool *>(&mockKernelWithInternal->mockKernel->isSchedulerKernel);
     *isScheduler = true;
 
@@ -476,7 +471,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     auto expectedBindingTableCount = 100u;
-    mockKernelWithInternal->mockKernel->kernelDeviceInfos[rootDeviceIndex].numberOfBindingTableStates = expectedBindingTableCount;
+    mockKernelWithInternal->mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
 
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
@@ -799,7 +794,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
         auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
         // Initialize binding table state pointers with pattern
-        EXPECT_EQ(numSurfaces, pKernel->getNumberOfBindingTableStates(rootDeviceIndex));
+        EXPECT_EQ(numSurfaces, pKernel->getNumberOfBindingTableStates());
 
         const size_t localWorkSizes[3]{256, 1, 1};
 
@@ -888,7 +883,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     auto usedBefore = ssh.getUsed();
 
     // Initialize binding table state pointers with pattern
-    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
+    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numSurfaceStates);
 
     // set binding table states
@@ -932,7 +927,7 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
     // Initialize binding table state pointers with pattern
-    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
+    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numSurfaceStates);
 
     auto dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
@@ -1078,7 +1073,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     }
 
     mockKernelWithInternal->mockKernel->setCrossThreadData(mockKernelWithInternal->crossThreadData, sizeof(mockKernelWithInternal->crossThreadData));
-    mockKernelWithInternal->mockKernel->setSshLocal(mockKernelWithInternal->sshLocal, sizeof(mockKernelWithInternal->sshLocal), rootDeviceIndex);
+    mockKernelWithInternal->mockKernel->setSshLocal(mockKernelWithInternal->sshLocal, sizeof(mockKernelWithInternal->sshLocal));
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel, rootDeviceIndex);

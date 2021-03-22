@@ -273,7 +273,7 @@ HWTEST_F(DispatchWalkerTest, GivenDefaultLwsAlgorithmWhenDispatchingWalkerThenDi
             nullptr,
             CL_COMMAND_NDRANGE_KERNEL);
 
-        EXPECT_EQ(dimension, *kernel.kernelDeviceInfos[rootDeviceIndex].workDim);
+        EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
 
@@ -304,7 +304,7 @@ HWTEST_F(DispatchWalkerTest, GivenSquaredLwsAlgorithmWhenDispatchingWalkerThenDi
             nullptr,
             nullptr,
             CL_COMMAND_NDRANGE_KERNEL);
-        EXPECT_EQ(dimension, *kernel.kernelDeviceInfos[rootDeviceIndex].workDim);
+        EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
 
@@ -334,7 +334,7 @@ HWTEST_F(DispatchWalkerTest, GivenNdLwsAlgorithmWhenDispatchingWalkerThenDimensi
             nullptr,
             nullptr,
             CL_COMMAND_NDRANGE_KERNEL);
-        EXPECT_EQ(dimension, *kernel.kernelDeviceInfos[rootDeviceIndex].workDim);
+        EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
 
@@ -365,7 +365,7 @@ HWTEST_F(DispatchWalkerTest, GivenOldLwsAlgorithmWhenDispatchingWalkerThenDimens
             nullptr,
             nullptr,
             CL_COMMAND_NDRANGE_KERNEL);
-        EXPECT_EQ(dimension, *kernel.kernelDeviceInfos[rootDeviceIndex].workDim);
+        EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
 
@@ -397,9 +397,9 @@ HWTEST_F(DispatchWalkerTest, GivenNumWorkGroupsWhenDispatchingWalkerThenNumWorkG
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
 
-    EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsX);
-    EXPECT_EQ(5u, *kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsY);
-    EXPECT_EQ(10u, *kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsZ);
+    EXPECT_EQ(2u, *kernel.numWorkGroupsX);
+    EXPECT_EQ(5u, *kernel.numWorkGroupsY);
+    EXPECT_EQ(10u, *kernel.numWorkGroupsZ);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenGlobalWorkOffsetWhenDispatchingWalkerThenGlobalWorkOffsetIsCorrectlySet) {
@@ -430,9 +430,9 @@ HWTEST_F(DispatchWalkerTest, GivenGlobalWorkOffsetWhenDispatchingWalkerThenGloba
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
 
-    EXPECT_EQ(1u, *kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetX);
-    EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetY);
-    EXPECT_EQ(3u, *kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetZ);
+    EXPECT_EQ(1u, *kernel.globalWorkOffsetX);
+    EXPECT_EQ(2u, *kernel.globalWorkOffsetY);
+    EXPECT_EQ(3u, *kernel.globalWorkOffsetZ);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndDefaultAlgorithmWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -462,9 +462,9 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndDefaultAlgorithmWhenDispatch
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-    EXPECT_EQ(5u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-    EXPECT_EQ(1u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
+    EXPECT_EQ(2u, *kernel.localWorkSizeX);
+    EXPECT_EQ(5u, *kernel.localWorkSizeY);
+    EXPECT_EQ(1u, *kernel.localWorkSizeZ);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndNdOnWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -494,9 +494,9 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndNdOnWhenDispatchingWalkerThe
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-    EXPECT_EQ(3u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-    EXPECT_EQ(5u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
+    EXPECT_EQ(2u, *kernel.localWorkSizeX);
+    EXPECT_EQ(3u, *kernel.localWorkSizeY);
+    EXPECT_EQ(5u, *kernel.localWorkSizeZ);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -527,9 +527,9 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmWhenDispatch
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-    EXPECT_EQ(5u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-    EXPECT_EQ(1u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
+    EXPECT_EQ(2u, *kernel.localWorkSizeX);
+    EXPECT_EQ(5u, *kernel.localWorkSizeY);
+    EXPECT_EQ(1u, *kernel.localWorkSizeZ);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmOffAndNdOffWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -560,9 +560,9 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmOffAndNdOffW
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-    EXPECT_EQ(5u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-    EXPECT_EQ(1u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
+    EXPECT_EQ(2u, *kernel.localWorkSizeX);
+    EXPECT_EQ(5u, *kernel.localWorkSizeY);
+    EXPECT_EQ(1u, *kernel.localWorkSizeZ);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -591,9 +591,9 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeWhenDispatchingWalkerThenLwsIsC
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(1u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-    EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-    EXPECT_EQ(3u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
+    EXPECT_EQ(1u, *kernel.localWorkSizeX);
+    EXPECT_EQ(2u, *kernel.localWorkSizeY);
+    EXPECT_EQ(3u, *kernel.localWorkSizeZ);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenTwoSetsOfLwsOffsetsWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -625,12 +625,12 @@ HWTEST_F(DispatchWalkerTest, GivenTwoSetsOfLwsOffsetsWhenDispatchingWalkerThenLw
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(1u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-    EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-    EXPECT_EQ(3u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
-    EXPECT_EQ(1u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX2);
-    EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY2);
-    EXPECT_EQ(3u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ2);
+    EXPECT_EQ(1u, *kernel.localWorkSizeX);
+    EXPECT_EQ(2u, *kernel.localWorkSizeY);
+    EXPECT_EQ(3u, *kernel.localWorkSizeZ);
+    EXPECT_EQ(1u, *kernel.localWorkSizeX2);
+    EXPECT_EQ(2u, *kernel.localWorkSizeY2);
+    EXPECT_EQ(3u, *kernel.localWorkSizeZ2);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -670,14 +670,14 @@ HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorre
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = static_cast<MockKernel &>(*dispatchInfo.getKernel());
         if (dispatchId == 0) {
-            EXPECT_EQ(1u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-            EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-            EXPECT_EQ(3u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
+            EXPECT_EQ(1u, *kernel.localWorkSizeX);
+            EXPECT_EQ(2u, *kernel.localWorkSizeY);
+            EXPECT_EQ(3u, *kernel.localWorkSizeZ);
         }
         if (dispatchId == 1) {
-            EXPECT_EQ(4u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-            EXPECT_EQ(5u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-            EXPECT_EQ(6u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
+            EXPECT_EQ(4u, *kernel.localWorkSizeX);
+            EXPECT_EQ(5u, *kernel.localWorkSizeY);
+            EXPECT_EQ(6u, *kernel.localWorkSizeZ);
         }
         dispatchId++;
     }
@@ -723,25 +723,25 @@ HWTEST_F(DispatchWalkerTest, GivenSplitWalkerWhenDispatchingWalkerThenLwsIsCorre
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = static_cast<MockKernel &>(*dispatchInfo.getKernel());
         if (&kernel == &mainKernel) {
-            EXPECT_EQ(4u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-            EXPECT_EQ(5u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-            EXPECT_EQ(6u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
-            EXPECT_EQ(4u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX2);
-            EXPECT_EQ(5u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY2);
-            EXPECT_EQ(6u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ2);
-            EXPECT_EQ(3u, *kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsX);
-            EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsY);
-            EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsZ);
+            EXPECT_EQ(4u, *kernel.localWorkSizeX);
+            EXPECT_EQ(5u, *kernel.localWorkSizeY);
+            EXPECT_EQ(6u, *kernel.localWorkSizeZ);
+            EXPECT_EQ(4u, *kernel.localWorkSizeX2);
+            EXPECT_EQ(5u, *kernel.localWorkSizeY2);
+            EXPECT_EQ(6u, *kernel.localWorkSizeZ2);
+            EXPECT_EQ(3u, *kernel.numWorkGroupsX);
+            EXPECT_EQ(2u, *kernel.numWorkGroupsY);
+            EXPECT_EQ(2u, *kernel.numWorkGroupsZ);
         } else {
-            EXPECT_EQ(0u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-            EXPECT_EQ(0u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-            EXPECT_EQ(0u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
-            EXPECT_EQ(1u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX2);
-            EXPECT_EQ(2u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY2);
-            EXPECT_EQ(3u, *kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ2);
-            EXPECT_EQ(0u, *kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsX);
-            EXPECT_EQ(0u, *kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsY);
-            EXPECT_EQ(0u, *kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsZ);
+            EXPECT_EQ(0u, *kernel.localWorkSizeX);
+            EXPECT_EQ(0u, *kernel.localWorkSizeY);
+            EXPECT_EQ(0u, *kernel.localWorkSizeZ);
+            EXPECT_EQ(1u, *kernel.localWorkSizeX2);
+            EXPECT_EQ(2u, *kernel.localWorkSizeY2);
+            EXPECT_EQ(3u, *kernel.localWorkSizeZ2);
+            EXPECT_EQ(0u, *kernel.numWorkGroupsX);
+            EXPECT_EQ(0u, *kernel.numWorkGroupsY);
+            EXPECT_EQ(0u, *kernel.numWorkGroupsZ);
         }
     }
 }
@@ -939,7 +939,7 @@ HWTEST_F(DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenWorkDi
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = static_cast<MockKernel &>(*dispatchInfo.getKernel());
-        EXPECT_EQ(*kernel.kernelDeviceInfos[rootDeviceIndex].workDim, dispatchInfo.getDim());
+        EXPECT_EQ(*kernel.workDim, dispatchInfo.getDim());
     }
 }
 

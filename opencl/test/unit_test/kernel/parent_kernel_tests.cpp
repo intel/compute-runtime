@@ -68,7 +68,7 @@ TEST(ParentKernelTest, WhenPatchingBlocksSimdSizeThenPatchIsAppliedCorrectly) {
 
     parentKernel->patchBlocksSimdSize(rootDeviceIndex);
 
-    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(rootDeviceIndex), parentKernel->getKernelInfo(rootDeviceIndex).childrenKernelsIdOffset[0].second);
+    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(), parentKernel->getKernelInfo(rootDeviceIndex).childrenKernelsIdOffset[0].second);
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     EXPECT_EQ(program->blockKernelManager->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
@@ -99,7 +99,7 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenBlocksSimdSizeIsPatched) 
 
     parentKernel->initialize();
 
-    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(rootDeviceIndex), parentKernel->getKernelInfo(rootDeviceIndex).childrenKernelsIdOffset[0].second);
+    void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(), parentKernel->getKernelInfo(rootDeviceIndex).childrenKernelsIdOffset[0].second);
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     EXPECT_EQ(program->blockKernelManager->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);

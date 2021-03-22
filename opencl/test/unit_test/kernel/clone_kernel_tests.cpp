@@ -183,7 +183,7 @@ TEST_F(CloneKernelTest, GivenArgLocalWhenCloningKernelThenKernelInfoIsCorrect) {
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
 
-        EXPECT_EQ(alignUp(slmSize, 1024), pClonedKernel[rootDeviceIndex]->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
+        EXPECT_EQ(alignUp(slmSize, 1024), pClonedKernel[rootDeviceIndex]->slmTotalSize);
     }
 }
 
@@ -219,7 +219,7 @@ TEST_F(CloneKernelTest, GivenArgBufferWhenCloningKernelThenKernelInfoIsCorrect) 
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
 
-        auto pKernelArg = (cl_mem *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = (cl_mem *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
                                      pClonedKernel[rootDeviceIndex]->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
         EXPECT_EQ(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch(), reinterpret_cast<uint64_t>(*pKernelArg));
     }
@@ -256,7 +256,7 @@ TEST_F(CloneKernelTest, GivenArgPipeWhenCloningKernelThenKernelInfoIsCorrect) {
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
 
-    auto pKernelArg = (cl_mem *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex) +
+    auto pKernelArg = (cl_mem *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
                                  pClonedKernel[rootDeviceIndex]->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
     EXPECT_EQ(pipe->getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch(), reinterpret_cast<uint64_t>(*pKernelArg));
 }
@@ -296,7 +296,7 @@ TEST_F(CloneKernelTest, GivenArgImageWhenCloningKernelThenKernelInfoIsCorrect) {
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex));
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData());
     EXPECT_EQ(objectId, *crossThreadData);
 
     const auto &argInfo = pClonedKernel[rootDeviceIndex]->getKernelInfo(rootDeviceIndex).kernelArgInfo[0];
@@ -349,7 +349,7 @@ TEST_F(CloneKernelTest, GivenArgAcceleratorWhenCloningKernelThenKernelInfoIsCorr
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex));
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData());
 
     const auto &argInfo = pClonedKernel[rootDeviceIndex]->getKernelInfo(rootDeviceIndex).kernelArgInfo[0];
 
@@ -403,7 +403,7 @@ TEST_F(CloneKernelTest, GivenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect)
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
 
-    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex));
+    auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData());
     EXPECT_EQ(objectId, *crossThreadData);
 
     const auto &argInfo = pClonedKernel[rootDeviceIndex]->getKernelInfo(rootDeviceIndex).kernelArgInfo[0];
@@ -454,7 +454,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CloneKernelTest, GivenArgDeviceQueueWhenCloningKerne
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
 
-    auto pKernelArg = (uintptr_t *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex) +
+    auto pKernelArg = (uintptr_t *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
                                     pClonedKernel[rootDeviceIndex]->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
     EXPECT_EQ(static_cast<uintptr_t>(mockDevQueue.getQueueBuffer()->getGpuAddressToPatch()), *pKernelArg);
 }
@@ -485,7 +485,7 @@ TEST_F(CloneKernelTest, GivenArgSvmWhenCloningKernelThenKernelInfoIsCorrect) {
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
 
-        auto pKernelArg = (void **)(pClonedKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = (void **)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
                                     pClonedKernel[rootDeviceIndex]->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
         EXPECT_EQ(svmPtr, *pKernelArg);
     }
@@ -518,7 +518,7 @@ TEST_F(CloneKernelTest, GivenArgSvmAllocWhenCloningKernelThenKernelInfoIsCorrect
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
 
-    auto pKernelArg = (void **)(pClonedKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex) +
+    auto pKernelArg = (void **)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
                                 pClonedKernel[rootDeviceIndex]->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
     EXPECT_EQ(svmPtr, *pKernelArg);
 
@@ -552,7 +552,7 @@ TEST_F(CloneKernelTest, GivenArgImmediateWhenCloningKernelThenKernelInfoIsCorrec
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getPatchedArgumentsNum(), pClonedKernel[rootDeviceIndex]->getPatchedArgumentsNum());
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
 
-        auto pKernelArg = (TypeParam *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = (TypeParam *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
                                         pClonedKernel[rootDeviceIndex]->getKernelInfo(rootDeviceIndex).kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
         EXPECT_EQ(value, *pKernelArg);
     }

@@ -15,12 +15,12 @@ struct KernelSubGroupInfoFixture : HelloWorldFixture<HelloWorldFixtureFactory> {
 
     void SetUp() override {
         ParentClass::SetUp();
-        pKernel->kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize = static_cast<uint32_t>(pDevice->getDeviceInfo().maxWorkGroupSize / 2);
+        pKernel->maxKernelWorkGroupSize = static_cast<uint32_t>(pDevice->getDeviceInfo().maxWorkGroupSize / 2);
         maxSimdSize = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize());
         ASSERT_LE(8u, maxSimdSize);
         maxWorkDim = static_cast<size_t>(pClDevice->getDeviceInfo().maxWorkItemDimensions);
         ASSERT_EQ(3u, maxWorkDim);
-        maxWorkGroupSize = static_cast<size_t>(pKernel->kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize);
+        maxWorkGroupSize = static_cast<size_t>(pKernel->maxKernelWorkGroupSize);
         ASSERT_GE(1024u, maxWorkGroupSize);
         largestCompiledSIMDSize = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).getMaxSimdSize());
         ASSERT_EQ(32u, largestCompiledSIMDSize);
@@ -30,8 +30,8 @@ struct KernelSubGroupInfoFixture : HelloWorldFixture<HelloWorldFixtureFactory> {
         auto requiredWorkGroupSizeZ = static_cast<size_t>(pKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
 
         calculatedMaxWorkgroupSize = requiredWorkGroupSizeX * requiredWorkGroupSizeY * requiredWorkGroupSizeZ;
-        if ((calculatedMaxWorkgroupSize == 0) || (calculatedMaxWorkgroupSize > static_cast<size_t>(pKernel->kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize))) {
-            calculatedMaxWorkgroupSize = static_cast<size_t>(pKernel->kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize);
+        if ((calculatedMaxWorkgroupSize == 0) || (calculatedMaxWorkgroupSize > static_cast<size_t>(pKernel->maxKernelWorkGroupSize))) {
+            calculatedMaxWorkgroupSize = static_cast<size_t>(pKernel->maxKernelWorkGroupSize);
         }
     }
 

@@ -67,7 +67,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         auto pKernel = pMultiDeviceKernel->getDefaultKernel();
         auto &device = pKernel->getDevices()[0]->getDevice();
         auto rootDeviceIndex = device.getRootDeviceIndex();
-        size_t gtpinBTI = pKernel->getNumberOfBindingTableStates(rootDeviceIndex);
+        size_t gtpinBTI = pKernel->getNumberOfBindingTableStates();
         // Enlarge local copy of SSH by 1 SS
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
@@ -141,7 +141,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         }
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
-        size_t gtpinBTI = pKernel->getNumberOfBindingTableStates(rootDeviceIndex) - 1;
+        size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
         void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI, rootDeviceIndex);
         cl_mem buffer = (cl_mem)resource;
         auto pBuffer = castToObjectOrAbort<Buffer>(buffer);

@@ -541,7 +541,7 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
     auto printfAllocation = printfHandler->getSurface();
     auto allocationAddress = printfAllocation->getGpuAddressToPatch();
 
-    auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel.mockKernel->getCrossThreadData(rootDeviceIndex)),
+    auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel.mockKernel->getCrossThreadData()),
                                         kernel.mockKernel->getKernelInfo(rootDeviceIndex).kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress.stateless);
 
     EXPECT_EQ(allocationAddress, *(uintptr_t *)printfPatchAddress);

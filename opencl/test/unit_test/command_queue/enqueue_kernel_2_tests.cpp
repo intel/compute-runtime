@@ -667,7 +667,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
         patchData.DataParamOffset = 0;
         populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, patchData);
 
-        auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData(rootDeviceIndex));
+        auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData());
 
         std::string testString = "test";
 

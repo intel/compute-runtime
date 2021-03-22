@@ -44,7 +44,7 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
         pKernel = new MockKernel(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
-        pKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize = 128;
+        pKernel->slmTotalSize = 128;
     }
     void TearDown() override {
         delete pKernel;

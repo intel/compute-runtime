@@ -1374,7 +1374,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     element = std::find(residencyVector.begin(), residencyVector.end(), constantAllocation);
     EXPECT_NE(residencyVector.end(), element);
 
-    auto crossThreadData = pKernel->getCrossThreadData(rootDeviceIndex);
+    auto crossThreadData = pKernel->getCrossThreadData();
     uint32_t *constBuffGpuAddr = reinterpret_cast<uint32_t *>(pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex())->getGpuAddressToPatch());
     uintptr_t *pDst = reinterpret_cast<uintptr_t *>(crossThreadData + pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
 
@@ -1384,7 +1384,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     EXPECT_EQ(0u, pCommandStreamReceiver->residency.size());
 
     std::vector<Surface *> surfaces;
-    pKernel->getResidency(surfaces, rootDeviceIndex);
+    pKernel->getResidency(surfaces);
     EXPECT_EQ(2u, surfaces.size());
 
     for (Surface *surface : surfaces) {

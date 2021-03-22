@@ -282,7 +282,7 @@ TEST_F(KernelTests, GivenKernelWorkGroupSizeWhenGettingWorkGroupInfoThenWorkGrou
     size_t paramValueSizeRet = 0;
 
     auto kernelMaxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize - 1;
-    pKernel->kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize = static_cast<uint32_t>(kernelMaxWorkGroupSize);
+    pKernel->maxKernelWorkGroupSize = static_cast<uint32_t>(kernelMaxWorkGroupSize);
 
     retVal = pKernel->getWorkGroupInfo(
         *pClDevice,
@@ -587,7 +587,7 @@ TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWh
 
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
 
-    auto privateSurface = pKernel->kernelDeviceInfos[pDevice->getRootDeviceIndex()].privateSurface;
+    auto privateSurface = pKernel->privateSurface;
     auto tagAddress = csr.getTagAddress();
 
     privateSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
@@ -667,7 +667,7 @@ TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateS
 
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-        EXPECT_TRUE(pKernel->kernelDeviceInfos[pDevice->getRootDeviceIndex()].privateSurface->is32BitAllocation());
+        EXPECT_TRUE(pKernel->privateSurface->is32BitAllocation());
 
         delete pKernel;
     }
@@ -707,7 +707,7 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
 
     EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize(rootDeviceIndex));
 
-    auto bufferAddress = pKernel->kernelDeviceInfos[pDevice->getRootDeviceIndex()].privateSurface->getGpuAddress();
+    auto bufferAddress = pKernel->privateSurface->getGpuAddress();
 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
@@ -856,7 +856,7 @@ TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalS
 
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
+    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData());
 
     program.setGlobalSurface(nullptr);
     delete pKernel;
@@ -891,7 +891,7 @@ TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalS
 
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
+    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData());
 
     program.setGlobalSurface(nullptr);
 
@@ -1008,7 +1008,7 @@ TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConst
 
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
+    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData());
 
     program.setConstantSurface(nullptr);
     delete pKernel;
@@ -1043,7 +1043,7 @@ TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConst
 
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
+    EXPECT_EQ(bufferAddress, *(uint64_t *)pKernel->getCrossThreadData());
 
     program.setConstantSurface(nullptr);
 
@@ -1234,7 +1234,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenKernelWithNullEvent
 
     pKernel->patchEventPool(pDevQueue);
 
-    EXPECT_EQ(123u, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
+    EXPECT_EQ(123u, *(uint64_t *)pKernel->getCrossThreadData());
 
     delete pKernel;
 }
@@ -1296,7 +1296,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatelessKernelWhen
 
     pKernel->patchEventPool(pDevQueue);
 
-    EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddressToPatch(), *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
+    EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddressToPatch(), *(uint64_t *)pKernel->getCrossThreadData());
 
     delete pKernel;
 }
@@ -1438,7 +1438,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenKernelWith
 
     pKernel->patchDefaultDeviceQueue(pDevQueue);
 
-    EXPECT_EQ(123u, *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
+    EXPECT_EQ(123u, *(uint64_t *)pKernel->getCrossThreadData());
 
     delete pKernel;
 }
@@ -1470,7 +1470,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatelessK
 
     pKernel->patchDefaultDeviceQueue(pDevQueue);
 
-    EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddressToPatch(), *(uint64_t *)pKernel->getCrossThreadData(rootDeviceIndex));
+    EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddressToPatch(), *(uint64_t *)pKernel->getCrossThreadData());
 
     delete pKernel;
 }
@@ -1542,7 +1542,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenExportedFun
 
     // check getResidency as well
     std::vector<NEO::Surface *> residencySurfaces;
-    pKernel->getResidency(residencySurfaces, rootDeviceIndex);
+    pKernel->getResidency(residencySurfaces);
     std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv;
     {
         CommandStreamReceiverMock csrMock;
@@ -1580,7 +1580,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBuffe
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface));
 
     std::vector<NEO::Surface *> residencySurfaces;
-    pKernel->getResidency(residencySurfaces, rootDeviceIndex);
+    pKernel->getResidency(residencySurfaces);
     std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv;
     {
         CommandStreamReceiverMock csrMock;
@@ -2468,10 +2468,10 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenGlobalWorkOffsetIsCorr
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetX);
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetY);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetY);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkOffsetZ);
+    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.globalWorkOffsetX);
+    EXPECT_NE(nullptr, kernel.globalWorkOffsetY);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.globalWorkOffsetY);
+    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.globalWorkOffsetZ);
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkSizeIsCorrect) {
@@ -2481,10 +2481,10 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkSizeIsCorrect
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ);
+    EXPECT_NE(nullptr, kernel.localWorkSizeX);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.localWorkSizeX);
+    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.localWorkSizeY);
+    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.localWorkSizeZ);
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkSize2IsCorrect) {
@@ -2494,10 +2494,10 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkSize2IsCorrec
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeX2);
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY2);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeY2);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ2);
+    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.localWorkSizeX2);
+    EXPECT_NE(nullptr, kernel.localWorkSizeY2);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.localWorkSizeY2);
+    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.localWorkSizeZ2);
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenGlobalWorkSizeIsCorrect) {
@@ -2507,10 +2507,10 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenGlobalWorkSizeIsCorrec
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkSizeX);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkSizeY);
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkSizeZ);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].globalWorkSizeZ);
+    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.globalWorkSizeX);
+    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.globalWorkSizeY);
+    EXPECT_NE(nullptr, kernel.globalWorkSizeZ);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.globalWorkSizeZ);
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkDimIsCorrect) {
@@ -2520,8 +2520,8 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkDimIsCorrect)
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].workDim);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].workDim);
+    EXPECT_NE(nullptr, kernel.workDim);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.workDim);
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenNumWorkGroupsIsCorrect) {
@@ -2533,12 +2533,12 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenNumWorkGroupsIsCorrect
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsX);
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsY);
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsZ);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsX);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsY);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].numWorkGroupsZ);
+    EXPECT_NE(nullptr, kernel.numWorkGroupsX);
+    EXPECT_NE(nullptr, kernel.numWorkGroupsY);
+    EXPECT_NE(nullptr, kernel.numWorkGroupsZ);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.numWorkGroupsX);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.numWorkGroupsY);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.numWorkGroupsZ);
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedLocalWorkSizeIsCorrect) {
@@ -2548,10 +2548,10 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedLocalWorkSizeI
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeX);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeX);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeY);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeZ);
+    EXPECT_NE(nullptr, kernel.enqueuedLocalWorkSizeX);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.enqueuedLocalWorkSizeX);
+    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.enqueuedLocalWorkSizeY);
+    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.enqueuedLocalWorkSizeZ);
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedMaxWorkGroupSizeIsCorrect) {
@@ -2560,11 +2560,11 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedMaxWorkGroupSi
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].maxWorkGroupSizeForCrossThreadData);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].maxWorkGroupSizeForCrossThreadData);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData(rootDeviceIndex) + pKernelInfo->workloadInfo.maxWorkGroupSizeOffset), static_cast<void *>(kernel.kernelDeviceInfos[rootDeviceIndex].maxWorkGroupSizeForCrossThreadData));
-    EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.kernelDeviceInfos[rootDeviceIndex].maxWorkGroupSizeForCrossThreadData);
-    EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.kernelDeviceInfos[rootDeviceIndex].maxKernelWorkGroupSize);
+    EXPECT_NE(nullptr, kernel.maxWorkGroupSizeForCrossThreadData);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.maxWorkGroupSizeForCrossThreadData);
+    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->workloadInfo.maxWorkGroupSizeOffset), static_cast<void *>(kernel.maxWorkGroupSizeForCrossThreadData));
+    EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.maxWorkGroupSizeForCrossThreadData);
+    EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.maxKernelWorkGroupSize);
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenDataParameterSimdSizeIsCorrect) {
@@ -2573,10 +2573,10 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenDataParameterSimdSizeI
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].dataParameterSimdSize);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].dataParameterSimdSize);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData(rootDeviceIndex) + pKernelInfo->workloadInfo.simdSizeOffset), static_cast<void *>(kernel.kernelDeviceInfos[rootDeviceIndex].dataParameterSimdSize));
-    EXPECT_EQ_VAL(pKernelInfo->getMaxSimdSize(), *kernel.kernelDeviceInfos[rootDeviceIndex].dataParameterSimdSize);
+    EXPECT_NE(nullptr, kernel.dataParameterSimdSize);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.dataParameterSimdSize);
+    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->workloadInfo.simdSizeOffset), static_cast<void *>(kernel.dataParameterSimdSize));
+    EXPECT_EQ_VAL(pKernelInfo->getMaxSimdSize(), *kernel.dataParameterSimdSize);
 }
 
 TEST_F(KernelCrossThreadTests, GivenParentEventOffsetWhenKernelIsInitializedThenParentEventIsInitiatedWithInvalid) {
@@ -2584,10 +2584,10 @@ TEST_F(KernelCrossThreadTests, GivenParentEventOffsetWhenKernelIsInitializedThen
     MockKernel kernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_NE(nullptr, kernel.kernelDeviceInfos[rootDeviceIndex].parentEventOffset);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.kernelDeviceInfos[rootDeviceIndex].parentEventOffset);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData(rootDeviceIndex) + pKernelInfo->workloadInfo.parentEventOffset), static_cast<void *>(kernel.kernelDeviceInfos[rootDeviceIndex].parentEventOffset));
-    EXPECT_EQ(WorkloadInfo::invalidParentEvent, *kernel.kernelDeviceInfos[rootDeviceIndex].parentEventOffset);
+    EXPECT_NE(nullptr, kernel.parentEventOffset);
+    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.parentEventOffset);
+    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->workloadInfo.parentEventOffset), static_cast<void *>(kernel.parentEventOffset));
+    EXPECT_EQ(WorkloadInfo::invalidParentEvent, *kernel.parentEventOffset);
 }
 
 TEST_F(KernelCrossThreadTests, WhenAddingKernelThenProgramRefCountIsIncremented) {
@@ -2608,7 +2608,7 @@ TEST_F(KernelCrossThreadTests, GivenSlmStatisSizeWhenCreatingKernelThenSlmTotalS
 
     MockKernel *kernel = new MockKernel(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), *pClDevice);
 
-    EXPECT_EQ(1024u, kernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
+    EXPECT_EQ(1024u, kernel->slmTotalSize);
 
     delete kernel;
 }
@@ -2623,9 +2623,9 @@ TEST_F(KernelCrossThreadTests, givenKernelWithPrivateMemoryWhenItIsCreatedThenCu
 
     kernel->initialize();
 
-    auto privateSurface = kernel->kernelDeviceInfos[pDevice->getRootDeviceIndex()].privateSurface;
+    auto privateSurface = kernel->privateSurface;
 
-    auto constantBuffer = kernel->getCrossThreadData(rootDeviceIndex);
+    auto constantBuffer = kernel->getCrossThreadData();
     auto privateAddress = (uintptr_t)privateSurface->getGpuAddressToPatch();
     auto ptrCurbe = (uint64_t *)constantBuffer;
     auto privateAddressFromCurbe = (uintptr_t)*ptrCurbe;
@@ -2642,7 +2642,7 @@ TEST_F(KernelCrossThreadTests, givenKernelWithPreferredWkgMultipleWhenItIsCreate
 
     kernel->initialize();
 
-    auto *crossThread = kernel->getCrossThreadData(rootDeviceIndex);
+    auto *crossThread = kernel->getCrossThreadData();
 
     uint32_t *preferredWkgMultipleOffset = (uint32_t *)ptrOffset(crossThread, 8);
 
@@ -2667,7 +2667,7 @@ TEST_F(KernelCrossThreadTests, WhenPatchingBlocksSimdSizeThenSimdSizeIsPatchedCo
     kernel->mockKernel->patchBlocksSimdSize(rootDeviceIndex);
 
     // obtain block's simd size from cross thread data
-    void *blockSimdSize = ptrOffset(kernel->mockKernel->getCrossThreadData(rootDeviceIndex), kernel->kernelInfo.childrenKernelsIdOffset[0].second);
+    void *blockSimdSize = ptrOffset(kernel->mockKernel->getCrossThreadData(), kernel->kernelInfo.childrenKernelsIdOffset[0].second);
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     // check of block's simd size has been patched correctly
@@ -3419,7 +3419,7 @@ TEST_F(KernelMultiRootDeviceTest, givenKernelWithPrivateSurfaceWhenInitializeThe
 
     for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
         auto kernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
-        auto privateSurface = kernel->kernelDeviceInfos[rootDeviceIndex].privateSurface;
+        auto privateSurface = kernel->privateSurface;
         ASSERT_NE(nullptr, privateSurface);
         EXPECT_EQ(rootDeviceIndex, privateSurface->getRootDeviceIndex());
     }

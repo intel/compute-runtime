@@ -96,13 +96,13 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     DEBUG_BREAK_IF(simd != PARALLEL_SCHEDULER_COMPILATION_SIZE_20);
 
     // Patch our kernel constants
-    scheduler.setGlobalWorkOffsetValues(rootDeviceIndex, 0, 0, 0);
-    scheduler.setGlobalWorkSizeValues(rootDeviceIndex, static_cast<uint32_t>(scheduler.getGws()), 1, 1);
-    scheduler.setLocalWorkSizeValues(rootDeviceIndex, static_cast<uint32_t>(scheduler.getLws()), 1, 1);
-    scheduler.setLocalWorkSize2Values(rootDeviceIndex, static_cast<uint32_t>(scheduler.getLws()), 1, 1);
-    scheduler.setEnqueuedLocalWorkSizeValues(rootDeviceIndex, static_cast<uint32_t>(scheduler.getLws()), 1, 1);
-    scheduler.setNumWorkGroupsValues(rootDeviceIndex, static_cast<uint32_t>(scheduler.getGws() / scheduler.getLws()), 0, 0);
-    scheduler.setWorkDim(rootDeviceIndex, 1);
+    scheduler.setGlobalWorkOffsetValues(0, 0, 0);
+    scheduler.setGlobalWorkSizeValues(static_cast<uint32_t>(scheduler.getGws()), 1, 1);
+    scheduler.setLocalWorkSizeValues(static_cast<uint32_t>(scheduler.getLws()), 1, 1);
+    scheduler.setLocalWorkSize2Values(static_cast<uint32_t>(scheduler.getLws()), 1, 1);
+    scheduler.setEnqueuedLocalWorkSizeValues(static_cast<uint32_t>(scheduler.getLws()), 1, 1);
+    scheduler.setNumWorkGroupsValues(static_cast<uint32_t>(scheduler.getGws() / scheduler.getLws()), 0, 0);
+    scheduler.setWorkDim(1);
 
     // Send our indirect object data
     size_t localWorkSizes[3] = {scheduler.getLws(), 1, 1};

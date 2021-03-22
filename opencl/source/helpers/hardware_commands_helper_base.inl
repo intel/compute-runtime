@@ -63,7 +63,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(
 
     auto numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
     uint32_t grfSize = sizeof(typename GfxFamily::GRF);
-    return alignUp((kernel.getCrossThreadDataSize(rootDeviceIndex) +
+    return alignUp((kernel.getCrossThreadDataSize() +
                     getPerThreadDataSizeTotal(kernelInfo.getMaxSimdSize(), grfSize, numChannels, localWorkSize)),
                    WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 }
@@ -174,7 +174,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     interfaceDescriptor.setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
 
-    auto slmTotalSize = kernel.getSlmTotalSize(rootDeviceIndex);
+    auto slmTotalSize = kernel.getSlmTotalSize();
 
     setGrfInfo(&interfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData, rootDeviceIndex);
     EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, hardwareInfo, threadsPerThreadGroup, slmTotalSize, SlmPolicy::SlmPolicyNone);
@@ -237,7 +237,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
 
     auto dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh, kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries,
                                                                                                   kernel.getSurfaceStateHeap(rootDeviceIndex), kernel.getSurfaceStateHeapSize(rootDeviceIndex),
-                                                                                                  kernel.getNumberOfBindingTableStates(rootDeviceIndex), kernel.getBindingTableOffset(rootDeviceIndex));
+                                                                                                  kernel.getNumberOfBindingTableStates(), kernel.getBindingTableOffset());
 
     // Copy our sampler state if it exists
     const auto &samplerTable = kernelInfo.kernelDescriptor.payloadMappings.samplerTable;
@@ -254,11 +254,11 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     auto threadsPerThreadGroup = static_cast<uint32_t>(getThreadsPerWG(simd, localWorkItems));
     auto numChannels = static_cast<uint32_t>(kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels);
 
-    uint32_t sizeCrossThreadData = kernel.getCrossThreadDataSize(rootDeviceIndex);
+    uint32_t sizeCrossThreadData = kernel.getCrossThreadDataSize();
 
     size_t offsetCrossThreadData = HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         ioh, kernel, inlineDataProgrammingRequired,
-        walkerCmd, sizeCrossThreadData, rootDeviceIndex);
+        walkerCmd, sizeCrossThreadData);
 
     size_t sizePerThreadDataTotal = 0;
     size_t sizePerThreadData = 0;
@@ -277,7 +277,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
 
     uint64_t offsetInterfaceDescriptor = offsetInterfaceDescriptorTable + interfaceDescriptorIndex * sizeof(INTERFACE_DESCRIPTOR_DATA);
 
-    auto bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates(rootDeviceIndex)));
+    auto bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
     if (resetBindingTablePrefetch(kernel)) {
         bindingTablePrefetchSize = 0;
     }

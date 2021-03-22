@@ -64,13 +64,13 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqeueing
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeX, 8u);
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeY, 2u);
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ, 2u);
+    EXPECT_EQ(*pKernel->localWorkSizeX, 8u);
+    EXPECT_EQ(*pKernel->localWorkSizeY, 2u);
+    EXPECT_EQ(*pKernel->localWorkSizeZ, 2u);
 
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeX, 8u);
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeY, 2u);
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeZ, 2u);
+    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeX, 8u);
+    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeY, 2u);
+    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeZ, 2u);
 }
 
 // Fully specified
@@ -91,13 +91,13 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenRequiredWorkGroupSizeWhenEnqeueingKer
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeX, 8u);
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeY, 2u);
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].enqueuedLocalWorkSizeZ, 2u);
+    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeX, 8u);
+    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeY, 2u);
+    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeZ, 2u);
 
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeX, 8u);
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeY, 2u);
-    EXPECT_EQ(*pKernel->kernelDeviceInfos[rootDeviceIndex].localWorkSizeZ, 2u);
+    EXPECT_EQ(*pKernel->localWorkSizeX, 8u);
+    EXPECT_EQ(*pKernel->localWorkSizeY, 2u);
+    EXPECT_EQ(*pKernel->localWorkSizeZ, 2u);
 }
 
 // Underspecified.  Won't permit.

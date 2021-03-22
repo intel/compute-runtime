@@ -322,7 +322,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
         Kernel *blockKernel = Kernel::create(pKernel->getProgram(), MockKernel::toKernelInfoContainer(*pBlockInfo, rootDeviceIndex), *pClDevice, nullptr);
         blockSSH = alignUp(blockSSH, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-        if (blockKernel->getNumberOfBindingTableStates(rootDeviceIndex) > 0) {
+        if (blockKernel->getNumberOfBindingTableStates() > 0) {
             ASSERT_TRUE(isValidOffset(pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.tableOffset));
             auto dstBlockBti = ptrOffset(blockSSH, pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.tableOffset);
             EXPECT_EQ(0U, reinterpret_cast<uintptr_t>(dstBlockBti) % INTERFACE_DESCRIPTOR_DATA::BINDINGTABLEPOINTER_ALIGN_SIZE);
@@ -330,7 +330,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
             auto srcBlockBti = ptrOffset(pBlockInfo->heapInfo.pSsh, pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.tableOffset);
             auto srcBindingTable = reinterpret_cast<const BINDING_TABLE_STATE *>(srcBlockBti);
-            for (uint32_t i = 0; i < blockKernel->getNumberOfBindingTableStates(rootDeviceIndex); ++i) {
+            for (uint32_t i = 0; i < blockKernel->getNumberOfBindingTableStates(); ++i) {
                 uint32_t dstSurfaceStatePointer = dstBindingTable[i].getSurfaceStatePointer();
                 uint32_t srcSurfaceStatePointer = srcBindingTable[i].getSurfaceStatePointer();
                 auto *dstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh->getCpuBase(), dstSurfaceStatePointer));
@@ -454,13 +454,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, GivenParentKernelWhenEnq
 
         const auto &defaultQueueSurfaceAddress = implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress;
         if (isValidOffset(defaultQueueSurfaceAddress.stateless)) {
-            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData(rootDeviceIndex)), defaultQueueSurfaceAddress.stateless);
+            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData()), defaultQueueSurfaceAddress.stateless);
             EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddressToPatch(), *patchLocation);
         }
 
         const auto &eventPoolSurfaceAddress = implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
         if (isValidOffset(eventPoolSurfaceAddress.stateless)) {
-            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData(rootDeviceIndex)), eventPoolSurfaceAddress.stateless);
+            auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData()), eventPoolSurfaceAddress.stateless);
             EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddressToPatch(), *patchLocation);
         }
     }

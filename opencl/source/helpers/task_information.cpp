@@ -198,7 +198,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         scheduler.makeResident(commandStreamReceiver);
 
         // Update SLM usage
-        slmUsed |= scheduler.getSlmTotalSize(rootDeviceIndex) > 0;
+        slmUsed |= scheduler.getSlmTotalSize() > 0;
 
         this->kernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(commandStreamReceiver);
     }

@@ -86,7 +86,7 @@ TEST_F(KernelArgSvmTest, GivenValidSvmPtrWhenSettingKernelArgThenSvmPtrIsCorrect
     auto retVal = pKernel->setArgSvm(0, 256, svmPtr, nullptr, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelArg = (void **)(pKernel->getCrossThreadData(rootDeviceIndex) +
+    auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
                                 pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
     EXPECT_EQ(svmPtr, *pKernelArg);
 
@@ -137,7 +137,7 @@ TEST_F(KernelArgSvmTest, GivenValidSvmAllocWhenSettingKernelArgThenArgumentsAreS
     auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelArg = (void **)(pKernel->getCrossThreadData(rootDeviceIndex) +
+    auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
                                 pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
     EXPECT_EQ(svmPtr, *pKernelArg);
 
@@ -238,7 +238,7 @@ HWTEST_F(KernelArgSvmTest, WhenPatchingWithImplicitSurfaceThenPatchIsApplied) {
     svmPtr.resize(256);
 
     pKernel->setCrossThreadData(nullptr, sizeof(void *));
-    pKernel->setSshLocal(nullptr, rendSurfSize, rootDeviceIndex);
+    pKernel->setSshLocal(nullptr, rendSurfSize);
     pKernelInfo->requiresSshForBuffers = true;
     pKernelInfo->usesSsh = true;
     {
@@ -252,8 +252,8 @@ HWTEST_F(KernelArgSvmTest, WhenPatchingWithImplicitSurfaceThenPatchIsApplied) {
 
         constexpr size_t patchOffset = 16;
         void *ptrToPatch = svmPtr.data() + patchOffset;
-        ASSERT_GE(pKernel->getCrossThreadDataSize(rootDeviceIndex), sizeof(void *));
-        *reinterpret_cast<void **>(pKernel->getCrossThreadData(rootDeviceIndex)) = 0U;
+        ASSERT_GE(pKernel->getCrossThreadDataSize(), sizeof(void *));
+        *reinterpret_cast<void **>(pKernel->getCrossThreadData()) = 0U;
 
         ASSERT_GE(pKernel->getSurfaceStateHeapSize(rootDeviceIndex), rendSurfSize);
         RENDER_SURFACE_STATE *surfState = reinterpret_cast<RENDER_SURFACE_STATE *>(pKernel->getSurfaceStateHeap(rootDeviceIndex));
@@ -262,7 +262,7 @@ HWTEST_F(KernelArgSvmTest, WhenPatchingWithImplicitSurfaceThenPatchIsApplied) {
         pKernel->patchWithImplicitSurface(ptrToPatch, svmAlloc, *pDevice, patch);
 
         // verify cross thread data was properly patched
-        EXPECT_EQ(ptrToPatch, *reinterpret_cast<void **>(pKernel->getCrossThreadData(rootDeviceIndex)));
+        EXPECT_EQ(ptrToPatch, *reinterpret_cast<void **>(pKernel->getCrossThreadData()));
 
         // create surface state for comparison
         RENDER_SURFACE_STATE expectedSurfaceState;
@@ -279,7 +279,7 @@ HWTEST_F(KernelArgSvmTest, WhenPatchingWithImplicitSurfaceThenPatchIsApplied) {
 
         // when cross thread and ssh data is not available then should not do anything
         pKernel->setCrossThreadData(nullptr, 0);
-        pKernel->setSshLocal(nullptr, 0, rootDeviceIndex);
+        pKernel->setSshLocal(nullptr, 0);
         pKernel->patchWithImplicitSurface(ptrToPatch, svmAlloc, *pDevice, patch);
     }
 }
@@ -294,7 +294,7 @@ TEST_F(KernelArgSvmTest, WhenPatchingBufferOffsetThenPatchIsApplied) {
         constexpr uint32_t svmOffset = 13U;
 
         MockGraphicsAllocation svmAlloc(svmPtr.data(), 256);
-        uint32_t *expectedPatchPtr = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
+        uint32_t *expectedPatchPtr = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
 
         KernelArgInfo kai;
         void *returnedPtr = nullptr;
@@ -390,7 +390,7 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
     kai.offsetBufferOffset = kai.kernelArgPatchInfoVector[0].size;
 
     this->pKernel->setCrossThreadData(nullptr, kai.offsetBufferOffset + sizeof(uint32_t));
-    this->pKernel->setSshLocal(nullptr, rendSurfSize, rootDeviceIndex);
+    this->pKernel->setSshLocal(nullptr, rendSurfSize);
     this->pKernelInfo->requiresSshForBuffers = true;
     this->pKernelInfo->usesSsh = true;
     {
@@ -399,10 +399,10 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
         constexpr size_t patchOffset = 16;
         void *ptrToPatch = svmPtr + patchOffset;
         size_t sizeToPatch = svmSize - patchOffset;
-        ASSERT_GE(this->pKernel->getCrossThreadDataSize(rootDeviceIndex), kai.offsetBufferOffset + sizeof(uint32_t));
+        ASSERT_GE(this->pKernel->getCrossThreadDataSize(), kai.offsetBufferOffset + sizeof(uint32_t));
 
-        void **expectedPointerPatchPtr = reinterpret_cast<void **>(this->pKernel->getCrossThreadData(rootDeviceIndex));
-        uint32_t *expectedOffsetPatchPtr = reinterpret_cast<uint32_t *>(ptrOffset(this->pKernel->getCrossThreadData(rootDeviceIndex), kai.offsetBufferOffset));
+        void **expectedPointerPatchPtr = reinterpret_cast<void **>(this->pKernel->getCrossThreadData());
+        uint32_t *expectedOffsetPatchPtr = reinterpret_cast<uint32_t *>(ptrOffset(this->pKernel->getCrossThreadData(), kai.offsetBufferOffset));
         *expectedPointerPatchPtr = reinterpret_cast<void *>(0U);
         *expectedOffsetPatchPtr = 0U;
 
@@ -534,7 +534,7 @@ TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidThenExpectSvm
     auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelArg = (void **)(pKernel->getCrossThreadData(rootDeviceIndex) +
+    auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
                                 pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
     EXPECT_EQ(svmPtr, *pKernelArg);
 }
@@ -548,7 +548,7 @@ TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidThenPatchBuff
     constexpr uint32_t initVal = 7U;
 
     MockGraphicsAllocation svmAlloc(nullptr, reinterpret_cast<uint64_t>(svmPtr.data()), 256);
-    uint32_t *expectedPatchPtr = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData(rootDeviceIndex));
+    uint32_t *expectedPatchPtr = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
 
     KernelArgInfo kai;
     void *returnedPtr = nullptr;

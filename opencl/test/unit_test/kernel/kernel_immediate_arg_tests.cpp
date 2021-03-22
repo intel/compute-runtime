@@ -109,7 +109,7 @@ TYPED_TEST(KernelArgImmediateTest, WhenSettingKernelArgThenArgIsSetCorrectly) {
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
-        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
                                         this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
         EXPECT_EQ(val, *pKernelArg);
@@ -132,7 +132,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleArgumentsWhenSettingKernelArgThe
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
-        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
                                         this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
         EXPECT_EQ(val, *pKernelArg);
@@ -142,7 +142,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleArgumentsWhenSettingKernelArgThe
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
-        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
                                         this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
 
         EXPECT_EQ(val, *pKernelArg);
@@ -152,7 +152,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleArgumentsWhenSettingKernelArgThe
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
-        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
                                         this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset);
 
         EXPECT_EQ(val, *pKernelArg);
@@ -166,7 +166,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenCrossThreadDataOverwritesWhenSettingKern
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
-        TypeParam *pKernelArg = (TypeParam *)(pKernel->getCrossThreadData(rootDeviceIndex) +
+        TypeParam *pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
                                               this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
         EXPECT_EQ(val, *pKernelArg);
@@ -177,7 +177,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenCrossThreadDataOverwritesWhenSettingKern
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
-        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
                                         this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
 
         EXPECT_EQ(val, *pKernelArg);
@@ -187,7 +187,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenCrossThreadDataOverwritesWhenSettingKern
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
-        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData(rootDeviceIndex) +
+        auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
                                         this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
         EXPECT_EQ(val, *pKernelArg);
@@ -215,11 +215,11 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleStructElementsWhenSettingKernelA
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
-        auto pCrossthreadA = (TypeParam *)(pKernel->getCrossThreadData(rootDeviceIndex) +
+        auto pCrossthreadA = (TypeParam *)(pKernel->getCrossThreadData() +
                                            this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset);
         EXPECT_EQ(immediateStruct.a, *pCrossthreadA);
 
-        auto pCrossthreadB = (TypeParam *)(pKernel->getCrossThreadData(rootDeviceIndex) +
+        auto pCrossthreadB = (TypeParam *)(pKernel->getCrossThreadData() +
                                            this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset);
         EXPECT_EQ(immediateStruct.b, *pCrossthreadB);
     }
@@ -233,7 +233,7 @@ TYPED_TEST(KernelArgImmediateTest, givenTooLargePatchSizeWhenSettingArgThenDontR
         std::memset(&memory[0], 0xaa, sizeof(TypeParam));
         std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-        const auto destinationMemoryAddress = pKernel->getCrossThreadData(rootDeviceIndex) +
+        const auto destinationMemoryAddress = pKernel->getCrossThreadData() +
                                               this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
         const auto memoryBeyondLimitAddress = destinationMemoryAddress + sizeof(TypeParam);
 
@@ -258,7 +258,7 @@ TYPED_TEST(KernelArgImmediateTest, givenNotTooLargePatchSizeWhenSettingArgThenDo
         std::memset(&memory[0], 0xaa, sizeof(TypeParam));
         std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-        const auto destinationMemoryAddress = pKernel->getCrossThreadData(rootDeviceIndex) +
+        const auto destinationMemoryAddress = pKernel->getCrossThreadData() +
                                               this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
         const auto memoryBeyondLimitAddress = destinationMemoryAddress + sizeof(TypeParam);
 
@@ -285,9 +285,9 @@ TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndFirstPatchSizeTooLarge
         std::memset(&memory[0], 0xaa, sizeof(TypeParam));
         std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-        const auto destinationMemoryAddress1 = pKernel->getCrossThreadData(rootDeviceIndex) +
+        const auto destinationMemoryAddress1 = pKernel->getCrossThreadData() +
                                                this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
-        const auto destinationMemoryAddress2 = pKernel->getCrossThreadData(rootDeviceIndex) +
+        const auto destinationMemoryAddress2 = pKernel->getCrossThreadData() +
                                                this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
         const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam);
         const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2 + sizeof(TypeParam) / 2;
@@ -321,9 +321,9 @@ TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndSecondPatchSizeTooLarg
         std::memset(&memory[0], 0xaa, sizeof(TypeParam));
         std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-        const auto destinationMemoryAddress1 = pKernel->getCrossThreadData(rootDeviceIndex) +
+        const auto destinationMemoryAddress1 = pKernel->getCrossThreadData() +
                                                this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
-        const auto destinationMemoryAddress2 = pKernel->getCrossThreadData(rootDeviceIndex) +
+        const auto destinationMemoryAddress2 = pKernel->getCrossThreadData() +
                                                this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
         const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam) / 2;
         const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2 + sizeof(TypeParam) / 2;
@@ -355,9 +355,9 @@ TYPED_TEST(KernelArgImmediateTest, givenMultiplePatchesAndOneSourceOffsetBeyondA
         std::memset(&memory[0], 0xaa, sizeof(TypeParam));
         std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
-        const auto destinationMemoryAddress1 = pKernel->getCrossThreadData(rootDeviceIndex) +
+        const auto destinationMemoryAddress1 = pKernel->getCrossThreadData() +
                                                this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
-        const auto destinationMemoryAddress2 = pKernel->getCrossThreadData(rootDeviceIndex) +
+        const auto destinationMemoryAddress2 = pKernel->getCrossThreadData() +
                                                this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
         const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam);
         const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2;

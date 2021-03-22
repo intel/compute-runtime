@@ -69,7 +69,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
         pKernel->setKernelArgHandler(0, &Kernel::setArgBuffer);
 
-        pKernel->kernelDeviceInfos[rootDeviceIndex].slmTotalSize = 128;
+        pKernel->slmTotalSize = 128;
         pKernel->isBuiltIn = true;
     }
 
@@ -874,11 +874,11 @@ TEST_F(DispatchInfoBuilderTest, WhenSettingKernelArgThenAddressesAreCorrect) {
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto crossthreadOffset0 = pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
-        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData(rootDeviceIndex) + crossthreadOffset0)));
+        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + crossthreadOffset0)));
         auto crossthreadOffset1 = pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset;
-        EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData(rootDeviceIndex) + crossthreadOffset1)));
+        EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + crossthreadOffset1)));
         auto crossthreadOffset2 = pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset;
-        EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData(rootDeviceIndex) + crossthreadOffset2)));
+        EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + crossthreadOffset2)));
     }
 
     delete buffer;
@@ -920,34 +920,34 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCo
     clearCrossThreadData();
     builder1D.setArg(SplitDispatch::RegionCoordX::Left, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
     for (auto &dispatchInfo : mdi1D) {
-        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData(rootDeviceIndex) + 0x10)));
+        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
     }
     clearCrossThreadData();
     builder2D.setArg(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
     for (auto &dispatchInfo : mdi2D) {
-        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData(rootDeviceIndex) + 0x10)));
+        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
     }
     clearCrossThreadData();
     builder3D.setArg(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, SplitDispatch::RegionCoordZ::Front, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
     for (auto &dispatchInfo : mdi3D) {
-        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData(rootDeviceIndex) + 0x10)));
+        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
     }
 
     //Set arg SVM
     clearCrossThreadData();
     builder1D.setArgSvm(SplitDispatch::RegionCoordX::Left, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
     for (auto &dispatchInfo : mdi1D) {
-        EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData(rootDeviceIndex) + 0x30)));
+        EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + 0x30)));
     }
     clearCrossThreadData();
     builder2D.setArgSvm(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
     for (auto &dispatchInfo : mdi2D) {
-        EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData(rootDeviceIndex) + 0x30)));
+        EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + 0x30)));
     }
     clearCrossThreadData();
     builder3D.setArgSvm(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, SplitDispatch::RegionCoordZ::Front, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
     for (auto &dispatchInfo : mdi3D) {
-        EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData(rootDeviceIndex) + 0x30)));
+        EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + 0x30)));
     }
 
     delete buffer;

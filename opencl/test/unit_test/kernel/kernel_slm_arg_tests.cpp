@@ -87,7 +87,7 @@ TEST_F(KernelSlmArgTest, WhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
     pMultiDeviceKernel->setArg(2, slmSize2, nullptr);
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-        auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex));
+        auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel[rootDeviceIndex]->getCrossThreadData());
         auto slmOffset = ptrOffset(crossThreadData, 0x10);
         EXPECT_EQ(0u, *slmOffset);
 
@@ -97,7 +97,7 @@ TEST_F(KernelSlmArgTest, WhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
         slmOffset = ptrOffset(crossThreadData, 0x30);
         EXPECT_EQ(0x400u, *slmOffset);
 
-        EXPECT_EQ(5 * KB, pKernel[rootDeviceIndex]->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
+        EXPECT_EQ(5 * KB, pKernel[rootDeviceIndex]->slmTotalSize);
     }
 }
 
@@ -106,7 +106,7 @@ TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSl
     pMultiDeviceKernel->setArg(0, slmSize0, nullptr);
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-        auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel[rootDeviceIndex]->getCrossThreadData(rootDeviceIndex));
+        auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel[rootDeviceIndex]->getCrossThreadData());
         auto slmOffset = ptrOffset(crossThreadData, 0x10);
         EXPECT_EQ(0u, *slmOffset);
 
@@ -116,6 +116,6 @@ TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSl
         slmOffset = ptrOffset(crossThreadData, 0x30);
         EXPECT_EQ(0x400u, *slmOffset);
 
-        EXPECT_EQ(5 * KB, pKernel[rootDeviceIndex]->kernelDeviceInfos[rootDeviceIndex].slmTotalSize);
+        EXPECT_EQ(5 * KB, pKernel[rootDeviceIndex]->slmTotalSize);
     }
 }

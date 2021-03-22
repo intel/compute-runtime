@@ -105,7 +105,7 @@ TEST_F(KernelArgAcceleratorTest, WhenCreatingVmeAcceleratorThenCorrectKernelArgs
     status = this->pKernel->setArg(0, sizeof(cl_accelerator_intel), &accelerator);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    char *crossThreadData = pKernel->getCrossThreadData(rootDeviceIndex);
+    char *crossThreadData = pKernel->getCrossThreadData();
 
     const auto &arginfo = pKernelInfo->kernelArgInfo[0];
 

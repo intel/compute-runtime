@@ -921,7 +921,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             } else {
                 continue;
             }
-            kernel->getResidency(allSurfaces, device->getRootDeviceIndex());
+            kernel->getResidency(allSurfaces);
         }
         for (auto &surface : CreateRange(surfaces, surfaceCount)) {
             allSurfaces.push_back(surface->duplicate());

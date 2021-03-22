@@ -380,7 +380,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML
     commandStreamReceiver->lastSentL3Config = L3Config;
     commandStreamReceiver->lastSentThreadArbitrationPolicy = kernel.mockKernel->getThreadArbitrationPolicy();
 
-    ((MockKernel *)kernel)->setTotalSLMSize(rootDeviceIndex, 1024);
+    ((MockKernel *)kernel)->setTotalSLMSize(1024);
 
     cmdList.clear();
     commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);

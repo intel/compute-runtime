@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,13 +127,12 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     Kernel &kernel,
     bool inlineDataProgrammingRequired,
     WALKER_TYPE<GfxFamily> *walkerCmd,
-    uint32_t &sizeCrossThreadData,
-    uint32_t rootDeviceIndex) {
+    uint32_t &sizeCrossThreadData) {
     indirectHeap.align(WALKER_TYPE<GfxFamily>::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 
     auto offsetCrossThreadData = indirectHeap.getUsed();
     char *pDest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
-    memcpy_s(pDest, sizeCrossThreadData, kernel.getCrossThreadData(rootDeviceIndex), sizeCrossThreadData);
+    memcpy_s(pDest, sizeCrossThreadData, kernel.getCrossThreadData(), sizeCrossThreadData);
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         FlatBatchBufferHelper::fixCrossThreadDataInfo(kernel.getPatchInfoDataList(), offsetCrossThreadData, indirectHeap.getGraphicsAllocation()->getGpuAddress());

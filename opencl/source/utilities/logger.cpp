@@ -206,9 +206,8 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
                 }
             } else {
                 type = "immediate";
-                auto rootDeviceIndex = kernel->getDevices()[0]->getRootDeviceIndex();
-                auto crossThreadData = kernel->getCrossThreadData(rootDeviceIndex);
-                auto crossThreadDataSize = kernel->getCrossThreadDataSize(rootDeviceIndex);
+                auto crossThreadData = kernel->getCrossThreadData();
+                auto crossThreadDataSize = kernel->getCrossThreadDataSize();
                 argVal = std::unique_ptr<char[]>(new char[crossThreadDataSize]);
 
                 size_t totalArgSize = 0;
