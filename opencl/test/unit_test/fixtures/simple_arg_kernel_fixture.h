@@ -339,6 +339,8 @@ class StatelessKernelWithIndirectAccessFixture : public ProgramFixture {
             &retVal));
         ASSERT_NE(nullptr, multiDeviceKernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_TRUE(multiDeviceKernel->getKernel(device->getRootDeviceIndex())->getKernelInfo().hasIndirectStatelessAccess);
     }
 
     void TearDown() override {
