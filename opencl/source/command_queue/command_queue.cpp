@@ -737,7 +737,7 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
-    auto blitterSupported = device->getHardwareInfo().capabilityTable.blitterOperationsSupported || this->isCopyOnly;
+    auto blitterSupported = (getBcsCommandStreamReceiver() != nullptr);
 
     bool blitEnqueueAllowed = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly;
     if (DebugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {

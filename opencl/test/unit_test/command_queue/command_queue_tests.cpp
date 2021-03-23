@@ -1154,10 +1154,14 @@ TEST(CommandQueue, givenCopyOnlyQueueWhenCallingBlitEnqueueAllowedThenReturnTrue
     MockContext context{};
     HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
     MockCommandQueue queue(&context, context.getDevice(0), 0);
+    if (!queue.bcsEngine) {
+        queue.bcsEngine = &context.getDevice(0)->getDefaultEngine();
+    }
     hwInfo->capabilityTable.blitterOperationsSupported = false;
 
     queue.isCopyOnly = false;
-    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
+    EXPECT_EQ(queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled(),
+              queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
 
     queue.isCopyOnly = true;
     EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
@@ -1165,33 +1169,24 @@ TEST(CommandQueue, givenCopyOnlyQueueWhenCallingBlitEnqueueAllowedThenReturnTrue
 
 TEST(CommandQueue, givenClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
     MockContext context{};
-    HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
-    MockCommandQueue queue(&context, context.getDevice(0), 0);
-    hwInfo->capabilityTable.blitterOperationsSupported = true;
 
-    if (queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
-        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER));
-        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER));
-        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER_RECT));
-        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER_RECT));
-        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT));
-        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY));
-        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_IMAGE));
-        EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE));
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
-    } else {
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER));
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER));
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER_RECT));
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER_RECT));
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT));
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY));
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_READ_IMAGE));
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE));
-        EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
+    MockCommandQueue queue(&context, context.getDevice(0), 0);
+    if (!queue.bcsEngine) {
+        queue.bcsEngine = &context.getDevice(0)->getDefaultEngine();
     }
+
+    bool supported = queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled();
+
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER_RECT));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_WRITE_BUFFER_RECT));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_SVM_MEMCPY));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_READ_IMAGE));
+    EXPECT_EQ(supported, queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE));
+    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
 }
 
 TEST(CommandQueue, givenRegularClCommandWhenCallingBlitEnqueuePreferredThenReturnCorrectValue) {
