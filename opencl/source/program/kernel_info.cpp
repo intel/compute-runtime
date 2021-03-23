@@ -117,18 +117,21 @@ std::map<std::string, size_t> typeSizeMap = {
     {"double8", sizeof(cl_double8)},
     {"double16", sizeof(cl_double16)},
 };
-WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, GFXCORE_FAMILY coreFamily, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface) {
+
+WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const HardwareInfo *hwInfo, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface) {
     this->maxWorkGroupSize = maxWorkGroupSize;
     this->hasBarriers = hasBarriers;
     this->simdSize = simdSize;
     this->slmTotalSize = slmTotalSize;
-    this->coreFamily = coreFamily;
+    this->coreFamily = hwInfo->platform.eRenderCoreFamily;
     this->numThreadsPerSubSlice = numThreadsPerSubSlice;
     this->localMemSize = localMemSize;
     this->imgUsed = imgUsed;
     this->yTiledSurfaces = yTiledSurface;
-    setMinWorkGroupSize();
+
+    setMinWorkGroupSize(hwInfo);
 }
+
 WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     auto &device = dispatchInfo.getClDevice();
     const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo();
@@ -140,8 +143,9 @@ WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     this->numThreadsPerSubSlice = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
                                   device.getSharedDeviceInfo().numThreadsPerEU;
     this->localMemSize = static_cast<uint32_t>(device.getSharedDeviceInfo().localMemSize);
+
     setIfUseImg(kernelInfo);
-    setMinWorkGroupSize();
+    setMinWorkGroupSize(&device.getHardwareInfo());
 }
 void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
     for (const auto &arg : kernelInfo.kernelDescriptor.payloadMappings.explicitArgs) {
@@ -152,7 +156,7 @@ void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
         }
     }
 }
-void WorkSizeInfo::setMinWorkGroupSize() {
+void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo) {
     minWorkGroupSize = 0;
     if (hasBarriers) {
         uint32_t maxBarriersPerHSlice = (coreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
@@ -160,6 +164,11 @@ void WorkSizeInfo::setMinWorkGroupSize() {
     }
     if (slmTotalSize > 0) {
         minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSize)), minWorkGroupSize);
+    }
+
+    const auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    if (hwHelper.isFusedEuDispatchEnabled(*hwInfo)) {
+        minWorkGroupSize *= 2;
     }
 }
 void WorkSizeInfo::checkRatio(const size_t workItems[3]) {

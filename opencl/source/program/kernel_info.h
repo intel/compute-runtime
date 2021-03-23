@@ -55,10 +55,10 @@ struct WorkSizeInfo {
     bool useStrictRatio = false;
     float targetRatio = 0;
 
-    WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, GFXCORE_FAMILY coreFamily, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface);
+    WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const HardwareInfo *hwInfo, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface);
     WorkSizeInfo(const DispatchInfo &dispatchInfo);
     void setIfUseImg(const KernelInfo &kernelInfo);
-    void setMinWorkGroupSize();
+    void setMinWorkGroupSize(const HardwareInfo *hwInfo);
     void checkRatio(const size_t workItems[3]);
 };
 
