@@ -5,12 +5,15 @@
  *
  */
 
+#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
 #include "test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 namespace L0 {
@@ -122,6 +125,18 @@ TEST_F(EventPoolCreate, givenCloseIpcHandleCalledReturnsNotSupported) {
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
+TEST_F(EventPoolCreate, GivenAtLeastOneValidDeviceHandleWhenCreatingEventPoolThenEventPoolCreated) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        1};
+
+    ze_device_handle_t devices[] = {nullptr, device->toHandle()};
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 2, devices, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+}
+
 TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamReceiverSet) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -215,6 +230,46 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroAndSt
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroAndStateSignaledHostSynchronizeReturnsSuccess) {
     uint64_t *hostAddr = static_cast<uint64_t *>(event->getHostAddress());
     *hostAddr = Event::STATE_SIGNALED;
+    ze_result_t result = event->hostSynchronize(10);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+using EventAubCsrTest = Test<DeviceFixture>;
+
+HWTEST_F(EventAubCsrTest, givenCallToEventHostSynchronizeWithAubModeCsrReturnsSuccess) {
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+
+    neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+    auto mockBuiltIns = new MockBuiltins();
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    device = driverHandle->devices[0];
+    int32_t tag;
+    auto aubCsr = new MockCsrAub<FamilyType>(tag, *neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    neoDevice->resetCommandStreamReceiver(aubCsr);
+
+    std::unique_ptr<L0::EventPool> eventPool = nullptr;
+    std::unique_ptr<L0::Event> event;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = 0;
+    eventDesc.wait = 0;
+
+    eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+    event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event);
+
     ze_result_t result = event->hostSynchronize(10);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }

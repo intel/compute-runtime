@@ -47,10 +47,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, uint32_t numDevices, 
     if (this->devices.empty()) {
         ze_device_handle_t hDevice;
         uint32_t count = 1;
-        ze_result_t result = driver->getDevice(&count, &hDevice);
-        if (result) {
-            return result;
-        }
+        driver->getDevice(&count, &hDevice);
         this->devices.push_back(Device::fromHandle(hDevice));
         rootDeviceIndices.push_back(this->devices[0]->getNEODevice()->getRootDeviceIndex());
         maxRootDeviceIndex = rootDeviceIndices[0];
