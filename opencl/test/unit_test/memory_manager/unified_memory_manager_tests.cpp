@@ -16,6 +16,7 @@
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -70,6 +71,29 @@ TEST_F(SVMMemoryAllocatorTest, whenCreateZeroSizedSVMAllocationThenReturnNullptr
 TEST_F(SVMMemoryAllocatorTest, whenRequestSVMAllocsThenReturnNonNullptr) {
     auto svmAllocs = svmManager->getSVMAllocs();
     EXPECT_NE(svmAllocs, nullptr);
+}
+
+using MultiDeviceSVMMemoryAllocatorTest = MultiRootDeviceWithSubDevicesFixture;
+
+TEST_F(MultiDeviceSVMMemoryAllocatorTest, givenMultipleDevicesWhenCreatingSVMAllocThenCreateOneGraphicsAllocationPerRootDeviceIndex) {
+    REQUIRE_SVM_OR_SKIP(device1);
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device1->getMemoryManager(), false);
+
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    EXPECT_NE(nullptr, ptr);
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    EXPECT_EQ(1u, svmManager->SVMAllocs.getNumAllocs());
+    ASSERT_NE(nullptr, svmData);
+    for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+        auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+        EXPECT_NE(nullptr, svmAllocation);
+        EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_ZERO_COPY, svmAllocation->getAllocationType());
+        EXPECT_FALSE(svmAllocation->isCoherent());
+    }
+
+    svmManager->freeSVMAlloc(ptr);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {

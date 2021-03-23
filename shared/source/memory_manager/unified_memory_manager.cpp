@@ -112,6 +112,9 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
     if (size == 0)
         return nullptr;
 
+    if (rootDeviceIndices.size() > 1) {
+        return createZeroCopySvmAllocation(size, svmProperties, rootDeviceIndices, subdeviceBitfields);
+    }
     if (!memoryManager->isLocalMemorySupported(*rootDeviceIndices.begin())) {
         return createZeroCopySvmAllocation(size, svmProperties, rootDeviceIndices, subdeviceBitfields);
     } else {
@@ -349,20 +352,26 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
                                     false, // isMultiStorageAllocation
                                     deviceBitfield};
     MemoryPropertiesHelper::fillCachePolicyInProperties(properties, false, svmProperties.readOnly, false, properties.cacheRegion);
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
-    if (!allocation) {
+
+    std::vector<uint32_t> rootDeviceIndicesVector(rootDeviceIndices.begin(), rootDeviceIndices.end());
+
+    auto maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
+    SvmAllocationData allocData(maxRootDeviceIndex);
+
+    void *usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, properties, allocData.gpuAllocations);
+    if (!usmPtr) {
         return nullptr;
     }
-    allocation->setMemObjectsAllocationWithWritableFlags(!svmProperties.readOnly && !svmProperties.hostPtrReadOnly);
-    allocation->setCoherent(svmProperties.coherent);
-
-    SvmAllocationData allocData(rootDeviceIndex);
-    allocData.gpuAllocations.addAllocation(allocation);
+    for (const auto &rootDeviceIndex : rootDeviceIndices) {
+        auto allocation = allocData.gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+        allocation->setMemObjectsAllocationWithWritableFlags(!svmProperties.readOnly && !svmProperties.hostPtrReadOnly);
+        allocation->setCoherent(svmProperties.coherent);
+    }
     allocData.size = size;
 
     std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);
-    return allocation->getUnderlyingBuffer();
+    return usmPtr;
 }
 
 void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties) {
@@ -415,10 +424,11 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
 }
 
 void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
-    GraphicsAllocation *gpuAllocation = svmData->gpuAllocations.getDefaultGraphicsAllocation();
+    auto gpuAllocations = svmData->gpuAllocations;
     SVMAllocs.remove(*svmData);
-
-    memoryManager->freeGraphicsMemory(gpuAllocation);
+    for (const auto &graphicsAllocation : gpuAllocations.getGraphicsAllocations()) {
+        memoryManager->freeGraphicsMemory(graphicsAllocation);
+    }
 }
 
 void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData) {

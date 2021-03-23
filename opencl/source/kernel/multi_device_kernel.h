@@ -54,12 +54,12 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     const ClDeviceVector &getDevices() const;
     size_t getKernelArgsNumber() const;
     Context &getContext() const;
-    cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc);
+    cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, MultiGraphicsAllocation *svmAllocs);
     bool getHasIndirectAccess() const;
     void setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue);
-    void setSvmKernelExecInfo(GraphicsAllocation *argValue);
+    void setSvmKernelExecInfo(const MultiGraphicsAllocation &argValue);
     void clearSvmKernelExecInfo();
-    void setUnifiedMemoryExecInfo(GraphicsAllocation *argValue);
+    void setUnifiedMemoryExecInfo(const MultiGraphicsAllocation &argValue);
     void clearUnifiedMemoryExecInfo();
     int setKernelThreadArbitrationPolicy(uint32_t propertyValue);
     cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType);

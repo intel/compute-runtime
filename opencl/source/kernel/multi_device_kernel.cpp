@@ -48,11 +48,8 @@ bool MultiDeviceKernel::getHasIndirectAccess() const { return defaultKernel->get
 cl_int MultiDeviceKernel::checkCorrectImageAccessQualifier(cl_uint argIndex, size_t argSize, const void *argValue) const { return getResultFromEachKernel(&Kernel::checkCorrectImageAccessQualifier, argIndex, argSize, argValue); }
 void MultiDeviceKernel::unsetArg(uint32_t argIndex) { callOnEachKernel(&Kernel::unsetArg, argIndex); }
 cl_int MultiDeviceKernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) { return getResultFromEachKernel(&Kernel::setArgument, argIndex, argSize, argVal); }
-cl_int MultiDeviceKernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc) { return getResultFromEachKernel(&Kernel::setArgSvmAlloc, argIndex, svmPtr, svmAlloc); }
 void MultiDeviceKernel::setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue) { callOnEachKernel(&Kernel::setUnifiedMemoryProperty, infoType, infoValue); }
-void MultiDeviceKernel::setSvmKernelExecInfo(GraphicsAllocation *argValue) { callOnEachKernel(&Kernel::setSvmKernelExecInfo, argValue); }
 void MultiDeviceKernel::clearSvmKernelExecInfo() { callOnEachKernel(&Kernel::clearSvmKernelExecInfo); }
-void MultiDeviceKernel::setUnifiedMemoryExecInfo(GraphicsAllocation *argValue) { callOnEachKernel(&Kernel::setUnifiedMemoryExecInfo, argValue); }
 void MultiDeviceKernel::clearUnifiedMemoryExecInfo() { callOnEachKernel(&Kernel::clearUnifiedMemoryExecInfo); }
 int MultiDeviceKernel::setKernelThreadArbitrationPolicy(uint32_t propertyValue) { return getResultFromEachKernel(&Kernel::setKernelThreadArbitrationPolicy, propertyValue); }
 cl_int MultiDeviceKernel::setKernelExecutionType(cl_execution_info_kernel_type_intel executionType) { return getResultFromEachKernel(&Kernel::setKernelExecutionType, executionType); }
@@ -67,5 +64,31 @@ cl_int MultiDeviceKernel::cloneKernel(MultiDeviceKernel *pSourceMultiDeviceKerne
         }
     }
     return CL_SUCCESS;
+}
+cl_int MultiDeviceKernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, MultiGraphicsAllocation *svmAllocs) {
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < kernels.size(); rootDeviceIndex++) {
+        auto pKernel = getKernel(rootDeviceIndex);
+        if (pKernel) {
+            auto svmAlloc = svmAllocs ? svmAllocs->getGraphicsAllocation(rootDeviceIndex) : nullptr;
+            pKernel->setArgSvmAlloc(argIndex, svmPtr, svmAlloc);
+        }
+    }
+    return CL_SUCCESS;
+}
+void MultiDeviceKernel::setSvmKernelExecInfo(const MultiGraphicsAllocation &argValue) {
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < kernels.size(); rootDeviceIndex++) {
+        auto pKernel = getKernel(rootDeviceIndex);
+        if (pKernel) {
+            pKernel->setSvmKernelExecInfo(argValue.getGraphicsAllocation(rootDeviceIndex));
+        }
+    }
+}
+void MultiDeviceKernel::setUnifiedMemoryExecInfo(const MultiGraphicsAllocation &argValue) {
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < kernels.size(); rootDeviceIndex++) {
+        auto pKernel = getKernel(rootDeviceIndex);
+        if (pKernel) {
+            pKernel->setUnifiedMemoryExecInfo(argValue.getGraphicsAllocation(rootDeviceIndex));
+        }
+    }
 }
 } // namespace NEO

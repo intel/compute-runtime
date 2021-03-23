@@ -467,8 +467,11 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
     }
 
     // copy additional information other than argument values set to source kernel with clSetKernelExecInfo
-    for (auto gfxAlloc : pSourceKernel->kernelSvmGfxAllocations) {
+    for (auto &gfxAlloc : pSourceKernel->kernelSvmGfxAllocations) {
         kernelSvmGfxAllocations.push_back(gfxAlloc);
+    }
+    for (auto &gfxAlloc : pSourceKernel->kernelUnifiedMemoryGfxAllocations) {
+        kernelUnifiedMemoryGfxAllocations.push_back(gfxAlloc);
     }
 
     this->isBuiltIn = pSourceKernel->isBuiltIn;
