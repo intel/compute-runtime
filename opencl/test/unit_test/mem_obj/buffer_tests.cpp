@@ -2135,6 +2135,15 @@ TEST_F(MultiRootDeviceBufferTest, WhenBuffersAreCreatedAndEnqueueCopyBufferRectC
     EXPECT_EQ(buffer2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
 }
 
+TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferMultiGraphicsAllocationIsCreatedInSystemMemoryPool) {
+    cl_int retVal = 0;
+
+    std::unique_ptr<Buffer> buffer1(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
+
+    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
+    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
+}
+
 TEST_F(MultiRootDeviceBufferTest, givenBufferWhenGetSurfaceSizeCalledWithoutAlignSizeForAuxTranslationThenCorrectValueReturned) {
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;

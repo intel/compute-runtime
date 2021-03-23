@@ -424,6 +424,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.rootDeviceIndex = properties.rootDeviceIndex;
     allocationData.useMmapObject = properties.useMmapObject;
 
+    allocationData.flags.useSystemMemory |= properties.flags.crossRootDeviceAccess;
+
     hwHelper.setExtraAllocationData(allocationData, properties, *hwInfo);
 
     return true;

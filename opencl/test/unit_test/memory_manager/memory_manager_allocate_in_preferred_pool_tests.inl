@@ -50,6 +50,28 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenNonHostMemoryAllocatoinTypeWhenA
     EXPECT_EQ(nullptr, allocData.hostPtr);
 }
 
+TEST_F(MemoryManagerGetAlloctionDataTests, givenMultiRootDeviceIndexAllocationPropertiesWhenAllocationDataIsQueriedThenUseSystemMemoryFlagsIsSet) {
+    AllocationData allocData;
+    AllocationProperties properties(mockRootDeviceIndex, true, 10, GraphicsAllocation::AllocationType::BUFFER, false, mockDeviceBitfield);
+    properties.flags.crossRootDeviceAccess = true;
+
+    MockMemoryManager mockMemoryManager;
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+}
+
+TEST_F(MemoryManagerGetAlloctionDataTests, givenDisabledCrossRootDeviceAccsessFlagInAllocationPropertiesWhenAllocationDataIsQueriedThenUseSystemMemoryFlagsIsNotSet) {
+    AllocationData allocData;
+    AllocationProperties properties(mockRootDeviceIndex, true, 10, GraphicsAllocation::AllocationType::BUFFER, false, mockDeviceBitfield);
+    properties.flags.crossRootDeviceAccess = false;
+
+    MockMemoryManager mockMemoryManager;
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
+}
+
 HWTEST_F(MemoryManagerGetAlloctionDataTests, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     AllocationProperties properties(mockRootDeviceIndex, true, 10, GraphicsAllocation::AllocationType::COMMAND_BUFFER, false, mockDeviceBitfield);

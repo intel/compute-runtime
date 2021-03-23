@@ -274,11 +274,13 @@ Buffer *Buffer::create(Context *context,
                 AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                                                                        allocationInfo[rootDeviceIndex].allocateMemory, size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                        *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex));
+                allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
                 allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, ptr);
             } else {
                 AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                                                                        allocationInfo[rootDeviceIndex].allocateMemory, size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                        *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex));
+                allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
                 allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
                 if (allocationInfo[rootDeviceIndex].memory) {
                     ptr = reinterpret_cast<void *>(allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer());
@@ -299,6 +301,7 @@ Buffer *Buffer::create(Context *context,
                                                                                                    true, // allocateMemory
                                                                                                    size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                    *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex));
+            allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
             allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
         }
 
