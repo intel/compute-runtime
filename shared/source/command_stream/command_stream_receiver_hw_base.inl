@@ -375,7 +375,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         latestSentStatelessMocsConfig = mocsIndex;
     }
 
-    if (dispatchFlags.useGlobalAtomics != lastSentUseGlobalAtomics) {
+    if (isMultiOsContextCapable() && (dispatchFlags.useGlobalAtomics != lastSentUseGlobalAtomics)) {
         isStateBaseAddressDirty = true;
         lastSentUseGlobalAtomics = dispatchFlags.useGlobalAtomics;
     }
