@@ -187,5 +187,39 @@ HWTEST2_F(ContextCreateSamplerTest, givenInvalidHardwareFamilyThenSamplerIsNotCr
     EXPECT_EQ(nullptr, sampler);
 }
 
+HWTEST2_F(ContextCreateSamplerTest, givenInvalidAddressModeThenSamplerIsNotCreated, SamplerCreateSupport) {
+    auto addressModeArray = std::make_unique<char[]>(sizeof(ze_sampler_address_mode_t));
+    addressModeArray[0] = 99; // out of range value
+    auto addressMode = *reinterpret_cast<ze_sampler_address_mode_t *>(addressModeArray.get());
+    ze_sampler_filter_mode_t filterMode = ZE_SAMPLER_FILTER_MODE_LINEAR;
+    ze_bool_t isNormalized = false;
+
+    ze_sampler_desc_t desc = {};
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    L0::Sampler *sampler = Sampler::create(gfxCoreFamily, device, &desc);
+
+    EXPECT_EQ(nullptr, sampler);
+}
+
+HWTEST2_F(ContextCreateSamplerTest, givenInvalidFilterModeThenSamplerIsNotCreated, SamplerCreateSupport) {
+    ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_NONE;
+    auto filterModeArray = std::make_unique<char[]>(sizeof(ze_sampler_filter_mode_t));
+    filterModeArray[0] = 99; // out of range value
+    ze_sampler_filter_mode_t filterMode = *reinterpret_cast<ze_sampler_filter_mode_t *>(filterModeArray.get());
+    ze_bool_t isNormalized = false;
+
+    ze_sampler_desc_t desc = {};
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    L0::Sampler *sampler = Sampler::create(gfxCoreFamily, device, &desc);
+
+    EXPECT_EQ(nullptr, sampler);
+}
+
 } // namespace ult
 } // namespace L0
