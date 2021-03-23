@@ -41,8 +41,6 @@ class Surface;
 class PrintfHandler;
 class MultiDeviceKernel;
 
-using KernelInfoContainer = StackVec<const KernelInfo *, 1>;
-
 class Kernel : public ReferenceTrackedObject<Kernel> {
   public:
     static const uint32_t kernelBinaryAlignement = 64;
@@ -157,10 +155,10 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     cl_int getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName,
                       size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
 
-    cl_int getWorkGroupInfo(ClDevice &clDevice, cl_kernel_work_group_info paramName,
+    cl_int getWorkGroupInfo(cl_kernel_work_group_info paramName,
                             size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
 
-    cl_int getSubGroupInfo(ClDevice &device, cl_kernel_sub_group_info paramName,
+    cl_int getSubGroupInfo(cl_kernel_sub_group_info paramName,
                            size_t inputValueSize, const void *inputValue,
                            size_t paramValueSize, void *paramValue,
                            size_t *paramValueSizeRet) const;
@@ -179,7 +177,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     void resizeSurfaceStateHeap(void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset);
 
-    void substituteKernelHeap(const Device &device, void *newKernelHeap, size_t newKernelHeapSize);
+    void substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize);
     bool isKernelHeapSubstituted() const;
     uint64_t getKernelId() const;
     void setKernelId(uint64_t newKernelId);
@@ -224,7 +222,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void patchEventPool(DeviceQueue *devQueue);
     void patchBlocksSimdSize();
     bool usesSyncBuffer();
-    void patchSyncBuffer(Device &device, GraphicsAllocation *gfxAllocation, size_t bufferOffset);
+    void patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOffset);
     void patchBindlessSurfaceStateOffsets(const Device &device, const size_t sshOffset);
 
     GraphicsAllocation *getKernelReflectionSurface() const {
@@ -368,7 +366,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         this->threadArbitrationPolicy = policy;
     }
     void getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *globalWorkSize, const size_t *globalWorkOffset,
-                                   size_t *localWorkSize, ClDevice &clDevice);
+                                   size_t *localWorkSize);
     uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue) const;
 
     uint64_t getKernelStartOffset(
@@ -383,9 +381,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo);
     uint32_t getAdditionalKernelExecInfo() const;
     MOCKABLE_VIRTUAL bool requiresWaDisableRccRhwoOptimization() const;
-    const ClDeviceVector &getDevices() const {
-        return program->getDevices();
-    }
 
     void setGlobalWorkOffsetValues(uint32_t globalWorkOffsetX, uint32_t globalWorkOffsetY, uint32_t globalWorkOffsetZ);
     void setGlobalWorkSizeValues(uint32_t globalWorkSizeX, uint32_t globalWorkSizeY, uint32_t globalWorkSizeZ);
@@ -479,10 +474,10 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     void *patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, GraphicsAllocation *svmAlloc);
 
-    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const Device &device, const ArgDescPointer &arg);
+    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg);
     // Sets-up both crossThreadData and ssh for given implicit (private/constant, etc.) allocation
     template <typename PatchTokenT>
-    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const Device &device, const PatchTokenT &patch);
+    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const PatchTokenT &patch);
 
     void getParentObjectCounts(ObjectCounts &objectCount);
     Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice, bool schedulerKernel = false);
@@ -508,7 +503,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     const ExecutionEnvironment &executionEnvironment;
     Program *program;
     ClDevice &clDevice;
-    const ClDeviceVector &deviceVector;
     const KernelInfo &kernelInfo;
 
     std::vector<SimpleKernelArgInfo> kernelArguments;
@@ -585,7 +579,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     GraphicsAllocation *privateSurface = nullptr;
     uint64_t privateSurfaceSize = 0u;
-    const uint32_t defaultRootDeviceIndex;
 
     struct KernelConfig {
         Vec3<size_t> gws;

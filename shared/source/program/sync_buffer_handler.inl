@@ -19,7 +19,7 @@ void NEO::SyncBufferHandler::prepareForEnqueue(size_t workGroupsCount, KernelT &
         usedBufferSize = 0;
     }
 
-    kernel.patchSyncBuffer(device, graphicsAllocation, usedBufferSize);
+    kernel.patchSyncBuffer(graphicsAllocation, usedBufferSize);
 
     usedBufferSize += requiredSize;
 }

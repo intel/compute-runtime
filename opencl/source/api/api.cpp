@@ -1951,7 +1951,6 @@ cl_int CL_API_CALL clGetKernelWorkGroupInfo(cl_kernel kernel,
     if (CL_SUCCESS == retVal) {
         auto pKernel = pMultiDeviceKernel->getKernel(pClDevice->getRootDeviceIndex());
         retVal = pKernel->getWorkGroupInfo(
-            *pClDevice,
             paramName,
             paramValueSize,
             paramValue,
@@ -5312,7 +5311,7 @@ cl_int CL_API_CALL clGetKernelSubGroupInfoKHR(cl_kernel kernel,
     case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE:
     case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE:
     case CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL:
-        return pKernel->getSubGroupInfo(*pClDevice, paramName,
+        return pKernel->getSubGroupInfo(paramName,
                                         inputValueSize, inputValue,
                                         paramValueSize, paramValue,
                                         paramValueSizeRet);
@@ -5418,7 +5417,7 @@ cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
     }
 
     auto pKernel = pMultiDeviceKernel->getKernel(pClDevice->getRootDeviceIndex());
-    retVal = pKernel->getSubGroupInfo(*pClDevice, paramName,
+    retVal = pKernel->getSubGroupInfo(paramName,
                                       inputValueSize, inputValue,
                                       paramValueSize, paramValue,
                                       paramValueSizeRet);
@@ -5796,7 +5795,7 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
         return retVal;
     }
 
-    pKernel->getSuggestedLocalWorkSize(workDim, globalWorkSize, globalWorkOffset, suggestedLocalWorkSize, pCommandQueue->getClDevice());
+    pKernel->getSuggestedLocalWorkSize(workDim, globalWorkSize, globalWorkOffset, suggestedLocalWorkSize);
 
     return retVal;
 }

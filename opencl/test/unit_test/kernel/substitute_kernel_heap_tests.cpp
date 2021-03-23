@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeT
     const size_t newHeapSize = initialHeapSize + 1;
     char newHeap[newHeapSize];
 
-    kernel.mockKernel->substituteKernelHeap(*pDevice, newHeap, newHeapSize);
+    kernel.mockKernel->substituteKernelHeap(newHeap, newHeapSize);
     auto secondAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, secondAllocation);
     auto secondAllocationSize = secondAllocation->getUnderlyingBufferSize();
@@ -64,7 +64,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThen
     const size_t newHeapSize = initialHeapSize;
     char newHeap[newHeapSize];
 
-    kernel.mockKernel->substituteKernelHeap(*pDevice, newHeap, newHeapSize);
+    kernel.mockKernel->substituteKernelHeap(newHeap, newHeapSize);
     auto secondAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, secondAllocation);
     auto secondAllocationSize = secondAllocation->getUnderlyingBufferSize();
@@ -93,7 +93,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeT
     const size_t newHeapSize = initialHeapSize - 1;
     char newHeap[newHeapSize];
 
-    kernel.mockKernel->substituteKernelHeap(*pDevice, newHeap, newHeapSize);
+    kernel.mockKernel->substituteKernelHeap(newHeap, newHeapSize);
     auto secondAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, secondAllocation);
     auto secondAllocationSize = secondAllocation->getUnderlyingBufferSize();
@@ -125,7 +125,7 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
 
     EXPECT_TRUE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
 
-    kernel.mockKernel->substituteKernelHeap(*pDevice, newHeap, newHeapSize);
+    kernel.mockKernel->substituteKernelHeap(newHeap, newHeapSize);
     auto secondAllocation = kernel.kernelInfo.kernelAllocation;
 
     EXPECT_FALSE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());

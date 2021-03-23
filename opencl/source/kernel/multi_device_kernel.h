@@ -15,6 +15,7 @@ struct OpenCLObjectMapper<_cl_kernel> {
 };
 
 using KernelVectorType = StackVec<Kernel *, 4>;
+using KernelInfoContainer = StackVec<const KernelInfo *, 4>;
 
 class MultiDeviceKernel : public BaseObject<_cl_kernel> {
   public:

@@ -19,9 +19,10 @@ MultiDeviceKernel::~MultiDeviceKernel() {
 Kernel *MultiDeviceKernel::determineDefaultKernel(KernelVectorType &kernelVector) {
     for (auto &pKernel : kernelVector) {
         if (pKernel) {
-            return kernelVector[(*pKernel->getDevices().begin())->getRootDeviceIndex()];
+            return pKernel;
         }
     }
+    UNRECOVERABLE_IF(true);
     return nullptr;
 }
 MultiDeviceKernel::MultiDeviceKernel(KernelVectorType kernelVector, const KernelInfoContainer kernelInfosArg) : kernels(std::move(kernelVector)),
@@ -39,7 +40,7 @@ MultiDeviceKernel::MultiDeviceKernel(KernelVectorType kernelVector, const Kernel
 const std::vector<Kernel::SimpleKernelArgInfo> &MultiDeviceKernel::getKernelArguments() const { return defaultKernel->getKernelArguments(); }
 cl_int MultiDeviceKernel::getInfo(cl_kernel_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const { return defaultKernel->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet); }
 cl_int MultiDeviceKernel::getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const { return defaultKernel->getArgInfo(argIndx, paramName, paramValueSize, paramValue, paramValueSizeRet); }
-const ClDeviceVector &MultiDeviceKernel::getDevices() const { return defaultKernel->getDevices(); }
+const ClDeviceVector &MultiDeviceKernel::getDevices() const { return program->getDevices(); }
 size_t MultiDeviceKernel::getKernelArgsNumber() const { return defaultKernel->getKernelArgsNumber(); }
 Context &MultiDeviceKernel::getContext() const { return defaultKernel->getContext(); }
 bool MultiDeviceKernel::getHasIndirectAccess() const { return defaultKernel->getHasIndirectAccess(); }

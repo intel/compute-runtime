@@ -778,7 +778,7 @@ bool KernelImp::usesSyncBuffer() {
     return this->kernelImmData->getDescriptor().kernelAttributes.flags.usesSyncBuffer;
 }
 
-void KernelImp::patchSyncBuffer(NEO::Device &device, NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
+void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
     this->residencyContainer.push_back(gfxAllocation);
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.syncBufferAddress,

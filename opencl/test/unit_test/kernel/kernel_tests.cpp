@@ -285,7 +285,6 @@ TEST_F(KernelTests, GivenKernelWorkGroupSizeWhenGettingWorkGroupInfoThenWorkGrou
     pKernel->maxKernelWorkGroupSize = static_cast<uint32_t>(kernelMaxWorkGroupSize);
 
     retVal = pKernel->getWorkGroupInfo(
-        *pClDevice,
         paramName,
         paramValueSize,
         &paramValue,
@@ -303,7 +302,6 @@ TEST_F(KernelTests, GivenKernelCompileWorkGroupSizeWhenGettingWorkGroupInfoThenC
     size_t paramValueSizeRet = 0;
 
     retVal = pKernel->getWorkGroupInfo(
-        *pClDevice,
         paramName,
         paramValueSize,
         &paramValue,
@@ -317,7 +315,6 @@ TEST_F(KernelTests, GivenInvalidParamNameWhenGettingWorkGroupInfoThenInvalidValu
     size_t paramValueSizeRet = 0x1234u;
 
     retVal = pKernel->getWorkGroupInfo(
-        *pClDevice,
         0,
         0,
         nullptr,
@@ -2818,15 +2815,15 @@ HWTEST_F(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedTh
     size_t maxKernelWkgSize;
 
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
-    kernel.mockKernel->getWorkGroupInfo(*device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
+    kernel.mockKernel->getWorkGroupInfo(CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
     EXPECT_EQ(1024u, maxKernelWkgSize);
 
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 16;
-    kernel.mockKernel->getWorkGroupInfo(*device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
+    kernel.mockKernel->getWorkGroupInfo(CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
     EXPECT_EQ(512u, maxKernelWkgSize);
 
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 8;
-    kernel.mockKernel->getWorkGroupInfo(*device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
+    kernel.mockKernel->getWorkGroupInfo(CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
     EXPECT_EQ(256u, maxKernelWkgSize);
 }
 
@@ -3166,7 +3163,7 @@ TEST(KernelTest, givenKernelWithPatchInfoCollectionEnabledWhenPatchWithImplicitS
     SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization patchToken{};
     uint64_t crossThreadData = 0;
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
-    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, device->getDevice(), patchToken);
+    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, patchToken);
     EXPECT_EQ(1u, kernel.mockKernel->getPatchInfoDataList().size());
 }
 
@@ -3176,7 +3173,7 @@ TEST(KernelTest, givenKernelWithPatchInfoCollecitonEnabledAndArgumentWithInvalid
     MockGraphicsAllocation mockAllocation;
     ArgDescPointer arg;
     uint64_t ptr = 0;
-    kernel.mockKernel->patchWithImplicitSurface(&ptr, mockAllocation, device->getDevice(), arg);
+    kernel.mockKernel->patchWithImplicitSurface(&ptr, mockAllocation, arg);
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
 }
 
@@ -3191,7 +3188,7 @@ TEST(KernelTest, givenKernelWithPatchInfoCollectionEnabledAndValidArgumentWhenPa
     arg.stateless = 0;
     uint64_t crossThreadData = 0;
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
-    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, device->getDevice(), arg);
+    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, arg);
     EXPECT_EQ(1u, kernel.mockKernel->getPatchInfoDataList().size());
 }
 
@@ -3202,7 +3199,7 @@ TEST(KernelTest, givenKernelWithPatchInfoCollectionDisabledWhenPatchWithImplicit
     SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization patchToken{};
     uint64_t crossThreadData = 0;
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
-    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, device->getDevice(), patchToken);
+    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, patchToken);
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
 }
 

@@ -190,7 +190,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSshRequiredWhenPatchingSyncBuffer
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
     EXPECT_NE(bufferAddress, surfaceAddress);
 
-    kernel->patchSyncBuffer(commandQueue->getDevice(), syncBufferHandler->graphicsAllocation, syncBufferHandler->usedBufferSize);
+    kernel->patchSyncBuffer(syncBufferHandler->graphicsAllocation, syncBufferHandler->usedBufferSize);
     surfaceAddress = surfaceState->getSurfaceBaseAddress();
     EXPECT_EQ(bufferAddress, surfaceAddress);
 }
