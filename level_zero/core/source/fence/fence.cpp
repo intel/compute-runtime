@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/wait_util.h"
 
@@ -36,8 +37,10 @@ ze_result_t FenceImp::queryStatus() {
         csr->downloadAllocations();
     }
 
-    auto hostAddr = static_cast<uint64_t *>(allocation->getUnderlyingBuffer());
-    return *hostAddr == Fence::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
+    uint64_t *hostAddr = static_cast<uint64_t *>(allocation->getUnderlyingBuffer());
+    uint32_t queryVal = Fence::STATE_CLEARED;
+    memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), static_cast<void *>(hostAddr), sizeof(uint32_t));
+    return queryVal == Fence::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
 }
 
 void FenceImp::initialize() {
