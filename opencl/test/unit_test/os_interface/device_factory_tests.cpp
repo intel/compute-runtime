@@ -301,6 +301,32 @@ TEST_F(DeviceFactoryTest, givenPrepareDeviceEnvironmentsCallWhenItIsDoneThenOsIn
     EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->osInterface);
 }
 
+TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenVectorReturnedWouldContainFirstDiscreteDevicesThenIntegratedDevices) {
+    uint32_t numRootDevices = 8u;
+    NEO::HardwareInfo hwInfo[8];
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        hwInfo[i] = *NEO::defaultHwInfo.get();
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo[i]);
+    }
+    executionEnvironment->rootDeviceEnvironments[0].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment->rootDeviceEnvironments[1].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment->rootDeviceEnvironments[2].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment->rootDeviceEnvironments[3].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    executionEnvironment->rootDeviceEnvironments[4].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    executionEnvironment->rootDeviceEnvironments[5].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment->rootDeviceEnvironments[6].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment->rootDeviceEnvironments[7].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+    for (auto iterator = 0u; iterator < 3; iterator++) {
+        EXPECT_FALSE(devices[iterator]->getHardwareInfo().capabilityTable.isIntegratedDevice); // Initial entries would be for discrete devices
+    }
+    for (auto iterator = 3u; iterator < 8u; iterator++) {
+        EXPECT_TRUE(devices[iterator]->getHardwareInfo().capabilityTable.isIntegratedDevice); // Later entries would be for integrated
+    }
+}
+
 TEST(DeviceFactory, givenHwModeSelectedWhenIsHwModeSelectedIsCalledThenTrueIsReturned) {
     DebugManagerStateRestore stateRestore;
     constexpr int32_t hwModes[] = {-1, CommandStreamReceiverType::CSR_HW, CommandStreamReceiverType::CSR_HW_WITH_AUB};
