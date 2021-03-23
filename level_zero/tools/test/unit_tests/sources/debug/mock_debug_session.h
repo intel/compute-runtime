@@ -25,6 +25,9 @@ class OsInterfaceWithDebugAttach : public NEO::OSInterface {
 struct DebugSessionMock : public L0::DebugSession {
     DebugSessionMock(const zet_debug_config_t &config, L0::Device *device) : DebugSession(config, device){};
     bool closeConnection() override { return true; }
+    ze_result_t initialize() override {
+        return ZE_RESULT_SUCCESS;
+    }
 };
 
 } // namespace ult
