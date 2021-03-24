@@ -72,7 +72,7 @@ ze_result_t DriverHandleImp::openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc
 }
 
 ze_result_t DriverHandleImp::closeIpcMemHandle(const void *ptr) {
-    return freeMem(ptr);
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DriverHandleImp::checkMemoryAccessFromDevice(Device *device, const void *ptr) {
