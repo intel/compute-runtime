@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,4 +16,5 @@ std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)>
                                     HeapIndex::HEAP_EXTERNAL,
                                     HeapIndex::HEAP_STANDARD,
                                     HeapIndex::HEAP_STANDARD64KB,
+                                    HeapIndex::HEAP_STANDARD2MB,
                                     HeapIndex::HEAP_SVM}};

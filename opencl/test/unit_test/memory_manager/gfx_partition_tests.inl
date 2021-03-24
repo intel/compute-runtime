@@ -80,17 +80,18 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
         gfxBase += sizeHeap32;
     }
 
-    uint32_t numStandardHeaps = static_cast<uint32_t>(HeapIndex::HEAP_STANDARD2MB) - static_cast<uint32_t>(HeapIndex::HEAP_STANDARD) + 1;
-    uint64_t sizeStandard = alignDown((gfxTop - gfxBase) / numStandardHeaps, GfxPartition::heapGranularity);
+    constexpr uint32_t numStandardHeaps = static_cast<uint32_t>(HeapIndex::HEAP_STANDARD2MB) - static_cast<uint32_t>(HeapIndex::HEAP_STANDARD) + 1;
+    constexpr uint64_t maxStandardHeapGranularity = std::max(GfxPartition::heapGranularity, GfxPartition::heapGranularity2MB);
+    uint64_t maxStandardHeapSize = alignDown((gfxTop - gfxBase) / numStandardHeaps, maxStandardHeapGranularity);
 
     EXPECT_TRUE(gfxPartition.heapInitialized(HeapIndex::HEAP_STANDARD));
     auto heapStandardBase = gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD);
     auto heapStandardSize = gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD);
     EXPECT_TRUE(isAligned<GfxPartition::heapGranularity>(heapStandardBase));
     EXPECT_EQ(heapStandardBase, gfxBase);
-    EXPECT_EQ(heapStandardSize, sizeStandard);
+    EXPECT_EQ(heapStandardSize, maxStandardHeapSize);
 
-    gfxBase += sizeStandard;
+    gfxBase += maxStandardHeapSize;
     EXPECT_TRUE(gfxPartition.heapInitialized(HeapIndex::HEAP_STANDARD64KB));
     auto heapStandard64KbBase = gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB);
     auto heapStandard64KbSize = gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB);
@@ -98,7 +99,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
     EXPECT_EQ(heapStandard64KbBase, heapStandardBase + heapStandardSize);
     EXPECT_EQ(heapStandard64KbSize, heapStandardSize);
 
-    gfxBase += sizeStandard;
+    gfxBase += maxStandardHeapSize;
     EXPECT_TRUE(gfxPartition.heapInitialized(HeapIndex::HEAP_STANDARD2MB));
     auto heapStandard2MbBase = gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD2MB);
     auto heapStandard2MbSize = gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD2MB);
@@ -107,7 +108,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
     EXPECT_EQ(heapStandard2MbSize, heapStandard64KbSize);
 
     EXPECT_LE(heapStandard2MbBase + heapStandard2MbSize, gfxTop);
-    EXPECT_LE(gfxBase + sizeStandard, gfxTop);
+    EXPECT_LE(gfxBase + maxStandardHeapSize, gfxTop);
 
     EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW));
     EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW));
@@ -121,6 +122,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
         }
 
         const bool isInternalHeapType = heap == HeapIndex::HEAP_INTERNAL || heap == HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
+        const auto heapGranularity = (heap == HeapIndex::HEAP_STANDARD2MB) ? GfxPartition::heapGranularity2MB : GfxPartition::heapGranularity;
 
         if (heap == HeapIndex::HEAP_SVM) {
             EXPECT_EQ(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap));
@@ -128,7 +130,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
             EXPECT_EQ(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap) + GfxPartition::internalFrontWindowPoolSize);
         } else {
             EXPECT_GT(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap));
-            EXPECT_EQ(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap) + GfxPartition::heapGranularity);
+            EXPECT_EQ(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap) + heapGranularity);
         }
 
         auto ptrBig = gfxPartition.heapAllocate(heap, sizeBig);
@@ -137,7 +139,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
         if (isInternalHeapType) {
             EXPECT_EQ(ptrBig, gfxPartition.getHeapBase(heap) + GfxPartition::internalFrontWindowPoolSize);
         } else {
-            EXPECT_EQ(ptrBig, gfxPartition.getHeapBase(heap) + GfxPartition::heapGranularity);
+            EXPECT_EQ(ptrBig, gfxPartition.getHeapBase(heap) + heapGranularity);
         }
         gfxPartition.heapFree(heap, ptrBig, sizeBig);
 
@@ -146,7 +148,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
 
         EXPECT_LT(gfxPartition.getHeapBase(heap), ptrSmall);
         EXPECT_GT(gfxPartition.getHeapLimit(heap), ptrSmall);
-        EXPECT_EQ(ptrSmall, gfxPartition.getHeapBase(heap) + gfxPartition.getHeapSize(heap) - GfxPartition::heapGranularity - sizeSmall);
+        EXPECT_EQ(ptrSmall, gfxPartition.getHeapBase(heap) + gfxPartition.getHeapSize(heap) - heapGranularity - sizeSmall);
 
         gfxPartition.heapFree(heap, ptrSmall, sizeSmall);
     }
@@ -213,12 +215,13 @@ TEST(GfxPartitionTest, GivenFullRange48BitSvmHeap64KbSplitWhenTestingGfxPartitio
     uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : maxNBitValue(48 - 1) + 1;
     uint64_t gfxTop = maxNBitValue(48) + 1;
 
-    auto numStandardHeaps = static_cast<uint32_t>(HeapIndex::HEAP_STANDARD2MB) - static_cast<uint32_t>(HeapIndex::HEAP_STANDARD) + 1;
-    auto heapStandardSize = alignDown((gfxTop - gfxBase - 4 * sizeHeap32) / numStandardHeaps, GfxPartition::heapGranularity);
-    auto heapStandard64KBSize = alignDown(heapStandardSize / numRootDevices, GfxPartition::heapGranularity);
+    constexpr auto numStandardHeaps = static_cast<uint32_t>(HeapIndex::HEAP_STANDARD2MB) - static_cast<uint32_t>(HeapIndex::HEAP_STANDARD) + 1;
+    constexpr auto maxStandardHeapGranularity = std::max(GfxPartition::heapGranularity, GfxPartition::heapGranularity2MB);
+    auto maxStandardHeapSize = alignDown((gfxTop - gfxBase - 4 * sizeHeap32) / numStandardHeaps, maxStandardHeapGranularity);
+    auto heapStandard64KBSize = alignDown(maxStandardHeapSize / numRootDevices, GfxPartition::heapGranularity);
 
     EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB));
-    EXPECT_EQ(gfxBase + 4 * sizeHeap32 + heapStandardSize + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
+    EXPECT_EQ(gfxBase + 4 * sizeHeap32 + maxStandardHeapSize + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
 }
 
 TEST(GfxPartitionTest, GivenFullRange47BitSvmHeap64KbSplitWhenTestingGfxPartitionThenAllExpectationsAreMet) {
@@ -231,12 +234,13 @@ TEST(GfxPartitionTest, GivenFullRange47BitSvmHeap64KbSplitWhenTestingGfxPartitio
     uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : (uint64_t)gfxPartition.getReservedCpuAddressRange();
     uint64_t gfxTop = is32bit ? maxNBitValue(47) + 1 : gfxBase + gfxPartition.getReservedCpuAddressRangeSize();
 
-    auto numStandardHeaps = static_cast<uint32_t>(HeapIndex::HEAP_STANDARD2MB) - static_cast<uint32_t>(HeapIndex::HEAP_STANDARD) + 1;
-    auto heapStandardSize = alignDown((gfxTop - gfxBase - 4 * sizeHeap32) / numStandardHeaps, GfxPartition::heapGranularity);
-    auto heapStandard64KBSize = alignDown(heapStandardSize / numRootDevices, GfxPartition::heapGranularity);
+    constexpr auto numStandardHeaps = static_cast<uint32_t>(HeapIndex::HEAP_STANDARD2MB) - static_cast<uint32_t>(HeapIndex::HEAP_STANDARD) + 1;
+    constexpr auto maxStandardHeapGranularity = std::max(GfxPartition::heapGranularity, GfxPartition::heapGranularity2MB);
+    auto maxStandardHeapSize = alignDown((gfxTop - gfxBase - 4 * sizeHeap32) / numStandardHeaps, maxStandardHeapGranularity);
+    auto heapStandard64KBSize = alignDown(maxStandardHeapSize / numRootDevices, GfxPartition::heapGranularity);
 
     EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB));
-    EXPECT_EQ(gfxBase + 4 * sizeHeap32 + heapStandardSize + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
+    EXPECT_EQ(gfxBase + 4 * sizeHeap32 + maxStandardHeapSize + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
 }
 
 class MockOsMemory : public OSMemory {

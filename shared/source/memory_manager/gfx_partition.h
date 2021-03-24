@@ -98,6 +98,8 @@ class GfxPartition {
             } else if (heapIndex == HeapIndex::HEAP_INTERNAL ||
                        heapIndex == HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) {
                 return getHeapBase(heapIndex) + GfxPartition::internalFrontWindowPoolSize;
+            } else if (heapIndex == HeapIndex::HEAP_STANDARD2MB) {
+                return getHeapBase(heapIndex) + GfxPartition::heapGranularity2MB;
             }
             return getHeapBase(heapIndex) + GfxPartition::heapGranularity;
         }
@@ -105,7 +107,8 @@ class GfxPartition {
 
     bool isLimitedRange() { return getHeap(HeapIndex::HEAP_SVM).getSize() == 0ull; }
 
-    static const uint64_t heapGranularity = 2 * MemoryConstants::megaByte;
+    static constexpr uint64_t heapGranularity = MemoryConstants::pageSize64k;
+    static constexpr uint64_t heapGranularity2MB = 2 * MemoryConstants::megaByte;
     static constexpr size_t externalFrontWindowPoolSize = 16 * MemoryConstants::megaByte;
     static constexpr size_t internalFrontWindowPoolSize = 1 * MemoryConstants::megaByte;
 
