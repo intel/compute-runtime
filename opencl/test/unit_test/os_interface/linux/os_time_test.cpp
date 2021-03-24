@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -193,6 +193,31 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultRes
 
     auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
     EXPECT_DOUBLE_EQ(result, defaultResolution);
+}
+
+TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlFailsThenDefaultClockIsReturned) {
+    auto defaultResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
+
+    auto drm = new DrmMockCustom();
+    osTime->updateDrm(drm);
+
+    drm->getParamRetValue = 0;
+    drm->ioctl_res = -1;
+
+    auto result = osTime->getDynamicDeviceTimerClock(*defaultHwInfo);
+    auto expectedResult = static_cast<uint64_t>(1000000000.0 / defaultResolution);
+    EXPECT_DOUBLE_EQ(result, expectedResult);
+}
+
+TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlSucceedsThenNonDefaultClockIsReturned) {
+    auto drm = new DrmMockCustom();
+    osTime->updateDrm(drm);
+
+    uint64_t frequency = 1500;
+    drm->getParamRetValue = static_cast<int>(frequency);
+
+    auto result = osTime->getDynamicDeviceTimerClock(*defaultHwInfo);
+    EXPECT_EQ(result, frequency);
 }
 
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenNoDrmThenDefaultResolutionIsReturned) {

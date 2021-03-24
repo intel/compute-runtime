@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,9 @@ class MockOSTime : public OSTime {
     }
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
         return OSTime::getDeviceTimerResolution(hwInfo);
+    }
+    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
+        return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
     }
     uint64_t getCpuRawTimestamp() override {
         return 0;

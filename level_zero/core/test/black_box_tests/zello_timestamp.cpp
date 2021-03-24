@@ -236,7 +236,8 @@ bool testKernelTimestampHostQuery(ze_context_handle_t &context,
               << " Kernel start: " << std::dec << kernelTsResults.context.kernelStart << " cycles\n"
               << " Kernel end: " << std::dec << kernelTsResults.context.kernelEnd << " cycles\n"
               << " Global end: " << std::dec << kernelTsResults.global.kernelEnd << " cycles\n"
-              << " Kernel duration : " << std::dec << kernelDuration << " cycles, " << kernelDuration * timerResolution << " ns\n";
+              << " timerResolution clock: " << std::dec << timerResolution << " cycles/s\n"
+              << " Kernel duration : " << std::dec << kernelDuration << " cycles, " << kernelDuration * (1000000000.0 / static_cast<double>(timerResolution)) << " ns\n";
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
@@ -342,7 +343,8 @@ bool testKernelTimestampApendQuery(ze_context_handle_t &context,
               << " Kernel start: " << std::dec << kernelTsResults->context.kernelStart << " cycles\n"
               << " Kernel end: " << std::dec << kernelTsResults->context.kernelEnd << " cycles\n"
               << " Global end: " << std::dec << kernelTsResults->global.kernelEnd << " cycles\n"
-              << " Kernel duration : " << std::dec << kernelDuration << " cycles, " << kernelDuration * timerResolution << " ns\n";
+              << " timerResolution clock: " << std::dec << timerResolution << " cycles/s\n"
+              << " Kernel duration : " << std::dec << kernelDuration << " cycles, " << kernelDuration * (1000000000.0 / static_cast<double>(timerResolution)) << " ns\n";
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));

@@ -107,6 +107,15 @@ double OSTimeWin::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) co
     return retVal;
 }
 
+uint64_t OSTimeWin::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const {
+    uint64_t retVal = 0u;
+    if (wddm) {
+        retVal = static_cast<uint64_t>(wddm->getTimestampFrequency());
+    }
+
+    return retVal;
+}
+
 uint64_t OSTimeWin::getCpuRawTimestamp() {
     LARGE_INTEGER cpuRawTimestamp = {};
     this->QueryPerfomanceCounterFnc(&cpuRawTimestamp);

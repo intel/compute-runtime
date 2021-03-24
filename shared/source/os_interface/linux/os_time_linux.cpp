@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -153,6 +153,22 @@ double OSTimeLinux::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) 
         }
     }
     return OSTime::getDeviceTimerResolution(hwInfo);
+}
+
+uint64_t OSTimeLinux::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const {
+    if (pDrm) {
+        drm_i915_getparam_t getParam = {};
+        int frequency = 0;
+
+        getParam.param = I915_PARAM_CS_TIMESTAMP_FREQUENCY;
+        getParam.value = &frequency;
+        auto error = pDrm->ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
+
+        if (!error) {
+            return static_cast<uint64_t>(frequency);
+        }
+    }
+    return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
 }
 
 uint64_t OSTimeLinux::getCpuRawTimestamp() {

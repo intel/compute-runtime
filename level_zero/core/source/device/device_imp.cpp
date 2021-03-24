@@ -392,7 +392,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount * ((this->numSubDevices > 0) ? this->numSubDevices : 1);
 
-    pDeviceProperties->timerResolution = this->neoDevice->getDeviceInfo().outProfilingTimerResolution;
+    pDeviceProperties->timerResolution = this->neoDevice->getDeviceInfo().outProfilingTimerClock;
 
     pDeviceProperties->timestampValidBits = hardwareInfo.capabilityTable.timestampValidBits;
 

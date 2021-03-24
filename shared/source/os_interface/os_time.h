@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,7 @@ class OSTime {
     virtual bool getCpuGpuTime(TimeStampData *pGpuCpuTime) = 0;
     virtual double getHostTimerResolution() const = 0;
     virtual double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const = 0;
+    virtual uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const = 0;
     virtual uint64_t getCpuRawTimestamp() = 0;
     OSInterface *getOSInterface() const {
         return osInterface;

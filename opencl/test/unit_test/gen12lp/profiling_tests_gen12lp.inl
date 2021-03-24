@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,6 +90,10 @@ class MyOSTime : public OSTime {
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
         EXPECT_FALSE(true);
         return 1.0;
+    }
+    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
+        EXPECT_FALSE(true);
+        return 0;
     }
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override {
         EXPECT_FALSE(true);

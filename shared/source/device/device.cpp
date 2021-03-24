@@ -208,6 +208,10 @@ double Device::getProfilingTimerResolution() {
     return osTime->getDynamicDeviceTimerResolution(getHardwareInfo());
 }
 
+uint64_t Device::getProfilingTimerClock() {
+    return osTime->getDynamicDeviceTimerClock(getHardwareInfo());
+}
+
 bool Device::isSimulation() const {
     auto &hwInfo = getHardwareInfo();
 

@@ -64,6 +64,7 @@ class Device : public ReferenceTrackedObject<Device> {
     GmmClientContext *getGmmClientContext() const;
     OSTime *getOSTime() const { return osTime.get(); };
     double getProfilingTimerResolution();
+    uint64_t getProfilingTimerClock();
     double getPlatformHostTimerResolution() const;
     bool isSimulation() const;
     GFXCORE_FAMILY getRenderCoreFamily() const;

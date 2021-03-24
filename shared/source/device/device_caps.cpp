@@ -71,6 +71,9 @@ void Device::initializeCaps() {
     deviceInfo.profilingTimerResolution = getProfilingTimerResolution();
     if (DebugManager.flags.OverrideProfilingTimerResolution.get() != -1) {
         deviceInfo.profilingTimerResolution = static_cast<double>(DebugManager.flags.OverrideProfilingTimerResolution.get());
+        deviceInfo.outProfilingTimerClock = static_cast<size_t>(1000000000.0 / deviceInfo.profilingTimerResolution);
+    } else {
+        deviceInfo.outProfilingTimerClock = static_cast<size_t>(getProfilingTimerClock());
     }
 
     deviceInfo.outProfilingTimerResolution = static_cast<size_t>(deviceInfo.profilingTimerResolution);

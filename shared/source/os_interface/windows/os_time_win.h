@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ class OSTimeWin : public OSTime {
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override;
     double getHostTimerResolution() const override;
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override;
+    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override;
     uint64_t getCpuRawTimestamp() override;
 
   protected:
