@@ -2238,7 +2238,7 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     ASSERT_NE(nullptr, pKernel);
 
     size_t numBTS1 = pKernel->getNumberOfBindingTableStates();
-    EXPECT_EQ(2u, numBTS1);
+    EXPECT_LE(2u, numBTS1);
     size_t sizeSurfaceStates1 = pKernel->getSurfaceStateHeapSize();
     EXPECT_NE(0u, sizeSurfaceStates1);
     size_t offsetBTS1 = pKernel->getBindingTableOffset();
