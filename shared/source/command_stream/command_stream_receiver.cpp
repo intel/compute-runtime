@@ -606,15 +606,15 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
     return true;
 }
 
-TagAllocator<HwTimeStamps> *CommandStreamReceiver::getEventTsAllocator() {
+TagAllocatorBase *CommandStreamReceiver::getEventTsAllocator() {
     if (profilingTimeStampAllocator.get() == nullptr) {
-        profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(
-            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, sizeof(HwTimeStamps), false, osContext->getDeviceBitfield());
+        profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
+                                                                                   sizeof(HwTimeStamps), false, osContext->getDeviceBitfield());
     }
     return profilingTimeStampAllocator.get();
 }
 
-TagAllocator<HwPerfCounter> *CommandStreamReceiver::getEventPerfCountAllocator(const uint32_t tagSize) {
+TagAllocatorBase *CommandStreamReceiver::getEventPerfCountAllocator(const uint32_t tagSize) {
     if (perfCounterAllocator.get() == nullptr) {
         perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(
             rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, tagSize, false, osContext->getDeviceBitfield());
@@ -622,15 +622,15 @@ TagAllocator<HwPerfCounter> *CommandStreamReceiver::getEventPerfCountAllocator(c
     return perfCounterAllocator.get();
 }
 
-TagAllocator<TimestampPacketStorage> *CommandStreamReceiver::getTimestampPacketAllocator() {
+TagAllocatorBase *CommandStreamReceiver::getTimestampPacketAllocator() {
     if (timestampPacketAllocator.get() == nullptr) {
         // dont release nodes in aub/tbx mode, to avoid removing semaphores optimization or reusing returned tags
         bool doNotReleaseNodes = (getType() > CommandStreamReceiverType::CSR_HW) ||
                                  DebugManager.flags.DisableTimestampPacketOptimizations.get();
 
-        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketStorage>>(
+        timestampPacketAllocator = std::make_unique<TagAllocator<NEO::TimestampPackets<uint32_t>>>(
             rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize * 4,
-            sizeof(TimestampPacketStorage), doNotReleaseNodes, osContext->getDeviceBitfield());
+            sizeof(NEO::TimestampPackets<uint32_t>), doNotReleaseNodes, osContext->getDeviceBitfield());
     }
     return timestampPacketAllocator.get();
 }

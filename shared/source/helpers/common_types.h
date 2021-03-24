@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,5 +22,14 @@ enum class DebugPauseState : uint32_t {
     waitingForUserEndConfirmation,
     hasUserEndConfirmation,
     terminate
+};
+
+class TagTypeBase {
+};
+
+enum class TagNodeType {
+    TimestampPacket,
+    HwTimeStamps,
+    HwPerfCounter
 };
 } // namespace NEO

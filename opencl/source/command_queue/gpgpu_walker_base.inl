@@ -133,7 +133,7 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     CommandQueue &commandQueue,
-    TagNode<HwPerfCounter> &hwPerfCounter,
+    TagNodeBase &hwPerfCounter,
     LinearStream *commandStream) {
 
     const auto pPerformanceCounters = commandQueue.getPerfCounters();
@@ -149,7 +149,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     CommandQueue &commandQueue,
-    TagNode<HwPerfCounter> &hwPerfCounter,
+    TagNodeBase &hwPerfCounter,
     LinearStream *commandStream) {
 
     const auto pPerformanceCounters = commandQueue.getPerfCounters();

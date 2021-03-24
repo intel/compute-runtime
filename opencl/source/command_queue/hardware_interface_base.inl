@@ -30,8 +30,8 @@ inline WALKER_TYPE<GfxFamily> *HardwareInterface<GfxFamily>::allocateWalkerSpace
 
 template <typename GfxFamily>
 inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(
-    TagNode<HwTimeStamps> *hwTimeStamps,
-    TagNode<HwPerfCounter> *hwPerfCounter,
+    TagNodeBase *hwTimeStamps,
+    TagNodeBase *hwPerfCounter,
     LinearStream *commandStream,
     CommandQueue &commandQueue) {
 
@@ -46,8 +46,8 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(
 
 template <typename GfxFamily>
 inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfEndCommands(
-    TagNode<HwTimeStamps> *hwTimeStamps,
-    TagNode<HwPerfCounter> *hwPerfCounter,
+    TagNodeBase *hwTimeStamps,
+    TagNodeBase *hwPerfCounter,
     LinearStream *commandStream,
     CommandQueue &commandQueue) {
 
@@ -66,8 +66,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     const MultiDispatchInfo &multiDispatchInfo,
     const CsrDependencies &csrDependencies,
     KernelOperation *blockedCommandsData,
-    TagNode<HwTimeStamps> *hwTimeStamps,
-    TagNode<HwPerfCounter> *hwPerfCounter,
+    TagNodeBase *hwTimeStamps,
+    TagNodeBase *hwPerfCounter,
     TimestampPacketDependencies *timestampPacketDependencies,
     TimestampPacketContainer *currentTimestampPacketNodes,
     uint32_t commandType) {

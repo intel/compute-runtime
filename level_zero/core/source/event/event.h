@@ -22,7 +22,6 @@ namespace L0 {
 typedef uint64_t FlushStamp;
 struct EventPool;
 struct MetricStreamer;
-using TimestampPacketStorage = NEO::TimestampPackets<uint32_t>;
 
 struct Event : _ze_event_handle_t {
     virtual ~Event() = default;
@@ -61,7 +60,7 @@ struct Event : _ze_event_handle_t {
     ze_event_scope_flags_t waitScope = 0u;
     bool isTimestampEvent = false;
 
-    std::unique_ptr<TimestampPacketStorage> timestampsData = nullptr;
+    std::unique_ptr<NEO::TimestampPackets<uint32_t>> timestampsData = nullptr;
     uint64_t globalStartTS;
     uint64_t globalEndTS;
     uint64_t contextStartTS;
@@ -158,7 +157,7 @@ struct EventPoolImp : public EventPool {
     size_t numEvents;
 
   protected:
-    const uint32_t eventSize = static_cast<uint32_t>(alignUp(NEO::TimestampPacketSizeControl::preferredPacketCount * sizeof(struct TimestampPacketStorage::Packet),
+    const uint32_t eventSize = static_cast<uint32_t>(alignUp(NEO::TimestampPacketSizeControl::preferredPacketCount * sizeof(struct NEO::TimestampPackets<uint32_t>::Packet),
                                                              MemoryConstants::cacheLineSize));
     const uint32_t eventAlignment = MemoryConstants::cacheLineSize;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,8 @@
 
 namespace NEO {
 
-struct HwTimeStamps {
+class HwTimeStamps : public TagTypeBase {
+  public:
     void initialize() {
         GlobalStartTS = 0;
         ContextStartTS = 0;
@@ -21,12 +22,18 @@ struct HwTimeStamps {
         GlobalCompleteTS = 0;
         ContextCompleteTS = 0;
     }
-    bool isCompleted() const { return true; }
-    uint32_t getImplicitGpuDependenciesCount() const { return 0; }
 
-    static GraphicsAllocation::AllocationType getAllocationType() {
+    static constexpr GraphicsAllocation::AllocationType getAllocationType() {
         return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
     }
+
+    static constexpr TagNodeType getTagNodeType() { return TagNodeType::HwTimeStamps; }
+
+    uint64_t getContextStartValue(uint32_t) const { return ContextStartTS; }
+    uint64_t getGlobalStartValue(uint32_t) const { return GlobalStartTS; }
+    uint64_t getContextEndValue(uint32_t) const { return ContextEndTS; }
+    uint64_t getGlobalEndValue(uint32_t) const { return GlobalEndTS; }
+
     uint64_t GlobalStartTS;
     uint64_t ContextStartTS;
     uint64_t GlobalEndTS;
@@ -34,4 +41,7 @@ struct HwTimeStamps {
     uint64_t GlobalCompleteTS;
     uint64_t ContextCompleteTS;
 };
+
+static_assert((6 * sizeof(uint64_t)) == sizeof(HwTimeStamps),
+              "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 } // namespace NEO

@@ -43,8 +43,9 @@ class MultiGraphicsAllocation;
 class OsContext;
 class OSInterface;
 class ScratchSpaceController;
-struct HwPerfCounter;
-struct HwTimeStamps;
+class HwPerfCounter;
+class HwTimeStamps;
+class TagAllocatorBase;
 
 template <typename TSize>
 class TimestampPackets;
@@ -192,9 +193,9 @@ class CommandStreamReceiver {
     virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
     OsContext &getOsContext() const { return *osContext; }
 
-    TagAllocator<HwTimeStamps> *getEventTsAllocator();
-    TagAllocator<HwPerfCounter> *getEventPerfCountAllocator(const uint32_t tagSize);
-    TagAllocator<TimestampPacketStorage> *getTimestampPacketAllocator();
+    TagAllocatorBase *getEventTsAllocator();
+    TagAllocatorBase *getEventPerfCountAllocator(const uint32_t tagSize);
+    TagAllocatorBase *getTimestampPacketAllocator();
 
     virtual bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
 
@@ -261,9 +262,9 @@ class CommandStreamReceiver {
     std::unique_ptr<InternalAllocationStorage> internalAllocationStorage;
     std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
     std::unique_ptr<ScratchSpaceController> scratchSpaceController;
-    std::unique_ptr<TagAllocator<HwTimeStamps>> profilingTimeStampAllocator;
-    std::unique_ptr<TagAllocator<HwPerfCounter>> perfCounterAllocator;
-    std::unique_ptr<TagAllocator<TimestampPacketStorage>> timestampPacketAllocator;
+    std::unique_ptr<TagAllocatorBase> profilingTimeStampAllocator;
+    std::unique_ptr<TagAllocatorBase> perfCounterAllocator;
+    std::unique_ptr<TagAllocatorBase> timestampPacketAllocator;
     std::unique_ptr<Thread> userPauseConfirmation;
 
     ResidencyContainer residencyAllocations;

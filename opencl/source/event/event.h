@@ -24,7 +24,7 @@
 
 namespace NEO {
 template <typename TagType>
-struct TagNode;
+class TagNode;
 class CommandQueue;
 class Context;
 class Device;
@@ -106,7 +106,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     void setProfilingEnabled(bool profilingEnabled) { this->profilingEnabled = profilingEnabled; }
 
-    TagNode<HwTimeStamps> *getHwTimeStampNode();
+    TagNodeBase *getHwTimeStampNode();
 
     void addTimestampPacketNodes(const TimestampPacketContainer &inputTimestampPacketContainer);
     TimestampPacketContainer *getTimestampPacketNodes() const;
@@ -119,7 +119,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         this->perfCountersEnabled = perfCountersEnabled;
     }
 
-    TagNode<HwPerfCounter> *getHwPerfCounterNode();
+    TagNodeBase *getHwPerfCounterNode();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::atomic<uint32_t> taskLevel;
@@ -372,8 +372,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     uint64_t completeTimeStamp;
     uint32_t bcsTaskCount = 0;
     bool perfCountersEnabled;
-    TagNode<HwTimeStamps> *timeStampNode = nullptr;
-    TagNode<HwPerfCounter> *perfCounterNode = nullptr;
+    TagNodeBase *timeStampNode = nullptr;
+    TagNodeBase *perfCounterNode = nullptr;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
     //number of events this event depends on
     std::atomic<int> parentCount;

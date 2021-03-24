@@ -205,10 +205,10 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyR
     GenCmdList cmdList;
 
     auto baseAddr = event->getGpuAddress();
-    auto contextStartOffset = offsetof(TimestampPacketStorage::Packet, contextStart);
-    auto globalStartOffset = offsetof(TimestampPacketStorage::Packet, globalStart);
-    auto contextEndOffset = offsetof(TimestampPacketStorage::Packet, contextEnd);
-    auto globalEndOffset = offsetof(TimestampPacketStorage::Packet, globalEnd);
+    auto contextStartOffset = offsetof(TimestampPackets<uint32_t>::Packet, contextStart);
+    auto globalStartOffset = offsetof(TimestampPackets<uint32_t>::Packet, globalStart);
+    auto contextEndOffset = offsetof(TimestampPackets<uint32_t>::Packet, contextEnd);
+    auto globalEndOffset = offsetof(TimestampPackets<uint32_t>::Packet, globalEnd);
 
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,23 +14,23 @@
 
 namespace NEO {
 
-struct HwPerfCounter {
+class HwPerfCounter : public TagTypeBase {
+  public:
     void initialize() {
         query = {};
         report[0] = 0;
     }
 
-    static GraphicsAllocation::AllocationType getAllocationType() {
+    static constexpr GraphicsAllocation::AllocationType getAllocationType() {
         return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
     }
+
+    static constexpr TagNodeType getTagNodeType() { return TagNodeType::HwPerfCounter; }
 
     template <typename Type>
     static uint32_t getSize(Type &performanceCounters) {
         return sizeof(query) + performanceCounters.getGpuReportSize();
     }
-
-    bool isCompleted() const { return true; }
-    uint32_t getImplicitGpuDependenciesCount() const { return 0; }
 
     // Gpu report size is not known during compile time.
     // Such information will be provided by metrics library dll.
@@ -43,4 +43,5 @@ struct HwPerfCounter {
 
     uint8_t report[1] = {};
 };
+
 } // namespace NEO

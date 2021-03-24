@@ -201,7 +201,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeC
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
     commandList->appendSignalEvent(event->toHandle());
-    auto contextOffset = offsetof(TimestampPacketStorage::Packet, contextEnd);
+    auto contextOffset = offsetof(TimestampPackets<uint32_t>::Packet, contextEnd);
     auto baseAddr = event->getGpuAddress();
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
 

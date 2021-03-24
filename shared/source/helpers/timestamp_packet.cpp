@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-void TimestampPacketContainer::add(Node *timestampPacketNode) {
+void TimestampPacketContainer::add(TagNodeBase *timestampPacketNode) {
     timestampPacketNodes.push_back(timestampPacketNode);
 }
 
@@ -28,7 +28,7 @@ void TimestampPacketContainer::swapNodes(TimestampPacketContainer &timestampPack
 }
 
 void TimestampPacketContainer::resolveDependencies(bool clearAllDependencies) {
-    std::vector<Node *> pendingNodes;
+    std::vector<TagNodeBase *> pendingNodes;
 
     for (auto node : timestampPacketNodes) {
         if (node->canBeReleased() || clearAllDependencies) {

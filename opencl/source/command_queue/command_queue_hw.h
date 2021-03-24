@@ -472,14 +472,14 @@ class CommandQueueHw : public CommandQueue {
                                                    size_t hostSlicePitch);
     void processDeviceEnqueue(DeviceQueueHw<GfxFamily> *devQueueHw,
                               const MultiDispatchInfo &multiDispatchInfo,
-                              TagNode<HwTimeStamps> *hwTimeStamps,
+                              TagNodeBase *hwTimeStamps,
                               bool &blocking);
 
     template <uint32_t commandType>
     void processDispatchForKernels(const MultiDispatchInfo &multiDispatchInfo,
                                    std::unique_ptr<PrintfHandler> &printfHandler,
                                    Event *event,
-                                   TagNode<NEO::HwTimeStamps> *&hwTimeStamps,
+                                   TagNodeBase *&hwTimeStamps,
                                    bool blockQueue,
                                    DeviceQueueHw<GfxFamily> *devQueueHw,
                                    CsrDependencies &csrDeps,

@@ -174,7 +174,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     DeviceQueueHw<GfxFamily> *devQueueHw = castToObject<DeviceQueueHw<GfxFamily>>(devQueue);
     auto clearAllDependencies = queueDependenciesClearRequired();
 
-    TagNode<HwTimeStamps> *hwTimeStamps = nullptr;
+    TagNodeBase *hwTimeStamps = nullptr;
 
     auto commandStreamRecieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
@@ -385,13 +385,13 @@ template <uint32_t commandType>
 void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInfo &multiDispatchInfo,
                                                           std::unique_ptr<PrintfHandler> &printfHandler,
                                                           Event *event,
-                                                          TagNode<HwTimeStamps> *&hwTimeStamps,
+                                                          TagNodeBase *&hwTimeStamps,
                                                           bool blockQueue,
                                                           DeviceQueueHw<GfxFamily> *devQueueHw,
                                                           CsrDependencies &csrDeps,
                                                           KernelOperation *blockedCommandsData,
                                                           TimestampPacketDependencies &timestampPacketDependencies) {
-    TagNode<HwPerfCounter> *hwPerfCounter = nullptr;
+    TagNodeBase *hwPerfCounter = nullptr;
     FileLoggerInstance().dumpKernelArgs(&multiDispatchInfo);
 
     printfHandler.reset(PrintfHandler::create(multiDispatchInfo, *device));
@@ -565,7 +565,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
 template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::processDeviceEnqueue(DeviceQueueHw<GfxFamily> *devQueueHw,
                                                      const MultiDispatchInfo &multiDispatchInfo,
-                                                     TagNode<HwTimeStamps> *hwTimeStamps,
+                                                     TagNodeBase *hwTimeStamps,
                                                      bool &blocking) {
     auto parentKernel = multiDispatchInfo.peekParentKernel();
     size_t minSizeSSHForEM = HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(*parentKernel);

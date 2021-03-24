@@ -103,7 +103,7 @@ void DeviceQueueHw<GfxFamily>::initPipeControl(PIPE_CONTROL *pc) {
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount) {
+void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNodeBase *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount) {
     // CleanUp Section
     auto offset = slbCS.getUsed();
     auto alignmentSize = alignUp(offset, MemoryConstants::pageSize) - offset;

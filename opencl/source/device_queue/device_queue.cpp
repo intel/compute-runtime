@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -169,7 +169,7 @@ void DeviceQueue::initDeviceQueue() {
 }
 
 void DeviceQueue::setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel,
-                                              uint32_t parentCount, uint64_t tagAddress, uint32_t taskCount, TagNode<HwTimeStamps> *hwTimeStamp, bool isCcsUsed) {
+                                              uint32_t parentCount, uint64_t tagAddress, uint32_t taskCount, TagNodeBase *hwTimeStamp, bool isCcsUsed) {
     setupIndirectState(surfaceStateHeap, dynamicStateHeap, parentKernel, parentCount, isCcsUsed);
     addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, tagAddress, taskCount);
 }
@@ -178,7 +178,7 @@ void DeviceQueue::setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHea
     return;
 }
 
-void DeviceQueue::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount) {
+void DeviceQueue::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNodeBase *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount) {
     return;
 }
 

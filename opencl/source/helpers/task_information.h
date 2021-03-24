@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,10 +27,10 @@ class Kernel;
 class MemObj;
 class Surface;
 class PrintfHandler;
-struct HwTimeStamps;
+class HwTimeStamps;
 class TimestampPacketContainer;
 template <class T>
-struct TagNode;
+class TagNode;
 
 enum MapOperationType {
     MAP,
@@ -99,7 +99,7 @@ class Command : public IFNode<Command> {
     void setEventsRequest(EventsRequest &eventsRequest);
     void makeTimestampPacketsResident(CommandStreamReceiver &commandStreamReceiver);
 
-    TagNode<HwTimeStamps> *timestamp = nullptr;
+    TagNodeBase *timestamp = nullptr;
     CompletionStamp completionStamp = {};
 
   protected:

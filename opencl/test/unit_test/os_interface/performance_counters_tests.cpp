@@ -97,7 +97,7 @@ TEST_P(PerformanceCountersProcessEventTest, givenNullptrInputParamWhenProcessEve
     TagNode<HwPerfCounter> query = {};
     query.tagForCpuAccess = &counters;
 
-    performanceCountersBase->getQueryHandle(counters.query.handle);
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
     auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, nullptr, &outputParamSize, eventComplete);
     performanceCountersBase->deleteQuery(counters.query.handle);
 
@@ -111,7 +111,7 @@ TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEve
     TagNode<HwPerfCounter> query = {};
     query.tagForCpuAccess = &counters;
 
-    performanceCountersBase->getQueryHandle(counters.query.handle);
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
     auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, inputParam.get(), &outputParamSize, eventComplete);
     performanceCountersBase->deleteQuery(counters.query.handle);
 
@@ -127,11 +127,12 @@ TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEve
 TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEventPerfCountersIsNotCalledThenReturnsFalse) {
     eventComplete = GetParam();
     EXPECT_EQ(0ull, outputParamSize);
+    HwPerfCounter tag = {};
     TagNode<HwPerfCounter> query = {};
-    query.tagForCpuAccess = nullptr;
+    query.tagForCpuAccess = &tag;
 
     auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, inputParam.get(), &outputParamSize, eventComplete);
-    EXPECT_FALSE(retVal);
+    EXPECT_EQ(eventComplete, retVal);
 }
 
 TEST_F(PerformanceCountersProcessEventTest, givenInvalidInputParamSizeWhenProcessEventPerfCountersIsCalledThenReturnsFalse) {
@@ -141,7 +142,7 @@ TEST_F(PerformanceCountersProcessEventTest, givenInvalidInputParamSizeWhenProces
     TagNode<HwPerfCounter> query = {};
     query.tagForCpuAccess = &counters;
 
-    performanceCountersBase->getQueryHandle(counters.query.handle);
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
     auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize - 1, inputParam.get(), &outputParamSize, eventComplete);
     performanceCountersBase->deleteQuery(counters.query.handle);
 
@@ -156,7 +157,7 @@ TEST_F(PerformanceCountersProcessEventTest, givenNullptrOutputParamSizeWhenProce
     TagNode<HwPerfCounter> query = {};
     query.tagForCpuAccess = &counters;
 
-    performanceCountersBase->getQueryHandle(counters.query.handle);
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
     auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, inputParam.get(), nullptr, eventComplete);
     performanceCountersBase->deleteQuery(counters.query.handle);
 
@@ -171,7 +172,7 @@ TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeWhenProcess
     TagNode<HwPerfCounter> query = {};
     query.tagForCpuAccess = &counters;
 
-    performanceCountersBase->getQueryHandle(counters.query.handle);
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
     auto retVal = performanceCountersBase->getApiReport(&query, 0, nullptr, &outputParamSize, eventComplete);
     performanceCountersBase->deleteQuery(counters.query.handle);
 
@@ -186,7 +187,7 @@ TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeAndNullptrO
     TagNode<HwPerfCounter> query = {};
     query.tagForCpuAccess = &counters;
 
-    performanceCountersBase->getQueryHandle(counters.query.handle);
+    performanceCountersBase->getQueryHandleRef(counters.query.handle);
     auto retVal = performanceCountersBase->getApiReport(&query, 0, nullptr, nullptr, eventComplete);
     performanceCountersBase->deleteQuery(counters.query.handle);
 
@@ -487,7 +488,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
     EXPECT_TRUE(performanceCountersBase->enable(false));
 
-    performanceCountersBase->getQueryHandle(query);
+    performanceCountersBase->getQueryHandleRef(query);
     EXPECT_TRUE(query.IsValid());
 
     performanceCountersBase->deleteQuery(query);
@@ -587,13 +588,13 @@ TEST_F(PerformanceCountersMetricsLibraryTest, WhenGettingHwPerfCounterThenValidP
     std::unique_ptr<Event> event(new Event(queue.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
+    auto perfCounter = static_cast<TagNode<HwPerfCounter> *>(event->getHwPerfCounterNode());
     ASSERT_NE(nullptr, perfCounter);
 
-    ASSERT_EQ(0ULL, perfCounter->report[0]);
+    ASSERT_EQ(0ULL, perfCounter->tagForCpuAccess->report[0]);
     EXPECT_TRUE(perfCounter->isCompleted());
 
-    HwPerfCounter *perfCounter2 = event->getHwPerfCounterNode()->tagForCpuAccess;
+    auto perfCounter2 = event->getHwPerfCounterNode();
     ASSERT_EQ(perfCounter, perfCounter2);
 
     performanceCountersBase->shutdown();
@@ -633,7 +634,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, WhenCreatingEventThenHwPerfCounter
     std::unique_ptr<Event> event(new Event(queue.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
+    HwPerfCounter *perfCounter = static_cast<TagNode<HwPerfCounter> *>(event->getHwPerfCounterNode())->tagForCpuAccess;
     ASSERT_NE(nullptr, perfCounter);
 
     GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation();

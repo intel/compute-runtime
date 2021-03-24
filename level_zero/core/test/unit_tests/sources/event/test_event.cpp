@@ -46,7 +46,7 @@ TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelT
 
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
-    uint32_t packetsSize = NEO::TimestampPacketSizeControl::preferredPacketCount * sizeof(struct TimestampPacketStorage::Packet);
+    uint32_t packetsSize = NEO::TimestampPacketSizeControl::preferredPacketCount * sizeof(struct TimestampPackets<uint32_t>::Packet);
     uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(packetsSize, MemoryConstants::cacheLineSize));
     EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }
@@ -364,12 +364,12 @@ TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsIncreasedThenCo
     event->increasePacketsInUse();
     EXPECT_EQ(1u, event->getPacketsInUse());
 
-    gpuAddr += sizeof(TimestampPacketStorage::Packet);
+    gpuAddr += sizeof(TimestampPackets<uint32_t>::Packet);
     EXPECT_EQ(gpuAddr, event->getTimestampPacketAddress());
 }
 
 HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
-    TimestampPacketStorage::Packet data = {};
+    TimestampPackets<uint32_t>::Packet data = {};
     data.contextStart = 1u;
     data.contextEnd = 2u;
     data.globalStart = 3u;

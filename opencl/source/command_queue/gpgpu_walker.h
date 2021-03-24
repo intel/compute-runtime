@@ -118,29 +118,29 @@ class GpgpuWalkerHelper {
         uint32_t requiredWorkgroupOrder);
 
     static void dispatchProfilingCommandsStart(
-        TagNode<HwTimeStamps> &hwTimeStamps,
+        TagNodeBase &hwTimeStamps,
         LinearStream *commandStream,
         const HardwareInfo &hwInfo);
 
     static void dispatchProfilingCommandsEnd(
-        TagNode<HwTimeStamps> &hwTimeStamps,
+        TagNodeBase &hwTimeStamps,
         LinearStream *commandStream,
         const HardwareInfo &hwInfo);
 
     static void dispatchPerfCountersCommandsStart(
         CommandQueue &commandQueue,
-        TagNode<HwPerfCounter> &hwPerfCounter,
+        TagNodeBase &hwPerfCounter,
         LinearStream *commandStream);
 
     static void dispatchPerfCountersCommandsEnd(
         CommandQueue &commandQueue,
-        TagNode<HwPerfCounter> &hwPerfCounter,
+        TagNodeBase &hwPerfCounter,
         LinearStream *commandStream);
 
     static void setupTimestampPacket(
         LinearStream *cmdStream,
         WALKER_TYPE<GfxFamily> *walkerCmd,
-        TagNode<TimestampPacketStorage> *timestampPacketNode,
+        TagNodeBase *timestampPacketNode,
         const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void dispatchScheduler(

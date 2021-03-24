@@ -34,7 +34,9 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/software_tags_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/spinlock.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stackvec.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/time_measure_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/timer_util.h
 )

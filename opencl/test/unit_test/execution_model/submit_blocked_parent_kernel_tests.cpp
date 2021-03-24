@@ -58,9 +58,12 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
         indirectStateSetup = true;
         return BaseClass::setupIndirectState(surfaceStateHeap, dynamicStateHeap, parentKernel, parentIDCount, isCcsUsed);
     }
-    void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount) override {
+    void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNodeBase *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount) override {
         cleanupSectionAdded = true;
-        timestampAddedInCleanupSection = hwTimeStamp ? hwTimeStamp->tagForCpuAccess : nullptr;
+
+        auto hwTimestampT = static_cast<TagNode<HwTimeStamps> *>(hwTimeStamp);
+
+        timestampAddedInCleanupSection = hwTimestampT ? hwTimestampT->tagForCpuAccess : nullptr;
         return BaseClass::addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, tagAddress, taskCount);
     }
     void dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh, bool isCcsUsed) override {
@@ -253,7 +256,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentK
     std::vector<Surface *> surfaces;
     auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
-    auto timestamp = pCmdQ->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag();
+    auto timestamp = static_cast<TagNode<HwTimeStamps> *>(pCmdQ->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag());
     cmdComputeKernel->timestamp = timestamp;
     cmdComputeKernel->submit(0, false);
 

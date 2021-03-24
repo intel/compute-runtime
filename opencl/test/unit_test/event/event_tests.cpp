@@ -864,10 +864,10 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
     pCmdQ->setPerfCountersEnabled();
     MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
     event->setCPUProfilingPath(true);
-    HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
+    HwPerfCounter *perfCounter = static_cast<TagNode<HwPerfCounter> *>(event->getHwPerfCounterNode())->tagForCpuAccess;
     ASSERT_NE(nullptr, perfCounter);
 
-    auto hwTimeStampNode = event->getHwTimeStampNode();
+    auto hwTimeStampNode = static_cast<TagNode<HwTimeStamps> *>(event->getHwTimeStampNode());
     if (pCmdQ->getTimestampPacketContainer()) {
         EXPECT_EQ(nullptr, hwTimeStampNode);
     } else {
@@ -1122,7 +1122,7 @@ HWTEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {
     std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    HwTimeStamps *timeStamps = event->getHwTimeStampNode()->tagForCpuAccess;
+    HwTimeStamps *timeStamps = static_cast<TagNode<HwTimeStamps> *>(event->getHwTimeStampNode())->tagForCpuAccess;
     ASSERT_NE(nullptr, timeStamps);
 
     //this should not cause any heap corruptions
@@ -1133,9 +1133,9 @@ HWTEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {
     ASSERT_EQ(0ULL, timeStamps->GlobalCompleteTS);
     ASSERT_EQ(0ULL, timeStamps->ContextCompleteTS);
 
-    EXPECT_TRUE(timeStamps->isCompleted());
+    EXPECT_TRUE(event->getHwTimeStampNode()->isCompleted());
 
-    HwTimeStamps *timeStamps2 = event->getHwTimeStampNode()->tagForCpuAccess;
+    HwTimeStamps *timeStamps2 = static_cast<TagNode<HwTimeStamps> *>(event->getHwTimeStampNode())->tagForCpuAccess;
     ASSERT_EQ(timeStamps, timeStamps2);
 }
 
@@ -1165,7 +1165,7 @@ HWTEST_F(EventTest, WhenEventIsCreatedThenHwTimeStampsMemoryIsPlacedInGraphicsAl
     std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    HwTimeStamps *timeStamps = event->getHwTimeStampNode()->tagForCpuAccess;
+    HwTimeStamps *timeStamps = static_cast<TagNode<HwTimeStamps> *>(event->getHwTimeStampNode())->tagForCpuAccess;
     ASSERT_NE(nullptr, timeStamps);
 
     GraphicsAllocation *allocation = event->getHwTimeStampNode()->getBaseGraphicsAllocation();

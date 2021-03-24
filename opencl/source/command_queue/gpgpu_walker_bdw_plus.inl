@@ -167,7 +167,7 @@ template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     LinearStream *cmdStream,
     WALKER_TYPE<GfxFamily> *walkerCmd,
-    TagNode<TimestampPacketStorage> *timestampPacketNode,
+    TagNodeBase *timestampPacketNode,
     const RootDeviceEnvironment &rootDeviceEnvironment) {
 
     uint64_t address = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
@@ -210,7 +210,7 @@ void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxF
 
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
-    TagNode<HwTimeStamps> &hwTimeStamps,
+    TagNodeBase &hwTimeStamps,
     LinearStream *commandStream,
     const HardwareInfo &hwInfo) {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
@@ -242,7 +242,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
 
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
-    TagNode<HwTimeStamps> &hwTimeStamps,
+    TagNodeBase &hwTimeStamps,
     LinearStream *commandStream,
     const HardwareInfo &hwInfo) {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;

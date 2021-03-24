@@ -1227,7 +1227,7 @@ bool Kernel::hasTunningFinished(KernelSubmissionData &submissionData) {
 
 bool Kernel::hasRunFinished(TimestampPacketContainer *timestampContainer) {
     for (const auto &node : timestampContainer->peekNodes()) {
-        if (!node->tagForCpuAccess->isCompleted()) {
+        if (!node->isCompleted()) {
             return false;
         }
     }

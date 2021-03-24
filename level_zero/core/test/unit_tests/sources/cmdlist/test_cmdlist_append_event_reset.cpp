@@ -138,7 +138,7 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
 
     commandList->appendEventReset(event->toHandle());
     ASSERT_EQ(0u, event->getPacketsInUse());
-    auto contextOffset = offsetof(TimestampPacketStorage::Packet, contextEnd);
+    auto contextOffset = offsetof(TimestampPackets<uint32_t>::Packet, contextEnd);
     auto baseAddr = event->getGpuAddress();
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
 

@@ -31,7 +31,7 @@ constexpr uint32_t preferredPacketCount = 16u;
 
 #pragma pack(1)
 template <typename TSize>
-class TimestampPackets {
+class TimestampPackets : public TagTypeBase {
   public:
     struct Packet {
         TSize contextStart = 1u;
@@ -40,9 +40,13 @@ class TimestampPackets {
         TSize globalEnd = 1u;
     };
 
-    static GraphicsAllocation::AllocationType getAllocationType() {
+    static constexpr GraphicsAllocation::AllocationType getAllocationType() {
         return GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
     }
+
+    static constexpr TagNodeType getTagNodeType() { return TagNodeType::TimestampPacket; }
+
+    size_t getSinglePacketSize() const { return sizeof(Packet); }
 
     bool isCompleted() const {
         if (DebugManager.flags.DisableAtomicForPostSyncs.get()) {
@@ -96,29 +100,25 @@ class TimestampPackets {
 };
 #pragma pack()
 
-using TimestampPacketStorage = TimestampPackets<uint32_t>;
-
-static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount + 2) * sizeof(uint32_t)) == sizeof(TimestampPacketStorage),
+static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount + 2) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t>),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 class TimestampPacketContainer : public NonCopyableClass {
   public:
-    using Node = TagNode<TimestampPacketStorage>;
-
     TimestampPacketContainer() = default;
     TimestampPacketContainer(TimestampPacketContainer &&) = default;
     TimestampPacketContainer &operator=(TimestampPacketContainer &&) = default;
     MOCKABLE_VIRTUAL ~TimestampPacketContainer();
 
-    const std::vector<Node *> &peekNodes() const { return timestampPacketNodes; }
-    void add(Node *timestampPacketNode);
+    const std::vector<TagNodeBase *> &peekNodes() const { return timestampPacketNodes; }
+    void add(TagNodeBase *timestampPacketNode);
     void swapNodes(TimestampPacketContainer &timestampPacketContainer);
     void assignAndIncrementNodesRefCounts(const TimestampPacketContainer &inputTimestampPacketContainer);
     void resolveDependencies(bool clearAllDependencies);
     void makeResident(CommandStreamReceiver &commandStreamReceiver);
 
   protected:
-    std::vector<Node *> timestampPacketNodes;
+    std::vector<TagNodeBase *> timestampPacketNodes;
 };
 
 struct TimestampPacketDependencies : public NonCopyableClass {
@@ -130,27 +130,27 @@ struct TimestampPacketDependencies : public NonCopyableClass {
 };
 
 struct TimestampPacketHelper {
-    static uint64_t getContextEndGpuAddress(const TagNode<TimestampPacketStorage> &timestampPacketNode) {
-        return timestampPacketNode.getGpuAddress() + timestampPacketNode.tagForCpuAccess->getContextEndOffset();
+    static uint64_t getContextEndGpuAddress(const TagNodeBase &timestampPacketNode) {
+        return timestampPacketNode.getGpuAddress() + timestampPacketNode.getContextEndOffset();
     }
-    static uint64_t getContextStartGpuAddress(const TagNode<TimestampPacketStorage> &timestampPacketNode) {
-        return timestampPacketNode.getGpuAddress() + timestampPacketNode.tagForCpuAccess->getContextStartOffset();
+    static uint64_t getContextStartGpuAddress(const TagNodeBase &timestampPacketNode) {
+        return timestampPacketNode.getGpuAddress() + timestampPacketNode.getContextStartOffset();
     }
-    static uint64_t getGlobalEndGpuAddress(const TagNode<TimestampPacketStorage> &timestampPacketNode) {
-        return timestampPacketNode.getGpuAddress() + timestampPacketNode.tagForCpuAccess->getGlobalEndOffset();
+    static uint64_t getGlobalEndGpuAddress(const TagNodeBase &timestampPacketNode) {
+        return timestampPacketNode.getGpuAddress() + timestampPacketNode.getGlobalEndOffset();
     }
-    static uint64_t getGlobalStartGpuAddress(const TagNode<TimestampPacketStorage> &timestampPacketNode) {
-        return timestampPacketNode.getGpuAddress() + timestampPacketNode.tagForCpuAccess->getGlobalStartOffset();
+    static uint64_t getGlobalStartGpuAddress(const TagNodeBase &timestampPacketNode) {
+        return timestampPacketNode.getGpuAddress() + timestampPacketNode.getGlobalStartOffset();
     }
 
-    static uint64_t getGpuDependenciesCountGpuAddress(const TagNode<TimestampPacketStorage> &timestampPacketNode) {
-        return timestampPacketNode.getGpuAddress() + timestampPacketNode.tagForCpuAccess->getImplicitGpuDependenciesCountOffset();
+    static uint64_t getGpuDependenciesCountGpuAddress(const TagNodeBase &timestampPacketNode) {
+        return timestampPacketNode.getGpuAddress() + timestampPacketNode.getImplicitGpuDependenciesCountOffset();
     }
 
     static void overrideSupportedDevicesCount(uint32_t &numSupportedDevices);
 
     template <typename GfxFamily>
-    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNode<TimestampPacketStorage> &timestampPacketNode, uint32_t numSupportedDevices) {
+    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNodeBase &timestampPacketNode, uint32_t numSupportedDevices) {
         using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
         using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
@@ -158,8 +158,8 @@ struct TimestampPacketHelper {
         auto compareAddress = getContextEndGpuAddress(timestampPacketNode);
         auto dependenciesCountAddress = getGpuDependenciesCountGpuAddress(timestampPacketNode);
 
-        for (uint32_t packetId = 0; packetId < timestampPacketNode.tagForCpuAccess->getPacketsUsed(); packetId++) {
-            uint64_t compareOffset = packetId * sizeof(TimestampPacketStorage::Packet);
+        for (uint32_t packetId = 0; packetId < timestampPacketNode.getPacketsUsed(); packetId++) {
+            uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
             EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
 
@@ -231,8 +231,8 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static size_t getRequiredCmdStreamSizeForNodeDependency(TagNode<TimestampPacketStorage> &timestampPacketNode) {
-        size_t totalMiSemaphoreWaitSize = timestampPacketNode.tagForCpuAccess->getPacketsUsed() * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+    static size_t getRequiredCmdStreamSizeForNodeDependency(TagNodeBase &timestampPacketNode) {
+        size_t totalMiSemaphoreWaitSize = timestampPacketNode.getPacketsUsed() * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
 
         return totalMiSemaphoreWaitSize + sizeof(typename GfxFamily::MI_ATOMIC);
     }

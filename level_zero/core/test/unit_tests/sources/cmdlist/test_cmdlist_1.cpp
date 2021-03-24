@@ -1041,8 +1041,8 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCo
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
     auto baseAddr = event->getGpuAddress();
-    auto contextOffset = offsetof(TimestampPacketStorage::Packet, contextStart);
-    auto globalOffset = offsetof(TimestampPacketStorage::Packet, globalStart);
+    auto contextOffset = offsetof(TimestampPackets<uint32_t>::Packet, contextStart);
+    auto globalOffset = offsetof(TimestampPackets<uint32_t>::Packet, globalStart);
     EXPECT_EQ(event->getTimestampPacketAddress(), baseAddr);
 
     commandList->appendEventForProfilingCopyCommand(event->toHandle(), true);
@@ -1078,8 +1078,8 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCop
 
     commandList->appendEventForProfilingCopyCommand(event->toHandle(), false);
 
-    auto contextOffset = offsetof(TimestampPacketStorage::Packet, contextEnd);
-    auto globalOffset = offsetof(TimestampPacketStorage::Packet, globalEnd);
+    auto contextOffset = offsetof(TimestampPackets<uint32_t>::Packet, contextEnd);
+    auto globalOffset = offsetof(TimestampPackets<uint32_t>::Packet, globalEnd);
     auto baseAddr = event->getGpuAddress();
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(

@@ -42,7 +42,7 @@ struct TimestampEvent : public Test<DeviceFixture> {
 };
 
 GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
-    TimestampPacketStorage::Packet data = {};
+    TimestampPackets<uint32_t>::Packet data = {};
     data.contextStart = 1u;
     data.contextEnd = 2u;
     data.globalStart = 3u;
@@ -61,7 +61,7 @@ GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCo
 }
 
 GEN12LPTEST_F(TimestampEvent, givenEventMoreThanOneTimestampsPacketWhenQueryKernelTimestampThenCorrectCalculationAreMade) {
-    TimestampPacketStorage::Packet data[3] = {};
+    TimestampPackets<uint32_t>::Packet data[3] = {};
     data[0].contextStart = 3u;
     data[0].contextEnd = 4u;
     data[0].globalStart = 5u;

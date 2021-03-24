@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,9 +23,8 @@ class Kernel;
 class Event;
 struct MultiDispatchInfo;
 class SchedulerKernel;
-struct HwTimeStamps;
-template <class T>
-struct TagNode;
+class HwTimeStamps;
+class TagNodeBase;
 
 template <>
 struct OpenCLObjectMapper<_device_queue> {
@@ -72,10 +71,10 @@ class DeviceQueue : public BaseObject<_device_queue> {
                                size_t paramValueSize, void *paramValue,
                                size_t *paramValueSizeRet);
 
-    void setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentCount, uint64_t tagAddress, uint32_t taskCount, TagNode<HwTimeStamps> *hwTimeStamp, bool isCcsUsed);
+    void setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentCount, uint64_t tagAddress, uint32_t taskCount, TagNodeBase *hwTimeStamp, bool isCcsUsed);
 
     virtual void setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount, bool isCcsUsed);
-    virtual void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount);
+    virtual void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNodeBase *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount);
 
     MOCKABLE_VIRTUAL bool isEMCriticalSectionFree() {
         auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(queueBuffer->getUnderlyingBuffer());

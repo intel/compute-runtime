@@ -26,16 +26,17 @@ class LinearStream;
 struct RootDeviceEnvironment;
 
 template <typename TagType>
-struct TagNode;
+class TagNode;
 
 template <typename TSize>
 class TimestampPackets;
+
+class TagNodeBase;
 
 struct BlitProperties;
 struct HardwareInfo;
 struct TimestampPacketDependencies;
 using BlitPropertiesContainer = StackVec<BlitProperties, 16>;
-using TimestampPacketStorage = TimestampPackets<uint32_t>;
 
 struct BlitProperties {
     static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
@@ -60,7 +61,7 @@ struct BlitProperties {
                                                    TimestampPacketContainer &kernelTimestamps, const CsrDependencies &depsFromEvents,
                                                    CommandStreamReceiver &gpguCsr, CommandStreamReceiver &bcsCsr);
 
-    TagNode<TimestampPacketStorage> *outputTimestampPacket = nullptr;
+    TagNodeBase *outputTimestampPacket = nullptr;
     BlitterConstants::BlitDirection blitDirection;
     CsrDependencies csrDependencies;
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;

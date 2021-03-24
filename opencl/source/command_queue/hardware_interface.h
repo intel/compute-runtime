@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,13 +19,13 @@ class DispatchInfo;
 class IndirectHeap;
 class Kernel;
 class LinearStream;
-struct HwPerfCounter;
-struct HwTimeStamps;
+class HwPerfCounter;
+class HwTimeStamps;
 struct KernelOperation;
 struct MultiDispatchInfo;
 
 template <class T>
-struct TagNode;
+class TagNode;
 
 template <typename GfxFamily>
 using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
@@ -40,8 +40,8 @@ class HardwareInterface {
         const MultiDispatchInfo &multiDispatchInfo,
         const CsrDependencies &csrDependencies,
         KernelOperation *blockedCommandsData,
-        TagNode<HwTimeStamps> *hwTimeStamps,
-        TagNode<HwPerfCounter> *hwPerfCounter,
+        TagNodeBase *hwTimeStamps,
+        TagNodeBase *hwPerfCounter,
         TimestampPacketDependencies *timestampPacketDependencies,
         TimestampPacketContainer *currentTimestampPacketNodes,
         uint32_t commandType);
@@ -62,14 +62,14 @@ class HardwareInterface {
         const bool &enable);
 
     static void dispatchProfilingPerfStartCommands(
-        TagNode<HwTimeStamps> *hwTimeStamps,
-        TagNode<HwPerfCounter> *hwPerfCounter,
+        TagNodeBase *hwTimeStamps,
+        TagNodeBase *hwPerfCounter,
         LinearStream *commandStream,
         CommandQueue &commandQueue);
 
     static void dispatchProfilingPerfEndCommands(
-        TagNode<HwTimeStamps> *hwTimeStamps,
-        TagNode<HwPerfCounter> *hwPerfCounter,
+        TagNodeBase *hwTimeStamps,
+        TagNodeBase *hwPerfCounter,
         LinearStream *commandStream,
         CommandQueue &commandQueue);
 

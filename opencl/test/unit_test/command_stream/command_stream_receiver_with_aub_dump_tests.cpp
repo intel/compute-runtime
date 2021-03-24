@@ -294,10 +294,10 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
         uint32_t zeros[4] = {};
 
         for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
-            tag->tagForCpuAccess->assignDataToAllTimestamps(i, zeros);
+            tag->assignDataToAllTimestamps(i, zeros);
         }
 
-        EXPECT_TRUE(tag->tagForCpuAccess->isCompleted());
+        EXPECT_TRUE(tag->isCompleted());
 
         bool canBeReleased = tag->canBeReleased();
         allocator->returnTag(tag);

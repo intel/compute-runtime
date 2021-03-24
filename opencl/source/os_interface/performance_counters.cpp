@@ -140,7 +140,7 @@ void PerformanceCounters::closeMetricsLibrary() {
 //////////////////////////////////////////////////////
 // PerformanceCounters::getQueryHandle
 //////////////////////////////////////////////////////
-void PerformanceCounters::getQueryHandle(QueryHandle_1_0 &handle) {
+void PerformanceCounters::getQueryHandleRef(QueryHandle_1_0 &handle) {
     if (!handle.IsValid()) {
         metricsLibrary->hwCountersCreate(
             context,
@@ -201,7 +201,7 @@ uint32_t PerformanceCounters::getGpuCommandsSize(
     bufferData.CommandsType = ObjectType::QueryHwCounters;
     bufferData.Type = commandBufferType;
 
-    getQueryHandle(query);
+    getQueryHandleRef(query);
 
     bufferData.QueryHwCounters.Begin = begin;
     bufferData.QueryHwCounters.Handle = query;
@@ -216,7 +216,7 @@ uint32_t PerformanceCounters::getGpuCommandsSize(
 //////////////////////////////////////////////////////
 bool PerformanceCounters::getGpuCommands(
     const MetricsLibraryApi::GpuCommandBufferType commandBufferType,
-    TagNode<HwPerfCounter> &performanceCounters,
+    TagNodeBase &performanceCounters,
     const bool begin,
     const uint32_t bufferSize,
     void *pBuffer) {
@@ -231,15 +231,15 @@ bool PerformanceCounters::getGpuCommands(
 
     // Gpu memory allocation for query hw counters.
     const uint32_t allocationOffset = offsetof(HwPerfCounter, report);
-    bufferData.Allocation.CpuAddress = reinterpret_cast<uint8_t *>(performanceCounters.tagForCpuAccess) + allocationOffset;
+    bufferData.Allocation.CpuAddress = reinterpret_cast<uint8_t *>(performanceCounters.getCpuBase()) + allocationOffset;
     bufferData.Allocation.GpuAddress = performanceCounters.getGpuAddress() + allocationOffset;
 
     // Allocate query handle for cl_event if not exists.
-    getQueryHandle(performanceCounters.tagForCpuAccess->query.handle);
+    getQueryHandleRef(performanceCounters.getQueryHandleRef());
 
     // Query hw counters specific data.
     bufferData.QueryHwCounters.Begin = begin;
-    bufferData.QueryHwCounters.Handle = performanceCounters.tagForCpuAccess->query.handle;
+    bufferData.QueryHwCounters.Handle = performanceCounters.getQueryHandleRef();
 
     return metricsLibrary->commandBufferGet(bufferData);
 }
@@ -261,7 +261,7 @@ uint32_t PerformanceCounters::getGpuReportSize() {
 //////////////////////////////////////////////////////
 // PerformanceCounters::getApiReport
 //////////////////////////////////////////////////////
-bool PerformanceCounters::getApiReport(const TagNode<HwPerfCounter> *performanceCounters, const size_t inputParamSize, void *pInputParam, size_t *pOutputParamSize, bool isEventComplete) {
+bool PerformanceCounters::getApiReport(const TagNodeBase *performanceCounters, const size_t inputParamSize, void *pInputParam, size_t *pOutputParamSize, bool isEventComplete) {
     const uint32_t outputSize = metricsLibrary->hwCountersGetApiReportSize();
 
     if (pOutputParamSize) {
@@ -269,10 +269,6 @@ bool PerformanceCounters::getApiReport(const TagNode<HwPerfCounter> *performance
     }
 
     if (!performanceCounters) {
-        return false;
-    }
-
-    if (!performanceCounters->tagForCpuAccess) {
         return false;
     }
 
@@ -288,6 +284,6 @@ bool PerformanceCounters::getApiReport(const TagNode<HwPerfCounter> *performance
         return false;
     }
 
-    return metricsLibrary->hwCountersGetReport(performanceCounters->tagForCpuAccess->query.handle, 0, 1, outputSize, pInputParam);
+    return metricsLibrary->hwCountersGetReport(performanceCounters->getQueryHandleRef(), 0, 1, outputSize, pInputParam);
 }
 } // namespace NEO
