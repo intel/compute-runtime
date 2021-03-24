@@ -12,6 +12,7 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "cl_api_tests.h"
@@ -1398,6 +1399,53 @@ TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithContextdWi
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     clReleaseContext(context);
+}
+
+TEST_F(clCreateImageWithMultiDeviceContextTests, GivenContextdWithMultiDeviceFailingAllocationThenImageAllocateFails) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    UltClDeviceFactory deviceFactory{2, 0};
+    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+
+    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+
+    MockContext pContext(ClDeviceVector(devices, 2));
+
+    EXPECT_EQ(1u, pContext.getMaxRootDeviceIndex());
+
+    auto bufferSize = imageDesc.image_width * imageDesc.image_height * 4;
+
+    cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
+
+    {
+        auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
+        auto ptrHostBuffer = static_cast<uint8_t *>(hostBuffer);
+
+        static_cast<MockMemoryManager *>(pContext.memoryManager)->successAllocatedGraphicsMemoryIndex = 0u;
+        static_cast<MockMemoryManager *>(pContext.memoryManager)->maxSuccessAllocatedGraphicsMemoryIndex = 0u;
+
+        auto image = clCreateImage(&pContext, flags, &imageFormat, &imageDesc, ptrHostBuffer, &retVal);
+
+        ASSERT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+        EXPECT_EQ(nullptr, image);
+
+        alignedFree(hostBuffer);
+    }
+
+    {
+        auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
+        auto ptrHostBuffer = static_cast<uint8_t *>(hostBuffer);
+
+        static_cast<MockMemoryManager *>(pContext.memoryManager)->successAllocatedGraphicsMemoryIndex = 0u;
+        static_cast<MockMemoryManager *>(pContext.memoryManager)->maxSuccessAllocatedGraphicsMemoryIndex = 1u;
+
+        auto image = clCreateImage(&pContext, flags, &imageFormat, &imageDesc, ptrHostBuffer, &retVal);
+
+        ASSERT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+        EXPECT_EQ(nullptr, image);
+
+        alignedFree(hostBuffer);
+    }
 }
 
 } // namespace ClCreateImageTests

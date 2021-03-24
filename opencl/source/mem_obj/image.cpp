@@ -239,6 +239,8 @@ Image *Image::create(Context *context,
         AllocationInfoType allocationInfo;
         allocationInfo.resize(maxRootDeviceIndex + 1u);
         bool isParentObject = parentBuffer || parentImage;
+        void *cpuPtr = nullptr;
+        void *hostPtrForced = nullptr;
 
         for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
             allocationInfo[rootDeviceIndex] = {};
@@ -321,11 +323,39 @@ Image *Image::create(Context *context,
                         allocationInfo[rootDeviceIndex].mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
                     }
                 } else {
-                    AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
-                                                                                                              true, // allocateMemory
-                                                                                                              memoryProperties, hwInfo,
-                                                                                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
-                    allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
+                    if (context->getRootDeviceIndices().size() > 1) {
+                        MemoryProperties memoryPropertiesToSet = memoryProperties;
+                        memoryPropertiesToSet.flags.useHostPtr = true;
+                        memoryPropertiesToSet.flags.copyHostPtr = false;
+
+                        if (cpuPtr) {
+                            AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
+                                                                                                                      false, // allocateMemory
+                                                                                                                      const_cast<MemoryProperties &>(memoryPropertiesToSet), hwInfo,
+                                                                                                                      context->getDeviceBitfieldForAllocation(rootDeviceIndex));
+                            allocProperties.flags.crossRootDeviceAccess = true;
+
+                            allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, cpuPtr);
+                        } else {
+                            AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
+                                                                                                                      false, // allocateMemory
+                                                                                                                      const_cast<MemoryProperties &>(memoryPropertiesToSet), hwInfo,
+                                                                                                                      context->getDeviceBitfieldForAllocation(rootDeviceIndex));
+                            allocProperties.flags.crossRootDeviceAccess = true;
+
+                            hostPtrForced = alignedMalloc(hostPtrMinSize, MemoryConstants::pageSize64k);
+                            allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtrForced);
+                            if (allocationInfo[rootDeviceIndex].memory) {
+                                cpuPtr = reinterpret_cast<void *>(allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer());
+                            }
+                        }
+                    } else {
+                        AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
+                                                                                                                  true, // allocateMemory
+                                                                                                                  memoryProperties, hwInfo,
+                                                                                                                  context->getDeviceBitfieldForAllocation(rootDeviceIndex));
+                        allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
+                    }
 
                     if (allocationInfo[rootDeviceIndex].memory && MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
                         allocationInfo[rootDeviceIndex].zeroCopyAllowed = true;
@@ -336,6 +366,9 @@ Image *Image::create(Context *context,
 
             if (!allocationInfo[rootDeviceIndex].memory) {
                 cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfo, isParentObject);
+                if (hostPtrForced) {
+                    alignedFree(hostPtrForced);
+                }
                 return image;
             }
 
@@ -370,6 +403,8 @@ Image *Image::create(Context *context,
 
         image = createImageHw(context, memoryProperties, flags, flagsIntel, imgInfo.size, hostPtrToSet, surfaceFormat->OCLImageFormat,
                               imageDescriptor, allocationInfo[defaultRootDeviceIndex].zeroCopyAllowed, std::move(multiGraphicsAllocation), false, 0, 0, surfaceFormat);
+
+        image->setAllocatedMapPtr(hostPtrForced);
 
         for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
 

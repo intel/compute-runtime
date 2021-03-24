@@ -120,7 +120,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const Alloc
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImageFromHostPtr(const AllocationData &allocationData) {
     bool copyRequired = isCopyRequired(*allocationData.imgInfo, allocationData.hostPtr);
 
-    if (allocationData.hostPtr && !copyRequired) {
+    if (allocationData.hostPtr && (!copyRequired || allocationData.flags.crossRootDeviceAccess)) {
         return allocateGraphicsMemoryWithHostPtr(allocationData);
     }
     return nullptr;
@@ -424,6 +424,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.rootDeviceIndex = properties.rootDeviceIndex;
     allocationData.useMmapObject = properties.useMmapObject;
 
+    allocationData.flags.crossRootDeviceAccess = properties.flags.crossRootDeviceAccess;
     allocationData.flags.useSystemMemory |= properties.flags.crossRootDeviceAccess;
 
     hwHelper.setExtraAllocationData(allocationData, properties, *hwInfo);

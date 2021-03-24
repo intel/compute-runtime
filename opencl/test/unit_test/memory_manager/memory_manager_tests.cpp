@@ -856,6 +856,44 @@ TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsM
     alignedFree(hostPtr);
 }
 
+TEST(OsAgnosticMemoryManager, givenEnabledCrossRootDeviceAccessFlagWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenGraphicsAllocationIsReturned) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    MockMemoryManager memoryManager(false, false, *executionEnvironment);
+
+    cl_image_desc imgDesc = {};
+    imgDesc.image_width = 4;
+    imgDesc.image_height = 1;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_RGBA;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
+    imgInfo.rowPitch = imgDesc.image_width * 4;
+    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.image_height;
+    imgInfo.size = imgInfo.slicePitch;
+    imgInfo.linearStorage = true;
+
+    auto hostPtr = alignedMalloc(imgDesc.image_width * imgDesc.image_height * 4, MemoryConstants::pageSize);
+
+    AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+    allocationData.hostPtr = hostPtr;
+    allocationData.size = imgInfo.size;
+    allocationData.flags.crossRootDeviceAccess = true;
+
+    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImageFromHostPtr(allocationData);
+    ASSERT_NE(nullptr, imageAllocation);
+    EXPECT_EQ(hostPtr, imageAllocation->getUnderlyingBuffer());
+
+    memoryManager.freeGraphicsMemory(imageAllocation);
+    alignedFree(hostPtr);
+}
+
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAllocationWhenMappingThenReturnFalse) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.initGmm();

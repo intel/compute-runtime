@@ -1604,6 +1604,20 @@ TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedThenImageAllocationHasCorrec
     EXPECT_EQ(expectedRootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
 }
 
+TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedWithoutHostPtrThenImageMultiGraphicsAllocationIsCreatedInSystemMemoryPool) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context.get()));
+
+    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
+    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(image->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
+
+    auto graphicsAllocation1 = image->getMultiGraphicsAllocation().getGraphicsAllocation(1u);
+    auto graphicsAllocation2 = image->getMultiGraphicsAllocation().getGraphicsAllocation(2u);
+
+    EXPECT_EQ(graphicsAllocation2->getUnderlyingBuffer(), graphicsAllocation1->getUnderlyingBuffer());
+}
+
 TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueWriteImageCalledThenImageMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
@@ -1624,7 +1638,7 @@ TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueWriteImageCalledTh
     desc.image_height = height * sizeof(unsigned int);
 
     auto bufferSize = sizeof(unsigned int) * width * height;
-    auto hostBuffer = alignedMalloc(bufferSize, 64 * 1024);
+    auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
 
@@ -1674,7 +1688,7 @@ TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueReadImageCalledThe
     desc.image_height = height * sizeof(unsigned int);
 
     auto bufferSize = sizeof(unsigned int) * width * height;
-    auto hostBuffer = alignedMalloc(bufferSize, 64 * 1024);
+    auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
 
@@ -1724,7 +1738,7 @@ TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueFillImageCalledThe
     desc.image_height = height * sizeof(unsigned int);
 
     auto bufferSize = sizeof(unsigned int) * width * height;
-    auto hostBuffer = alignedMalloc(bufferSize, 64 * 1024);
+    auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
 
@@ -1774,13 +1788,17 @@ TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueCopyImageCalledThe
     desc.image_width = width * sizeof(unsigned int);
     desc.image_height = height * sizeof(unsigned int);
 
-    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+
+    auto bufferSize = sizeof(unsigned int) * width * height;
+    auto hostBuffer1 = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
+    auto hostBuffer2 = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &format, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
 
-    std::unique_ptr<Image> image1(Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0, surfaceFormat, &desc, nullptr, retVal));
-    std::unique_ptr<Image> image2(Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0, surfaceFormat, &desc, nullptr, retVal));
+    std::unique_ptr<Image> image1(Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0, surfaceFormat, &desc, hostBuffer1, retVal));
+    std::unique_ptr<Image> image2(Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0, surfaceFormat, &desc, hostBuffer2, retVal));
 
     auto cmdQ1 = context->getSpecialQueue(1u);
     cmdQ1->enqueueCopyImage(image1.get(), image2.get(), orgin, orgin, region, 0, nullptr, nullptr);
@@ -1804,6 +1822,9 @@ TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueCopyImageCalledThe
     cmdQ2->enqueueCopyImage(image1.get(), image2.get(), orgin, orgin, region, 0, nullptr, nullptr);
     EXPECT_EQ(image1->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
     EXPECT_EQ(image2->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+
+    alignedFree(hostBuffer2);
+    alignedFree(hostBuffer1);
 }
 
 TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueCopyImageToBufferCalledThenImageAndBufferMultiGraphicsAllocationsLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
@@ -1825,13 +1846,17 @@ TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueCopyImageToBufferC
     desc.image_width = width * sizeof(unsigned int);
     desc.image_height = height * sizeof(unsigned int);
 
-    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+
+    auto bufferSize = sizeof(unsigned int) * width * height;
+    auto hostBuffer1 = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
+    auto hostBuffer2 = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &format, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
 
-    std::unique_ptr<Image> image(Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0, surfaceFormat, &desc, nullptr, retVal));
-    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, MemoryConstants::pageSize, nullptr, retVal));
+    std::unique_ptr<Image> image(Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0, surfaceFormat, &desc, hostBuffer1, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, MemoryConstants::pageSize, hostBuffer2, retVal));
 
     auto cmdQ1 = context->getSpecialQueue(1u);
     cmdQ1->enqueueCopyImageToBuffer(image.get(), buffer.get(), orgin, region, 0, 0, nullptr, nullptr);
@@ -1855,6 +1880,9 @@ TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueCopyImageToBufferC
     cmdQ2->enqueueCopyImageToBuffer(image.get(), buffer.get(), orgin, region, 0, 0, nullptr, nullptr);
     EXPECT_EQ(image->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
     EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+
+    alignedFree(hostBuffer2);
+    alignedFree(hostBuffer1);
 }
 
 TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueCopyBufferToImageCalledThenImageAndBufferMultiGraphicsAllocationsLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
@@ -1876,13 +1904,17 @@ TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueCopyBufferToImageC
     desc.image_width = width * sizeof(unsigned int);
     desc.image_height = height * sizeof(unsigned int);
 
-    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+
+    auto bufferSize = sizeof(unsigned int) * width * height;
+    auto hostBuffer1 = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
+    auto hostBuffer2 = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &format, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
 
-    std::unique_ptr<Image> image(Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0, surfaceFormat, &desc, nullptr, retVal));
-    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, MemoryConstants::pageSize, nullptr, retVal));
+    std::unique_ptr<Image> image(Image::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0, surfaceFormat, &desc, hostBuffer1, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, MemoryConstants::pageSize, hostBuffer2, retVal));
 
     auto cmdQ1 = context->getSpecialQueue(1u);
     cmdQ1->enqueueCopyBufferToImage(buffer.get(), image.get(), 0, orgin, region, 0, nullptr, nullptr);
@@ -1906,4 +1938,7 @@ TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedAndEnqueueCopyBufferToImageC
     cmdQ2->enqueueCopyBufferToImage(buffer.get(), image.get(), 0, orgin, region, 0, nullptr, nullptr);
     EXPECT_EQ(image->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
     EXPECT_EQ(buffer->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
+
+    alignedFree(hostBuffer2);
+    alignedFree(hostBuffer1);
 }
