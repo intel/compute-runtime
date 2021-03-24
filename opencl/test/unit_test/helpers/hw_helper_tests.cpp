@@ -944,19 +944,6 @@ HWTEST_F(HwHelperTest, whenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectVal
     EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
 }
 
-HWTEST_F(HwHelperTest, whenPatchingGlobalBuffersThenDontForceBlitter) {
-    if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
-        GTEST_SKIP();
-    }
-    uint64_t gpuAddress = 0x1000;
-    void *buffer = reinterpret_cast<void *>(0x0);
-    size_t size = 0x1000;
-
-    MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
-    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    EXPECT_FALSE(hwHelper.forceBlitterUseForGlobalBuffers(hardwareInfo, &mockAllocation));
-}
-
 HWTEST_F(HwHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
     struct MockHwHelper : HwHelperHw<FamilyType> {
         using HwHelper::getDefaultLocalMemoryAccessMode;

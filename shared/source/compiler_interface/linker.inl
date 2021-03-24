@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,7 @@ void Linker::patchIncrement(Device *pDevice, GraphicsAllocation *dstAllocation, 
     auto &hwInfo = pDevice->getHardwareInfo();
     auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    bool useBlitter = (helper.isBlitCopyRequiredForLocalMemory(hwInfo, *dstAllocation) ||
-                       helper.forceBlitterUseForGlobalBuffers(hwInfo, dstAllocation));
+    bool useBlitter = helper.isBlitCopyRequiredForLocalMemory(hwInfo, *dstAllocation);
 
     auto initValue = ptrOffset(initData, relocationOffset);
 

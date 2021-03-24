@@ -219,11 +219,6 @@ EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType en
 }
 
 template <>
-bool HwHelperHw<Family>::forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo, GraphicsAllocation *allocation) const {
-    return Gen12LPHelpers::forceBlitterUseForGlobalBuffers(hwInfo, allocation);
-}
-
-template <>
 void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
     if (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) {

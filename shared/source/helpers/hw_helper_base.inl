@@ -444,11 +444,6 @@ inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const Hardwa
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo, GraphicsAllocation *allocation) const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::additionalKernelExecInfoSupported(const HardwareInfo &hwInfo) const {
     return false;
 }

@@ -64,9 +64,5 @@ bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) {
     return (hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP || hwInfo.platform.eProductFamily == IGFX_ROCKETLAKE);
 }
 
-bool forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo, GraphicsAllocation *allocation) {
-    return false;
-}
-
 } // namespace Gen12LPHelpers
 } // namespace NEO
