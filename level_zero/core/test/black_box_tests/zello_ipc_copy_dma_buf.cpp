@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#define CHILDPROCESSES 4
+
+int sv[CHILDPROCESSES][2];
 extern bool verbose;
 bool verbose = false;
 
@@ -128,8 +131,8 @@ inline void initializeProcess(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 }
 
-void run_client(int commSocket) {
-    std::cout << "Client process " << std::dec << getpid() << "\n";
+void run_client(int commSocket, uint32_t clientId) {
+    std::cout << "Client " << clientId << ", process ID: " << std::dec << getpid() << "\n";
 
     ze_context_handle_t context;
     ze_device_handle_t device;
@@ -170,8 +173,8 @@ void run_client(int commSocket) {
     delete[] heapBuffer;
 }
 
-void run_server(int commSocket, bool &validRet) {
-    std::cout << "Server process " << std::dec << getpid() << "\n";
+void run_server(bool &validRet) {
+    std::cout << "Server process ID " << std::dec << getpid() << "\n";
 
     ze_context_handle_t context;
     ze_device_handle_t device;
@@ -183,64 +186,67 @@ void run_server(int commSocket, bool &validRet) {
     ze_device_mem_alloc_desc_t deviceDesc = {};
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
 
-    // Initialize the IPC buffer
-    int value = 3;
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, zeBuffer, reinterpret_cast<void *>(&value),
-                                                       sizeof(value), allocSize, nullptr, 0, nullptr));
+    for (uint32_t i = 0; i < CHILDPROCESSES; i++) {
+        // Initialize the IPC buffer
+        int value = 3;
+        SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, zeBuffer, reinterpret_cast<void *>(&value),
+                                                           sizeof(value), allocSize, nullptr, 0, nullptr));
 
-    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
-    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
-    SUCCESS_OR_TERMINATE(zeCommandListReset(cmdList));
+        SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+        SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+        SUCCESS_OR_TERMINATE(zeCommandListReset(cmdList));
 
-    // Get a dma_buf for the previously allocated pointer
-    ze_ipc_mem_handle_t pIpcHandle;
-    SUCCESS_OR_TERMINATE(zeMemGetIpcHandle(context, zeBuffer, &pIpcHandle));
+        // Get a dma_buf for the previously allocated pointer
+        ze_ipc_mem_handle_t pIpcHandle;
+        SUCCESS_OR_TERMINATE(zeMemGetIpcHandle(context, zeBuffer, &pIpcHandle));
 
-    // Pass the dma_buf to the other process
-    int dma_buf_fd;
-    memcpy(static_cast<void *>(&dma_buf_fd), &pIpcHandle, sizeof(dma_buf_fd));
-    if (sendmsg_fd(commSocket, static_cast<int>(dma_buf_fd)) < 0) {
-        std::cerr << "Failing to send dma_buf fd to client\n";
-        std::terminate();
+        // Pass the dma_buf to the other process
+        int dma_buf_fd;
+        memcpy(static_cast<void *>(&dma_buf_fd), &pIpcHandle, sizeof(dma_buf_fd));
+        int commSocket = sv[i][0];
+        if (sendmsg_fd(commSocket, static_cast<int>(dma_buf_fd)) < 0) {
+            std::cerr << "Failing to send dma_buf fd to client\n";
+            std::terminate();
+        }
+
+        char *heapBuffer = new char[allocSize];
+        for (size_t i = 0; i < allocSize; ++i) {
+            heapBuffer[i] = static_cast<char>(i + 1);
+        }
+
+        // Wait for child to exit
+        int child_status;
+        pid_t clientPId = wait(&child_status);
+        if (clientPId <= 0) {
+            std::cerr << "Client terminated abruptly with error code " << strerror(errno) << "\n";
+            std::terminate();
+        }
+
+        void *validateBuffer = nullptr;
+        ze_host_mem_alloc_desc_t hostDesc = {};
+        SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc,
+                                              allocSize, 1, device, &validateBuffer));
+
+        value = 5;
+        SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, validateBuffer, reinterpret_cast<void *>(&value),
+                                                           sizeof(value), allocSize, nullptr, 0, nullptr));
+
+        SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+
+        // Copy from device-allocated memory
+        SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, validateBuffer, zeBuffer, allocSize,
+                                                           nullptr, 0, nullptr));
+
+        SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+        SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+
+        // Validate stack and buffers have the original data from heapBuffer
+        validRet = (0 == memcmp(heapBuffer, validateBuffer, allocSize));
+        delete[] heapBuffer;
     }
 
-    char *heapBuffer = new char[allocSize];
-    for (size_t i = 0; i < allocSize; ++i) {
-        heapBuffer[i] = static_cast<char>(i + 1);
-    }
-
-    // Wait for child to exit
-    int child_status;
-    pid_t clientPId = wait(&child_status);
-    if (clientPId <= 0) {
-        std::cerr << "Client terminated abruptly with error code " << strerror(errno) << "\n";
-        std::terminate();
-    }
-
-    void *validateBuffer = nullptr;
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc,
-                                          allocSize, 1, device, &validateBuffer));
-
-    value = 5;
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, validateBuffer, reinterpret_cast<void *>(&value),
-                                                       sizeof(value), allocSize, nullptr, 0, nullptr));
-
-    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
-
-    // Copy from device-allocated memory
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, validateBuffer, zeBuffer, allocSize,
-                                                       nullptr, 0, nullptr));
-
-    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
-    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
-
-    // Validate stack and buffers have the original data from heapBuffer
-    validRet = (0 == memcmp(heapBuffer, validateBuffer, allocSize));
-
-    delete[] heapBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
 
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
@@ -252,26 +258,28 @@ int main(int argc, char *argv[]) {
     verbose = isVerbose(argc, argv);
     bool outputValidationSuccessful;
 
-    int sv[2];
-    if (socketpair(PF_UNIX, SOCK_STREAM, 0, sv) < 0) {
-        perror("socketpair");
-        exit(1);
+    for (uint32_t i = 0; i < CHILDPROCESSES; i++) {
+        if (socketpair(PF_UNIX, SOCK_STREAM, 0, sv[i]) < 0) {
+            perror("socketpair");
+            exit(1);
+        }
     }
 
-    int child = fork();
-    if (child < 0) {
-        perror("fork");
-        exit(1);
-    } else if (0 == child) {
-        close(sv[0]);
-        run_client(sv[1]);
-        close(sv[1]);
-        exit(0);
-    } else {
-        close(sv[1]);
-        run_server(sv[0], outputValidationSuccessful);
-        close(sv[0]);
+    pid_t childPids[CHILDPROCESSES];
+    for (uint32_t i = 0; i < CHILDPROCESSES; i++) {
+        childPids[i] = fork();
+        if (childPids[i] < 0) {
+            perror("fork");
+            exit(1);
+        } else if (childPids[i] == 0) {
+            close(sv[i][0]);
+            run_client(sv[i][1], i);
+            close(sv[i][1]);
+            exit(0);
+        }
     }
+
+    run_server(outputValidationSuccessful);
 
     std::cout << "\nZello IPC Results validation "
               << (outputValidationSuccessful ? "PASSED" : "FAILED")
