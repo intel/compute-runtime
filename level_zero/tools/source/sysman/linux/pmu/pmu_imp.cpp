@@ -42,6 +42,14 @@ uint32_t PmuInterfaceImp::getEventType() {
     return eventTypeVal;
 }
 
+ssize_t PmuInterfaceImp::readCounters(int fd, uint64_t *data, ssize_t sizeOfdata) {
+    return read(fd, data, sizeOfdata);
+}
+
+int PmuInterfaceImp::getErrorNo() {
+    return errno;
+}
+
 inline int64_t PmuInterfaceImp::perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) {
     attr->size = sizeof(*attr);
     return syscall(perfEventOpenSyscallNumber, attr, pid, cpu, groupFd, flags);
@@ -67,14 +75,14 @@ int64_t PmuInterfaceImp::pmuInterfaceOpen(uint64_t config, int group, uint32_t f
 
     do {
         ret = perfEventOpen(&attr, -1, cpu++, group, 0);
-    } while ((ret < 0 && errno == EINVAL) && (cpu < nrCpus));
+    } while ((ret < 0 && getErrorNo() == EINVAL) && (cpu < nrCpus));
 
     return ret;
 }
 
 int PmuInterfaceImp::pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) {
     ssize_t len;
-    len = read(fd, data, sizeOfdata);
+    len = readCounters(fd, data, sizeOfdata);
     if (len != sizeOfdata) {
         return -1;
     }

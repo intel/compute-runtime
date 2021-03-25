@@ -25,6 +25,8 @@ class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableOrMovableClass {
 
   protected:
     MOCKABLE_VIRTUAL int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags);
+    MOCKABLE_VIRTUAL ssize_t readCounters(int fd, uint64_t *data, ssize_t sizeOfdata);
+    MOCKABLE_VIRTUAL int getErrorNo();
 
   private:
     uint32_t getEventType();
