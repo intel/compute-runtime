@@ -11,7 +11,9 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/memory_manager/surface.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -52,7 +54,8 @@ using namespace gtpin;
 
 namespace NEO {
 extern std::deque<gtpinkexec_t> kernelExecQueue;
-}
+extern GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE];
+} // namespace NEO
 
 namespace ULT {
 
@@ -149,6 +152,11 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
 
   public:
     void SetUp() override {
+        DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(false);
+        SetUpImpl();
+    }
+
+    void SetUpImpl() {
         platformsImpl->clear();
         MemoryManagementFixture::SetUp();
         constructPlatform();
@@ -195,6 +203,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     gtpin::ocl::gtpin_events_t gtpinCallbacks;
     MockMemoryManagerWithFailures *memoryManager = nullptr;
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
+    DebugManagerStateRestore restore;
 };
 
 typedef Test<GTPinFixture> GTPinTests;
@@ -2495,4 +2504,178 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
     EXPECT_EQ(kernelExecQueue[0].taskCount, stamp.taskCount);
 }
 
+class GTPinFixtureWithLocalMemory : public GTPinFixture {
+  public:
+    void SetUp() override {
+        DebugManager.flags.EnableLocalMemory.set(true);
+        DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(true);
+        GTPinFixture::SetUpImpl();
+    }
+    void TearDown() override {
+        GTPinFixture::TearDown();
+    }
+    DebugManagerStateRestore restore;
+};
+
+using GTPinTestsWithLocalMemory = Test<GTPinFixtureWithLocalMemory>;
+
+TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCantBeAllocatedInSharedMemory) {
+    DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(-1);
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto canUseSharedAllocation = gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo());
+    if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
+        EXPECT_FALSE(canUseSharedAllocation);
+    }
+}
+
+HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedThenAllocateBufferInSharedMemory) {
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+        GTEST_SKIP();
+    }
+
+    resource_handle_t resource = nullptr;
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    GTPIN_DI_STATUS status = GTPIN_DI_SUCCESS;
+
+    status = gtpinCreateBuffer((gtpin::context_handle_t)ctxt, 256, &resource);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+    EXPECT_NE(nullptr, resource);
+
+    auto allocData = reinterpret_cast<SvmAllocationData *>(resource);
+
+    auto cpuAllocation = allocData->cpuAllocation;
+    ASSERT_NE(nullptr, cpuAllocation);
+    EXPECT_NE(GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY, cpuAllocation->getAllocationType());
+
+    auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAllocation);
+    EXPECT_NE(GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY, gpuAllocation->getAllocationType());
+
+    uint8_t *address = nullptr;
+    status = gtpinMapBuffer((gtpin::context_handle_t)ctxt, resource, &address);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+    EXPECT_EQ(allocData->cpuAllocation->getUnderlyingBuffer(), address);
+
+    status = gtpinUnmapBuffer((gtpin::context_handle_t)ctxt, resource);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+
+    status = gtpinFreeBuffer((gtpin::context_handle_t)ctxt, resource);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+}
+
+HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsAllocatedInSharedMemoryThenSetSurfaceStateForTheBufferAndMakeItResident) {
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+        GTEST_SKIP();
+    }
+
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+
+    GTPIN_DI_STATUS status = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, status);
+
+    cl_kernel kernel = nullptr;
+    cl_program pProgram = nullptr;
+    cl_device_id device = (cl_device_id)pDevice;
+    size_t sourceSize = 0;
+    std::string testFile;
+    cl_command_queue cmdQ = nullptr;
+    cl_queue_properties properties = 0;
+    cl_context context = nullptr;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
+    EXPECT_NE(0u, sourceSize);
+    EXPECT_NE(nullptr, pSource);
+
+    context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context);
+
+    cmdQ = clCreateCommandQueue(context, device, properties, &retVal);
+    ASSERT_NE(nullptr, cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    const char *sources[1] = {pSource.get()};
+    pProgram = clCreateProgramWithSource(
+        context,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+    ASSERT_NE(nullptr, pProgram);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    EXPECT_NE(nullptr, kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto pMultiDeviceKernel = static_cast<MultiDeviceKernel *>(kernel);
+    auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+    auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
+    auto &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
+
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    constexpr size_t renderSurfaceSize = sizeof(RENDER_SURFACE_STATE);
+
+    size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
+    void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);
+    EXPECT_NE(nullptr, pSurfaceState);
+
+    RENDER_SURFACE_STATE *surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(pSurfaceState);
+    memset(pSurfaceState, 0, renderSurfaceSize);
+
+    gtpinNotifyKernelSubmit(kernel, pCmdQueue);
+
+    auto allocData = reinterpret_cast<SvmAllocationData *>(kernelExecQueue[0].gtpinResource);
+    EXPECT_NE(nullptr, allocData);
+    auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    EXPECT_NE(nullptr, gpuAllocation);
+
+    RENDER_SURFACE_STATE expectedSurfaceState;
+    memset(&expectedSurfaceState, 0, renderSurfaceSize);
+    {
+        void *addressToPatch = gpuAllocation->getUnderlyingBuffer();
+        size_t sizeToPatch = gpuAllocation->getUnderlyingBufferSize();
+        Buffer::setSurfaceState(&pDevice->getDevice(), &expectedSurfaceState, false, false,
+                                sizeToPatch, addressToPatch, 0, gpuAllocation, 0, 0,
+                                pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
+    }
+    EXPECT_EQ(0, memcmp(&expectedSurfaceState, surfaceState, renderSurfaceSize));
+
+    EXPECT_FALSE(gpuAllocation->isResident(csr.getOsContext().getContextId()));
+    gtpinNotifyMakeResident(pKernel, &csr);
+    EXPECT_TRUE(gpuAllocation->isResident(csr.getOsContext().getContextId()));
+
+    kernelExecQueue[0].isTaskCountValid = true;
+    gtpinNotifyTaskCompletion(kernelExecQueue[0].taskCount);
+
+    retVal = clReleaseKernel(kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseCommandQueue(cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseContext(context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
 } // namespace ULT
