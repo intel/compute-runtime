@@ -644,7 +644,7 @@ template <typename GfxFamily>
 void EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const HardwareInfo &hwInfo) {}
 
 template <typename GfxFamily>
-size_t EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(uint32_t size) { return 0; }
+size_t EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(size_t size) { return 0u; }
 
 template <typename Family>
 void EncodeMiArbCheck<Family>::program(LinearStream &commandStream) {

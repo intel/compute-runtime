@@ -348,7 +348,7 @@ struct EncodeMiFlushDW {
 template <typename GfxFamily>
 struct EncodeMemoryPrefetch {
     static void programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const HardwareInfo &hwInfo);
-    static size_t getSizeForMemoryPrefetch(uint32_t size);
+    static size_t getSizeForMemoryPrefetch(size_t size);
 };
 
 template <typename GfxFamily>
