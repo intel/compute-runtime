@@ -259,6 +259,13 @@ TMetricParams_1_0 *IMetric_1_0::GetParams() {
     return nullptr;
 }
 
+IInformation_1_0 ::~IInformation_1_0() {}
+
+TInformationParams_1_0 *IInformation_1_0::GetParams() {
+    UNRECOVERABLE_IF(true);
+    return nullptr;
+}
+
 IAdapter_1_8 *IAdapterGroup_1_8::GetAdapter(uint32_t index) {
     UNRECOVERABLE_IF(true);
     return nullptr;

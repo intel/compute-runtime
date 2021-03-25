@@ -14,6 +14,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include <unordered_map>
+
 using ::testing::_;
 using ::testing::Return;
 
@@ -2071,5 +2073,243 @@ TEST_F(MetricEnumerationTest, givenSubDeviceWhenLoadDependenciesIsCalledThenOpen
     EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
+
+class MetricEnumerationTestMetricTypes : public MetricEnumerationTest,
+                                         public ::testing::WithParamInterface<MetricsDiscovery::TMetricType> {
+  public:
+    MetricsDiscovery::TMetricType metricType;
+    MetricEnumerationTestMetricTypes() {
+        metricType = GetParam();
+    }
+    ~MetricEnumerationTestMetricTypes() {}
+};
+
+TEST_P(MetricEnumerationTestMetricTypes, givenValidMetricTypesWhenSetAndGetIsSameThenReturnSuccess) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.MetricsCount = 1;
+
+    // Metrics Discovery:: metric.
+    Mock<IMetric_1_0> metric;
+    TMetricParams_1_0 metricParams = {};
+    metricParams.SymbolName = "Metric symbol name";
+    metricParams.ShortName = "Metric short name";
+    metricParams.LongName = "Metric long name";
+    metricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
+    metricParams.MetricType = metricType;
+    zet_metric_properties_t metricProperties = {};
+
+    // One api: metric group handle.
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    openMetricsAdapter();
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, GetMetric(_))
+        .Times(1)
+        .WillOnce(Return(&metric));
+
+    EXPECT_CALL(metric, GetParams())
+        .Times(1)
+        .WillOnce(Return(&metricParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    // Metric group handle.
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // Obtain metric.
+    uint32_t metricCount = 0;
+    zet_metric_handle_t metricHandle = {};
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricCount, 1u);
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, &metricHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(metricHandle, nullptr);
+
+    // Obtain metric params.
+    EXPECT_EQ(zetMetricGetProperties(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(strcmp(metricProperties.name, metricParams.SymbolName), 0);
+    EXPECT_EQ(strcmp(metricProperties.description, metricParams.LongName), 0);
+    EXPECT_EQ(metricProperties.metricType, static_cast<zet_metric_type_t>(metricType));
+    EXPECT_EQ(metricProperties.resultType, ZET_VALUE_TYPE_UINT64);
+}
+
+std::vector<MetricsDiscovery::TMetricType>
+getListOfMetricTypes() {
+    std::vector<MetricsDiscovery::TMetricType> metricTypes = {};
+    for (int type = MetricsDiscovery::TMetricType::METRIC_TYPE_DURATION;
+         type < MetricsDiscovery::TMetricType::METRIC_TYPE_LAST;
+         type++) {
+        metricTypes.push_back(static_cast<MetricsDiscovery::TMetricType>(type));
+    }
+    return metricTypes;
+}
+
+INSTANTIATE_TEST_CASE_P(parameterizedMetricEnumerationTestMetricTypes, MetricEnumerationTestMetricTypes,
+                        ::testing::ValuesIn(getListOfMetricTypes()));
+
+class MetricEnumerationTestInformationTypes : public MetricEnumerationTest,
+                                              public ::testing::WithParamInterface<MetricsDiscovery::TInformationType> {
+  public:
+    MetricsDiscovery::TInformationType infoType;
+    std::unordered_map<MetricsDiscovery::TInformationType, zet_metric_type_t> validate;
+    MetricEnumerationTestInformationTypes() {
+        infoType = GetParam();
+        validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_REPORT_REASON] = ZET_METRIC_TYPE_EVENT;
+        validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_VALUE] = ZET_METRIC_TYPE_RAW;
+        validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_FLAG] = ZET_METRIC_TYPE_FLAG;
+        validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_TIMESTAMP] = ZET_METRIC_TYPE_TIMESTAMP;
+        validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_CONTEXT_ID_TAG] = ZET_METRIC_TYPE_RAW;
+        validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_SAMPLE_PHASE] = ZET_METRIC_TYPE_RAW;
+        validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_GPU_NODE] = ZET_METRIC_TYPE_RAW;
+    }
+    ~MetricEnumerationTestInformationTypes() {}
+};
+
+TEST_P(MetricEnumerationTestInformationTypes, givenValidInformationTypesWhenSetAndGetIsSameThenReturnSuccess) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.InformationCount = 1;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+
+    // Metrics Discovery:: information.
+    Mock<MetricsDiscovery::IInformation_1_0> information;
+    MetricsDiscovery::TInformationParams_1_0 sourceInformationParams = {};
+    sourceInformationParams.SymbolName = "Info symbol name";
+    sourceInformationParams.LongName = "Info long name";
+    sourceInformationParams.GroupName = "Info group name";
+    sourceInformationParams.InfoUnits = "Info Units";
+    sourceInformationParams.InfoType = infoType;
+
+    zet_metric_properties_t metricProperties = {};
+    // One api: metric group handle.
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    openMetricsAdapter();
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, GetInformation(_))
+        .Times(1)
+        .WillOnce(Return(&information));
+
+    EXPECT_CALL(information, GetParams())
+        .Times(1)
+        .WillOnce(Return(&sourceInformationParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    // Metric group handle.
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // Obtain information.
+    uint32_t metricCount = 0;
+    zet_metric_handle_t infoHandle = {};
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricCount, 1u);
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, &infoHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(infoHandle, nullptr);
+
+    // Obtain information params.
+    EXPECT_EQ(zetMetricGetProperties(infoHandle, &metricProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(strcmp(metricProperties.name, sourceInformationParams.SymbolName), 0);
+    EXPECT_EQ(strcmp(metricProperties.description, sourceInformationParams.LongName), 0);
+    EXPECT_EQ(strcmp(metricProperties.component, sourceInformationParams.GroupName), 0);
+    EXPECT_EQ(strcmp(metricProperties.resultUnits, sourceInformationParams.InfoUnits), 0);
+    EXPECT_EQ(metricProperties.metricType, validate[infoType]);
+}
+
+std::vector<MetricsDiscovery::TInformationType>
+getListOfInfoTypes() {
+    std::vector<MetricsDiscovery::TInformationType> infoTypes = {};
+    for (int type = MetricsDiscovery::TInformationType::INFORMATION_TYPE_REPORT_REASON;
+         type < MetricsDiscovery::TInformationType::INFORMATION_TYPE_LAST;
+         type++) {
+        infoTypes.push_back(static_cast<MetricsDiscovery::TInformationType>(type));
+    }
+    return infoTypes;
+}
+
+INSTANTIATE_TEST_CASE_P(parameterizedMetricEnumerationTestInformationTypes,
+                        MetricEnumerationTestInformationTypes,
+                        ::testing::ValuesIn(getListOfInfoTypes()));
 } // namespace ult
 } // namespace L0

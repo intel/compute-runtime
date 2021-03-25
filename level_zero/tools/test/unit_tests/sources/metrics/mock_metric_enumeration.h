@@ -153,6 +153,14 @@ class Mock<IMetric_1_0> : public IMetric_1_0 {
 };
 
 template <>
+class Mock<IInformation_1_0> : public IInformation_1_0 {
+  public:
+    Mock(){};
+
+    MOCK_METHOD(MetricsDiscovery::TInformationParams_1_0 *, GetParams, (), (override));
+};
+
+template <>
 struct Mock<MetricEnumeration> : public MetricEnumeration {
     Mock(::L0::MetricContext &metricContext);
     ~Mock() override;
