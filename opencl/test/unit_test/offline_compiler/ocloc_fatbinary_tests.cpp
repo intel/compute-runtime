@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,7 +140,9 @@ TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenThenReturnAllEnable
     auto platform0 = allEnabledPlatforms[0];
     auto gfxCore0 = NEO::hardwareInfoTable[platform0]->platform.eRenderCoreFamily;
     std::string genName = NEO::familyName[gfxCore0];
-    genName[0] = 'g'; // ocloc uses lower case
+    if (genName[0] == 'G') {
+        genName[0] = 'g';
+    }
 
     std::vector<PRODUCT_FAMILY> platformsForGen;
     NEO::appendPlatformsForGfxCore(gfxCore0, allEnabledPlatforms, platformsForGen);
@@ -235,7 +237,9 @@ TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeFromThenRe
     }
     auto core0 = allEnabledCores[allEnabledCores.size() / 2];
     std::string genName = NEO::familyName[core0];
-    genName[0] = 'g'; // ocloc uses lower case
+    if (genName[0] == 'G') {
+        genName[0] = 'g';
+    }
 
     std::vector<PRODUCT_FAMILY> expectedPlatforms;
     unsigned int coreIt = core0;
@@ -258,7 +262,9 @@ TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeToThenRetu
     }
     auto core0 = allEnabledCores[allEnabledCores.size() / 2];
     std::string genName = NEO::familyName[core0];
-    genName[0] = 'g'; // ocloc uses lower case
+    if (genName[0] == 'G') {
+        genName[0] = 'g';
+    }
 
     std::vector<PRODUCT_FAMILY> expectedPlatforms;
     unsigned int coreIt = IGFX_UNKNOWN_CORE;
@@ -282,9 +288,13 @@ TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenClosedRangeThenRetu
     auto genFrom = allEnabledCores[1];
     auto genTo = allEnabledCores[allEnabledCores.size() - 2];
     std::string genNameFrom = NEO::familyName[genFrom];
-    genNameFrom[0] = 'g';
+    if (genNameFrom[0] == 'G') {
+        genNameFrom[0] = 'g';
+    }
     std::string genNameTo = NEO::familyName[genTo];
-    genNameTo[0] = 'g';
+    if (genNameTo[0] == 'G') {
+        genNameTo[0] = 'g';
+    }
 
     std::vector<PRODUCT_FAMILY> expectedPlatforms;
     auto genIt = genFrom;
@@ -352,7 +362,9 @@ TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenClosedRangeWhenAnyO
     auto platform0 = allEnabledPlatforms[0];
     auto gfxCore0 = NEO::hardwareInfoTable[platform0]->platform.eRenderCoreFamily;
     std::string genName = NEO::familyName[gfxCore0];
-    genName[0] = 'g'; // ocloc uses lower case
+    if (genName[0] == 'G') {
+        genName[0] = 'g';
+    }
 
     auto got = NEO::getTargetPlatformsForFatbinary("gen2-" + genName, oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());

@@ -112,7 +112,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
 
             if (range.size() == 1) {
                 // open range , from-max or min-to
-                if (range[0].containsCaseInsensitive("gen")) {
+                if (range[0].containsCaseInsensitive("gen") || range[0].startsWith("XE_")) {
                     auto coreIdList = asGfxCoreIdList(range[0]);
                     if (coreIdList.empty()) {
                         argHelper->printf("Unknown device : %s\n", set.str().c_str());
@@ -152,8 +152,8 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
                     }
                 }
             } else {
-                if (range[0].contains("gen")) {
-                    if (false == range[1].contains("gen")) {
+                if (range[0].contains("gen") || range[0].startsWith("XE_")) {
+                    if (false == range[1].contains("gen") && false == range[1].startsWith("XE_")) {
                         argHelper->printf("Ranges mixing platforms and gfxCores is not supported : %s - should be genFrom-genTo or platformFrom-platformTo\n", set.str().c_str());
                         return {};
                     }
