@@ -18,8 +18,7 @@ HeapAssigner::HeapAssigner() {
 }
 bool HeapAssigner::useInternal32BitHeap(GraphicsAllocation::AllocationType allocType) {
     return GraphicsAllocation::isIsaAllocationType(allocType) ||
-           allocType == GraphicsAllocation::AllocationType::INTERNAL_HEAP ||
-           allocType == GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA;
+           allocType == GraphicsAllocation::AllocationType::INTERNAL_HEAP;
 }
 bool HeapAssigner::use32BitHeap(GraphicsAllocation::AllocationType allocType) {
     return useExternal32BitHeap(allocType) || useInternal32BitHeap(allocType);

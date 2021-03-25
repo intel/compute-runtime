@@ -65,11 +65,11 @@ class GfxPartition {
         getHeap(heapIndex).initFrontWindow(base, size);
     }
 
-    uint64_t heapAllocate(HeapIndex heapIndex, size_t &size) {
+    MOCKABLE_VIRTUAL uint64_t heapAllocate(HeapIndex heapIndex, size_t &size) {
         return getHeap(heapIndex).allocate(size);
     }
 
-    void heapFree(HeapIndex heapIndex, uint64_t ptr, size_t size) {
+    MOCKABLE_VIRTUAL void heapFree(HeapIndex heapIndex, uint64_t ptr, size_t size) {
         getHeap(heapIndex).free(ptr, size);
     }
 

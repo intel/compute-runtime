@@ -125,7 +125,8 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
     }
 }
 
-uint64_t getGpuAddress(GraphicsAllocation::AllocationType allocType, GfxPartition *gfxPartition, size_t &sizeAllocated, const void *hostPtr, bool resource48Bit) {
+uint64_t getGpuAddress(HeapAssigner &heapAssigner, const HardwareInfo &hwInfo, GraphicsAllocation::AllocationType allocType, GfxPartition *gfxPartition,
+                       size_t &sizeAllocated, const void *hostPtr, bool resource48Bit, bool useFrontWindow) {
     uint64_t gpuAddress = 0;
     switch (allocType) {
     case GraphicsAllocation::AllocationType::SVM_GPU:
@@ -135,8 +136,10 @@ uint64_t getGpuAddress(GraphicsAllocation::AllocationType allocType, GfxPartitio
     case GraphicsAllocation::AllocationType::KERNEL_ISA:
     case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
     case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
-        gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, sizeAllocated));
-        break;
+    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA: {
+        auto heap = heapAssigner.get32BitHeapIndex(allocType, true, hwInfo, useFrontWindow);
+        gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocate(heap, sizeAllocated));
+    } break;
     case GraphicsAllocation::AllocationType::WRITE_COMBINED:
         sizeAllocated = 0;
         break;
@@ -210,7 +213,10 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
 
     auto sizeAllocated = sizeAligned;
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-    auto gpuAddress = getGpuAddress(allocationData.type, gfxPartition, sizeAllocated, allocationData.hostPtr, allocationData.flags.resource48Bit);
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+    auto gpuAddress = getGpuAddress(this->heapAssigner, *hwInfo,
+                                    allocationData.type, gfxPartition, sizeAllocated,
+                                    allocationData.hostPtr, allocationData.flags.resource48Bit, allocationData.flags.use32BitFrontWindow);
 
     auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, numHandles, allocationData.type, nullptr, nullptr, gpuAddress, sizeAligned, MemoryPool::LocalMemory);
     allocation->setDefaultGmm(gmm.release());

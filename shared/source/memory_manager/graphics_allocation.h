@@ -223,12 +223,15 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::PRINTF_SURFACE ||
                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER ||
                allocationType == AllocationType::RING_BUFFER ||
-               allocationType == AllocationType::SEMAPHORE_BUFFER;
+               allocationType == AllocationType::SEMAPHORE_BUFFER ||
+               allocationType == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
+               allocationType == AllocationType::DEBUG_MODULE_AREA;
     }
 
     static bool isIsaAllocationType(GraphicsAllocation::AllocationType type) {
         return type == GraphicsAllocation::AllocationType::KERNEL_ISA ||
-               type == GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
+               type == GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL ||
+               type == AllocationType::DEBUG_MODULE_AREA;
     }
 
     void *getReservedAddressPtr() const {

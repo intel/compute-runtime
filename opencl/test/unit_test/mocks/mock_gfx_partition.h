@@ -34,11 +34,28 @@ class MockGfxPartition : public GfxPartition {
         return reservedCpuAddressRange.actualReservedSize - GfxPartition::heapGranularity;
     }
 
-    MOCK_METHOD2(freeGpuAddressRange, void(uint64_t gpuAddress, size_t size));
+    uint64_t heapAllocate(HeapIndex heapIndex, size_t &size) override {
+        if (callHeapAllocate) {
+            return getHeap(heapIndex).allocate(size);
+        }
+        heapAllocateIndex = heapIndex;
+        return mockGpuVa;
+    }
+
+    void heapFree(HeapIndex heapIndex, uint64_t ptr, size_t size) override {
+        if (callHeapAllocate) {
+            getHeap(heapIndex).free(ptr, size);
+        }
+    }
+
+    MOCK_METHOD(void, freeGpuAddressRange, (uint64_t gpuAddress, size_t size), (override));
 
     static std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> allHeapNames;
 
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
+    bool callHeapAllocate = true;
+    HeapIndex heapAllocateIndex = HeapIndex::TOTAL_HEAPS;
+    const uint64_t mockGpuVa = std::numeric_limits<uint64_t>::max();
 };
 
 class MockGfxPartitionBasic : public GfxPartition {
