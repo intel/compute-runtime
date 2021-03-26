@@ -49,7 +49,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         const auto allocType = GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
 
         AllocationProperties properties = {device.getRootDeviceIndex(), sipBinary.size(), allocType, device.getDeviceBitfield()};
-        properties.flags.use32BitFrontWindow = true;
+        properties.flags.use32BitFrontWindow = false;
 
         auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 

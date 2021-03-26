@@ -2119,28 +2119,6 @@ TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquired
     mockCompilerInterface->releaseDummyGenBinary();
 }
 
-TEST_F(BuiltInTests, WhenGettingSipKernelThenItIsAllocatedInFrontWindow) {
-    auto mockCompilerInterface = new MockCompilerInterface();
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
-    auto builtins = new BuiltIns;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->builtins.reset(builtins);
-    mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
-
-    const SipKernel &sipKernel = builtins->getSipKernel(SipKernelType::Csr, *pDevice);
-
-    HeapAssigner heapAssigner;
-    bool useLocalMem = heapAssigner.useExternal32BitHeap(sipKernel.getSipAllocation()->getAllocationType()) ? HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).heapInLocalMem(*defaultHwInfo) : false;
-    auto heap = heapAssigner.get32BitHeapIndex(sipKernel.getSipAllocation()->getAllocationType(), useLocalMem, *defaultHwInfo, true);
-
-    auto base = pDevice->getMemoryManager()->getGfxPartition(rootDeviceIndex)->getHeapBase(heap);
-    auto limit = pDevice->getMemoryManager()->getGfxPartition(rootDeviceIndex)->getHeapLimit(heap);
-
-    EXPECT_LE(base, GmmHelper::decanonize(sipKernel.getSipAllocation()->getGpuAddress()));
-    EXPECT_GT(limit, GmmHelper::decanonize(sipKernel.getSipAllocation()->getGpuAddress()));
-
-    mockCompilerInterface->releaseDummyGenBinary();
-}
-
 TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationForKernel) {
     const SipKernel &sipKern = pDevice->getBuiltIns()->getSipKernel(SipKernelType::Csr, pContext->getDevice(0)->getDevice());
     auto sipAllocation = sipKern.getSipAllocation();
