@@ -1689,7 +1689,7 @@ cl_int Kernel::setArgSampler(uint32_t argIndex,
         auto dsh = getDynamicStateHeap();
         auto samplerState = ptrOffset(dsh, kernelArgInfo.offsetHeap);
 
-        pSampler->setArg(const_cast<void *>(samplerState), getProgram()->getDevices()[0]->getHardwareInfo());
+        pSampler->setArg(const_cast<void *>(samplerState), clDevice.getHardwareInfo());
 
         patch<uint32_t, unsigned int>(pSampler->getSnapWaValue(), crossThreadData, kernelArgInfo.offsetSamplerSnapWa);
         patch<uint32_t, uint32_t>(GetAddrModeEnum(pSampler->addressingMode), crossThreadData, kernelArgInfo.offsetSamplerAddressingMode);
@@ -1802,7 +1802,7 @@ void Kernel::unsetArg(uint32_t argIndex) {
 }
 
 void Kernel::createReflectionSurface() {
-    auto pClDevice = program->getDevices()[0];
+    auto pClDevice = &clDevice;
     if (this->isParentKernel && kernelReflectionSurface == nullptr) {
         auto &hwInfo = pClDevice->getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -1970,7 +1970,7 @@ size_t Kernel::getInstructionHeapSizeForExecutionModel() const {
 }
 
 void Kernel::patchBlocksCurbeWithConstantValues() {
-    auto rootDeviceIndex = program->getDevices()[0]->getRootDeviceIndex();
+    auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     BlockKernelManager *blockManager = program->getBlockKernelManager();
     uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
 
@@ -2494,7 +2494,7 @@ void Kernel::resolveArgs() {
 }
 
 bool Kernel::canTransformImages() const {
-    auto renderCoreFamily = program->getDevices()[0]->getHardwareInfo().platform.eRenderCoreFamily;
+    auto renderCoreFamily = clDevice.getHardwareInfo().platform.eRenderCoreFamily;
     return renderCoreFamily >= IGFX_GEN9_CORE && renderCoreFamily <= IGFX_GEN11LP_CORE;
 }
 
