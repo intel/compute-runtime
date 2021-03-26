@@ -16,6 +16,11 @@ namespace L0 {
 namespace ult {
 struct TimestampEvent : public Test<DeviceFixture> {
   public:
+    class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
+      public:
+        using typename TimestampPackets<uint32_t>::Packet;
+    };
+
     void SetUp() override {
         DeviceFixture::SetUp();
         ze_event_pool_desc_t eventPoolDesc = {};
@@ -42,7 +47,7 @@ struct TimestampEvent : public Test<DeviceFixture> {
 };
 
 GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
-    TimestampPackets<uint32_t>::Packet data = {};
+    typename MockTimestampPackets32::Packet data = {};
     data.contextStart = 1u;
     data.contextEnd = 2u;
     data.globalStart = 3u;
@@ -61,7 +66,7 @@ GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCo
 }
 
 GEN12LPTEST_F(TimestampEvent, givenEventMoreThanOneTimestampsPacketWhenQueryKernelTimestampThenCorrectCalculationAreMade) {
-    TimestampPackets<uint32_t>::Packet data[3] = {};
+    typename MockTimestampPackets32::Packet data[3] = {};
     data[0].contextStart = 3u;
     data[0].contextEnd = 4u;
     data[0].globalStart = 5u;

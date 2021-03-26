@@ -230,7 +230,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     uint64_t baseAddr = event->getGpuAddress();
     size_t eventOffset = 0;
     if (event->isTimestampEvent) {
-        eventOffset = offsetof(NEO::TimestampPackets<uint32_t>::Packet, contextEnd);
+        eventOffset = NEO::TimestampPackets<uint32_t>::getContextEndOffset();
         event->resetPackets();
     }
     commandContainer.addToResidencyContainer(&event->getAllocation());
@@ -1487,7 +1487,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     uint64_t baseAddr = event->getGpuAddress();
     size_t eventSignalOffset = 0;
     if (event->isTimestampEvent) {
-        eventSignalOffset = offsetof(NEO::TimestampPackets<uint32_t>::Packet, contextEnd);
+        eventSignalOffset = NEO::TimestampPackets<uint32_t>::getContextEndOffset();
     }
 
     if (isCopyOnly()) {
@@ -1536,7 +1536,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
         gpuAddr = event->getGpuAddress();
         if (event->isTimestampEvent) {
-            gpuAddr += offsetof(NEO::TimestampPackets<uint32_t>::Packet, contextEnd);
+            gpuAddr += NEO::TimestampPackets<uint32_t>::getContextEndOffset();
         }
         NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
                                                                    gpuAddr,
@@ -1577,8 +1577,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(ze_event_h
     auto event = Event::fromHandle(hEvent);
 
     auto baseAddr = event->getGpuAddress();
-    auto contextOffset = beforeWalker ? offsetof(NEO::TimestampPackets<uint32_t>::Packet, contextStart) : offsetof(NEO::TimestampPackets<uint32_t>::Packet, contextEnd);
-    auto globalOffset = beforeWalker ? offsetof(NEO::TimestampPackets<uint32_t>::Packet, globalStart) : offsetof(NEO::TimestampPackets<uint32_t>::Packet, globalEnd);
+    auto contextOffset = beforeWalker ? NEO::TimestampPackets<uint32_t>::getContextStartOffset() : NEO::TimestampPackets<uint32_t>::getContextEndOffset();
+    auto globalOffset = beforeWalker ? NEO::TimestampPackets<uint32_t>::getGlobalStartOffset() : NEO::TimestampPackets<uint32_t>::getGlobalEndOffset();
 
     if (maskLsb) {
         NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, REG_GLOBAL_TIMESTAMP_LDW, mask, ptrOffset(baseAddr, globalOffset));

@@ -113,7 +113,7 @@ void TagAllocator<TagType>::returnTag(TagNodeBase *node) {
 template <typename TagType>
 size_t TagNode<TagType>::getGlobalStartOffset() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        return tagForCpuAccess->getGlobalStartOffset();
+        return TagType::getGlobalStartOffset();
     } else {
         UNRECOVERABLE_IF(true);
     }
@@ -122,7 +122,7 @@ size_t TagNode<TagType>::getGlobalStartOffset() const {
 template <typename TagType>
 size_t TagNode<TagType>::getContextStartOffset() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        return tagForCpuAccess->getContextStartOffset();
+        return TagType::getContextStartOffset();
     } else {
         UNRECOVERABLE_IF(true);
     }
@@ -131,7 +131,7 @@ size_t TagNode<TagType>::getContextStartOffset() const {
 template <typename TagType>
 size_t TagNode<TagType>::getContextEndOffset() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        return tagForCpuAccess->getContextEndOffset();
+        return TagType::getContextEndOffset();
     } else {
         UNRECOVERABLE_IF(true);
     }
@@ -140,7 +140,7 @@ size_t TagNode<TagType>::getContextEndOffset() const {
 template <typename TagType>
 size_t TagNode<TagType>::getGlobalEndOffset() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        return tagForCpuAccess->getGlobalEndOffset();
+        return TagType::getGlobalEndOffset();
     } else {
         UNRECOVERABLE_IF(true);
     }
@@ -244,7 +244,7 @@ uint32_t TagNode<TagType>::getImplicitGpuDependenciesCount() const {
 template <typename TagType>
 size_t TagNode<TagType>::getSinglePacketSize() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        return tagForCpuAccess->getSinglePacketSize();
+        return TagType::getSinglePacketSize();
     } else {
         UNRECOVERABLE_IF(true);
     }

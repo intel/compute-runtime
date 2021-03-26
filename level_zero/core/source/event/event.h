@@ -157,7 +157,7 @@ struct EventPoolImp : public EventPool {
     size_t numEvents;
 
   protected:
-    const uint32_t eventSize = static_cast<uint32_t>(alignUp(NEO::TimestampPacketSizeControl::preferredPacketCount * sizeof(struct NEO::TimestampPackets<uint32_t>::Packet),
+    const uint32_t eventSize = static_cast<uint32_t>(alignUp(NEO::TimestampPacketSizeControl::preferredPacketCount * NEO::TimestampPackets<uint32_t>::getSinglePacketSize(),
                                                              MemoryConstants::cacheLineSize));
     const uint32_t eventAlignment = MemoryConstants::cacheLineSize;
 };

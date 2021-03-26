@@ -32,7 +32,7 @@ constexpr uint32_t preferredPacketCount = 16u;
 #pragma pack(1)
 template <typename TSize>
 class TimestampPackets : public TagTypeBase {
-  public:
+  protected:
     struct Packet {
         TSize contextStart = 1u;
         TSize globalStart = 1u;
@@ -40,13 +40,14 @@ class TimestampPackets : public TagTypeBase {
         TSize globalEnd = 1u;
     };
 
+  public:
     static constexpr GraphicsAllocation::AllocationType getAllocationType() {
         return GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
     }
 
     static constexpr TagNodeType getTagNodeType() { return TagNodeType::TimestampPacket; }
 
-    size_t getSinglePacketSize() const { return sizeof(Packet); }
+    static constexpr size_t getSinglePacketSize() { return sizeof(Packet); }
 
     bool isCompleted() const {
         if (DebugManager.flags.DisableAtomicForPostSyncs.get()) {
@@ -77,10 +78,10 @@ class TimestampPackets : public TagTypeBase {
         memcpy_s(&packets[packetIndex], sizeof(Packet), source, sizeof(Packet));
     }
 
-    size_t getGlobalStartOffset() const { return ptrDiff(&packets[0].globalStart, this); }
-    size_t getContextStartOffset() const { return ptrDiff(&packets[0].contextStart, this); }
-    size_t getContextEndOffset() const { return ptrDiff(&packets[0].contextEnd, this); }
-    size_t getGlobalEndOffset() const { return ptrDiff(&packets[0].globalEnd, this); }
+    static constexpr size_t getGlobalStartOffset() { return offsetof(Packet, globalStart); }
+    static constexpr size_t getContextStartOffset() { return offsetof(Packet, contextStart); }
+    static constexpr size_t getContextEndOffset() { return offsetof(Packet, contextEnd); }
+    static constexpr size_t getGlobalEndOffset() { return offsetof(Packet, globalEnd); }
     size_t getImplicitGpuDependenciesCountOffset() const { return ptrDiff(&implicitGpuDependenciesCount, this); }
 
     uint64_t getContextStartValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].contextStart); }

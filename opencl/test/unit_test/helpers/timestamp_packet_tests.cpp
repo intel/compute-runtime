@@ -87,7 +87,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
 
-        uint64_t compareOffset = packetId * sizeof(TimestampPackets<uint32_t>::Packet);
+        uint64_t compareOffset = packetId * TimestampPackets<uint32_t>::getSinglePacketSize();
         auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode) + compareOffset;
 
         EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());

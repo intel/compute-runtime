@@ -140,7 +140,7 @@ NEO::GraphicsAllocation &Event::getAllocation() {
 }
 
 uint64_t Event::getTimestampPacketAddress() {
-    return gpuAddress + packetsInUse * sizeof(NEO::TimestampPackets<uint32_t>::Packet);
+    return gpuAddress + packetsInUse * NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
 }
 
 ze_result_t EventImp::calculateProfilingData() {
@@ -172,7 +172,7 @@ void EventImp::assignTimestampData(void *address) {
 
     for (uint32_t i = 0; i < packetsToCopy; i++) {
         timestampsData->assignDataToAllTimestamps(i, address);
-        address = ptrOffset(address, sizeof(struct NEO::TimestampPackets<uint32_t>::Packet));
+        address = ptrOffset(address, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
     }
 }
 
@@ -190,7 +190,7 @@ ze_result_t EventImp::queryStatus() {
     this->csr->downloadAllocations();
     if (isTimestampEvent) {
         auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
-        auto timeStampAddress = baseAddr + offsetof(NEO::TimestampPackets<uint32_t>::Packet, contextEnd);
+        auto timeStampAddress = baseAddr + NEO::TimestampPackets<uint32_t>::getContextEndOffset();
         hostAddr = reinterpret_cast<uint64_t *>(timeStampAddress);
     }
     memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), static_cast<void *>(hostAddr), sizeof(uint32_t));
@@ -212,11 +212,11 @@ ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
     };
 
     for (uint32_t i = 0; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
-        eventTsSetFunc(baseAddr + offsetof(NEO::TimestampPackets<uint32_t>::Packet, contextStart));
-        eventTsSetFunc(baseAddr + offsetof(NEO::TimestampPackets<uint32_t>::Packet, globalStart));
-        eventTsSetFunc(baseAddr + offsetof(NEO::TimestampPackets<uint32_t>::Packet, contextEnd));
-        eventTsSetFunc(baseAddr + offsetof(NEO::TimestampPackets<uint32_t>::Packet, globalEnd));
-        baseAddr += sizeof(struct NEO::TimestampPackets<uint32_t>::Packet);
+        eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getContextStartOffset());
+        eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getGlobalStartOffset());
+        eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getContextEndOffset());
+        eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getGlobalEndOffset());
+        baseAddr += NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
     }
     assignTimestampData(hostAddress);
 
