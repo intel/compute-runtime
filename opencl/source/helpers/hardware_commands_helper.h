@@ -116,7 +116,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
 
     inline static bool resetBindingTablePrefetch(Kernel &kernel);
 
-    static size_t getSizeRequiredCS(const Kernel *kernel);
+    static size_t getSizeRequiredCS();
     static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);
 
     static size_t getSizeRequiredDSH(

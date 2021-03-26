@@ -46,7 +46,7 @@ uint32_t HardwareCommandsHelper<GfxFamily>::additionalSizeRequiredDsh() {
 }
 
 template <typename GfxFamily>
-size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS(const Kernel *kernel) {
+size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() {
     size_t size = 2 * sizeof(typename GfxFamily::MEDIA_STATE_FLUSH) +
                   sizeof(typename GfxFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD);
     return size;

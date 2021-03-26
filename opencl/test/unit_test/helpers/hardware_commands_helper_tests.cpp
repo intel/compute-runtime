@@ -368,7 +368,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     EXPECT_GE(sizeRequiredSSH, usedAfterSSH - usedBeforeSSH);
 
     auto usedAfterCS = commandStream.getUsed();
-    EXPECT_GE(HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(kernel), usedAfterCS - usedBeforeCS);
+    EXPECT_GE(HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(), usedAfterCS - usedBeforeCS);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTableEntriesWhenIndirectStateIsEmittedThenInterfaceDescriptorContainsCorrectBindingTableEntryCount) {

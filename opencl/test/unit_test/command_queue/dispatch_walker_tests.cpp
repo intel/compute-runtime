@@ -160,7 +160,7 @@ HWTEST_F(DispatchWalkerTest, WhenDispatchingWalkerThenCommandStreamMemoryIsntCha
 
     // Consume all memory except what is needed for this enqueue
     auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::WALKER_TYPE) +
-                                   HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
+                                   HardwareCommandsHelper<FamilyType>::getSizeRequiredCS();
 
     //cs has a minimum required size
     auto sizeThatNeedsToBeSubstracted = sizeDispatchWalkerNeeds + CSRequirements::minCommandQueueCommandStreamSize;
@@ -211,7 +211,7 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalIdsWhenDispatchingWalkerThenWalkerIsDis
 
     // Consume all memory except what is needed for this enqueue
     auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::WALKER_TYPE) +
-                                   HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
+                                   HardwareCommandsHelper<FamilyType>::getSizeRequiredCS();
 
     //cs has a minimum required size
     auto sizeThatNeedsToBeSubstracted = sizeDispatchWalkerNeeds + CSRequirements::minCommandQueueCommandStreamSize;
