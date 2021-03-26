@@ -76,10 +76,6 @@ CommandStreamReceiver::~CommandStreamReceiver() {
     }
     cleanupResources();
 
-    profilingTimeStampAllocator.reset();
-    perfCounterAllocator.reset();
-    timestampPacketAllocator.reset();
-
     internalAllocationStorage->cleanAllocationList(-1, REUSABLE_ALLOCATION);
     internalAllocationStorage->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
     getMemoryManager()->unregisterEngineForCsr(this);
