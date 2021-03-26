@@ -302,7 +302,6 @@ static constexpr ze_device_fp_flags_t defaultFpFlags = static_cast<ze_device_fp_
                                                                                          ZE_DEVICE_FP_FLAG_FMA);
 
 ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKernelProperties) {
-    memset(pKernelProperties, 0, sizeof(ze_device_module_properties_t));
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
     auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
@@ -348,6 +347,19 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
     pKernelProperties->maxArgumentsSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().maxParameterSize);
 
     pKernelProperties->printfBufferSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().printfBufferSize);
+
+    if (pKernelProperties->pNext) {
+        ze_base_desc_t *extendedProperties = reinterpret_cast<ze_base_desc_t *>(pKernelProperties->pNext);
+        if (extendedProperties->stype == ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES) {
+            ze_float_atomic_ext_properties_t *floatProperties =
+                reinterpret_cast<ze_float_atomic_ext_properties_t *>(extendedProperties);
+            auto &hwInfo = this->getHwInfo();
+            auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+            hwInfoConfig.getKernelExtendedProperties(&floatProperties->fp16Flags,
+                                                     &floatProperties->fp32Flags,
+                                                     &floatProperties->fp64Flags);
+        }
+    }
 
     return ZE_RESULT_SUCCESS;
 }

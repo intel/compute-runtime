@@ -196,11 +196,49 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelThenNewAllocati
     delete[] buffer;
 }
 
+TEST_F(DeviceTest, givenKernelExtendedPropertiesStructureWhenKernelPropertiesCalledThenSuccessIsReturnedAndPropertiesAreSet) {
+    ze_device_module_properties_t kernelProperties = {};
+
+    ze_float_atomic_ext_properties_t kernelExtendedProperties = {};
+    kernelExtendedProperties.stype = ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES;
+    uint32_t maxValue = static_cast<ze_device_fp_flags_t>(std::numeric_limits<uint32_t>::max());
+    kernelExtendedProperties.fp16Flags = maxValue;
+    kernelExtendedProperties.fp32Flags = maxValue;
+    kernelExtendedProperties.fp64Flags = maxValue;
+
+    kernelProperties.pNext = &kernelExtendedProperties;
+    ze_result_t res = device->getKernelProperties(&kernelProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_NE(maxValue, kernelExtendedProperties.fp16Flags);
+    EXPECT_NE(maxValue, kernelExtendedProperties.fp32Flags);
+    EXPECT_NE(maxValue, kernelExtendedProperties.fp64Flags);
+}
+
+TEST_F(DeviceTest, givenKernelExtendedPropertiesStructureWhenKernelPropertiesCalledWithIncorrectsStypeThenSuccessIsReturnedButPropertiesAreNotSet) {
+    ze_device_module_properties_t kernelProperties = {};
+
+    ze_float_atomic_ext_properties_t kernelExtendedProperties = {};
+    kernelExtendedProperties.stype = ZE_STRUCTURE_TYPE_FORCE_UINT32;
+    uint32_t maxValue = static_cast<ze_device_fp_flags_t>(std::numeric_limits<uint32_t>::max());
+    kernelExtendedProperties.fp16Flags = maxValue;
+    kernelExtendedProperties.fp32Flags = maxValue;
+    kernelExtendedProperties.fp64Flags = maxValue;
+
+    kernelProperties.pNext = &kernelExtendedProperties;
+    ze_result_t res = device->getKernelProperties(&kernelProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(maxValue, kernelExtendedProperties.fp16Flags);
+    EXPECT_EQ(maxValue, kernelExtendedProperties.fp32Flags);
+    EXPECT_EQ(maxValue, kernelExtendedProperties.fp64Flags);
+}
+
 TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenAllPropertiesAreAssigned) {
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
 
-    ze_device_module_properties_t kernelProperties, kernelPropertiesBefore;
+    ze_device_module_properties_t kernelProperties = {};
+    ze_device_module_properties_t kernelPropertiesBefore = {};
     memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
+    kernelProperties.pNext = nullptr;
     kernelPropertiesBefore = kernelProperties;
     device->getKernelProperties(&kernelProperties);
 
@@ -592,8 +630,9 @@ struct DeviceHasNoDoubleFp64Test : public ::testing::Test {
 };
 
 TEST_F(DeviceHasNoDoubleFp64Test, givenDeviceThatDoesntHaveFp64WhenDbgFlagEnablesFp64ThenReportFp64Flags) {
-    ze_device_module_properties_t kernelProperties;
+    ze_device_module_properties_t kernelProperties = {};
     memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
+    kernelProperties.pNext = nullptr;
 
     device->getKernelProperties(&kernelProperties);
     EXPECT_FALSE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64);
@@ -631,8 +670,9 @@ struct DeviceHasNo64BitAtomicTest : public ::testing::Test {
 };
 
 TEST_F(DeviceHasNo64BitAtomicTest, givenDeviceWithNoSupportForInteger64BitAtomicsThenFlagsAreSetCorrectly) {
-    ze_device_module_properties_t kernelProperties;
+    ze_device_module_properties_t kernelProperties = {};
     memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
+    kernelProperties.pNext = nullptr;
 
     device->getKernelProperties(&kernelProperties);
     EXPECT_TRUE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP16);
@@ -658,8 +698,9 @@ struct DeviceHas64BitAtomicTest : public ::testing::Test {
 };
 
 TEST_F(DeviceHas64BitAtomicTest, givenDeviceWithSupportForInteger64BitAtomicsThenFlagsAreSetCorrectly) {
-    ze_device_module_properties_t kernelProperties;
+    ze_device_module_properties_t kernelProperties = {};
     memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
+    kernelProperties.pNext = nullptr;
 
     device->getKernelProperties(&kernelProperties);
     EXPECT_TRUE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP16);

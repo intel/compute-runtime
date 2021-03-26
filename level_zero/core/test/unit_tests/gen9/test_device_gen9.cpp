@@ -16,15 +16,6 @@ using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::Return;
 
-using KernelPropertyTest = Test<DeviceFixture>;
-
-HWTEST2_F(KernelPropertyTest, givenReturnedKernelPropertiesThenExpectedDp4aSupportReturned, IsGen9) {
-    ze_device_module_properties_t kernelProps;
-
-    device->getKernelProperties(&kernelProps);
-    EXPECT_EQ(0u, kernelProps.flags & ZE_DEVICE_MODULE_FLAG_DP4A);
-}
-
 using DevicePropertyTest = Test<DeviceFixture>;
 
 HWTEST2_F(DevicePropertyTest, givenReturnedDevicePropertiesThenExpectedPropertiesFlagsSet, IsGen9) {

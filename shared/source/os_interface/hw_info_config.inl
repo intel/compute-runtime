@@ -20,6 +20,13 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) {
+    *fp16 = 0u;
+    *fp32 = 0u;
+    *fp64 = 0u;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint64_t HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities() {
     return 0;
 }
