@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,11 +29,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-
-    image->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
-
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillImage3d,
                                                                             this->getClDevice());
     BuiltInOwnershipWrapper builtInLock(builder);

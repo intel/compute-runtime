@@ -30,13 +30,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-
-    srcBuffer->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
-    dstImage->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
-
     auto eBuiltInOpsType = EBuiltInOps::CopyBufferToImage3d;
+
     if (forceStateless(srcBuffer->getSize())) {
         eBuiltInOpsType = EBuiltInOps::CopyBufferToImage3dStateless;
     }

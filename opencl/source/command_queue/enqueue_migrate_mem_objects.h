@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,13 +25,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueMigrateMemObjects(cl_uint numMemObjects
                                                            cl_event *event) {
     NullSurface s;
     Surface *surfaces[] = {&s};
-
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-
-    for (unsigned int object = 0; object < numMemObjects; object++) {
-        auto memObject = castToObject<MemObj>(memObjects[object]);
-        memObject->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
-    }
 
     enqueueHandler<CL_COMMAND_MIGRATE_MEM_OBJECTS>(surfaces,
                                                    false,

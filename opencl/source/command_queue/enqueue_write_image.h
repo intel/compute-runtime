@@ -34,13 +34,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-
-    dstImage->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
-
     auto cmdType = CL_COMMAND_WRITE_IMAGE;
     auto isMemTransferNeeded = true;
+
     if (dstImage->isMemObjZeroCopy()) {
         size_t hostOffset;
         Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, dstImage->getImageDesc().image_type, dstImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);

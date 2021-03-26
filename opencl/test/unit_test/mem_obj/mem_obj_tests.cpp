@@ -572,36 +572,3 @@ TEST_F(MemObjMultiRootDeviceTests, WhenMemObjMapAreCreatedThenAllAllocationAreDe
 
     memObj.reset(nullptr);
 }
-
-TEST_F(MemObjMultiRootDeviceTests, WhenMemObjIsCreatedAndEnqueueMigrateMemObjectsCalledThenMemObjMultiGraphicsAllocationLastUsedRootDeviceIndexHasCorrectRootDeviceIndex) {
-    cl_int retVal = 0;
-    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, buffer);
-
-    auto bufferMemObj = static_cast<cl_mem>(buffer.get());
-    auto pBufferMemObj = &bufferMemObj;
-
-    auto cmdQ1 = context->getSpecialQueue(1u);
-    retVal = cmdQ1->enqueueMigrateMemObjects(1, pBufferMemObj, CL_MIGRATE_MEM_OBJECT_HOST, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(buffer.get()->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
-
-    retVal = cmdQ1->enqueueMigrateMemObjects(1, pBufferMemObj, CL_MIGRATE_MEM_OBJECT_HOST, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(buffer.get()->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
-
-    auto cmdQ2 = context->getSpecialQueue(2u);
-    retVal = cmdQ2->enqueueMigrateMemObjects(1, pBufferMemObj, CL_MIGRATE_MEM_OBJECT_HOST, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(buffer.get()->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
-
-    retVal = cmdQ1->enqueueMigrateMemObjects(1, pBufferMemObj, CL_MIGRATE_MEM_OBJECT_HOST, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(buffer.get()->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 1u);
-
-    static_cast<MemoryAllocation *>(buffer.get()->getMigrateableMultiGraphicsAllocation().getGraphicsAllocation(2u))->overrideMemoryPool(MemoryPool::LocalMemory);
-    retVal = cmdQ2->enqueueMigrateMemObjects(1, pBufferMemObj, CL_MIGRATE_MEM_OBJECT_HOST, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(buffer.get()->getMultiGraphicsAllocation().getLastUsedRootDeviceIndex(), 2u);
-}

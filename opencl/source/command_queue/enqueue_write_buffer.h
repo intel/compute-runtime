@@ -34,8 +34,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
 
     auto rootDeviceIndex = getDevice().getRootDeviceIndex();
 
-    buffer->getMigrateableMultiGraphicsAllocation().ensureMemoryOnDevice(*getDevice().getMemoryManager(), rootDeviceIndex);
-
     const cl_command_type cmdType = CL_COMMAND_WRITE_BUFFER;
     auto isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingWrite, size, const_cast<void *>(ptr),
