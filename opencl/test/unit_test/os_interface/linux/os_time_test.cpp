@@ -206,7 +206,7 @@ TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlFailsThenDefaultCloc
 
     auto result = osTime->getDynamicDeviceTimerClock(*defaultHwInfo);
     auto expectedResult = static_cast<uint64_t>(1000000000.0 / defaultResolution);
-    EXPECT_DOUBLE_EQ(result, expectedResult);
+    EXPECT_EQ(result, expectedResult);
 }
 
 TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlSucceedsThenNonDefaultClockIsReturned) {
