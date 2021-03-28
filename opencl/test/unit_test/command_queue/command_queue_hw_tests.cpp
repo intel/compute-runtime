@@ -332,7 +332,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventWhenEnqueuingBlockedMapUnmapOperationThen
     buffer->decRefInternal();
 }
 
-HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingMapBufferWillWaitForPrecedingCommandsToComplete) {
+HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingWhenMappingBufferThenWillWaitForPrecedingCommandsToComplete) {
     struct MockCmdQ : CommandQueueHw<FamilyType> {
         MockCmdQ(Context *context, ClDevice *device)
             : CommandQueueHw<FamilyType>(context, device, 0, false) {
@@ -371,7 +371,7 @@ HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingMapBufferWillWaitForPre
     clReleaseEvent(gatingEvent);
 }
 
-HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingMapBufferWillWaitForEvents) {
+HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingWhenMappingBufferThenWillWaitForEvents) {
     struct MockEvent : UserEvent {
         MockEvent(Context *ctx, uint32_t updateCountBeforeCompleted)
             : UserEvent(ctx),
@@ -975,7 +975,7 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferRectCallWh
     EXPECT_EQ(offset, builtinParams.dstOffset);
     EXPECT_EQ(ptrOffset, builtinParams.srcOffset.x);
 }
-HWTEST_F(CommandQueueHwTest, givenCommandQueueThatIsBlockedAndUsesCpuCopyWhenEventIsReturnedItIsNotReady) {
+HWTEST_F(CommandQueueHwTest, givenCommandQueueThatIsBlockedAndUsesCpuCopyWhenEventIsReturnedThenItIsNotReady) {
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
     MockBuffer buffer;
     cl_event returnEvent = nullptr;
