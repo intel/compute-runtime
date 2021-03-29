@@ -99,17 +99,17 @@ if(NOT SKIP_UNIT_TESTS)
                              ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
   )
 
-  if(UNIX)
-    target_link_libraries(${TARGET_NAME} pthread rt)
-  else()
-    target_link_libraries(${TARGET_NAME} dbghelp)
-  endif()
-
   target_link_libraries(${TARGET_NAME}
                         gmock-gtest
                         ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE}
                         compute_runtime_mockable_extra
   )
+
+  if(UNIX)
+    target_link_libraries(${TARGET_NAME} pthread rt)
+  else()
+    target_link_libraries(${TARGET_NAME} dbghelp)
+  endif()
 
   if(MSVC)
     set_target_properties(${TARGET_NAME} PROPERTIES
