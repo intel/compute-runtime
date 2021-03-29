@@ -269,10 +269,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             NEO::PreemptionHelper::programStateSip<GfxFamily>(child, *neoDevice);
         }
 
-        NEO::PreemptionHelper::programCmdStream<GfxFamily>(child,
-                                                           cmdQueuePreemption,
-                                                           commandQueuePreemptionMode,
-                                                           csr->getPreemptionAllocation());
+        if (cmdQueuePreemption != commandQueuePreemptionMode) {
+            NEO::PreemptionHelper::programCmdStream<GfxFamily>(child,
+                                                               cmdQueuePreemption,
+                                                               commandQueuePreemptionMode,
+                                                               csr->getPreemptionAllocation());
+        }
         statePreemption = cmdQueuePreemption;
 
         const bool sipKernelUsed = devicePreemption == NEO::PreemptionMode::MidThread ||
