@@ -69,7 +69,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     }
 
     EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), true);
-    EncodeStates<Family>::adjustStateComputeMode(*container.getCommandStream(), container.lastSentNumGrfRequired, nullptr, false, false);
+    EncodeStates<Family>::adjustStateComputeMode(*container.getCommandStream(), container.lastSentNumGrfRequired, nullptr, false, false,
+                                                 kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, device->getNumAvailableDevices() > 1);
     EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), false);
 
     auto numThreadsPerThreadGroup = dispatchInterface->getNumThreadsPerThreadGroup();

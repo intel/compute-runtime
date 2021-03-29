@@ -148,6 +148,7 @@ void CommandContainer::reset() {
     nextIddInBlock = this->getNumIddPerBlock();
     lastSentNumGrfRequired = 0;
     lastPipelineSelectModeRequired = false;
+    lastSentUseGlobalAtomics = false;
 }
 
 void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,

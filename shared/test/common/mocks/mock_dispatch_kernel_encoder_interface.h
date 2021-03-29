@@ -52,7 +52,6 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     uint32_t getNumThreadsPerThreadGroup() const override {
         return 1;
     }
-
     void expectAnyMockFunctionCall();
 
     ::testing::NiceMock<MockGraphicsAllocation> mockAllocation;

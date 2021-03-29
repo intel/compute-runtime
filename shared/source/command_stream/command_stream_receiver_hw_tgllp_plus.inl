@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,8 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
 
         auto stateComputeMode = GfxFamily::cmdInitStateComputeMode;
         adjustThreadArbitionPolicy(&stateComputeMode);
-        EncodeStates<GfxFamily>::adjustStateComputeMode(stream, dispatchFlags.numGrfRequired, &stateComputeMode, isMultiOsContextCapable(), dispatchFlags.requiresCoherency);
+        EncodeStates<GfxFamily>::adjustStateComputeMode(stream, dispatchFlags.numGrfRequired, &stateComputeMode, isMultiOsContextCapable(), dispatchFlags.requiresCoherency,
+                                                        dispatchFlags.useGlobalAtomics, dispatchFlags.areMultipleSubDevicesInContext);
 
         if (csrSizeRequestFlags.hasSharedHandles) {
             auto pc = stream.getSpaceForCmd<PIPE_CONTROL>();

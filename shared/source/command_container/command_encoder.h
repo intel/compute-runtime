@@ -98,7 +98,7 @@ struct EncodeStates {
                                      const void *fnDynamicStateHeap,
                                      BindlessHeapsHelper *bindlessHeapHelper);
 
-    static void adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable, bool requiresCoherency);
+    static void adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable, bool requiresCoherency, bool useGlobalAtomics, bool areMultipleSubDevicesInContext);
 
     static size_t getAdjustStateComputeModeSize();
 };
@@ -265,7 +265,8 @@ struct EncodeSurfaceState {
 template <typename GfxFamily>
 struct EncodeComputeMode {
     using STATE_COMPUTE_MODE = typename GfxFamily::STATE_COMPUTE_MODE;
-    static void adjustComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable);
+    static void adjustComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
+                                  bool isMultiOsContextCapable, bool useGlobalAtomics, bool areMultipleSubDevicesInContext);
 
     static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
 };

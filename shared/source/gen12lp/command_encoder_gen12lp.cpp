@@ -35,7 +35,8 @@ size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
 }
 
 template <>
-void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable) {
+void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
+                                                  bool isMultiOsContextCapable, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
     STATE_COMPUTE_MODE *stateComputeMode = static_cast<STATE_COMPUTE_MODE *>(stateComputeModePtr);
     auto buffer = csr.getSpace(sizeof(STATE_COMPUTE_MODE));
     *reinterpret_cast<STATE_COMPUTE_MODE *>(buffer) = *stateComputeMode;

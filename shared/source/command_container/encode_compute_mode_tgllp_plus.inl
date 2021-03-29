@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,8 @@
 
 namespace NEO {
 template <typename Family>
-void EncodeStates<Family>::adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable, bool requiresCoherency) {
+void EncodeStates<Family>::adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
+                                                  bool isMultiOsContextCapable, bool requiresCoherency, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
     STATE_COMPUTE_MODE stateComputeMode = (stateComputeModePtr != nullptr) ? *(static_cast<STATE_COMPUTE_MODE *>(stateComputeModePtr)) : Family::cmdInitStateComputeMode;
@@ -20,7 +21,7 @@ void EncodeStates<Family>::adjustStateComputeMode(LinearStream &csr, uint32_t nu
 
     stateComputeMode.setMaskBits(stateComputeMode.getMaskBits() | Family::stateComputeModeForceNonCoherentMask);
 
-    EncodeComputeMode<Family>::adjustComputeMode(csr, numGrfRequired, &stateComputeMode, isMultiOsContextCapable);
+    EncodeComputeMode<Family>::adjustComputeMode(csr, numGrfRequired, &stateComputeMode, isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext);
 }
 
 template <typename Family>
