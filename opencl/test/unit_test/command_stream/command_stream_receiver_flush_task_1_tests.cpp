@@ -624,10 +624,40 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenMultiOsContextCapableSetAndDi
     stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), stateBaseAddressItor);
 
-    // 2. Reprogram SBA only if dispatchFlags.useGlobalAtomics flips and csr is multi context capable
+    // 2. Reprogram SBA only if dispatchFlags.useGlobalAtomics flips and csr is multi context capable or context has several devices
     commandStreamReceiver.multiOsContextCapable = true;
 
     flushTaskFlags.useGlobalAtomics = true;
+    flushTaskFlags.numDevicesInContext = 1;
+    offset = commandStreamReceiver.commandStream.getUsed();
+    flushTask(commandStreamReceiver);
+
+    cmdList.clear();
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, offset);
+    stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), stateBaseAddressItor);
+
+    flushTaskFlags.useGlobalAtomics ^= true;
+    offset = commandStreamReceiver.commandStream.getUsed();
+    flushTask(commandStreamReceiver);
+
+    cmdList.clear();
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, offset);
+    stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), stateBaseAddressItor);
+
+    offset = commandStreamReceiver.commandStream.getUsed();
+    flushTask(commandStreamReceiver);
+
+    cmdList.clear();
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, offset);
+    stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), stateBaseAddressItor);
+
+    commandStreamReceiver.multiOsContextCapable = false;
+
+    flushTaskFlags.useGlobalAtomics = true;
+    flushTaskFlags.numDevicesInContext = 2;
     offset = commandStreamReceiver.commandStream.getUsed();
     flushTask(commandStreamReceiver);
 
