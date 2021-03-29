@@ -17,6 +17,7 @@
 #include "test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
@@ -453,6 +454,41 @@ TEST_F(GlobalTimestampTest, whenGetProfilingTimerClockandProfilingTimerResolutio
     double timerResolution = neoDevice->getProfilingTimerResolution();
     EXPECT_NE(timerResolution, 0.0);
     EXPECT_EQ(timerClock, static_cast<uint64_t>(1000000000.0 / timerResolution));
+}
+
+TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionThenDefaultTimerResolutionInNanoSecondsIsReturned) {
+    neoDevice->setOSTime(new FalseCpuGpuTime());
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    std::unique_ptr<L0::DriverHandleImp> driverHandle = std::make_unique<L0::DriverHandleImp>();
+    driverHandle->initialize(std::move(devices));
+
+    double timerResolution = neoDevice->getProfilingTimerResolution();
+    EXPECT_NE(timerResolution, 0.0);
+
+    ze_device_properties_t deviceProps = {};
+    ze_result_t res = driverHandle.get()->devices[0]->getProperties(&deviceProps);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(deviceProps.timerResolution, static_cast<uint64_t>(timerResolution));
+}
+
+TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecondTimerSetThenTimerResolutionInCyclesPerSecondsIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseCyclesPerSecondTimer.set(1u);
+
+    neoDevice->setOSTime(new FalseCpuGpuTime());
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    std::unique_ptr<L0::DriverHandleImp> driverHandle = std::make_unique<L0::DriverHandleImp>();
+    driverHandle->initialize(std::move(devices));
+
+    uint64_t timerClock = neoDevice->getProfilingTimerClock();
+    EXPECT_NE(timerClock, 0u);
+
+    ze_device_properties_t deviceProps = {};
+    ze_result_t res = driverHandle.get()->devices[0]->getProperties(&deviceProps);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(deviceProps.timerResolution, timerClock);
 }
 
 class FalseCpuTime : public NEO::OSTime {
