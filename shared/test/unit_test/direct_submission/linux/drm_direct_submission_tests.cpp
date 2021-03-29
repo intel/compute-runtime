@@ -48,16 +48,24 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass = DrmDirectSubmission<GfxFamily, Dispatcher>;
     using BaseClass::allocateResources;
     using BaseClass::currentTagData;
+    using BaseClass::disableMonitorFence;
+    using BaseClass::dispatchSwitchRingBufferSection;
     using BaseClass::DrmDirectSubmission;
     using BaseClass::getSizeNewResourceHandler;
+    using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::getTagAddressValue;
     using BaseClass::handleNewResourcesSubmission;
     using BaseClass::handleResidency;
     using BaseClass::isNewResourceHandleNeeded;
+    using BaseClass::ringStart;
     using BaseClass::submit;
     using BaseClass::switchRingBuffers;
     using BaseClass::tagAddress;
     using BaseClass::updateTagValue;
+
+    MockDrmDirectSubmission(Device &device, OsContext &osContext) : DrmDirectSubmission<GfxFamily, Dispatcher>(device, osContext) {
+        this->disableMonitorFence = false;
+    }
 };
 
 using namespace NEO;
@@ -99,6 +107,55 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenDestructObjectThen
     drmDirectSubmission.reset();
 
     EXPECT_EQ(drm->ioctlCallsCount, 3u);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenDispatchSwitchRingBufferThenDispatchPipeControl) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
+                                                                     *osContext.get());
+    directSubmission.disableMonitorFence = true;
+    directSubmission.ringStart = true;
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+
+    uint64_t newAddress = 0x1234;
+    directSubmission.dispatchSwitchRingBufferSection(newAddress);
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+
+    EXPECT_NE(pipeControl, nullptr);
+    EXPECT_EQ(directSubmission.getSizeSwitchRingBufferSection(), Dispatcher::getSizeStartCommandBuffer() + Dispatcher::getSizeMonitorFence(device->getHardwareInfo()));
+
+    directSubmission.currentTagData.tagValue--;
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenUpdateTagValueThenTagIsNotUpdated) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
+                                                                     *osContext.get());
+    directSubmission.disableMonitorFence = true;
+    directSubmission.ringStart = true;
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+
+    auto currentTag = directSubmission.currentTagData.tagValue;
+    directSubmission.updateTagValue();
+
+    auto updatedTag = directSubmission.currentTagData.tagValue;
+
+    EXPECT_EQ(currentTag, updatedTag);
+
+    directSubmission.currentTagData.tagValue--;
 }
 
 HWTEST_F(DrmDirectSubmissionTest, whenCheckForDirectSubmissionSupportThenProperValueIsReturned) {

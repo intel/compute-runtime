@@ -1313,6 +1313,7 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
     template <typename GfxFamily>
     void SetUpT() {
         DebugManager.flags.EnableDirectSubmission.set(1u);
+        DebugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
         DrmCommandStreamEnhancedTest::SetUpT<GfxFamily>();
         auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
         auto engineType = device->getDefaultEngine().osContext->getEngineType();

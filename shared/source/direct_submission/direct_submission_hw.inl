@@ -218,12 +218,21 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeStartSection() {
 
 template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress) {
+    if (disableMonitorFence) {
+        TagData currentTagData = {};
+        getTagAddressValue(currentTagData);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo);
+    }
     Dispatcher::dispatchStartCommandBuffer(ringCommandStream, nextBufferGpuAddress);
 }
 
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSwitchRingBufferSection() {
-    return Dispatcher::getSizeStartCommandBuffer();
+    size_t size = Dispatcher::getSizeStartCommandBuffer();
+    if (disableMonitorFence) {
+        size += Dispatcher::getSizeMonitorFence(*hwInfo);
+    }
+    return size;
 }
 
 template <typename GfxFamily, typename Dispatcher>

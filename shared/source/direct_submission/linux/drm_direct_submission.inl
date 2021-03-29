@@ -26,6 +26,12 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
                                                                 OsContext &osContext)
     : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext) {
 
+    this->disableMonitorFence = true;
+
+    if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
+        this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
+    }
+
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
     osContextLinux->getDrm().setDirectSubmissionActive(true);
 };
@@ -33,8 +39,11 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
 template <typename GfxFamily, typename Dispatcher>
 inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
     if (this->ringStart) {
-        this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
         this->stopRingBuffer();
+        if (this->disableMonitorFence) {
+            this->currentTagData.tagValue++;
+        }
+        this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
         auto bb = static_cast<DrmAllocation *>(this->ringBuffer)->getBO();
         bb->wait(-1);
     }
@@ -126,6 +135,12 @@ size_t DrmDirectSubmission<GfxFamily, Dispatcher>::getSizeNewResourceHandler() {
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
+    if (this->disableMonitorFence) {
+        auto previousRingBuffer = this->currentRingBuffer == DirectSubmissionHw<GfxFamily, Dispatcher>::RingBufferUse::FirstBuffer ? DirectSubmissionHw<GfxFamily, Dispatcher>::RingBufferUse::SecondBuffer : DirectSubmissionHw<GfxFamily, Dispatcher>::RingBufferUse::FirstBuffer;
+        this->currentTagData.tagValue++;
+        this->completionRingBuffers[previousRingBuffer] = this->currentTagData.tagValue;
+    }
+
     if (this->ringStart) {
         if (this->completionRingBuffers[this->currentRingBuffer] != 0) {
             this->wait(static_cast<uint32_t>(this->completionRingBuffers[this->currentRingBuffer]));
@@ -135,8 +150,10 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
 
 template <typename GfxFamily, typename Dispatcher>
 uint64_t DrmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue() {
-    this->currentTagData.tagValue++;
-    this->completionRingBuffers[this->currentRingBuffer] = this->currentTagData.tagValue;
+    if (!this->disableMonitorFence) {
+        this->currentTagData.tagValue++;
+        this->completionRingBuffers[this->currentRingBuffer] = this->currentTagData.tagValue;
+    }
     return 0ull;
 }
 
