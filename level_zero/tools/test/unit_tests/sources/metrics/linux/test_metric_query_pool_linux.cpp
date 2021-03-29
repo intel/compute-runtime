@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
@@ -18,6 +19,12 @@
 
 using ::testing::_;
 using ::testing::Return;
+
+namespace NEO {
+namespace SysCalls {
+extern int fstatFuncRetVal;
+} // namespace SysCalls
+} // namespace NEO
 
 namespace L0 {
 namespace ult {
@@ -328,10 +335,24 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectOpenMetricDeviceOnAdapterWhenGet
     EXPECT_NE(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTestLinux, givenIcorrectDrmFileForFstaWhenGetMetricsAdapterThenReturnFail) {
+TEST_F(MetricEnumerationTestLinux, givenCorrectDrmFileForFstatWhenGetMetricsAdapterThenReturnSuccess) {
 
     uint32_t drmMajor = 0;
     uint32_t drmMinor = 0;
+
+    VariableBackup<int> fstatBackup(&NEO::SysCalls::fstatFuncRetVal);
+    NEO::SysCalls::fstatFuncRetVal = 0;
+
+    EXPECT_EQ(mockMetricEnumeration->baseGetAdapterId(drmMajor, drmMinor), true);
+}
+
+TEST_F(MetricEnumerationTestLinux, givenIncorrectDrmFileForFstatWhenGetMetricsAdapterThenReturnFail) {
+
+    uint32_t drmMajor = 0;
+    uint32_t drmMinor = 0;
+
+    VariableBackup<int> fstatBackup(&NEO::SysCalls::fstatFuncRetVal);
+    NEO::SysCalls::fstatFuncRetVal = -1;
 
     EXPECT_EQ(mockMetricEnumeration->baseGetAdapterId(drmMajor, drmMinor), false);
 }

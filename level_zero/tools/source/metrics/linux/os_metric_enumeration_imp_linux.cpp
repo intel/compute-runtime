@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
 
@@ -25,7 +26,7 @@ bool MetricEnumeration::getAdapterId(uint32_t &adapterMajor, uint32_t &adapterMi
     auto drmFile = drm->getFileDescriptor();
     struct stat drmStat = {};
 
-    int32_t result = fstat(drmFile, &drmStat);
+    int32_t result = NEO::SysCalls::fstat(drmFile, &drmStat);
 
     adapterMajor = major(drmStat.st_rdev);
     adapterMinor = minor(drmStat.st_rdev);

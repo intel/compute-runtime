@@ -37,6 +37,7 @@ int ioctlVmCreateReturned = 0u;
 uint64_t ioctlVmCreateExtensionArg = 0ull;
 constexpr unsigned long int invalidIoctl = static_cast<unsigned long int>(-1);
 int setErrno = 0;
+int fstatFuncRetVal = 0;
 
 int close(int fileDescriptor) {
     closeFuncCalled++;
@@ -124,5 +125,8 @@ int poll(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) {
     return 0;
 }
 
+int fstat(int fd, struct stat *buf) {
+    return fstatFuncRetVal;
+}
 } // namespace SysCalls
 } // namespace NEO

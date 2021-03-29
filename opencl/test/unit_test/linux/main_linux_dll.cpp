@@ -544,6 +544,12 @@ TEST(SysCalls, WhenSysCallsPollCalledThenCallIsRedirectedToOs) {
     EXPECT_EQ(0, result);
 }
 
+TEST(SysCalls, WhenSysCallsFstatCalledThenCallIsRedirectedToOs) {
+    struct stat st = {};
+    auto result = NEO::SysCalls::fstat(0, &st);
+    EXPECT_EQ(0, result);
+}
+
 int main(int argc, char **argv) {
     bool useDefaultListener = false;
 
