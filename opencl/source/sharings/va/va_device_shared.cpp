@@ -8,7 +8,6 @@
 #include "shared/source/device/device.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_interface.h"
-#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform.h"
@@ -28,27 +27,11 @@ ClDevice *VADevice::getRootDeviceFromVaDisplay(Platform *pPlatform, VADisplay va
 
     UNRECOVERABLE_IF(deviceFd < 0);
 
-    char path[256] = {0};
-    size_t pathlen = 256;
+    auto devicePath = OSInterface::OSInterfaceImpl::getPciPath(deviceFd);
 
-    if (SysCalls::getDevicePath(deviceFd, path, pathlen)) {
+    if (devicePath == std::nullopt) {
         return nullptr;
     }
-
-    if (SysCalls::access(path, F_OK)) {
-        return nullptr;
-    }
-
-    int readLinkSize = 0;
-    char devicePath[256] = {0};
-    readLinkSize = SysCalls::readlink(path, devicePath, pathlen);
-
-    if (readLinkSize == -1) {
-        return nullptr;
-    }
-
-    std::string_view devicePathView(devicePath, static_cast<size_t>(readLinkSize));
-    devicePathView = devicePathView.substr(devicePathView.find("/drm/render") - 7u, 7u);
 
     for (size_t i = 0; i < pPlatform->getNumDevices(); ++i) {
         auto device = pPlatform->getClDevice(i);
@@ -56,7 +39,7 @@ ClDevice *VADevice::getRootDeviceFromVaDisplay(Platform *pPlatform, VADisplay va
 
         auto *drm = neoDevice->getRootDeviceEnvironment().osInterface->get()->getDrm();
         auto pciPath = drm->getPciPath();
-        if (devicePathView == pciPath) {
+        if (devicePath == pciPath) {
             return device;
         }
     }

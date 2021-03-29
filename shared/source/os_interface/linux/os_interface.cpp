@@ -13,6 +13,13 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
+
+#include <optional>
+#include <string_view>
+#include <sys/stat.h>
+#include <system_error>
+#include <unistd.h>
 
 namespace NEO {
 
@@ -68,5 +75,31 @@ bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDevi
     }
     memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);
     return true;
+}
+
+std::optional<std::string> OSInterface::OSInterfaceImpl::getPciPath(int deviceFd) {
+    char path[256] = {0};
+    size_t pathlen = 256;
+
+    if (SysCalls::getDevicePath(deviceFd, path, pathlen)) {
+        return std::nullopt;
+    }
+
+    if (SysCalls::access(path, F_OK)) {
+        return std::nullopt;
+    }
+
+    int readLinkSize = 0;
+    char devicePath[256] = {0};
+    readLinkSize = SysCalls::readlink(path, devicePath, pathlen);
+
+    if (readLinkSize == -1) {
+        return std::nullopt;
+    }
+
+    std::string_view devicePathView(devicePath, static_cast<size_t>(readLinkSize));
+    devicePathView = devicePathView.substr(devicePathView.find("/drm/render") - 7u, 7u);
+
+    return std::string(devicePathView);
 }
 } // namespace NEO

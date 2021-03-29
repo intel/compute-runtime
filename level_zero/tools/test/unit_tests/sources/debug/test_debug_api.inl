@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "test.h"

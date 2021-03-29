@@ -135,6 +135,7 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirSuccedsThenHwDeviceIdsHavePr
 TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevices) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);
+    VariableBackup<decltype(readLinkCalledTimes)> backupReadlink(&readLinkCalledTimes, 0);
     openFull = openWithCounter;
     openCounter = 1;
 
@@ -152,7 +153,7 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderD
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
     EXPECT_STREQ("00:02.0", hwDeviceIds[0]->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
-    EXPECT_STREQ("00:02.0", hwDeviceIds[1]->getPciPath());
+    EXPECT_STREQ("00:03.0", hwDeviceIds[1]->getPciPath());
 }
 
 TEST(DrmTest, GivenSelectedNonExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevicesAndNoDevicesAreCreated) {
@@ -170,6 +171,7 @@ TEST(DrmTest, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateMultipleRo
     DebugManagerStateRestore stateRestore;
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);
+    VariableBackup<decltype(readLinkCalledTimes)> backupReadlink(&readLinkCalledTimes, 0);
     openFull = openWithCounter;
     ExecutionEnvironment executionEnvironment;
     const uint32_t requestedNumRootDevices = 2u;
@@ -182,7 +184,7 @@ TEST(DrmTest, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateMultipleRo
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
     EXPECT_STREQ("00:02.0", hwDeviceIds[0]->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
-    EXPECT_STREQ("00:02.0", hwDeviceIds[1]->getPciPath());
+    EXPECT_STREQ("00:03.0", hwDeviceIds[1]->getPciPath());
 }
 
 TEST(DrmTest, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevicesFlagIsSetThenTheFlagIsRespected) {

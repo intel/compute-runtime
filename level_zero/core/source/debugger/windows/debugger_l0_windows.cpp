@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/kernel/debug_data.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 
 #include "level_zero/core/source/debugger/debugger_l0.h"
 

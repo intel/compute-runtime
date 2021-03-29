@@ -7,6 +7,8 @@
 
 #include "mock_os_layer.h"
 
+#include "shared/source/helpers/string.h"
+
 #include <cassert>
 #include <dirent.h>
 #include <iostream>
@@ -59,7 +61,16 @@ int access(const char *pathname, int mode) {
 
 ssize_t readlink(const char *path, char *buf, size_t bufsiz) {
     ++readLinkCalledTimes;
-    return -1;
+
+    if (readLinkCalledTimes % 2 == 1) {
+        return -1;
+    }
+
+    constexpr size_t sizeofPath = sizeof("../../devices/pci0000:4a/0000:4a:02.0/0000:4b:00.0/0000:4c:01.0/0000:00:03.0/drm/renderD128");
+
+    strcpy_s(buf, sizeofPath, "../../devices/pci0000:4a/0000:4a:02.0/0000:4b:00.0/0000:4c:01.0/0000:00:03.0/drm/renderD128");
+
+    return sizeofPath;
 }
 
 int open(const char *pathname, int flags, ...) {
