@@ -1271,4 +1271,20 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPerDssBackedBuffer(const
     return 0;
 }
 
+template <typename GfxFamily>
+TagAllocatorBase *CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocator() {
+    if (timestampPacketAllocator.get() == nullptr) {
+        // dont release nodes in aub/tbx mode, to avoid removing semaphores optimization or reusing returned tags
+        bool doNotReleaseNodes = (getType() > CommandStreamReceiverType::CSR_HW) ||
+                                 DebugManager.flags.DisableTimestampPacketOptimizations.get();
+
+        using TimestampPacketsT = TimestampPackets<typename GfxFamily::TimestampPacketType>;
+
+        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketsT>>(
+            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize * 4,
+            sizeof(TimestampPacketsT), doNotReleaseNodes, osContext->getDeviceBitfield());
+    }
+    return timestampPacketAllocator.get();
+}
+
 } // namespace NEO

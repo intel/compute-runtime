@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,6 +54,7 @@ struct BDWFamily : public GEN8 {
     using VFE_STATE_TYPE = MEDIA_VFE_STATE;
     using XY_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    using TimestampPacketType = uint32_t;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;

@@ -618,19 +618,6 @@ TagAllocatorBase *CommandStreamReceiver::getEventPerfCountAllocator(const uint32
     return perfCounterAllocator.get();
 }
 
-TagAllocatorBase *CommandStreamReceiver::getTimestampPacketAllocator() {
-    if (timestampPacketAllocator.get() == nullptr) {
-        // dont release nodes in aub/tbx mode, to avoid removing semaphores optimization or reusing returned tags
-        bool doNotReleaseNodes = (getType() > CommandStreamReceiverType::CSR_HW) ||
-                                 DebugManager.flags.DisableTimestampPacketOptimizations.get();
-
-        timestampPacketAllocator = std::make_unique<TagAllocator<NEO::TimestampPackets<uint32_t>>>(
-            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize * 4,
-            sizeof(NEO::TimestampPackets<uint32_t>), doNotReleaseNodes, osContext->getDeviceBitfield());
-    }
-    return timestampPacketAllocator.get();
-}
-
 size_t CommandStreamReceiver::getPreferredTagPoolSize() const {
     if (DebugManager.flags.DisableTimestampPacketOptimizations.get()) {
         return 1;

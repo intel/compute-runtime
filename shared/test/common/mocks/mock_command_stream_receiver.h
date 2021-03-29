@@ -55,6 +55,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return MemoryCompressionState::NotApplicable;
     };
 
+    TagAllocatorBase *getTimestampPacketAllocator() override { return nullptr; }
+
     CompletionStamp flushTask(
         LinearStream &commandStream,
         size_t commandStreamStart,

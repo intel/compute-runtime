@@ -75,6 +75,19 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {
     EXPECT_FALSE(csr.isPreambleSent);
 }
 
+HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenTimestampTypeIs32b) {
+    using ExpectedType = TimestampPackets<typename FamilyType::TimestampPacketType>;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto allocator = csr.getTimestampPacketAllocator();
+    auto tag = allocator->getTag();
+
+    auto expectedOffset = sizeof(typename FamilyType::TimestampPacketType) * 4 * static_cast<size_t>(TimestampPacketSizeControl::preferredPacketCount);
+
+    EXPECT_EQ(expectedOffset, tag->getImplicitGpuDependenciesCountOffset());
+}
+
 HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.initProgrammingFlags();
