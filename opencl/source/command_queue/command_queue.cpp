@@ -544,7 +544,7 @@ bool CommandQueue::setupDebugSurface(Kernel *kernel) {
     Buffer::setSurfaceState(&device->getDevice(), surfaceState, false, false, sizeToPatch,
                             addressToPatch, 0, debugSurface, 0, 0,
                             kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
-                            kernel->getTotalNumDevicesInContext());
+                            kernel->areMultipleSubDevicesInContext());
     return true;
 }
 

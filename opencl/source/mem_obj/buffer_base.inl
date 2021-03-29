@@ -35,7 +35,7 @@ union SURFACE_STATE_BUFFER_LENGTH {
 
 template <typename GfxFamily>
 void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation,
-                                         bool isReadOnlyArgument, const Device &device, bool useGlobalAtomics, size_t numDevicesInContext) {
+                                         bool isReadOnlyArgument, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
     auto rootDeviceIndex = device.getRootDeviceIndex();
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     const auto isReadOnly = isValueSet(getFlags(), CL_MEM_READ_ONLY) || isReadOnlyArgument;
@@ -43,7 +43,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
                                                 getSurfaceSize(alignSizeForAuxTranslation, rootDeviceIndex),
                                                 getMocsValue(disableL3, isReadOnly, rootDeviceIndex),
                                                 true, forceNonAuxMode, isReadOnly, device.getNumAvailableDevices(),
-                                                graphicsAllocation, device.getGmmHelper(), useGlobalAtomics, numDevicesInContext);
+                                                graphicsAllocation, device.getGmmHelper(), useGlobalAtomics, areMultipleSubDevicesInContext);
     appendSurfaceStateExt(memory);
 }
 } // namespace NEO

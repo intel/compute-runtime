@@ -243,7 +243,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         kernel->requiresPerDssBackedBuffer(),                                             //usePerDssBackedBuffer
         kernel->isSingleSubdevicePreferred(),                                             //useSingleSubdevice
         kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
-        kernel->getTotalNumDevicesInContext());                                           //numDevicesInContext
+        kernel->areMultipleSubDevicesInContext());                                        //areMultipleSubDevicesInContext
 
     if (timestampPacketDependencies) {
         eventsRequest.fillCsrDependencies(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);

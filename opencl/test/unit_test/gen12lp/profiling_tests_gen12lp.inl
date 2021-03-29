@@ -21,6 +21,7 @@ struct ProfilingTestsGen12LP : public CommandEnqueueFixture,
     }
 
     void TearDown() override {
+        mockKernelWithInternals.reset();
         CommandEnqueueFixture::TearDown();
     }
 

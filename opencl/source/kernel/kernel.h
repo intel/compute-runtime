@@ -399,7 +399,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     MultiDeviceKernel *getMultiDeviceKernel() const { return pMultiDeviceKernel; }
     void setMultiDeviceKernel(MultiDeviceKernel *pMultiDeviceKernelToSet) { pMultiDeviceKernel = pMultiDeviceKernelToSet; }
 
-    size_t getTotalNumDevicesInContext() const;
+    bool areMultipleSubDevicesInContext() const;
 
   protected:
     struct ObjectCounts {

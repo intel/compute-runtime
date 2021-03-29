@@ -67,7 +67,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
         size_t sizeToPatch = printfSurface->getUnderlyingBufferSize();
         Buffer::setSurfaceState(&device.getDevice(), surfaceState, false, false, sizeToPatch, addressToPatch, 0, printfSurface, 0, 0,
                                 kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
-                                kernel->getTotalNumDevicesInContext());
+                                kernel->areMultipleSubDevicesInContext());
     }
 }
 

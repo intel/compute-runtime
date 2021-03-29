@@ -372,7 +372,7 @@ class MockKernelWithInternals {
         populateKernelDescriptor(kernelInfo.kernelDescriptor, mediaVfeStateSlot1, 1);
 
         if (context == nullptr) {
-            mockContext = new MockContext;
+            mockContext = new MockContext(deviceVector);
             context = mockContext;
         } else {
             context->incRefInternal();

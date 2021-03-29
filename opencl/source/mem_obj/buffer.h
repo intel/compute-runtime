@@ -129,7 +129,7 @@ class Buffer : public MemObj {
                                 cl_mem_flags flags,
                                 cl_mem_flags_intel flagsIntel,
                                 bool useGlobalAtomics,
-                                size_t numDevicesInContext);
+                                bool areMultipleSubDevicesInContext);
 
     static void provideCompressionHint(GraphicsAllocation::AllocationType allocationType,
                                        Context *context,
@@ -140,7 +140,7 @@ class Buffer : public MemObj {
     bool isValidSubBufferOffset(size_t offset);
     uint64_t setArgStateless(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex, bool set32BitAddressing);
     virtual void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation,
-                                bool isReadOnly, const Device &device, bool useGlobalAtomics, size_t numDevicesInContext) = 0;
+                                bool isReadOnly, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) = 0;
     bool bufferRectPitchSet(const size_t *bufferOrigin,
                             const size_t *region,
                             size_t &bufferRowPitch,
@@ -213,7 +213,7 @@ class BufferHw : public Buffer {
                  zeroCopy, isHostPtrSVM, isObjectRedescribed) {}
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation,
-                        bool isReadOnlyArgument, const Device &device, bool useGlobalAtomics, size_t numDevicesInContext) override;
+                        bool isReadOnlyArgument, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) override;
     void appendSurfaceStateExt(void *memory);
 
     static Buffer *create(Context *context,

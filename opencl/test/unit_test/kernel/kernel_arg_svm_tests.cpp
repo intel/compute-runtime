@@ -271,7 +271,7 @@ HWTEST_F(KernelArgSvmTest, WhenPatchingWithImplicitSurfaceThenPatchIsApplied) {
             void *addressToPatch = svmAlloc.getUnderlyingBuffer();
             size_t sizeToPatch = svmAlloc.getUnderlyingBufferSize();
             Buffer::setSurfaceState(pDevice, &expectedSurfaceState, false, false,
-                                    sizeToPatch, addressToPatch, 0, &svmAlloc, 0, 0, false, 1u);
+                                    sizeToPatch, addressToPatch, 0, &svmAlloc, 0, 0, false, false);
         }
 
         // verify ssh was properly patched
@@ -426,7 +426,7 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
         }
 
         Buffer::setSurfaceState(device.get(), &expectedSurfaceState, false, false, svmAlloc.getUnderlyingBufferSize(),
-                                svmAlloc.getUnderlyingBuffer(), 0, &svmAlloc, 0, 0, false, 1u);
+                                svmAlloc.getUnderlyingBuffer(), 0, &svmAlloc, 0, 0, false, false);
 
         // verify ssh was properly patched
         int32_t cmpResult = memcmp(&expectedSurfaceState, surfState, rendSurfSize);

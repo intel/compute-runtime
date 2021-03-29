@@ -38,7 +38,7 @@ GEN12LPTEST_F(BufferTestsTgllp, givenBufferNotReadonlyWhenProgrammingSurfaceStat
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, false, device->getDevice(), false, 1u);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, device->getDevice(), false, false);
 
     const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
@@ -55,7 +55,7 @@ GEN12LPTEST_F(BufferTestsTgllp, givenBufferReadonlyWhenProgrammingSurfaceStateTh
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, true, context->getDevice(0)->getDevice(), false, 1u);
+    buffer->setArgStateful(&surfaceState, false, false, false, true, context->getDevice(0)->getDevice(), false, false);
 
     const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
@@ -73,7 +73,7 @@ GEN12LPTEST_F(BufferTestsTgllp, givenConstantSurfaceWhenProgrammingSurfaceStateT
     buffer->getGraphicsAllocation(0)->setAllocationType(GraphicsAllocation::AllocationType::CONSTANT_SURFACE);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, false, context->getDevice(0)->getDevice(), false, 1u);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, context->getDevice(0)->getDevice(), false, false);
 
     const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
@@ -93,7 +93,7 @@ GEN12LPTEST_F(BufferTestsTgllp, givenL1ForceEnabledWhenProgrammingSurfaceStateTh
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, false, device->getDevice(), false, 1u);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, device->getDevice(), false, false);
 
     const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
@@ -113,7 +113,7 @@ GEN12LPTEST_F(BufferTestsTgllp, givenBufferReadonlyAndL1ForceEnabledWhenProgramm
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, false, device->getDevice(), false, 1u);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, device->getDevice(), false, false);
 
     const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
@@ -133,7 +133,7 @@ GEN12LPTEST_F(BufferTestsTgllp, givenBufferReadonlyL1ForceDisabledWhenProgrammin
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, true, device->getDevice(), false, 1u);
+    buffer->setArgStateful(&surfaceState, false, false, false, true, device->getDevice(), false, false);
 
     const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();

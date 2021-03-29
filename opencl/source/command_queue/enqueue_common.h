@@ -806,7 +806,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         usePerDssBackedBuffer,                                                                      //usePerDssBackedBuffer
         kernel->isSingleSubdevicePreferred(),                                                       //useSingleSubdevice
         useGlobalAtomics,                                                                           //useGlobalAtomics
-        kernel->getTotalNumDevicesInContext()                                                       //numDevicesInContext
+        kernel->areMultipleSubDevicesInContext()                                                    //areMultipleSubDevicesInContext
     );
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;

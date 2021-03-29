@@ -20,7 +20,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     MemoryCompressionState memoryCompressionState,
     bool overrideBindlessSurfaceStateBase,
     bool useGlobalAtomics,
-    size_t numDevicesInContext) {
+    bool areMultipleSubDevicesInContext) {
 
     if (overrideBindlessSurfaceStateBase && ssh) {
         stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);

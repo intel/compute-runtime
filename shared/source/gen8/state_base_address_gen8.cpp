@@ -29,7 +29,7 @@ void StateBaseAddressHelper<BDWFamily>::programStateBaseAddress(
     bool isMultiOsContextCapable,
     MemoryCompressionState memoryCompressionState,
     bool useGlobalAtomics,
-    size_t numDevicesInContext) {
+    bool areMultipleSubDevicesInContext) {
 
     *stateBaseAddress = BDWFamily::cmdInitStateBaseAddress;
 
@@ -77,7 +77,7 @@ void StateBaseAddressHelper<BDWFamily>::programStateBaseAddress(
     stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
 
     appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress,
-                                     gmmHelper, isMultiOsContextCapable, memoryCompressionState, true, useGlobalAtomics, numDevicesInContext);
+                                     gmmHelper, isMultiOsContextCapable, memoryCompressionState, true, useGlobalAtomics, areMultipleSubDevicesInContext);
 }
 template struct StateBaseAddressHelper<BDWFamily>;
 } // namespace NEO

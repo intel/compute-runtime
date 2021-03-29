@@ -375,7 +375,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         latestSentStatelessMocsConfig = mocsIndex;
     }
 
-    if ((isMultiOsContextCapable() || (dispatchFlags.numDevicesInContext > 1)) && (dispatchFlags.useGlobalAtomics != lastSentUseGlobalAtomics)) {
+    if ((isMultiOsContextCapable() || dispatchFlags.areMultipleSubDevicesInContext) && (dispatchFlags.useGlobalAtomics != lastSentUseGlobalAtomics)) {
         isStateBaseAddressDirty = true;
         lastSentUseGlobalAtomics = dispatchFlags.useGlobalAtomics;
     }
@@ -427,7 +427,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             isMultiOsContextCapable(),
             memoryCompressionState,
             dispatchFlags.useGlobalAtomics,
-            dispatchFlags.numDevicesInContext);
+            dispatchFlags.areMultipleSubDevicesInContext);
         *pCmd = cmd;
 
         if (sshDirty) {

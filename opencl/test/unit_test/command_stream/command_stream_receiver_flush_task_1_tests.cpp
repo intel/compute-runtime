@@ -628,7 +628,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenMultiOsContextCapableSetAndDi
     commandStreamReceiver.multiOsContextCapable = true;
 
     flushTaskFlags.useGlobalAtomics = true;
-    flushTaskFlags.numDevicesInContext = 1;
+    flushTaskFlags.areMultipleSubDevicesInContext = false;
     offset = commandStreamReceiver.commandStream.getUsed();
     flushTask(commandStreamReceiver);
 
@@ -657,7 +657,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenMultiOsContextCapableSetAndDi
     commandStreamReceiver.multiOsContextCapable = false;
 
     flushTaskFlags.useGlobalAtomics = true;
-    flushTaskFlags.numDevicesInContext = 2;
+    flushTaskFlags.areMultipleSubDevicesInContext = true;
     offset = commandStreamReceiver.commandStream.getUsed();
     flushTask(commandStreamReceiver);
 

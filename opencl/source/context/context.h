@@ -80,7 +80,7 @@ class Context : public BaseObject<_cl_context> {
                                     cl_image_format *imageFormats, cl_uint *numImageFormats);
 
     size_t getNumDevices() const;
-    size_t getTotalNumDevices() const;
+    bool containsMultipleSubDevices(uint32_t rootDeviceIndex) const;
     ClDevice *getDevice(size_t deviceOrdinal) const;
 
     MemoryManager *getMemoryManager() const {

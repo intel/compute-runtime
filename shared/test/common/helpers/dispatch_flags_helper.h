@@ -41,6 +41,6 @@ struct DispatchFlagsHelper {
             false,                                   //usePerDssBackedBuffer
             false,                                   //useSingleSubdevice
             false,                                   //useGlobalAtomics
-            1u);                                     //numDevicesInContext
+            false);                                  //areMultipleSubDevicesInContext
     }
 };

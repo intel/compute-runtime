@@ -767,13 +767,13 @@ void Buffer::setSurfaceState(const Device *device,
                              cl_mem_flags flags,
                              cl_mem_flags_intel flagsIntel,
                              bool useGlobalAtomics,
-                             size_t numAvailableDevices) {
+                             bool areMultipleSubDevicesInContext) {
     auto multiGraphicsAllocation = MultiGraphicsAllocation(device->getRootDeviceIndex());
     if (gfxAlloc) {
         multiGraphicsAllocation.addAllocation(gfxAlloc);
     }
     auto buffer = Buffer::createBufferHwFromDevice(device, flags, flagsIntel, svmSize, svmPtr, svmPtr, std::move(multiGraphicsAllocation), offset, true, false, false);
-    buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, false, false, *device, useGlobalAtomics, numAvailableDevices);
+    buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, false, false, *device, useGlobalAtomics, areMultipleSubDevicesInContext);
     delete buffer;
 }
 

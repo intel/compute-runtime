@@ -146,7 +146,7 @@ void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, Graphic
         void *addressToPatch = reinterpret_cast<void *>(allocation.getGpuAddressToPatch());
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
         Buffer::setSurfaceState(&clDevice.getDevice(), surfaceState, false, false, sizeToPatch, addressToPatch, 0, &allocation, 0, 0,
-                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, getTotalNumDevicesInContext());
+                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
     }
 }
 
@@ -172,7 +172,7 @@ void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, Graphic
         void *addressToPatch = reinterpret_cast<void *>(allocation.getGpuAddressToPatch());
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
         Buffer::setSurfaceState(&clDevice.getDevice(), surfaceState, false, false, sizeToPatch, addressToPatch, 0, &allocation, 0, 0,
-                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, getTotalNumDevicesInContext());
+                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
     }
 }
 
@@ -347,13 +347,13 @@ cl_int Kernel::initialize() {
     if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.bindful)) {
         auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()),
                                       kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.bindful);
-        Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0, useGlobalAtomics, getTotalNumDevicesInContext());
+        Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0, useGlobalAtomics, areMultipleSubDevicesInContext());
     }
 
     if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful)) {
         auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()),
                                       kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful);
-        Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0, useGlobalAtomics, getTotalNumDevicesInContext());
+        Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0, useGlobalAtomics, areMultipleSubDevicesInContext());
     }
 
     setThreadArbitrationPolicy(hwHelper.getDefaultThreadArbitrationPolicy());
@@ -930,7 +930,7 @@ cl_int Kernel::setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, G
         const auto &kernelArgInfo = kernelInfo.kernelArgInfo[argIndex];
         auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
         Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, false, false, svmAllocSize + ptrDiff(svmPtr, ptrToPatch), ptrToPatch, 0, svmAlloc, svmFlags, 0,
-                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, getTotalNumDevicesInContext());
+                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
     }
     if (!kernelArguments[argIndex].isPatched) {
         patchedArgumentsNum++;
@@ -983,7 +983,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
             allocSize -= offset;
         }
         Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, forceNonAuxMode, disableL3, allocSize, ptrToPatch, offset, svmAlloc, 0, 0,
-                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, getTotalNumDevicesInContext());
+                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
     }
 
     if (!kernelArguments[argIndex].isPatched) {
@@ -1465,7 +1465,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
             buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, isAuxTranslationKernel, kernelArgInfo.isReadOnly, pClDevice->getDevice(),
-                                   kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, getTotalNumDevicesInContext());
+                                   kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
         }
 
         kernelArguments[argIndex].isStatelessUncacheable = kernelArgInfo.pureStatefulBufferAccess ? false : buffer->isMemObjUncacheable();
@@ -1492,7 +1492,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
             Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0,
-                                    kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, getTotalNumDevicesInContext());
+                                    kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
         }
 
         return CL_SUCCESS;
@@ -1544,7 +1544,7 @@ cl_int Kernel::setArgPipe(uint32_t argIndex,
             Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, false, false,
                                     pipe->getSize(), pipe->getCpuAddress(), 0,
                                     graphicsAllocation, 0, 0,
-                                    kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, getTotalNumDevicesInContext());
+                                    kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
         }
 
         return CL_SUCCESS;
@@ -2389,7 +2389,7 @@ void Kernel::patchDefaultDeviceQueue(DeviceQueue *devQueue) {
         auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()), defaultQueueSurfaceAddress.bindful);
         Buffer::setSurfaceState(&devQueue->getDevice(), surfaceState, false, false, devQueue->getQueueBuffer()->getUnderlyingBufferSize(),
                                 (void *)devQueue->getQueueBuffer()->getGpuAddress(), 0, devQueue->getQueueBuffer(), 0, 0,
-                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, getTotalNumDevicesInContext());
+                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
     }
 }
 
@@ -2407,7 +2407,7 @@ void Kernel::patchEventPool(DeviceQueue *devQueue) {
         auto eventPoolBuffer = devQueue->getEventPoolBuffer();
         Buffer::setSurfaceState(&devQueue->getDevice(), surfaceState, false, false, eventPoolBuffer->getUnderlyingBufferSize(),
                                 (void *)eventPoolBuffer->getGpuAddress(), 0, eventPoolBuffer, 0, 0,
-                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, getTotalNumDevicesInContext());
+                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
     }
 }
 
@@ -2439,7 +2439,7 @@ void Kernel::patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOff
         auto addressToPatch = gfxAllocation->getUnderlyingBuffer();
         auto sizeToPatch = gfxAllocation->getUnderlyingBufferSize();
         Buffer::setSurfaceState(&clDevice.getDevice(), surfaceState, false, false, sizeToPatch, addressToPatch, 0, gfxAllocation, 0, 0,
-                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, getTotalNumDevicesInContext());
+                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
     }
 }
 
@@ -2747,9 +2747,9 @@ uint32_t Kernel::getSlmTotalSize() const {
     return slmTotalSize;
 }
 
-size_t Kernel::getTotalNumDevicesInContext() const {
+bool Kernel::areMultipleSubDevicesInContext() const {
     auto context = program->getContextPtr();
-    return context ? context->getTotalNumDevices() : 1u;
+    return context ? context->containsMultipleSubDevices(clDevice.getRootDeviceIndex()) : false;
 }
 
 } // namespace NEO

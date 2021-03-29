@@ -1349,7 +1349,7 @@ HWTEST_F(EnqueueKernelTest, givenUseGlobalAtomicsIsNotSetWhenEnqueueKernelThenDi
     EXPECT_FALSE(mockCsr->passedDispatchFlags.useGlobalAtomics);
 }
 
-HWTEST_F(EnqueueKernelTest, givenContextWithSeveralDevicesWhenEnqueueKernelThenDispatchFlagsiHasCorrectNumDevicesValue) {
+HWTEST_F(EnqueueKernelTest, givenContextWithSeveralDevicesWhenEnqueueKernelThenDispatchFlagsHaveCorrectInfoAboutMultipleSubDevicesInContext) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1357,15 +1357,12 @@ HWTEST_F(EnqueueKernelTest, givenContextWithSeveralDevicesWhenEnqueueKernelThenD
     MockKernelWithInternals mockKernel(*pClDevice, context);
     size_t gws[3] = {1, 0, 0};
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(1u, mockCsr->passedDispatchFlags.numDevicesInContext);
+    EXPECT_FALSE(mockCsr->passedDispatchFlags.areMultipleSubDevicesInContext);
 
-    MockDevice subDevice;
-    context->devices.push_back(pClDevice);
-    context->devices.push_back(pClDevice);
+    context->deviceBitfields[rootDeviceIndex].set(7, true);
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(3u, mockCsr->passedDispatchFlags.numDevicesInContext);
-    context->devices.pop_back();
-    context->devices.pop_back();
+    EXPECT_TRUE(mockCsr->passedDispatchFlags.areMultipleSubDevicesInContext);
+    context->deviceBitfields[rootDeviceIndex].set(7, false);
 }
 
 HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsDoesntHaveMediaSamplerRequired) {

@@ -337,22 +337,21 @@ TEST(Context, whenCreateContextThenSpecialQueueUsesInternalEngine) {
     EXPECT_EQ(internalEngine.commandStreamReceiver, specialQueueEngine.commandStreamReceiver);
 }
 
-TEST(MultiDeviceContextTest, givenContextWithMultipleDevicesWhenGettingTotalNumberOfDevicesThenNumberOfAllAvailableDevicesIsReturned) {
-    DebugManagerStateRestore restorer;
-    const uint32_t numRootDevices = 1u;
-    const uint32_t numSubDevices = 3u;
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-    initPlatform();
-    auto device = platform()->getClDevice(0);
+TEST(MultiDeviceContextTest, givenContextWithMultipleDevicesWhenGettingInfoAboutSubDevicesThenCorrectValueIsReturned) {
+    MockSpecializedContext context1;
+    MockUnrestrictiveContext context2;
+    MockDefaultContext context3;
 
-    cl_device_id clDevice = device;
-    ClDeviceVector deviceVector(&clDevice, numRootDevices);
-    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
-    auto context = std::unique_ptr<Context>(Context::create<Context>(nullptr, deviceVector, nullptr, nullptr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(numSubDevices, device->getNumAvailableDevices());
-    EXPECT_EQ(numRootDevices, context->getNumDevices());
-    EXPECT_EQ(numRootDevices * numSubDevices, context->getTotalNumDevices());
+    EXPECT_EQ(2u, context1.getNumDevices());
+    EXPECT_TRUE(context1.containsMultipleSubDevices(0));
+
+    EXPECT_EQ(3u, context2.getNumDevices());
+    EXPECT_TRUE(context2.containsMultipleSubDevices(0));
+
+    EXPECT_EQ(3u, context3.getNumDevices());
+    EXPECT_FALSE(context3.containsMultipleSubDevices(0));
+    EXPECT_FALSE(context3.containsMultipleSubDevices(1));
+    EXPECT_FALSE(context3.containsMultipleSubDevices(2));
 }
 
 class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,

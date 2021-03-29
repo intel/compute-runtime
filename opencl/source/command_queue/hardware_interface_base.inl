@@ -103,7 +103,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         Buffer::setSurfaceState(&commandQueue.getDevice(), commandQueue.getDevice().getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh),
                                 false, false, sizeToPatch, addressToPatch, 0, debugSurface, 0, 0,
                                 mainKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
-                                mainKernel->getTotalNumDevicesInContext());
+                                mainKernel->areMultipleSubDevicesInContext());
     }
 
     auto numSupportedDevices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices();

@@ -57,33 +57,33 @@ struct DispatchFlags {
                   KernelExecutionType kernelExecutionTypeP, MemoryCompressionState memoryCompressionStateP,
                   uint64_t sliceCountP, bool blockingP, bool dcFlushP, bool useSLMP, bool guardCommandBufferWithPipeControlP, bool gsba32BitRequiredP,
                   bool requiresCoherencyP, bool lowPriorityP, bool implicitFlushP, bool outOfOrderExecutionAllowedP, bool epilogueRequiredP,
-                  bool usePerDSSbackedBufferP, bool useSingleSubdeviceP, bool useGlobalAtomicsP, size_t numDevicesInContextP) : csrDependencies(csrDependenciesP),
-                                                                                                                                barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
-                                                                                                                                pipelineSelectArgs(pipelineSelectArgsP),
-                                                                                                                                flushStampReference(flushStampReferenceP),
-                                                                                                                                throttle(throttleP),
-                                                                                                                                preemptionMode(preemptionModeP),
-                                                                                                                                numGrfRequired(numGrfRequiredP),
-                                                                                                                                l3CacheSettings(l3CacheSettingsP),
-                                                                                                                                threadArbitrationPolicy(threadArbitrationPolicyP),
-                                                                                                                                additionalKernelExecInfo(additionalKernelExecInfoP),
-                                                                                                                                kernelExecutionType(kernelExecutionTypeP),
-                                                                                                                                memoryCompressionState(memoryCompressionStateP),
-                                                                                                                                sliceCount(sliceCountP),
-                                                                                                                                blocking(blockingP),
-                                                                                                                                dcFlush(dcFlushP),
-                                                                                                                                useSLM(useSLMP),
-                                                                                                                                guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControlP),
-                                                                                                                                gsba32BitRequired(gsba32BitRequiredP),
-                                                                                                                                requiresCoherency(requiresCoherencyP),
-                                                                                                                                lowPriority(lowPriorityP),
-                                                                                                                                implicitFlush(implicitFlushP),
-                                                                                                                                outOfOrderExecutionAllowed(outOfOrderExecutionAllowedP),
-                                                                                                                                epilogueRequired(epilogueRequiredP),
-                                                                                                                                usePerDssBackedBuffer(usePerDSSbackedBufferP),
-                                                                                                                                useSingleSubdevice(useSingleSubdeviceP),
-                                                                                                                                useGlobalAtomics(useGlobalAtomicsP),
-                                                                                                                                numDevicesInContext(numDevicesInContextP){};
+                  bool usePerDSSbackedBufferP, bool useSingleSubdeviceP, bool useGlobalAtomicsP, size_t areMultipleSubDevicesInContextP) : csrDependencies(csrDependenciesP),
+                                                                                                                                           barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
+                                                                                                                                           pipelineSelectArgs(pipelineSelectArgsP),
+                                                                                                                                           flushStampReference(flushStampReferenceP),
+                                                                                                                                           throttle(throttleP),
+                                                                                                                                           preemptionMode(preemptionModeP),
+                                                                                                                                           numGrfRequired(numGrfRequiredP),
+                                                                                                                                           l3CacheSettings(l3CacheSettingsP),
+                                                                                                                                           threadArbitrationPolicy(threadArbitrationPolicyP),
+                                                                                                                                           additionalKernelExecInfo(additionalKernelExecInfoP),
+                                                                                                                                           kernelExecutionType(kernelExecutionTypeP),
+                                                                                                                                           memoryCompressionState(memoryCompressionStateP),
+                                                                                                                                           sliceCount(sliceCountP),
+                                                                                                                                           blocking(blockingP),
+                                                                                                                                           dcFlush(dcFlushP),
+                                                                                                                                           useSLM(useSLMP),
+                                                                                                                                           guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControlP),
+                                                                                                                                           gsba32BitRequired(gsba32BitRequiredP),
+                                                                                                                                           requiresCoherency(requiresCoherencyP),
+                                                                                                                                           lowPriority(lowPriorityP),
+                                                                                                                                           implicitFlush(implicitFlushP),
+                                                                                                                                           outOfOrderExecutionAllowed(outOfOrderExecutionAllowedP),
+                                                                                                                                           epilogueRequired(epilogueRequiredP),
+                                                                                                                                           usePerDssBackedBuffer(usePerDSSbackedBufferP),
+                                                                                                                                           useSingleSubdevice(useSingleSubdeviceP),
+                                                                                                                                           useGlobalAtomics(useGlobalAtomicsP),
+                                                                                                                                           areMultipleSubDevicesInContext(areMultipleSubDevicesInContextP){};
 
     CsrDependencies csrDependencies;
     TimestampPacketContainer *barrierTimestampPacketNodes = nullptr;
@@ -112,7 +112,7 @@ struct DispatchFlags {
     bool usePerDssBackedBuffer = false;
     bool useSingleSubdevice = false;
     bool useGlobalAtomics = false;
-    size_t numDevicesInContext = 1u;
+    bool areMultipleSubDevicesInContext = false;
 };
 
 struct CsrSizeRequestFlags {
