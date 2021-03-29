@@ -68,4 +68,4 @@ endif()
 
 # Level-Zero package version
 set(NEO_L0_VERSION_MAJOR 1)
-set(NEO_L0_VERSION_MINOR 0)
+set(NEO_L0_VERSION_MINOR 1)
