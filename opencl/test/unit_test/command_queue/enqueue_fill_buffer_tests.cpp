@@ -125,7 +125,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
-HWTEST_F(EnqueueFillBufferCmdTests, FillBufferRightLeftover) {
+HWTEST_F(EnqueueFillBufferCmdTests, GivenRightLeftoverWhenFillingBufferThenFillBufferRightLeftoverKernelUsed) {
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
@@ -152,7 +152,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferRightLeftover) {
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
-HWTEST_F(EnqueueFillBufferCmdTests, FillBufferMiddle) {
+HWTEST_F(EnqueueFillBufferCmdTests, GivenMiddleWhenFillingBufferThenFillBufferMiddleKernelUsed) {
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
@@ -179,7 +179,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferMiddle) {
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
-HWTEST_F(EnqueueFillBufferCmdTests, FillBufferLeftLeftover) {
+HWTEST_F(EnqueueFillBufferCmdTests, GivenLeftLeftoverWhenFillingBufferThenFillBufferLeftLeftoverKernelUsed) {
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
