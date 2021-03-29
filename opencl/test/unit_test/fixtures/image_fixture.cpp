@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,5 +99,6 @@ const cl_image_desc Image1dArrayDefaults::imageDesc = {
 static float imageMemory[imageWidth * imageHeight * imageDepth] = {};
 
 void *Image1dDefaults::hostPtr = imageMemory;
+void *ImageWithoutHostPtr::hostPtr = nullptr;
 
 NEO::Context *Image1dDefaults::context = nullptr;

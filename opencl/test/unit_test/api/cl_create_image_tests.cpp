@@ -10,6 +10,8 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
@@ -1360,91 +1362,61 @@ INSTANTIATE_TEST_CASE_P(clCreateNon2dImageFromImageTests,
                         clCreateNon2dImageFromImageTest,
                         ::testing::ValuesIn(non2dImageTypes));
 
-using clCreateImageWithMultiDeviceContextTests = clCreateImageTest;
+using clCreateImageWithMultiDeviceContextTests = MultiRootDeviceFixture;
 
-TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyFilled) {
-    UltClDeviceFactory deviceFactory{2, 0};
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithoutHostPtrAndWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyCreatedAndMapPtrIsSet) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    DebugManagerStateRestore dbgRestore;
 
-    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
-    auto context = clCreateContext(nullptr, 2u, devices, nullptr, nullptr, &retVal);
-    EXPECT_NE(nullptr, context);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    std::unique_ptr<Image> image(ImageHelper<ImageWithoutHostPtr>::create(context.get()));
 
-    auto pContext = castToObject<Context>(context);
-    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
+    EXPECT_EQ(image->getMultiGraphicsAllocation().getGraphicsAllocations().size(), 3u);
+    EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u), nullptr);
+    EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(2u), nullptr);
+    EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u), image->getMultiGraphicsAllocation().getGraphicsAllocation(2u));
 
-    EXPECT_EQ(1u, pContext->getMaxRootDeviceIndex());
+    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
+    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(image->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
 
-    std::unique_ptr<char[]> ptr;
-    char *hostPtr = nullptr;
+    EXPECT_NE(image->getAllocatedMapPtr(), nullptr);
+}
 
-    ptr = std::make_unique<char[]>(alignUp(imageDesc.image_width * imageDesc.image_height * 4, MemoryConstants::pageSize));
-    hostPtr = ptr.get();
+TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithHostPtrAndWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyCreatedAndMapPtrIsNotSet) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    DebugManagerStateRestore dbgRestore;
 
-    cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context.get()));
 
-    auto image = clCreateImage(context, flags, &imageFormat, &imageDesc, hostPtr, &retVal);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, image);
+    EXPECT_EQ(image->getMultiGraphicsAllocation().getGraphicsAllocations().size(), 3u);
+    EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u), nullptr);
+    EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(2u), nullptr);
+    EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u), image->getMultiGraphicsAllocation().getGraphicsAllocation(2u));
 
-    Image *imageObj = NEO::castToObject<Image>(image);
+    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
+    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(image->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
 
-    EXPECT_EQ(imageObj->getMultiGraphicsAllocation().getGraphicsAllocations().size(), 2u);
-    EXPECT_NE(imageObj->getMultiGraphicsAllocation().getGraphicsAllocation(0u), nullptr);
-    EXPECT_NE(imageObj->getMultiGraphicsAllocation().getGraphicsAllocation(1u), nullptr);
-    EXPECT_NE(imageObj->getMultiGraphicsAllocation().getGraphicsAllocation(0u), imageObj->getMultiGraphicsAllocation().getGraphicsAllocation(1u));
-
-    retVal = clReleaseMemObject(image);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    clReleaseContext(context);
+    EXPECT_EQ(image->getAllocatedMapPtr(), nullptr);
 }
 
 TEST_F(clCreateImageWithMultiDeviceContextTests, GivenContextdWithMultiDeviceFailingAllocationThenImageAllocateFails) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-    UltClDeviceFactory deviceFactory{2, 0};
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
-
-    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
-
-    MockContext pContext(ClDeviceVector(devices, 2));
-
-    EXPECT_EQ(1u, pContext.getMaxRootDeviceIndex());
-
-    auto bufferSize = imageDesc.image_width * imageDesc.image_height * 4;
-
-    cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
-
     {
-        auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
-        auto ptrHostBuffer = static_cast<uint8_t *>(hostBuffer);
+        static_cast<MockMemoryManager *>(context.get()->getMemoryManager())->successAllocatedGraphicsMemoryIndex = 0u;
+        static_cast<MockMemoryManager *>(context.get()->getMemoryManager())->maxSuccessAllocatedGraphicsMemoryIndex = 0u;
 
-        static_cast<MockMemoryManager *>(pContext.memoryManager)->successAllocatedGraphicsMemoryIndex = 0u;
-        static_cast<MockMemoryManager *>(pContext.memoryManager)->maxSuccessAllocatedGraphicsMemoryIndex = 0u;
+        std::unique_ptr<Image> image(ImageHelper<ImageWithoutHostPtr>::create(context.get()));
 
-        auto image = clCreateImage(&pContext, flags, &imageFormat, &imageDesc, ptrHostBuffer, &retVal);
-
-        ASSERT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
         EXPECT_EQ(nullptr, image);
-
-        alignedFree(hostBuffer);
     }
 
     {
-        auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
-        auto ptrHostBuffer = static_cast<uint8_t *>(hostBuffer);
+        static_cast<MockMemoryManager *>(context.get()->getMemoryManager())->successAllocatedGraphicsMemoryIndex = 0u;
+        static_cast<MockMemoryManager *>(context.get()->getMemoryManager())->maxSuccessAllocatedGraphicsMemoryIndex = 1u;
 
-        static_cast<MockMemoryManager *>(pContext.memoryManager)->successAllocatedGraphicsMemoryIndex = 0u;
-        static_cast<MockMemoryManager *>(pContext.memoryManager)->maxSuccessAllocatedGraphicsMemoryIndex = 1u;
+        std::unique_ptr<Image> image(ImageHelper<ImageWithoutHostPtr>::create(context.get()));
 
-        auto image = clCreateImage(&pContext, flags, &imageFormat, &imageDesc, ptrHostBuffer, &retVal);
-
-        ASSERT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
         EXPECT_EQ(nullptr, image);
-
-        alignedFree(hostBuffer);
     }
 }
 

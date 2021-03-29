@@ -1995,6 +1995,26 @@ TEST(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRootDev
     cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
 
     {
+        cl_event eventWaitList[] =
+            {
+                &event1,
+                &event3,
+                &event4,
+            };
+
+        cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+
+        pCmdQ1->enqueueMarkerWithWaitList(
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        EXPECT_EQ(0u, mockCsr1->waitForCompletionWithTimeoutCalled);
+        EXPECT_EQ(0u, mockCsr2->waitForCompletionWithTimeoutCalled);
+        EXPECT_EQ(0u, mockCsr3->waitForCompletionWithTimeoutCalled);
+    }
+
+    {
         pCmdQ1->enqueueMarkerWithWaitList(
             numEventsInWaitList,
             eventWaitList,

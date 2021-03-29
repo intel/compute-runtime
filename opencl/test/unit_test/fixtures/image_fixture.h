@@ -55,6 +55,11 @@ struct LuminanceImage : public Image2dDefaults {
     static const cl_image_format imageFormat;
 };
 
+struct ImageWithoutHostPtr : public Image1dDefaults {
+    enum { flags = 0 };
+    static void *hostPtr;
+};
+
 template <typename BaseClass>
 struct ImageUseHostPtr : public BaseClass {
     enum { flags = BaseClass::flags | CL_MEM_USE_HOST_PTR };
@@ -90,7 +95,6 @@ struct ImageHelper {
             Traits::hostPtr,
             retVal);
 
-        assert(image != nullptr);
         return image;
     }
 };

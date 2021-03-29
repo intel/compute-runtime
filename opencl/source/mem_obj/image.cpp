@@ -285,12 +285,12 @@ Image *Image::create(Context *context,
             } else {
                 errcodeRet = CL_OUT_OF_HOST_MEMORY;
                 if (memoryProperties.flags.useHostPtr) {
-
                     if (!context->isSharedContext) {
                         AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
                                                                                                                   false, // allocateMemory
                                                                                                                   memoryProperties, hwInfo,
                                                                                                                   context->getDeviceBitfieldForAllocation(rootDeviceIndex));
+                        allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
 
                         allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
 
@@ -313,14 +313,16 @@ Image *Image::create(Context *context,
                         allocationInfo[rootDeviceIndex].memory->setDefaultGmm(gmm);
                         allocationInfo[rootDeviceIndex].zeroCopyAllowed = true;
                     }
-                    if (allocationInfo[rootDeviceIndex].memory) {
-                        AllocationProperties properties{rootDeviceIndex,
-                                                        false, // allocateMemory
-                                                        hostPtrMinSize, GraphicsAllocation::AllocationType::MAP_ALLOCATION,
-                                                        false, // isMultiStorageAllocation
-                                                        context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
-                        properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
-                        allocationInfo[rootDeviceIndex].mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
+                    if (!allocationInfo[rootDeviceIndex].zeroCopyAllowed) {
+                        if (allocationInfo[rootDeviceIndex].memory) {
+                            AllocationProperties properties{rootDeviceIndex,
+                                                            false, // allocateMemory
+                                                            hostPtrMinSize, GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                                            false, // isMultiStorageAllocation
+                                                            context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
+                            properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
+                            allocationInfo[rootDeviceIndex].mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
+                        }
                     }
                 } else {
                     if (context->getRootDeviceIndices().size() > 1) {
@@ -403,8 +405,9 @@ Image *Image::create(Context *context,
 
         image = createImageHw(context, memoryProperties, flags, flagsIntel, imgInfo.size, hostPtrToSet, surfaceFormat->OCLImageFormat,
                               imageDescriptor, allocationInfo[defaultRootDeviceIndex].zeroCopyAllowed, std::move(multiGraphicsAllocation), false, 0, 0, surfaceFormat);
-
-        image->setAllocatedMapPtr(hostPtrForced);
+        if (hostPtrForced) {
+            image->setAllocatedMapPtr(hostPtrForced);
+        }
 
         for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
 
