@@ -36,6 +36,22 @@ TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryDeviceWhenZetGetMetr
     EXPECT_EQ(metricGroupCount, 0u);
 }
 
+TEST_F(MetricEnumerationTest, givenCorrectMetricDiscoverywhenLoadMetricsDiscoveryIsCalledThenReturnsSuccess) {
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(1);
+
+    EXPECT_EQ(mockMetricEnumeration->loadMetricsDiscovery(), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricEnumerationTest, givenIncorrectMetricDiscoverywhenLoadMetricsDiscoveryIsCalledThenReturnsFail) {
+
+    mockMetricEnumeration->hMetricsDiscovery = nullptr;
+    mockMetricEnumeration->openAdapterGroup = nullptr;
+
+    EXPECT_EQ(mockMetricEnumeration->baseLoadMetricsDiscovery(), ZE_RESULT_ERROR_NOT_AVAILABLE);
+}
+
 TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryInterfaceVersionWhenZetGetMetricGroupIsCalledThenReturnsFail) {
 
     metricsDeviceParams.Version.MajorNumber = 0;
