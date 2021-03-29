@@ -67,7 +67,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
 
     // define kernel info
     kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
-    kernelInfo.workloadInfo.slmStaticSize = GetParam() * KB;
+    kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = GetParam() * KB;
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -101,32 +101,32 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     uint32_t ExpectedSLMSize = 0;
 
     if (::renderCoreFamily == IGFX_GEN8_CORE) {
-        if (kernelInfo.workloadInfo.slmStaticSize <= (4 * 1024)) {
+        if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (4 * 1024)) {
             ExpectedSLMSize = 1;
-        } else if (kernelInfo.workloadInfo.slmStaticSize <= (8 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (8 * 1024)) {
             ExpectedSLMSize = 2;
-        } else if (kernelInfo.workloadInfo.slmStaticSize <= (16 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (16 * 1024)) {
             ExpectedSLMSize = 4;
-        } else if (kernelInfo.workloadInfo.slmStaticSize <= (32 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (32 * 1024)) {
             ExpectedSLMSize = 8;
-        } else if (kernelInfo.workloadInfo.slmStaticSize <= (64 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (64 * 1024)) {
             ExpectedSLMSize = 16;
         }
     } else {
-        if (kernelInfo.workloadInfo.slmStaticSize <= (1 * 1024)) // its a power of "2" +1 for example 1 is 2^0 ( 0+1); 2 is 2^1 is (1+1) etc.
+        if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (1 * 1024)) // its a power of "2" +1 for example 1 is 2^0 ( 0+1); 2 is 2^1 is (1+1) etc.
         {
             ExpectedSLMSize = 1;
-        } else if (kernelInfo.workloadInfo.slmStaticSize <= (2 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (2 * 1024)) {
             ExpectedSLMSize = 2;
-        } else if (kernelInfo.workloadInfo.slmStaticSize <= (4 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (4 * 1024)) {
             ExpectedSLMSize = 3;
-        } else if (kernelInfo.workloadInfo.slmStaticSize <= (8 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (8 * 1024)) {
             ExpectedSLMSize = 4;
-        } else if (kernelInfo.workloadInfo.slmStaticSize <= (16 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (16 * 1024)) {
             ExpectedSLMSize = 5;
-        } else if (kernelInfo.workloadInfo.slmStaticSize <= (32 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (32 * 1024)) {
             ExpectedSLMSize = 6;
-        } else if (kernelInfo.workloadInfo.slmStaticSize <= (64 * 1024)) {
+        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (64 * 1024)) {
             ExpectedSLMSize = 7;
         }
     }
@@ -154,7 +154,7 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.OverrideSlmAllocationSize.set(expectedSlmSize);
 
-    kernelInfo.workloadInfo.slmStaticSize = 0;
+    kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = 0;
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());

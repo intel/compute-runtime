@@ -75,7 +75,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
     program->retainForKernel();
     imageTransformer.reset(new ImageTransformer);
     maxKernelWorkGroupSize = static_cast<uint32_t>(clDevice.getSharedDeviceInfo().maxWorkGroupSize);
-    slmTotalSize = kernelInfoArg.workloadInfo.slmStaticSize;
+    slmTotalSize = kernelInfoArg.kernelDescriptor.kernelAttributes.slmInlineSize;
 }
 
 Kernel::~Kernel() {
@@ -190,8 +190,9 @@ cl_int Kernel::initialize() {
     auto &hwInfo = pClDevice->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto &kernelDescriptor = kernelInfo.kernelDescriptor;
+    const auto &dispatchTraits = kernelDescriptor.payloadMappings.dispatchTraits;
+    const auto &implicitArgs = kernelDescriptor.payloadMappings.implicitArgs;
     auto maxSimdSize = kernelInfo.getMaxSimdSize();
-    const auto &workloadInfo = kernelInfo.workloadInfo;
     const auto &heapInfo = kernelInfo.heapInfo;
 
     if (maxSimdSize != 1 && maxSimdSize < hwHelper.getMinimalSIMDSize()) {
@@ -212,106 +213,71 @@ cl_int Kernel::initialize() {
         }
 
         auto crossThread = reinterpret_cast<uint32_t *>(crossThreadData);
-        globalWorkOffsetX = workloadInfo.globalWorkOffsetOffsets[0] != WorkloadInfo::undefinedOffset
-                                ? ptrOffset(crossThread, workloadInfo.globalWorkOffsetOffsets[0])
-                                : globalWorkOffsetX;
-        globalWorkOffsetY = workloadInfo.globalWorkOffsetOffsets[1] != WorkloadInfo::undefinedOffset
-                                ? ptrOffset(crossThread, workloadInfo.globalWorkOffsetOffsets[1])
-                                : globalWorkOffsetY;
-        globalWorkOffsetZ = workloadInfo.globalWorkOffsetOffsets[2] != WorkloadInfo::undefinedOffset
-                                ? ptrOffset(crossThread, workloadInfo.globalWorkOffsetOffsets[2])
-                                : globalWorkOffsetZ;
+        auto setDispatchTraitsIfValidOffset = [&](uint32_t *&crossThreadData, NEO::CrossThreadDataOffset offset) {
+            if (isValidOffset(offset)) {
+                crossThreadData = ptrOffset(crossThread, offset);
+            }
+        };
+        setDispatchTraitsIfValidOffset(globalWorkOffsetX, dispatchTraits.globalWorkOffset[0]);
+        setDispatchTraitsIfValidOffset(globalWorkOffsetY, dispatchTraits.globalWorkOffset[1]);
+        setDispatchTraitsIfValidOffset(globalWorkOffsetZ, dispatchTraits.globalWorkOffset[2]);
 
-        localWorkSizeX = workloadInfo.localWorkSizeOffsets[0] != WorkloadInfo::undefinedOffset
-                             ? ptrOffset(crossThread, workloadInfo.localWorkSizeOffsets[0])
-                             : localWorkSizeX;
-        localWorkSizeY = workloadInfo.localWorkSizeOffsets[1] != WorkloadInfo::undefinedOffset
-                             ? ptrOffset(crossThread, workloadInfo.localWorkSizeOffsets[1])
-                             : localWorkSizeY;
-        localWorkSizeZ = workloadInfo.localWorkSizeOffsets[2] != WorkloadInfo::undefinedOffset
-                             ? ptrOffset(crossThread, workloadInfo.localWorkSizeOffsets[2])
-                             : localWorkSizeZ;
+        setDispatchTraitsIfValidOffset(localWorkSizeX, dispatchTraits.localWorkSize[0]);
+        setDispatchTraitsIfValidOffset(localWorkSizeY, dispatchTraits.localWorkSize[1]);
+        setDispatchTraitsIfValidOffset(localWorkSizeZ, dispatchTraits.localWorkSize[2]);
 
-        localWorkSizeX2 = workloadInfo.localWorkSizeOffsets2[0] != WorkloadInfo::undefinedOffset
-                              ? ptrOffset(crossThread, workloadInfo.localWorkSizeOffsets2[0])
-                              : localWorkSizeX2;
-        localWorkSizeY2 = workloadInfo.localWorkSizeOffsets2[1] != WorkloadInfo::undefinedOffset
-                              ? ptrOffset(crossThread, workloadInfo.localWorkSizeOffsets2[1])
-                              : localWorkSizeY2;
-        localWorkSizeZ2 = workloadInfo.localWorkSizeOffsets2[2] != WorkloadInfo::undefinedOffset
-                              ? ptrOffset(crossThread, workloadInfo.localWorkSizeOffsets2[2])
-                              : localWorkSizeZ2;
+        setDispatchTraitsIfValidOffset(localWorkSizeX2, dispatchTraits.localWorkSize2[0]);
+        setDispatchTraitsIfValidOffset(localWorkSizeY2, dispatchTraits.localWorkSize2[1]);
+        setDispatchTraitsIfValidOffset(localWorkSizeZ2, dispatchTraits.localWorkSize2[2]);
 
-        globalWorkSizeX = workloadInfo.globalWorkSizeOffsets[0] != WorkloadInfo::undefinedOffset
-                              ? ptrOffset(crossThread, workloadInfo.globalWorkSizeOffsets[0])
-                              : globalWorkSizeX;
-        globalWorkSizeY = workloadInfo.globalWorkSizeOffsets[1] != WorkloadInfo::undefinedOffset
-                              ? ptrOffset(crossThread, workloadInfo.globalWorkSizeOffsets[1])
-                              : globalWorkSizeY;
-        globalWorkSizeZ = workloadInfo.globalWorkSizeOffsets[2] != WorkloadInfo::undefinedOffset
-                              ? ptrOffset(crossThread, workloadInfo.globalWorkSizeOffsets[2])
-                              : globalWorkSizeZ;
+        setDispatchTraitsIfValidOffset(globalWorkSizeX, dispatchTraits.globalWorkSize[0]);
+        setDispatchTraitsIfValidOffset(globalWorkSizeY, dispatchTraits.globalWorkSize[1]);
+        setDispatchTraitsIfValidOffset(globalWorkSizeZ, dispatchTraits.globalWorkSize[2]);
 
-        enqueuedLocalWorkSizeX = workloadInfo.enqueuedLocalWorkSizeOffsets[0] != WorkloadInfo::undefinedOffset
-                                     ? ptrOffset(crossThread, workloadInfo.enqueuedLocalWorkSizeOffsets[0])
-                                     : enqueuedLocalWorkSizeX;
-        enqueuedLocalWorkSizeY = workloadInfo.enqueuedLocalWorkSizeOffsets[1] != WorkloadInfo::undefinedOffset
-                                     ? ptrOffset(crossThread, workloadInfo.enqueuedLocalWorkSizeOffsets[1])
-                                     : enqueuedLocalWorkSizeY;
-        enqueuedLocalWorkSizeZ = workloadInfo.enqueuedLocalWorkSizeOffsets[2] != WorkloadInfo::undefinedOffset
-                                     ? ptrOffset(crossThread, workloadInfo.enqueuedLocalWorkSizeOffsets[2])
-                                     : enqueuedLocalWorkSizeZ;
+        setDispatchTraitsIfValidOffset(globalWorkOffsetX, dispatchTraits.globalWorkOffset[0]);
+        setDispatchTraitsIfValidOffset(globalWorkOffsetY, dispatchTraits.globalWorkOffset[1]);
+        setDispatchTraitsIfValidOffset(globalWorkOffsetZ, dispatchTraits.globalWorkOffset[2]);
 
-        numWorkGroupsX = workloadInfo.numWorkGroupsOffset[0] != WorkloadInfo::undefinedOffset
-                             ? ptrOffset(crossThread, workloadInfo.numWorkGroupsOffset[0])
-                             : numWorkGroupsX;
-        numWorkGroupsY = workloadInfo.numWorkGroupsOffset[1] != WorkloadInfo::undefinedOffset
-                             ? ptrOffset(crossThread, workloadInfo.numWorkGroupsOffset[1])
-                             : numWorkGroupsY;
-        numWorkGroupsZ = workloadInfo.numWorkGroupsOffset[2] != WorkloadInfo::undefinedOffset
-                             ? ptrOffset(crossThread, workloadInfo.numWorkGroupsOffset[2])
-                             : numWorkGroupsZ;
+        setDispatchTraitsIfValidOffset(enqueuedLocalWorkSizeX, dispatchTraits.enqueuedLocalWorkSize[0]);
+        setDispatchTraitsIfValidOffset(enqueuedLocalWorkSizeY, dispatchTraits.enqueuedLocalWorkSize[1]);
+        setDispatchTraitsIfValidOffset(enqueuedLocalWorkSizeZ, dispatchTraits.enqueuedLocalWorkSize[2]);
 
-        maxWorkGroupSizeForCrossThreadData = workloadInfo.maxWorkGroupSizeOffset != WorkloadInfo::undefinedOffset
-                                                 ? ptrOffset(crossThread, workloadInfo.maxWorkGroupSizeOffset)
-                                                 : maxWorkGroupSizeForCrossThreadData;
-        workDim = workloadInfo.workDimOffset != WorkloadInfo::undefinedOffset
-                      ? ptrOffset(crossThread, workloadInfo.workDimOffset)
-                      : workDim;
-        dataParameterSimdSize = workloadInfo.simdSizeOffset != WorkloadInfo::undefinedOffset ? ptrOffset(crossThread, workloadInfo.simdSizeOffset) : dataParameterSimdSize;
-        parentEventOffset = workloadInfo.parentEventOffset != WorkloadInfo::undefinedOffset
-                                ? ptrOffset(crossThread, workloadInfo.parentEventOffset)
-                                : parentEventOffset;
-        preferredWkgMultipleOffset = workloadInfo.preferredWkgMultipleOffset != WorkloadInfo::undefinedOffset
-                                         ? ptrOffset(crossThread, workloadInfo.preferredWkgMultipleOffset)
-                                         : preferredWkgMultipleOffset;
+        setDispatchTraitsIfValidOffset(numWorkGroupsX, dispatchTraits.numWorkGroups[0]);
+        setDispatchTraitsIfValidOffset(numWorkGroupsY, dispatchTraits.numWorkGroups[1]);
+        setDispatchTraitsIfValidOffset(numWorkGroupsZ, dispatchTraits.numWorkGroups[2]);
 
-        *maxWorkGroupSizeForCrossThreadData = maxKernelWorkGroupSize;
-        *dataParameterSimdSize = maxSimdSize;
-        *preferredWkgMultipleOffset = maxSimdSize;
-        *parentEventOffset = WorkloadInfo::invalidParentEvent;
+        setDispatchTraitsIfValidOffset(workDim, dispatchTraits.workDim);
+
+        auto setArgsIfValidOffset = [&](uint32_t *&crossThreadData, NEO::CrossThreadDataOffset offset, uint32_t value) {
+            if (isValidOffset(offset)) {
+                crossThreadData = ptrOffset(crossThread, offset);
+                *crossThreadData = value;
+            }
+        };
+        setArgsIfValidOffset(maxWorkGroupSizeForCrossThreadData, implicitArgs.maxWorkGroupSize, maxKernelWorkGroupSize);
+        setArgsIfValidOffset(dataParameterSimdSize, implicitArgs.simdSize, maxSimdSize);
+        setArgsIfValidOffset(preferredWkgMultipleOffset, implicitArgs.preferredWkgMultiple, maxSimdSize);
+        setArgsIfValidOffset(parentEventOffset, implicitArgs.deviceSideEnqueueParentEvent, undefined<uint32_t>);
     }
 
     // allocate our own SSH, if necessary
     sshLocalSize = heapInfo.SurfaceStateHeapSize;
-
     if (sshLocalSize) {
         pSshLocal = std::make_unique<char[]>(sshLocalSize);
 
         // copy the ssh into our local copy
         memcpy_s(pSshLocal.get(), sshLocalSize,
-                 heapInfo.pSsh, sshLocalSize);
+                 heapInfo.pSsh, heapInfo.SurfaceStateHeapSize);
     }
     numberOfBindingTableStates = kernelDescriptor.payloadMappings.bindingTable.numEntries;
     localBindingTableOffset = kernelDescriptor.payloadMappings.bindingTable.tableOffset;
 
     // patch crossthread data and ssh with inline surfaces, if necessary
     auto perHwThreadPrivateMemorySize = kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
-
     if (perHwThreadPrivateMemorySize) {
         privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch);
-
         DEBUG_BREAK_IF(privateSurfaceSize == 0);
+
         if (privateSurfaceSize > std::numeric_limits<uint32_t>::max()) {
             return CL_OUT_OF_RESOURCES;
         }
@@ -323,9 +289,11 @@ cl_int Kernel::initialize() {
         if (privateSurface == nullptr) {
             return CL_OUT_OF_RESOURCES;
         }
-        const auto &patch = kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress;
-        patchWithImplicitSurface(reinterpret_cast<void *>(privateSurface->getGpuAddressToPatch()), *privateSurface, patch);
+
+        const auto &privateMemoryAddress = kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress;
+        patchWithImplicitSurface(reinterpret_cast<void *>(privateSurface->getGpuAddressToPatch()), *privateSurface, privateMemoryAddress);
     }
+
     if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless)) {
         DEBUG_BREAK_IF(program->getConstantSurface(rootDeviceIndex) == nullptr);
         uintptr_t constMemory = isBuiltIn ? (uintptr_t)program->getConstantSurface(rootDeviceIndex)->getUnderlyingBuffer() : (uintptr_t)program->getConstantSurface(rootDeviceIndex)->getGpuAddressToPatch();
@@ -342,6 +310,7 @@ cl_int Kernel::initialize() {
         patchWithImplicitSurface(reinterpret_cast<void *>(globalMemory), *program->getGlobalSurface(rootDeviceIndex), arg);
     }
 
+    // Patch Surface State Heap
     bool useGlobalAtomics = kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics;
 
     if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress.bindful)) {
@@ -1399,7 +1368,7 @@ cl_int Kernel::setArgLocal(uint32_t argIndexIn,
         ++argIndex;
     }
 
-    slmTotalSize = kernelInfo.workloadInfo.slmStaticSize + alignUp(slmOffset, KB);
+    slmTotalSize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize + alignUp(slmOffset, KB);
 
     return CL_SUCCESS;
 }
@@ -2107,41 +2076,32 @@ void Kernel::ReflectionSurfaceHelper::getCurbeParams(std::vector<IGIL_KernelCurb
         tokenMask |= shiftLeftBy(DATA_PARAMETER_KERNEL_ARGUMENT);
     }
 
-    for (uint32_t i = 0; i < 3; i++) {
-        const uint32_t sizeOfParam = 4;
-        if (kernelInfo.workloadInfo.enqueuedLocalWorkSizeOffsets[i] != WorkloadInfo::undefinedOffset) {
-            curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_ENQUEUED_LOCAL_WORK_SIZE, sizeOfParam, kernelInfo.workloadInfo.enqueuedLocalWorkSizeOffsets[i], i * sizeOfParam});
-            tokenMask |= shiftLeftBy(DATA_PARAMETER_ENQUEUED_LOCAL_WORK_SIZE);
-        }
-        if (kernelInfo.workloadInfo.globalWorkOffsetOffsets[i] != WorkloadInfo::undefinedOffset) {
-            curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_GLOBAL_WORK_OFFSET, sizeOfParam, kernelInfo.workloadInfo.globalWorkOffsetOffsets[i], i * sizeOfParam});
-            tokenMask |= shiftLeftBy(DATA_PARAMETER_GLOBAL_WORK_OFFSET);
-        }
-        if (kernelInfo.workloadInfo.globalWorkSizeOffsets[i] != WorkloadInfo::undefinedOffset) {
-            curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_GLOBAL_WORK_SIZE, sizeOfParam, kernelInfo.workloadInfo.globalWorkSizeOffsets[i], i * sizeOfParam});
-            tokenMask |= shiftLeftBy(DATA_PARAMETER_GLOBAL_WORK_SIZE);
-        }
-        if (kernelInfo.workloadInfo.localWorkSizeOffsets[i] != WorkloadInfo::undefinedOffset) {
-            curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_LOCAL_WORK_SIZE, sizeOfParam, kernelInfo.workloadInfo.localWorkSizeOffsets[i], i * sizeOfParam});
-            tokenMask |= shiftLeftBy(DATA_PARAMETER_LOCAL_WORK_SIZE);
-        }
-        if (kernelInfo.workloadInfo.localWorkSizeOffsets2[i] != WorkloadInfo::undefinedOffset) {
-            curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_LOCAL_WORK_SIZE, sizeOfParam, kernelInfo.workloadInfo.localWorkSizeOffsets2[i], i * sizeOfParam});
-            tokenMask |= shiftLeftBy(DATA_PARAMETER_LOCAL_WORK_SIZE);
-        }
-        if (kernelInfo.workloadInfo.numWorkGroupsOffset[i] != WorkloadInfo::undefinedOffset) {
-            curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_NUM_WORK_GROUPS, sizeOfParam, kernelInfo.workloadInfo.numWorkGroupsOffset[i], i * sizeOfParam});
-            tokenMask |= shiftLeftBy(DATA_PARAMETER_NUM_WORK_GROUPS);
-        }
+    const auto &dispatchTraits = kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits;
+    for (uint i = 0; i < 3U; i++) {
+        auto emplaceIfValidOffsetAndShiftTokenMask = [&](uint parameterType, NEO::CrossThreadDataOffset offset) {
+            if (isValidOffset(offset)) {
+                curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{parameterType, sizeof(uint32_t), offset, static_cast<uint>(i * sizeof(uint32_t))});
+                tokenMask |= shiftLeftBy(parameterType);
+            }
+        };
+        emplaceIfValidOffsetAndShiftTokenMask(DATA_PARAMETER_LOCAL_WORK_SIZE, dispatchTraits.localWorkSize[i]);
+        emplaceIfValidOffsetAndShiftTokenMask(DATA_PARAMETER_LOCAL_WORK_SIZE, dispatchTraits.localWorkSize2[i]);
+        emplaceIfValidOffsetAndShiftTokenMask(DATA_PARAMETER_GLOBAL_WORK_OFFSET, dispatchTraits.globalWorkOffset[i]);
+        emplaceIfValidOffsetAndShiftTokenMask(DATA_PARAMETER_ENQUEUED_LOCAL_WORK_SIZE, dispatchTraits.enqueuedLocalWorkSize[i]);
+        emplaceIfValidOffsetAndShiftTokenMask(DATA_PARAMETER_GLOBAL_WORK_SIZE, dispatchTraits.globalWorkSize[i]);
+        emplaceIfValidOffsetAndShiftTokenMask(DATA_PARAMETER_NUM_WORK_GROUPS, dispatchTraits.numWorkGroups[i]);
     }
 
-    if (kernelInfo.workloadInfo.parentEventOffset != WorkloadInfo::undefinedOffset) {
-        curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_PARENT_EVENT, sizeof(uint32_t), kernelInfo.workloadInfo.parentEventOffset, 0});
-        tokenMask |= shiftLeftBy(DATA_PARAMETER_PARENT_EVENT);
-    }
-    if (kernelInfo.workloadInfo.workDimOffset != WorkloadInfo::undefinedOffset) {
-        curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_WORK_DIMENSIONS, sizeof(uint32_t), kernelInfo.workloadInfo.workDimOffset, 0});
-        tokenMask |= shiftLeftBy(DATA_PARAMETER_WORK_DIMENSIONS);
+    {
+        const auto &payloadMappings = kernelInfo.kernelDescriptor.payloadMappings;
+        auto emplaceIfValidOffsetAndShiftTokenMask = [&](uint parameterType, NEO::CrossThreadDataOffset offset) {
+            if (isValidOffset(offset)) {
+                curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{parameterType, sizeof(uint32_t), offset, 0});
+                tokenMask |= shiftLeftBy(parameterType);
+            }
+        };
+        emplaceIfValidOffsetAndShiftTokenMask(DATA_PARAMETER_PARENT_EVENT, payloadMappings.implicitArgs.deviceSideEnqueueParentEvent);
+        emplaceIfValidOffsetAndShiftTokenMask(DATA_PARAMETER_WORK_DIMENSIONS, payloadMappings.dispatchTraits.workDim);
     }
 
     std::sort(curbeParamsOut.begin(), curbeParamsOut.end(), compareFunction);
@@ -2170,7 +2130,7 @@ uint32_t Kernel::ReflectionSurfaceHelper::setKernelData(void *reflectionSurface,
     kernelData->m_RequiredWkgSizes[0] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
     kernelData->m_RequiredWkgSizes[1] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
     kernelData->m_RequiredWkgSizes[2] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];
-    kernelData->m_InilineSLMSize = kernelInfo.workloadInfo.slmStaticSize;
+    kernelData->m_InilineSLMSize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize;
 
     bool localIdRequired = false;
     if (kernelInfo.kernelDescriptor.kernelAttributes.flags.usesFlattenedLocalIds || (kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels > 0)) {

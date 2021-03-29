@@ -49,7 +49,7 @@ class KernelSlmArgTest : public MultiRootDeviceWithSubDevicesFixture {
             pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
             pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].slmAlignment = 0x400;
             pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].metadata.addressQualifier = KernelArgMetadata::AddrLocal;
-            pKernelInfo[rootDeviceIndex]->workloadInfo.slmStaticSize = 3 * KB;
+            pKernelInfo[rootDeviceIndex]->kernelDescriptor.kernelAttributes.slmInlineSize = 3 * KB;
             kernelInfos[rootDeviceIndex] = pKernelInfo[rootDeviceIndex].get();
         }
 

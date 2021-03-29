@@ -2476,7 +2476,7 @@ struct KernelCrossThreadTests : Test<ClDeviceFixture> {
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenGlobalWorkOffsetIsCorrect) {
 
-    pKernelInfo->workloadInfo.globalWorkOffsetOffsets[1] = 4;
+    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkOffset[1] = 4;
 
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -2489,7 +2489,7 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenGlobalWorkOffsetIsCorr
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkSizeIsCorrect) {
 
-    pKernelInfo->workloadInfo.localWorkSizeOffsets[0] = 0xc;
+    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0xc;
 
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -2502,7 +2502,7 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkSizeIsCorrect
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkSize2IsCorrect) {
 
-    pKernelInfo->workloadInfo.localWorkSizeOffsets2[1] = 0xd;
+    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[1] = 0xd;
 
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -2515,7 +2515,7 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkSize2IsCorrec
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenGlobalWorkSizeIsCorrect) {
 
-    pKernelInfo->workloadInfo.globalWorkSizeOffsets[2] = 8;
+    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[2] = 8;
 
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -2528,7 +2528,7 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenGlobalWorkSizeIsCorrec
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkDimIsCorrect) {
 
-    pKernelInfo->workloadInfo.workDimOffset = 12;
+    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.workDim = 12;
 
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -2539,9 +2539,9 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkDimIsCorrect)
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenNumWorkGroupsIsCorrect) {
 
-    pKernelInfo->workloadInfo.numWorkGroupsOffset[0] = 0 * sizeof(uint32_t);
-    pKernelInfo->workloadInfo.numWorkGroupsOffset[1] = 1 * sizeof(uint32_t);
-    pKernelInfo->workloadInfo.numWorkGroupsOffset[2] = 2 * sizeof(uint32_t);
+    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 0 * sizeof(uint32_t);
+    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[1] = 1 * sizeof(uint32_t);
+    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[2] = 2 * sizeof(uint32_t);
 
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -2556,7 +2556,7 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenNumWorkGroupsIsCorrect
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedLocalWorkSizeIsCorrect) {
 
-    pKernelInfo->workloadInfo.enqueuedLocalWorkSizeOffsets[0] = 0;
+    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[0] = 0;
 
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -2568,39 +2568,39 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedLocalWorkSizeI
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedMaxWorkGroupSizeIsCorrect) {
-    pKernelInfo->workloadInfo.maxWorkGroupSizeOffset = 12;
+    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize = 12;
 
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     EXPECT_NE(nullptr, kernel.maxWorkGroupSizeForCrossThreadData);
     EXPECT_NE(&Kernel::dummyPatchLocation, kernel.maxWorkGroupSizeForCrossThreadData);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->workloadInfo.maxWorkGroupSizeOffset), static_cast<void *>(kernel.maxWorkGroupSizeForCrossThreadData));
+    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize), static_cast<void *>(kernel.maxWorkGroupSizeForCrossThreadData));
     EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.maxWorkGroupSizeForCrossThreadData);
     EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.maxKernelWorkGroupSize);
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenDataParameterSimdSizeIsCorrect) {
-    pKernelInfo->workloadInfo.simdSizeOffset = 16;
+    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.simdSize = 16;
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 16;
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     EXPECT_NE(nullptr, kernel.dataParameterSimdSize);
     EXPECT_NE(&Kernel::dummyPatchLocation, kernel.dataParameterSimdSize);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->workloadInfo.simdSizeOffset), static_cast<void *>(kernel.dataParameterSimdSize));
+    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.simdSize), static_cast<void *>(kernel.dataParameterSimdSize));
     EXPECT_EQ_VAL(pKernelInfo->getMaxSimdSize(), *kernel.dataParameterSimdSize);
 }
 
-TEST_F(KernelCrossThreadTests, GivenParentEventOffsetWhenKernelIsInitializedThenParentEventIsInitiatedWithInvalid) {
-    pKernelInfo->workloadInfo.parentEventOffset = 16;
+TEST_F(KernelCrossThreadTests, GivenParentEventOffsetWhenKernelIsInitializedThenParentEventIsInitiatedWithUndefined) {
+    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueParentEvent = 16;
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     EXPECT_NE(nullptr, kernel.parentEventOffset);
     EXPECT_NE(&Kernel::dummyPatchLocation, kernel.parentEventOffset);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->workloadInfo.parentEventOffset), static_cast<void *>(kernel.parentEventOffset));
-    EXPECT_EQ(WorkloadInfo::invalidParentEvent, *kernel.parentEventOffset);
+    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueParentEvent), static_cast<void *>(kernel.parentEventOffset));
+    EXPECT_EQ(undefined<uint32_t>, *kernel.parentEventOffset);
 }
 
 TEST_F(KernelCrossThreadTests, WhenAddingKernelThenProgramRefCountIsIncremented) {
@@ -2617,7 +2617,7 @@ TEST_F(KernelCrossThreadTests, WhenAddingKernelThenProgramRefCountIsIncremented)
 
 TEST_F(KernelCrossThreadTests, GivenSlmStatisSizeWhenCreatingKernelThenSlmTotalSizeIsSet) {
 
-    pKernelInfo->workloadInfo.slmStaticSize = 1024;
+    pKernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize = 1024;
 
     MockKernel *kernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
 
@@ -2650,7 +2650,7 @@ TEST_F(KernelCrossThreadTests, givenKernelWithPrivateMemoryWhenItIsCreatedThenCu
 
 TEST_F(KernelCrossThreadTests, givenKernelWithPreferredWkgMultipleWhenItIsCreatedThenCurbeIsPatchedProperly) {
 
-    pKernelInfo->workloadInfo.preferredWkgMultipleOffset = 8;
+    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.preferredWkgMultiple = 8;
     MockKernel *kernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
 
     kernel->initialize();

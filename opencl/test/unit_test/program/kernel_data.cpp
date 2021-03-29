@@ -857,7 +857,7 @@ TEST_F(KernelDataTest, GivenDataParameterWorkDimensionsWhenBuildingThenProgramIs
     EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
 
-    EXPECT_EQ(offsetWorkDim, pKernelInfo->workloadInfo.workDimOffset);
+    EXPECT_EQ(offsetWorkDim, pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.workDim);
 }
 
 TEST_F(KernelDataTest, GivenDataParameterSimdSizeWhenBuildingThenProgramIsCorrect) {
@@ -884,7 +884,7 @@ TEST_F(KernelDataTest, GivenDataParameterSimdSizeWhenBuildingThenProgramIsCorrec
     EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 
-    EXPECT_EQ(offsetSimdSize, pKernelInfo->workloadInfo.simdSizeOffset);
+    EXPECT_EQ(offsetSimdSize, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.simdSize);
 }
 
 TEST_F(KernelDataTest, GivenParameterPrivateMemoryStatelessSizeWhenBuildingThenProgramIsCorrect) {
@@ -986,7 +986,7 @@ TEST_F(KernelDataTest, GivenDataParameterNumWorkGroupsWhenBuildingThenProgramIsC
     EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
 
-    EXPECT_EQ(offsetNumWorkGroups[argumentNumber], pKernelInfo->workloadInfo.numWorkGroupsOffset[argumentNumber]);
+    EXPECT_EQ(offsetNumWorkGroups[argumentNumber], pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[argumentNumber]);
 }
 
 TEST_F(KernelDataTest, GivenDataParameterMaxWorkgroupSizeWhenBuildingThenProgramIsCorrect) {
@@ -1013,7 +1013,7 @@ TEST_F(KernelDataTest, GivenDataParameterMaxWorkgroupSizeWhenBuildingThenProgram
     EXPECT_EQ(0U, pKernelInfo->kernelDescriptor.kernelMetadata.allByValueKernelArguments.size());
     EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
 
-    EXPECT_EQ(offsetMaxWorkGroupSize, pKernelInfo->workloadInfo.maxWorkGroupSizeOffset);
+    EXPECT_EQ(offsetMaxWorkGroupSize, pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize);
 }
 
 TEST_F(KernelDataTest, GivenDataParameterSamplerAddressModeWhenBuildingThenProgramIsCorrect) {
@@ -1155,7 +1155,7 @@ TEST_F(KernelDataTest, GivenPatchTokenAllocateLocalSurfaceWhenBuildingThenProgra
 
     buildAndDecode();
 
-    EXPECT_EQ(1024u, pKernelInfo->workloadInfo.slmStaticSize);
+    EXPECT_EQ(1024u, pKernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize);
 }
 
 TEST_F(KernelDataTest, GivenPatchTokenAllocateStatelessPrintfSurfaceWhenBuildingThenProgramIsCorrect) {

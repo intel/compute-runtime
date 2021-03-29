@@ -24,15 +24,13 @@ inline void storeTokenIfNotNull(KernelInfo &kernelInfo, T *token) {
         kernelInfo.storePatchToken(token);
     }
 }
-
 template <typename T>
 inline uint32_t getOffset(T *token) {
     if (token != nullptr) {
         return token->Offset;
     }
-    return WorkloadInfo::undefinedOffset;
+    return undefined<uint32_t>;
 }
-
 void populateKernelInfoArgMetadata(KernelInfo &dstKernelInfoArg, const SPatchKernelArgumentInfo *src) {
     if (nullptr == src) {
         return;
@@ -158,7 +156,7 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
 
     storeTokenIfNotNull(dst, src.tokens.executionEnvironment);
     dst.usesSsh = src.tokens.bindingTableState && (src.tokens.bindingTableState->Count > 0);
-    dst.workloadInfo.slmStaticSize = src.tokens.allocateLocalSurface ? src.tokens.allocateLocalSurface->TotalInlineLocalMemorySize : 0U;
+    dst.kernelDescriptor.kernelAttributes.slmInlineSize = src.tokens.allocateLocalSurface ? src.tokens.allocateLocalSurface->TotalInlineLocalMemorySize : 0U;
 
     dst.kernelArgInfo.resize(src.tokens.kernelArgs.size());
 
@@ -178,23 +176,6 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
     dst.isVmeWorkload = dst.isVmeWorkload || (src.tokens.inlineVmeSamplerInfo != nullptr);
     dst.systemKernelOffset = src.tokens.stateSip ? src.tokens.stateSip->SystemKernelOffset : 0U;
 
-    for (uint32_t i = 0; i < 3U; ++i) {
-        dst.workloadInfo.localWorkSizeOffsets[i] = getOffset(src.tokens.crossThreadPayloadArgs.localWorkSize[i]);
-        dst.workloadInfo.localWorkSizeOffsets2[i] = getOffset(src.tokens.crossThreadPayloadArgs.localWorkSize2[i]);
-        dst.workloadInfo.globalWorkOffsetOffsets[i] = getOffset(src.tokens.crossThreadPayloadArgs.globalWorkOffset[i]);
-        dst.workloadInfo.enqueuedLocalWorkSizeOffsets[i] = getOffset(src.tokens.crossThreadPayloadArgs.enqueuedLocalWorkSize[i]);
-        dst.workloadInfo.globalWorkSizeOffsets[i] = getOffset(src.tokens.crossThreadPayloadArgs.globalWorkSize[i]);
-        dst.workloadInfo.numWorkGroupsOffset[i] = getOffset(src.tokens.crossThreadPayloadArgs.numWorkGroups[i]);
-    }
-
-    dst.workloadInfo.maxWorkGroupSizeOffset = getOffset(src.tokens.crossThreadPayloadArgs.maxWorkGroupSize);
-    dst.workloadInfo.workDimOffset = getOffset(src.tokens.crossThreadPayloadArgs.workDimensions);
-    dst.workloadInfo.simdSizeOffset = getOffset(src.tokens.crossThreadPayloadArgs.simdSize);
-    dst.workloadInfo.parentEventOffset = getOffset(src.tokens.crossThreadPayloadArgs.parentEvent);
-    dst.workloadInfo.preferredWkgMultipleOffset = getOffset(src.tokens.crossThreadPayloadArgs.preferredWorkgroupMultiple);
-    dst.workloadInfo.privateMemoryStatelessSizeOffset = getOffset(src.tokens.crossThreadPayloadArgs.privateMemoryStatelessSize);
-    dst.workloadInfo.localMemoryStatelessWindowSizeOffset = getOffset(src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize);
-    dst.workloadInfo.localMemoryStatelessWindowStartAddressOffset = getOffset(src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress);
     for (auto &childSimdSize : src.tokens.crossThreadPayloadArgs.childBlockSimdSize) {
         dst.childrenKernelsIdOffset.push_back({childSimdSize->ArgumentNumber, childSimdSize->Offset});
     }

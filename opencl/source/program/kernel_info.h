@@ -43,31 +43,9 @@ extern bool useKernelDescriptor;
 
 extern std::map<std::string, size_t> typeSizeMap;
 
-struct WorkloadInfo {
-    enum : uint32_t { undefinedOffset = std::numeric_limits<uint32_t>::max() };
-    enum : uint32_t { invalidParentEvent = std::numeric_limits<uint32_t>::max() };
-
-    uint32_t globalWorkOffsetOffsets[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
-    uint32_t globalWorkSizeOffsets[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
-    uint32_t localWorkSizeOffsets[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
-    uint32_t localWorkSizeOffsets2[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
-    uint32_t enqueuedLocalWorkSizeOffsets[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
-    uint32_t numWorkGroupsOffset[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
-    uint32_t maxWorkGroupSizeOffset = undefinedOffset;
-    uint32_t workDimOffset = undefinedOffset;
-    uint32_t slmStaticSize = 0;
-    uint32_t simdSizeOffset = undefinedOffset;
-    uint32_t parentEventOffset = undefinedOffset;
-    uint32_t preferredWkgMultipleOffset = undefinedOffset;
-    uint32_t privateMemoryStatelessSizeOffset = undefinedOffset;
-    uint32_t localMemoryStatelessWindowSizeOffset = undefinedOffset;
-    uint32_t localMemoryStatelessWindowStartAddressOffset = undefinedOffset;
-};
-
 static const float YTilingRatioValue = 1.3862943611198906188344642429164f;
 
 struct WorkSizeInfo {
-
     uint32_t maxWorkGroupSize;
     uint32_t minWorkGroupSize;
     bool hasBarriers;
@@ -168,7 +146,6 @@ struct KernelInfo {
     PatchInfo patchInfo = {};
     std::vector<KernelArgInfo> kernelArgInfo;
     std::vector<KernelArgInfo> kernelNonArgInfo;
-    WorkloadInfo workloadInfo = {};
     std::vector<std::pair<uint32_t, uint32_t>> childrenKernelsIdOffset;
     bool usesSsh = false;
     bool requiresSshForBuffers = false;

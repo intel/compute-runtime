@@ -890,34 +890,34 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithExecutionParametersWhenPa
     const uint32_t globalOffsetOffsets[3] = {52, 56, 60};
     const uint32_t enqueuedLocalWorkSizeOffsets[3] = {64, 68, 72};
 
-    info.workloadInfo.localWorkSizeOffsets[0] = lwsOffsets[0];
-    info.workloadInfo.localWorkSizeOffsets[1] = lwsOffsets[1];
-    info.workloadInfo.localWorkSizeOffsets[2] = lwsOffsets[2];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = lwsOffsets[0];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = lwsOffsets[1];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = lwsOffsets[2];
 
-    info.workloadInfo.localWorkSizeOffsets2[0] = lwsOffsets2[0];
-    info.workloadInfo.localWorkSizeOffsets2[1] = lwsOffsets2[1];
-    info.workloadInfo.localWorkSizeOffsets2[2] = lwsOffsets2[2];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[0] = lwsOffsets2[0];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[1] = lwsOffsets2[1];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[2] = lwsOffsets2[2];
 
-    info.workloadInfo.globalWorkSizeOffsets[0] = gwsOffsets[0];
-    info.workloadInfo.globalWorkSizeOffsets[1] = gwsOffsets[1];
-    info.workloadInfo.globalWorkSizeOffsets[2] = gwsOffsets[2];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = gwsOffsets[0];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[1] = gwsOffsets[1];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[2] = gwsOffsets[2];
 
-    info.workloadInfo.numWorkGroupsOffset[0] = numOffsets[0];
-    info.workloadInfo.numWorkGroupsOffset[1] = numOffsets[1];
-    info.workloadInfo.numWorkGroupsOffset[2] = numOffsets[2];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = numOffsets[0];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[1] = numOffsets[1];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[2] = numOffsets[2];
 
-    info.workloadInfo.globalWorkOffsetOffsets[0] = globalOffsetOffsets[0];
-    info.workloadInfo.globalWorkOffsetOffsets[1] = globalOffsetOffsets[1];
-    info.workloadInfo.globalWorkOffsetOffsets[2] = globalOffsetOffsets[2];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.globalWorkOffset[0] = globalOffsetOffsets[0];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.globalWorkOffset[1] = globalOffsetOffsets[1];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.globalWorkOffset[2] = globalOffsetOffsets[2];
 
-    info.workloadInfo.enqueuedLocalWorkSizeOffsets[0] = enqueuedLocalWorkSizeOffsets[0];
-    info.workloadInfo.enqueuedLocalWorkSizeOffsets[1] = enqueuedLocalWorkSizeOffsets[1];
-    info.workloadInfo.enqueuedLocalWorkSizeOffsets[2] = enqueuedLocalWorkSizeOffsets[2];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[0] = enqueuedLocalWorkSizeOffsets[0];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[1] = enqueuedLocalWorkSizeOffsets[1];
+    info.kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[2] = enqueuedLocalWorkSizeOffsets[2];
 
-    info.workloadInfo.workDimOffset = workDimOffset;
+    info.kernelDescriptor.payloadMappings.dispatchTraits.workDim = workDimOffset;
     // NUM_HARDWARE_THREADS unsupported
     EXPECT_TRUE(numHwThreads > 0u);
-    info.workloadInfo.parentEventOffset = parentEventOffset;
+    info.kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueParentEvent = parentEventOffset;
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
     uint64_t tokenMask = 0;
@@ -1247,7 +1247,7 @@ class ReflectionSurfaceHelperSetKernelDataTest : public testing::TestWithParam<s
         info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1] = 8;
         info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2] = 2;
 
-        info.workloadInfo.slmStaticSize = 1652;
+        info.kernelDescriptor.kernelAttributes.slmInlineSize = 1652;
 
         IGIL_KernelCurbeParams testParams[3] = {{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}};
         curbeParams.push_back(testParams[0]);
@@ -1324,7 +1324,7 @@ TEST_P(ReflectionSurfaceHelperSetKernelDataTest, WhenSettingKernelDataThenDataAn
     EXPECT_EQ(info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0], kernelData->m_RequiredWkgSizes[0]);
     EXPECT_EQ(info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1], kernelData->m_RequiredWkgSizes[1]);
     EXPECT_EQ(info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2], kernelData->m_RequiredWkgSizes[2]);
-    EXPECT_EQ(info.workloadInfo.slmStaticSize, kernelData->m_InilineSLMSize);
+    EXPECT_EQ(info.kernelDescriptor.kernelAttributes.slmInlineSize, kernelData->m_InilineSLMSize);
 
     if (localIDPresent.flattend || localIDPresent.x || localIDPresent.y || localIDPresent.z)
         EXPECT_EQ(1u, kernelData->m_NeedLocalIDS);

@@ -359,29 +359,19 @@ void KernelInfo::apply(const DeviceInfoKernelPayloadConstants &constants) {
         return;
     }
 
-    uint32_t privateMemoryStatelessSizeOffset = this->workloadInfo.privateMemoryStatelessSizeOffset;
-    uint32_t localMemoryStatelessWindowSizeOffset = this->workloadInfo.localMemoryStatelessWindowSizeOffset;
-    uint32_t localMemoryStatelessWindowStartAddressOffset = this->workloadInfo.localMemoryStatelessWindowStartAddressOffset;
+    const auto &implicitArgs = kernelDescriptor.payloadMappings.implicitArgs;
+    const auto privateMemorySize = static_cast<uint32_t>(KernelHelper::getPrivateSurfaceSize(kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize,
+                                                                                             constants.computeUnitsUsedForScratch));
 
-    if (localMemoryStatelessWindowStartAddressOffset != WorkloadInfo::undefinedOffset) {
-        *(uintptr_t *)&(this->crossThreadData[localMemoryStatelessWindowStartAddressOffset]) = reinterpret_cast<uintptr_t>(constants.slmWindow);
-    }
-
-    if (localMemoryStatelessWindowSizeOffset != WorkloadInfo::undefinedOffset) {
-        *(uint32_t *)&(this->crossThreadData[localMemoryStatelessWindowSizeOffset]) = constants.slmWindowSize;
-    }
-
-    auto perHwThreadSize = kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
-    uint32_t privateMemorySize = static_cast<uint32_t>(KernelHelper::getPrivateSurfaceSize(perHwThreadSize,
-                                                                                           constants.computeUnitsUsedForScratch));
-
-    if (privateMemoryStatelessSizeOffset != WorkloadInfo::undefinedOffset) {
-        *(uint32_t *)&(this->crossThreadData[privateMemoryStatelessSizeOffset]) = privateMemorySize;
-    }
-
-    if (this->workloadInfo.maxWorkGroupSizeOffset != WorkloadInfo::undefinedOffset) {
-        *(uint32_t *)&(this->crossThreadData[this->workloadInfo.maxWorkGroupSizeOffset]) = constants.maxWorkGroupSize;
-    }
+    auto setIfValidOffset = [&](auto value, NEO::CrossThreadDataOffset offset) {
+        if (isValidOffset(offset)) {
+            *ptrOffset(reinterpret_cast<decltype(value) *>(crossThreadData), offset) = value;
+        }
+    };
+    setIfValidOffset(reinterpret_cast<uintptr_t>(constants.slmWindow), implicitArgs.localMemoryStatelessWindowStartAddres);
+    setIfValidOffset(constants.slmWindowSize, implicitArgs.localMemoryStatelessWindowSize);
+    setIfValidOffset(privateMemorySize, implicitArgs.privateMemorySize);
+    setIfValidOffset(constants.maxWorkGroupSize, implicitArgs.maxWorkGroupSize);
 }
 
 std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos) {

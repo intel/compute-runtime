@@ -249,7 +249,7 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalIdsWhenDispatchingWalkerThenWalkerIsDis
 
 HWTEST_F(DispatchWalkerTest, GivenDefaultLwsAlgorithmWhenDispatchingWalkerThenDimensionsAreCorrect) {
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.workDimOffset = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -282,7 +282,7 @@ HWTEST_F(DispatchWalkerTest, GivenSquaredLwsAlgorithmWhenDispatchingWalkerThenDi
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.workDimOffset = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -312,7 +312,7 @@ HWTEST_F(DispatchWalkerTest, GivenNdLwsAlgorithmWhenDispatchingWalkerThenDimensi
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.workDimOffset = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -343,7 +343,7 @@ HWTEST_F(DispatchWalkerTest, GivenOldLwsAlgorithmWhenDispatchingWalkerThenDimens
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.workDimOffset = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -371,9 +371,9 @@ HWTEST_F(DispatchWalkerTest, GivenOldLwsAlgorithmWhenDispatchingWalkerThenDimens
 
 HWTEST_F(DispatchWalkerTest, GivenNumWorkGroupsWhenDispatchingWalkerThenNumWorkGroupsIsCorrectlySet) {
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.numWorkGroupsOffset[0] = 0;
-    kernelInfo.workloadInfo.numWorkGroupsOffset[1] = 4;
-    kernelInfo.workloadInfo.numWorkGroupsOffset[2] = 8;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[1] = 4;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[2] = 8;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -403,9 +403,9 @@ HWTEST_F(DispatchWalkerTest, GivenNumWorkGroupsWhenDispatchingWalkerThenNumWorkG
 }
 
 HWTEST_F(DispatchWalkerTest, GivenGlobalWorkOffsetWhenDispatchingWalkerThenGlobalWorkOffsetIsCorrectlySet) {
-    kernelInfo.workloadInfo.globalWorkOffsetOffsets[0] = 0u;
-    kernelInfo.workloadInfo.globalWorkOffsetOffsets[1] = 4u;
-    kernelInfo.workloadInfo.globalWorkOffsetOffsets[2] = 8u;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.globalWorkOffset[0] = 0u;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.globalWorkOffset[1] = 4u;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.globalWorkOffset[2] = 8u;
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -439,9 +439,9 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndDefaultAlgorithmWhenDispatch
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 4;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 8;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -471,9 +471,9 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndNdOnWhenDispatchingWalkerThe
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 4;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 8;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -504,9 +504,9 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmWhenDispatch
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 4;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 8;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -537,9 +537,9 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmOffAndNdOffW
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 4;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 8;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -567,9 +567,9 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmOffAndNdOffW
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeWhenDispatchingWalkerThenLwsIsCorrect) {
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 4;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 8;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -598,12 +598,12 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeWhenDispatchingWalkerThenLwsIsC
 
 HWTEST_F(DispatchWalkerTest, GivenTwoSetsOfLwsOffsetsWhenDispatchingWalkerThenLwsIsCorrect) {
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
-    kernelInfo.workloadInfo.localWorkSizeOffsets2[0] = 12;
-    kernelInfo.workloadInfo.localWorkSizeOffsets2[1] = 16;
-    kernelInfo.workloadInfo.localWorkSizeOffsets2[2] = 20;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 4;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 8;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[0] = 12;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[1] = 16;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[2] = 20;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -635,15 +635,15 @@ HWTEST_F(DispatchWalkerTest, GivenTwoSetsOfLwsOffsetsWhenDispatchingWalkerThenLw
 
 HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorrect) {
     MockKernel kernel1(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 4;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 8;
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
 
     MockKernel kernel2(program.get(), kernelInfoWithSampler, *pClDevice);
-    kernelInfoWithSampler.workloadInfo.localWorkSizeOffsets[0] = 12;
-    kernelInfoWithSampler.workloadInfo.localWorkSizeOffsets[1] = 16;
-    kernelInfoWithSampler.workloadInfo.localWorkSizeOffsets[2] = 20;
+    kernelInfoWithSampler.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 12;
+    kernelInfoWithSampler.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 16;
+    kernelInfoWithSampler.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 20;
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
     DispatchInfo di1(pClDevice, &kernel1, 3, {10, 10, 10}, {1, 2, 3}, {0, 0, 0});
@@ -686,15 +686,15 @@ HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorre
 HWTEST_F(DispatchWalkerTest, GivenSplitWalkerWhenDispatchingWalkerThenLwsIsCorrect) {
     MockKernel kernel1(program.get(), kernelInfo, *pClDevice);
     MockKernel mainKernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
-    kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
-    kernelInfo.workloadInfo.localWorkSizeOffsets2[0] = 12;
-    kernelInfo.workloadInfo.localWorkSizeOffsets2[1] = 16;
-    kernelInfo.workloadInfo.localWorkSizeOffsets2[2] = 20;
-    kernelInfo.workloadInfo.numWorkGroupsOffset[0] = 24;
-    kernelInfo.workloadInfo.numWorkGroupsOffset[1] = 28;
-    kernelInfo.workloadInfo.numWorkGroupsOffset[2] = 32;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 4;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 8;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[0] = 12;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[1] = 16;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[2] = 20;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 24;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[1] = 28;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[2] = 32;
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
     ASSERT_EQ(CL_SUCCESS, mainKernel.initialize());
 
@@ -1329,7 +1329,7 @@ HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTran
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.workDimOffset = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     auto &cmdStream = pCmdQ->getCS(0);
@@ -1383,7 +1383,7 @@ HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTran
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.workloadInfo.workDimOffset = 0;
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     auto &cmdStream = pCmdQ->getCS(0);

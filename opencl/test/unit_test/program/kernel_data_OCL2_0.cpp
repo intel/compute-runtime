@@ -90,7 +90,7 @@ TEST_F(KernelDataTest, GIVENdataParameterParentEventWHENdecodeTokensTHENoffsetLo
 
     buildAndDecode();
 
-    EXPECT_EQ(pKernelInfo->workloadInfo.parentEventOffset, offsetSimdSize);
+    EXPECT_EQ(pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueParentEvent, offsetSimdSize);
 }
 
 TEST_F(KernelDataTest, GIVENdataParameterPreferredWorkgroupMultipleTokenWHENbinaryIsdecodedTHENcorrectOffsetIsAssigned) {
@@ -110,7 +110,7 @@ TEST_F(KernelDataTest, GIVENdataParameterPreferredWorkgroupMultipleTokenWHENbina
 
     buildAndDecode();
 
-    EXPECT_EQ(pKernelInfo->workloadInfo.preferredWkgMultipleOffset, offset);
+    EXPECT_EQ(pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.preferredWkgMultiple, offset);
 }
 
 TEST_F(KernelDataTest, GIVENdataParameterObjectIdWHENdecodeTokensTHENoffsetLocatedInKernelArgInfo) {

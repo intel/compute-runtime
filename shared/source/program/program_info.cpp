@@ -28,7 +28,7 @@ size_t getMaxInlineSlmNeeded(const ProgramInfo &programInfo) {
 
 bool requiresLocalMemoryWindowVA(const ProgramInfo &programInfo) {
     for (const auto &kernelInfo : programInfo.kernelInfos) {
-        if (WorkloadInfo::undefinedOffset != kernelInfo->workloadInfo.localMemoryStatelessWindowStartAddressOffset) {
+        if (isValidOffset(kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres)) {
             return true;
         }
     }

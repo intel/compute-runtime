@@ -61,6 +61,6 @@ TEST(RequiresLocalMemoryWindowVA, GivenProgramWithKernelsNotLocalMemoryWindowVAT
 TEST(RequiresLocalMemoryWindowVA, GivenProgramWithKernelsWhenSomeOfKernelRequireLocalMemoryWidnowVAThenReturnTrue) {
     NEO::ProgramInfo programInfo;
     programInfo.kernelInfos = {new NEO::KernelInfo(), new NEO::KernelInfo(), new NEO::KernelInfo()};
-    programInfo.kernelInfos[1]->workloadInfo.localMemoryStatelessWindowStartAddressOffset = 0U;
+    programInfo.kernelInfos[1]->kernelDescriptor.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres = 0U;
     EXPECT_TRUE(NEO::requiresLocalMemoryWindowVA(programInfo));
 }

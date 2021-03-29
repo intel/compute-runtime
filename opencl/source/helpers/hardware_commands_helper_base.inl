@@ -46,7 +46,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(const Kernel &kerne
 
     totalSize += borderColorSize + additionalSizeRequiredDsh();
 
-    DEBUG_BREAK_IF(!(totalSize >= kernel.getDynamicStateHeapSize() || kernel.getKernelInfo().isVmeWorkload));
+    DEBUG_BREAK_IF(!(totalSize >= kernel.getDynamicStateHeapSize() || kernel.isVmeKernel()));
 
     return alignUp(totalSize, EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
 }
