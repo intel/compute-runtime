@@ -20,6 +20,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       zello_world_global_work_offset
       zello_scratch
       zello_fence
+      zello_printf
   )
 
   include_directories(common)
@@ -55,6 +56,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   target_link_libraries(zello_world_jitc_ocloc PUBLIC ocloc_lib)
   target_link_libraries(zello_scratch PUBLIC ocloc_lib)
   target_link_libraries(zello_fence PUBLIC ocloc_lib)
+  target_link_libraries(zello_printf PUBLIC ocloc_lib)
   if(UNIX)
     target_link_libraries(zello_world_global_work_offset PUBLIC ocloc_lib)
   endif()

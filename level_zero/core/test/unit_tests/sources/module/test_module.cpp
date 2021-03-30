@@ -896,6 +896,40 @@ HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOpti
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
 }
 
+using PrintfModuleTest = Test<DeviceFixture>;
+
+HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAllocationIsPlacedInResidencyContainer) {
+    std::string testFile;
+    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".gen");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    auto module = std::unique_ptr<L0::Module>(Module::create(device, &moduleDesc, nullptr, ModuleType::User));
+
+    auto kernel = std::make_unique<::testing::NiceMock<Mock<Kernel>>>();
+    ASSERT_NE(nullptr, kernel);
+
+    kernel->module = module.get();
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "test";
+    kernel->initialize(&kernelDesc);
+
+    auto &container = kernel->residencyContainer;
+    auto printfPos = std::find(container.begin(), container.end(), kernel->getPrintfBufferAllocation());
+    EXPECT_NE(container.end(), printfPos);
+    bool correctPos = printfPos >= container.begin() + kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs.size();
+    EXPECT_TRUE(correctPos);
+}
+
 TEST(BuildOptions, givenNoSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenFalseIsReturned) {
     std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, NEO::CompilerOptions::finiteMathOnly);
     std::string dstNames;
