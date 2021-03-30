@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,6 +86,10 @@ TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformInContextCreationPro
     auto clContext = clCreateContextFromType(properties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, clContext);
+    auto pContext = castToObject<Context>(clContext);
+    for (auto i = 0u; i < nonDefaultPlatform->getNumDevices(); i++) {
+        EXPECT_EQ(nonDefaultPlatform->getClDevice(i), pContext->getDevice(i));
+    }
     clReleaseContext(clContext);
 }
 

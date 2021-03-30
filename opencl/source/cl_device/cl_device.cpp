@@ -260,5 +260,7 @@ void ClDevice::getQueueFamilyName(char *outputName, size_t maxOutputNameLength, 
     UNRECOVERABLE_IF(name.length() > maxOutputNameLength + 1);
     strncpy_s(outputName, maxOutputNameLength, name.c_str(), name.size());
 }
-
+Platform *ClDevice::getPlatform() const {
+    return castToObject<Platform>(platformId);
+}
 } // namespace NEO

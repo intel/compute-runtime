@@ -135,12 +135,8 @@ bool Context::createImpl(const cl_context_properties *properties,
         propertiesCurrent += 2;
 
         switch (propertyType) {
-        case CL_CONTEXT_PLATFORM: {
-            if (castToObject<Platform>(reinterpret_cast<cl_platform_id>(propertyValue)) == nullptr) {
-                errcodeRet = CL_INVALID_PLATFORM;
-                return false;
-            }
-        } break;
+        case CL_CONTEXT_PLATFORM:
+            break;
         case CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL:
             driverDiagnosticsUsed = static_cast<int32_t>(propertyValue);
             break;
@@ -457,4 +453,19 @@ void Context::setupContextType() {
     }
 }
 
+Platform *Context::getPlatformFromProperties(const cl_context_properties *properties, cl_int &errcode) {
+    errcode = CL_SUCCESS;
+    auto propertiesCurrent = properties;
+    while (propertiesCurrent && *propertiesCurrent) {
+        auto propertyType = propertiesCurrent[0];
+        auto propertyValue = propertiesCurrent[1];
+        propertiesCurrent += 2;
+        if (CL_CONTEXT_PLATFORM == propertyType) {
+            Platform *pPlatform = nullptr;
+            errcode = validateObject(WithCastToInternal(reinterpret_cast<cl_platform_id>(propertyValue), &pPlatform));
+            return pPlatform;
+        }
+    }
+    return nullptr;
+}
 } // namespace NEO

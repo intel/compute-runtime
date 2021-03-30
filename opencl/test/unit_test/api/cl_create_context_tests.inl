@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -180,7 +180,7 @@ TEST_F(clCreateContextTests, GivenNonDefaultPlatformInContextCreationPropertiesW
     clReleaseContext(clContext);
 }
 
-TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformWithInvalidIcdDispatchInContextCreationPropertiesWhenCreatingContextThenInvalidPlatformErrorIsReturned) {
+TEST_F(clCreateContextTests, GivenNonDefaultPlatformWithInvalidIcdDispatchInContextCreationPropertiesWhenCreatingContextThenInvalidPlatformErrorIsReturned) {
     auto nonDefaultPlatform = std::make_unique<MockPlatform>();
     nonDefaultPlatform->initializeWithNewDevices();
     cl_platform_id nonDefaultPlatformCl = nonDefaultPlatform.get();
@@ -192,4 +192,42 @@ TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformWithInvalidIcdDispat
     EXPECT_EQ(nullptr, clContext);
 }
 
+TEST_F(clCreateContextTests, GivenDeviceNotAssociatedToPlatformInPropertiesWhenCreatingContextThenInvalidDeviceErrorIsReturned) {
+    auto nonDefaultPlatform = std::make_unique<MockPlatform>();
+    nonDefaultPlatform->initializeWithNewDevices();
+    cl_device_id clDevice = platform()->getClDevice(0);
+    cl_platform_id nonDefaultPlatformCl = nonDefaultPlatform.get();
+    cl_context_properties properties[3] = {CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(nonDefaultPlatformCl), 0};
+
+    auto clContext = clCreateContext(properties, 1, &clDevice, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(nullptr, clContext);
+}
+
+TEST_F(clCreateContextTests, GivenDevicesFromDifferentPlatformsWhenCreatingContextWithoutSpecifiedPlatformThenInvalidDeviceErrorIsReturned) {
+    auto platform1 = std::make_unique<MockPlatform>();
+    auto platform2 = std::make_unique<MockPlatform>();
+    platform1->initializeWithNewDevices();
+    platform2->initializeWithNewDevices();
+    cl_device_id clDevices[] = {platform1->getClDevice(0), platform2->getClDevice(0)};
+
+    auto clContext = clCreateContext(nullptr, 2, clDevices, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(nullptr, clContext);
+}
+
+TEST_F(clCreateContextTests, GivenDevicesFromDifferentPlatformsWhenCreatingContextWithSpecifiedPlatformThenInvalidDeviceErrorIsReturned) {
+    auto platform1 = std::make_unique<MockPlatform>();
+    auto platform2 = std::make_unique<MockPlatform>();
+    platform1->initializeWithNewDevices();
+    platform2->initializeWithNewDevices();
+    cl_device_id clDevices[] = {platform1->getClDevice(0), platform2->getClDevice(0)};
+
+    cl_platform_id clPlatform = platform1.get();
+    cl_context_properties properties[3] = {CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(clPlatform), 0};
+
+    auto clContext = clCreateContext(properties, 2, clDevices, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(nullptr, clContext);
+}
 } // namespace ClCreateContextTests

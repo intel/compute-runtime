@@ -381,12 +381,25 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
             retVal = CL_INVALID_VALUE;
             break;
         }
+        auto pPlatform = Context::getPlatformFromProperties(properties, retVal);
+        if (CL_SUCCESS != retVal) {
+            break;
+        }
 
         ClDeviceVector allDevs(devices, numDevices);
-        context = Context::create<Context>(properties, allDevs, funcNotify, userData, retVal);
-        if (context != nullptr) {
-            gtpinNotifyContextCreate(context);
+        if (!pPlatform) {
+            pPlatform = allDevs[0]->getPlatform();
         }
+        for (auto &pClDevice : allDevs) {
+            if (pClDevice->getPlatform() != pPlatform) {
+                retVal = CL_INVALID_DEVICE;
+                break;
+            }
+        }
+        if (CL_SUCCESS != retVal) {
+            break;
+        }
+        context = Context::create<Context>(properties, allDevs, funcNotify, userData, retVal);
     } while (false);
 
     if (errcodeRet) {
@@ -413,10 +426,13 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
             retVal = CL_INVALID_VALUE;
             break;
         }
-
+        auto pPlatform = Context::getPlatformFromProperties(properties, retVal);
+        if (CL_SUCCESS != retVal) {
+            break;
+        }
         cl_uint numDevices = 0;
         /* Query the number of device first. */
-        retVal = clGetDeviceIDs(nullptr, deviceType, 0, nullptr, &numDevices);
+        retVal = clGetDeviceIDs(pPlatform, deviceType, 0, nullptr, &numDevices);
         if (retVal != CL_SUCCESS) {
             break;
         }
@@ -425,7 +441,7 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
         StackVec<cl_device_id, 2> supportedDevs;
         supportedDevs.resize(numDevices);
 
-        retVal = clGetDeviceIDs(nullptr, deviceType, numDevices, supportedDevs.begin(), nullptr);
+        retVal = clGetDeviceIDs(pPlatform, deviceType, numDevices, supportedDevs.begin(), nullptr);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
 
         if (!DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
@@ -434,9 +450,6 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
 
         ClDeviceVector deviceVector(supportedDevs.begin(), numDevices);
         pContext = Context::create<Context>(properties, deviceVector, funcNotify, userData, retVal);
-        if (pContext != nullptr) {
-            gtpinNotifyContextCreate(pContext);
-        }
     } while (false);
 
     if (errcodeRet) {

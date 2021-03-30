@@ -13,6 +13,7 @@
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/context/context_type.h"
 #include "opencl/source/context/driver_diagnostics.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callbacks.h"
 
@@ -33,6 +34,7 @@ class SharingFunctions;
 class SVMAllocsManager;
 class SchedulerKernel;
 class Program;
+class Platform;
 
 template <>
 struct OpenCLObjectMapper<_cl_context> {
@@ -60,7 +62,7 @@ class Context : public BaseObject<_cl_context> {
             delete pContext;
             pContext = nullptr;
         }
-
+        gtpinNotifyContextCreate(pContext);
         return pContext;
     }
 
@@ -161,6 +163,8 @@ class Context : public BaseObject<_cl_context> {
         return devices;
     }
     const std::map<uint32_t, DeviceBitfield> &getDeviceBitfields() const { return deviceBitfields; };
+
+    static Platform *getPlatformFromProperties(const cl_context_properties *properties, cl_int &errcode);
 
   protected:
     struct BuiltInKernel {

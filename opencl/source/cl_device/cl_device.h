@@ -125,6 +125,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     static cl_command_queue_capabilities_intel getQueueFamilyCapabilitiesAll();
     MOCKABLE_VIRTUAL cl_command_queue_capabilities_intel getQueueFamilyCapabilities(EngineGroupType type);
     void getQueueFamilyName(char *outputName, size_t maxOutputNameLength, EngineGroupType type);
+    Platform *getPlatform() const;
 
   protected:
     void initializeCaps();
