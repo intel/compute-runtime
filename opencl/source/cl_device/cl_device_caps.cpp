@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/sharings/sharing_factory.h"
 
@@ -373,7 +374,12 @@ void ClDevice::initializeCaps() {
             deviceInfo.queueFamilyProperties.push_back(properties);
         }
     }
-
+    auto &clHwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const std::vector<uint32_t> &supportedThreadArbitrationPolicies = clHwHelper.getSupportedThreadArbitrationPolicies();
+    deviceInfo.supportedThreadArbitrationPolicies.resize(supportedThreadArbitrationPolicies.size());
+    for (size_t policy = 0u; policy < supportedThreadArbitrationPolicies.size(); policy++) {
+        deviceInfo.supportedThreadArbitrationPolicies[policy] = supportedThreadArbitrationPolicies[policy];
+    }
     deviceInfo.preemptionSupported = false;
     deviceInfo.maxGlobalVariableSize = ocl21FeaturesEnabled ? 64 * KB : 0;
     deviceInfo.globalVariablePreferredTotalSize = ocl21FeaturesEnabled ? static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize) : 0;

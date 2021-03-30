@@ -5,6 +5,7 @@
  *
  */
 
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/command_stream/thread_arbitration_policy_helper.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
@@ -66,6 +67,10 @@ TEST_F(clSetKernelExecInfoTests, GivenNullKernelWhenSettingAdditionalKernelInfoT
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenDeviceNotSupportingSvmWhenSettingKernelExecInfoThenErrorIsReturnedOnSvmRelatedParams) {
+    auto &hwHelper = NEO::ClHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+        GTEST_SKIP();
+    }
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
     VariableBackup<bool> ftrSvm{&hwInfo->capabilityTable.ftrSvm, false};
 
@@ -298,6 +303,10 @@ TEST_F(clSetKernelExecInfoTests, givenNonExistingParamNameWithValuesWhenSettingA
 }
 
 HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
+    auto &hwHelper = NEO::ClHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+        GTEST_SKIP();
+    }
     uint32_t newThreadArbitrationPolicy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
     size_t ptrSizeInBytes = sizeof(uint32_t *);
 
@@ -312,7 +321,28 @@ HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhe
     EXPECT_EQ(getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->getThreadArbitrationPolicy());
 }
 
+HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhenNotSupportedAndSettingAdditionalKernelInfoThenClInvalidDeviceIsReturned) {
+    auto &hwHelper = NEO::ClHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+        GTEST_SKIP();
+    }
+    uint32_t newThreadArbitrationPolicy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
+    size_t ptrSizeInBytes = sizeof(uint32_t *);
+
+    retVal = clSetKernelExecInfo(
+        pMockMultiDeviceKernel,                              // cl_kernel kernel
+        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, // cl_kernel_exec_info param_name
+        ptrSizeInBytes,                                      // size_t param_value_size
+        &newThreadArbitrationPolicy                          // const void *param_value
+    );
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
 HWTEST_F(clSetKernelExecInfoTests, givenInvalidThreadArbitrationPolicyWhenSettingAdditionalKernelInfoThenClInvalidValueIsReturned) {
+    auto &hwHelper = NEO::ClHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+        GTEST_SKIP();
+    }
     uint32_t invalidThreadArbitrationPolicy = 0;
     size_t ptrSizeInBytes = 1 * sizeof(uint32_t *);
 

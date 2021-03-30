@@ -3211,7 +3211,11 @@ TEST(KernelTest, givenDefaultKernelWhenItIsCreatedThenItReportsStatelessWrites) 
 }
 
 TEST(KernelTest, givenPolicyWhensetKernelThreadArbitrationPolicyThenExpectedClValueIsReturned) {
-    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
+    auto &hwHelper = NEO::ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+        GTEST_SKIP();
+    }
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockKernelWithInternals kernel(*device);
     EXPECT_EQ(CL_SUCCESS, kernel.mockKernel->setKernelThreadArbitrationPolicy(CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL));
     EXPECT_EQ(CL_SUCCESS, kernel.mockKernel->setKernelThreadArbitrationPolicy(CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_OLDEST_FIRST_INTEL));
