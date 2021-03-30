@@ -22,6 +22,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/spinlock_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/timer_util_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/vec_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/wait_util_tests.cpp
 )
 
 add_subdirectories()

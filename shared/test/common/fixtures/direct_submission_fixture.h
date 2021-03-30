@@ -14,7 +14,9 @@
 
 using namespace NEO;
 
+namespace CpuIntrinsicsTests {
 extern std::atomic<uintptr_t> lastClFlushedPtr;
+}
 
 struct DirectSubmissionFixture : public DeviceFixture {
     void SetUp() {

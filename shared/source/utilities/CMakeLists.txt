@@ -39,6 +39,8 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/time_measure_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/timer_util.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wait_util.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wait_util.h
 )
 
 set(NEO_CORE_UTILITIES_WINDOWS

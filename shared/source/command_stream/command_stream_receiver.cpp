@@ -27,6 +27,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/tag_allocator.h"
+#include "shared/source/utilities/wait_util.h"
 
 namespace NEO {
 
@@ -258,8 +259,9 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
 
     time1 = std::chrono::high_resolution_clock::now();
     while (*getTagAddress() < taskCountToWait && timeDiff <= timeoutMicroseconds) {
-        std::this_thread::yield();
-        CpuIntrinsics::pause();
+        if (WaitUtils::waitFunction(getTagAddress(), taskCountToWait)) {
+            break;
+        }
 
         if (enableTimeout) {
             time2 = std::chrono::high_resolution_clock::now();

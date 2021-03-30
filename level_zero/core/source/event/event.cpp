@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/utilities/cpuintrinsics.h"
+#include "shared/source/utilities/wait_util.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -261,8 +262,7 @@ ze_result_t EventImp::hostSynchronize(uint64_t timeout) {
             return ZE_RESULT_SUCCESS;
         }
 
-        std::this_thread::yield();
-        NEO::CpuIntrinsics::pause();
+        NEO::WaitUtils::waitFunction(nullptr, 0u);
 
         if (timeout == std::numeric_limits<uint32_t>::max()) {
             continue;

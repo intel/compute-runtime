@@ -35,11 +35,11 @@ HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledSetThenExpectNoCpuCach
     EXPECT_TRUE(directSubmission.disableCpuCacheFlush);
 
     uintptr_t expectedPtrVal = 0;
-    lastClFlushedPtr = 0;
+    CpuIntrinsicsTests::lastClFlushedPtr = 0;
     void *ptr = reinterpret_cast<void *>(0xABCD00u);
     size_t size = 64;
     directSubmission.cpuCachelineFlush(ptr, size);
-    EXPECT_EQ(expectedPtrVal, lastClFlushedPtr);
+    EXPECT_EQ(expectedPtrVal, CpuIntrinsicsTests::lastClFlushedPtr);
 }
 
 HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledNotSetThenExpectCpuCacheFlush) {
@@ -51,11 +51,11 @@ HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledNotSetThenExpectCpuCac
     EXPECT_FALSE(directSubmission.disableCpuCacheFlush);
 
     uintptr_t expectedPtrVal = 0xABCD00u;
-    lastClFlushedPtr = 0;
+    CpuIntrinsicsTests::lastClFlushedPtr = 0;
     void *ptr = reinterpret_cast<void *>(expectedPtrVal);
     size_t size = 64;
     directSubmission.cpuCachelineFlush(ptr, size);
-    EXPECT_EQ(expectedPtrVal, lastClFlushedPtr);
+    EXPECT_EQ(expectedPtrVal, CpuIntrinsicsTests::lastClFlushedPtr);
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsStartedThenExpectAllocationsCreatedAndCommandsDispatched) {

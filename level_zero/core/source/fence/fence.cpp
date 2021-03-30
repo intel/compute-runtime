@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/utilities/cpuintrinsics.h"
+#include "shared/source/utilities/wait_util.h"
 
 #include "hw_helpers.h"
 
@@ -79,8 +79,7 @@ ze_result_t FenceImp::hostSynchronize(uint64_t timeout) {
             return ZE_RESULT_SUCCESS;
         }
 
-        std::this_thread::yield();
-        NEO::CpuIntrinsics::pause();
+        NEO::WaitUtils::waitFunction(nullptr, 0u);
 
         if (timeout == std::numeric_limits<uint64_t>::max()) {
             continue;

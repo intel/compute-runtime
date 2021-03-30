@@ -9,6 +9,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
@@ -2059,4 +2060,27 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhen
         }
     }
     EXPECT_TRUE(found);
+}
+
+namespace CpuIntrinsicsTests {
+extern volatile uint32_t *pauseAddress;
+extern uint32_t pauseValue;
+} // namespace CpuIntrinsicsTests
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountToWaitWhenTagValueSwitchesThenWaitFunctionReturnsTrue) {
+    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    uint32_t taskCountToWait = 2u;
+
+    *mockCsr->tagAddress = 1u;
+
+    CpuIntrinsicsTests::pauseAddress = mockCsr->tagAddress;
+    CpuIntrinsicsTests::pauseValue = taskCountToWait;
+
+    bool ret = mockCsr->waitForCompletionWithTimeout(false, 1, taskCountToWait);
+    EXPECT_TRUE(ret);
 }

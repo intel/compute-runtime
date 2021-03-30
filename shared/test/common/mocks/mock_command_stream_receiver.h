@@ -133,6 +133,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::pageTableManagerInitialized;
     using CommandStreamReceiver::requiredScratchSize;
     using CommandStreamReceiver::requiredThreadArbitrationPolicy;
+    using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::taskLevel;
     using CommandStreamReceiver::timestampPacketWriteEnabled;

@@ -213,6 +213,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, UseAsyncDrmExec, -1, "-1: default, 0: Disabled 1
 DECLARE_DEBUG_VARIABLE(int32_t, UseBindlessMode, -1, "Use precompiled builtins in bindless mode, -1: api dependent, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSlmSize, -1, "Force different slm size than default in kB")
 DECLARE_DEBUG_VARIABLE(int32_t, UseCyclesPerSecondTimer, 0, "0: default behavior, 0: disabled: Report L0 timer in nanosecond units, 1: enabled: Report L0 timer in cycles per second")
+DECLARE_DEBUG_VARIABLE(int32_t, WaitLoopCount, -1, "-1: use default, >=0: number of iterations in wait loop")
 
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")
