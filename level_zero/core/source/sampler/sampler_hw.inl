@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,10 +17,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_sampler_desc_t *desc) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
-    ze_result_t ret = BaseClass::initialize(device, desc);
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
-    }
+    BaseClass::initialize(device, desc);
 
     samplerState.setNonNormalizedCoordinateEnable(!desc->isNormalized);
 
