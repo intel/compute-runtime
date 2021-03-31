@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
@@ -13,6 +14,7 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
+#include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 
@@ -1486,6 +1488,36 @@ TEST_F(ContextMemoryTest, givenSystemAllocatedPointerThenGetAllocPropertiesRetur
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_UNKNOWN);
 
     delete[] ptr;
+}
+
+TEST_F(ContextMemoryTest, givenCallTochangeMemoryOperationStatusToL0ResultTypeThenExpectedValueIsReturned) {
+    NEO::MemoryOperationsStatus status = NEO::MemoryOperationsStatus::SUCCESS;
+    ze_result_t res = changeMemoryOperationStatusToL0ResultType(status);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    status = NEO::MemoryOperationsStatus::FAILED;
+    res = changeMemoryOperationStatusToL0ResultType(status);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_DEVICE_LOST);
+
+    status = NEO::MemoryOperationsStatus::MEMORY_NOT_FOUND;
+    res = changeMemoryOperationStatusToL0ResultType(status);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+
+    status = NEO::MemoryOperationsStatus::OUT_OF_MEMORY;
+    res = changeMemoryOperationStatusToL0ResultType(status);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY);
+
+    status = NEO::MemoryOperationsStatus::UNSUPPORTED;
+    res = changeMemoryOperationStatusToL0ResultType(status);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    status = NEO::MemoryOperationsStatus::DEVICE_UNINITIALIZED;
+    res = changeMemoryOperationStatusToL0ResultType(status);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_UNINITIALIZED);
+
+    status = static_cast<NEO::MemoryOperationsStatus>(static_cast<uint32_t>(NEO::MemoryOperationsStatus::DEVICE_UNINITIALIZED) + 1);
+    res = changeMemoryOperationStatusToL0ResultType(status);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_UNKNOWN);
 }
 
 } // namespace ult
