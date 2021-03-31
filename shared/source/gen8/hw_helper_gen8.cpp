@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ void MemorySynchronizationCommands<Family>::addPipeControl(LinearStream &command
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(LinearStream &commandStream, PipeControlArgs &args) {
+void MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(LinearStream &commandStream) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
     PIPE_CONTROL cmd = Family::cmdInitPipeControl;
     cmd.setCommandStreamerStallEnable(true);

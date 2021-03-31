@@ -640,7 +640,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::forcePipeControl(NEO::LinearStream &commandStreamCSR) {
     PipeControlArgs args;
-    MemorySynchronizationCommands<GfxFamily>::addPipeControlWithCSStallOnly(commandStreamCSR, args);
+    MemorySynchronizationCommands<GfxFamily>::addPipeControlWithCSStallOnly(commandStreamCSR);
     MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStreamCSR, args);
 }
 

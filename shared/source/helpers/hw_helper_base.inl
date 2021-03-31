@@ -288,7 +288,7 @@ void MemorySynchronizationCommands<GfxFamily>::addPipeControl(LinearStream &comm
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::addPipeControlWithCSStallOnly(LinearStream &commandStream, PipeControlArgs &args) {
+void MemorySynchronizationCommands<GfxFamily>::addPipeControlWithCSStallOnly(LinearStream &commandStream) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
     cmd.setCommandStreamerStallEnable(true);
