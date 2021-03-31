@@ -214,7 +214,31 @@ HWTEST_F(PreambleTest, givenMinHwThreadsUnoccupiedDebugVariableWhenGetThreadsMax
     EXPECT_EQ(expected, value);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenPreambleHelperWhenMediaVfeStateIsProgrammedThenOffsetToCommandIsReturned) {
+HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorrectVfeStateAddressIsReturned) {
+    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+
+    char buffer[64];
+    MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
+    LinearStream preambleStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
+    uint64_t addressToPatch = 0xC0DEC0DE;
+    uint64_t expectedAddress = 0xC0DEC000;
+
+    auto pVfeCmd = PreambleHelper<FamilyType>::programVFEState(&preambleStream, *defaultHwInfo, 1024u, addressToPatch,
+                                                               10u, EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
+                                                               KernelExecutionType::NotApplicable);
+    EXPECT_GE(reinterpret_cast<uintptr_t>(pVfeCmd), reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()));
+    EXPECT_LT(reinterpret_cast<uintptr_t>(pVfeCmd), reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()) + preambleStream.getUsed());
+
+    auto &vfeCmd = *reinterpret_cast<MEDIA_VFE_STATE *>(pVfeCmd);
+    EXPECT_EQ(10u, vfeCmd.getMaximumNumberOfThreads());
+    EXPECT_EQ(1u, vfeCmd.getNumberOfUrbEntries());
+    EXPECT_EQ(expectedAddress, vfeCmd.getScratchSpaceBasePointer());
+    EXPECT_EQ(0u, vfeCmd.getScratchSpaceBasePointerHigh());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetForVfeStateIsCalledThenCorrectOffsetIsReturned) {
+    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+
     char buffer[64];
     MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
     LinearStream preambleStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
@@ -222,10 +246,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenPreambleHelperWhenMediaVfeStateIs
     FlatBatchBufferHelperHw<FamilyType> helper(*mockDevice->getExecutionEnvironment());
     uint64_t addressToPatch = 0xC0DEC0DE;
 
-    auto offset = PreambleHelper<FamilyType>::programVFEState(&preambleStream, mockDevice->getHardwareInfo(), 1024u, addressToPatch,
-                                                              10u, aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable,
-                                                              KernelExecutionType::NotApplicable);
+    auto pVfeCmd = PreambleHelper<FamilyType>::programVFEState(&preambleStream, mockDevice->getHardwareInfo(), 1024u, addressToPatch,
+                                                               10u, EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
+                                                               KernelExecutionType::NotApplicable);
+
+    auto offset = PreambleHelper<FamilyType>::getScratchSpaceAddressOffsetForVfeState(&preambleStream, pVfeCmd);
     EXPECT_NE(0u, offset);
+    EXPECT_EQ(MEDIA_VFE_STATE::PATCH_CONSTANTS::SCRATCHSPACEBASEPOINTER_BYTEOFFSET + reinterpret_cast<uintptr_t>(pVfeCmd),
+              offset + reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()));
 }
 
 HWTEST_F(PreambleTest, givenSetForceSemaphoreDelayBetweenWaitsWhenProgramSemaphoreDelayThenSemaWaitPollRegisterIsProgrammed) {

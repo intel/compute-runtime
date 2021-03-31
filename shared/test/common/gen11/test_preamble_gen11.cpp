@@ -59,7 +59,7 @@ GEN11TEST_F(Gen11PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgramm
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
     PreambleHelper<ICLFamily>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
-                                               aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable,
+                                               EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
                                                KernelExecutionType::NotApplicable);
 
     parseCommands<ICLFamily>(cs);
@@ -79,7 +79,7 @@ GEN11TEST_F(Gen11PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammi
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
     PreambleHelper<ICLFamily>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
-                                               aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable,
+                                               EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
                                                KernelExecutionType::NotApplicable);
 
     parseCommands<ICLFamily>(cs);

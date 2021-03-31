@@ -63,7 +63,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgramm
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
     PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 672u,
-                                                aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable,
+                                                EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
                                                 KernelExecutionType::NotApplicable);
 
     parseCommands<FamilyType>(cs);
@@ -85,7 +85,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCcsEngineWhenWaIsSetThenAppropriatePipeC
     LinearStream &cs = linearStream;
 
     PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 672u,
-                                                aub_stream::EngineType::ENGINE_CCS, AdditionalKernelExecInfo::NotApplicable,
+                                                EngineGroupType::Compute, AdditionalKernelExecInfo::NotApplicable,
                                                 KernelExecutionType::NotApplicable);
 
     parseCommands<FamilyType>(cs);
@@ -106,7 +106,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenRcsEngineWhenWaIsSetThenAppropriatePipeC
     LinearStream &cs = linearStream;
 
     PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 672u,
-                                                aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable,
+                                                EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
                                                 KernelExecutionType::NotApplicable);
 
     parseCommands<FamilyType>(cs);

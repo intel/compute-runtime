@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,12 +58,12 @@ void PreambleHelper<TGLLPFamily>::programPipelineSelect(LinearStream *pCommandSt
 }
 
 template <>
-void PreambleHelper<TGLLPFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType) {
+void PreambleHelper<TGLLPFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
     PIPE_CONTROL cmd = TGLLPFamily::cmdInitPipeControl;
     cmd.setCommandStreamerStallEnable(true);
     if (hwInfo->workaroundTable.waSendMIFLUSHBeforeVFE) {
-        if (!EngineHelpers::isCcs(engineType)) {
+        if (engineGroupType != EngineGroupType::Compute) {
             cmd.setRenderTargetCacheFlushEnable(true);
             cmd.setDepthCacheFlushEnable(true);
             cmd.setDepthStallEnable(true);

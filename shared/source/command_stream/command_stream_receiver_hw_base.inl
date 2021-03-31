@@ -919,7 +919,14 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         if (dispatchFlags.kernelExecutionType != KernelExecutionType::NotApplicable) {
             lastKernelExecutionType = dispatchFlags.kernelExecutionType;
         }
-        auto commandOffset = PreambleHelper<GfxFamily>::programVFEState(&csr, peekHwInfo(), requiredScratchSize, getScratchPatchAddress(), maxFrontEndThreads, getOsContext().getEngineType(), lastAdditionalKernelExecInfo, lastKernelExecutionType);
+        auto &hwInfo = peekHwInfo();
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto engineGroupType = hwHelper.getEngineGroupType(getOsContext().getEngineType(), hwInfo);
+        auto pVfeState = PreambleHelper<GfxFamily>::programVFEState(
+            &csr, hwInfo, requiredScratchSize, getScratchPatchAddress(),
+            maxFrontEndThreads, engineGroupType, lastAdditionalKernelExecInfo, lastKernelExecutionType);
+        auto commandOffset = PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(&csr, pVfeState);
+
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             flatBatchBufferHelper->collectScratchSpacePatchInfo(getScratchPatchAddress(), commandOffset, csr);
         }

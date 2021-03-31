@@ -108,7 +108,7 @@ GEN9TEST_F(PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsC
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
     PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
-                                                aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable,
+                                                EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
                                                 KernelExecutionType::NotApplicable);
 
     parseCommands<FamilyType>(cs);
@@ -128,7 +128,7 @@ GEN9TEST_F(PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammingIsCo
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
     PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
-                                                aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable,
+                                                EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
                                                 KernelExecutionType::NotApplicable);
 
     parseCommands<FamilyType>(cs);

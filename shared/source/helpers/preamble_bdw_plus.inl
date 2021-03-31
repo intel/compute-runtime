@@ -27,19 +27,18 @@ uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
 }
 
 template <typename GfxFamily>
-uint64_t PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream,
-                                                    const HardwareInfo &hwInfo,
-                                                    uint32_t scratchSize,
-                                                    uint64_t scratchAddress,
-                                                    uint32_t maxFrontEndThreads,
-                                                    aub_stream::EngineType engineType,
-                                                    uint32_t additionalExecInfo,
-                                                    KernelExecutionType kernelExecutionType) {
+void *PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream,
+                                                 const HardwareInfo &hwInfo,
+                                                 uint32_t scratchSize,
+                                                 uint64_t scratchAddress,
+                                                 uint32_t maxFrontEndThreads,
+                                                 EngineGroupType engineGroupType,
+                                                 uint32_t additionalExecInfo,
+                                                 KernelExecutionType kernelExecutionType) {
     using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
 
-    addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo, engineType);
+    addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo, engineGroupType);
 
-    auto scratchSpaceAddressOffset = static_cast<uint64_t>(pCommandStream->getUsed() + MEDIA_VFE_STATE::PATCH_CONSTANTS::SCRATCHSPACEBASEPOINTER_BYTEOFFSET);
     auto pMediaVfeState = pCommandStream->getSpaceForCmd<MEDIA_VFE_STATE>();
     MEDIA_VFE_STATE cmd = GfxFamily::cmdInitMediaVfeState;
     cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
@@ -56,7 +55,15 @@ uint64_t PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream
     appendProgramVFEState(hwInfo, kernelExecutionType, additionalExecInfo, &cmd);
     *pMediaVfeState = cmd;
 
-    return scratchSpaceAddressOffset;
+    return pMediaVfeState;
+}
+
+template <typename GfxFamily>
+uint64_t PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState) {
+    using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
+    return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pVfeState) -
+                                 reinterpret_cast<uintptr_t>(pCommandStream->getCpuBase()) +
+                                 MEDIA_VFE_STATE::PATCH_CONSTANTS::SCRATCHSPACEBASEPOINTER_BYTEOFFSET);
 }
 
 template <typename GfxFamily>

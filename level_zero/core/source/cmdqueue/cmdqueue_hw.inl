@@ -418,12 +418,15 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     UNRECOVERABLE_IF(csr == nullptr);
+    auto &hwInfo = device->getHwInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto engineGroupType = hwHelper.getEngineGroupType(csr->getOsContext().getEngineType(), hwInfo);
     NEO::PreambleHelper<GfxFamily>::programVFEState(&commandStream,
-                                                    device->getHwInfo(),
+                                                    hwInfo,
                                                     perThreadScratchSpaceSize,
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
-                                                    csr->getOsContext().getEngineType(),
+                                                    engineGroupType,
                                                     NEO::AdditionalKernelExecInfo::NotApplicable,
                                                     NEO::KernelExecutionType::NotApplicable);
     csr->setMediaVFEStateDirty(false);

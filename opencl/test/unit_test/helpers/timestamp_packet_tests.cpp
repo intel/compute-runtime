@@ -920,8 +920,8 @@ HWTEST_F(TimestampPacketTests, givenMultipleDevicesOnCsrWhenIncrementingCpuDepen
 
     UltClDeviceFactory factory{2, 4};
 
-    auto osContext0 = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, osContext0DeviceBitfiled, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false));
-    auto osContext1 = std::unique_ptr<OsContext>(OsContext::create(nullptr, 1, osContext1DeviceBitfiled, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false));
+    auto osContext0 = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, osContext0DeviceBitfiled, EngineTypeUsage{getChosenEngineType(*defaultHwInfo), EngineUsage::Regular}, PreemptionMode::Disabled, false));
+    auto osContext1 = std::unique_ptr<OsContext>(OsContext::create(nullptr, 1, osContext1DeviceBitfiled, EngineTypeUsage{getChosenEngineType(*defaultHwInfo), EngineUsage::Regular}, PreemptionMode::Disabled, false));
     EXPECT_EQ(2u, osContext0->getNumSupportedDevices());
     EXPECT_EQ(3u, osContext1->getNumSupportedDevices());
 
