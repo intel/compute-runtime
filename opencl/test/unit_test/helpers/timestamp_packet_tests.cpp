@@ -213,7 +213,7 @@ TEST_F(TimestampPacketTests, givenTagNodeWhatAskingForGpuAddressesThenReturnCorr
     EXPECT_EQ(expectedCounterAddress, TimestampPacketHelper::getGpuDependenciesCountGpuAddress(mockNode));
 }
 
-TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenMarkAsCompleted) {
+TEST_F(TimestampPacketSimpleTests, whenContextEndTagIsNotOneThenMarkAsCompleted) {
     MockTimestampPacketStorage timestampPacketStorage;
     auto &packet = timestampPacketStorage.packets[0];
     timestampPacketStorage.initialize();
@@ -228,7 +228,7 @@ TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenMarkAsCompleted) {
 
     packet.contextEnd = 0;
     packet.globalEnd = 1;
-    EXPECT_FALSE(timestampPacketStorage.isCompleted());
+    EXPECT_TRUE(timestampPacketStorage.isCompleted());
 
     packet.contextEnd = 0;
     packet.globalEnd = 0;
@@ -277,7 +277,7 @@ TEST_F(TimestampPacketSimpleTests, whenIsCompletedIsCalledThenItReturnsProperTim
 
     EXPECT_FALSE(timestampPacketStorage.isCompleted());
     packet.contextEnd = 0;
-    EXPECT_FALSE(timestampPacketStorage.isCompleted());
+    EXPECT_TRUE(timestampPacketStorage.isCompleted());
     packet.globalEnd = 0;
     EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
@@ -295,10 +295,10 @@ TEST_F(TimestampPacketSimpleTests, givenMultiplePacketsInUseWhenCompletionIsChec
         EXPECT_FALSE(timestampPacketStorage.isCompleted());
     }
 
-    packets[timestampPacketStorage.getPacketsUsed() - 1].contextEnd = 0;
+    packets[timestampPacketStorage.getPacketsUsed() - 1].globalEnd = 0;
     EXPECT_FALSE(timestampPacketStorage.isCompleted());
 
-    packets[timestampPacketStorage.getPacketsUsed() - 1].globalEnd = 0;
+    packets[timestampPacketStorage.getPacketsUsed() - 1].contextEnd = 0;
     EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
