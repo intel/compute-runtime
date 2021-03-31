@@ -1505,5 +1505,78 @@ TEST_F(KernelPrintHandlerTest, whenPrintPrintfOutputIsCalledThenPrintfBufferIsUs
     EXPECT_EQ(buffer, MyPrintfHandler::getPrintfSurfaceInitialDataSize());
 }
 
+using PrintfTest = Test<DeviceFixture>;
+
+TEST_F(PrintfTest, givenKernelWithPrintfThenPrintfBufferIsCreated) {
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<Kernel> mockKernel;
+    mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
+    mockKernel.module = &mockModule;
+
+    EXPECT_TRUE(mockKernel.getImmutableData()->getDescriptor().kernelAttributes.flags.usesPrintf);
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "mock";
+    mockKernel.createPrintfBuffer();
+    EXPECT_NE(nullptr, mockKernel.getPrintfBufferAllocation());
+}
+
+TEST_F(PrintfTest, GivenKernelNotUsingPrintfWhenCreatingPrintfBufferThenAllocationIsNotCreated) {
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<Kernel> mockKernel;
+    mockKernel.descriptor.kernelAttributes.flags.usesPrintf = false;
+    mockKernel.module = &mockModule;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "mock";
+    mockKernel.createPrintfBuffer();
+    EXPECT_EQ(nullptr, mockKernel.getPrintfBufferAllocation());
+}
+
+TEST_F(PrintfTest, WhenCreatingPrintfBufferThenAllocationAddedToResidencyContainer) {
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<Kernel> mockKernel;
+    mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
+    mockKernel.module = &mockModule;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "mock";
+    mockKernel.createPrintfBuffer();
+
+    auto printfBufferAllocation = mockKernel.getPrintfBufferAllocation();
+    EXPECT_NE(nullptr, printfBufferAllocation);
+
+    EXPECT_NE(0u, mockKernel.residencyContainer.size());
+    EXPECT_EQ(mockKernel.residencyContainer[mockKernel.residencyContainer.size() - 1], printfBufferAllocation);
+}
+
+TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<Kernel> mockKernel;
+    mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
+    mockKernel.module = &mockModule;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "mock";
+
+    auto crossThreadData = std::make_unique<uint32_t[]>(4);
+
+    mockKernel.descriptor.payloadMappings.implicitArgs.printfSurfaceAddress.stateless = 0;
+    mockKernel.descriptor.payloadMappings.implicitArgs.printfSurfaceAddress.pointerSize = sizeof(uintptr_t);
+    mockKernel.crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData.get()));
+    mockKernel.crossThreadDataSize = sizeof(uint32_t[4]);
+
+    mockKernel.createPrintfBuffer();
+
+    auto printfBufferAllocation = mockKernel.getPrintfBufferAllocation();
+    EXPECT_NE(nullptr, printfBufferAllocation);
+
+    auto printfBufferAddressPatched = *reinterpret_cast<uintptr_t *>(crossThreadData.get());
+    auto printfBufferGpuAddressOffset = static_cast<uintptr_t>(printfBufferAllocation->getGpuAddressToPatch());
+    EXPECT_EQ(printfBufferGpuAddressOffset, printfBufferAddressPatched);
+
+    mockKernel.crossThreadData.release();
+}
+
 } // namespace ult
 } // namespace L0
