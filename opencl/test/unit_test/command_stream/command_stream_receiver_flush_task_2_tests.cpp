@@ -74,7 +74,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
 
     // Verify that the dcFlushEnabled bit is set in PC
     auto pCmdWA = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
-    EXPECT_TRUE(pCmdWA->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pCmdWA->getDcFlushEnable());
 
     buffer->release();
 }
@@ -347,10 +347,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests,
         EXPECT_NE(cmdList.end(), itorCmdP);
         auto itorCmd2 = find<PIPE_CONTROL *>(itorCmdP, cmdList.end());
         cmdPC = (PIPE_CONTROL *)*itorCmd2;
-        EXPECT_TRUE(cmdPC->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmdPC->getDcFlushEnable());
     } else {
         // single PIPE_CONTROL following GPGPU_WALKER has DcFlush and Write HwTag
-        EXPECT_TRUE(cmdPC->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmdPC->getDcFlushEnable());
     }
 
     retVal = clReleaseEvent(event);

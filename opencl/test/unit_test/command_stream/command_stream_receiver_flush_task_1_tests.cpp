@@ -545,7 +545,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsRequi
     EXPECT_NE(stateBaseAddressItor, pipeControlItor);
     auto pipeControlCmd = (typename FamilyType::PIPE_CONTROL *)*pipeControlItor;
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControlCmd->getDcFlushEnable());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableL3ConfigWhenFlushingTaskThenDontReloadSba) {
@@ -1185,11 +1185,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenBlockingWh
 
             // Verify that the dcFlushEnabled bit is not set in PC
             auto pCmd = reinterpret_cast<PIPE_CONTROL *>(pipeControlTask);
-            EXPECT_TRUE(pCmd->getDcFlushEnable());
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pCmd->getDcFlushEnable());
         }
     } else {
         auto pCmd = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
-        EXPECT_TRUE(pCmd->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pCmd->getDcFlushEnable());
     }
 }
 
@@ -1233,7 +1233,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
 
     // Verify that the dcFlushEnabled bit is set in PC
     auto pCmdWA = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
-    EXPECT_TRUE(pCmdWA->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pCmdWA->getDcFlushEnable());
 
     buffer->release();
 }

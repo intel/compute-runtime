@@ -132,7 +132,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppe
         ASSERT_NE(cmd, nullptr);
 
         EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-        EXPECT_TRUE(cmd->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
     }
 }
 

@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/interlocked_max.h"
 #include "shared/source/helpers/preamble.h"
@@ -32,16 +33,12 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    PIPE_CONTROL *pcCmd = commandStream.getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
+    NEO::PipeControlArgs pcArgs;
+    pcArgs.dcFlushEnable = true;
+    pcArgs.textureCacheInvalidationEnable = true;
 
-    cmd.setTextureCacheInvalidationEnable(true);
-    cmd.setDcFlushEnable(true);
-    cmd.setCommandStreamerStallEnable(true);
-
-    *pcCmd = cmd;
+    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, pcArgs);
 
     NEO::Device *neoDevice = device->getNEODevice();
     auto &hwInfo = neoDevice->getHardwareInfo();

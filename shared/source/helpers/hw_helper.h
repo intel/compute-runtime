@@ -401,6 +401,8 @@ struct MemorySynchronizationCommands {
     static void addPipeControl(LinearStream &commandStream, PipeControlArgs &args);
     static void addPipeControlWithCSStallOnly(LinearStream &commandStream, PipeControlArgs &args);
 
+    static bool isDcFlushAllowed();
+
     static void addFullCacheFlush(LinearStream &commandStream);
     static void setCacheFlushExtraProperties(PipeControlArgs &args);
 

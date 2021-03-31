@@ -1415,8 +1415,10 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         return false;
     }
 
-    template <typename PIPE_CONTROL>
+    template <typename FamilyType>
     bool verifyPipeControl(const GenCmdList::iterator &iterator, uint64_t debugPauseStateAddress, DebugPauseState requiredDebugPauseState) {
+        using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
         auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*iterator);
 
         if ((static_cast<uint32_t>(requiredDebugPauseState) == pipeControlCmd->getImmediateData()) &&
@@ -1424,7 +1426,8 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
             (static_cast<uint32_t>(debugPauseStateAddress >> 32) == pipeControlCmd->getAddressHigh())) {
 
             EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-            EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
+
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), pipeControlCmd->getDcFlushEnable());
 
             EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControlCmd->getPostSyncOperation());
 
@@ -1466,16 +1469,17 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         }
     }
 
-    template <typename PIPE_CONTROL>
+    template <typename FamilyType>
     void findPipeControls(GenCmdList &cmdList) {
+        using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         auto pipeControl = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
         while (pipeControl != cmdList.end()) {
-            if (verifyPipeControl<PIPE_CONTROL>(pipeControl, debugPauseStateAddress, DebugPauseState::waitingForUserStartConfirmation)) {
+            if (verifyPipeControl<FamilyType>(pipeControl, debugPauseStateAddress, DebugPauseState::waitingForUserStartConfirmation)) {
                 pipeControlBeforeWalkerFound++;
             }
 
-            if (verifyPipeControl<PIPE_CONTROL>(pipeControl, debugPauseStateAddress, DebugPauseState::waitingForUserEndConfirmation)) {
+            if (verifyPipeControl<FamilyType>(pipeControl, debugPauseStateAddress, DebugPauseState::waitingForUserEndConfirmation)) {
                 pipeControlAfterWalkerFound++;
             }
 
@@ -1530,7 +1534,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInser
     EXPECT_EQ(1u, semaphoreBeforeWalkerFound);
     EXPECT_EQ(1u, semaphoreAfterWalkerFound);
 
-    findPipeControls<PIPE_CONTROL>(hwParser.cmdList);
+    findPipeControls<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, pipeControlBeforeWalkerFound);
     EXPECT_EQ(1u, pipeControlAfterWalkerFound);
@@ -1552,7 +1556,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetToMinusTwoWhenDispatchWalker
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
 
-    findPipeControls<PIPE_CONTROL>(hwParser.cmdList);
+    findPipeControls<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(2u, semaphoreBeforeWalkerFound);
     EXPECT_EQ(2u, semaphoreAfterWalkerFound);
@@ -1576,7 +1580,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeOnlyWhenDispatchingThenInsert
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
 
-    findPipeControls<PIPE_CONTROL>(hwParser.cmdList);
+    findPipeControls<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, semaphoreBeforeWalkerFound);
     EXPECT_EQ(0u, semaphoreAfterWalkerFound);
@@ -1600,7 +1604,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToAfterOnlyWhenDispatchingThenInsertP
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
 
-    findPipeControls<PIPE_CONTROL>(hwParser.cmdList);
+    findPipeControls<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(0u, semaphoreBeforeWalkerFound);
     EXPECT_EQ(1u, semaphoreAfterWalkerFound);
@@ -1624,7 +1628,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenIn
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
 
-    findPipeControls<PIPE_CONTROL>(hwParser.cmdList);
+    findPipeControls<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, semaphoreBeforeWalkerFound);
     EXPECT_EQ(1u, semaphoreAfterWalkerFound);
@@ -1649,7 +1653,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenDontI
 
     findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
 
-    findPipeControls<PIPE_CONTROL>(hwParser.cmdList);
+    findPipeControls<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(0u, semaphoreBeforeWalkerFound);
     EXPECT_EQ(0u, semaphoreAfterWalkerFound);

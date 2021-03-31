@@ -234,7 +234,6 @@ void MemorySynchronizationCommands<GfxFamily>::addPipeControlWithPostSync(
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
     pipeControl.setCommandStreamerStallEnable(true);
-    pipeControl.setDcFlushEnable(args.dcFlushEnable);
     pipeControl.setConstantCacheInvalidationEnable(args.constantCacheInvalidationEnable);
     pipeControl.setInstructionCacheInvalidateEnable(args.instructionCacheInvalidateEnable);
     pipeControl.setPipeControlFlushEnable(args.pipeControlFlushEnable);
@@ -244,6 +243,10 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
     pipeControl.setVfCacheInvalidationEnable(args.vfCacheInvalidationEnable);
     pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
     pipeControl.setTlbInvalidate(args.tlbInvalidation);
+
+    if (isDcFlushAllowed()) {
+        pipeControl.setDcFlushEnable(args.dcFlushEnable);
+    }
 
     setPipeControlExtraProperties(pipeControl, args);
 
@@ -268,6 +271,11 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
         pipeControl.setConstantCacheInvalidationEnable(false);
         pipeControl.setStateCacheInvalidationEnable(false);
     }
+}
+
+template <typename GfxFamily>
+bool MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed() {
+    return true;
 }
 
 template <typename GfxFamily>

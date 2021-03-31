@@ -403,7 +403,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionC
         cmd = genCmdCast<PIPE_CONTROL *>(*itor);
         itor = find<PIPE_CONTROL *>(++itor, genCmdList.end());
     }
-    EXPECT_TRUE(cmd->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, Platforms) {
@@ -426,7 +426,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledT
         cmd = genCmdCast<PIPE_CONTROL *>(*itor);
         itor = find<PIPE_CONTROL *>(++itor, genCmdList.end());
     }
-    EXPECT_TRUE(cmd->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListAnd2DWhbufferenMemoryCopyRegionCalledThenCopyKernel2DCalled, Platforms) {
@@ -596,7 +596,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeS
 
     auto it = *(iterator.end() - 1);
     auto cmd1 = genCmdCast<PIPE_CONTROL *>(*it);
-    EXPECT_TRUE(cmd1->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd1->getDcFlushEnable());
 }
 
 using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
@@ -1234,7 +1234,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThen
     EXPECT_NE(cmdList.end(), itor);
     {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
-        EXPECT_TRUE(cmd->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
     }
 }
 } // namespace ult

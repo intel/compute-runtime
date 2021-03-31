@@ -739,7 +739,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
             //make sure we flush DC if needed
             if (epiloguePipeControlLocation) {
-                bool flushDcInEpilogue = true;
+                bool flushDcInEpilogue = MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed();
+
                 if (DebugManager.flags.DisableDcFlushInEpilogue.get()) {
                     flushDcInEpilogue = false;
                 }
