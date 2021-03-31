@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -729,4 +730,80 @@ TEST(SourceLevelDebugger, givenMode2InEnableMockSourceLevelDebuggerWhenDebuggerC
 
     auto sld = std::unique_ptr<SourceLevelDebugger>(SourceLevelDebugger::create());
     EXPECT_FALSE(sld->isOptimizationDisabled());
+}
+
+TEST(SourceLevelDebugger, givenDebugVarDumpElfWhenNotifyKernelDebugDataIsCalledThenElfFileIsCreated) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF);
+
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    MockSourceLevelDebugger debugger;
+    char isa[8];
+    char dbgIsa[10];
+    char visa[12];
+
+    KernelInfo info;
+    info.debugData.genIsa = dbgIsa;
+    info.debugData.vIsa = visa;
+    info.debugData.genIsaSize = sizeof(dbgIsa);
+    info.debugData.vIsaSize = sizeof(visa);
+
+    info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
+
+    info.heapInfo.KernelHeapSize = sizeof(isa);
+    info.heapInfo.pKernelHeap = isa;
+
+    std::string fileName = info.kernelDescriptor.kernelMetadata.kernelName + ".elf";
+    EXPECT_FALSE(fileExists(fileName));
+
+    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+    EXPECT_TRUE(fileExists(fileName));
+    std::remove(fileName.c_str());
+}
+
+TEST(SourceLevelDebugger, givenDebugVarDumpElfWhenElfFileExistsWhileNotifyingDebugDataThenSuffixIsAppendedToFileName) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF);
+
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    MockSourceLevelDebugger debugger;
+    char isa[8];
+    char dbgIsa[10];
+    char visa[12];
+
+    KernelInfo info;
+    info.debugData.genIsa = dbgIsa;
+    info.debugData.vIsa = visa;
+    info.debugData.genIsaSize = sizeof(dbgIsa);
+    info.debugData.vIsaSize = sizeof(visa);
+
+    info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
+
+    info.heapInfo.KernelHeapSize = sizeof(isa);
+    info.heapInfo.pKernelHeap = isa;
+
+    std::string fileName = info.kernelDescriptor.kernelMetadata.kernelName + ".elf";
+    char data[4];
+    writeDataToFile(fileName.c_str(), data, 4);
+    EXPECT_TRUE(fileExists(fileName));
+
+    std::string fileName2 = info.kernelDescriptor.kernelMetadata.kernelName + "_0.elf";
+    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+
+    EXPECT_TRUE(fileExists(fileName2));
+
+    std::remove(fileName.c_str());
+    std::remove(fileName2.c_str());
 }

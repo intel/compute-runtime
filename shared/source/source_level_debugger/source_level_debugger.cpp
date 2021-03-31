@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -213,6 +214,18 @@ bool SourceLevelDebugger::notifyKernelDebugData(const DebugData *debugData, cons
             kernelDebugData.dbgVisaSize = debugData->vIsaSize;
             kernelDebugData.dbgGenIsaBuffer = debugData->genIsa;
             kernelDebugData.dbgGenIsaSize = debugData->genIsaSize;
+
+            if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF) {
+                std::ofstream elfFile;
+                std::string fileName = name + ".elf";
+
+                int suffix = 0;
+                while (fileExists(fileName)) {
+                    fileName = name + "_" + std::to_string(suffix) + ".elf";
+                    suffix++;
+                }
+                writeDataToFile(fileName.c_str(), kernelDebugData.dbgVisaBuffer, kernelDebugData.dbgVisaSize);
+            }
         }
 
         if (sourceLevelDebuggerInterface) {

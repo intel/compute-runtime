@@ -68,6 +68,12 @@ struct DebugVarBase {
 };
 
 struct DebugVariables {
+    struct DEBUGGER_LOG_BITMASK {
+        constexpr static int32_t LOG_INFO{1};
+        constexpr static int32_t LOG_ERROR{1 << 1};
+        constexpr static int32_t DUMP_ELF{1 << 10};
+    };
+
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     DebugVarBase<dataType> variableName{defaultValue};
 #include "debug_variables.inl"
