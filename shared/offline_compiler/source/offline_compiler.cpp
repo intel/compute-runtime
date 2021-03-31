@@ -292,6 +292,20 @@ int OfflineCompiler::getHardwareInfo(std::string deviceName) {
 
     overridePlatformName(deviceName);
 
+    const char hexPrefix = 2;
+    std::string product("");
+
+    if (deviceName.substr(0, hexPrefix) == "0x" && std::all_of(deviceName.begin() + hexPrefix, deviceName.end(), (::isxdigit))) {
+        product = argHelper->returnProductNameForDevice(stoi(deviceName, 0, 16));
+        if (!product.empty()) {
+            argHelper->printf("Auto-detected target based on %s device id: %s\n", deviceName.c_str(), product.c_str());
+            deviceName = product;
+        } else {
+            argHelper->printf("Could not determine target based on device id: %s\n", deviceName.c_str());
+            return retVal;
+        }
+    }
+
     for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
         if (hardwarePrefix[productId] && (0 == strcmp(deviceName.c_str(), hardwarePrefix[productId]))) {
             if (hardwareInfoTable[productId]) {
@@ -776,12 +790,17 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 OpenCL C kernel language).
 
   -device <device_type>         Target device.
-                                <device_type> can be: %s, %s - can be single or multiple target devices.
+                                <device_type> can be: %s, %s or hexadecimal value with 0x prefix - can be single or multiple target devices.
+                                The hexadecimal value represents device ID.
+                                If such value is provided, ocloc will try to match it
+                                with corresponding device type.
+                                For example, 0xFF20 device ID will be translated to tgllp.
                                 If multiple target devices are provided, ocloc
                                 will compile for each of these targets and will
                                 create a fatbinary archive that contains all of
                                 device binaries produced this way.
                                 Supported -device patterns examples:
+                                -device 0xFF20     ; will compile 1 target (tgllp)
                                 -device skl        ; will compile 1 target
                                 -device skl,icllp  ; will compile 2 targets
                                 -device skl-icllp  ; will compile all targets

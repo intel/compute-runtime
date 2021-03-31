@@ -52,7 +52,7 @@ class OclocArgHelper {
     uint8_t ***dataOutputs = nullptr;
     uint64_t **lenOutputs = nullptr;
     bool hasOutput = false;
-    const std::vector<DeviceProduct> deviceProductTable{{0u, std::string("")}};
+    const std::vector<DeviceProduct> deviceProductTable;
     void moveOutputs();
     MessagePrinter messagePrinter;
     Source *findSourceFile(const std::string &filename);
@@ -63,7 +63,7 @@ class OclocArgHelper {
     }
 
   public:
-    OclocArgHelper() = default;
+    OclocArgHelper();
     OclocArgHelper(const uint32_t numSources, const uint8_t **dataSources,
                    const uint64_t *lenSources, const char **nameSources,
                    const uint32_t numInputHeaders,

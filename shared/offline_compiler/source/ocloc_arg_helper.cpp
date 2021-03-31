@@ -62,6 +62,8 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
     }
 }
 
+OclocArgHelper::OclocArgHelper() : OclocArgHelper(0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) {}
+
 OclocArgHelper::~OclocArgHelper() {
     if (outputEnabled()) {
         saveOutput(oclocStdoutLogName, messagePrinter.getLog());

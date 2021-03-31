@@ -21,6 +21,7 @@
 #include "environment.h"
 #include "gmock/gmock.h"
 #include "hw_cmds.h"
+#include "mock/mock_argument_helper.h"
 #include "mock/mock_offline_compiler.h"
 
 #include <algorithm>
@@ -236,6 +237,62 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenOfflineCompilerIsCreatedThenSuccessIsR
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     delete pOfflineCompiler;
+}
+TEST_F(OfflineCompilerTests, givenProperDeviceIdHexAsDeviceArgumentThenSuccessIsReturned) {
+    std::map<std::string, std::string> files;
+    std::unique_ptr<MockOclocArgHelper> argHelper = std::make_unique<MockOclocArgHelper>(files);
+
+    std::stringstream deviceString, productString;
+    deviceString << "0x" << std::hex << argHelper->deviceProductTable[0].deviceId;
+    productString << argHelper->deviceProductTable[0].product;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        deviceString.str()};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+    std::string resString = "Auto-detected target based on 0xff20 device id: ";
+    resString.append(productString.str()).append("\n");
+
+    EXPECT_NE(nullptr, pOfflineCompiler);
+    EXPECT_STREQ(output.c_str(), resString.c_str());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdHexThenInvalidDeviceIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        "0x0"};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_STREQ(output.c_str(), "Could not determine target based on device id: 0x0\nError: Cannot get HW Info for device 0x0.\n");
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdWithIncorrectHexPatternThenInvalidDeviceIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        "0xnonexist"};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_STREQ(output.c_str(), "Error: Cannot get HW Info for device 0xnonexist.\n");
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
 TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorrectExtensionsArePassed) {
