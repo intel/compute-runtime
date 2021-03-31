@@ -517,12 +517,13 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenValidObjectIsRet
     EXPECT_NE(nullptr, &indirectHeap);
 }
 
-TEST_P(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedForInternalAllocationThenTrueIsReturned) {
+HWTEST_P(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedForInternalAllocationThenTrueIsReturned) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 8192);
-    if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
+    if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT && commandStreamReceiver.canUse4GbHeaps) {
         EXPECT_TRUE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
     } else {
         EXPECT_FALSE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
@@ -587,7 +588,7 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenSizeIsAlignedToC
     EXPECT_TRUE(isAligned<MemoryConstants::cacheLineSize>(indirectHeap.getAvailableSpace()));
 }
 
-TEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForHeapAllocationThenAllocationFromReusablePoolIsReturned) {
+HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForHeapAllocationThenAllocationFromReusablePoolIsReturned) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props);
 
@@ -597,9 +598,9 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAlloc
 
     GraphicsAllocation *allocation = nullptr;
 
-    auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
+    auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
     auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
-    if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
+    if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT && commandStreamReceiver.canUse4GbHeaps) {
         allocationType = GraphicsAllocation::AllocationType::INTERNAL_HEAP;
     }
     allocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), allocationSize, allocationType, pDevice->getDeviceBitfield()});
@@ -736,13 +737,14 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocat
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCalledThenIndirectHeapAllocationTypeShouldBeSetToInternalHeapForIohAndLinearStreamForOthers) {
+HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCalledThenIndirectHeapAllocationTypeShouldBeSetToInternalHeapForIohAndLinearStreamForOthers) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props);
+    auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto heapType = this->GetParam();
 
-    bool requireInternalHeap = IndirectHeap::INDIRECT_OBJECT == heapType;
+    bool requireInternalHeap = IndirectHeap::INDIRECT_OBJECT == heapType && commandStreamReceiver.canUse4GbHeaps;
     const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
     auto indirectHeapAllocation = indirectHeap.getGraphicsAllocation();
     ASSERT_NE(nullptr, indirectHeapAllocation);

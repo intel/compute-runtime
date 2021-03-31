@@ -54,6 +54,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::staticWorkPartitioningEnabled;
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
+    using BaseClass::CommandStreamReceiver::canUse4GbHeaps;
     using BaseClass::CommandStreamReceiver::checkForNewResources;
     using BaseClass::CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using BaseClass::CommandStreamReceiver::cleanupResources;

@@ -52,6 +52,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
     resetKmdNotifyHelper(new KmdNotifyHelper(&peekHwInfo().capabilityTable.kmdNotifyProperties));
     flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(executionEnvironment));
     defaultSshSize = getSshHeapSize();
+    canUse4GbHeaps = are4GbHeapsAvailable();
 
     timestampPacketWriteEnabled = hwHelper.timestampPacketWriteSupported();
     if (DebugManager.flags.EnableTimestampPacket.get() != -1) {

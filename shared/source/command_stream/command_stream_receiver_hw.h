@@ -145,6 +145,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void addPipeControlCmd(LinearStream &commandStream, PipeControlArgs &args);
     void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream);
     size_t getSshHeapSize();
+    bool are4GbHeapsAvailable() const;
 
     uint64_t getScratchPatchAddress();
     void createScratchSpaceController();

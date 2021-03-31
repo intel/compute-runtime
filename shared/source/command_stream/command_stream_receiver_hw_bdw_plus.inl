@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,9 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getSshHeapSize() {
     return defaultHeapSize;
 }
+
+template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::are4GbHeapsAvailable() const { return true; }
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {

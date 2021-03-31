@@ -184,6 +184,7 @@ class CommandStreamReceiver {
     bool peekTimestampPacketWriteEnabled() const { return timestampPacketWriteEnabled; }
 
     size_t defaultSshSize;
+    bool canUse4GbHeaps = true;
 
     AllocationsList &getTemporaryAllocations();
     AllocationsList &getAllocationsForReuse();
