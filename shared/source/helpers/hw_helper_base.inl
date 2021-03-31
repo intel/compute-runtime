@@ -561,6 +561,11 @@ bool HwHelperHw<GfxFamily>::isNewResidencyModelSupported() const {
 }
 
 template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isDirectSubmissionSupported() const {
+    return false;
+}
+
+template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isCopyOnlyEngineType(EngineGroupType type) const {
     return NEO::EngineGroupType::Copy == type;
 }

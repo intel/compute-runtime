@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_interface.h"
@@ -75,6 +76,11 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
             }
         }
     }
+}
+
+bool OsContextLinux::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    return this->getDrm().isVmBindAvailable() && hwHelper.isDirectSubmissionSupported();
 }
 
 Drm &OsContextLinux::getDrm() const {

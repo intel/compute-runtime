@@ -24,6 +24,7 @@ class OsContextLinux : public OsContext {
     unsigned int getEngineFlag() const { return engineFlag; }
     const std::vector<uint32_t> &getDrmContextIds() const { return drmContextIds; }
     const std::vector<uint32_t> &getDrmVmIds() const { return drmVmIds; }
+    bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
     Drm &getDrm() const;
     void waitForPagingFence();
 

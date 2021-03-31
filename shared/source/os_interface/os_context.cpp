@@ -14,7 +14,13 @@
 
 namespace NEO {
 bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &submitOnInit) {
-    if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
+    bool enableDirectSubmission = this->isDirectSubmissionSupported(hwInfo);
+
+    if (DebugManager.flags.EnableDirectSubmission.get() != -1) {
+        enableDirectSubmission = DebugManager.flags.EnableDirectSubmission.get();
+    }
+
+    if (enableDirectSubmission) {
         auto contextEngineType = this->getEngineType();
         const DirectSubmissionProperties &directSubmissionProperty =
             hwInfo.capabilityTable.directSubmissionEngines.data[contextEngineType];

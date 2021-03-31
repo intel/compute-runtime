@@ -94,3 +94,10 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenDestructObjectThen
 
     EXPECT_EQ(drm->ioctlCallsCount, 3u);
 }
+
+HWTEST_F(DrmDirectSubmissionTest, whenCheckForDirectSubmissionSupportThenProperValueIsReturned) {
+    auto directSubmissionSupported = osContext->isDirectSubmissionSupported(device->getHardwareInfo());
+
+    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+    EXPECT_EQ(directSubmissionSupported, hwHelper.isDirectSubmissionSupported() && executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm()->isVmBindAvailable());
+}
