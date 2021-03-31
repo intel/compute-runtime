@@ -115,6 +115,8 @@ class Drm {
     uint64_t getSliceMask(uint64_t sliceCount);
     MOCKABLE_VIRTUAL bool querySystemInfo();
     MOCKABLE_VIRTUAL bool queryEngineInfo();
+    MOCKABLE_VIRTUAL bool sysmanQueryEngineInfo();
+    MOCKABLE_VIRTUAL bool queryEngineInfo(bool isSysmanEnabled);
     MOCKABLE_VIRTUAL bool queryMemoryInfo();
     bool queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &data);
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
@@ -167,6 +169,7 @@ class Drm {
     EngineInfo *getEngineInfo() const {
         return engineInfo.get();
     }
+
     RootDeviceEnvironment &getRootDeviceEnvironment() {
         return rootDeviceEnvironment;
     }

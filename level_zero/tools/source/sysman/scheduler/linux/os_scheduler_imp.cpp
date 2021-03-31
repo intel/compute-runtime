@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -171,7 +171,7 @@ ze_bool_t LinuxSchedulerImp::canControlScheduler() {
 }
 
 static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineTypeToSysfsEngineMap = {
-    {ZES_ENGINE_TYPE_FLAG_COMPUTE, "rcs"},
+    {ZES_ENGINE_TYPE_FLAG_RENDER, "rcs"},
     {ZES_ENGINE_TYPE_FLAG_DMA, "bcs"},
     {ZES_ENGINE_TYPE_FLAG_MEDIA, "vcs"},
     {ZES_ENGINE_TYPE_FLAG_OTHER, "vecs"}};

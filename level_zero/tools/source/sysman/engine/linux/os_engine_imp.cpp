@@ -13,28 +13,30 @@
 
 namespace L0 {
 
-static const std::multimap<drm_i915_gem_engine_class, zes_engine_group_t> i915ToEngineMap = {
-    {I915_ENGINE_CLASS_RENDER, ZES_ENGINE_GROUP_RENDER_SINGLE},
-    {I915_ENGINE_CLASS_VIDEO, ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE},
-    {I915_ENGINE_CLASS_VIDEO, ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE},
-    {I915_ENGINE_CLASS_COPY, ZES_ENGINE_GROUP_COPY_SINGLE}};
+static const std::multimap<__u16, zes_engine_group_t> i915ToEngineMap = {
+    {static_cast<__u16>(I915_ENGINE_CLASS_RENDER), ZES_ENGINE_GROUP_RENDER_SINGLE},
+    {static_cast<__u16>(I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE},
+    {static_cast<__u16>(I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE},
+    {static_cast<__u16>(I915_ENGINE_CLASS_COPY), ZES_ENGINE_GROUP_COPY_SINGLE},
+    {static_cast<__u16>(I915_ENGINE_CLASS_VIDEO_ENHANCE), ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE}};
 
-static const std::multimap<zes_engine_group_t, drm_i915_gem_engine_class> engineToI915Map = {
-    {ZES_ENGINE_GROUP_RENDER_SINGLE, I915_ENGINE_CLASS_RENDER},
-    {ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, I915_ENGINE_CLASS_VIDEO},
-    {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, I915_ENGINE_CLASS_VIDEO},
-    {ZES_ENGINE_GROUP_COPY_SINGLE, I915_ENGINE_CLASS_COPY}};
+static const std::multimap<zes_engine_group_t, __u16> engineToI915Map = {
+    {ZES_ENGINE_GROUP_RENDER_SINGLE, static_cast<__u16>(I915_ENGINE_CLASS_RENDER)},
+    {ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, static_cast<__u16>(I915_ENGINE_CLASS_VIDEO)},
+    {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, static_cast<__u16>(I915_ENGINE_CLASS_VIDEO)},
+    {ZES_ENGINE_GROUP_COPY_SINGLE, static_cast<__u16>(I915_ENGINE_CLASS_COPY)},
+    {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, static_cast<__u16>(I915_ENGINE_CLASS_VIDEO_ENHANCE)}};
 
 ze_result_t OsEngine::getNumEngineTypeAndInstances(std::multimap<zes_engine_group_t, uint32_t> &engineGroupInstance, OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     NEO::Drm *pDrm = &pLinuxSysmanImp->getDrm();
 
-    if (pDrm->queryEngineInfo() == false) {
+    if (pDrm->sysmanQueryEngineInfo() == false) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     auto engineInfo = static_cast<NEO::EngineInfoImpl *>(pDrm->getEngineInfo());
     for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
-        auto L0EngineEntryInMap = i915ToEngineMap.find(static_cast<drm_i915_gem_engine_class>(itr->engine.engine_class));
+        auto L0EngineEntryInMap = i915ToEngineMap.find(static_cast<__u16>(itr->engine.engine_class));
         if (L0EngineEntryInMap == i915ToEngineMap.end()) {
             continue;
         }

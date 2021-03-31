@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -442,7 +442,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_TRUE(properties.canControl);
-        EXPECT_LE(properties.engines, ZES_ENGINE_TYPE_FLAG_DMA);
+        EXPECT_LE(properties.engines, ZES_ENGINE_TYPE_FLAG_RENDER);
         EXPECT_EQ(properties.supportedModes, static_cast<uint32_t>((1 << ZES_SCHED_MODE_TIMEOUT) | (1 << ZES_SCHED_MODE_TIMESLICE) | (1 << ZES_SCHED_MODE_EXCLUSIVE)));
     }
 }
@@ -452,7 +452,7 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingSchedProperti
     std::vector<std::string> listOfEngines;
     ze_device_properties_t deviceProperties = {};
     Device::fromHandle(device)->getProperties(&deviceProperties);
-    LinuxSchedulerImp *pLinuxSchedulerImp = new LinuxSchedulerImp(pOsSysman, ZES_ENGINE_TYPE_FLAG_COMPUTE, listOfEngines,
+    LinuxSchedulerImp *pLinuxSchedulerImp = new LinuxSchedulerImp(pOsSysman, ZES_ENGINE_TYPE_FLAG_RENDER, listOfEngines,
                                                                   deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSchedulerImp->getProperties(properties));
     EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);

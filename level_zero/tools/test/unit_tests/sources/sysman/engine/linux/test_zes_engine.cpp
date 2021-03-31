@@ -14,7 +14,7 @@ using ::testing::Return;
 class OsEngine;
 namespace L0 {
 namespace ult {
-constexpr uint32_t handleComponentCount = 4u;
+constexpr uint32_t handleComponentCount = 5u;
 class ZesEngineFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<Mock<EngineNeoDrm>> pDrm;
@@ -50,7 +50,7 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pDrm = pDrm.get();
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
-        ON_CALL(*pDrm.get(), queryEngineInfo())
+        ON_CALL(*pDrm.get(), sysmanQueryEngineInfo())
             .WillByDefault(::testing::Invoke(pDrm.get(), &Mock<EngineNeoDrm>::queryEngineInfoMockPositiveTest));
 
         ON_CALL(*pPmuInterface.get(), perfEventOpen(_, _, _, _, _))
@@ -115,6 +115,10 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertie
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[3], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_COPY_SINGLE, properties.type);
+    EXPECT_FALSE(properties.onSubdevice);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[4], &properties));
+    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 }
 
@@ -201,10 +205,34 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAn
 
 TEST_F(ZesEngineFixture, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
     std::multimap<zes_engine_group_t, uint32_t> engineGroupInstance;
-    ON_CALL(*pDrm.get(), queryEngineInfo())
+    ON_CALL(*pDrm.get(), sysmanQueryEngineInfo())
         .WillByDefault(::testing::Invoke(pDrm.get(), &Mock<EngineNeoDrm>::queryEngineInfoMockReturnFalse));
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman));
+}
+
+TEST_F(ZesEngineFixture, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {
+    auto drm = std::make_unique<DrmMockEngine>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    ASSERT_NE(nullptr, drm);
+    drm->sysmanQueryEngineInfo();
+    auto engineInfo = static_cast<EngineInfoImpl *>(drm->getEngineInfo());
+    ASSERT_NE(nullptr, engineInfo);
+    EXPECT_EQ(2u, engineInfo->engines.size());
+}
+
+TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQuerySupportedWhenQueryingEngineInfoWithVideoThenEngineInfoIsCreatedWithEngines) {
+    auto drm = std::make_unique<DrmMockEngine>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    ASSERT_NE(nullptr, drm);
+    drm->sysmanQueryEngineInfo();
+    auto engineInfo = static_cast<EngineInfoImpl *>(drm->getEngineInfo());
+    ASSERT_NE(nullptr, engineInfo);
+    EXPECT_EQ(2u, engineInfo->engines.size());
+}
+
+TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQueryFailsThenFailureIsReturned) {
+    auto drm = std::make_unique<DrmMockEngineInfoFailing>((const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+    ASSERT_NE(nullptr, drm);
+    EXPECT_FALSE(drm->sysmanQueryEngineInfo());
 }
 
 } // namespace ult

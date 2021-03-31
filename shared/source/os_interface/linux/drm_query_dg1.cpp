@@ -39,7 +39,7 @@ bool Drm::querySystemInfo() {
     return true;
 }
 
-bool Drm::queryEngineInfo() {
+bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     auto length = 0;
     auto dataQuery = this->query(DRM_I915_QUERY_ENGINE_INFO, DrmQueryItemFlags::empty, length);
     auto data = reinterpret_cast<drm_i915_query_engine_info *>(dataQuery.get());
@@ -48,6 +48,14 @@ bool Drm::queryEngineInfo() {
         return true;
     }
     return false;
+}
+
+bool Drm::queryEngineInfo() {
+    return Drm::queryEngineInfo(false);
+}
+
+bool Drm::sysmanQueryEngineInfo() {
+    return Drm::queryEngineInfo(true);
 }
 
 bool Drm::queryMemoryInfo() {
