@@ -645,6 +645,14 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread || neoDevice->getDebugger()) {
             auto sipType = NEO::SipKernel::getSipKernelType(hwInfo.platform.eRenderCoreFamily, neoDevice->getDebugger());
             NEO::initSipKernel(sipType, *neoDevice);
+
+            auto stateSaveAreaHeader = NEO::SipKernel::getSipStateSaveAreaHeader(*neoDevice);
+            if (debugSurface && stateSaveAreaHeader.size() > 0) {
+                auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+                NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
+                                                                      *neoDevice, debugSurface, 0, stateSaveAreaHeader.data(),
+                                                                      stateSaveAreaHeader.size());
+            }
         }
     } else {
         *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;

@@ -19,7 +19,7 @@
 #include <map>
 
 namespace NEO {
-MockSipKernel::MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) : SipKernel(type, sipAlloc) {
+MockSipKernel::MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) : SipKernel(type, sipAlloc, {'s', 's', 'a', 'h'}) {
     this->mockSipMemoryAllocation =
         std::make_unique<MemoryAllocation>(0u,
                                            GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL,
@@ -30,7 +30,7 @@ MockSipKernel::MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) :
                                            MemoryPool::System4KBPages, 3u);
 }
 
-MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr) {
+MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr, {'s', 's', 'a', 'h'}) {
     this->mockSipMemoryAllocation =
         std::make_unique<MemoryAllocation>(0u,
                                            GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL,
@@ -51,5 +51,9 @@ std::vector<char> MockSipKernel::getDummyGenBinary() {
 
 GraphicsAllocation *MockSipKernel::getSipAllocation() const {
     return mockSipMemoryAllocation.get();
+}
+
+const std::vector<char> &MockSipKernel::getStateSaveAreaHeader() const {
+    return mockStateSaveAreaHeader;
 }
 } // namespace NEO

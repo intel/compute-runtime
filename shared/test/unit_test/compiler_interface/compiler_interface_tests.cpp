@@ -1002,7 +1002,8 @@ TEST_F(CompilerInterfaceTest, GivenCompilerWhenGettingCompilerAvailabilityThenCo
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSipKernelBinaryFailsGracefully) {
     pCompilerInterface->igcMain.reset();
     std::vector<char> sipBinary;
-    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary);
+    std::vector<char> stateAreaHeader;
+    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary, stateAreaHeader);
     EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
     EXPECT_EQ(0U, sipBinary.size());
 }
@@ -1013,7 +1014,8 @@ TEST_F(CompilerInterfaceTest, whenIgcReturnsErrorThenGetSipKernelBinaryFailsGrac
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
     std::vector<char> sipBinary;
-    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary);
+    std::vector<char> stateAreaHeader;
+    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary, stateAreaHeader);
     EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
     EXPECT_EQ(0U, sipBinary.size());
 
@@ -1025,7 +1027,8 @@ TEST_F(CompilerInterfaceTest, whenEverythingIsOkThenGetSipKernelReturnsIgcsOutpu
     retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd16_", ".bc");
     gEnvironment->igcPushDebugVars(igcDebugVars);
     std::vector<char> sipBinary;
-    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary);
+    std::vector<char> stateAreaHeader;
+    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary, stateAreaHeader);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
     EXPECT_NE(0U, sipBinary.size());
 
@@ -1036,17 +1039,18 @@ TEST_F(CompilerInterfaceTest, whenRequestingSipKernelBinaryThenProperSystemRouti
     MockCompilerDebugVars igcDebugVars;
     gEnvironment->igcPushDebugVars(igcDebugVars);
     std::vector<char> sipBinary;
-    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary);
+    std::vector<char> stateAreaHeader;
+    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary, stateAreaHeader);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::contextSaveRestore, getIgcDebugVars().typeOfSystemRoutine);
 
-    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsr, sipBinary);
+    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsr, sipBinary, stateAreaHeader);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::debug, getIgcDebugVars().typeOfSystemRoutine);
 
-    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsrLocal, sipBinary);
+    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsrLocal, sipBinary, stateAreaHeader);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::debugSlm, getIgcDebugVars().typeOfSystemRoutine);
@@ -1060,19 +1064,20 @@ TEST_F(CompilerInterfaceTest, givenUseBindlessDebugSipWhenRequestingSipKernelBin
     MockCompilerDebugVars igcDebugVars;
     gEnvironment->igcPushDebugVars(igcDebugVars);
     std::vector<char> sipBinary;
-    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary);
+    std::vector<char> stateAreaHeader;
+    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::Csr, sipBinary, stateAreaHeader);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::contextSaveRestore, getIgcDebugVars().typeOfSystemRoutine);
     EXPECT_EQ(MockCompilerDebugVars::SipAddressingType::bindful, getIgcDebugVars().receivedSipAddressingType);
 
-    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsr, sipBinary);
+    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsr, sipBinary, stateAreaHeader);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::debug, getIgcDebugVars().typeOfSystemRoutine);
     EXPECT_EQ(MockCompilerDebugVars::SipAddressingType::bindless, getIgcDebugVars().receivedSipAddressingType);
 
-    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsrLocal, sipBinary);
+    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::DbgCsrLocal, sipBinary, stateAreaHeader);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::debugSlm, getIgcDebugVars().typeOfSystemRoutine);
@@ -1085,7 +1090,8 @@ TEST_F(CompilerInterfaceTest, whenRequestingInvalidSipKernelBinaryThenErrorIsRet
     MockCompilerDebugVars igcDebugVars;
     gEnvironment->igcPushDebugVars(igcDebugVars);
     std::vector<char> sipBinary;
-    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::COUNT, sipBinary);
+    std::vector<char> stateAreaHeader;
+    auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::COUNT, sipBinary, stateAreaHeader);
     EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
     EXPECT_EQ(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::undefined, getIgcDebugVars().typeOfSystemRoutine);

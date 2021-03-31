@@ -114,13 +114,14 @@ class MockCompilerInterface : public CompilerInterface {
         return this->fclBaseTranslationCtx.get();
     }
 
-    TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary) override {
+    TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+                                                    std::vector<char> &stateAreaHeader) override {
         if (this->sipKernelBinaryOverride.size() > 0) {
             retBinary = this->sipKernelBinaryOverride;
             this->requestedSipKernel = type;
             return TranslationOutput::ErrorCode::Success;
         } else {
-            return CompilerInterface::getSipKernelBinary(device, type, retBinary);
+            return CompilerInterface::getSipKernelBinary(device, type, retBinary, stateAreaHeader);
         }
     }
 

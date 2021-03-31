@@ -20,6 +20,7 @@ class MockBuiltins : public NEO::BuiltIns {
     const NEO::SipKernel &getSipKernel(NEO::SipKernelType type, NEO::Device &device) override;
     std::unique_ptr<NEO::SipKernel> sipKernel;
     std::unique_ptr<NEO::MockGraphicsAllocation> allocation;
+    std::vector<char> stateSaveAreaHeader{'s', 's', 'a', 'h'};
 };
 } // namespace ult
 } // namespace L0

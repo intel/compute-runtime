@@ -21,6 +21,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 #include "gtest/gtest.h"
@@ -79,6 +80,30 @@ TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInit
 
     EXPECT_EQ(NEO::SipKernelType::Csr, NEO::MockSipData::calledType);
     EXPECT_TRUE(NEO::MockSipData::called);
+}
+
+TEST(L0DeviceTest, givenDebuggerEnabledButIGCNotReturnsSSAHThenSSAHIsNotCopied) {
+    NEO::MockCompilerEnableGuard mock(true);
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    auto mockBuiltIns = new MockBuiltins();
+    mockBuiltIns->stateSaveAreaHeader.clear();
+
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.ftrLocalMemory = true;
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->initializeMemoryManager();
+
+    auto neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->enableProgramDebugging = true;
+
+    driverHandle->initialize(std::move(devices));
+    auto stateSaveAreaHeader = NEO::SipKernel::getSipStateSaveAreaHeader(*neoDevice);
+    EXPECT_EQ(static_cast<size_t>(0), stateSaveAreaHeader.size());
 }
 
 TEST(L0DeviceTest, givenDisabledPreemptionWhenCreatingDeviceThenSipKernelIsNotInitialized) {

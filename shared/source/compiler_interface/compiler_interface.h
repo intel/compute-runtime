@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,7 +133,8 @@ class CompilerInterface {
                                                const TranslationInput &input,
                                                TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary);
+    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+                                                                     std::vector<char> &stateSaveAreaHeader);
 
   protected:
     MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> cache, bool requireFcl);

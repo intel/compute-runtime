@@ -303,7 +303,8 @@ TranslationOutput::ErrorCode CompilerInterface::createLibrary(
     return TranslationOutput::ErrorCode::Success;
 }
 
-TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary) {
+TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+                                                                   std::vector<char> &stateSaveAreaHeader) {
     if (false == isIgcAvailable()) {
         return TranslationOutput::ErrorCode::CompilerNotAvailable;
     }
@@ -342,6 +343,8 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
     }
 
     retBinary.assign(systemRoutineBuffer->GetMemory<char>(), systemRoutineBuffer->GetMemory<char>() + systemRoutineBuffer->GetSizeRaw());
+    stateSaveAreaHeader.assign(stateSaveAreaBuffer->GetMemory<char>(), stateSaveAreaBuffer->GetMemory<char>() + stateSaveAreaBuffer->GetSizeRaw());
+
     return TranslationOutput::ErrorCode::Success;
 }
 

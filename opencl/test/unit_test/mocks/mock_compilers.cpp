@@ -494,13 +494,15 @@ bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutine
     debugVars.typeOfSystemRoutine = typeOfSystemRoutine;
     debugVars.receivedSipAddressingType = bindless ? MockCompilerDebugVars::SipAddressingType::bindless : MockCompilerDebugVars::SipAddressingType::bindful;
 
-    const char mockData[64] = {'C', 'T', 'N', 'I'};
+    const char mockData1[64] = {'C', 'T', 'N', 'I'};
+    const char mockData2[64] = {'S', 'S', 'A', 'H'};
 
     if (debugVars.forceBuildFailure || typeOfSystemRoutine == IGC::SystemRoutineType::undefined) {
         return false;
     }
 
-    outSystemRoutineBuffer->PushBackRawBytes(mockData, 64);
+    outSystemRoutineBuffer->PushBackRawBytes(mockData1, 64);
+    stateSaveAreaHeaderInit->PushBackRawBytes(mockData2, 64);
     return true;
 }
 

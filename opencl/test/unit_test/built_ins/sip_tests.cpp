@@ -21,16 +21,17 @@ using namespace NEO;
 namespace SipKernelTests {
 
 TEST(Sip, WhenGettingTypeThenCorrectTypeIsReturned) {
-    SipKernel csr{SipKernelType::Csr, nullptr};
+    std::vector<char> ssaHeader;
+    SipKernel csr{SipKernelType::Csr, nullptr, ssaHeader};
     EXPECT_EQ(SipKernelType::Csr, csr.getType());
 
-    SipKernel dbgCsr{SipKernelType::DbgCsr, nullptr};
+    SipKernel dbgCsr{SipKernelType::DbgCsr, nullptr, ssaHeader};
     EXPECT_EQ(SipKernelType::DbgCsr, dbgCsr.getType());
 
-    SipKernel dbgCsrLocal{SipKernelType::DbgCsrLocal, nullptr};
+    SipKernel dbgCsrLocal{SipKernelType::DbgCsrLocal, nullptr, ssaHeader};
     EXPECT_EQ(SipKernelType::DbgCsrLocal, dbgCsrLocal.getType());
 
-    SipKernel undefined{SipKernelType::COUNT, nullptr};
+    SipKernel undefined{SipKernelType::COUNT, nullptr, ssaHeader};
     EXPECT_EQ(SipKernelType::COUNT, undefined.getType());
 }
 

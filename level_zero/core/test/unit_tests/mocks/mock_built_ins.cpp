@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ namespace ult {
 
 const NEO::SipKernel &MockBuiltins::getSipKernel(NEO::SipKernelType type, NEO::Device &device) {
     if (!(sipKernel && sipKernel->getType() == type)) {
-        sipKernel.reset(new NEO::SipKernel(type, allocation.get()));
+        sipKernel.reset(new NEO::SipKernel(type, allocation.get(), stateSaveAreaHeader));
     }
 
     return *sipKernel;

@@ -29,8 +29,10 @@ class MockSipKernel : public SipKernel {
     static std::vector<char> getDummyGenBinary();
 
     GraphicsAllocation *getSipAllocation() const override;
+    const std::vector<char> &getStateSaveAreaHeader() const override;
 
     std::unique_ptr<MemoryAllocation> mockSipMemoryAllocation;
+    const std::vector<char> mockStateSaveAreaHeader = {'s', 's', 'a', 'h'};
     MockExecutionEnvironment executionEnvironment;
 };
 

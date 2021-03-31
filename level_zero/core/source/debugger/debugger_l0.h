@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,6 +46,18 @@ struct DebugAreaHeader {
     uint16_t scratchBegin;
     uint16_t scratchEnd;
     uint64_t isShared : 1;
+};
+struct alignas(4) DebuggerVersion {
+    uint8_t major;
+    uint8_t minor;
+    uint16_t patch;
+};
+struct alignas(8) StateSaveAreaHeader {
+    char magic[8] = "tssarea";
+    uint64_t reserved1;
+    struct DebuggerVersion version;
+    uint8_t size;
+    uint8_t reserved2[3];
 };
 
 #pragma pack()

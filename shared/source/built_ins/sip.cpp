@@ -24,11 +24,15 @@ const size_t SipKernel::maxDbgSurfaceSize = 0x1800000; // proper value should be
 
 SipKernel::~SipKernel() = default;
 
-SipKernel::SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) : type(type), sipAllocation(sipAlloc) {
+SipKernel::SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah) : type(type), sipAllocation(sipAlloc), stateSaveAreaHeader(ssah) {
 }
 
 GraphicsAllocation *SipKernel::getSipAllocation() const {
     return sipAllocation;
+}
+
+const std::vector<char> &SipKernel::getStateSaveAreaHeader() const {
+    return stateSaveAreaHeader;
 }
 
 SipKernelType SipKernel::getSipKernelType(GFXCORE_FAMILY family, bool debuggingActive) {
@@ -40,5 +44,11 @@ GraphicsAllocation *SipKernel::getSipKernelAllocation(Device &device) {
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
     auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().platform.eRenderCoreFamily, debuggingEnabled);
     return device.getBuiltIns()->getSipKernel(sipType, device).getSipAllocation();
+}
+
+const std::vector<char> &SipKernel::getSipStateSaveAreaHeader(Device &device) {
+    bool debuggingEnabled = device.getDebugger() != nullptr;
+    auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().platform.eRenderCoreFamily, debuggingEnabled);
+    return device.getBuiltIns()->getSipKernel(sipType, device).getStateSaveAreaHeader();
 }
 } // namespace NEO

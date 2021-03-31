@@ -19,7 +19,7 @@ class GraphicsAllocation;
 
 class SipKernel {
   public:
-    SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc);
+    SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah);
     SipKernel(const SipKernel &) = delete;
     SipKernel &operator=(const SipKernel &) = delete;
     SipKernel(SipKernel &&) = delete;
@@ -33,11 +33,14 @@ class SipKernel {
     static const size_t maxDbgSurfaceSize;
 
     MOCKABLE_VIRTUAL GraphicsAllocation *getSipAllocation() const;
+    MOCKABLE_VIRTUAL const std::vector<char> &getStateSaveAreaHeader() const;
     static SipKernelType getSipKernelType(GFXCORE_FAMILY family, bool debuggingActive);
     static GraphicsAllocation *getSipKernelAllocation(Device &device);
+    static const std::vector<char> &getSipStateSaveAreaHeader(Device &device);
 
   protected:
     SipKernelType type = SipKernelType::COUNT;
     GraphicsAllocation *sipAllocation = nullptr;
+    const std::vector<char> stateSaveAreaHeader;
 };
 } // namespace NEO

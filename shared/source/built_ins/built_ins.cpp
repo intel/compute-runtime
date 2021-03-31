@@ -38,10 +38,11 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
     auto initializer = [&] {
         std::vector<char> sipBinary;
+        std::vector<char> stateSaveAareHeader;
         auto compilerInteface = device.getCompilerInterface();
         UNRECOVERABLE_IF(compilerInteface == nullptr);
 
-        auto ret = compilerInteface->getSipKernelBinary(device, type, sipBinary);
+        auto ret = compilerInteface->getSipKernelBinary(device, type, sipBinary, stateSaveAareHeader);
 
         UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::Success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
@@ -61,7 +62,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
                                                              device, sipAllocation, 0, sipBinary.data(),
                                                              sipBinary.size());
         }
-        sipBuiltIn.first.reset(new SipKernel(type, sipAllocation));
+        sipBuiltIn.first.reset(new SipKernel(type, sipAllocation, std::move(stateSaveAareHeader)));
     };
     std::call_once(sipBuiltIn.second, initializer);
     UNRECOVERABLE_IF(sipBuiltIn.first == nullptr);

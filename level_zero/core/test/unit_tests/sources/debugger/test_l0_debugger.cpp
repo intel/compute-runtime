@@ -48,6 +48,41 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIs
     EXPECT_EQ(expectedSipAllocation, systemRoutine);
 }
 
+TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
+    auto stateSaveAreaHeader = SipKernel::getSipStateSaveAreaHeader(*neoDevice);
+
+    auto sipType = SipKernel::getSipKernelType(neoDevice->getHardwareInfo().platform.eRenderCoreFamily, true);
+    auto expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
+
+    EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
+}
+
+TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    auto mockBuiltIns = new MockBuiltins();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.ftrLocalMemory = true;
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->initializeMemoryManager();
+
+    auto neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->enableProgramDebugging = false;
+
+    driverHandle->initialize(std::move(devices));
+
+    auto stateSaveAreaHeader = SipKernel::getSipStateSaveAreaHeader(*neoDevice);
+
+    auto sipType = SipKernel::getSipKernelType(neoDevice->getHardwareInfo().platform.eRenderCoreFamily, false);
+    auto expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
+
+    EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
+}
+
 HWTEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuffersAreAllocated) {
     auto debugger = device->getL0Debugger();
     ASSERT_NE(nullptr, debugger);
