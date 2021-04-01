@@ -46,6 +46,15 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint64_t &v
     return ZE_RESULT_SUCCESS;
 }
 
+bool compareTelemNodes(std::string &telemNode1, std::string &telemNode2) {
+    std::string telem = "telem";
+    auto indexString1 = telemNode1.substr(telem.size(), telemNode1.size());
+    auto indexForTelemNode1 = stoi(indexString1);
+    auto indexString2 = telemNode2.substr(telem.size(), telemNode2.size());
+    auto indexForTelemNode2 = stoi(indexString2);
+    return indexForTelemNode1 < indexForTelemNode2;
+}
+
 ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess, std::string &rootPciPathOfGpuDevice) {
     std::vector<std::string> listOfTelemNodes;
     auto result = pFsAccess->listDirectory(baseTelemSysFS, listOfTelemNodes);
@@ -57,7 +66,7 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
     // # /sys/class/intel_pmt$ ls
     // telem1  telem2  telem3
     // Then listOfTelemNodes would contain telem1, telem2, telem3
-    std::sort(listOfTelemNodes.begin(), listOfTelemNodes.end()); // sort listOfTelemNodes, to arange telem nodes in ascending order
+    std::sort(listOfTelemNodes.begin(), listOfTelemNodes.end(), compareTelemNodes); // sort listOfTelemNodes, to arange telem nodes in ascending order
     for (const auto &telemNode : listOfTelemNodes) {
         std::string realPathOfTelemNode;
         result = pFsAccess->getRealPath(baseTelemSysFS + "/" + telemNode, realPathOfTelemNode);
