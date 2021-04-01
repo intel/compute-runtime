@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/os_context_linux.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -51,8 +52,14 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
                 drm.setContextDebugFlag(drmContextId);
             }
 
+            auto lowPriorityDirectSubmissionBcs = this->isDirectSubmissionActive() && EngineHelpers::isBcs(engineType);
+
+            if (DebugManager.flags.DirectSubmissionLowPriorityBlitter.get() != -1) {
+                lowPriorityDirectSubmissionBcs = DebugManager.flags.DirectSubmissionLowPriorityBlitter.get();
+            }
+
             if ((drm.isPreemptionSupported() && isLowPriority()) ||
-                (this->isDirectSubmissionActive() && EngineHelpers::isBcs(engineType))) {
+                lowPriorityDirectSubmissionBcs) {
                 drm.setLowPriorityContextParam(drmContextId);
             }
 

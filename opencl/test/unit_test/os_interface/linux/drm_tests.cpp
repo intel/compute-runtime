@@ -251,6 +251,23 @@ TEST(DrmTest, givenDirectSubmissionEnabledOnBlitterWhenCreateBcsEngineThenLowPri
     EXPECT_EQ(4u, drmMock.receivedContextParamRequestCount);
 }
 
+TEST(DrmTest, givenDirectSubmissionEnabledOnBlitterAndDirectSubmissionLowPriorityBlitterSetZeroWhenCreateBcsEngineThenLowPriorityIsNotSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDirectSubmission.set(1);
+    DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1);
+    DebugManager.flags.DirectSubmissionLowPriorityBlitter.set(0);
+
+    OsContextLinux osContext2(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
+}
+
 TEST(DrmTest, WhenGettingExecSoftPinThenCorrectValueIsReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
