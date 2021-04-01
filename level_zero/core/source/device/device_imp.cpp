@@ -516,14 +516,25 @@ ze_result_t DeviceImp::imageGetProperties(const ze_image_desc_t *desc,
 ze_result_t DeviceImp::getDeviceImageProperties(ze_device_image_properties_t *pDeviceImageProperties) {
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
 
-    pDeviceImageProperties->maxImageDims1D = static_cast<uint32_t>(deviceInfo.image2DMaxWidth);
-    pDeviceImageProperties->maxImageDims2D = static_cast<uint32_t>(deviceInfo.image2DMaxHeight);
-    pDeviceImageProperties->maxImageDims3D = static_cast<uint32_t>(deviceInfo.image3DMaxDepth);
-    pDeviceImageProperties->maxImageBufferSize = this->neoDevice->getDeviceInfo().imageMaxBufferSize;
-    pDeviceImageProperties->maxImageArraySlices = static_cast<uint32_t>(deviceInfo.imageMaxArraySize);
-    pDeviceImageProperties->maxSamplers = this->neoDevice->getDeviceInfo().maxSamplers;
-    pDeviceImageProperties->maxReadImageArgs = this->neoDevice->getDeviceInfo().maxReadImageArgs;
-    pDeviceImageProperties->maxWriteImageArgs = this->neoDevice->getDeviceInfo().maxWriteImageArgs;
+    if (deviceInfo.imageSupport) {
+        pDeviceImageProperties->maxImageDims1D = static_cast<uint32_t>(deviceInfo.image2DMaxWidth);
+        pDeviceImageProperties->maxImageDims2D = static_cast<uint32_t>(deviceInfo.image2DMaxHeight);
+        pDeviceImageProperties->maxImageDims3D = static_cast<uint32_t>(deviceInfo.image3DMaxDepth);
+        pDeviceImageProperties->maxImageBufferSize = deviceInfo.imageMaxBufferSize;
+        pDeviceImageProperties->maxImageArraySlices = static_cast<uint32_t>(deviceInfo.imageMaxArraySize);
+        pDeviceImageProperties->maxSamplers = deviceInfo.maxSamplers;
+        pDeviceImageProperties->maxReadImageArgs = deviceInfo.maxReadImageArgs;
+        pDeviceImageProperties->maxWriteImageArgs = deviceInfo.maxWriteImageArgs;
+    } else {
+        pDeviceImageProperties->maxImageDims1D = 0u;
+        pDeviceImageProperties->maxImageDims2D = 0u;
+        pDeviceImageProperties->maxImageDims3D = 0u;
+        pDeviceImageProperties->maxImageBufferSize = 0u;
+        pDeviceImageProperties->maxImageArraySlices = 0u;
+        pDeviceImageProperties->maxSamplers = 0u;
+        pDeviceImageProperties->maxReadImageArgs = 0u;
+        pDeviceImageProperties->maxWriteImageArgs = 0u;
+    }
 
     return ZE_RESULT_SUCCESS;
 }

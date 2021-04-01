@@ -1038,5 +1038,63 @@ TEST(zeDevice, givenValidImagePropertiesStructWhenGettingImagePropertiesThenSucc
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST(zeDevice, givenImagesSupportedWhenGettingImagePropertiesThenValidValuesAreReturned) {
+    DriverHandleImp driverHandle{};
+    NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, 1, false));
+    DeviceInfo &deviceInfo = neoDevice->deviceInfo;
+
+    deviceInfo.imageSupport = true;
+    deviceInfo.image2DMaxWidth = 1;
+    deviceInfo.image2DMaxHeight = 2;
+    deviceInfo.image3DMaxDepth = 3;
+    deviceInfo.imageMaxBufferSize = 4;
+    deviceInfo.imageMaxArraySize = 5;
+    deviceInfo.maxSamplers = 6;
+    deviceInfo.maxReadImageArgs = 7;
+    deviceInfo.maxWriteImageArgs = 8;
+
+    ze_device_image_properties_t properties{};
+    ze_result_t result = zeDeviceGetImageProperties(device->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(deviceInfo.image2DMaxWidth, static_cast<uint64_t>(properties.maxImageDims1D));
+    EXPECT_EQ(deviceInfo.image2DMaxHeight, static_cast<uint64_t>(properties.maxImageDims2D));
+    EXPECT_EQ(deviceInfo.image3DMaxDepth, static_cast<uint64_t>(properties.maxImageDims3D));
+    EXPECT_EQ(deviceInfo.imageMaxBufferSize, properties.maxImageBufferSize);
+    EXPECT_EQ(deviceInfo.imageMaxArraySize, static_cast<uint64_t>(properties.maxImageArraySlices));
+    EXPECT_EQ(deviceInfo.maxSamplers, properties.maxSamplers);
+    EXPECT_EQ(deviceInfo.maxReadImageArgs, properties.maxReadImageArgs);
+    EXPECT_EQ(deviceInfo.maxWriteImageArgs, properties.maxWriteImageArgs);
+}
+
+TEST(zeDevice, givenNoImagesSupportedWhenGettingImagePropertiesThenZeroValuesAreReturned) {
+    DriverHandleImp driverHandle{};
+    NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, 1, false));
+    DeviceInfo &deviceInfo = neoDevice->deviceInfo;
+
+    neoDevice->deviceInfo.imageSupport = false;
+    deviceInfo.image2DMaxWidth = 1;
+    deviceInfo.image2DMaxHeight = 2;
+    deviceInfo.image3DMaxDepth = 3;
+    deviceInfo.imageMaxBufferSize = 4;
+    deviceInfo.imageMaxArraySize = 5;
+    deviceInfo.maxSamplers = 6;
+    deviceInfo.maxReadImageArgs = 7;
+    deviceInfo.maxWriteImageArgs = 8;
+
+    ze_device_image_properties_t properties{};
+    ze_result_t result = zeDeviceGetImageProperties(device->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, properties.maxImageDims1D);
+    EXPECT_EQ(0u, properties.maxImageDims2D);
+    EXPECT_EQ(0u, properties.maxImageDims3D);
+    EXPECT_EQ(0u, properties.maxImageBufferSize);
+    EXPECT_EQ(0u, properties.maxImageArraySlices);
+    EXPECT_EQ(0u, properties.maxSamplers);
+    EXPECT_EQ(0u, properties.maxReadImageArgs);
+    EXPECT_EQ(0u, properties.maxWriteImageArgs);
+}
+
 } // namespace ult
 } // namespace L0
