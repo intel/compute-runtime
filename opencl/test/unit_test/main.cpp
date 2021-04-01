@@ -168,11 +168,6 @@ void cleanTestHelpers() {
     delete platformsImpl;
 }
 
-std::string getHardwarePrefix() {
-    std::string s = hardwarePrefix[defaultHwInfo->platform.eProductFamily];
-    return s;
-}
-
 std::string getRunPath(char *argv0) {
     std::string res(argv0);
 

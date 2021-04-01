@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,21 +100,32 @@ class CCustomEventListener : public ::testing::TestEventListener {
         int testsFailed = unitTest.failed_test_count();
         int testsDisabled = unitTest.disabled_test_count();
         auto timeElapsed = static_cast<int>(unitTest.elapsed_time());
-
+        std::string ultStatus = "PASSED";
+        std::string paddingS = "";
+        std::string paddingE = "";
         if (unitTest.Failed()) {
+            ultStatus = "FAILED";
+        }
+
+        if (hardwarePrefix != "---") {
+            paddingS = std::string(hardwarePrefix.length(), ' ');
+            paddingE = std::string(hardwarePrefix.length(), '=');
+
             fprintf(
                 stdout,
                 "\n"
-                "=====================\n"
-                "==   ULTs FAILED   ==\n"
-                "=====================\n");
+                "%s=====================\n"
+                "==  %s ULTs %s   ==\n"
+                "%s=====================\n",
+                paddingE.c_str(), hardwarePrefix.c_str(), ultStatus.c_str(), paddingE.c_str());
         } else {
             fprintf(
                 stdout,
                 "\n"
                 "=====================\n"
-                "==   ULTs PASSED   ==\n"
-                "=====================\n");
+                "==   ULTs %s   ==\n"
+                "=====================\n",
+                ultStatus.c_str());
         }
 
         fprintf(
@@ -125,13 +136,14 @@ class CCustomEventListener : public ::testing::TestEventListener {
             "Tests failed:   %d\n"
             "Tests disabled: %d\n"
             " Time elapsed:  %d ms\n"
-            "=====================\n",
+            "%s=====================\n",
             testsRun,
             testsPassed,
             testsSkipped,
             testsFailed,
             testsDisabled,
-            timeElapsed);
+            timeElapsed,
+            paddingE.c_str());
 
         for (auto failure : testFailures)
             fprintf(
