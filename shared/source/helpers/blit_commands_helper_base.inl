@@ -106,7 +106,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const Vec3<size_t
     if (updateTimestampPacket) {
         timestampCmdSize += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
         if (profilingEnabled) {
-            timestampCmdSize += 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+            timestampCmdSize += getProfilingMmioCmdsSize();
         }
     }
 
@@ -460,4 +460,26 @@ void BlitCommandsHelper<GfxFamily>::appendExtraMemoryProperties(typename GfxFami
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendExtraMemoryProperties(typename GfxFamily::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::encodeProfilingStartMmios(LinearStream &cmdStream, const TagNodeBase &timestampPacketNode) {
+    auto timestampContextStartGpuAddress = TimestampPacketHelper::getContextStartGpuAddress(timestampPacketNode);
+    auto timestampGlobalStartAddress = TimestampPacketHelper::getGlobalStartGpuAddress(timestampPacketNode);
+
+    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timestampContextStartGpuAddress);
+    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, REG_GLOBAL_TIMESTAMP_LDW, timestampGlobalStartAddress);
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::encodeProfilingEndMmios(LinearStream &cmdStream, const TagNodeBase &timestampPacketNode) {
+    auto timestampContextEndGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(timestampPacketNode);
+    auto timestampGlobalEndAddress = TimestampPacketHelper::getGlobalEndGpuAddress(timestampPacketNode);
+
+    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timestampContextEndGpuAddress);
+    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, REG_GLOBAL_TIMESTAMP_LDW, timestampGlobalEndAddress);
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::getProfilingMmioCmdsSize() {
+    return 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+}
 } // namespace NEO

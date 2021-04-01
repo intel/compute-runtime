@@ -159,5 +159,9 @@ struct BlitCommandsHelper {
     static bool miArbCheckWaRequired();
     static bool preBlitCommandWARequired();
     static void appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd);
+
+    static void encodeProfilingStartMmios(LinearStream &cmdStream, const TagNodeBase &timestampPacketNode);
+    static void encodeProfilingEndMmios(LinearStream &cmdStream, const TagNodeBase &timestampPacketNode);
+    static size_t getProfilingMmioCmdsSize();
 };
 } // namespace NEO
