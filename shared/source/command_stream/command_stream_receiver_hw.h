@@ -155,6 +155,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool checkPlatformSupportsNewResourceImplicitFlush() const;
     bool checkPlatformSupportsGpuIdleImplicitFlush() const;
 
+    MOCKABLE_VIRTUAL size_t getTimestampPacketAllocatorAlignment() const;
+
     HeapDirtyState dshState;
     HeapDirtyState iohState;
     HeapDirtyState sshState;

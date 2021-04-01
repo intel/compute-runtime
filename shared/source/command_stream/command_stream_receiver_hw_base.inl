@@ -1282,10 +1282,15 @@ TagAllocatorBase *CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocato
         using TimestampPacketsT = TimestampPackets<typename GfxFamily::TimestampPacketType>;
 
         timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketsT>>(
-            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize * 4,
+            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), getTimestampPacketAllocatorAlignment(),
             sizeof(TimestampPacketsT), doNotReleaseNodes, osContext->getDeviceBitfield());
     }
     return timestampPacketAllocator.get();
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocatorAlignment() const {
+    return MemoryConstants::cacheLineSize * 4;
 }
 
 } // namespace NEO
