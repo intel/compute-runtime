@@ -34,6 +34,7 @@
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "pipe_control_args.h"
+#include "stream_properties.h"
 
 #include <limits>
 #include <thread>
@@ -421,14 +422,15 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uin
     auto &hwInfo = device->getHwInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto engineGroupType = hwHelper.getEngineGroupType(csr->getOsContext().getEngineType(), hwInfo);
-    NEO::PreambleHelper<GfxFamily>::programVFEState(&commandStream,
+    auto pVfeState = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(&commandStream, hwInfo, engineGroupType);
+    NEO::StreamProperties emptyProperties{};
+    NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState,
                                                     hwInfo,
                                                     perThreadScratchSpaceSize,
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
-                                                    engineGroupType,
                                                     NEO::AdditionalKernelExecInfo::NotApplicable,
-                                                    NEO::KernelExecutionType::NotApplicable);
+                                                    emptyProperties);
     csr->setMediaVFEStateDirty(false);
 }
 

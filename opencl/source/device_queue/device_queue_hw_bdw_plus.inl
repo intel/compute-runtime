@@ -11,6 +11,8 @@
 #include "opencl/source/device_queue/device_queue_hw_base.inl"
 #include "opencl/source/program/block_kernel_manager.h"
 
+#include "stream_properties.h"
+
 namespace NEO {
 
 template <typename GfxFamily>
@@ -130,9 +132,10 @@ void DeviceQueueHw<GfxFamily>::addMediaStateClearCmds() {
 
     addDcFlushToPipeControlWa(pipeControl);
 
-    PreambleHelper<GfxFamily>::programVFEState(&slbCS, device->getHardwareInfo(), 0u, 0, device->getSharedDeviceInfo().maxFrontEndThreads,
-                                               EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
-                                               KernelExecutionType::NotApplicable);
+    auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&slbCS, device->getHardwareInfo(), EngineGroupType::RenderCompute);
+    StreamProperties emptyProperties{};
+    PreambleHelper<GfxFamily>::programVfeState(pVfeState, device->getHardwareInfo(), 0u, 0, device->getSharedDeviceInfo().maxFrontEndThreads,
+                                               AdditionalKernelExecInfo::NotApplicable, emptyProperties);
 }
 
 template <typename GfxFamily>

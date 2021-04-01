@@ -12,6 +12,8 @@
 
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 
+#include "stream_properties.h"
+
 using namespace NEO;
 
 typedef PreambleFixture BdwSlm;
@@ -95,8 +97,10 @@ BDWTEST_F(PreambleVfeState, WhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef BDWFamily::PIPE_CONTROL PIPE_CONTROL;
 
     LinearStream &cs = linearStream;
-    PreambleHelper<BDWFamily>::programVFEState(&linearStream, *defaultHwInfo, 0u, 0, 168u, EngineGroupType::RenderCompute,
-                                               AdditionalKernelExecInfo::NotApplicable, KernelExecutionType::NotApplicable);
+    auto pVfeCmd = PreambleHelper<BDWFamily>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
+    StreamProperties emptyProperties{};
+    PreambleHelper<BDWFamily>::programVfeState(pVfeCmd, *defaultHwInfo, 0u, 0, 168u,
+                                               AdditionalKernelExecInfo::NotApplicable, emptyProperties);
 
     parseCommands<BDWFamily>(cs);
 

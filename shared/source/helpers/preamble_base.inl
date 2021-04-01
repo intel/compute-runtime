@@ -117,7 +117,7 @@ void PreambleHelper<GfxFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::appendProgramVFEState(const HardwareInfo &hwInfo, KernelExecutionType kernelExecutionType, uint32_t additionalKernelExecInfo, void *cmd) {}
+void PreambleHelper<GfxFamily>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, uint32_t additionalKernelExecInfo, void *cmd) {}
 
 template <typename GfxFamily>
 uint32_t PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize) {

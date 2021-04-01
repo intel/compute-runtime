@@ -10,6 +10,7 @@
 #include "shared/test/unit_test/preamble/preamble_fixture.h"
 
 #include "reg_configs_common.h"
+#include "stream_properties.h"
 
 using namespace NEO;
 
@@ -58,9 +59,11 @@ GEN11TEST_F(Gen11PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgramm
     typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    PreambleHelper<ICLFamily>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
-                                               EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
-                                               KernelExecutionType::NotApplicable);
+    auto pVfeCmd = PreambleHelper<ICLFamily>::getSpaceForVfeState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), EngineGroupType::RenderCompute);
+    StreamProperties emptyProperties{};
+    PreambleHelper<ICLFamily>::programVfeState(pVfeCmd, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
+                                               AdditionalKernelExecInfo::NotApplicable,
+                                               emptyProperties);
 
     parseCommands<ICLFamily>(cs);
 
@@ -78,9 +81,11 @@ GEN11TEST_F(Gen11PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammi
     typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
-    PreambleHelper<ICLFamily>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
-                                               EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
-                                               KernelExecutionType::NotApplicable);
+    auto pVfeCmd = PreambleHelper<ICLFamily>::getSpaceForVfeState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), EngineGroupType::RenderCompute);
+    StreamProperties emptyProperties{};
+    PreambleHelper<ICLFamily>::programVfeState(pVfeCmd, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
+                                               AdditionalKernelExecInfo::NotApplicable,
+                                               emptyProperties);
 
     parseCommands<ICLFamily>(cs);
 

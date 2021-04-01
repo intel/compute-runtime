@@ -18,6 +18,7 @@
 
 #include "test.h"
 
+#include "stream_properties.h"
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -223,9 +224,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorrect
     uint64_t addressToPatch = 0xC0DEC0DE;
     uint64_t expectedAddress = 0xC0DEC000;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::programVFEState(&preambleStream, *defaultHwInfo, 1024u, addressToPatch,
-                                                               10u, EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
-                                                               KernelExecutionType::NotApplicable);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::RenderCompute);
+    StreamProperties emptyProperties{};
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo, 1024u, addressToPatch,
+                                                10u, AdditionalKernelExecInfo::NotApplicable,
+                                                emptyProperties);
     EXPECT_GE(reinterpret_cast<uintptr_t>(pVfeCmd), reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()));
     EXPECT_LT(reinterpret_cast<uintptr_t>(pVfeCmd), reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()) + preambleStream.getUsed());
 
@@ -246,9 +249,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetForVfe
     FlatBatchBufferHelperHw<FamilyType> helper(*mockDevice->getExecutionEnvironment());
     uint64_t addressToPatch = 0xC0DEC0DE;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::programVFEState(&preambleStream, mockDevice->getHardwareInfo(), 1024u, addressToPatch,
-                                                               10u, EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
-                                                               KernelExecutionType::NotApplicable);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, mockDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
+    StreamProperties emptyProperties{};
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, mockDevice->getHardwareInfo(), 1024u, addressToPatch,
+                                                10u, AdditionalKernelExecInfo::NotApplicable,
+                                                emptyProperties);
 
     auto offset = PreambleHelper<FamilyType>::getScratchSpaceAddressOffsetForVfeState(&preambleStream, pVfeCmd);
     EXPECT_NE(0u, offset);

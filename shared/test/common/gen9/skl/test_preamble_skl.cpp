@@ -13,6 +13,8 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/preamble/preamble_fixture.h"
 
+#include "stream_properties.h"
+
 using namespace NEO;
 
 typedef PreambleFixture SklSlm;
@@ -107,9 +109,11 @@ GEN9TEST_F(PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsC
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
-                                                EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
-                                                KernelExecutionType::NotApplicable);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), EngineGroupType::RenderCompute);
+    StreamProperties emptyProperties{};
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
+                                                AdditionalKernelExecInfo::NotApplicable,
+                                                emptyProperties);
 
     parseCommands<FamilyType>(cs);
 
@@ -127,9 +131,11 @@ GEN9TEST_F(PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammingIsCo
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
-                                                EngineGroupType::RenderCompute, AdditionalKernelExecInfo::NotApplicable,
-                                                KernelExecutionType::NotApplicable);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), EngineGroupType::RenderCompute);
+    StreamProperties emptyProperties{};
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pPlatform->getClDevice(0)->getHardwareInfo(), 0u, 0, 168u,
+                                                AdditionalKernelExecInfo::NotApplicable,
+                                                emptyProperties);
 
     parseCommands<FamilyType>(cs);
 

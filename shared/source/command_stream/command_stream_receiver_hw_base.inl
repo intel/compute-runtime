@@ -33,6 +33,7 @@
 
 #include "command_stream_receiver_hw_ext.inl"
 #include "pipe_control_args.h"
+#include "stream_properties.h"
 
 namespace NEO {
 
@@ -922,9 +923,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         auto &hwInfo = peekHwInfo();
         auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto engineGroupType = hwHelper.getEngineGroupType(getOsContext().getEngineType(), hwInfo);
-        auto pVfeState = PreambleHelper<GfxFamily>::programVFEState(
-            &csr, hwInfo, requiredScratchSize, getScratchPatchAddress(),
-            maxFrontEndThreads, engineGroupType, lastAdditionalKernelExecInfo, lastKernelExecutionType);
+        auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
+        StreamProperties streamProperties{};
+        streamProperties.setCooperativeKernelProperties(lastKernelExecutionType == KernelExecutionType::Concurrent);
+        PreambleHelper<GfxFamily>::programVfeState(
+            pVfeState, hwInfo, requiredScratchSize, getScratchPatchAddress(),
+            maxFrontEndThreads, lastAdditionalKernelExecInfo, streamProperties);
         auto commandOffset = PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(&csr, pVfeState);
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
