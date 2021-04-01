@@ -203,11 +203,11 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleFirmwareLibraryCallFailureWhe
     zes_firmware_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[0], &properties));
     EXPECT_STREQ(mockSupportedFwTypes[0].c_str(), properties.name);
-    EXPECT_STREQ("Unknown", properties.version);
+    EXPECT_STREQ("unknown", properties.version);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[1], &properties));
     EXPECT_STREQ(mockSupportedFwTypes[1].c_str(), properties.name);
-    EXPECT_STREQ("Unknown", properties.version);
+    EXPECT_STREQ("unknown", properties.version);
 }
 
 class ZesFirmwareUninitializedFixture : public SysmanDeviceFixture {

@@ -14,7 +14,7 @@ namespace L0 {
 namespace ult {
 
 const std::string vendorIntel("Intel(R) Corporation");
-const std::string unknown("Unknown");
+const std::string unknown("unknown");
 const std::string intelPciId("0x8086");
 const std::string deviceDir("device");
 const std::string vendorFile("device/vendor");

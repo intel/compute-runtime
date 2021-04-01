@@ -8,7 +8,7 @@
 #pragma once
 #include <string>
 const std::string vendorIntel("Intel(R) Corporation");
-const std::string unknown("Unknown");
+const std::string unknown("unknown");
 const std::string intelPciId("0x8086");
 constexpr uint32_t MbpsToBytesPerSecond = 125000;
 constexpr double milliVoltsFactor = 1000.0;
