@@ -20,7 +20,7 @@ extern std::atomic<uint32_t> pauseCounter;
 } // namespace CpuIntrinsicsTests
 
 TEST(WaitTest, givenDefaultSettingsWhenNoPollAddressProvidedThenPauseDefaultTimeAndReturnFalse) {
-    EXPECT_EQ(64u, WaitUtils::defaultWaitCount);
+    EXPECT_EQ(1u, WaitUtils::defaultWaitCount);
 
     WaitUtils::init();
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);

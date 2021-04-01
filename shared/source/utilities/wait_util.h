@@ -15,7 +15,7 @@ namespace NEO {
 
 namespace WaitUtils {
 
-constexpr uint32_t defaultWaitCount = 64u;
+constexpr uint32_t defaultWaitCount = 1u;
 extern uint32_t waitCount;
 
 inline bool waitFunction(volatile uint32_t *pollAddress, uint32_t expectedValue) {
