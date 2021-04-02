@@ -76,15 +76,14 @@ void DebuggerL0::printTrackedAddresses(uint32_t contextId) {
     auto memory = perContextSbaAllocations[contextId]->getUnderlyingBuffer();
     auto sba = reinterpret_cast<SbaTrackedAddresses *>(memory);
 
-    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
-                       "Debugger: SBA ssh = %" SCNx64
-                       " gsba = %" SCNx64
-                       " dsba =  %" SCNx64
-                       " ioba =  %" SCNx64
-                       " iba =  %" SCNx64
-                       " bsurfsba =  %" SCNx64 "\n",
-                       sba->SurfaceStateBaseAddress, sba->GeneralStateBaseAddress, sba->DynamicStateBaseAddress,
-                       sba->IndirectObjectBaseAddress, sba->InstructionBaseAddress, sba->BindlessSurfaceStateBaseAddress);
+    PRINT_DEBUGGER_INFO_LOG("Debugger: SBA ssh = %" SCNx64
+                            " gsba = %" SCNx64
+                            " dsba =  %" SCNx64
+                            " ioba =  %" SCNx64
+                            " iba =  %" SCNx64
+                            " bsurfsba =  %" SCNx64 "\n",
+                            sba->SurfaceStateBaseAddress, sba->GeneralStateBaseAddress, sba->DynamicStateBaseAddress,
+                            sba->IndirectObjectBaseAddress, sba->InstructionBaseAddress, sba->BindlessSurfaceStateBaseAddress);
 }
 
 DebuggerL0 ::~DebuggerL0() {

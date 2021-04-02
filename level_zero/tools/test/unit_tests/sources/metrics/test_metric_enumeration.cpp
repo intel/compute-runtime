@@ -2081,7 +2081,7 @@ class MetricEnumerationTestMetricTypes : public MetricEnumerationTest,
     MetricEnumerationTestMetricTypes() {
         metricType = GetParam();
     }
-    ~MetricEnumerationTestMetricTypes() {}
+    ~MetricEnumerationTestMetricTypes() override {}
 };
 
 TEST_P(MetricEnumerationTestMetricTypes, givenValidMetricTypesWhenSetAndGetIsSameThenReturnSuccess) {
@@ -2203,7 +2203,7 @@ class MetricEnumerationTestInformationTypes : public MetricEnumerationTest,
         validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_SAMPLE_PHASE] = ZET_METRIC_TYPE_RAW;
         validate[MetricsDiscovery::TInformationType::INFORMATION_TYPE_GPU_NODE] = ZET_METRIC_TYPE_RAW;
     }
-    ~MetricEnumerationTestInformationTypes() {}
+    ~MetricEnumerationTestInformationTypes() override {}
 };
 
 TEST_P(MetricEnumerationTestInformationTypes, givenValidInformationTypesWhenSetAndGetIsSameThenReturnSuccess) {

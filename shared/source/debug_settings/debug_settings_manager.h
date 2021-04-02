@@ -133,6 +133,19 @@ class DebugSettingsManager {
 
 extern DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
 
+#define PRINT_DEBUGGER_LOG(OUT, STR, ...) \
+    NEO::printDebugString(true, OUT, STR, __VA_ARGS__);
+
+#define PRINT_DEBUGGER_INFO_LOG(STR, ...)                                                                         \
+    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) { \
+        PRINT_DEBUGGER_LOG(stdout, "\nINFO: " STR, __VA_ARGS__)                                                   \
+    }
+
+#define PRINT_DEBUGGER_ERROR_LOG(STR, ...)                                                                         \
+    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR) { \
+        PRINT_DEBUGGER_LOG(stderr, "\nERROR: " STR, __VA_ARGS__)                                                   \
+    }
+
 template <DebugFunctionalityLevel DebugLevel>
 const char *DebugSettingsManager<DebugLevel>::settingsDumpFileName = "igdrcl_dumped.config";
 }; // namespace NEO
