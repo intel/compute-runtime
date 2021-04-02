@@ -147,7 +147,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::KernelNameTag>(
             *commandContainer.getCommandStream(),
             *neoDevice,
-            kernel->getKernelDescriptor().kernelMetadata.kernelName.c_str());
+            kernel->getKernelDescriptor().kernelMetadata.kernelName.c_str(), 0u);
     }
 
     updateStreamProperties(*kernel, false);

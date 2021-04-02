@@ -17,7 +17,9 @@ namespace SWTags {
 enum class OpCode : uint32_t {
     Unknown,
     KernelName,
-    PipeControlReason
+    PipeControlReason,
+    CallNameBegin,
+    CallNameEnd
 };
 
 enum class Component : uint32_t {
@@ -84,7 +86,7 @@ struct BaseTag {
 
 struct KernelNameTag : public BaseTag {
   public:
-    KernelNameTag(const char *name)
+    KernelNameTag(const char *name, uint32_t callId)
         : BaseTag(OpCode::KernelName, sizeof(KernelNameTag)) {
         strcpy_s(kernelName, KENEL_NAME_STR_LENGTH, name);
     }
@@ -98,7 +100,7 @@ struct KernelNameTag : public BaseTag {
 
 struct PipeControlReasonTag : public BaseTag {
   public:
-    PipeControlReasonTag(const char *reason)
+    PipeControlReasonTag(const char *reason, uint32_t callId)
         : BaseTag(OpCode::PipeControlReason, sizeof(PipeControlReasonTag)) {
         strcpy_s(reasonString, REASON_STR_LENGTH, reason);
     }
@@ -108,6 +110,38 @@ struct PipeControlReasonTag : public BaseTag {
   private:
     static constexpr unsigned int REASON_STR_LENGTH = sizeof(uint32_t) * 32; // Dword aligned
     char reasonString[REASON_STR_LENGTH] = {};
+};
+
+struct CallNameBeginTag : public BaseTag {
+  public:
+    CallNameBeginTag(const char *name, uint32_t callId)
+        : BaseTag(OpCode::CallNameBegin, sizeof(CallNameBeginTag)) {
+        strcpy_s(zeCallName, ZE_CALL_NAME_STR_LENGTH, name);
+        snprintf(zeCallId, sizeof(uint32_t), "%x", callId);
+    }
+
+    static void bxml(std::ostream &os);
+
+  private:
+    static constexpr unsigned int ZE_CALL_NAME_STR_LENGTH = sizeof(uint32_t) * 32; // Dword aligned
+    char zeCallName[ZE_CALL_NAME_STR_LENGTH] = {};
+    char zeCallId[ZE_CALL_NAME_STR_LENGTH] = {};
+};
+
+struct CallNameEndTag : public BaseTag {
+  public:
+    CallNameEndTag(const char *name, uint32_t callId)
+        : BaseTag(OpCode::CallNameEnd, sizeof(CallNameEndTag)) {
+        strcpy_s(zeCallName, ZE_CALL_NAME_STR_LENGTH, name);
+        snprintf(zeCallId, sizeof(uint32_t), "%x", callId);
+    }
+
+    static void bxml(std::ostream &os);
+
+  private:
+    static constexpr unsigned int ZE_CALL_NAME_STR_LENGTH = sizeof(uint32_t) * 32; // Dword aligned
+    char zeCallName[ZE_CALL_NAME_STR_LENGTH] = {};
+    char zeCallId[ZE_CALL_NAME_STR_LENGTH] = {};
 };
 
 struct SWTagBXML {

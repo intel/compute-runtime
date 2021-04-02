@@ -138,7 +138,8 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(GraphicsAlloc
     {GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, "DBSBATRB"},
     {GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA, "DBMDLARE"},
     {GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY, "USHRDMEM"},
-    {GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, "GPUTSDBF"}};
+    {GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, "GPUTSDBF"},
+    {GraphicsAllocation::AllocationType::SW_TAG_BUFFER, "SWTAGBF"}};
 class AllocationTypeTagString : public ::testing::TestWithParam<AllocationTypeTagTestCase> {};
 
 TEST_P(AllocationTypeTagString, givenGraphicsAllocationTypeWhenCopyTagToStorageInfoThenCorrectTagIsReturned) {

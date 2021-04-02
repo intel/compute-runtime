@@ -27,6 +27,7 @@
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/program/sync_buffer_handler.inl"
+#include "shared/source/utilities/software_tags_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -174,13 +175,34 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
                                                                      uint32_t numWaitEvents,
                                                                      ze_event_handle_t *phWaitEvents) {
 
+    NEO::Device *neoDevice = device->getNEODevice();
+    uint32_t callId = 0;
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendLaunchKernel",
+            ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
+        callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
+    }
+
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents);
     if (ret) {
         return ret;
     }
 
-    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions,
-                                        hEvent, false, false, false);
+    auto res = appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions,
+                                            hEvent, false, false, false);
+
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendLaunchKernel",
+            callId);
+    }
+
+    return res;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -265,6 +287,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
 
     uint32_t packetsToReset = 1;
 
+    NEO::Device *neoDevice = device->getNEODevice();
+    uint32_t callId = 0;
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendEventReset",
+            ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
+        callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
+    }
+
     if (event->isEventTimestampFlagSet()) {
         baseAddr += event->getContextEndOffset();
         packetsToReset = EventPacketsCount::eventPackets;
@@ -297,6 +330,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
             baseAddr += event->getSinglePacketSize();
         }
     }
+
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendEventReset",
+            callId);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -967,6 +1009,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     uintptr_t start = reinterpret_cast<uintptr_t>(dstptr);
     bool isStateless = false;
+
+    NEO::Device *neoDevice = device->getNEODevice();
+    uint32_t callId = 0;
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendMemoryCopy",
+            ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
+        callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
+    }
+
     size_t middleAlignment = MemoryConstants::cacheLineSize;
     size_t middleElSize = sizeof(uint32_t) * 4;
 
@@ -1061,6 +1115,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
     }
 
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendMemoryCopy",
+            callId);
+    }
+
     return ret;
 }
 
@@ -1076,6 +1138,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                                                          ze_event_handle_t hSignalEvent,
                                                                          uint32_t numWaitEvents,
                                                                          ze_event_handle_t *phWaitEvents) {
+
+    NEO::Device *neoDevice = device->getNEODevice();
+    uint32_t callId = 0;
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendMemoryCopyRegion",
+            ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
+        callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
+    }
 
     size_t dstSize = 0;
     size_t srcSize = 0;
@@ -1134,6 +1207,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
             NEO::PipeControlArgs args(true);
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
         }
+    }
+
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendMemoryCopyRegion",
+            callId);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -1273,6 +1354,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents) {
     bool isStateless = false;
+
+    NEO::Device *neoDevice = device->getNEODevice();
+    uint32_t callId = 0;
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendMemoryFill",
+            ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
+        callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
+    }
 
     if (isCopyOnly()) {
         return appendBlitFill(ptr, pattern, patternSize, size, hSignalEvent, numWaitEvents, phWaitEvents);
@@ -1454,6 +1546,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             NEO::PipeControlArgs args(true);
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
         }
+    }
+
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendMemoryFill",
+            callId);
     }
 
     return res;
@@ -1647,6 +1747,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
     uint64_t baseAddr = event->getGpuAddress(this->device);
+    NEO::Device *neoDevice = device->getNEODevice();
+    uint32_t callId = 0;
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendSignalEvent",
+            ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
+        callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
+    }
     size_t eventSignalOffset = 0;
     if (event->isEventTimestampFlagSet()) {
         eventSignalOffset = event->getContextEndOffset();
@@ -1679,6 +1789,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
             *buffer = storeDataImmediate;
         }
     }
+
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendSignalEvent",
+            callId);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1689,6 +1808,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    NEO::Device *neoDevice = device->getNEODevice();
+    uint32_t callId = 0;
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendWaitOnEvents",
+            ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
+        callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
+    }
 
     uint64_t gpuAddr = 0;
     constexpr uint32_t eventStateClear = static_cast<uint32_t>(-1);
@@ -1728,6 +1858,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
             gpuAddr += event->getSinglePacketSize();
         }
+    }
+
+    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
+            *commandContainer.getCommandStream(),
+            *neoDevice,
+            "zeCommandListAppendWaitOnEvents",
+            callId);
     }
 
     return ZE_RESULT_SUCCESS;

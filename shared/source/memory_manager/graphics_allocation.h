@@ -98,6 +98,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         UNIFIED_SHARED_MEMORY,
         WORK_PARTITION_SURFACE,
         GPU_TIMESTAMP_DEVICE_BUFFER,
+        SW_TAG_BUFFER,
         COUNT
     };
 

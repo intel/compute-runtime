@@ -319,7 +319,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                 neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::PipeControlReasonTag>(
                     child,
                     *neoDevice,
-                    "ComandList Preemption Mode update");
+                    "ComandList Preemption Mode update", 0u);
             }
 
             if (preemptionCmdSyncProgramming) {

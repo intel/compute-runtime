@@ -16,6 +16,7 @@
 #include "test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -49,7 +50,7 @@ struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
     DebugManagerStateRestore dbgRestorer;
 };
 
-HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchKernelThenTagIsInserted) {
+HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchKernelThenTagsAreInserted) {
     using MI_NOOP = typename FamilyType::MI_NOOP;
 
     createKernel();
@@ -69,13 +70,382 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchK
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
     auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
-    ASSERT_LE(2u, noops.size());
+    EXPECT_EQ(6u, noops.size());
 
     bool tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
 
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
         if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::KernelName) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+
+    tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+
+    tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendEventResetIsCalledThenTagsAreInserted) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    auto usedSpaceBefore = cmdStream->getUsed();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t hEvent = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &hEvent);
+
+    auto result = commandList->appendEventReset(hEvent);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
+    uint32_t expecteNumberOfNops = 4u;
+    EXPECT_EQ(expecteNumberOfNops, noops.size());
+
+    bool tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+
+    tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+
+    Event *event = Event::fromHandle(hEvent);
+    event->destroy();
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendSignalEventThenThenTagsAreInserted) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    auto usedSpaceBefore = cmdStream->getUsed();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t hEvent = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &hEvent);
+
+    auto result = commandList->appendSignalEvent(hEvent);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
+    uint32_t expecteNumberOfNops = 4u;
+    EXPECT_EQ(expecteNumberOfNops, noops.size());
+
+    bool tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+
+    tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+
+    Event *event = Event::fromHandle(hEvent);
+    event->destroy();
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnEventsThenThenTagsAreInserted) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    auto usedSpaceBefore = cmdStream->getUsed();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t hEvent = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &hEvent);
+
+    auto result = commandList->appendWaitOnEvents(1, &hEvent);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
+    uint32_t expecteNumberOfNops = 4u;
+    EXPECT_EQ(expecteNumberOfNops, noops.size());
+
+    bool tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+
+    tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+
+    Event *event = Event::fromHandle(hEvent);
+    event->destroy();
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryCopyThenThenTagsAreInserted) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    auto usedSpaceBefore = cmdStream->getUsed();
+
+    void *srcBuffer = reinterpret_cast<void *>(0x0F000000);
+    void *dstBuffer = reinterpret_cast<void *>(0x0FF00000);
+    size_t size = 1024;
+    auto result = commandList->appendMemoryCopy(dstBuffer, srcBuffer, size, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
+    uint32_t expecteNumberOfNops = 6u;
+    EXPECT_EQ(expecteNumberOfNops, noops.size());
+
+    bool tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+
+    tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryCopyRegionThenThenTagsAreInserted) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    auto usedSpaceBefore = cmdStream->getUsed();
+
+    void *srcBuffer = reinterpret_cast<void *>(0x0F000000);
+    void *dstBuffer = reinterpret_cast<void *>(0x0FF00000);
+    uint32_t width = 16;
+    uint32_t height = 16;
+    ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
+    ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
+    ze_result_t result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                                             srcBuffer, &sr, width, 0, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = cmdStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
+    uint32_t expecteNumberOfNops = 10u;
+    EXPECT_EQ(expecteNumberOfNops, noops.size());
+
+    bool tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+            noop->getIdentificationNumberRegisterWriteEnable() == true &&
+            ++it != noops.end()) {
+
+            noop = genCmdCast<MI_NOOP *>(*(*it));
+            if (noop->getIdentificationNumber() & 1 << 21 &&
+                noop->getIdentificationNumberRegisterWriteEnable() == false) {
+                tagFound = true;
+            }
+        }
+    }
+    EXPECT_TRUE(tagFound);
+
+    tagFound = false;
+    for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
+        auto noop = genCmdCast<MI_NOOP *>(*(*it));
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 

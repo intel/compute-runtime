@@ -116,6 +116,8 @@ const char *AppResourceHelper::getResourceTagStr(GraphicsAllocation::AllocationT
         return "WRPRTSRF";
     case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
         return "GPUTSDBF";
+    case GraphicsAllocation::AllocationType::SW_TAG_BUFFER:
+        return "SWTAGBF";
     default:
         return "NOTFOUND";
     }

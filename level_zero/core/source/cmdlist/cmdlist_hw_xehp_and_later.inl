@@ -127,6 +127,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         NEO::PipeControlArgs args = {};
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
     }
+    NEO::Device *neoDevice = device->getNEODevice();
 
     const auto kernel = Kernel::fromHandle(hKernel);
     UNRECOVERABLE_IF(kernel == nullptr);
@@ -180,13 +181,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         this->indirectAllocationsAllowed = true;
     }
 
-    NEO::Device *neoDevice = device->getNEODevice();
-
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::KernelNameTag>(
             *commandContainer.getCommandStream(),
             *neoDevice,
-            kernelDescriptor.kernelMetadata.kernelName.c_str());
+            kernelDescriptor.kernelMetadata.kernelName.c_str(), 0u);
     }
 
     if (!containsAnyKernel) {

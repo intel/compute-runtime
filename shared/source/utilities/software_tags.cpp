@@ -103,7 +103,7 @@ void KernelNameTag::bxml(std::ostream &os) {
     BaseTag::bxml(os, OpCode::KernelName, sizeof(KernelNameTag), "KERNEL_NAME");
 
     unsigned int stringDWORDSize = KENEL_NAME_STR_LENGTH / sizeof(uint32_t);
-    os << "  <Dword Name=\"2.." << 2 + stringDWORDSize << "\">\n";
+    os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"KernelName\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Name of the kernel.</Description>\n";
     os << "    </BitField>\n";
@@ -119,9 +119,51 @@ void PipeControlReasonTag::bxml(std::ostream &os) {
     BaseTag::bxml(os, OpCode::PipeControlReason, sizeof(PipeControlReasonTag), "PIPE_CONTROL_REASON");
 
     unsigned int stringDWORDSize = REASON_STR_LENGTH / sizeof(uint32_t);
-    os << "  <Dword Name=\"2.." << 2 + stringDWORDSize << "\">\n";
+    os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"PipeControlReason\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Reason of the PIPE_CONTROL.</Description>\n";
+    os << "    </BitField>\n";
+    os << "  </Dword>\n";
+
+    os << "</Instruction>\n";
+}
+
+void CallNameBeginTag::bxml(std::ostream &os) {
+    os << "<Instruction Name=\"CallNameBegin\" Source=\"Driver\" Project=\"All\" LengthBias=\"2\">\n";
+    os << "  <Description>ZE Call where the GPU originated from.</Description>\n";
+
+    BaseTag::bxml(os, OpCode::CallNameBegin, sizeof(CallNameBeginTag), "ZE_CALL_NAME_BEGIN");
+
+    unsigned int stringDWORDSize = ZE_CALL_NAME_STR_LENGTH / sizeof(uint32_t);
+    os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
+    os << "    <BitField Name=\"CallNameBegin\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
+    os << "      <Description>Entry of ZE Call where the GPU originated from.</Description>\n";
+    os << "    </BitField>\n";
+    os << "  </Dword>\n";
+    os << "  <Dword Name=\"" << 2 + stringDWORDSize << ".." << 2 + 2 * stringDWORDSize - 1 << "\">\n";
+    os << "    <BitField Name=\"SWTagId\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
+    os << "      <Description>Exit of ZE Call where the GPU originated from.</Description>\n";
+    os << "    </BitField>\n";
+    os << "  </Dword>\n";
+
+    os << "</Instruction>\n";
+}
+
+void CallNameEndTag::bxml(std::ostream &os) {
+    os << "<Instruction Name=\"CallNameEnd\" Source=\"Driver\" Project=\"All\" LengthBias=\"2\">\n";
+    os << "  <Description>ZE Call where the GPU originated from.</Description>\n";
+
+    BaseTag::bxml(os, OpCode::CallNameEnd, sizeof(CallNameEndTag), "ZE_CALL_NAME_END");
+
+    unsigned int stringDWORDSize = ZE_CALL_NAME_STR_LENGTH / sizeof(uint32_t);
+    os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
+    os << "    <BitField Name=\"CallNameEnd\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
+    os << "      <Description>Exit of ZE Call where the GPU originated from.</Description>\n";
+    os << "    </BitField>\n";
+    os << "  </Dword>\n";
+    os << "  <Dword Name=\"" << 2 + stringDWORDSize << ".." << 2 + 2 * stringDWORDSize - 1 << "\">\n";
+    os << "    <BitField Name=\"SWTagId\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
+    os << "      <Description>Exit of ZE Call where the GPU originated from.</Description>\n";
     os << "    </BitField>\n";
     os << "  </Dword>\n";
 
@@ -139,6 +181,8 @@ SWTagBXML::SWTagBXML() {
 
     KernelNameTag::bxml(ss);
     PipeControlReasonTag::bxml(ss);
+    CallNameBeginTag::bxml(ss);
+    CallNameEndTag::bxml(ss);
 
     ss << "</BSpec>";
 

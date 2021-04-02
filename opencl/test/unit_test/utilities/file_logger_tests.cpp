@@ -893,7 +893,8 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::WRITE_COMBINED, "WRITE_COMBINED"},
     {GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, "DEBUG_CONTEXT_SAVE_AREA"},
     {GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, "DEBUG_SBA_TRACKING_BUFFER"},
-    {GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA, "DEBUG_MODULE_AREA"}};
+    {GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA, "DEBUG_MODULE_AREA"},
+    {GraphicsAllocation::AllocationType::SW_TAG_BUFFER, "SW_TAG_BUFFER"}};
 
 class AllocationTypeLogging : public ::testing::TestWithParam<AllocationTypeTestCase> {};
 

@@ -31,7 +31,7 @@ void SWTagsManager::allocateBXMLHeap(Device &device) {
     const AllocationProperties properties{
         device.getRootDeviceIndex(),
         heapSizeInBytes,
-        GraphicsAllocation::AllocationType::LINEAR_STREAM,
+        GraphicsAllocation::AllocationType::SW_TAG_BUFFER,
         device.getDeviceBitfield()};
     bxmlHeap = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
@@ -44,7 +44,7 @@ void SWTagsManager::allocateSWTagHeap(Device &device) {
     const AllocationProperties properties{
         device.getRootDeviceIndex(),
         MAX_TAG_HEAP_SIZE,
-        GraphicsAllocation::AllocationType::LINEAR_STREAM,
+        GraphicsAllocation::AllocationType::SW_TAG_BUFFER,
         device.getDeviceBitfield()};
     tagHeap = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 

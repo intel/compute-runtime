@@ -345,6 +345,8 @@ const char *FileLogger<DebugLevel>::getAllocationTypeString(GraphicsAllocation c
         return "SEMAPHORE_BUFFER";
     case GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY:
         return "UNIFIED_SHARED_MEMORY";
+    case GraphicsAllocation::AllocationType::SW_TAG_BUFFER:
+        return "SW_TAG_BUFFER";
     default:
         return "ILLEGAL_VALUE";
     }

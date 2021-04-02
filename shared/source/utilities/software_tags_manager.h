@@ -37,8 +37,10 @@ class SWTagsManager {
     template <typename GfxFamily>
     static size_t estimateSpaceForSWTags();
 
-    static const unsigned int MAX_TAG_COUNT = 20;
-    static const unsigned int MAX_TAG_HEAP_SIZE = 1024;
+    static const unsigned int MAX_TAG_COUNT = 200;
+    static const unsigned int MAX_TAG_HEAP_SIZE = 16384;
+    unsigned int currentCallCount = 0;
+    unsigned int getCurrentHeapOffset() { return currentHeapOffset; }
 
   private:
     void allocateBXMLHeap(Device &device);
@@ -88,7 +90,7 @@ void SWTagsManager::insertTag(LinearStream &cmdStream, Device &device, Params...
 
     unsigned int tagSize = sizeof(Tag);
 
-    if (currentTagCount >= MAX_TAG_COUNT || currentHeapOffset + tagSize > MAX_TAG_HEAP_SIZE) {
+    if (currentTagCount >= MAX_TAG_COUNT || getCurrentHeapOffset() + tagSize > MAX_TAG_HEAP_SIZE) {
         return;
     }
     ++currentTagCount;
