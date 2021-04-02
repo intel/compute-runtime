@@ -236,7 +236,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PreferCopyEngineForCopyBufferToBuffer, -1, "-1: 
 DECLARE_DEBUG_VARIABLE(int64_t, ForceSystemMemoryPlacement, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force system memory placement")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceNonSystemMemoryPlacement, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force non-system memory placement")
 DECLARE_DEBUG_VARIABLE(int64_t, DisableIndirectAccess, -1, "0: default,  0: Use indirect access settings provided by application, 1: Disable indirect access and ignore settings provided by application")
-DECLARE_DEBUG_VARIABLE(int32_t, UseVmBind, 0, "Use new residency model on Linux (requires kernel support), -1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, UseVmBind, -1, "Use new residency model on Linux (requires kernel support), -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, PassBoundBOToExec, -1, "Pass bound BOs to exec call to keep dependencies")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStaticPartitioning, -1, "Divide workload into partitions during dispatch, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, UpdateTaskCountFromWait, -1, " Do not update task count after each enqueue, but send update request while wait, -1: default(disabled), 0: disabled, 1: enabled")
