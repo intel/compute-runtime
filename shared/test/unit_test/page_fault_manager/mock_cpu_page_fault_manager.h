@@ -14,8 +14,8 @@ using namespace NEO;
 class MockPageFaultManager : public PageFaultManager {
   public:
     using PageFaultManager::gpuDomainHandler;
+    using PageFaultManager::handleGpuDomainTransferForAubAndTbx;
     using PageFaultManager::handleGpuDomainTransferForHw;
-    using PageFaultManager::handleGpuDomainTransferForTbx;
     using PageFaultManager::memoryData;
     using PageFaultManager::PageFaultData;
     using PageFaultManager::PageFaultManager;
@@ -59,8 +59,8 @@ class MockPageFaultManager : public PageFaultManager {
         return reinterpret_cast<void *>(PageFaultManager::handleGpuDomainTransferForHw);
     }
 
-    void *getTbxHandlerAddress() {
-        return reinterpret_cast<void *>(PageFaultManager::handleGpuDomainTransferForTbx);
+    void *getAubAndTbxHandlerAddress() {
+        return reinterpret_cast<void *>(PageFaultManager::handleGpuDomainTransferForAubAndTbx);
     }
 
     int allowMemoryAccessCalled = 0;

@@ -95,7 +95,7 @@ void PageFaultManager::handleGpuDomainTransferForHw(PageFaultManager *pageFaultH
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
 }
 
-void PageFaultManager::handleGpuDomainTransferForTbx(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
+void PageFaultManager::handleGpuDomainTransferForAubAndTbx(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
 
     if (pageFaultData.domain == AllocationDomain::Gpu) {
@@ -105,9 +105,10 @@ void PageFaultManager::handleGpuDomainTransferForTbx(PageFaultManager *pageFault
 }
 
 void PageFaultManager::selectGpuDomainHandler() {
-    if (DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_TBX ||
+    if (DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_AUB ||
+        DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_TBX ||
         DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_TBX_WITH_AUB) {
-        this->gpuDomainHandler = &PageFaultManager::handleGpuDomainTransferForTbx;
+        this->gpuDomainHandler = &PageFaultManager::handleGpuDomainTransferForAubAndTbx;
     }
 }
 

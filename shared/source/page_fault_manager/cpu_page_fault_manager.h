@@ -56,7 +56,7 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager);
 
     static void handleGpuDomainTransferForHw(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
-    static void handleGpuDomainTransferForTbx(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
+    static void handleGpuDomainTransferForAubAndTbx(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
     void selectGpuDomainHandler();
 
     decltype(&handleGpuDomainTransferForHw) gpuDomainHandler = &handleGpuDomainTransferForHw;
