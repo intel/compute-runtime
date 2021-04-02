@@ -98,7 +98,6 @@ struct EventImp : public Event {
     ze_result_t hostEventSetValue(uint32_t eventValue);
     ze_result_t hostEventSetValueTimestamps(uint32_t eventVal);
     void assignTimestampData(void *address);
-    void makeAllocationResident();
 };
 
 struct EventPool : _ze_event_pool_handle_t {
