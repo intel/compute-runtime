@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/ult_hw_config.inl"
@@ -532,6 +533,15 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
     std::string errStr = ::testing::internal::GetCapturedStderr();
     EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("INFO: Device doesn't support GEM Virtual Memory")));
     ::testing::internal::GetCapturedStdout();
+}
+
+TEST(SysCalls, WhenSysCallsPollCalledThenCallIsRedirectedToOs) {
+    struct pollfd pollFd;
+    pollFd.fd = 0;
+    pollFd.events = 0;
+
+    auto result = NEO::SysCalls::poll(&pollFd, 1, 0);
+    EXPECT_EQ(0, result);
 }
 
 int main(int argc, char **argv) {

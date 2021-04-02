@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
 
@@ -23,11 +24,15 @@ class OsInterfaceWithDebugAttach : public NEO::OSInterface {
 };
 
 struct DebugSessionMock : public L0::DebugSession {
-    DebugSessionMock(const zet_debug_config_t &config, L0::Device *device) : DebugSession(config, device){};
+    DebugSessionMock(const zet_debug_config_t &config, L0::Device *device) : DebugSession(config, device), config(config){};
     bool closeConnection() override { return true; }
     ze_result_t initialize() override {
+        if (config.pid == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
         return ZE_RESULT_SUCCESS;
     }
+    zet_debug_config_t config;
 };
 
 } // namespace ult

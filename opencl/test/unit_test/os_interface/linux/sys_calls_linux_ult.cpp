@@ -15,6 +15,7 @@
 #include <cstring>
 #include <dlfcn.h>
 #include <iostream>
+#include <poll.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -118,5 +119,10 @@ int getDevicePath(int deviceFd, char *buf, size_t &bufSize) {
 
     return 0;
 }
+
+int poll(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) {
+    return 0;
+}
+
 } // namespace SysCalls
 } // namespace NEO

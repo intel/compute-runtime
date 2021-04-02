@@ -31,6 +31,7 @@ add_executable(${TARGET_NAME}
                ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.h
                ${L0_CORE_ENABLERS}
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
+               ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp
 )
 

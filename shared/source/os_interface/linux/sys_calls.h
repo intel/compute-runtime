@@ -6,8 +6,8 @@
  */
 
 #pragma once
-
 #include <iostream>
+#include <poll.h>
 
 namespace NEO {
 namespace SysCalls {
@@ -18,5 +18,6 @@ int ioctl(int fileDescriptor, unsigned long int request, void *arg);
 int getDevicePath(int deviceFd, char *buf, size_t &bufSize);
 int access(const char *pathname, int mode);
 int readlink(const char *path, char *buf, size_t bufsize);
+int poll(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout);
 } // namespace SysCalls
 } // namespace NEO
