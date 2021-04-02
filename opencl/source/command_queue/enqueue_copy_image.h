@@ -33,7 +33,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     cl_event *event) {
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
                                                                             this->getClDevice());
-    BuiltInOwnershipWrapper builtInLock(builder);
+    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface srcImgSurf(srcImage);
     MemObjSurface dstImgSurf(dstImage);

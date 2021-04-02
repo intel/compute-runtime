@@ -118,10 +118,10 @@ class BuiltInDispatchBuilderOp {
 class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {
   public:
     BuiltInOwnershipWrapper() = default;
-    BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder);
+    BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
     ~BuiltInOwnershipWrapper();
 
-    void takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder);
+    void takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
 
   protected:
     BuiltinDispatchInfoBuilder *builder = nullptr;

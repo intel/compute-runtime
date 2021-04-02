@@ -80,7 +80,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
 
         if (AuxTranslationMode::Builtin == auxTranslationMode) {
             auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getClDevice());
-            builtInLock.takeOwnership(builder);
+            builtInLock.takeOwnership(builder, this->context);
 
             dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::AuxToNonAux);
         }
@@ -1175,7 +1175,7 @@ void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dis
     } else {
         auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInOperation,
                                                                                 this->getClDevice());
-        BuiltInOwnershipWrapper builtInLock(builder);
+        BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
         builder.buildDispatchInfos(dispatchInfo);
 

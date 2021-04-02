@@ -31,7 +31,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
     cl_event *event) {
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillImage3d,
                                                                             this->getClDevice());
-    BuiltInOwnershipWrapper builtInLock(builder);
+    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface dstImgSurf(image);
     Surface *surfaces[] = {&dstImgSurf};

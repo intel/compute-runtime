@@ -780,19 +780,27 @@ BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuil
     return *operationBuilder.first;
 }
 
-BuiltInOwnershipWrapper::BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder) {
-    takeOwnership(inputBuilder);
+BuiltInOwnershipWrapper::BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
+    takeOwnership(inputBuilder, context);
 }
 BuiltInOwnershipWrapper::~BuiltInOwnershipWrapper() {
     if (builder) {
         for (auto &kernel : builder->peekUsedKernels()) {
             kernel->releaseOwnership();
         }
+        if (!builder->peekUsedKernels().empty()) {
+            builder->peekUsedKernels()[0]->getProgram()->setContext(nullptr);
+            builder->peekUsedKernels()[0]->getProgram()->releaseOwnership();
+        }
     }
 }
-void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder) {
+void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
     UNRECOVERABLE_IF(builder);
     builder = &inputBuilder;
+    if (!builder->peekUsedKernels().empty()) {
+        builder->peekUsedKernels()[0]->getProgram()->takeOwnership();
+        builder->peekUsedKernels()[0]->getProgram()->setContext(context);
+    }
     for (auto &kernel : builder->peekUsedKernels()) {
         kernel->takeOwnership();
     }
