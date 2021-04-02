@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,10 +13,11 @@
 
 namespace NEO {
 
-struct OsHandle;
+struct OsHandle {
+  protected:
+    OsHandle() = default;
+};
 struct ResidencyData;
-
-using OsGraphicsHandle = OsHandle;
 
 constexpr int maxFragmentsCount = 3;
 

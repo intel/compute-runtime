@@ -707,7 +707,7 @@ TEST_F(WddmCommandStreamTest, givenAddressWithHighestBitSetWhenItIsMappedThenPro
     auto expectedAddress = castToUint64(faultyAddress);
     EXPECT_EQ(gfxAllocation->getGpuAddress(), expectedAddress);
     ASSERT_EQ(gfxAllocation->fragmentsStorage.fragmentCount, 1u);
-    EXPECT_EQ(expectedAddress, gfxAllocation->fragmentsStorage.fragmentStorageData[0].osHandleStorage->gpuPtr);
+    EXPECT_EQ(expectedAddress, static_cast<OsHandleWin *>(gfxAllocation->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->gpuPtr);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }

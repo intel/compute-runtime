@@ -29,14 +29,14 @@ struct WddmMemoryOperationsHandlerTest : public WddmTest {
         wddmMemoryOperationsHandler = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         wddmAllocation.handle = 0x2u;
 
-        osHandleStorageFirst = std::make_unique<OsHandle>();
-        osHandleStorageSecond = std::make_unique<OsHandle>();
+        osHandleStorageFirst = std::make_unique<OsHandleWin>();
+        osHandleStorageSecond = std::make_unique<OsHandleWin>();
 
         wddmFragmentedAllocation.fragmentsStorage.fragmentCount = 2;
         wddmFragmentedAllocation.fragmentsStorage.fragmentStorageData[0].osHandleStorage = osHandleStorageFirst.get();
-        wddmFragmentedAllocation.fragmentsStorage.fragmentStorageData[0].osHandleStorage->handle = 0x3u;
+        static_cast<OsHandleWin *>(wddmFragmentedAllocation.fragmentsStorage.fragmentStorageData[0].osHandleStorage)->handle = 0x3u;
         wddmFragmentedAllocation.fragmentsStorage.fragmentStorageData[1].osHandleStorage = osHandleStorageSecond.get();
-        wddmFragmentedAllocation.fragmentsStorage.fragmentStorageData[1].osHandleStorage->handle = 0x4u;
+        static_cast<OsHandleWin *>(wddmFragmentedAllocation.fragmentsStorage.fragmentStorageData[1].osHandleStorage)->handle = 0x4u;
 
         allocationPtr = &wddmAllocation;
 
@@ -47,8 +47,8 @@ struct WddmMemoryOperationsHandlerTest : public WddmTest {
     std::unique_ptr<WddmMemoryOperationsHandler> wddmMemoryOperationsHandler;
     MockWddmAllocation wddmAllocation;
     MockWddmAllocation wddmFragmentedAllocation;
-    std::unique_ptr<OsHandle> osHandleStorageFirst;
-    std::unique_ptr<OsHandle> osHandleStorageSecond;
+    std::unique_ptr<OsHandleWin> osHandleStorageFirst;
+    std::unique_ptr<OsHandleWin> osHandleStorageSecond;
     GraphicsAllocation *allocationPtr;
     StackVec<GraphicsAllocation *, 2> allocationData;
 };

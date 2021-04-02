@@ -385,10 +385,11 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
 }
 
 bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData) {
-    return mapGpuVirtualAddress(allocationStorageData->osHandleStorage->gmm,
-                                allocationStorageData->osHandleStorage->handle,
+    auto osHandle = static_cast<OsHandleWin *>(allocationStorageData->osHandleStorage);
+    return mapGpuVirtualAddress(osHandle->gmm,
+                                osHandle->handle,
                                 0u, MemoryConstants::maxSvmAddress, castToUint64(allocationStorageData->cpuPtr),
-                                allocationStorageData->osHandleStorage->gpuPtr);
+                                osHandle->gpuPtr);
 }
 
 bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) {
@@ -544,10 +545,11 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
             break;
         }
 
-        if (osHandles.fragmentStorageData[i].osHandleStorage->handle == (D3DKMT_HANDLE) nullptr && osHandles.fragmentStorageData[i].fragmentSize) {
-            AllocationInfo[allocationCount].pPrivateDriverData = osHandles.fragmentStorageData[i].osHandleStorage->gmm->gmmResourceInfo->peekHandle();
+        auto osHandle = static_cast<OsHandleWin *>(osHandles.fragmentStorageData[i].osHandleStorage);
+        if (osHandle->handle == (D3DKMT_HANDLE) nullptr && osHandles.fragmentStorageData[i].fragmentSize) {
+            AllocationInfo[allocationCount].pPrivateDriverData = osHandle->gmm->gmmResourceInfo->peekHandle();
             auto pSysMem = osHandles.fragmentStorageData[i].cpuPtr;
-            auto PSysMemFromGmm = osHandles.fragmentStorageData[i].osHandleStorage->gmm->gmmResourceInfo->getSystemMemPointer();
+            auto PSysMemFromGmm = osHandle->gmm->gmmResourceInfo->getSystemMemPointer();
             DEBUG_BREAK_IF(PSysMemFromGmm != pSysMem);
             AllocationInfo[allocationCount].pSystemMem = osHandles.fragmentStorageData[i].cpuPtr;
             AllocationInfo[allocationCount].PrivateDriverDataSize = static_cast<unsigned int>(sizeof(GMM_RESOURCE_INFO));
@@ -582,10 +584,10 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
         }
         auto allocationIndex = 0;
         for (int i = 0; i < allocationCount; i++) {
-            while (osHandles.fragmentStorageData[allocationIndex].osHandleStorage->handle) {
+            while (static_cast<OsHandleWin *>(osHandles.fragmentStorageData[allocationIndex].osHandleStorage)->handle) {
                 allocationIndex++;
             }
-            osHandles.fragmentStorageData[allocationIndex].osHandleStorage->handle = AllocationInfo[i].hAllocation;
+            static_cast<OsHandleWin *>(osHandles.fragmentStorageData[allocationIndex].osHandleStorage)->handle = AllocationInfo[i].hAllocation;
             bool success = mapGpuVirtualAddress(&osHandles.fragmentStorageData[allocationIndex]);
 
             if (!success) {

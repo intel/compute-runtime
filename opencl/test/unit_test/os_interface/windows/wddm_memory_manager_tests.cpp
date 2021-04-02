@@ -197,7 +197,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     for (size_t i = 0; i < allocation->fragmentsStorage.fragmentCount; i++) {
-        EXPECT_TRUE(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm->useSystemMemoryPool);
+        EXPECT_TRUE(static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->gmm->useSystemMemoryPool);
     }
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -478,9 +478,10 @@ TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationT
     EXPECT_EQ(fragment->fragmentCpuPointer, cpuPtr);
     EXPECT_EQ(fragment->fragmentSize, size);
     EXPECT_NE(fragment->osInternalStorage, nullptr);
-    EXPECT_EQ(fragment->osInternalStorage->gmm, gfxAllocation.getDefaultGmm());
-    EXPECT_EQ(fragment->osInternalStorage->gpuPtr, gpuPtr);
-    EXPECT_EQ(fragment->osInternalStorage->handle, gfxAllocation.handle);
+    auto osHandle = static_cast<OsHandleWin *>(fragment->osInternalStorage);
+    EXPECT_EQ(osHandle->gmm, gfxAllocation.getDefaultGmm());
+    EXPECT_EQ(osHandle->gpuPtr, gpuPtr);
+    EXPECT_EQ(osHandle->handle, gfxAllocation.handle);
     EXPECT_NE(fragment->residency, nullptr);
 
     FragmentStorage fragmentStorage = {};
@@ -948,8 +949,8 @@ TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemThenOsInternalStorageIsPopulat
     auto fragment = memoryManager->getHostPtrManager()->getFragment({ptr, rootDeviceIndex});
     ASSERT_NE(nullptr, fragment);
     EXPECT_TRUE(fragment->refCount == 1);
-    EXPECT_NE(fragment->osInternalStorage->handle, 0);
-    EXPECT_NE(fragment->osInternalStorage->gmm, nullptr);
+    EXPECT_NE(static_cast<OsHandleWin *>(fragment->osInternalStorage)->handle, 0);
+    EXPECT_NE(static_cast<OsHandleWin *>(fragment->osInternalStorage)->gmm, nullptr);
     memoryManager->freeGraphicsMemory(gpuAllocation);
     alignedFree(ptr);
 }
@@ -1054,23 +1055,27 @@ TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsT
     void *pSysMem = reinterpret_cast<void *>(0x1000);
     uint32_t maxOsContextCount = 1u;
 
-    storage.fragmentStorageData[0].osHandleStorage = new OsHandle;
+    auto osHandle0 = new OsHandleWin();
+    auto osHandle1 = new OsHandleWin();
+    auto osHandle2 = new OsHandleWin();
+
+    storage.fragmentStorageData[0].osHandleStorage = osHandle0;
     storage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
 
-    storage.fragmentStorageData[0].osHandleStorage->handle = ALLOCATION_HANDLE;
+    osHandle0->handle = ALLOCATION_HANDLE;
     storage.fragmentStorageData[0].freeTheFragment = true;
-    storage.fragmentStorageData[0].osHandleStorage->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, false);
+    osHandle0->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, false);
 
-    storage.fragmentStorageData[1].osHandleStorage = new OsHandle;
-    storage.fragmentStorageData[1].osHandleStorage->handle = ALLOCATION_HANDLE;
+    storage.fragmentStorageData[1].osHandleStorage = osHandle1;
+    osHandle1->handle = ALLOCATION_HANDLE;
     storage.fragmentStorageData[1].residency = new ResidencyData(maxOsContextCount);
 
     storage.fragmentStorageData[1].freeTheFragment = false;
 
-    storage.fragmentStorageData[2].osHandleStorage = new OsHandle;
-    storage.fragmentStorageData[2].osHandleStorage->handle = ALLOCATION_HANDLE;
+    storage.fragmentStorageData[2].osHandleStorage = osHandle2;
+    osHandle2->handle = ALLOCATION_HANDLE;
     storage.fragmentStorageData[2].freeTheFragment = true;
-    storage.fragmentStorageData[2].osHandleStorage->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, false);
+    osHandle2->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, false);
     storage.fragmentStorageData[2].residency = new ResidencyData(maxOsContextCount);
 
     memoryManager->cleanOsHandles(storage, 0);
@@ -1083,7 +1088,7 @@ TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsT
     EXPECT_EQ(0u, ptrToDestroyAlloc2->Flags.SynchronousDestroy);
     EXPECT_EQ(1u, ptrToDestroyAlloc2->Flags.AssumeNotInUse);
 
-    EXPECT_EQ(ALLOCATION_HANDLE, storage.fragmentStorageData[1].osHandleStorage->handle);
+    EXPECT_EQ(ALLOCATION_HANDLE, osHandle1->handle);
 
     delete storage.fragmentStorageData[1].osHandleStorage;
     delete storage.fragmentStorageData[1].residency;
@@ -1229,7 +1234,7 @@ TEST_F(BufferWithWddmMemory, GivenNullOsHandleStorageWhenPopulatingThenFilledPoi
     storage.fragmentStorageData[0].fragmentSize = MemoryConstants::pageSize;
     memoryManager->populateOsHandles(storage, 0);
     EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage);
-    EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage->gmm);
+    EXPECT_NE(nullptr, static_cast<OsHandleWin *>(storage.fragmentStorageData[0].osHandleStorage)->gmm);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[1].osHandleStorage);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
     storage.fragmentStorageData[0].freeTheFragment = true;
@@ -1248,13 +1253,14 @@ TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
     auto reqs = MockHostPtrManager::getAllocationRequirements(context.getDevice(0)->getRootDeviceIndex(), ptr, size);
 
     for (int i = 0; i < maxFragmentsCount; i++) {
-        EXPECT_NE((D3DKMT_HANDLE) nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->handle);
+        auto osHandle = static_cast<OsHandleWin *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage);
+        EXPECT_NE((D3DKMT_HANDLE) nullptr, osHandle->handle);
 
-        EXPECT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm);
+        EXPECT_NE(nullptr, osHandle->gmm);
         EXPECT_EQ(reqs.allocationFragments[i].allocationPtr,
-                  reinterpret_cast<void *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm->resourceParams.pExistingSysMem));
+                  reinterpret_cast<void *>(osHandle->gmm->resourceParams.pExistingSysMem));
         EXPECT_EQ(reqs.allocationFragments[i].allocationSize,
-                  graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm->resourceParams.BaseWidth);
+                  osHandle->gmm->resourceParams.BaseWidth);
     }
     memoryManager->freeGraphicsMemory(graphicsAllocation);
     EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
@@ -1303,13 +1309,15 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     auto size = MemoryConstants::pageSize * 2;
     auto maxOsContextCount = 1u;
 
+    auto osHandle = new OsHandleWin();
+
     handleStorage.fragmentStorageData[0].cpuPtr = ptr;
     handleStorage.fragmentStorageData[0].fragmentSize = size;
-    handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
+    handleStorage.fragmentStorageData[0].osHandleStorage = osHandle;
     handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
-    handleStorage.fragmentStorageData[0].osHandleStorage->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, false);
+    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, false);
     handleStorage.fragmentCount = 1;
 
     FragmentStorage fragment = {};
@@ -1317,7 +1325,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     fragment.fragmentCpuPointer = ptr;
     fragment.fragmentSize = size;
     fragment.osInternalStorage = handleStorage.fragmentStorageData[0].osHandleStorage;
-    fragment.osInternalStorage->gpuPtr = gpuAdress;
+    osHandle->gpuPtr = gpuAdress;
     memoryManager->getHostPtrManager()->storeFragment(rootDeviceIndex, fragment);
 
     AllocationData allocationData;
@@ -1339,13 +1347,15 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     auto size = MemoryConstants::pageSize * 2;
     auto maxOsContextCount = 1u;
 
+    auto osHandle = new OsHandleWin();
+
     handleStorage.fragmentStorageData[0].cpuPtr = ptr;
     handleStorage.fragmentStorageData[0].fragmentSize = size;
-    handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
+    handleStorage.fragmentStorageData[0].osHandleStorage = osHandle;
     handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
-    handleStorage.fragmentStorageData[0].osHandleStorage->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, false);
+    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, false);
     handleStorage.fragmentCount = 1;
 
     FragmentStorage fragment = {};
@@ -1353,7 +1363,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     fragment.fragmentCpuPointer = ptr;
     fragment.fragmentSize = size;
     fragment.osInternalStorage = handleStorage.fragmentStorageData[0].osHandleStorage;
-    fragment.osInternalStorage->gpuPtr = gpuAdress;
+    osHandle->gpuPtr = gpuAdress;
     memoryManager->getHostPtrManager()->storeFragment(rootDeviceIndex, fragment);
 
     auto offset = 80;
@@ -1885,7 +1895,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenP
 
 TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenCreateAllocationFailsThenAllocatedFragmentsAreNotStored) {
     OsHandleStorage handleStorage;
-    OsHandle handle;
+    OsHandleWin handle;
     handleStorage.fragmentCount = 2;
     handleStorage.fragmentStorageData[0].osHandleStorage = &handle;
     handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);

@@ -152,7 +152,7 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
     EXPECT_EQ(fragment->fragmentCpuPointer, cpuPtr);
     EXPECT_EQ(fragment->fragmentSize, size);
     EXPECT_NE(fragment->osInternalStorage, nullptr);
-    EXPECT_EQ(fragment->osInternalStorage->bo, gfxAllocation.getBO());
+    EXPECT_EQ(static_cast<OsHandleLinux *>(fragment->osInternalStorage)->bo, gfxAllocation.getBO());
     EXPECT_NE(fragment->residency, nullptr);
 
     FragmentStorage fragmentStorage = {};
@@ -1036,10 +1036,10 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 }
 
 TEST_F(DrmMemoryManagerTest, GivenNoInputsWhenOsHandleIsCreatedThenAllBoHandlesAreInitializedAsNullPtrs) {
-    OsHandle boHandle;
+    OsHandleLinux boHandle;
     EXPECT_EQ(nullptr, boHandle.bo);
 
-    std::unique_ptr<OsHandle> boHandle2(new OsHandle);
+    std::unique_ptr<OsHandleLinux> boHandle2(new OsHandleLinux);
     EXPECT_EQ(nullptr, boHandle2->bo);
 }
 
@@ -1138,9 +1138,10 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
     auto reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
 
     for (int i = 0; i < maxFragmentsCount; i++) {
-        ASSERT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo);
-        EXPECT_EQ(reqs.allocationFragments[i].allocationSize, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekSize());
-        EXPECT_EQ(reqs.allocationFragments[i].allocationPtr, reinterpret_cast<void *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekAddress()));
+        auto osHandle = static_cast<OsHandleLinux *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage);
+        ASSERT_NE(nullptr, osHandle->bo);
+        EXPECT_EQ(reqs.allocationFragments[i].allocationSize, osHandle->bo->peekSize());
+        EXPECT_EQ(reqs.allocationFragments[i].allocationPtr, reinterpret_cast<void *>(osHandle->bo->peekAddress()));
     }
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 
@@ -3232,7 +3233,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     mock->ioctl_expected.execbuffer2 = 0; // pinning for host memory validation is mocked
 
     OsHandleStorage handleStorage;
-    OsHandle handle1;
+    OsHandleLinux handle1;
     handleStorage.fragmentStorageData[0].osHandleStorage = &handle1;
     handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[0].fragmentSize = 4096;
@@ -3254,8 +3255,8 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     EXPECT_NE(nullptr, handleStorage.fragmentStorageData[1].osHandleStorage);
     EXPECT_NE(nullptr, handleStorage.fragmentStorageData[2].osHandleStorage);
 
-    EXPECT_EQ(handleStorage.fragmentStorageData[1].osHandleStorage->bo, pinBB->pinnedBoArray[0]);
-    EXPECT_EQ(handleStorage.fragmentStorageData[2].osHandleStorage->bo, pinBB->pinnedBoArray[1]);
+    EXPECT_EQ(static_cast<OsHandleLinux *>(handleStorage.fragmentStorageData[1].osHandleStorage)->bo, pinBB->pinnedBoArray[0]);
+    EXPECT_EQ(static_cast<OsHandleLinux *>(handleStorage.fragmentStorageData[2].osHandleStorage)->bo, pinBB->pinnedBoArray[1]);
 
     handleStorage.fragmentStorageData[0].freeTheFragment = false;
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
@@ -3534,7 +3535,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     mock->ioctl_expected.execbuffer2 = 1;
 
     OsHandleStorage handleStorage;
-    OsHandle handle1;
+    OsHandleLinux handle1;
     handleStorage.fragmentStorageData[0].osHandleStorage = &handle1;
     handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[0].fragmentSize = 4096;
@@ -3584,7 +3585,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     mock->ioctl_expected.execbuffer2 = 1;
 
     OsHandleStorage handleStorage;
-    OsHandle handle1;
+    OsHandleLinux handle1;
     handleStorage.fragmentStorageData[0].osHandleStorage = &handle1;
     handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[0].fragmentSize = 4096;
@@ -3652,12 +3653,12 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCl
     auto maxOsContextCount = 1u;
 
     OsHandleStorage handleStorage;
-    handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
+    handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandleLinux();
     handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[0].fragmentSize = 4096;
 
-    handleStorage.fragmentStorageData[1].osHandleStorage = new OsHandle();
+    handleStorage.fragmentStorageData[1].osHandleStorage = new OsHandleLinux();
     handleStorage.fragmentStorageData[1].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[1].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[1].fragmentSize = 4096;
@@ -4377,7 +4378,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCac
     allocation->setCacheAdvice(drm, 1024, CacheRegion::Region1);
 
     for (uint32_t i = 0; i < storage.fragmentCount; i++) {
-        auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_EQ(CacheRegion::Region1, bo->peekCacheRegion());
     }
 

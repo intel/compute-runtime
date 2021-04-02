@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,10 @@
 
 namespace NEO {
 
-struct OsHandle {
-    D3DKMT_HANDLE handle;
-    D3DGPU_VIRTUAL_ADDRESS gpuPtr;
-    Gmm *gmm;
+struct OsHandleWin : OsHandle {
+    D3DKMT_HANDLE handle = 0;
+    D3DGPU_VIRTUAL_ADDRESS gpuPtr = 0;
+    Gmm *gmm = nullptr;
 };
 
 constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();

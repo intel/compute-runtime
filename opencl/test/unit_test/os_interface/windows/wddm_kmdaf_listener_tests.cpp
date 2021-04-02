@@ -164,11 +164,11 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocation64IsCalledThenKmDafLi
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationsAndMapGpuVaIsCalledThenKmDafListenerNotifyWriteTargetAndMapGpuVAIsFedWithCorrectParams) {
     OsHandleStorage storage;
-    OsHandle osHandle = {0};
+    OsHandleWin osHandle;
     auto gmm = std::unique_ptr<Gmm>(new Gmm(rootDeviceEnvironment->getGmmClientContext(), nullptr, 1, false));
     storage.fragmentStorageData[0].osHandleStorage = &osHandle;
     storage.fragmentStorageData[0].fragmentSize = 100;
-    storage.fragmentStorageData[0].osHandleStorage->gmm = gmm.get();
+    static_cast<OsHandleWin *>(storage.fragmentStorageData[0].osHandleStorage)->gmm = gmm.get();
 
     wddmWithKmDafMock->createAllocationsAndMapGpuVa(storage);
 

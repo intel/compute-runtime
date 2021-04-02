@@ -943,14 +943,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, makeResidentTwiceWhenFragmentSt
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
                   reqs.allocationFragments[i].allocationPtr);
-        auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_TRUE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
 
     csr->makeNonResident(*allocation);
     for (int i = 0; i < maxFragmentsCount; i++) {
-        auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_FALSE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
@@ -1039,13 +1039,13 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationCreatedFromThree
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
                   reqs.allocationFragments[i].allocationPtr);
-        auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_TRUE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
     csr->makeNonResident(*allocation);
     for (int i = 0; i < maxFragmentsCount; i++) {
-        auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_FALSE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
@@ -1070,13 +1070,13 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationsContainingDiffe
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
                   reqs.allocationFragments[i].allocationPtr);
-        auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_TRUE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
     csr->makeNonResident(*allocation);
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
-        auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_FALSE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
@@ -1095,15 +1095,15 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationsContainingDiffe
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         ASSERT_EQ(allocation2->fragmentsStorage.fragmentStorageData[i].cpuPtr,
                   reqs.allocationFragments[i].allocationPtr);
-        auto bo = allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_TRUE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
     csr->makeNonResident(*allocation2);
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
-        auto bo = allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_FALSE(isResident<FamilyType>(bo));
-        EXPECT_EQ(1u, allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->getRefCount());
+        EXPECT_EQ(1u, bo->getRefCount());
     }
     mm->freeGraphicsMemory(allocation2);
 }

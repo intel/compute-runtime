@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -207,8 +207,10 @@ void WddmResidencyController::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags,
             for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
                 AllocationStorageData &fragmentStorageData = wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId];
                 if (!wasAllocationUsedSinceLastTrim(fragmentStorageData.residency->getFenceValueForContextId(osContextId))) {
-                    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict fragment: handle =", wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle, "lastFence =", wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId));
-                    fragmentEvictHandles[fragmentsToEvict++] = fragmentStorageData.osHandleStorage->handle;
+                    auto osHandle = static_cast<OsHandleWin *>(wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage);
+                    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict fragment: handle =", osHandle->handle, "lastFence =",
+                            wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId));
+                    fragmentEvictHandles[fragmentsToEvict++] = static_cast<OsHandleWin *>(fragmentStorageData.osHandleStorage)->handle;
                     fragmentStorageData.residency->resident[osContextId] = false;
                 }
             }
@@ -264,7 +266,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
             auto &fragmentStorageData = wddmAllocation->fragmentsStorage.fragmentStorageData;
             for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
                 if (fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId) <= monitoredFence.lastSubmittedFence) {
-                    fragmentEvictHandles[fragmentsToEvict++] = fragmentStorageData[allocationId].osHandleStorage->handle;
+                    fragmentEvictHandles[fragmentsToEvict++] = static_cast<OsHandleWin *>(fragmentStorageData[allocationId].osHandleStorage)->handle;
                 }
             }
 
@@ -323,14 +325,16 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
         } else {
             for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
                 fragmentResidency[allocationId] = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency->resident[osContextId];
-                DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "fragment handle =", allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle, fragmentResidency[allocationId] ? "resident" : "not resident");
+                DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "fragment handle =",
+                        static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage)->handle,
+                        fragmentResidency[allocationId] ? "resident" : "not resident");
             }
         }
 
         if (allocation->fragmentsStorage.fragmentCount > 0) {
             for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
                 if (!fragmentResidency[allocationId]) {
-                    handlesForResidency.push_back(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle);
+                    handlesForResidency.push_back(static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage)->handle);
                     totalHandlesCount++;
                 }
             }

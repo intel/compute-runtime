@@ -319,9 +319,9 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddr
 
 TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocationsThenAllMarkedAllocationsAreDestroyed) {
     OsHandleStorage storage;
-    OsHandle osHandle1 = {0};
-    OsHandle osHandle2 = {0};
-    OsHandle osHandle3 = {0};
+    OsHandleWin osHandle1;
+    OsHandleWin osHandle2;
+    OsHandleWin osHandle3;
 
     osHandle1.handle = ALLOCATION_HANDLE;
     osHandle2.handle = ALLOCATION_HANDLE;
@@ -822,7 +822,7 @@ TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemor
     gdi->createAllocation = MockCreateAllocation::mockCreateAllocation;
 
     OsHandleStorage handleStorage;
-    OsHandle handle = {0};
+    OsHandleWin handle;
     auto maxOsContextCount = 1u;
     ResidencyData residency(maxOsContextCount);
 
@@ -832,13 +832,13 @@ TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemor
     handleStorage.fragmentStorageData[0].freeTheFragment = false;
     handleStorage.fragmentStorageData[0].osHandleStorage = &handle;
     handleStorage.fragmentStorageData[0].residency = &residency;
-    handleStorage.fragmentStorageData[0].osHandleStorage->gmm = GmmHelperFunctions::getGmm(nullptr, 0, getGmmClientContext());
+    handle.gmm = GmmHelperFunctions::getGmm(nullptr, 0, getGmmClientContext());
 
     NTSTATUS result = wddm->createAllocationsAndMapGpuVa(handleStorage);
 
     EXPECT_EQ(STATUS_GRAPHICS_NO_VIDEO_MEMORY, result);
 
-    delete handleStorage.fragmentStorageData[0].osHandleStorage->gmm;
+    delete handle.gmm;
 }
 
 TEST_F(Wddm20Tests, whenContextIsInitializedThenApplyAdditionalContextFlagsIsCalled) {

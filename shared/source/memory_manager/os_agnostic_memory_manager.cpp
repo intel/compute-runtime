@@ -27,6 +27,8 @@
 #include <cassert>
 
 namespace NEO {
+struct OsHandleOsAgnostic : OsHandle {
+};
 
 OsAgnosticMemoryManager::OsAgnosticMemoryManager(bool aubUsage, ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment) {
     initialize(aubUsage);
@@ -54,9 +56,6 @@ OsAgnosticMemoryManager::~OsAgnosticMemoryManager() = default;
 bool OsAgnosticMemoryManager::is64kbPagesEnabled(const HardwareInfo *hwInfo) {
     return hwInfo->capabilityTable.ftr64KBpages && !!DebugManager.flags.Enable64kbpages.get();
 }
-
-struct OsHandle {
-};
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
     auto sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize);
@@ -209,7 +208,7 @@ void OsAgnosticMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *
     fragment.driverAllocation = true;
     fragment.fragmentCpuPointer = gfxAllocation->getUnderlyingBuffer();
     fragment.fragmentSize = alignUp(gfxAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize);
-    fragment.osInternalStorage = new OsHandle();
+    fragment.osInternalStorage = new OsHandleOsAgnostic();
     fragment.residency = new ResidencyData(maxOsContextCount);
     hostPtrManager->storeFragment(gfxAllocation->getRootDeviceIndex(), fragment);
 }
@@ -289,7 +288,7 @@ void OsAgnosticMemoryManager::turnOnFakingBigAllocations() {
 MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].cpuPtr) {
-            handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
+            handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandleOsAgnostic();
             handleStorage.fragmentStorageData[i].residency = new ResidencyData(maxOsContextCount);
 
             FragmentStorage newFragment = {};

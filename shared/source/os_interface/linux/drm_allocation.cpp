@@ -36,7 +36,7 @@ bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regi
 
     if (fragmentsStorage.fragmentCount > 0) {
         for (uint32_t i = 0; i < fragmentsStorage.fragmentCount; i++) {
-            auto bo = fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
+            auto bo = static_cast<OsHandleLinux *>(fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
             bo->setCacheRegion(regionIndex);
         }
         return true;
@@ -54,7 +54,7 @@ void DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, s
     if (this->fragmentsStorage.fragmentCount) {
         for (unsigned int f = 0; f < this->fragmentsStorage.fragmentCount; f++) {
             if (!this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContext->getContextId()]) {
-                bindBO(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage->bo, osContext, vmHandleId, bufferObjects, bind);
+                bindBO(static_cast<OsHandleLinux *>(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage)->bo, osContext, vmHandleId, bufferObjects, bind);
                 this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContext->getContextId()] = true;
             }
         }

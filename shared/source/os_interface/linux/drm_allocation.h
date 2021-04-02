@@ -15,7 +15,7 @@ class OsContext;
 class Drm;
 enum class CacheRegion : uint16_t;
 
-struct OsHandle {
+struct OsHandleLinux : OsHandle {
     BufferObject *bo = nullptr;
 };
 
@@ -51,7 +51,7 @@ class DrmAllocation : public GraphicsAllocation {
 
     BufferObject *getBO() const {
         if (fragmentsStorage.fragmentCount) {
-            return fragmentsStorage.fragmentStorageData[0].osHandleStorage->bo;
+            return static_cast<OsHandleLinux *>(fragmentsStorage.fragmentStorageData[0].osHandleStorage)->bo;
         }
         return this->bufferObjects[0];
     }
