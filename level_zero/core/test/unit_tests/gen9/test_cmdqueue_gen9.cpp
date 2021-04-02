@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
@@ -24,6 +25,7 @@ namespace ult {
 
 struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
     void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
@@ -167,6 +169,7 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
 
 struct CommandQueueGroupMultiDevice : public MultiDeviceFixture, public ::testing::Test {
     void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
         MultiDeviceFixture::SetUp();
         uint32_t count = 1;
         ze_device_handle_t hDevice;
