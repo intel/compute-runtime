@@ -7,7 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/memory_manager/surface.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/spinlock.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
@@ -30,15 +30,13 @@ using namespace gtpin;
 
 namespace NEO {
 
-using GTPinLockType = std::recursive_mutex;
-
 extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
 
 igc_init_t *pIgcInit = nullptr;
 std::atomic<int> sequenceCount(1);
 CommandQueue *pCmdQueueForFlushTask = nullptr;
 std::deque<gtpinkexec_t> kernelExecQueue;
-GTPinLockType kernelExecQueueLock;
+SpinLock kernelExecQueueLock;
 
 void gtpinNotifyContextCreate(cl_context context) {
     if (isGTPinInitialized) {
@@ -133,7 +131,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         kExec.gtpinResource = (cl_mem)resource;
         kExec.commandBuffer = commandBuffer;
         kExec.pCommandQueue = (CommandQueue *)pCmdQueue;
-        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
+        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         kernelExecQueue.push_back(kExec);
         lock.unlock();
         // Patch SSH[gtpinBTI] with GT-Pin resource
@@ -144,19 +142,10 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
         void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);
-        if (gtpinHelper.canUseSharedAllocation(device.getHardwareInfo())) {
-            auto allocData = reinterpret_cast<SvmAllocationData *>(resource);
-            auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
-            size_t size = gpuAllocation->getUnderlyingBufferSize();
-            Buffer::setSurfaceState(&device, pSurfaceState, false, false, size, gpuAllocation->getUnderlyingBuffer(), 0, gpuAllocation, 0, 0,
-                                    pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
-            pKernel->setUnifiedMemoryExecInfo(gpuAllocation);
-        } else {
-            cl_mem buffer = (cl_mem)resource;
-            auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
-            pBuffer->setArgStateful(pSurfaceState, false, false, false, false, device,
-                                    pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
-        }
+        cl_mem buffer = (cl_mem)resource;
+        auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
+        pBuffer->setArgStateful(pSurfaceState, false, false, false, false, device,
+                                pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
     }
 }
 
@@ -168,7 +157,7 @@ void gtpinNotifyPreFlushTask(void *pCmdQueue) {
 
 void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
     if (isGTPinInitialized) {
-        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
+        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
             if ((kernelExecQueue[n].pCommandQueue == pCmdQueueForFlushTask) && !kernelExecQueue[n].isTaskCountValid) {
@@ -184,7 +173,7 @@ void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
 
 void gtpinNotifyTaskCompletion(uint32_t completedTaskCount) {
     if (isGTPinInitialized) {
-        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
+        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems;) {
             if (kernelExecQueue[n].isTaskCountValid && (kernelExecQueue[n].taskCount <= completedTaskCount)) {
@@ -202,23 +191,15 @@ void gtpinNotifyTaskCompletion(uint32_t completedTaskCount) {
 
 void gtpinNotifyMakeResident(void *pKernel, void *pCSR) {
     if (isGTPinInitialized) {
-        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
-        Context &context = static_cast<Kernel *>(pKernel)->getContext();
-        GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
             if ((kernelExecQueue[n].pKernel == pKernel) && !kernelExecQueue[n].isResourceResident && kernelExecQueue[n].gtpinResource) {
                 // It's time for kernel to make resident its GT-Pin resource
                 CommandStreamReceiver *pCommandStreamReceiver = reinterpret_cast<CommandStreamReceiver *>(pCSR);
-                GraphicsAllocation *pGfxAlloc = nullptr;
-                if (gtpinHelper.canUseSharedAllocation(context.getDevice(0)->getHardwareInfo())) {
-                    auto allocData = reinterpret_cast<SvmAllocationData *>(kernelExecQueue[n].gtpinResource);
-                    pGfxAlloc = allocData->gpuAllocations.getGraphicsAllocation(pCommandStreamReceiver->getRootDeviceIndex());
-                } else {
-                    cl_mem gtpinBuffer = kernelExecQueue[n].gtpinResource;
-                    auto pBuffer = castToObjectOrAbort<Buffer>(gtpinBuffer);
-                    pGfxAlloc = pBuffer->getGraphicsAllocation(pCommandStreamReceiver->getRootDeviceIndex());
-                }
+                cl_mem gtpinBuffer = kernelExecQueue[n].gtpinResource;
+                auto pBuffer = castToObjectOrAbort<Buffer>(gtpinBuffer);
+                GraphicsAllocation *pGfxAlloc = pBuffer->getGraphicsAllocation(pCommandStreamReceiver->getRootDeviceIndex());
                 pCommandStreamReceiver->makeResident(*pGfxAlloc);
                 kernelExecQueue[n].isResourceResident = true;
                 break;
@@ -229,7 +210,7 @@ void gtpinNotifyMakeResident(void *pKernel, void *pCSR) {
 
 void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResVec) {
     if (isGTPinInitialized) {
-        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
+        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
             if ((kernelExecQueue[n].pKernel == pKernel) && !kernelExecQueue[n].isResourceResident && kernelExecQueue[n].gtpinResource) {

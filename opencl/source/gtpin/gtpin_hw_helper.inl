@@ -56,14 +56,4 @@ void *GTPinHwHelperHw<GfxFamily>::getSurfaceState(Kernel *pKernel, size_t bti) {
     return pSurfaceState;
 }
 
-template <typename GfxFamily>
-bool GTPinHwHelperHw<GfxFamily>::canUseSharedAllocation(const HardwareInfo &hwInfo) const {
-    bool canUseSharedAllocation = false;
-    if (DebugManager.flags.GTPinAllocateBufferInSharedMemory.get() != -1) {
-        canUseSharedAllocation = !!DebugManager.flags.GTPinAllocateBufferInSharedMemory.get();
-    }
-    canUseSharedAllocation &= hwInfo.capabilityTable.ftrSvm;
-    return canUseSharedAllocation;
-}
-
 } // namespace NEO
