@@ -92,6 +92,13 @@ apt install intel-opencl-icd
 apt install intel-opencl-icd
 ```
 
+## Conda (Linux glibc>=2.12)
+
+```
+conda config --add channels conda-forge
+conda install intel-compute-runtime
+```
+
 ## Building and installation
 
 * [Ubuntu*](https://github.com/intel/compute-runtime/blob/master/BUILD.md)
