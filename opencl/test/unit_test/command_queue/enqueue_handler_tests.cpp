@@ -12,7 +12,6 @@
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"
-#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/command_stream/thread_arbitration_policy_helper.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
@@ -499,12 +498,8 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
     mockCmdQ->release();
 }
 
-HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySetKernelThreadArbitrationPolicyThenRequiredThreadArbitrationPolicyIsSetProperly) {
+HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadysetKernelThreadArbitrationPolicyThenRequiredThreadArbitrationPolicyIsSetProperly) {
     REQUIRE_SVM_OR_SKIP(pClDevice);
-    auto &hwHelper = NEO::ClHwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
 
@@ -530,42 +525,6 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySe
                                                                  nullptr,
                                                                  nullptr);
     EXPECT_EQ(getNewKernelArbitrationPolicy(euThreadSetting), pDevice->getUltCommandStreamReceiver<FamilyType>().requiredThreadArbitrationPolicy);
-
-    mockCmdQ->release();
-}
-
-HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenNotSupportedPolicyChangeThenRequiredThreadArbitrationPolicyNotChangedAndIsSetAsDefault) {
-    auto &hwHelper = NEO::ClHwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
-        GTEST_SKIP();
-    }
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
-
-    MockKernelWithInternals kernelInternals(*pClDevice, context);
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
-
-    uint32_t euThreadSetting = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
-    size_t ptrSizeInBytes = 1 * sizeof(uint32_t *);
-    auto retVal = clSetKernelExecInfo(
-        kernelInternals.mockMultiDeviceKernel,               // cl_kernel kernel
-        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, // cl_kernel_exec_info param_name
-        ptrSizeInBytes,                                      // size_t param_value_size
-        &euThreadSetting                                     // const void *param_value
-    );
-    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
-    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
-
-    mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
-                                                                 0,
-                                                                 false,
-                                                                 multiDispatchInfo,
-                                                                 0,
-                                                                 nullptr,
-                                                                 nullptr);
-    EXPECT_NE(getNewKernelArbitrationPolicy(euThreadSetting), pDevice->getUltCommandStreamReceiver<FamilyType>().requiredThreadArbitrationPolicy);
-    EXPECT_EQ(0u, pDevice->getUltCommandStreamReceiver<FamilyType>().requiredThreadArbitrationPolicy);
 
     mockCmdQ->release();
 }

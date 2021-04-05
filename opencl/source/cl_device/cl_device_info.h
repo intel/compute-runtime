@@ -132,7 +132,6 @@ struct ClDeviceInfo {
     cl_unified_shared_memory_capabilities_intel                                                       singleDeviceSharedMemCapabilities;
     cl_unified_shared_memory_capabilities_intel                                                       crossDeviceSharedMemCapabilities;
     cl_unified_shared_memory_capabilities_intel                                                       sharedSystemMemCapabilities;
-    StackVec<uint32_t, 4>                                                                             supportedThreadArbitrationPolicies;
 };
 // clang-format on
 
