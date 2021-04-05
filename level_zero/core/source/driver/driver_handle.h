@@ -58,6 +58,8 @@ struct DriverHandle : _ze_driver_handle_t {
     virtual NEO::SVMAllocsManager *getSvmAllocsManager() = 0;
     virtual ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                            uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) = 0;
+    virtual ze_result_t sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
+                                             uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) = 0;
     virtual ze_result_t importExternalPointer(void *ptr, size_t size) = 0;
     virtual ze_result_t releaseImportedPointer(void *ptr) = 0;
     virtual ze_result_t getHostPointerBaseAddress(void *ptr, void **baseAddress) = 0;

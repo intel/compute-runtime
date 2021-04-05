@@ -142,7 +142,7 @@ ze_result_t SysmanDeviceImp::deviceEventRegister(zes_event_type_flags_t events) 
     return pEvents->eventRegister(events);
 }
 
-bool SysmanDeviceImp::deviceEventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) {
+bool SysmanDeviceImp::deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) {
     return pEvents->eventListen(pEvent, timeout);
 }
 

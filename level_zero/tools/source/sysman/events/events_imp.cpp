@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ ze_result_t EventsImp::eventRegister(zes_event_type_flags_t events) {
     return pOsEvents->eventRegister(events);
 }
 
-bool EventsImp::eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) {
+bool EventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) {
     return pOsEvents->eventListen(pEvent, timeout);
 }
 

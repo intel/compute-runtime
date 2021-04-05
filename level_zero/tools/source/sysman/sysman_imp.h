@@ -66,7 +66,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phFirmware) override;
     ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) override;
     ze_result_t deviceEventRegister(zes_event_type_flags_t events) override;
-    bool deviceEventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) override;
+    bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
 
   private:
     template <typename T>

@@ -240,5 +240,40 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForAListOfEventsT
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, zesDeviceEventRegister(device->toHandle(), events2));
 }
 
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenExAPIReturnsAfterReceivingEventWithinTimeout) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsOne));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenEx(driverHandle->toHandle(), 100u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, pDeviceEvents[0]);
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+}
+
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenExAPIWaitForTimeoutIfEventNotReceived) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValReturnValAsZero));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenEx(driverHandle->toHandle(), 100u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+
+    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EventsFsAccess>::getValFileNotFound));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenEx(driverHandle->toHandle(), 100u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+}
+
 } // namespace ult
 } // namespace L0

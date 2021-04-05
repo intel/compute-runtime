@@ -58,6 +58,9 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                    uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
 
+    ze_result_t sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
+                                     uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
+
     ze_result_t importExternalPointer(void *ptr, size_t size) override;
     ze_result_t releaseImportedPointer(void *ptr) override;
     ze_result_t getHostPointerBaseAddress(void *ptr, void **baseAddress) override;

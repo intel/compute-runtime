@@ -670,6 +670,17 @@ zesDriverEventListen(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
+zesDriverEventListenEx(
+    ze_driver_handle_t hDriver,
+    uint64_t timeout,
+    uint32_t count,
+    zes_device_handle_t *phDevices,
+    uint32_t *pNumDeviceEvents,
+    zes_event_type_flags_t *pEvents) {
+    return L0::DriverHandle::fromHandle(hDriver)->sysmanEventsListenEx(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDeviceEnumDiagnosticTestSuites(
     zes_device_handle_t hDevice,
     uint32_t *pCount,

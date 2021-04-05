@@ -89,7 +89,7 @@ ze_result_t WddmEventsImp::eventRegister(zes_event_type_flags_t events) {
     return (eventList.size() == 0) ? ZE_RESULT_ERROR_UNSUPPORTED_FEATURE : ZE_RESULT_SUCCESS;
 }
 
-bool WddmEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) {
+bool WddmEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) {
     HANDLE events[MAXIMUM_WAIT_OBJECTS];
     pEvent = 0;
 
@@ -104,7 +104,7 @@ bool WddmEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout
     events[eventList.size()] = exitHandle;
 
     // Setting the last handle for the exit handle, then the exit handle is signaled, it breaks from the wait.
-    uint32_t signaledEvent = WaitForMultipleObjects(static_cast<uint32_t>(eventList.size() + 1), events, FALSE, timeout);
+    uint32_t signaledEvent = WaitForMultipleObjects(static_cast<uint32_t>(eventList.size() + 1), events, FALSE, static_cast<uint32_t>(timeout));
 
     // Was a timeout
     if (signaledEvent == WAIT_TIMEOUT) {

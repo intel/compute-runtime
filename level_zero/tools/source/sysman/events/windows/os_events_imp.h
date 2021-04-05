@@ -24,7 +24,7 @@ struct EventHandler {
 
 class WddmEventsImp : public OsEvents, NEO::NonCopyableOrMovableClass {
   public:
-    bool eventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) override;
+    bool eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
     ze_result_t eventRegister(zes_event_type_flags_t events) override;
     WddmEventsImp(OsSysman *pOsSysman);
     ~WddmEventsImp() {

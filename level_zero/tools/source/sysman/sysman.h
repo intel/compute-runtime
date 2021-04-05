@@ -54,7 +54,7 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) = 0;
     virtual ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) = 0;
     virtual ze_result_t deviceEventRegister(zes_event_type_flags_t events) = 0;
-    virtual bool deviceEventListen(zes_event_type_flags_t &pEvent, uint32_t timeout) = 0;
+    virtual bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) = 0;
     virtual ~SysmanDevice() = default;
 };
 
