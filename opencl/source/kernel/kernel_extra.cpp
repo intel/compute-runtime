@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
@@ -16,7 +17,12 @@ bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
 void Kernel::reconfigureKernel() {
 }
 int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
-    if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL) {
+    auto hwInfo = clDevice.getHardwareInfo();
+    auto &hwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+        this->threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+        return CL_INVALID_DEVICE;
+    } else if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL) {
         this->threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
     } else if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_OLDEST_FIRST_INTEL) {
         this->threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;

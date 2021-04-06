@@ -43,5 +43,12 @@ template <typename GfxFamily>
 inline bool ClHwHelperHw<GfxFamily>::preferBlitterForLocalToLocalTransfers() const {
     return false;
 }
+template <typename GfxFamily>
+bool ClHwHelperHw<GfxFamily>::isSupportedKernelThreadArbitrationPolicy() const { return true; }
+
+template <typename GfxFamily>
+std::vector<uint32_t> ClHwHelperHw<GfxFamily>::getSupportedThreadArbitrationPolicies() const {
+    return std::vector<uint32_t>{CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_OLDEST_FIRST_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL, CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_AFTER_DEPENDENCY_ROUND_ROBIN_INTEL};
+}
 
 } // namespace NEO
