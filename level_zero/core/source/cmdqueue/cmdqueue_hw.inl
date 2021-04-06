@@ -118,7 +118,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         spaceForResidency += residencyContainerSpaceForPreemption;
     }
 
-    bool directSubmissionEnabled = csr->isDirectSubmissionEnabled();
+    bool directSubmissionEnabled = isCopyOnlyCommandQueue ? csr->isBlitterDirectSubmissionEnabled() : csr->isDirectSubmissionEnabled();
 
     L0::Fence *fence = nullptr;
 
