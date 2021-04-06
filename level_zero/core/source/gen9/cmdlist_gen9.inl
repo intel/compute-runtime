@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,9 @@
 #include "pipe_control_args.h"
 
 namespace L0 {
+
+template struct CommandListCoreFamily<IGFX_GEN9_CORE>;
+template struct CommandListCoreFamilyImmediate<IGFX_GEN9_CORE>;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t numRanges,
