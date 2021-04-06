@@ -1198,6 +1198,10 @@ HWTEST2_F(HwHelperTest, givenHwHelperWhenCheckingSipWaThenFalseIsReturned, isTgl
 
     EXPECT_FALSE(helper.isSipWANeeded(*defaultHwInfo));
 }
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGettingPlanarYuvHeightThenHelperReturnsCorrectValue) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(helper.getPlanarYuvMaxHeight(), 16352u);
+}
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenAdditionalKernelExecInfoSupportCheckedThenReturnFalse) {
     auto &helper = HwHelper::get(renderCoreFamily);

@@ -137,6 +137,7 @@ class HwHelper {
     virtual uint32_t getDefaultRevisionId(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getNumCacheRegions(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
+    virtual uint32_t getPlanarYuvMaxHeight() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -349,6 +350,8 @@ class HwHelperHw : public HwHelper {
     uint32_t getNumCacheRegions(const HardwareInfo &hwInfo) const override;
 
     bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const override;
+
+    uint32_t getPlanarYuvMaxHeight() const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

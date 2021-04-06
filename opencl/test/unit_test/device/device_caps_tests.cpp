@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -16,6 +17,7 @@
 #include "opencl/source/platform/extensions.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
@@ -1239,6 +1241,31 @@ TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenGettingNameAndVersionThen
 
     EXPECT_STREQ(DriverInfoMock::testDeviceName.c_str(), caps.name);
     EXPECT_STREQ(DriverInfoMock::testVersion.c_str(), caps.driverVersion);
+}
+
+static bool getPlanarYuvHeightCalled = false;
+
+template <typename GfxFamily>
+class MyMockHwHelper : public HwHelperHw<GfxFamily> {
+  public:
+    uint32_t getPlanarYuvMaxHeight() const override {
+        getPlanarYuvHeightCalled = true;
+        return dummyPlanarYuvValue;
+    }
+    uint32_t dummyPlanarYuvValue = 0x12345;
+};
+
+HWTEST_F(DeviceGetCapsTest, givenDeviceWhenInitializingCapsThenPlanarYuvHeightIsTakenFromHelper) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    RAIIHwHelperFactory<MyMockHwHelper<FamilyType>> hwHelperBackup{device->getHardwareInfo().platform.eRenderCoreFamily};
+
+    DriverInfoMock *driverInfoMock = new DriverInfoMock();
+    device->driverInfo.reset(driverInfoMock);
+    device->initializeCaps();
+    EXPECT_TRUE(getPlanarYuvHeightCalled);
+    getPlanarYuvHeightCalled = false;
+    const auto &caps = device->getDeviceInfo();
+    EXPECT_EQ(hwHelperBackup.mockHwHelper.dummyPlanarYuvValue, caps.planarYuvMaxHeight);
 }
 
 TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenReturnDefaultValues) {

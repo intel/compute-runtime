@@ -98,6 +98,13 @@ uint64_t HwHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double f
     return static_cast<uint64_t>(timeStamp * frequency);
 }
 
+constexpr uint32_t planarYuvMaxHeight = 16352;
+
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::getPlanarYuvMaxHeight() const {
+    return planarYuvMaxHeight;
+}
+
 template <typename GfxFamily>
 aub_stream::MMIOList HwHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const {
     return {};

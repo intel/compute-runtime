@@ -100,15 +100,6 @@ TEST(GetDeviceInfo, GivenPlanarYuvExtensionEnabledAndSupportImageEnabledWhenGett
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(16384u, value);
-
-    retVal = device->getDeviceInfo(
-        CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL,
-        sizeof(size_t),
-        &value,
-        nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(16352u, value);
 }
 
 TEST(GetDeviceInfo, GivenPlanarYuvExtensionDisabledAndSupportImageDisabledWhenGettingPlanarYuvMaxWidthHeightThenInvalidValueErrorIsReturned) {

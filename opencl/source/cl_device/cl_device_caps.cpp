@@ -385,7 +385,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.globalVariablePreferredTotalSize = ocl21FeaturesEnabled ? static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize) : 0;
 
     deviceInfo.planarYuvMaxWidth = 16384;
-    deviceInfo.planarYuvMaxHeight = 16352;
+    deviceInfo.planarYuvMaxHeight = hwHelper.getPlanarYuvMaxHeight();
 
     deviceInfo.vmeAvcSupportsTextureSampler = hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler;
     if (hwInfo.capabilityTable.supportsVme) {
