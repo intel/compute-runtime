@@ -587,7 +587,7 @@ HWTEST_P(FilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect) {
     sampler = Sampler::create(
         context,
         CL_TRUE,
-        CL_ADDRESS_MIRRORED_REPEAT,
+        CL_ADDRESS_NONE,
         filterMode,
         retVal);
 

@@ -130,7 +130,7 @@ HWTEST_F(HwInfoConfigTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsC
     auto sampler = clUniquePtr(new SamplerHw<FamilyType>(context.get(), CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST));
     auto state = FamilyType::cmdInitSamplerState;
     auto initialState = state;
-    hwInfoConfig->adjustSamplerState(&state);
+    hwInfoConfig->adjustSamplerState(&state, pInHwInfo);
 
     EXPECT_EQ(0, memcmp(&initialState, &state, sizeof(SAMPLER_STATE)));
 }

@@ -84,7 +84,7 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvenContextCountRequired() {
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler){};
+void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo){};
 
 template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData){};
