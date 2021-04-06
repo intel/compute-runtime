@@ -2311,5 +2311,86 @@ getListOfInfoTypes() {
 INSTANTIATE_TEST_CASE_P(parameterizedMetricEnumerationTestInformationTypes,
                         MetricEnumerationTestInformationTypes,
                         ::testing::ValuesIn(getListOfInfoTypes()));
+
+TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsTrue) {
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceMetricSet = &metricsSet;
+    EXPECT_CALL(metricsSet, Activate())
+        .WillRepeatedly(Return(MetricsDiscovery::CC_OK));
+
+    EXPECT_EQ(metricGroup.activate(), true);
+}
+
+TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsFalse) {
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceMetricSet = &metricsSet;
+    EXPECT_CALL(metricsSet, Activate())
+        .WillRepeatedly(Return(MetricsDiscovery::CC_ERROR_GENERAL));
+
+    EXPECT_EQ(metricGroup.activate(), false);
+}
+
+TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateReturnsTrue) {
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceMetricSet = &metricsSet;
+    EXPECT_CALL(metricsSet, Deactivate())
+        .WillRepeatedly(Return(MetricsDiscovery::CC_OK));
+
+    EXPECT_EQ(metricGroup.deactivate(), true);
+}
+
+TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateReturnsFalse) {
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceMetricSet = &metricsSet;
+    EXPECT_CALL(metricsSet, Deactivate())
+        .WillRepeatedly(Return(MetricsDiscovery::CC_ERROR_GENERAL));
+
+    EXPECT_EQ(metricGroup.deactivate(), false);
+}
+
+TEST_F(MetricEnumerationTest, givenMetricSetWhenWaitForReportsIsCalledWaitForReportsReturnsSuccess) {
+
+    // Metrics Discovery:: metric group.
+    Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
+    EXPECT_CALL(concurrentGroup, WaitForReports(_))
+        .WillRepeatedly(Return(MetricsDiscovery::TCompletionCode::CC_OK));
+
+    uint32_t timeout = 1;
+    EXPECT_EQ(metricGroup.waitForReports(timeout), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricEnumerationTest, givenMetricSetWhenWaitForReportsIsCalledWaitForReportsReturnsNotReady) {
+
+    // Metrics Discovery:: metric group.
+    Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
+    EXPECT_CALL(concurrentGroup, WaitForReports(_))
+        .WillRepeatedly(Return(MetricsDiscovery::TCompletionCode::CC_ERROR_GENERAL));
+
+    uint32_t timeout = 1;
+    EXPECT_EQ(metricGroup.waitForReports(timeout), ZE_RESULT_NOT_READY);
+}
+
 } // namespace ult
 } // namespace L0

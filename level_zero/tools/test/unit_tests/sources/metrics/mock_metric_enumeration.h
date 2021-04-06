@@ -209,5 +209,10 @@ struct Mock<MetricGroup> : public MetricGroup {
     MOCK_METHOD(ze_result_t, closeIoStream, (), (override));
 };
 
+struct MetricGroupImpTest : public MetricGroupImp {
+    using MetricGroupImp::pReferenceConcurrentGroup;
+    using MetricGroupImp::pReferenceMetricSet;
+};
+
 } // namespace ult
 } // namespace L0
