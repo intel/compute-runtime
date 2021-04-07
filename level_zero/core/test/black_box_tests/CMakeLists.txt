@@ -21,6 +21,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       zello_scratch
       zello_fence
       zello_printf
+      zello_image
   )
 
   include_directories(common)

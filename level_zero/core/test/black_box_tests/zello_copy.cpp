@@ -21,7 +21,7 @@ void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t context, ze
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
-    SUCCESS_OR_TERMINATE(createCommandQueue(context, device, cmdQueue));
+    cmdQueue = createCommandQueue(context, device, nullptr);
     SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -69,7 +69,7 @@ void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t context, ze
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
-    SUCCESS_OR_TERMINATE(createCommandQueue(context, device, cmdQueue));
+    cmdQueue = createCommandQueue(context, device, nullptr);
     SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
 
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -120,7 +120,7 @@ void testAppendMemoryCopy2DRegion(ze_context_handle_t context, ze_device_handle_
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
-    SUCCESS_OR_TERMINATE(createCommandQueue(context, device, cmdQueue));
+    cmdQueue = createCommandQueue(context, device, nullptr);
     SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
 
     void *dstBuffer = nullptr;
@@ -235,7 +235,7 @@ void testAppendMemoryFillWithSomePattern(ze_context_handle_t context, ze_device_
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
-    SUCCESS_OR_TERMINATE(createCommandQueue(context, device, cmdQueue));
+    cmdQueue = createCommandQueue(context, device, nullptr);
     SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
 
     // Initialize buffers
@@ -325,7 +325,7 @@ void testAppendMemoryCopy3DRegion(ze_context_handle_t context, ze_device_handle_
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
-    SUCCESS_OR_TERMINATE(createCommandQueue(context, device, cmdQueue));
+    cmdQueue = createCommandQueue(context, device, nullptr);
     SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
 
     void *dstBuffer = nullptr;

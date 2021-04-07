@@ -117,7 +117,8 @@ uint32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
     return copyOnlyQueueGroupOrdinal;
 }
 
-ze_result_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_queue_handle_t &cmdQueue) {
+ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device, uint32_t *ordinal) {
+    ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t descriptor = {};
     descriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
 
@@ -128,7 +129,11 @@ ze_result_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t 
 
     descriptor.ordinal = getCommandQueueOrdinal(device);
     descriptor.index = 0;
-    return zeCommandQueueCreate(context, device, &descriptor, &cmdQueue);
+    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &descriptor, &cmdQueue));
+    if (ordinal != nullptr) {
+        *ordinal = descriptor.ordinal;
+    }
+    return cmdQueue;
 }
 
 ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList) {
@@ -171,4 +176,17 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
 std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_t &context) {
     ze_driver_handle_t driverHandle;
     return zelloInitContextAndGetDevices(context, driverHandle);
+}
+
+void initialize(ze_driver_handle_t &driver, ze_context_handle_t &context, ze_device_handle_t &device, ze_command_queue_handle_t &cmdQueue, uint32_t &ordinal) {
+    std::vector<ze_device_handle_t> devices;
+
+    devices = zelloInitContextAndGetDevices(context, driver);
+    device = devices[0];
+    cmdQueue = createCommandQueue(context, device, &ordinal);
+}
+
+static inline void teardown(ze_context_handle_t context, ze_command_queue_handle_t cmdQueue) {
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 }
