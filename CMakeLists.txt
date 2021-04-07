@@ -1032,6 +1032,7 @@ if(BUILD_WITH_L0)
 endif()
 
 add_subdirectory_unique(target_unit_tests)
+add_subdirectory_unique(shared${BRANCH_DIR_SUFFIX})
 
 add_subdirectories()
 
