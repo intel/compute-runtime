@@ -34,28 +34,4 @@ class MultiCommandTests : public ::testing::Test {
     int retVal = OfflineCompiler::ErrorCode::SUCCESS;
     std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
 };
-
-void MultiCommandTests::createFileWithArgs(const std::vector<std::string> &singleArgs, int numOfBuild) {
-    std::ofstream myfile(nameOfFileWithArgs);
-    if (myfile.is_open()) {
-        for (int i = 0; i < numOfBuild; i++) {
-            for (auto singleArg : singleArgs)
-                myfile << singleArg + " ";
-            myfile << std::endl;
-        }
-        myfile.close();
-    } else
-        printf("Unable to open file\n");
-}
-
-void MultiCommandTests::deleteFileWithArgs() {
-    if (remove(nameOfFileWithArgs.c_str()) != 0)
-        perror("Error deleting file");
-}
-
-void MultiCommandTests::deleteOutFileList() {
-    if (remove(outFileList.c_str()) != 0)
-        perror("Error deleting file");
-}
-
 } // namespace NEO

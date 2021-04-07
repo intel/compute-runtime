@@ -405,6 +405,13 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
         return retVal;
     }
+
+    if (options.find(CompilerOptions::generateDebugInfo.str()) != std::string::npos) {
+        if (hwInfo.platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+            internalOptions = CompilerOptions::concatenate(internalOptions, CompilerOptions::debugKernelEnable);
+        }
+    }
+
     if (deviceName.empty()) {
         internalOptions = CompilerOptions::concatenate("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes", internalOptions);
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);

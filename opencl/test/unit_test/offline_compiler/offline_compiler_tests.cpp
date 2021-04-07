@@ -31,6 +31,29 @@ extern Environment *gEnvironment;
 
 namespace NEO {
 
+void MultiCommandTests::createFileWithArgs(const std::vector<std::string> &singleArgs, int numOfBuild) {
+    std::ofstream myfile(nameOfFileWithArgs);
+    if (myfile.is_open()) {
+        for (int i = 0; i < numOfBuild; i++) {
+            for (auto singleArg : singleArgs)
+                myfile << singleArg + " ";
+            myfile << std::endl;
+        }
+        myfile.close();
+    } else
+        printf("Unable to open file\n");
+}
+
+void MultiCommandTests::deleteFileWithArgs() {
+    if (remove(nameOfFileWithArgs.c_str()) != 0)
+        perror("Error deleting file");
+}
+
+void MultiCommandTests::deleteOutFileList() {
+    if (remove(outFileList.c_str()) != 0)
+        perror("Error deleting file");
+}
+
 std::string getCompilerOutputFileName(const std::string &fileName, const std::string &type) {
     std::string fName(fileName);
     fName.append("_");
@@ -293,6 +316,28 @@ TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdWithIncorrectHexPatternThenIn
     EXPECT_EQ(nullptr, pOfflineCompiler);
     EXPECT_STREQ(output.c_str(), "Error: Cannot get HW Info for device 0xnonexist.\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(OfflineCompilerTests, givenDebugOptionThenInternalOptionShouldContainKernelDebugEnable) {
+    if (gEnvironment->devicePrefix == "bdw") {
+        GTEST_SKIP();
+    }
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-options",
+        "-g",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+    mockOfflineCompiler->initialize(argv.size(), argv);
+
+    std::string internalOptions = mockOfflineCompiler->internalOptions;
+    EXPECT_THAT(internalOptions, ::testing::HasSubstr("-cl-kernel-debug-enable"));
 }
 
 TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorrectExtensionsArePassed) {
