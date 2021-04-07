@@ -255,11 +255,11 @@ TEST_F(OfflineCompilerTests, givenProperDeviceIdHexAsDeviceArgumentThenSuccessIs
     testing::internal::CaptureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
-    std::string resString = "Auto-detected target based on 0xff20 device id: ";
-    resString.append(productString.str()).append("\n");
+    std::stringstream resString;
+    resString << "Auto-detected target based on " << deviceString.str() << " device id: " << productString.str() << "\n";
 
     EXPECT_NE(nullptr, pOfflineCompiler);
-    EXPECT_STREQ(output.c_str(), resString.c_str());
+    EXPECT_STREQ(output.c_str(), resString.str().c_str());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     delete pOfflineCompiler;
