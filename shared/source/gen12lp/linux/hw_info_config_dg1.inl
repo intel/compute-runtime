@@ -18,6 +18,9 @@ int HwInfoConfigHw<IGFX_DG1>::configureHardwareCustom(HardwareInfo *hwInfo, OSIn
     enableBlitterOperationsSupport(hwInfo);
 
     hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = false;
+    auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
+    kmdNotifyProperties.enableKmdNotify = true;
+    kmdNotifyProperties.delayKmdNotifyMicroseconds = 100;
     return 0;
 }
 

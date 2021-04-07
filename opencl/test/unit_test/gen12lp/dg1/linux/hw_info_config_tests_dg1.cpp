@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,4 +22,13 @@ DG1TEST_F(HwHelperTestGen12Lp, GivenDG1WhenConfigureHardwareCustomThenMTPIsNotSe
 
     hwInfoConfig->configureHardwareCustom(&hardwareInfo, &osIface);
     EXPECT_FALSE(hardwareInfo.featureTable.ftrGpGpuMidThreadLevelPreempt);
+}
+
+DG1TEST_F(HwHelperTestGen12Lp, GivenDG1WhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
+    HwInfoConfig *hwInfoConfig = HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+
+    OSInterface osIface;
+    hwInfoConfig->configureHardwareCustom(&hardwareInfo, &osIface);
+    EXPECT_TRUE(hardwareInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
+    EXPECT_EQ(100ll, hardwareInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
 }
