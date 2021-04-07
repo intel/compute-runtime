@@ -366,7 +366,7 @@ HWTEST2_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThen
     auto isMediaFormatLayout = imageHW->isMediaFormat(params.first);
     if (isMediaFormatLayout) {
         auto imgInfo = imageHW->getImageInfo();
-        EXPECT_EQ(RSS.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
+        EXPECT_EQ(RSS.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
         EXPECT_EQ(RSS.getYOffsetForUOrUvPlane(), imgInfo.yOffsetForUVPlane);
         EXPECT_EQ(RSS.getXOffsetForUOrUvPlane(), imgInfo.xOffset);
     } else {
@@ -382,6 +382,10 @@ HWTEST2_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThen
         EXPECT_EQ(RSS.getShaderChannelSelectGreen(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_GREEN);
         EXPECT_EQ(RSS.getShaderChannelSelectBlue(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_BLUE);
         EXPECT_EQ(RSS.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_ALPHA);
+    } else {
+        EXPECT_EQ(RSS.getShaderChannelSelectRed(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_RED);
+        EXPECT_EQ(RSS.getShaderChannelSelectGreen(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_GREEN);
+        EXPECT_EQ(RSS.getShaderChannelSelectBlue(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_BLUE);
     }
 
     EXPECT_EQ(RSS.getNumberOfMultisamples(), FamilyType::RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
