@@ -86,7 +86,7 @@ MetricContextImp::MetricContextImp(Device &deviceInput)
       metricGroupDomains(*this) {
 
     auto deviceNeo = deviceInput.getNEODevice();
-    bool isSubDevice = deviceNeo->getParentDevice() != nullptr;
+    bool isSubDevice = deviceNeo->isSubDevice();
 
     subDeviceIndex = isSubDevice
                          ? static_cast<NEO::SubDevice *>(deviceNeo)->getSubDeviceIndex()

@@ -24,6 +24,7 @@
 namespace NEO {
 class OSTime;
 class SourceLevelDebugger;
+class SubDevice;
 
 class Device : public ReferenceTrackedObject<Device> {
   public:
@@ -98,11 +99,14 @@ class Device : public ReferenceTrackedObject<Device> {
     void allocateSyncBufferHandler();
 
     virtual uint32_t getRootDeviceIndex() const = 0;
-    virtual uint32_t getNumAvailableDevices() const = 0;
-    virtual Device *getDeviceById(uint32_t deviceId) const = 0;
-    virtual Device *getParentDevice() const = 0;
-    virtual DeviceBitfield getDeviceBitfield() const = 0;
-    virtual BindlessHeapsHelper *getBindlessHeapsHelper() const = 0;
+    uint32_t getNumAvailableDevices() const;
+    virtual Device *getDeviceById(uint32_t deviceId) const;
+    virtual Device *getRootDevice() const = 0;
+    DeviceBitfield getDeviceBitfield() const { return deviceBitfield; };
+    uint32_t getNumSubDevices() const { return numSubDevices; }
+    virtual bool isSubDevice() const = 0;
+
+    BindlessHeapsHelper *getBindlessHeapsHelper() const;
 
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
@@ -137,10 +141,16 @@ class Device : public ReferenceTrackedObject<Device> {
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::vector<EngineControl> engines;
     std::vector<std::vector<EngineControl>> engineGroups;
+    std::vector<SubDevice *> subdevices;
+
     PreemptionMode preemptionMode;
     ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t defaultEngineIndex = 0;
+    uint32_t numSubDevices = 0;
+
     std::atomic<uint32_t> selectorCopyEngine{0};
+
+    DeviceBitfield deviceBitfield = 1;
 
     uintptr_t specializedDevice = reinterpret_cast<uintptr_t>(nullptr);
 };

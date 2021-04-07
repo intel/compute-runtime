@@ -401,13 +401,13 @@ TEST(DeviceCreation, givenDeviceWhenCheckingEnginesCountThenNumberGreaterThanZer
 TEST(DeviceCreation, givenDeviceWhenCheckingParentDeviceThenCorrectValueIsReturned) {
     UltDeviceFactory deviceFactory{2, 2};
 
-    EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getParentDevice());
-    EXPECT_EQ(deviceFactory.rootDevices[0], deviceFactory.subDevices[0]->getParentDevice());
-    EXPECT_EQ(deviceFactory.rootDevices[0], deviceFactory.subDevices[1]->getParentDevice());
+    EXPECT_EQ(deviceFactory.rootDevices[0], deviceFactory.rootDevices[0]->getRootDevice());
+    EXPECT_EQ(deviceFactory.rootDevices[0], deviceFactory.subDevices[0]->getRootDevice());
+    EXPECT_EQ(deviceFactory.rootDevices[0], deviceFactory.subDevices[1]->getRootDevice());
 
-    EXPECT_EQ(nullptr, deviceFactory.rootDevices[1]->getParentDevice());
-    EXPECT_EQ(deviceFactory.rootDevices[1], deviceFactory.subDevices[2]->getParentDevice());
-    EXPECT_EQ(deviceFactory.rootDevices[1], deviceFactory.subDevices[3]->getParentDevice());
+    EXPECT_EQ(deviceFactory.rootDevices[1], deviceFactory.rootDevices[1]->getRootDevice());
+    EXPECT_EQ(deviceFactory.rootDevices[1], deviceFactory.subDevices[2]->getRootDevice());
+    EXPECT_EQ(deviceFactory.rootDevices[1], deviceFactory.subDevices[3]->getRootDevice());
 }
 
 TEST(DeviceCreation, givenRootDeviceWithSubDevicesWhenCheckingEngineGroupsThenItHasOneNonEmptyGroup) {

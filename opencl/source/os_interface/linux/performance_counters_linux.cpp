@@ -25,7 +25,7 @@ std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device)
     auto &hwHelper = HwHelper::get(gen);
     UNRECOVERABLE_IF(counter == nullptr);
 
-    if (device->getParentDevice() == nullptr) {
+    if (!device->isSubDevice()) {
 
         // Root device.
         counter->subDevice.Enabled = false;
@@ -36,7 +36,7 @@ std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device)
         // Sub device.
         counter->subDevice.Enabled = true;
         counter->subDeviceIndex.Index = static_cast<NEO::SubDevice *>(device)->getSubDeviceIndex();
-        counter->subDeviceCount.Count = device->getParentDevice()->getNumAvailableDevices();
+        counter->subDeviceCount.Count = device->getRootDevice()->getNumAvailableDevices();
     }
 
     // Adapter data.

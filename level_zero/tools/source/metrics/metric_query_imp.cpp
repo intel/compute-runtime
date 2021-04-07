@@ -203,7 +203,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
     ClientOptionsData_1_0 &subDeviceIndex,
     ClientOptionsData_1_0 &subDeviceCount) {
 
-    if (neoDevice.getParentDevice() == nullptr) {
+    if (!neoDevice.isSubDevice()) {
 
         // Root device.
         subDevice.Type = ClientOptionsType::SubDevice;
@@ -225,7 +225,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDeviceIndex.SubDeviceIndex.Index = static_cast<NEO::SubDevice *>(&neoDevice)->getSubDeviceIndex();
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
-        subDeviceCount.SubDeviceCount.Count = neoDevice.getParentDevice()->getNumAvailableDevices();
+        subDeviceCount.SubDeviceCount.Count = neoDevice.getRootDevice()->getNumAvailableDevices();
     }
 }
 

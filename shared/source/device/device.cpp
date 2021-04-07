@@ -44,6 +44,12 @@ Device::~Device() {
         engine.commandStreamReceiver->flushBatchedSubmissions();
     }
 
+    for (auto subdevice : subdevices) {
+        if (subdevice) {
+            delete subdevice;
+        }
+    }
+
     syncBufferHandler.reset();
     commandStreamReceivers.clear();
     executionEnvironment->memoryManager->waitForDeletions();
@@ -307,6 +313,26 @@ bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTime
 
 bool Device::getHostTimer(uint64_t *hostTimestamp) const {
     return getOSTime()->getCpuTime(hostTimestamp);
+}
+
+uint32_t Device::getNumAvailableDevices() const {
+    if (subdevices.empty()) {
+        return 1u;
+    }
+    return getNumSubDevices();
+}
+
+Device *Device::getDeviceById(uint32_t deviceId) const {
+    if (subdevices.empty()) {
+        UNRECOVERABLE_IF(deviceId > 0);
+        return const_cast<Device *>(this);
+    }
+    UNRECOVERABLE_IF(deviceId >= subdevices.size());
+    return subdevices[deviceId];
+}
+
+BindlessHeapsHelper *Device::getBindlessHeapsHelper() const {
+    return getRootDeviceEnvironment().getBindlessHeapsHelper();
 }
 
 GmmClientContext *Device::getGmmClientContext() const {
