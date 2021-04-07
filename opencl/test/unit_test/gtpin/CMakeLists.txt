@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2020 Intel Corporation
+# Copyright (C) 2017-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,3 +19,4 @@ apply_macro_for_each_gen("TESTED")
 if(NOT DISABLED_GTPIN_SUPPORT)
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gtpin})
 endif()
+add_subdirectories()
