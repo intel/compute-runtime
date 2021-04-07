@@ -32,6 +32,9 @@ struct DebugSessionMock : public L0::DebugSession {
         }
         return ZE_RESULT_SUCCESS;
     }
+    ze_result_t readEvent(uint64_t timeout, zet_debug_event_t *event) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     zet_debug_config_t config;
 };
 

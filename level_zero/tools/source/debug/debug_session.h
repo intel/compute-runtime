@@ -26,6 +26,8 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual bool closeConnection() = 0;
     virtual ze_result_t initialize() = 0;
 
+    virtual ze_result_t readEvent(uint64_t timeout, zet_debug_event_t *event) = 0;
+
     Device *getConnectedDevice() { return connectedDevice; }
 
   protected:
