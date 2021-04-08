@@ -245,6 +245,22 @@ def main(args):
                 os.chmod(path, old_mode)
 
         if args['check'] and ''.join(gathered_header) != ''.join(written_header):
+            _tmp = []
+            for _itm in written_header:
+                _tmp.extend(f'{_aa}\n' for _aa in _itm.split('\n'))
+            print('--- source')
+            print('+++ updated')
+            print('@@')
+
+            for idx, shl in enumerate(gathered_header):
+                if idx>=len(_tmp):
+                    print('-%s' % shl.strip())
+                elif shl != _tmp[idx]:
+                    print('-%s' % shl.strip())
+                    print('+%s' % _tmp[idx].strip())
+                else:
+                    print(' %s' % shl.strip())
+
             status = 1
 
     return status
