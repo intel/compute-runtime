@@ -390,23 +390,20 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
     }
     return result;
 }
-
-void LinuxGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
-    uint32_t valWedged = 0;
-    if (ZE_RESULT_SUCCESS == pFsAccess->read(ueventWedgedFile, valWedged)) {
-        if (valWedged != 0) {
-            pState->reset |= ZES_RESET_REASON_FLAG_WEDGED;
-        }
-    }
-}
 ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
-    memset(pState, 0, sizeof(zes_device_state_t));
-    pState->repaired = ZES_REPAIR_STATUS_UNSUPPORTED;
-    getWedgedStatus(pState);
-    getRepairStatus(pState);
-    return ZE_RESULT_SUCCESS;
+    uint32_t valWedged = 0;
+    ze_result_t result = pFsAccess->read(ueventWedgedFile, valWedged);
+    if (result != ZE_RESULT_SUCCESS) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE)
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return result;
+    }
+    pState->reset = 0;
+    if (valWedged != 0) {
+        pState->reset |= ZES_RESET_REASON_FLAG_WEDGED;
+    }
+    return result;
 }
-
 LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
 
@@ -414,7 +411,6 @@ LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pProcfsAccess = &pLinuxSysmanImp->getProcfsAccess();
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
     pDevice = pLinuxSysmanImp->getDeviceHandle();
-    pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
 }
 
 OsGlobalOperations *OsGlobalOperations::create(OsSysman *pOsSysman) {

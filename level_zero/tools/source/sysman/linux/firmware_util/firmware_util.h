@@ -10,16 +10,26 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util_base.h"
-#include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util_extended.h"
 
+#ifdef IGSC_PRESENT
+#include "igsc_lib.h"
+#else
+typedef struct igsc_device_info {
+} igsc_device_info_t;
+#endif
 #include <string>
 #include <vector>
 
 namespace L0 {
-class FirmwareUtil : public virtual FirmwareUtilBase, public virtual FirmwareUtilExtended {
+class FirmwareUtil {
   public:
     static FirmwareUtil *create();
+    virtual ze_result_t fwDeviceInit() = 0;
+    virtual ze_result_t getFirstDevice(igsc_device_info *) = 0;
+    virtual ze_result_t fwGetVersion(std::string &fwVersion) = 0;
+    virtual ze_result_t opromGetVersion(std::string &fwVersion) = 0;
+    virtual ze_result_t fwFlashGSC(void *pImage, uint32_t size) = 0;
+    virtual ze_result_t fwFlashOprom(void *pImage, uint32_t size) = 0;
     virtual ~FirmwareUtil() = default;
 };
 } // namespace L0

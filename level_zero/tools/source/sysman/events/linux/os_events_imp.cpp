@@ -18,7 +18,9 @@ const std::string LinuxEventsImp::attachEvent("add");
 
 bool LinuxEventsImp::isResetRequired(zes_event_type_flags_t &pEvent) {
     zes_device_state_t pState = {};
-    pLinuxSysmanImp->getSysmanDeviceImp()->deviceGetState(&pState);
+    if (pLinuxSysmanImp->getSysmanDeviceImp()->deviceGetState(&pState) != ZE_RESULT_SUCCESS) {
+        return false;
+    }
     if (pState.reset) {
         pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED;
         return true;
