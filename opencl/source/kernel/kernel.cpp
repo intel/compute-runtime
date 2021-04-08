@@ -771,7 +771,11 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
     auto currentAllocationSize = pKernelInfo->kernelAllocation->getUnderlyingBufferSize();
     bool status = false;
     if (currentAllocationSize >= newKernelHeapSize) {
-        status = memoryManager->copyMemoryToAllocation(pKernelInfo->kernelAllocation, 0, newKernelHeap, newKernelHeapSize);
+        auto &hwInfo = clDevice.getDevice().getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        status = MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *pKernelInfo->getGraphicsAllocation()),
+                                                                  clDevice.getDevice(), pKernelInfo->getGraphicsAllocation(), 0, newKernelHeap,
+                                                                  static_cast<size_t>(newKernelHeapSize));
     } else {
         memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(pKernelInfo->kernelAllocation);
         pKernelInfo->kernelAllocation = nullptr;

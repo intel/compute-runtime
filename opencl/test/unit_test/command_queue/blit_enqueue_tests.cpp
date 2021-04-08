@@ -1760,4 +1760,63 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenLocalMemoryAccessNotAllowedWhenGlobalCons
     EXPECT_NE(nullptr, bcsMockContext->getSVMAllocsManager()->getSVMAlloc(gpuAddress));
 }
 
+HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAccessAllowedWhenSubstituteKernelHeapIsCalledThenUseBcsForTransfer) {
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+
+    device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+
+    MockKernelWithInternals kernel(*device);
+    const size_t initialHeapSize = 0x40;
+    kernel.kernelInfo.heapInfo.KernelHeapSize = initialHeapSize;
+
+    kernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
+    ASSERT_NE(nullptr, kernel.kernelInfo.kernelAllocation);
+    EXPECT_TRUE(kernel.kernelInfo.kernelAllocation->isAllocatedInLocalMemoryPool());
+
+    const size_t newHeapSize = initialHeapSize;
+    char newHeap[newHeapSize];
+
+    auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
+
+    kernel.mockKernel->substituteKernelHeap(newHeap, newHeapSize);
+
+    EXPECT_EQ(initialTaskCount + 1, bcsMockContext->bcsCsr->peekTaskCount());
+
+    device->getMemoryManager()->freeGraphicsMemory(kernel.kernelInfo.kernelAllocation);
+}
+
+HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAccessAllowedWhenLinkerRequiresPatchingOfInstructionSegmentsThenUseBcsForTransfer) {
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+
+    device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+
+    auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+
+    KernelInfo kernelInfo = {};
+    std::vector<char> kernelHeap;
+    kernelHeap.resize(32, 7);
+    kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
+    kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
+    kernelInfo.createKernelAllocation(device->getDevice(), false);
+    ASSERT_NE(nullptr, kernelInfo.kernelAllocation);
+    EXPECT_TRUE(kernelInfo.kernelAllocation->isAllocatedInLocalMemoryPool());
+
+    MockProgram program{nullptr, false, toClDeviceVector(*device)};
+    program.getKernelInfoArray(device->getRootDeviceIndex()).push_back(&kernelInfo);
+    program.setLinkerInput(device->getRootDeviceIndex(), std::move(linkerInput));
+
+    auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
+
+    auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, ret);
+
+    EXPECT_EQ(initialTaskCount + 1, bcsMockContext->bcsCsr->peekTaskCount());
+
+    program.getKernelInfoArray(device->getRootDeviceIndex()).clear();
+    device->getMemoryManager()->freeGraphicsMemory(kernelInfo.kernelAllocation);
+}
+
 } // namespace NEO

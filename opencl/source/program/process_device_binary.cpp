@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,9 +115,11 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
             }
             auto &kernHeapInfo = kernelInfo->heapInfo;
             auto segmentId = &kernelInfo - &kernelInfoArray[0];
-            pDevice->getMemoryManager()->copyMemoryToAllocation(kernelInfo->getGraphicsAllocation(), 0,
-                                                                isaSegmentsForPatching[segmentId].hostPointer,
-                                                                kernHeapInfo.KernelHeapSize);
+            auto &hwInfo = pDevice->getHardwareInfo();
+            auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+            MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelInfo->getGraphicsAllocation()),
+                                                             *pDevice, kernelInfo->getGraphicsAllocation(), 0, isaSegmentsForPatching[segmentId].hostPointer,
+                                                             static_cast<size_t>(kernHeapInfo.KernelHeapSize));
         }
     }
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->getSymbols(pDevice->getRootDeviceIndex())));
