@@ -162,12 +162,6 @@ class Drm {
         return classHandles.size() > 0;
     }
 
-    static inline uint32_t createMemoryRegionId(uint16_t type, uint16_t instance) {
-        return (1u << (type + 16)) | (1u << instance);
-    }
-    static inline uint16_t getMemoryTypeFromRegion(uint32_t region) { return Math::log2(region >> 16); };
-    static inline uint16_t getMemoryInstanceFromRegion(uint32_t region) { return Math::log2(region & 0xFFFF); };
-
     static bool isi915Version(int fd);
 
     static Drm *create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);

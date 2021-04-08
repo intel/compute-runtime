@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,19 +103,4 @@ TEST(MemoryInfo, givenMemoryInfoWithoutRegionsWhenGettingMemoryRegionClassAndIns
     EXPECT_EQ(MemoryInfoImpl::invalidMemoryRegion(), regionClassAndInstance.memory_instance);
     auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
     EXPECT_EQ(0 * GB, regionSize);
-}
-
-TEST(MemoryInfo, givenMemoryRegionIdWhenGetMemoryTypeFromRegionAndGetInstanceFromRegionAreCalledThenMemoryTypeAndInstanceAreReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = std::make_unique<DrmMockDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
-    EXPECT_NE(nullptr, drm);
-
-    auto regionSmem = drm->createMemoryRegionId(0, 0);
-    EXPECT_EQ(0u, drm->getMemoryTypeFromRegion(regionSmem));
-    EXPECT_EQ(0u, drm->getMemoryInstanceFromRegion(regionSmem));
-
-    auto regionLmem = drm->createMemoryRegionId(1, 0);
-    EXPECT_EQ(1u, drm->getMemoryTypeFromRegion(regionLmem));
-    EXPECT_EQ(0u, drm->getMemoryInstanceFromRegion(regionLmem));
 }

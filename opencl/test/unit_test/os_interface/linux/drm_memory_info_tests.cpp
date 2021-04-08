@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,31 +43,4 @@ TEST(DrmTest, givenMemoryInfoWhenGetMemoryInfoIsCalledThenValidPtrIsReturned) {
 
 TEST(MemoryInfo, givenMemoryInfoImplementationWhenDestructingThenDestructorIsCalled) {
     MemoryInfoImpl memoryInfoImpl;
-}
-
-TEST(MemoryInfo, givenMemoryRegionIdWhenGetMemoryTypeFromRegionAndGetInstanceFromRegionAreCalledThenMemoryTypeAndInstanceAreReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    EXPECT_NE(nullptr, drm);
-
-    auto regionSmem = drm->createMemoryRegionId(0, 0);
-    EXPECT_EQ(0u, drm->getMemoryTypeFromRegion(regionSmem));
-    EXPECT_EQ(0u, drm->getMemoryInstanceFromRegion(regionSmem));
-
-    auto regionLmem = drm->createMemoryRegionId(1, 0);
-    EXPECT_EQ(1u, drm->getMemoryTypeFromRegion(regionLmem));
-    EXPECT_EQ(0u, drm->getMemoryInstanceFromRegion(regionLmem));
-
-    auto regionLmem1 = drm->createMemoryRegionId(1, 1);
-    EXPECT_EQ(1u, drm->getMemoryTypeFromRegion(regionLmem1));
-    EXPECT_EQ(1u, drm->getMemoryInstanceFromRegion(regionLmem1));
-
-    auto regionLmem2 = drm->createMemoryRegionId(1, 2);
-    EXPECT_EQ(1u, drm->getMemoryTypeFromRegion(regionLmem2));
-    EXPECT_EQ(2u, drm->getMemoryInstanceFromRegion(regionLmem2));
-
-    auto regionLmem3 = drm->createMemoryRegionId(1, 3);
-    EXPECT_EQ(1u, drm->getMemoryTypeFromRegion(regionLmem3));
-    EXPECT_EQ(3u, drm->getMemoryInstanceFromRegion(regionLmem3));
 }
