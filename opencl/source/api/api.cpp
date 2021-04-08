@@ -4832,7 +4832,10 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
 
     for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
         auto pKernel = pMultiDeviceKernel->getKernel(pDevice->getRootDeviceIndex());
-        cl_int kernelArgAddressQualifier = asClKernelArgAddressQualifier(pKernel->getKernelInfo().kernelArgInfo[argIndex].metadata.getAddressQualifier());
+        cl_int kernelArgAddressQualifier = asClKernelArgAddressQualifier(pKernel->getKernelInfo()
+                                                                             .kernelDescriptor.payloadMappings.explicitArgs[argIndex]
+                                                                             .getTraits()
+                                                                             .getAddressQualifier());
         if ((kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_GLOBAL) &&
             (kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_CONSTANT)) {
             retVal = CL_INVALID_ARG_VALUE;

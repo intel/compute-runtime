@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_kernel_info.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "gtest/gtest.h"

@@ -564,14 +564,10 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
-    KernelInfo *kernelInfo = const_cast<KernelInfo *>(&pKernel->getKernelInfo());
-    kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
 
-    SPatchAllocateStatelessPrintfSurface sPatchPrintfSurface = {};
-    sPatchPrintfSurface.DataParamOffset = 0;
-    sPatchPrintfSurface.DataParamSize = 8;
-    populateKernelDescriptor(kernelInfo->kernelDescriptor, sPatchPrintfSurface);
-    kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap[0].assign(testString);
+    auto &kernelInfo = mockKernelWithInternals.kernelInfo;
+    kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
+    kernelInfo.addToPrintfStringsMap(0, testString);
 
     uint64_t crossThread[10];
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);

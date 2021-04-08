@@ -35,7 +35,7 @@ class PrintFormatterTest : public testing::Test {
     MockGraphicsAllocation *data;
     MockKernel *kernel;
     std::unique_ptr<MockProgram> program;
-    std::unique_ptr<KernelInfo> kernelInfo;
+    std::unique_ptr<MockKernelInfo> kernelInfo;
     ClDevice *device;
 
     uint8_t underlyingBuffer[maxPrintfOutputLength];
@@ -49,7 +49,7 @@ class PrintFormatterTest : public testing::Test {
         maxStringIndex = 0;
         data = new MockGraphicsAllocation(underlyingBuffer, maxPrintfOutputLength);
 
-        kernelInfo = std::make_unique<KernelInfo>();
+        kernelInfo = std::make_unique<MockKernelInfo>();
         device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
         program = std::make_unique<MockProgram>(toClDeviceVector(*device));
         kernel = new MockKernel(program.get(), *kernelInfo, *device);
@@ -127,23 +127,9 @@ class PrintFormatterTest : public testing::Test {
     }
 
     int injectFormatString(std::string str) {
-        size_t strSize = str.length() + 1;
-
-        SPatchString printfString;
-        printfString.Token = PATCH_TOKEN_STRING;
-        printfString.Size = static_cast<uint32_t>(sizeof(SPatchString) + strSize);
-
-        printfString.Index = maxStringIndex++;
-        printfString.StringSize = static_cast<uint32_t>(strSize);
-
-        cl_char *pPrintfString = new cl_char[printfString.Size];
-        memcpy_s(pPrintfString, sizeof(SPatchString), &printfString, sizeof(SPatchString));
-        memcpy_s((cl_char *)pPrintfString + sizeof(printfString), strSize, str.c_str(), strSize);
-
-        populateKernelDescriptor(kernelInfo->kernelDescriptor, *reinterpret_cast<SPatchString *>(pPrintfString));
-
-        delete[] pPrintfString;
-        return printfString.Index;
+        auto index = maxStringIndex++;
+        kernelInfo->addToPrintfStringsMap(index, str);
+        return index;
     }
 };
 
@@ -824,7 +810,7 @@ TEST_F(PrintFormatterTest, GivenPointerWith32BitKernelWhenPrintingThen32BitPoint
     printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), printfBufferSize, true, kernelInfo->kernelDescriptor.kernelMetadata.printfStringsMap));
     auto stringIndex = injectFormatString("%p");
     storeData(stringIndex);
-    kernelInfo->gpuPointerSize = 4;
+    kernelInfo->kernelDescriptor.kernelAttributes.gpuPointerSize = 4;
 
     storeData(PRINTF_DATA_TYPE::POINTER);
 

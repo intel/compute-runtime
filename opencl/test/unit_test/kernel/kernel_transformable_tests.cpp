@@ -22,30 +22,17 @@ class KernelTransformableTest : public ::testing::Test {
   public:
     void SetUp() override {
         context = std::make_unique<MockContext>(deviceFactory.rootDevices[rootDeviceIndex]);
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-
-        KernelArgPatchInfo kernelArgPatchInfo;
 
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-        pKernelInfo->usesSsh = true;
 
-        pKernelInfo->kernelArgInfo.resize(4);
-        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-
-        pKernelInfo->kernelArgInfo[0].offsetHeap = 0x0;
-        pKernelInfo->kernelArgInfo[0].isSampler = true;
-        pKernelInfo->kernelArgInfo[1].offsetHeap = 0x0;
-        pKernelInfo->kernelArgInfo[1].isSampler = true;
-        pKernelInfo->kernelArgInfo[2].offsetHeap = firstImageOffset;
-        pKernelInfo->kernelArgInfo[2].isImage = true;
-        pKernelInfo->kernelArgInfo[3].offsetHeap = secondImageOffset;
-        pKernelInfo->kernelArgInfo[3].isImage = true;
-        pKernelInfo->argumentsToPatchNum = 4;
+        pKernelInfo->addArgSampler(0, 0);
+        pKernelInfo->addArgSampler(1, 0);
+        pKernelInfo->addArgImage(2, firstImageOffset);
+        pKernelInfo->addArgImage(3, secondImageOffset);
+        pKernelInfo->kernelDescriptor.kernelAttributes.numArgsToPatch = 4;
 
         program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*context->getDevice(0)));
         pKernel.reset(new MockKernel(program.get(), *pKernelInfo, *deviceFactory.rootDevices[rootDeviceIndex]));
@@ -72,7 +59,7 @@ class KernelTransformableTest : public ::testing::Test {
     std::unique_ptr<MockContext> context;
     std::unique_ptr<MockProgram> program;
     std::unique_ptr<Sampler> sampler;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     std::unique_ptr<MockKernel> pKernel;
 
     std::unique_ptr<Image> image;
@@ -89,8 +76,8 @@ HWTEST_F(KernelTransformableTest, givenKernelThatCannotTranformImagesWithTwoTran
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
     pKernel->canKernelTransformImages = false;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
@@ -117,8 +104,8 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
     pKernel->setArg(1, sizeof(clSampler), &clSampler);
@@ -144,8 +131,8 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
     pKernel->setArg(1, sizeof(clSampler), &clSampler);
@@ -159,7 +146,7 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     firstSurfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_NULL);
     secondSurfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_NULL);
 
-    pKernelInfo->kernelArgInfo[3].isTransformable = false;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = false;
     pKernel->setArg(3, sizeof(clImage), &clImage);
 
     EXPECT_EQ(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D, firstSurfaceState->getSurfaceType());
@@ -176,8 +163,8 @@ HWTEST_F(KernelTransformableTest, givenKernelWithOneTransformableImageAndTwoTran
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = false;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = false;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
     pKernel->setArg(1, sizeof(clSampler), &clSampler);
@@ -203,8 +190,8 @@ HWTEST_F(KernelTransformableTest, givenKernelWithImages2dAndTwoTransformableSamp
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     auto ssh = pKernel->getSurfaceStateHeap();
 
@@ -230,8 +217,8 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     sampler.reset(createTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
     pKernel->setArg(1, sizeof(clSampler), &clSampler);
@@ -262,8 +249,8 @@ HWTEST_F(KernelTransformableTest, givenKernelWithNonTransformableSamplersWhenRes
     sampler.reset(createNonTransformableSampler());
     cl_mem clImage = image.get();
     cl_sampler clSampler = sampler.get();
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     pKernel->setArg(0, sizeof(clSampler), &clSampler);
     pKernel->setArg(1, sizeof(clSampler), &clSampler);
@@ -293,12 +280,13 @@ HWTEST_F(KernelTransformableTest, givenKernelWithoutSamplersAndTransformableImag
     image.reset(Image3dHelper<>::create(context.get()));
     cl_mem clImage = image.get();
 
-    pKernelInfo->kernelArgInfo[0].isSampler = false;
-    pKernelInfo->kernelArgInfo[0].isImage = true;
-    pKernelInfo->kernelArgInfo[1].isSampler = false;
-    pKernelInfo->kernelArgInfo[1].isImage = true;
-    pKernelInfo->kernelArgInfo[2].isTransformable = true;
-    pKernelInfo->kernelArgInfo[3].isTransformable = true;
+    pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
+    pKernelInfo->addArgImage(0, 0);
+    pKernelInfo->addArgImage(1, 0);
+    pKernelInfo->addArgImage(2, firstImageOffset);
+    pKernelInfo->argAt(2).getExtendedTypeInfo().isTransformable = true;
+    pKernelInfo->addArgImage(3, secondImageOffset);
+    pKernelInfo->argAt(3).getExtendedTypeInfo().isTransformable = true;
 
     pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
     pKernel->setKernelArgHandler(1, &Kernel::setArgImage);

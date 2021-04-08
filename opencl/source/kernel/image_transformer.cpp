@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,10 +20,11 @@ void ImageTransformer::registerImage3d(uint32_t argIndex) {
 }
 void ImageTransformer::transformImagesTo2dArray(const KernelInfo &kernelInfo, const std::vector<Kernel::SimpleKernelArgInfo> &kernelArguments, void *ssh) {
     for (auto const &argIndex : argIndexes) {
-        if (kernelInfo.kernelArgInfo.at(argIndex).isTransformable) {
+        const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex];
+        if (arg.getExtendedTypeInfo().isTransformable) {
             auto clMemObj = static_cast<cl_mem>(kernelArguments.at(argIndex).object);
             auto image = castToObjectOrAbort<Image>(clMemObj);
-            auto surfaceState = ptrOffset(ssh, kernelInfo.kernelArgInfo.at(argIndex).offsetHeap);
+            auto surfaceState = ptrOffset(ssh, arg.as<ArgDescImage>().bindful);
             image->transformImage3dTo2dArray(surfaceState);
         }
     }
@@ -31,9 +32,10 @@ void ImageTransformer::transformImagesTo2dArray(const KernelInfo &kernelInfo, co
 }
 void ImageTransformer::transformImagesTo3d(const KernelInfo &kernelInfo, const std::vector<Kernel::SimpleKernelArgInfo> &kernelArguments, void *ssh) {
     for (auto const &argIndex : argIndexes) {
+        const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex];
         auto clMemObj = static_cast<cl_mem>(kernelArguments.at(argIndex).object);
         auto image = castToObjectOrAbort<Image>(clMemObj);
-        auto surfaceState = ptrOffset(ssh, kernelInfo.kernelArgInfo.at(argIndex).offsetHeap);
+        auto surfaceState = ptrOffset(ssh, arg.as<ArgDescImage>().bindful);
         image->transformImage2dArrayTo3d(surfaceState);
     }
     transformed = false;

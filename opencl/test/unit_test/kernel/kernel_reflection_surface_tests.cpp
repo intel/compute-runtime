@@ -48,26 +48,11 @@ TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelThenKernelReflectionSurfac
 }
 
 TEST_P(KernelReflectionSurfaceTest, GivenEmptyKernelInfoWhenPassedToGetCurbeParamsThenEmptyVectorIsReturned) {
-    KernelInfo info;
-    SPatchImageMemoryObjectKernelArgument imageMemObjKernelArg;
-    imageMemObjKernelArg.ArgumentNumber = 0;
-    imageMemObjKernelArg.Offset = 32;
-    imageMemObjKernelArg.Size = 4;
-    imageMemObjKernelArg.Type = iOpenCL::IMAGE_MEMORY_OBJECT_2D;
-    info.storeKernelArgument(&imageMemObjKernelArg);
+    MockKernelInfo info;
 
-    SPatchSamplerKernelArgument samplerMemObjKernelArg;
-    samplerMemObjKernelArg.ArgumentNumber = 1;
-    samplerMemObjKernelArg.Offset = 32;
-    samplerMemObjKernelArg.Size = 4;
-    samplerMemObjKernelArg.Type = iOpenCL::SAMPLER_OBJECT_TEXTURE;
-    info.storeKernelArgument(&samplerMemObjKernelArg);
-
-    SPatchDataParameterBuffer bufferMemObjKernelArg;
-    bufferMemObjKernelArg.ArgumentNumber = 2;
-    bufferMemObjKernelArg.Offset = 32;
-    bufferMemObjKernelArg.Size = 4;
-    info.storeKernelArgument(&bufferMemObjKernelArg);
+    info.addArgImage(0, 32);
+    info.addArgSampler(1, 32);
+    info.addArgImmediate(2, 4, 32);
 
     std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
     uint64_t tokenMask = 0;
@@ -83,13 +68,7 @@ TEST_P(KernelReflectionSurfaceTest, GivenEmptyKernelInfoWhenPassedToGetCurbePara
 }
 
 TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithCorrectlyFilledImageArgumentWhenPassedToGetCurbeParamsThenImageCurbeParamsAreReturned) {
-
-    KernelInfo info;
-    SPatchImageMemoryObjectKernelArgument imageMemObjKernelArg;
-    imageMemObjKernelArg.ArgumentNumber = 0;
-    imageMemObjKernelArg.Offset = 32;
-    imageMemObjKernelArg.Size = 4;
-    imageMemObjKernelArg.Type = iOpenCL::IMAGE_MEMORY_OBJECT_2D;
+    MockKernelInfo info;
 
     const uint32_t offsetDataType = 4;
     const uint32_t offsetChannelOrder = 8;
@@ -100,22 +79,20 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithCorrectlyFilledImageArgum
     const uint32_t offsetObjectID = 28;
     const uint32_t offsetArraySize = 32;
 
-    info.storeKernelArgument(&imageMemObjKernelArg);
-    info.kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
-    info.kernelArgInfo[0].metadata.accessQualifier = NEO::KernelArgMetadata::AccessReadOnly;
-    info.kernelArgInfo[0].metadataExtended->accessQualifier = "read_only";
-    info.kernelArgInfo[0].isImage = true;
-    info.kernelArgInfo[0].metadataExtended->argName = "img";
-    info.kernelArgInfo[0].offsetChannelDataType = offsetDataType;
-    info.kernelArgInfo[0].offsetChannelOrder = offsetChannelOrder;
-    info.kernelArgInfo[0].offsetHeap = offsetHeap;
-    info.kernelArgInfo[0].offsetImgDepth = offsetDepth;
-    info.kernelArgInfo[0].offsetImgWidth = offsetWidth;
-    info.kernelArgInfo[0].offsetImgHeight = offsetHeight;
-    info.kernelArgInfo[0].offsetObjectId = offsetObjectID;
-    info.kernelArgInfo[0].offsetArraySize = offsetArraySize;
+    info.addArgImage(0, offsetHeap);
+    auto &metaPayload = info.argAsImg(0).metadataPayload;
+    metaPayload.channelDataType = offsetDataType;
+    metaPayload.channelOrder = offsetChannelOrder;
+    metaPayload.imgDepth = offsetDepth;
+    metaPayload.imgWidth = offsetWidth;
+    metaPayload.imgHeight = offsetHeight;
+    metaPayload.arraySize = offsetArraySize;
 
-    info.gpuPointerSize = 8;
+    info.addExtendedDeviceSideEnqueueDescriptor(0, offsetObjectID);
+    info.setAccessQualifier(0, KernelArgMetadata::AccessReadOnly);
+    info.addExtendedMetadata(0, "img", "", "read_only");
+
+    info.kernelDescriptor.kernelAttributes.gpuPointerSize = 8;
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
     uint64_t tokenMask = 0;
@@ -176,24 +153,15 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithCorrectlyFilledImageArgum
 HWTEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithSetBindingTableStateAndImageArgumentWhenPassedToGetCurbeParamsThenProperCurbeParamIsReturned) {
     typedef typename FamilyType::BINDING_TABLE_STATE BINDING_TABLE_STATE;
 
-    KernelInfo info;
+    MockKernelInfo info;
     uint32_t imageOffset = 32;
     uint32_t btIndex = 3;
 
-    info.gpuPointerSize = 8;
+    info.kernelDescriptor.kernelAttributes.gpuPointerSize = 8;
 
-    SPatchImageMemoryObjectKernelArgument imageMemObjKernelArg;
-    imageMemObjKernelArg.ArgumentNumber = 0;
-    imageMemObjKernelArg.Offset = imageOffset;
-    imageMemObjKernelArg.Size = 4;
-    imageMemObjKernelArg.Type = iOpenCL::IMAGE_MEMORY_OBJECT_2D;
+    info.addArgImage(0, imageOffset, iOpenCL::IMAGE_MEMORY_OBJECT_2D);
 
-    info.storeKernelArgument(&imageMemObjKernelArg);
-
-    SPatchBindingTableState bindingTableStateInfo;
-    bindingTableStateInfo.Offset = 0;
-    bindingTableStateInfo.Count = 4;
-    populateKernelDescriptor(info.kernelDescriptor, bindingTableStateInfo);
+    info.setBindingTable(0, 4);
 
     BINDING_TABLE_STATE bindingTableState[4];
 
@@ -226,25 +194,16 @@ HWTEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithSetBindingTableStateAnd
 HWTEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBindingTableStateAndImageArgumentWhenCountIsZeroThenGetCurbeParamsReturnsMaxBTIndex) {
     typedef typename FamilyType::BINDING_TABLE_STATE BINDING_TABLE_STATE;
 
-    KernelInfo info;
+    MockKernelInfo info;
     uint32_t imageOffset = 32;
     uint32_t btIndex = 0;
     uint32_t maxBTIndex = 253;
 
-    info.gpuPointerSize = 8;
+    info.kernelDescriptor.kernelAttributes.gpuPointerSize = 8;
 
-    SPatchImageMemoryObjectKernelArgument imageMemObjKernelArg;
-    imageMemObjKernelArg.ArgumentNumber = 0;
-    imageMemObjKernelArg.Offset = imageOffset;
-    imageMemObjKernelArg.Size = 4;
-    imageMemObjKernelArg.Type = iOpenCL::IMAGE_MEMORY_OBJECT_2D;
+    info.addArgImage(0, imageOffset, iOpenCL::IMAGE_MEMORY_OBJECT_2D);
 
-    info.storeKernelArgument(&imageMemObjKernelArg);
-
-    SPatchBindingTableState bindingTableStateInfo;
-    bindingTableStateInfo.Offset = 0;
-    bindingTableStateInfo.Count = 0;
-    populateKernelDescriptor(info.kernelDescriptor, bindingTableStateInfo);
+    info.setBindingTable(0, 0);
 
     BINDING_TABLE_STATE bindingTableState[1];
 
@@ -276,7 +235,7 @@ HWTEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBindingTableStateAndIma
 
 TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithCorrectlyFilledSamplerArgumentWhenPassedToGetCurbeParamsThenSamplerCurbeParamsAreReturned) {
 
-    KernelInfo info;
+    MockKernelInfo info;
     SPatchSamplerKernelArgument samplerMemObjKernelArg;
     samplerMemObjKernelArg.ArgumentNumber = 1;
     samplerMemObjKernelArg.Offset = 32;
@@ -288,14 +247,9 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithCorrectlyFilledSamplerArg
     const uint32_t offsetSamplerSnapWa = 12;
     const uint32_t offsetObjectID = 28;
 
-    info.storeKernelArgument(&samplerMemObjKernelArg);
-    info.kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
-    info.kernelArgInfo[0].isSampler = true;
-    info.kernelArgInfo[0].metadataExtended->argName = "smp";
-    info.kernelArgInfo[0].offsetSamplerAddressingMode = offsetSamplerAddressingMode;
-    info.kernelArgInfo[0].offsetSamplerNormalizedCoords = offsetSamplerNormalizedCoords;
-    info.kernelArgInfo[0].offsetSamplerSnapWa = offsetSamplerSnapWa;
-    info.kernelArgInfo[0].offsetObjectId = offsetObjectID;
+    info.addArgSampler(1, 32, offsetSamplerAddressingMode, offsetSamplerNormalizedCoords, offsetSamplerSnapWa);
+    info.addExtendedMetadata(1, "smp");
+    info.addExtendedDeviceSideEnqueueDescriptor(1, offsetObjectID);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
     uint64_t tokenMask = 0;
@@ -337,17 +291,8 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithCorrectlyFilledSamplerArg
 
 TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBufferAndDataParameterBuffersTokensWhenPassedToGetCurbeParamsThenCorrectCurbeParamsWithProperSizesAreReturned) {
 
-    KernelInfo info;
-    SPatchDataParameterBuffer dataParameterBuffer;
-    dataParameterBuffer.ArgumentNumber = 0;
-    dataParameterBuffer.DataSize = 8;
-    dataParameterBuffer.Offset = 40;
-    dataParameterBuffer.SourceOffset = 0;
-    dataParameterBuffer.Type = iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT;
-
-    info.storeKernelArgument(&dataParameterBuffer);
-    info.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
-    populateKernelArgDescriptor(info.kernelDescriptor, 0, dataParameterBuffer);
+    MockKernelInfo info;
+    info.addArgImmediate(0, 8, 40, 0, true);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
     uint64_t tokenMask = 0;
@@ -380,16 +325,8 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBufferAndDataParameterBuf
 }
 
 TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBufferAndNoDataParameterBuffersTokenWhenPassedToGetCurbeParamsThenCurbeParamForDataKernelArgumentTokenIsNotReturned) {
-
-    KernelInfo info;
-    SPatchDataParameterBuffer dataParameterBuffer;
-    dataParameterBuffer.ArgumentNumber = 0;
-    dataParameterBuffer.DataSize = 8;
-    dataParameterBuffer.Offset = 40;
-    dataParameterBuffer.SourceOffset = 0;
-    dataParameterBuffer.Type = iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT;
-
-    info.storeKernelArgument(&dataParameterBuffer);
+    MockKernelInfo info;
+    info.addArgImmediate(0, 8, 40);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
     uint64_t tokenMask = 0;
@@ -407,29 +344,12 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBufferAndNoDataParameterB
 }
 
 TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithLocalMemoryParameterWhenPassedToGetCurbeParamsThenCurbeParamForLocalMemoryArgIsReturned) {
-
-    KernelInfo info;
-    SPatchDataParameterBuffer dataParameterBuffer;
+    MockKernelInfo info;
 
     const uint32_t crossThreadOffset = 10;
-    const uint32_t dataSize = 8;
     const uint32_t slmAlignment = 80;
 
-    dataParameterBuffer.ArgumentNumber = 0;
-    dataParameterBuffer.DataSize = dataSize;
-    dataParameterBuffer.Offset = crossThreadOffset;
-    dataParameterBuffer.SourceOffset = 0;
-    dataParameterBuffer.Type = iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT;
-
-    info.storeKernelArgument(&dataParameterBuffer);
-
-    KernelArgPatchInfo kernelArgPatchInfo;
-    kernelArgPatchInfo.crossthreadOffset = crossThreadOffset;
-    kernelArgPatchInfo.size = dataSize;
-    kernelArgPatchInfo.sourceOffset = 76;
-
-    info.kernelArgInfo[0].slmAlignment = slmAlignment;
-    info.kernelArgInfo[0].kernelArgPatchInfoVector[0] = kernelArgPatchInfo;
+    info.addArgLocal(0, crossThreadOffset, slmAlignment);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
     uint64_t tokenMask = 0;
@@ -451,28 +371,12 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithLocalMemoryParameterWhenP
 
 TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithoutLocalMemoryParameterWhenPassedToGetCurbeParamsThenCurbeParamForLocalMemoryArgIsNotReturned) {
 
-    KernelInfo info;
-    SPatchDataParameterBuffer dataParameterBuffer;
+    MockKernelInfo info;
 
     const uint32_t crossThreadOffset = 10;
-    const uint32_t dataSize = 8;
     const uint32_t slmAlignment = 0;
 
-    dataParameterBuffer.ArgumentNumber = 0;
-    dataParameterBuffer.DataSize = dataSize;
-    dataParameterBuffer.Offset = crossThreadOffset;
-    dataParameterBuffer.SourceOffset = 0;
-    dataParameterBuffer.Type = iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT;
-
-    info.storeKernelArgument(&dataParameterBuffer);
-
-    KernelArgPatchInfo kernelArgPatchInfo;
-    kernelArgPatchInfo.crossthreadOffset = crossThreadOffset;
-    kernelArgPatchInfo.size = dataSize;
-    kernelArgPatchInfo.sourceOffset = 76;
-
-    info.kernelArgInfo[0].slmAlignment = slmAlignment;
-    info.kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+    info.addArgLocal(0, crossThreadOffset, slmAlignment);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
     uint64_t tokenMask = 0;
@@ -520,7 +424,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenReturnedVectorIsSo
                 }
             }
         }
-        EXPECT_EQ(curbeParamsForBlock.size() - pBlockInfo->kernelArgInfo.size(), firstSSHTokenIndex);
+        EXPECT_EQ(curbeParamsForBlock.size() - pBlockInfo->getExplicitArgs().size(), firstSSHTokenIndex);
         curbeParamsForBlock.resize(0);
     }
 }
@@ -571,7 +475,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenReturnedVectorHasE
             EXPECT_TRUE(imageFound);
             EXPECT_TRUE(samplerFound);
         }
-        EXPECT_EQ(curbeParamsForBlock.size() - pBlockInfo->kernelArgInfo.size(), firstSSHTokenIndex);
+        EXPECT_EQ(curbeParamsForBlock.size() - pBlockInfo->getExplicitArgs().size(), firstSSHTokenIndex);
         curbeParamsForBlock.resize(0);
     }
 }
@@ -646,24 +550,14 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNoKernelArgsWhenObtainingKernelRefl
     MockContext context;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockProgram program(toClDeviceVector(*device));
-    KernelInfo *blockInfo = new KernelInfo;
-    KernelInfo &info = *blockInfo;
+    MockKernelInfo *blockInfo = new MockKernelInfo;
+    MockKernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
     DeviceQueue devQueue(&context, device.get(), properties[0]);
 
     info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
-
-    SPatchDataParameterStream dataParameterStream;
-    dataParameterStream.Size = 0;
-    dataParameterStream.DataParameterStreamSize = 0;
-    populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
-
-    SPatchBindingTableState bindingTableState;
-    bindingTableState.Count = 0;
-    bindingTableState.Offset = 0;
-    bindingTableState.Size = 0;
-    bindingTableState.SurfaceStateOffset = 0;
-    populateKernelDescriptor(info.kernelDescriptor, bindingTableState);
+    info.setCrossThreadDataSize(0);
+    info.setBindingTable(0, 0);
 
     MockKernel kernel(&program, info, *device);
 
@@ -694,8 +588,8 @@ TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKe
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockProgram program(toClDeviceVector(*device));
 
-    KernelInfo *blockInfo = new KernelInfo;
-    KernelInfo &info = *blockInfo;
+    MockKernelInfo *blockInfo = new MockKernelInfo;
+    MockKernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
     DeviceQueue devQueue(&context, device.get(), properties[0]);
 
@@ -703,28 +597,9 @@ TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKe
     uint32_t devQueueCurbeSize = 4;
 
     info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
-
-    SPatchDataParameterStream dataParameterStream;
-    dataParameterStream.Size = 0;
-    dataParameterStream.DataParameterStreamSize = 0;
-    populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
-
-    SPatchBindingTableState bindingTableState;
-    bindingTableState.Count = 0;
-    bindingTableState.Offset = 0;
-    bindingTableState.Size = 0;
-    bindingTableState.SurfaceStateOffset = 0;
-    populateKernelDescriptor(info.kernelDescriptor, bindingTableState);
-
-    KernelArgInfo argInfo;
-    argInfo.isDeviceQueue = true;
-
-    info.kernelArgInfo.resize(1);
-    info.kernelArgInfo[0] = std::move(argInfo);
-
-    info.kernelArgInfo[0].kernelArgPatchInfoVector.resize(1);
-    info.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = devQueueCurbeOffset;
-    info.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = devQueueCurbeSize;
+    info.setCrossThreadDataSize(0);
+    info.setBindingTable(0, 0);
+    info.addArgDevQueue(0, devQueueCurbeOffset, devQueueCurbeSize);
 
     MockKernel kernel(&program, info, *device);
 
@@ -854,7 +729,7 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithArgsWhenPassedToGetCurbeP
 
     KernelInfo info;
 
-    info.kernelArgInfo.resize(9);
+    info.kernelDescriptor.payloadMappings.explicitArgs.resize(9);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
     uint64_t tokenMask = 0;
@@ -1071,15 +946,15 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
             }
         }
 
-        for (const auto &arg : pBlockInfo->kernelArgInfo) {
-            if (arg.isDeviceQueue) {
-
-                auto *patchedPointer = ptrOffset(pCurbe, arg.kernelArgPatchInfoVector[0].crossthreadOffset);
-                if (arg.kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
+        for (const auto &arg : pBlockInfo->getExplicitArgs()) {
+            if (arg.getExtendedTypeInfo().isDeviceQueue) {
+                auto &asPtr = arg.as<ArgDescPointer>();
+                auto *patchedPointer = ptrOffset(pCurbe, asPtr.stateless);
+                if (asPtr.pointerSize == sizeof(uint32_t)) {
                     uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
                     uint64_t patchedValue64 = *patchedValue;
                     EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), patchedValue64);
-                } else if (arg.kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
+                } else if (asPtr.pointerSize == sizeof(uint64_t)) {
                     uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
                     EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), *patchedValue);
                 }
@@ -1130,9 +1005,10 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
 
         if (pKernelHeader->m_ParentKernelImageCount > 0) {
             uint32_t imageIndex = 0;
-            for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
-                if (arg.isImage) {
-                    EXPECT_EQ(arg.offsetHeap, pParentImageParams[imageIndex].m_ObjectID);
+            for (const auto &arg : pKernel->getKernelInfo().getExplicitArgs()) {
+                if (arg.is<ArgDescriptor::ArgTImage>()) {
+                    const auto &asImg = arg.as<ArgDescImage>();
+                    EXPECT_EQ(pParentImageParams[imageIndex].m_ObjectID, asImg.bindful);
                     imageIndex++;
                 }
             }
@@ -1140,9 +1016,10 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
 
         if (pKernelHeader->m_ParentSamplerCount > 0) {
             uint32_t samplerIndex = 0;
-            for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
-                if (arg.isSampler) {
-                    EXPECT_EQ(OCLRT_ARG_OFFSET_TO_SAMPLER_OBJECT_ID(arg.offsetHeap), pParentSamplerParams[samplerIndex].m_ObjectID);
+            for (const auto &arg : pKernel->getKernelInfo().getExplicitArgs()) {
+                if (arg.is<ArgDescriptor::ArgTSampler>()) {
+                    const auto &asSmp = arg.as<ArgDescSampler>();
+                    EXPECT_EQ(pParentSamplerParams[samplerIndex].m_ObjectID, static_cast<uint>(OCLRT_ARG_OFFSET_TO_SAMPLER_OBJECT_ID(asSmp.bindful)));
                     samplerIndex++;
                 }
             }
@@ -1222,26 +1099,13 @@ class ReflectionSurfaceHelperSetKernelDataTest : public testing::TestWithParam<s
     void SetUp() override {
         PlatformFixture::SetUp();
 
-        samplerStateArray.BorderColorOffset = 0x3;
-        samplerStateArray.Count = 1;
-        samplerStateArray.Offset = 5;
-        samplerStateArray.Size = 16;
-        samplerStateArray.Token = 1;
-        populateKernelDescriptor(info.kernelDescriptor, samplerStateArray);
+        info.setSamplerTable(3, 1, 5);
 
-        dataParameterStream.DataParameterStreamSize = 60;
-        dataParameterStream.Size = 20;
-        dataParameterStream.Token = 3;
-        populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
-
+        info.setCrossThreadDataSize(crossThreadDataSize);
         info.kernelDescriptor.kernelAttributes.simdSize = 16;
         info.kernelDescriptor.kernelAttributes.barrierCount = 1;
 
-        SPatchThreadPayload threadPayload = {};
-        populateKernelDescriptor(info.kernelDescriptor, threadPayload);
-
-        SPatchAllocateStatelessPrivateSurface privateSurface;
-        populateKernelDescriptor(info.kernelDescriptor, privateSurface);
+        info.setLocalIds({0, 0, 0});
 
         info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] = 4;
         info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1] = 8;
@@ -1259,9 +1123,8 @@ class ReflectionSurfaceHelperSetKernelDataTest : public testing::TestWithParam<s
         PlatformFixture::TearDown();
     }
 
-    KernelInfo info;
-    SPatchSamplerStateArray samplerStateArray;
-    SPatchDataParameterStream dataParameterStream;
+    MockKernelInfo info;
+    const uint16_t crossThreadDataSize = 16;
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
 };
@@ -1284,16 +1147,9 @@ TEST_P(ReflectionSurfaceHelperSetKernelDataTest, WhenSettingKernelDataThenDataAn
 
     std::tie(localIDPresent, privateSurfaceSize) = GetParam();
 
-    SPatchThreadPayload threadPayload = {};
-    threadPayload.LocalIDFlattenedPresent = localIDPresent.flattend;
-    threadPayload.LocalIDXPresent = localIDPresent.x;
-    threadPayload.LocalIDYPresent = localIDPresent.y;
-    threadPayload.LocalIDZPresent = localIDPresent.z;
-    populateKernelDescriptor(info.kernelDescriptor, threadPayload);
-
-    SPatchAllocateStatelessPrivateSurface privateSurface = {};
-    privateSurface.PerThreadPrivateMemorySize = privateSurfaceSize;
-    populateKernelDescriptor(info.kernelDescriptor, privateSurface);
+    info.setLocalIds({localIDPresent.x, localIDPresent.y, localIDPresent.z});
+    info.kernelDescriptor.kernelAttributes.flags.usesFlattenedLocalIds = localIDPresent.flattend;
+    info.setPrivateMemory(privateSurfaceSize, false, 0, 0, 0);
 
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
 
@@ -1310,13 +1166,14 @@ TEST_P(ReflectionSurfaceHelperSetKernelDataTest, WhenSettingKernelDataThenDataAn
 
     IGIL_KernelData *kernelData = reinterpret_cast<IGIL_KernelData *>(kernelDataMemory.get() + offsetInKernelDataMemory);
 
+    const auto &samplerTable = info.kernelDescriptor.payloadMappings.samplerTable;
     EXPECT_EQ(3u, kernelData->m_numberOfCurbeParams);
     EXPECT_EQ(3u, kernelData->m_numberOfCurbeTokens);
-    EXPECT_EQ(samplerStateArray.Count, kernelData->m_numberOfSamplerStates);
-    EXPECT_EQ(alignUp(samplerStateArray.Size, Sampler::samplerStateArrayAlignment) + samplerStateArray.Offset - samplerStateArray.BorderColorOffset, kernelData->m_SizeOfSamplerHeap);
-    EXPECT_EQ(samplerStateArray.BorderColorOffset, kernelData->m_SamplerBorderColorStateOffsetOnDSH);
-    EXPECT_EQ(samplerStateArray.Offset, kernelData->m_SamplerStateArrayOffsetOnDSH);
-    EXPECT_EQ(dataParameterStream.DataParameterStreamSize, kernelData->m_sizeOfConstantBuffer);
+    EXPECT_EQ(samplerTable.numSamplers, kernelData->m_numberOfSamplerStates);
+    EXPECT_EQ(Sampler::samplerStateArrayAlignment + samplerTable.tableOffset - samplerTable.borderColor, kernelData->m_SizeOfSamplerHeap);
+    EXPECT_EQ(samplerTable.borderColor, kernelData->m_SamplerBorderColorStateOffsetOnDSH);
+    EXPECT_EQ(samplerTable.tableOffset, kernelData->m_SamplerStateArrayOffsetOnDSH);
+    EXPECT_EQ(crossThreadDataSize, kernelData->m_sizeOfConstantBuffer);
     EXPECT_EQ(tokenMask, kernelData->m_PatchTokensMask);
     EXPECT_EQ(0u, kernelData->m_ScratchSpacePatchValue);
     EXPECT_EQ(info.kernelDescriptor.kernelAttributes.simdSize, kernelData->m_SIMDSize);
@@ -1376,8 +1233,6 @@ TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullPrivateSurfaceWhenSett
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
-    SPatchAllocateStatelessPrivateSurface patch = {};
-    populateKernelDescriptor(info.kernelDescriptor, patch);
 
     uint64_t tokenMask = 1 | 2 | 4;
 
@@ -1402,8 +1257,7 @@ TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullPrivateSurfaceWhenSett
 }
 
 TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullSamplerStateWhenSettingKernelDataThenDataAndOffsetsAreCorrect) {
-    SPatchSamplerStateArray samplerStateArray = {};
-    populateKernelDescriptor(info.kernelDescriptor, samplerStateArray);
+    info.setSamplerTable(0, 0, 0);
 
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
 
@@ -1470,11 +1324,8 @@ TEST_F(ReflectionSurfaceHelperFixture, GivenNullBindingTableWhenSettingKernelDat
 }
 
 TEST_F(ReflectionSurfaceHelperFixture, GivenSetBindingTableWhenSettingKernelDataThenDataIsCorrectlySet) {
-    KernelInfo info;
-    SPatchBindingTableState bindingTableStateInfo;
-    bindingTableStateInfo.Offset = 0;
-    bindingTableStateInfo.Count = 4;
-    populateKernelDescriptor(info.kernelDescriptor, bindingTableStateInfo);
+    MockKernelInfo info;
+    info.setBindingTable(0, 4);
 
     std::unique_ptr<char> kernelDataMemory(new char[200]);
     IGIL_KernelAddressData *kernalAddressData = reinterpret_cast<IGIL_KernelAddressData *>(kernelDataMemory.get());
@@ -1585,14 +1436,13 @@ TEST_F(ReflectionSurfaceHelperFixture, GivenUndefinedOffsetsWhenPatchingBlocksCu
 
 TEST_F(ReflectionSurfaceHelperFixture, WhenSettingParentImageParamsThenParamsAreSetCorrectly) {
     MockContext context;
-    KernelInfo info;
+    MockKernelInfo info;
     std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
 
     std::unique_ptr<Image> image2d(ImageHelper<Image2dDefaults>::create(&context));
     std::unique_ptr<Image> image1d(ImageHelper<Image1dDefaults>::create(&context));
 
     Kernel::SimpleKernelArgInfo imgInfo;
-    KernelArgInfo argInfo;
 
     uint32_t imageID[4] = {32, 64, 0, 0};
 
@@ -1600,38 +1450,23 @@ TEST_F(ReflectionSurfaceHelperFixture, WhenSettingParentImageParamsThenParamsAre
     imgInfo.type = Kernel::kernelArgType::BUFFER_OBJ;
     imgInfo.object = reinterpret_cast<void *>(0x0);
     kernelArguments.push_back(imgInfo);
-
-    argInfo.offsetHeap = 0;
-    argInfo.isBuffer = true;
-    info.kernelArgInfo.push_back(std::move(argInfo));
+    info.addArgBuffer(0, undefined<CrossThreadDataOffset>, 0, 0);
 
     imgInfo.type = Kernel::kernelArgType::IMAGE_OBJ;
     imgInfo.object = (cl_mem)image2d.get();
     kernelArguments.push_back(imgInfo);
-
-    argInfo = {};
-    argInfo.offsetHeap = imageID[0];
-    argInfo.isImage = true;
-    info.kernelArgInfo.push_back(std::move(argInfo));
+    info.addArgImage(1, imageID[0]);
 
     // Buffer Object should never be dereferenced by setParentImageParams
     imgInfo.type = Kernel::kernelArgType::BUFFER_OBJ;
     imgInfo.object = reinterpret_cast<void *>(0x0);
     kernelArguments.push_back(imgInfo);
-
-    argInfo = {};
-    argInfo.offsetHeap = 0;
-    argInfo.isBuffer = true;
-    info.kernelArgInfo.push_back(std::move(argInfo));
+    info.addArgBuffer(2, undefined<CrossThreadDataOffset>, 0, 0);
 
     imgInfo.type = Kernel::kernelArgType::IMAGE_OBJ;
     imgInfo.object = (cl_mem)image1d.get();
     kernelArguments.push_back(imgInfo);
-
-    argInfo = {};
-    argInfo.offsetHeap = imageID[1];
-    argInfo.isImage = true;
-    info.kernelArgInfo.push_back(std::move(argInfo));
+    info.addArgImage(3, imageID[1]);
 
     std::unique_ptr<char> reflectionSurfaceMemory(new char[4096]);
 
@@ -1668,7 +1503,7 @@ TEST_F(ReflectionSurfaceHelperFixture, WhenSettingParentImageParamsThenParamsAre
 
 TEST_F(ReflectionSurfaceHelperFixture, WhenSettingParentSamplerParamsThenParamsAreSetCorrectly) {
     MockContext context;
-    KernelInfo info;
+    MockKernelInfo info;
     std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
 
     std::unique_ptr<MockSampler> sampler1(new MockSampler(&context,
@@ -1682,7 +1517,6 @@ TEST_F(ReflectionSurfaceHelperFixture, WhenSettingParentSamplerParamsThenParamsA
                                                           (cl_filter_mode)CL_FILTER_NEAREST));
 
     Kernel::SimpleKernelArgInfo imgInfo;
-    KernelArgInfo argInfo;
 
     uint32_t samplerID[4] = {32, 64, 0, 0};
 
@@ -1690,41 +1524,26 @@ TEST_F(ReflectionSurfaceHelperFixture, WhenSettingParentSamplerParamsThenParamsA
     imgInfo.type = Kernel::kernelArgType::BUFFER_OBJ;
     imgInfo.object = reinterpret_cast<void *>(0x0);
     kernelArguments.push_back(std::move(imgInfo));
-
-    argInfo.offsetHeap = 0;
-    argInfo.isBuffer = true;
-    info.kernelArgInfo.push_back(std::move(argInfo));
+    info.addArgBuffer(0, undefined<CrossThreadDataOffset>, 0, 0);
 
     imgInfo = {};
     imgInfo.type = Kernel::kernelArgType::SAMPLER_OBJ;
     imgInfo.object = (cl_sampler)sampler1.get();
     kernelArguments.push_back(std::move(imgInfo));
-
-    argInfo = {};
-    argInfo.offsetHeap = samplerID[0];
-    argInfo.isSampler = true;
-    info.kernelArgInfo.push_back(std::move(argInfo));
+    info.addArgSampler(1, samplerID[0]);
 
     // Buffer Object should never be dereferenced by setParentImageParams
     imgInfo = {};
     imgInfo.type = Kernel::kernelArgType::BUFFER_OBJ;
     imgInfo.object = reinterpret_cast<void *>(0x0);
     kernelArguments.push_back(std::move(imgInfo));
-
-    argInfo = {};
-    argInfo.offsetHeap = 0;
-    argInfo.isBuffer = true;
-    info.kernelArgInfo.push_back(std::move(argInfo));
+    info.addArgBuffer(2, undefined<CrossThreadDataOffset>, 0, 0);
 
     imgInfo = {};
     imgInfo.type = Kernel::kernelArgType::SAMPLER_OBJ;
     imgInfo.object = (cl_sampler)sampler2.get();
     kernelArguments.push_back(std::move(imgInfo));
-
-    argInfo = {};
-    argInfo.offsetHeap = samplerID[1];
-    argInfo.isSampler = true;
-    info.kernelArgInfo.push_back(std::move(argInfo));
+    info.addArgSampler(3, samplerID[1]);
 
     std::unique_ptr<char> reflectionSurfaceMemory(new char[4096]);
 
@@ -2070,24 +1889,14 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelRefl
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device1);
 
     MockProgram program(context.get(), false, toClDeviceVector(*device1));
-    KernelInfo *blockInfo = new KernelInfo;
-    KernelInfo &info = *blockInfo;
+    MockKernelInfo *blockInfo = new MockKernelInfo;
+    MockKernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
     DeviceQueue devQueue(context.get(), device1, properties[0]);
 
     info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
-
-    SPatchDataParameterStream dataParameterStream;
-    dataParameterStream.Size = 0;
-    dataParameterStream.DataParameterStreamSize = 0;
-    populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
-
-    SPatchBindingTableState bindingTableState;
-    bindingTableState.Count = 0;
-    bindingTableState.Offset = 0;
-    bindingTableState.Size = 0;
-    bindingTableState.SurfaceStateOffset = 0;
-    populateKernelDescriptor(info.kernelDescriptor, bindingTableState);
+    info.setCrossThreadDataSize(0);
+    info.setBindingTable(0, 0);
 
     MockKernel kernel(&program, info, *device1);
 
@@ -2118,8 +1927,8 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKe
 
     MockProgram program(context.get(), false, toClDeviceVector(*device1));
 
-    KernelInfo *blockInfo = new KernelInfo;
-    KernelInfo &info = *blockInfo;
+    MockKernelInfo *blockInfo = new MockKernelInfo;
+    MockKernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
     DeviceQueue devQueue(context.get(), device1, properties[0]);
 
@@ -2127,28 +1936,9 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKe
     uint32_t devQueueCurbeSize = 4;
 
     info.kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
-
-    SPatchDataParameterStream dataParameterStream;
-    dataParameterStream.Size = 0;
-    dataParameterStream.DataParameterStreamSize = 0;
-    populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
-
-    SPatchBindingTableState bindingTableState;
-    bindingTableState.Count = 0;
-    bindingTableState.Offset = 0;
-    bindingTableState.Size = 0;
-    bindingTableState.SurfaceStateOffset = 0;
-    populateKernelDescriptor(info.kernelDescriptor, bindingTableState);
-
-    KernelArgInfo argInfo;
-    argInfo.isDeviceQueue = true;
-
-    info.kernelArgInfo.resize(1);
-    info.kernelArgInfo[0] = std::move(argInfo);
-
-    info.kernelArgInfo[0].kernelArgPatchInfoVector.resize(1);
-    info.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = devQueueCurbeOffset;
-    info.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = devQueueCurbeSize;
+    info.setCrossThreadDataSize(0);
+    info.setBindingTable(0, 0);
+    info.addArgDevQueue(0, devQueueCurbeOffset, devQueueCurbeSize);
 
     MockKernel kernel(&program, info, *device1);
 

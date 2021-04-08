@@ -33,38 +33,21 @@ class KernelArgImmediateTest : public MultiRootDeviceWithSubDevicesFixture {
             memset(&pCrossThreadData[rootDeviceIndex], 0xfe, sizeof(pCrossThreadData[rootDeviceIndex]));
 
             // define kernel info
-            pKernelInfo[rootDeviceIndex] = std::make_unique<KernelInfo>();
-            pKernelInfo[rootDeviceIndex]->kernelDescriptor.kernelAttributes.simdSize = 1;
+            this->pKernelInfo = std::make_unique<MockKernelInfo>();
+            this->pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
-            // setup kernel arg offsets
-            KernelArgPatchInfo kernelArgPatchInfo;
+            this->pKernelInfo->addArgImmediate(0, sizeof(T), 0x50);
+            this->pKernelInfo->addArgImmediate(1, sizeof(T), 0x40);
+            this->pKernelInfo->addArgImmediate(2, sizeof(T), 0x30);
+            this->pKernelInfo->addArgImmediate(3, sizeof(T), 0x20);
+            this->pKernelInfo->argAsVal(3).elements.push_back(ArgDescValue::Element{0x28, sizeof(T), 0});
+            this->pKernelInfo->argAsVal(3).elements.push_back(ArgDescValue::Element{0x38, sizeof(T), 0});
 
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo.resize(4);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[1].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset = 0x38;
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset = 0x28;
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20;
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset = 0x40;
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x50;
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = sizeof(T);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(T);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[0].size = sizeof(T);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].kernelArgPatchInfoVector[0].size = sizeof(T);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeof(T);
-            pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(T);
-
-            kernelInfos[rootDeviceIndex] = pKernelInfo[rootDeviceIndex].get();
+            kernelInfos[rootDeviceIndex] = this->pKernelInfo.get();
         }
 
         for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-            pKernel[rootDeviceIndex] = new MockKernel(program.get(), *pKernelInfo[rootDeviceIndex], *deviceFactory->rootDevices[rootDeviceIndex]);
+            pKernel[rootDeviceIndex] = new MockKernel(program.get(), *pKernelInfo, *deviceFactory->rootDevices[rootDeviceIndex]);
             kernels[rootDeviceIndex] = pKernel[rootDeviceIndex];
             ASSERT_EQ(CL_SUCCESS, pKernel[rootDeviceIndex]->initialize());
         }
@@ -84,7 +67,7 @@ class KernelArgImmediateTest : public MultiRootDeviceWithSubDevicesFixture {
     std::unique_ptr<MockProgram> program;
     std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel;
     MockKernel *pKernel[3] = {nullptr};
-    std::unique_ptr<KernelInfo> pKernelInfo[3];
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     char pCrossThreadData[3][0x60];
 };
 
@@ -110,7 +93,7 @@ TYPED_TEST(KernelArgImmediateTest, WhenSettingKernelArgThenArgIsSetCorrectly) {
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
         auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
-                                        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                        this->pKernelInfo->argAsVal(0).elements[0].offset);
 
         EXPECT_EQ(val, *pKernelArg);
     }
@@ -133,7 +116,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleArgumentsWhenSettingKernelArgThe
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
         auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
-                                        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                        this->pKernelInfo->argAsVal(0).elements[0].offset);
 
         EXPECT_EQ(val, *pKernelArg);
     }
@@ -143,7 +126,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleArgumentsWhenSettingKernelArgThe
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
         auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
-                                        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                        this->pKernelInfo->argAsVal(1).elements[0].offset);
 
         EXPECT_EQ(val, *pKernelArg);
     }
@@ -153,7 +136,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleArgumentsWhenSettingKernelArgThe
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
         auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
-                                        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                        this->pKernelInfo->argAsVal(2).elements[0].offset);
 
         EXPECT_EQ(val, *pKernelArg);
     }
@@ -167,7 +150,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenCrossThreadDataOverwritesWhenSettingKern
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
 
         TypeParam *pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
-                                              this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                              this->pKernelInfo->argAsVal(0).elements[0].offset);
 
         EXPECT_EQ(val, *pKernelArg);
     }
@@ -178,7 +161,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenCrossThreadDataOverwritesWhenSettingKern
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
         auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
-                                        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                        this->pKernelInfo->argAsVal(1).elements[0].offset);
 
         EXPECT_EQ(val, *pKernelArg);
     }
@@ -188,7 +171,7 @@ TYPED_TEST(KernelArgImmediateTest, GivenCrossThreadDataOverwritesWhenSettingKern
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
         auto pKernelArg = (TypeParam *)(pKernel->getCrossThreadData() +
-                                        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                        this->pKernelInfo->argAsVal(0).elements[0].offset);
 
         EXPECT_EQ(val, *pKernelArg);
     }
@@ -207,20 +190,18 @@ TYPED_TEST(KernelArgImmediateTest, GivenMultipleStructElementsWhenSettingKernelA
     immediateStruct.unused[1] = 0xfe;
     immediateStruct.unused[2] = 0xfe;
 
-    for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[0].sourceOffset = offsetof(struct ImmediateStruct, a);
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].sourceOffset = offsetof(struct ImmediateStruct, b);
-    }
+    auto &elements = this->pKernelInfo->argAsVal(3).elements;
+    elements[0].sourceOffset = offsetof(struct ImmediateStruct, a);
+    elements[1].sourceOffset = offsetof(struct ImmediateStruct, b);
+
     this->pMultiDeviceKernel->setArg(3, sizeof(immediateStruct), &immediateStruct);
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
-        auto pCrossthreadA = (TypeParam *)(pKernel->getCrossThreadData() +
-                                           this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset);
+        auto pCrossthreadA = (TypeParam *)(pKernel->getCrossThreadData() + elements[0].offset);
         EXPECT_EQ(immediateStruct.a, *pCrossthreadA);
 
-        auto pCrossthreadB = (TypeParam *)(pKernel->getCrossThreadData() +
-                                           this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset);
+        auto pCrossthreadB = (TypeParam *)(pKernel->getCrossThreadData() + elements[1].offset);
         EXPECT_EQ(immediateStruct.b, *pCrossthreadB);
     }
 }
@@ -234,12 +215,12 @@ TYPED_TEST(KernelArgImmediateTest, givenTooLargePatchSizeWhenSettingArgThenDontR
         std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
         const auto destinationMemoryAddress = pKernel->getCrossThreadData() +
-                                              this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
+                                              this->pKernelInfo->argAsVal(0).elements[0].offset;
         const auto memoryBeyondLimitAddress = destinationMemoryAddress + sizeof(TypeParam);
 
         const auto memoryBeyondLimitBefore = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
 
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(TypeParam) + 1;
+        this->pKernelInfo->argAsVal(0).elements[0].size = sizeof(TypeParam) + 1;
         auto retVal = pKernel->setArg(0, sizeof(TypeParam), &memory[0]);
 
         const auto memoryBeyondLimitAfter = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
@@ -259,12 +240,12 @@ TYPED_TEST(KernelArgImmediateTest, givenNotTooLargePatchSizeWhenSettingArgThenDo
         std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
         const auto destinationMemoryAddress = pKernel->getCrossThreadData() +
-                                              this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
+                                              this->pKernelInfo->argAsVal(0).elements[0].offset;
         const auto memoryBeyondLimitAddress = destinationMemoryAddress + sizeof(TypeParam);
 
         const auto memoryBeyondLimitBefore = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
 
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(TypeParam);
+        this->pKernelInfo->argAsVal(0).elements[0].size = sizeof(TypeParam);
         auto retVal = pKernel->setArg(0, sizeof(TypeParam), &memory[0]);
 
         const auto memoryBeyondLimitAfter = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
@@ -285,20 +266,21 @@ TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndFirstPatchSizeTooLarge
         std::memset(&memory[0], 0xaa, sizeof(TypeParam));
         std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
+        auto &elements = this->pKernelInfo->argAsVal(3).elements;
         const auto destinationMemoryAddress1 = pKernel->getCrossThreadData() +
-                                               this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
+                                               elements[2].offset;
         const auto destinationMemoryAddress2 = pKernel->getCrossThreadData() +
-                                               this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
+                                               elements[1].offset;
         const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam);
         const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2 + sizeof(TypeParam) / 2;
 
         const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam));
         const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam) / 2);
 
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].sourceOffset = 0;
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].sourceOffset = sizeof(TypeParam) / 2;
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = sizeof(TypeParam);
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(TypeParam) / 2;
+        elements[2].sourceOffset = 0;
+        elements[1].sourceOffset = sizeof(TypeParam) / 2;
+        elements[2].size = sizeof(TypeParam);
+        elements[1].size = sizeof(TypeParam) / 2;
         auto retVal = pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
 
         EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, sizeof(TypeParam)));
@@ -321,21 +303,22 @@ TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndSecondPatchSizeTooLarg
         std::memset(&memory[0], 0xaa, sizeof(TypeParam));
         std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
+        auto &elements = this->pKernelInfo->argAsVal(3).elements;
         const auto destinationMemoryAddress1 = pKernel->getCrossThreadData() +
-                                               this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
+                                               elements[2].offset;
         const auto destinationMemoryAddress2 = pKernel->getCrossThreadData() +
-                                               this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
+                                               elements[1].offset;
         const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam) / 2;
         const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2 + sizeof(TypeParam) / 2;
 
         const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam) / 2);
         const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam) / 2);
 
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[0].size = 0;
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].sourceOffset = 0;
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].sourceOffset = sizeof(TypeParam) / 2;
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = sizeof(TypeParam) / 2;
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(TypeParam);
+        elements[0].size = 0;
+        elements[2].sourceOffset = 0;
+        elements[1].sourceOffset = sizeof(TypeParam) / 2;
+        elements[2].size = sizeof(TypeParam) / 2;
+        elements[1].size = sizeof(TypeParam);
         auto retVal = pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
 
         EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, sizeof(TypeParam) / 2));
@@ -355,21 +338,22 @@ TYPED_TEST(KernelArgImmediateTest, givenMultiplePatchesAndOneSourceOffsetBeyondA
         std::memset(&memory[0], 0xaa, sizeof(TypeParam));
         std::memset(&memory[1], 0xbb, sizeof(TypeParam));
 
+        auto &elements = this->pKernelInfo->argAsVal(3).elements;
         const auto destinationMemoryAddress1 = pKernel->getCrossThreadData() +
-                                               this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
+                                               elements[1].offset;
         const auto destinationMemoryAddress2 = pKernel->getCrossThreadData() +
-                                               this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
+                                               elements[2].offset;
         const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam);
         const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2;
 
         const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam));
         const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam));
 
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[0].size = 0;
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].sourceOffset = 0;
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(TypeParam);
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].sourceOffset = sizeof(TypeParam);
-        this->pKernelInfo[rootDeviceIndex]->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = 1;
+        elements[0].size = 0;
+        elements[1].sourceOffset = 0;
+        elements[1].size = sizeof(TypeParam);
+        elements[2].sourceOffset = sizeof(TypeParam);
+        elements[2].size = 1;
         auto retVal = pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
 
         EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, memoryBeyondLimitBefore1.size()));

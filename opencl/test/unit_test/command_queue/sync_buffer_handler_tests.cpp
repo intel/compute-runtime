@@ -79,10 +79,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     void patchAllocateSyncBuffer() {
-        sPatchAllocateSyncBuffer.SurfaceStateHeapOffset = 0;
-        sPatchAllocateSyncBuffer.DataParamOffset = 0;
-        sPatchAllocateSyncBuffer.DataParamSize = sizeof(uint8_t);
-        populateKernelDescriptor(kernelInternals->kernelInfo.kernelDescriptor, sPatchAllocateSyncBuffer);
+        kernelInternals->kernelInfo.setSyncBuffer(sizeof(uint8_t), 0, 0);
     }
 
     MockSyncBufferHandler *getSyncBufferHandler() {
@@ -107,7 +104,6 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     std::unique_ptr<MockKernelWithInternals> kernelInternals;
     MockKernel *kernel;
     MockCommandQueue *commandQueue;
-    SPatchAllocateSyncBuffer sPatchAllocateSyncBuffer;
     HwHelper *hwHelper;
 };
 
@@ -176,15 +172,14 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSyncBufferFullWhenEnqueuingKernel
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSshRequiredWhenPatchingSyncBufferThenSshIsProperlyPatched) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    kernelInternals->kernelInfo.usesSsh = true;
-    kernelInternals->kernelInfo.requiresSshForBuffers = true;
-    kernelInternals->kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindfulAndStateless;
+    kernelInternals->kernelInfo.setBufferAddressingMode(KernelDescriptor::BindfulAndStateless);
+
     patchAllocateSyncBuffer();
 
     pDevice->allocateSyncBufferHandler();
     auto syncBufferHandler = getSyncBufferHandler();
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(kernel->getSurfaceStateHeap(),
-                                                                           sPatchAllocateSyncBuffer.SurfaceStateHeapOffset));
+                                                                           kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.bindful));
     auto bufferAddress = syncBufferHandler->graphicsAllocation->getGpuAddress();
     surfaceState->setSurfaceBaseAddress(bufferAddress + 1);
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();

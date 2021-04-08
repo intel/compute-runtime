@@ -80,9 +80,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
     MockKernelWithInternals mockKernel(*pDevice);
-    SPatchMediaVFEState mediaVFEstate;
-    mediaVFEstate.PerThreadScratchSpace = 1024; //whatever greater than 0
-    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
+    mockKernel.kernelInfo.setPerThreadScratchSize(1024, 0);
 
     cl_ulong scratchSpaceSize = static_cast<cl_ulong>(mockKernel.mockKernel->getScratchSize());
     EXPECT_EQ(scratchSpaceSize, 1024u);
@@ -107,9 +105,7 @@ HWTEST2_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocatio
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
     MockKernelWithInternals mockKernel(*pDevice);
-    SPatchAllocateStatelessPrivateSurface privateAllocation;
-    privateAllocation.PerThreadPrivateMemorySize = 1024;
-    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, privateAllocation);
+    mockKernel.kernelInfo.setPrivateMemory(1024, false, 0, 0, 0);
 
     retVal = clGetKernelWorkGroupInfo(
         mockKernel.mockMultiDeviceKernel,
@@ -121,7 +117,7 @@ HWTEST2_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocatio
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_ulong), paramValueSizeRet);
-    EXPECT_EQ(PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(privateAllocation, mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.simdSize), param_value);
+    EXPECT_EQ(1024U, param_value);
 }
 
 TEST_F(clGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenZeroIsReturned) {

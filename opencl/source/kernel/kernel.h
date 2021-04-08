@@ -192,8 +192,8 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         return kernelArguments.size();
     }
 
-    bool requiresSshForBuffers() const {
-        return kernelInfo.requiresSshForBuffers;
+    bool usesBindfulAddressingForBuffers() const {
+        return KernelDescriptor::BindfulAndStateless == kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode;
     }
 
     const KernelInfo &getKernelInfo() const {
@@ -290,7 +290,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     const SimpleKernelArgInfo &getKernelArgInfo(uint32_t argIndex) const;
 
     bool getAllowNonUniform() const { return program->getAllowNonUniform(); }
-    bool isVmeKernel() const { return kernelInfo.isVmeWorkload; }
+    bool isVmeKernel() const { return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme; }
     bool requiresSpecialPipelineSelectMode() const { return specialPipelineSelectMode; }
 
     void performKernelTuning(CommandStreamReceiver &commandStreamReceiver, const Vec3<size_t> &lws, const Vec3<size_t> &gws, const Vec3<size_t> &offsets, TimestampPacketContainer *timestampContainer);
@@ -330,7 +330,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool checkIfIsParentKernelAndBlocksUsesPrintf();
 
     bool is32Bit() const {
-        return kernelInfo.gpuPointerSize == 4;
+        return kernelInfo.kernelDescriptor.kernelAttributes.gpuPointerSize == 4;
     }
 
     size_t getPerThreadSystemThreadSurfaceSize() const {
@@ -472,12 +472,9 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void
     makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
 
-    void *patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, GraphicsAllocation *svmAlloc);
+    void *patchBufferOffset(const ArgDescPointer &argAsPtr, void *svmPtr, GraphicsAllocation *svmAlloc);
 
     void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg);
-    // Sets-up both crossThreadData and ssh for given implicit (private/constant, etc.) allocation
-    template <typename PatchTokenT>
-    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const PatchTokenT &patch);
 
     void getParentObjectCounts(ObjectCounts &objectCount);
     Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice, bool schedulerKernel = false);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -189,9 +189,9 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithKernelsThenKernelI
     NEO::ProgramInfo programInfo = {};
     NEO::populateProgramInfo(programInfo, programFromTokens);
     ASSERT_EQ(3U, programInfo.kernelInfos.size());
-    EXPECT_EQ(programFromTokens.header->GPUPointerSizeInBytes, programInfo.kernelInfos[0]->gpuPointerSize);
-    EXPECT_EQ(programFromTokens.header->GPUPointerSizeInBytes, programInfo.kernelInfos[1]->gpuPointerSize);
-    EXPECT_EQ(programFromTokens.header->GPUPointerSizeInBytes, programInfo.kernelInfos[2]->gpuPointerSize);
+    EXPECT_EQ(programFromTokens.header->GPUPointerSizeInBytes, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.gpuPointerSize);
+    EXPECT_EQ(programFromTokens.header->GPUPointerSizeInBytes, programInfo.kernelInfos[1]->kernelDescriptor.kernelAttributes.gpuPointerSize);
+    EXPECT_EQ(programFromTokens.header->GPUPointerSizeInBytes, programInfo.kernelInfos[2]->kernelDescriptor.kernelAttributes.gpuPointerSize);
 }
 
 TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithKernelsWhenKernelHasSymbolTableThenLinkerIsUpdatedWithAdditionalSymbolInfo) {

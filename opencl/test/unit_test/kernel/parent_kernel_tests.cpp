@@ -108,69 +108,28 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenPrivateMemoryForBlocksIsA
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
 
-    uint32_t crossThreadOffsetBlock = 0;
-
-    auto infoBlock = new KernelInfo();
+    auto infoBlock = new MockKernelInfo();
     infoBlock->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-    SPatchAllocateStatelessDefaultDeviceQueueSurface allocateDeviceQueueSurface = {};
-    allocateDeviceQueueSurface.DataParamOffset = crossThreadOffsetBlock;
-    allocateDeviceQueueSurface.DataParamSize = 8;
-    allocateDeviceQueueSurface.Size = 8;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, allocateDeviceQueueSurface);
 
+    uint32_t crossThreadOffsetBlock = 0;
+    infoBlock->setDeviceSideEnqueueDefaultQueueSurface(8, crossThreadOffsetBlock);
     crossThreadOffsetBlock += 8;
 
-    SPatchAllocateStatelessEventPoolSurface allocateEventPoolSurface = {};
-    allocateEventPoolSurface.DataParamOffset = crossThreadOffsetBlock;
-    allocateEventPoolSurface.DataParamSize = 8;
-    allocateEventPoolSurface.EventPoolSurfaceIndex = 0;
-    allocateEventPoolSurface.Size = 8;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, allocateEventPoolSurface);
-
+    infoBlock->setDeviceSideEnqueueEventPoolSurface(8, crossThreadOffsetBlock);
     crossThreadOffsetBlock += 8;
 
-    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
-    privateSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
-    privateSurfaceBlock.DataParamSize = 8;
-    privateSurfaceBlock.Size = 8;
-    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock.Token = 0;
-    privateSurfaceBlock.PerThreadPrivateMemorySize = 1000;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
-
+    infoBlock->setPrivateMemory(1000, false, 8, crossThreadOffsetBlock);
     crossThreadOffsetBlock += 8;
 
-    SPatchThreadPayload threadPayloadBlock = {};
-    threadPayloadBlock.LocalIDXPresent = 0;
-    threadPayloadBlock.LocalIDYPresent = 0;
-    threadPayloadBlock.LocalIDZPresent = 0;
-    threadPayloadBlock.HeaderPresent = 0;
-    threadPayloadBlock.Size = 128;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, threadPayloadBlock);
+    infoBlock->setLocalIds({0, 0, 0});
 
     infoBlock->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = true;
-
-    SPatchDataParameterStream streamBlock = {};
-    streamBlock.DataParameterStreamSize = 0;
-    streamBlock.Size = 0;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, streamBlock);
-
-    SPatchBindingTableState bindingTable = {};
-    bindingTable.Count = 0;
-    bindingTable.Offset = 0;
-    bindingTable.Size = 0;
-    bindingTable.SurfaceStateOffset = 0;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, bindingTable);
-
-    SPatchInterfaceDescriptorData idData = {};
-    idData.BindingTableOffset = 0;
-    idData.KernelOffset = 0;
-    idData.Offset = 0;
-    idData.SamplerStateOffset = 0;
-    idData.Size = 0;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, idData);
+    infoBlock->setDeviceSideEnqueueBlockInterfaceDescriptorOffset(0);
 
     infoBlock->heapInfo.pDsh = (void *)new uint64_t[64];
+    infoBlock->heapInfo.DynamicStateHeapSize = 64 * sizeof(uint64_t);
+
+    infoBlock->setCrossThreadDataSize(crossThreadOffsetBlock);
     infoBlock->crossThreadData = new char[crossThreadOffsetBlock];
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);

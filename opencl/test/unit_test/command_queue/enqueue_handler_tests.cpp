@@ -578,16 +578,6 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
         using SyncBufferHandler::graphicsAllocation;
     };
 
-    SPatchAllocateSyncBuffer sPatchAllocateSyncBuffer{};
-    sPatchAllocateSyncBuffer.SurfaceStateHeapOffset = 0;
-    sPatchAllocateSyncBuffer.DataParamOffset = 0;
-    sPatchAllocateSyncBuffer.DataParamSize = sizeof(uint8_t);
-
-    SPatchBindingTableState sPatchBindingTableState{};
-    sPatchBindingTableState.Offset = sizeof(RENDER_SURFACE_STATE);
-    sPatchBindingTableState.Count = 1;
-    sPatchBindingTableState.SurfaceStateOffset = 0;
-
     pDevice->allocateSyncBufferHandler();
 
     size_t offset = 0;
@@ -597,8 +587,6 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
 
     {
         MockKernelWithInternals kernelInternals{*pClDevice, context};
-        kernelInternals.kernelInfo.usesSsh = true;
-        kernelInternals.kernelInfo.requiresSshForBuffers = true;
         auto kernel = kernelInternals.mockKernel;
         kernel->initialize();
 
@@ -610,16 +598,15 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
 
     {
         MockKernelWithInternals kernelInternals{*pClDevice, context};
-        kernelInternals.kernelInfo.usesSsh = true;
-        kernelInternals.kernelInfo.requiresSshForBuffers = true;
-        populateKernelDescriptor(kernelInternals.kernelInfo.kernelDescriptor, sPatchAllocateSyncBuffer);
-        populateKernelDescriptor(kernelInternals.kernelInfo.kernelDescriptor, sPatchBindingTableState);
+        kernelInternals.kernelInfo.setSyncBuffer(sizeof(uint8_t), 0, 0);
+        constexpr auto bindingTableOffset = sizeof(RENDER_SURFACE_STATE);
+        kernelInternals.kernelInfo.setBindingTable(bindingTableOffset, 1);
         kernelInternals.kernelInfo.heapInfo.SurfaceStateHeapSize = sizeof(RENDER_SURFACE_STATE) + sizeof(BINDING_TABLE_STATE);
         auto kernel = kernelInternals.mockKernel;
         kernel->initialize();
 
         auto bindingTableState = reinterpret_cast<BINDING_TABLE_STATE *>(
-            ptrOffset(kernel->getSurfaceStateHeap(), sPatchBindingTableState.Offset));
+            ptrOffset(kernel->getSurfaceStateHeap(), bindingTableOffset));
         bindingTableState->setSurfaceStatePointer(0);
 
         auto mockCmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));

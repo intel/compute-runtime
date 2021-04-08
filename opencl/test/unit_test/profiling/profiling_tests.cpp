@@ -36,21 +36,13 @@ struct ProfilingTests : public CommandEnqueueFixture,
         program = ReleaseableObjectPtr<MockProgram>(new MockProgram(toClDeviceVector(*pClDevice)));
         program->setContext(&ctx);
 
-        memset(&dataParameterStream, 0, sizeof(dataParameterStream));
-        dataParameterStream.DataParameterStreamSize = sizeof(crossThreadData);
-
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+        kernelInfo.setCrossThreadDataSize(sizeof(crossThreadData));
 
-        SPatchThreadPayload threadPayload = {};
-        memset(&threadPayload, 0, sizeof(threadPayload));
-        threadPayload.LocalIDXPresent = 1;
-        threadPayload.LocalIDYPresent = 1;
-        threadPayload.LocalIDZPresent = 1;
-        populateKernelDescriptor(kernelInfo.kernelDescriptor, threadPayload);
+        kernelInfo.setLocalIds({1, 1, 1});
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
-        populateKernelDescriptor(kernelInfo.kernelDescriptor, dataParameterStream);
     }
 
     void TearDown() override {
@@ -60,8 +52,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
     ReleaseableObjectPtr<MockProgram> program;
 
     SKernelBinaryHeaderCommon kernelHeader = {};
-    SPatchDataParameterStream dataParameterStream = {};
-    KernelInfo kernelInfo;
+    MockKernelInfo kernelInfo;
     MockContext ctx;
 
     uint32_t kernelIsa[32];

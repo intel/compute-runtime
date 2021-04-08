@@ -255,7 +255,6 @@ int main(int argc, char **argv) {
     NEO::defaultHwInfo = std::make_unique<NEO::HardwareInfo>();
     *NEO::defaultHwInfo = hwInfoForTests;
 
-    NEO::useKernelDescriptor = true;
     NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());
 
     environment = reinterpret_cast<TestEnvironment *>(::testing::AddGlobalTestEnvironment(new TestEnvironment));

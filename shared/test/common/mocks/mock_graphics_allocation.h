@@ -14,7 +14,7 @@ namespace NEO {
 
 constexpr uint32_t mockRootDeviceIndex = 0u;
 constexpr DeviceBitfield mockDeviceBitfield(0b1);
-constexpr size_t mockMaxOsContextCount = 3u;
+constexpr size_t mockMaxOsContextCount = 4u;
 
 class MockGraphicsAllocation : public MemoryAllocation {
   public:

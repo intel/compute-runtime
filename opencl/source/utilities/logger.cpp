@@ -171,8 +171,9 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
     if (dumpKernelArgsEnabled && kernel != nullptr) {
         std::unique_lock<std::mutex> theLock(mtx);
         std::ofstream outFile;
-        const auto &kernelInfo = kernel->getKernelInfo();
-        for (unsigned int i = 0; i < kernelInfo.kernelArgInfo.size(); i++) {
+        const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
+        const auto &explicitArgs = kernelDescriptor.payloadMappings.explicitArgs;
+        for (unsigned int i = 0; i < explicitArgs.size(); i++) {
             std::string type;
             std::string fileName;
             const char *ptr = nullptr;
@@ -180,11 +181,10 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
             uint64_t flags = 0;
             std::unique_ptr<char[]> argVal = nullptr;
 
-            auto &argInfo = kernelInfo.kernelArgInfo[i];
-
-            if (argInfo.metadata.addressQualifier == KernelArgMetadata::AddrLocal) {
+            const auto &arg = explicitArgs[i];
+            if (arg.getTraits().getAddressQualifier() == KernelArgMetadata::AddrLocal) {
                 type = "local";
-            } else if (argInfo.isImage) {
+            } else if (arg.is<ArgDescriptor::ArgTImage>()) {
                 type = "image";
                 auto clMem = (const cl_mem)kernel->getKernelArg(i);
                 auto memObj = castToObject<MemObj>(clMem);
@@ -193,9 +193,9 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
                     size = memObj->getSize();
                     flags = memObj->getFlags();
                 }
-            } else if (argInfo.isSampler) {
+            } else if (arg.is<ArgDescriptor::ArgTSampler>()) {
                 type = "sampler";
-            } else if (argInfo.isBuffer) {
+            } else if (arg.is<ArgDescriptor::ArgTPointer>()) {
                 type = "buffer";
                 auto clMem = (const cl_mem)kernel->getKernelArg(i);
                 auto memObj = castToObject<MemObj>(clMem);
@@ -211,18 +211,18 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
                 argVal = std::unique_ptr<char[]>(new char[crossThreadDataSize]);
 
                 size_t totalArgSize = 0;
-                for (const auto &kernelArgPatchInfo : argInfo.kernelArgPatchInfoVector) {
-                    auto pSource = ptrOffset(crossThreadData, kernelArgPatchInfo.crossthreadOffset);
-                    auto pDestination = ptrOffset(argVal.get(), kernelArgPatchInfo.sourceOffset);
-                    memcpy_s(pDestination, kernelArgPatchInfo.size, pSource, kernelArgPatchInfo.size);
-                    totalArgSize += kernelArgPatchInfo.size;
+                for (const auto &element : arg.as<ArgDescValue>().elements) {
+                    auto pSource = ptrOffset(crossThreadData, element.offset);
+                    auto pDestination = ptrOffset(argVal.get(), element.sourceOffset);
+                    memcpy_s(pDestination, element.size, pSource, element.size);
+                    totalArgSize += element.size;
                 }
                 size = totalArgSize;
                 ptr = argVal.get();
             }
 
             if (ptr && size) {
-                fileName = kernelInfo.kernelDescriptor.kernelMetadata.kernelName + "_arg_" + std::to_string(i) + "_" + type + "_size_" + std::to_string(size) + "_flags_" + std::to_string(flags) + ".bin";
+                fileName = kernelDescriptor.kernelMetadata.kernelName + "_arg_" + std::to_string(i) + "_" + type + "_size_" + std::to_string(size) + "_flags_" + std::to_string(flags) + ".bin";
                 writeToFile(fileName, ptr, size, std::ios::trunc | std::ios::binary);
             }
         }

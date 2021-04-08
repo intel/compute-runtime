@@ -22,8 +22,6 @@ ProgramInfo::~ProgramInfo() {
 }
 
 KernelInfo::~KernelInfo() {
-    kernelArgInfo.clear();
-
     delete[] crossThreadData;
 }
 

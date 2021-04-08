@@ -180,7 +180,7 @@ HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenSurfaceStateIsProgrammedCorr
     mockCmdQ->storeMultiDispatchInfo = true;
     enqueueWriteImage<FamilyType>();
 
-    auto index = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo().kernelArgInfo[1].offsetHeap / sizeof(RENDER_SURFACE_STATE);
+    auto index = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo().getArgDescriptorAt(1).template as<ArgDescImage>().bindful / sizeof(RENDER_SURFACE_STATE);
 
     const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), static_cast<uint32_t>(index));
 

@@ -12,9 +12,6 @@
 #include "shared/source/utilities/const_stringref.h"
 
 #include "opencl/source/program/heap_info.h"
-#include "opencl/source/program/kernel_arg_info.h"
-
-#include "patch_info.h"
 
 #include <algorithm>
 #include <array>
@@ -38,8 +35,6 @@ class DispatchInfo;
 struct KernelArgumentType;
 class GraphicsAllocation;
 class MemoryManager;
-
-extern bool useKernelDescriptor;
 
 extern std::map<std::string, size_t> typeSizeMap;
 
@@ -81,28 +76,19 @@ struct KernelInfo {
     KernelInfo &operator=(const KernelInfo &) = delete;
     ~KernelInfo();
 
-    void storeArgInfo(uint32_t argNum, ArgTypeTraits metadata, std::unique_ptr<ArgTypeMetadataExtended> metadataExtended);
-    void storeKernelArgument(const SPatchDataParameterBuffer *pDataParameterKernelArg);
-    void storeKernelArgument(const SPatchStatelessGlobalMemoryObjectKernelArgument *pStatelessGlobalKernelArg);
-    void storeKernelArgument(const SPatchImageMemoryObjectKernelArgument *pImageMemObjKernelArg);
-    void storeKernelArgument(const SPatchGlobalMemoryObjectKernelArgument *pGlobalMemObjKernelArg);
-    void storeKernelArgument(const SPatchStatelessConstantMemoryObjectKernelArgument *pStatelessConstMemObjKernelArg);
-    void storeKernelArgument(const SPatchStatelessDeviceQueueKernelArgument *pStatelessDeviceQueueKernelArg);
-    void storeKernelArgument(const SPatchSamplerKernelArgument *pSamplerKernelArg);
-    void storePatchToken(const SPatchExecutionEnvironment *execEnv);
     GraphicsAllocation *getGraphicsAllocation() const { return this->kernelAllocation; }
-    void resizeKernelArgInfoAndRegisterParameter(uint32_t argCount) {
-        if (kernelArgInfo.size() <= argCount) {
-            kernelArgInfo.resize(argCount + 1);
-        }
-        if (!kernelArgInfo[argCount].needPatch) {
-            kernelArgInfo[argCount].needPatch = true;
-            argumentsToPatchNum++;
-        }
+
+    const ArgDescriptor &getArgDescriptorAt(uint32_t index) const {
+        DEBUG_BREAK_IF(index >= kernelDescriptor.payloadMappings.explicitArgs.size());
+        return kernelDescriptor.payloadMappings.explicitArgs[index];
     }
-
-    void storeKernelArgPatchInfo(uint32_t argNum, uint32_t dataSize, uint32_t crossthreadOffset, uint32_t sourceOffset, uint32_t offsetSSH);
-
+    const StackVec<ArgDescriptor, 16> &getExplicitArgs() const {
+        return kernelDescriptor.payloadMappings.explicitArgs;
+    }
+    const ArgTypeMetadataExtended &getExtendedMetadata(uint32_t index) const {
+        DEBUG_BREAK_IF(index >= kernelDescriptor.explicitArgsExtendedMetadata.size());
+        return kernelDescriptor.explicitArgsExtendedMetadata[index];
+    }
     size_t getSamplerStateArrayCount() const;
     size_t getSamplerStateArraySize(const HardwareInfo &hwInfo) const;
     size_t getBorderColorStateSize() const;
@@ -128,35 +114,18 @@ struct KernelInfo {
     }
 
     uint32_t getConstantBufferSize() const;
-    int32_t getArgNumByName(const char *name) const {
-        int32_t argNum = 0;
-        for (auto &arg : kernelArgInfo) {
-            if (arg.metadataExtended && (arg.metadataExtended->argName == name)) {
-                return argNum;
-            }
-            ++argNum;
-        }
-        return -1;
-    }
+    int32_t getArgNumByName(const char *name) const;
 
     bool createKernelAllocation(const Device &device, bool internalIsa);
     void apply(const DeviceInfoKernelPayloadConstants &constants);
 
     HeapInfo heapInfo = {};
-    PatchInfo patchInfo = {};
-    std::vector<KernelArgInfo> kernelArgInfo;
-    std::vector<KernelArgInfo> kernelNonArgInfo;
     std::vector<std::pair<uint32_t, uint32_t>> childrenKernelsIdOffset;
-    bool usesSsh = false;
-    bool requiresSshForBuffers = false;
-    bool hasIndirectStatelessAccess = false;
-    bool isVmeWorkload = false;
     char *crossThreadData = nullptr;
-    uint32_t gpuPointerSize = 0;
     const BuiltinDispatchInfoBuilder *builtinDispatchBuilder = nullptr;
-    uint32_t argumentsToPatchNum = 0;
     uint32_t systemKernelOffset = 0;
     uint64_t kernelId = 0;
+    bool hasIndirectStatelessAccess = false;
     bool isKernelHeapSubstituted = false;
     GraphicsAllocation *kernelAllocation = nullptr;
     DebugData debugData;

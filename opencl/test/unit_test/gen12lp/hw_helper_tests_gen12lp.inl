@@ -23,14 +23,14 @@ using HwHelperTestGen12Lp = HwHelperTest;
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
     auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
 
-    for (auto isPureStateful : {false, true}) {
+    for (auto accessedUsingStatelessAddressingMode : {true, false}) {
         KernelInfo kernelInfo{};
-        KernelArgInfo argInfo{};
-        argInfo.isBuffer = true;
-        argInfo.pureStatefulBufferAccess = isPureStateful;
-        kernelInfo.kernelArgInfo.push_back(std::move(argInfo));
 
-        EXPECT_EQ(!isPureStateful, clHwHelper.requiresAuxResolves(kernelInfo));
+        ArgDescriptor arg;
+        arg.as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = accessedUsingStatelessAddressingMode;
+        kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(std::move(arg));
+
+        EXPECT_EQ(accessedUsingStatelessAddressingMode, clHwHelper.requiresAuxResolves(kernelInfo));
     }
 }
 

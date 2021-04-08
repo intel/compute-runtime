@@ -109,26 +109,21 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
     if (hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
         const auto &surfaceStateDst = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 1);
 
-        if (kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
-            auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() +
-                                           kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
+        const auto &arg1AsPtr = kernelInfo.getArgDescriptorAt(1).as<ArgDescPointer>();
+        if (arg1AsPtr.pointerSize == sizeof(uint64_t)) {
+            auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() + arg1AsPtr.stateless);
             EXPECT_EQ(alignDown(gpuVa, 4), static_cast<uint64_t>(*pKernelArg));
             EXPECT_EQ(*pKernelArg, surfaceStateDst.getSurfaceBaseAddress());
 
-        } else if (kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
-            auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() +
-                                           kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
+        } else if (arg1AsPtr.pointerSize == sizeof(uint32_t)) {
+            auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() + arg1AsPtr.stateless);
             EXPECT_EQ(alignDown(gpuVa, 4), static_cast<uint64_t>(*pKernelArg));
             EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceStateDst.getSurfaceBaseAddress());
         }
     }
 
-    if (kernelInfo.kernelArgInfo[3].kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
-        auto dstOffset = (uint32_t *)(kernel->getCrossThreadData() +
-                                      kernelInfo.kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset);
-        EXPECT_EQ(ptrDiff(misalignedPtr, alignDown(misalignedPtr, 4)), *dstOffset);
-    } else {
-        // dstOffset arg should be 4 bytes in size, if that changes, above if path should be modified
-        EXPECT_TRUE(false);
-    }
+    auto arg3AsVal = kernelInfo.getArgDescriptorAt(3).as<ArgDescValue>();
+    EXPECT_EQ(sizeof(uint32_t), arg3AsVal.elements[0].size);
+    auto dstOffset = (uint32_t *)(kernel->getCrossThreadData() + arg3AsVal.elements[0].offset);
+    EXPECT_EQ(ptrDiff(misalignedPtr, alignDown(misalignedPtr, 4)), *dstOffset);
 }

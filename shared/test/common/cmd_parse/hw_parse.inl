@@ -115,11 +115,9 @@ const void *HardwareParse::getStatelessArgumentPointer(const Kernel &kernel, uin
         offsetCrossThreadData);
 
     // Determine where the argument is
-    auto &patchInfo = kernel.getKernelInfo().patchInfo;
-    for (auto &arg : patchInfo.statelessGlobalMemObjKernelArgs) {
-        if (arg->ArgumentNumber == indexArg) {
-            return ptrOffset(pCrossThreadData, arg->DataParamOffset);
-        }
+    const auto &arg = kernel.getKernelInfo().getArgDescriptorAt(indexArg);
+    if (arg.is<ArgDescriptor::ArgTPointer>() && isValidOffset(arg.as<ArgDescPointer>().stateless)) {
+        return ptrOffset(pCrossThreadData, arg.as<ArgDescPointer>().stateless);
     }
     return nullptr;
 }

@@ -24,17 +24,9 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
         ClDeviceFixture::SetUp();
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
-        SPatchDataParameterStream dataParameterStream = {};
-        memset(&dataParameterStream, 0, sizeof(dataParameterStream));
-        dataParameterStream.DataParameterStreamSize = sizeof(crossThreadData);
-        populateKernelDescriptor(kernelInfo.kernelDescriptor, dataParameterStream);
+        kernelInfo.setCrossThreadDataSize(sizeof(crossThreadData));
 
-        SPatchThreadPayload threadPayload;
-        memset(&threadPayload, 0, sizeof(threadPayload));
-        threadPayload.LocalIDXPresent = 1;
-        threadPayload.LocalIDYPresent = 1;
-        threadPayload.LocalIDZPresent = 1;
-        populateKernelDescriptor(kernelInfo.kernelDescriptor, threadPayload);
+        kernelInfo.setLocalIds({1, 1, 1});
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
@@ -51,7 +43,7 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
     std::unique_ptr<MockProgram> program;
 
     SKernelBinaryHeaderCommon kernelHeader;
-    KernelInfo kernelInfo;
+    MockKernelInfo kernelInfo;
 
     uint32_t kernelIsa[32];
     uint32_t crossThreadData[32];

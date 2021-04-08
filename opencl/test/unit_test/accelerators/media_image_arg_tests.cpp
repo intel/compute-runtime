@@ -29,28 +29,20 @@ class MediaImageSetArgTest : public ClDeviceFixture,
     void SetUp() override {
         ClDeviceFixture::SetUp();
 
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->usesSsh = true;
-        pKernelInfo->isVmeWorkload = true;
+        pKernelInfo->kernelDescriptor.kernelAttributes.flags.usesVme = true;
 
-        pKernelInfo->kernelArgInfo.resize(2);
-        pKernelInfo->kernelArgInfo[1].offsetHeap = 0x00;
-        pKernelInfo->kernelArgInfo[0].offsetHeap = 0x40;
-
-        pKernelInfo->kernelArgInfo[1].isMediaImage = true;
-        pKernelInfo->kernelArgInfo[0].isMediaImage = true;
-
-        pKernelInfo->kernelArgInfo[1].isImage = true;
-        pKernelInfo->kernelArgInfo[0].isImage = true;
+        pKernelInfo->addArgImage(0, 0x00, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA);
+        pKernelInfo->addArgImage(0, 0x40, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA);
 
         int32_t retVal = CL_INVALID_PLATFORM;
-        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*static_cast<KernelInfo *>(pKernelInfo.get()), rootDeviceIndex), &retVal);
         pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -77,7 +69,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
     MultiDeviceKernel *pMultiDeviceKernel = nullptr;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     char surfaceStateHeap[0x80];
     Image *srcImage = nullptr;
 };
@@ -87,7 +79,7 @@ HWTEST_F(MediaImageSetArgTest, WhenSettingMediaImageArgThenArgsSetCorrectly) {
 
     auto pSurfaceState = reinterpret_cast<const MEDIA_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
 
     srcImage->setMediaImageArg(const_cast<MEDIA_SURFACE_STATE *>(pSurfaceState), pClDevice->getRootDeviceIndex());
 
@@ -115,7 +107,7 @@ HWTEST_F(MediaImageSetArgTest, WhenSettingKernelArgImageThenArgsSetCorrectly) {
 
     auto pSurfaceState = reinterpret_cast<const MEDIA_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
 
     uint64_t surfaceAddress = pSurfaceState->getSurfaceBaseAddress();
     ASSERT_EQ(srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), surfaceAddress);

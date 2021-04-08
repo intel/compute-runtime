@@ -47,10 +47,8 @@ bool TestChecks::supportsDeviceEnqueue(const std::unique_ptr<HardwareInfo> &pHar
 
 bool TestChecks::supportsAuxResolves() {
     KernelInfo kernelInfo{};
-    KernelArgInfo argInfo{};
-    argInfo.isBuffer = true;
-    argInfo.pureStatefulBufferAccess = false;
-    kernelInfo.kernelArgInfo.push_back(std::move(argInfo));
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
 
     auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     return clHwHelper.requiresAuxResolves(kernelInfo);

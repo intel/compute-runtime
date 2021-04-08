@@ -109,14 +109,8 @@ struct BlitEnqueueTests : public ::testing::Test {
 
     template <size_t N>
     void setMockKernelArgs(std::array<Buffer *, N> buffers) {
-        if (mockKernel->kernelInfo.kernelArgInfo.size() < buffers.size()) {
-            mockKernel->kernelInfo.kernelArgInfo.resize(buffers.size());
-        }
-
         for (uint32_t i = 0; i < buffers.size(); i++) {
-            mockKernel->kernelInfo.kernelArgInfo.at(i).kernelArgPatchInfoVector.resize(1);
-            mockKernel->kernelInfo.kernelArgInfo.at(i).isBuffer = true;
-            mockKernel->kernelInfo.kernelArgInfo.at(i).pureStatefulBufferAccess = false;
+            mockKernel->kernelInfo.addArgBuffer(i, 0);
         }
 
         mockKernel->mockKernel->initialize();
@@ -130,14 +124,8 @@ struct BlitEnqueueTests : public ::testing::Test {
 
     template <size_t N>
     void setMockKernelArgs(std::array<GraphicsAllocation *, N> allocs) {
-        if (mockKernel->kernelInfo.kernelArgInfo.size() < allocs.size()) {
-            mockKernel->kernelInfo.kernelArgInfo.resize(allocs.size());
-        }
-
         for (uint32_t i = 0; i < allocs.size(); i++) {
-            mockKernel->kernelInfo.kernelArgInfo.at(i).kernelArgPatchInfoVector.resize(1);
-            mockKernel->kernelInfo.kernelArgInfo.at(i).isBuffer = true;
-            mockKernel->kernelInfo.kernelArgInfo.at(i).pureStatefulBufferAccess = false;
+            mockKernel->kernelInfo.addArgBuffer(i, 0);
         }
 
         mockKernel->mockKernel->initialize();

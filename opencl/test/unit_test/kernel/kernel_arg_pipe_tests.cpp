@@ -38,22 +38,13 @@ class KernelArgPipeFixture : public ContextFixture, public ClDeviceFixture {
         ContextFixture::SetUp(1, &device);
 
         // define kernel info
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-
-        // setup kernel arg offsets
-        KernelArgPatchInfo kernelArgPatchInfo;
 
         pKernelInfo->heapInfo.pSsh = pSshLocal;
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal);
-        pKernelInfo->usesSsh = true;
-        pKernelInfo->requiresSshForBuffers = true;
 
-        pKernelInfo->kernelArgInfo.resize(1);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
+        pKernelInfo->addArgPipe(0, 0x30, sizeof(void *));
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
@@ -75,7 +66,7 @@ class KernelArgPipeFixture : public ContextFixture, public ClDeviceFixture {
     cl_int retVal = CL_SUCCESS;
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     SKernelBinaryHeaderCommon kernelHeader;
     char pSshLocal[64];
     char pCrossThreadData[64];
@@ -93,7 +84,7 @@ TEST_F(KernelArgPipeTest, GivenValidPipeWhenSettingKernelArgThenPipeAddressIsCor
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData() +
-                                  this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                  this->pKernelInfo->argAsPtr(0).stateless);
     EXPECT_EQ(pipe->getCpuAddress(), *pKernelArg);
 
     delete pipe;
@@ -105,13 +96,8 @@ TEST_F(KernelArgPipeTest, GivenSvmPtrStatelessWhenSettingKernelArgThenArgumentsA
     auto val = (cl_mem)pipe;
     auto pVal = &val;
 
-    pKernelInfo->usesSsh = false;
-    pKernelInfo->requiresSshForBuffers = false;
-
     auto retVal = this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_EQ(0u, pKernel->getSurfaceStateHeapSize());
 
     delete pipe;
 }
@@ -122,9 +108,7 @@ HWTEST_F(KernelArgPipeTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArguments
     auto val = (cl_mem)pipe;
     auto pVal = &val;
 
-    pKernelInfo->usesSsh = true;
-    pKernelInfo->requiresSshForBuffers = true;
-
+    pKernelInfo->argAsPtr(0).bindful = 0;
     auto retVal = this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -133,7 +117,7 @@ HWTEST_F(KernelArgPipeTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArguments
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsPtr(0).bindful));
 
     void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
     EXPECT_EQ(pipe->getCpuAddress(), surfaceAddress);

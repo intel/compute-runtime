@@ -166,11 +166,12 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
 
     template <typename RetType>
     RetType getKernelArgByValValue(uint32_t argNum) const {
-        auto &kernelArgInfo = vmeKernel->getKernelInfo().kernelArgInfo[argNum];
-        DEBUG_BREAK_IF(kernelArgInfo.kernelArgPatchInfoVector.size() != 1);
-        const KernelArgPatchInfo &patchInfo = kernelArgInfo.kernelArgPatchInfoVector[0];
-        DEBUG_BREAK_IF(sizeof(RetType) > patchInfo.size);
-        return *(RetType *)(vmeKernel->getCrossThreadData() + patchInfo.crossthreadOffset);
+        const auto &argAsVal = vmeKernel->getKernelInfo().kernelDescriptor.payloadMappings.explicitArgs[argNum].as<ArgDescValue>();
+        DEBUG_BREAK_IF(argAsVal.elements.size() != 1);
+
+        const auto &element = argAsVal.elements[0];
+        DEBUG_BREAK_IF(sizeof(RetType) > element.size);
+        return *(RetType *)(vmeKernel->getCrossThreadData() + element.offset);
     }
 
     cl_int validateImages(Vec3<size_t> inputRegion, Vec3<size_t> offset) const {

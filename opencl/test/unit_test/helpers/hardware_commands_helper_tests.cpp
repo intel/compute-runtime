@@ -51,11 +51,7 @@ void HardwareCommandsTest::TearDown() {
 void HardwareCommandsTest::addSpaceForSingleKernelArg() {
     kernelArguments.resize(1);
     kernelArguments[0] = kernelArgInfo;
-    mockKernelWithInternal->kernelInfo.resizeKernelArgInfoAndRegisterParameter(1);
-    mockKernelWithInternal->kernelInfo.kernelArgInfo.resize(1);
-    mockKernelWithInternal->kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector.resize(1);
-    mockKernelWithInternal->kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0;
-    mockKernelWithInternal->kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(uintptr_t);
+    mockKernelWithInternal->kernelInfo.addArgBuffer(0, 0, sizeof(uintptr_t));
     mockKernelWithInternal->mockKernel->setKernelArguments(kernelArguments);
     mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush.resize(1);
 }
@@ -548,7 +544,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 
     KernelInfo modifiedKernelInfo = {};
-    modifiedKernelInfo.patchInfo = kernel->getKernelInfo().patchInfo;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[0] = 2;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[1] = 1;
     modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[2] = 0;
@@ -638,8 +633,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
 
     // Obtain where the pointers will be stored
     const auto &kernelInfo = kernel->getKernelInfo();
-    auto numSurfaceStates = kernelInfo.patchInfo.statelessGlobalMemObjKernelArgs.size() +
-                            kernelInfo.patchInfo.imageMemObjKernelArgs.size();
+    auto numSurfaceStates = kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries;
     EXPECT_EQ(2u, numSurfaceStates);
     size_t bindingTableStateSize = numSurfaceStates * sizeof(RENDER_SURFACE_STATE);
     uint32_t *bindingTableStatesPointers = reinterpret_cast<uint32_t *>(
@@ -648,8 +642,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
         *(&bindingTableStatesPointers[i]) = 0xDEADBEEF;
     }
 
-    // force statefull path for buffers
-    const_cast<KernelInfo &>(kernelInfo).requiresSshForBuffers = true;
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*kernel);
@@ -680,42 +672,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     // define kernel info
-    auto pKernelInfo = std::make_unique<KernelInfo>();
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // define patch offsets for global, constant, private, event pool and default device queue surfaces
-    SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization allocateStatelessGlobalMemorySurfaceWithInitialization;
-    allocateStatelessGlobalMemorySurfaceWithInitialization.GlobalBufferIndex = 0;
-    allocateStatelessGlobalMemorySurfaceWithInitialization.SurfaceStateHeapOffset = 0;
-    allocateStatelessGlobalMemorySurfaceWithInitialization.DataParamOffset = 0;
-    allocateStatelessGlobalMemorySurfaceWithInitialization.DataParamSize = 8;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessGlobalMemorySurfaceWithInitialization);
-
-    SPatchAllocateStatelessConstantMemorySurfaceWithInitialization allocateStatelessConstantMemorySurfaceWithInitialization;
-    allocateStatelessConstantMemorySurfaceWithInitialization.ConstantBufferIndex = 0;
-    allocateStatelessConstantMemorySurfaceWithInitialization.SurfaceStateHeapOffset = 64;
-    allocateStatelessConstantMemorySurfaceWithInitialization.DataParamOffset = 8;
-    allocateStatelessConstantMemorySurfaceWithInitialization.DataParamSize = 8;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessConstantMemorySurfaceWithInitialization);
-
-    SPatchAllocateStatelessPrivateSurface allocateStatelessPrivateMemorySurface;
-    allocateStatelessPrivateMemorySurface.PerThreadPrivateMemorySize = 32;
-    allocateStatelessPrivateMemorySurface.SurfaceStateHeapOffset = 128;
-    allocateStatelessPrivateMemorySurface.DataParamOffset = 16;
-    allocateStatelessPrivateMemorySurface.DataParamSize = 8;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessPrivateMemorySurface);
-
-    SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;
-    allocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 192;
-    allocateStatelessEventPoolSurface.DataParamOffset = 24;
-    allocateStatelessEventPoolSurface.DataParamSize = 8;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessEventPoolSurface);
-
-    SPatchAllocateStatelessDefaultDeviceQueueSurface allocateStatelessDefaultDeviceQueueSurface;
-    allocateStatelessDefaultDeviceQueueSurface.SurfaceStateHeapOffset = 256;
-    allocateStatelessDefaultDeviceQueueSurface.DataParamOffset = 32;
-    allocateStatelessDefaultDeviceQueueSurface.DataParamSize = 8;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, allocateStatelessDefaultDeviceQueueSurface);
+    pKernelInfo->setGlobalVariablesSurface(8, 0, 0);
+    pKernelInfo->setGlobalConstantsSurface(8, 8, 64);
+    pKernelInfo->setPrivateMemory(32, false, 8, 16, 128);
+    pKernelInfo->setDeviceSideEnqueueEventPoolSurface(8, 24, 192);
+    pKernelInfo->setDeviceSideEnqueueDefaultQueueSurface(8, 32, 256);
 
     // create program with valid context
     MockContext context;
@@ -752,25 +717,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
     pKernelInfo->heapInfo.pKernelHeap = kernelIsa;
     pKernelInfo->heapInfo.KernelHeapSize = sizeof(kernelIsa);
 
-    // setup binding table state
-    SPatchBindingTableState bindingTableState;
-    bindingTableState.Token = iOpenCL::PATCH_TOKEN_BINDING_TABLE_STATE;
-    bindingTableState.Size = sizeof(SPatchBindingTableState);
-    bindingTableState.Count = 5;
-    bindingTableState.Offset = btiOffset;
-    bindingTableState.SurfaceStateOffset = 0;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, bindingTableState);
-
-    // setup thread payload
-    SPatchThreadPayload threadPayload = {};
-    threadPayload.LocalIDXPresent = 1;
-    threadPayload.LocalIDYPresent = 1;
-    threadPayload.LocalIDZPresent = 1;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, threadPayload);
-
-    // define stateful path
-    pKernelInfo->usesSsh = true;
-    pKernelInfo->requiresSshForBuffers = true;
+    pKernelInfo->setBindingTable(btiOffset, 5);
+    pKernelInfo->setLocalIds({1, 1, 1});
 
     // initialize kernel
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
@@ -843,7 +791,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
 
 HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTableStatesForKernelThenSshIsNotUsed) {
     // define kernel info
-    auto pKernelInfo = std::make_unique<KernelInfo>();
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
     // create program with valid context
@@ -858,18 +806,8 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
     pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
 
-    // define stateful path
-    pKernelInfo->usesSsh = true;
-    pKernelInfo->requiresSshForBuffers = false;
-
-    SPatchStatelessGlobalMemoryObjectKernelArgument statelessGlobalMemory;
-    statelessGlobalMemory.ArgumentNumber = 0;
-    statelessGlobalMemory.DataParamOffset = 0;
-    statelessGlobalMemory.DataParamSize = 0;
-    statelessGlobalMemory.Size = 0;
-    statelessGlobalMemory.SurfaceStateHeapOffset = 0;
-
-    pKernelInfo->patchInfo.statelessGlobalMemObjKernelArgs.push_back(&statelessGlobalMemory);
+    pKernelInfo->addArgBuffer(0, 0, 0, 0);
+    pKernelInfo->setAddressQualifier(0, KernelArgMetadata::AddrGlobal);
 
     // initialize kernel
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
@@ -899,7 +837,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
 
 HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStatesThenPointerIsZero) {
     // define kernel info
-    auto pKernelInfo = std::make_unique<KernelInfo>();
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
     // create program with valid context
@@ -913,10 +851,6 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     char surfaceStateHeap[256];
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
     pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-
-    // define stateful path
-    pKernelInfo->usesSsh = true;
-    pKernelInfo->requiresSshForBuffers = true;
 
     // initialize kernel
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
@@ -934,13 +868,7 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
-    SPatchBindingTableState bindingTableState;
-    bindingTableState.Token = iOpenCL::PATCH_TOKEN_BINDING_TABLE_STATE;
-    bindingTableState.Size = sizeof(SPatchBindingTableState);
-    bindingTableState.Count = 0;
-    bindingTableState.Offset = 64;
-    bindingTableState.SurfaceStateOffset = 0;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, bindingTableState);
+    pKernelInfo->setBindingTable(64, 0);
 
     dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
@@ -966,13 +894,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerS
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
 
     //Undefined Offset, Defined BorderColorOffset
-    SPatchSamplerStateArray samplerStateArray = {};
-    samplerStateArray.BorderColorOffset = 0;
-    samplerStateArray.Count = 2;
-    samplerStateArray.Offset = undefined<uint16_t>;
-    samplerStateArray.Size = sizeof(SPatchSamplerStateArray);
-    samplerStateArray.Token = 1;
-    populateKernelDescriptor(mockKernelWithInternal->kernelInfo.kernelDescriptor, samplerStateArray);
+    mockKernelWithInternal->kernelInfo.setSamplerTable(0, 2, undefined<uint16_t>);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
@@ -996,9 +918,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerS
     EXPECT_EQ(0U, interfaceDescriptor->getSamplerCount());
 
     //Defined Offset, Undefined BorderColorOffset
-    samplerStateArray.Offset = 0;
-    samplerStateArray.BorderColorOffset = undefined<uint16_t>;
-    populateKernelDescriptor(mockKernelWithInternal->kernelInfo.kernelDescriptor, samplerStateArray);
+    mockKernelWithInternal->kernelInfo.setSamplerTable(undefined<uint16_t>, 2, 0);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
@@ -1040,22 +960,16 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
-    const uint32_t borderColorSize = 64;
+    const uint32_t samplerTableOffset = 64;
     const uint32_t samplerStateSize = sizeof(SAMPLER_STATE) * 2;
+    mockKernelWithInternal->kernelInfo.setSamplerTable(0, 2, static_cast<DynamicStateHeapOffset>(samplerTableOffset));
 
-    SPatchSamplerStateArray samplerStateArray = {};
-    samplerStateArray.BorderColorOffset = 0x0;
-    samplerStateArray.Count = 2;
-    samplerStateArray.Offset = borderColorSize;
-    samplerStateArray.Size = samplerStateSize;
-    samplerStateArray.Token = 1;
-    populateKernelDescriptor(mockKernelWithInternal->kernelInfo.kernelDescriptor, samplerStateArray);
-
-    char *mockDsh = new char[(borderColorSize + samplerStateSize) * 4];
-    memset(mockDsh, 6, borderColorSize);
-    memset(mockDsh + borderColorSize, 8, borderColorSize);
+    const uint32_t mockDshSize = (samplerTableOffset + samplerStateSize) * 4;
+    char *mockDsh = new char[mockDshSize];
+    memset(mockDsh, 6, samplerTableOffset);
+    memset(mockDsh + samplerTableOffset, 8, samplerTableOffset);
     mockKernelWithInternal->kernelInfo.heapInfo.pDsh = mockDsh;
-
+    mockKernelWithInternal->kernelInfo.heapInfo.DynamicStateHeapSize = mockDshSize;
     uint64_t interfaceDescriptorTableOffset = dsh.getUsed();
     dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
     dsh.getSpace(4);
@@ -1064,7 +978,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     char *borderColorPointer = alignUp(initialDshPointer, 64);
     uint32_t borderColorOffset = static_cast<uint32_t>(borderColorPointer - static_cast<char *>(dsh.getCpuBase()));
 
-    SAMPLER_STATE *pSamplerState = reinterpret_cast<SAMPLER_STATE *>(mockDsh + borderColorSize);
+    SAMPLER_STATE *pSamplerState = reinterpret_cast<SAMPLER_STATE *>(mockDsh + samplerTableOffset);
 
     for (uint32_t i = 0; i < 2; i++) {
         pSamplerState[i].setIndirectStatePointer(0);
@@ -1093,10 +1007,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
         true,
         *pDevice);
 
-    bool isMemorySame = memcmp(borderColorPointer, mockDsh, borderColorSize) == 0;
+    bool isMemorySame = memcmp(borderColorPointer, mockDsh, samplerTableOffset) == 0;
     EXPECT_TRUE(isMemorySame);
 
-    SAMPLER_STATE *pSamplerStatesCopied = reinterpret_cast<SAMPLER_STATE *>(borderColorPointer + borderColorSize);
+    SAMPLER_STATE *pSamplerStatesCopied = reinterpret_cast<SAMPLER_STATE *>(borderColorPointer + samplerTableOffset);
 
     for (uint32_t i = 0; i < 2; i++) {
         EXPECT_EQ(pSamplerState[i].getNonNormalizedCoordinateEnable(), pSamplerStatesCopied[i].getNonNormalizedCoordinateEnable());

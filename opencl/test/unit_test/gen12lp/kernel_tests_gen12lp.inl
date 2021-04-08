@@ -27,13 +27,11 @@ GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenNotUsingSharedObjArgsThenWaDisab
 
 GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedThenWaDisableRccRhwoOptimizationIsRequired) {
     MockKernelWithInternals kernel(*pClDevice);
-    kernel.kernelInfo.kernelArgInfo.resize(3);
-    kernel.kernelInfo.kernelArgInfo.at(0).isBuffer = true;
-    kernel.kernelInfo.kernelArgInfo.at(1).isBuffer = false;
-    kernel.kernelInfo.kernelArgInfo.at(2).isBuffer = true;
-    for (auto &kernelInfo : kernel.kernelInfo.kernelArgInfo) {
-        kernelInfo.kernelArgPatchInfoVector.resize(1);
-    }
+    kernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(3);
+    kernel.kernelInfo.addArgBuffer(0);
+    kernel.kernelInfo.addArgImmediate(1);
+    kernel.kernelInfo.addArgBuffer(2);
+
     kernel.mockKernel->initialize();
 
     MockBuffer buffer;

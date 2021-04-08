@@ -134,8 +134,12 @@ TEST_F(clEnqueueNDRangeKernelTests, GivenKernelWithAllocateSyncBufferPatchWhenEx
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
-    SPatchAllocateSyncBuffer patchAllocateSyncBuffer;
-    populateKernelDescriptor(pProgram->mockKernelInfo.kernelDescriptor, patchAllocateSyncBuffer);
+
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = true;
+    auto &syncBufferAddress = pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress;
+    syncBufferAddress.pointerSize = sizeof(uint8_t);
+    syncBufferAddress.stateless = 0;
+    syncBufferAddress.bindful = 0;
 
     EXPECT_TRUE(pKernel->usesSyncBuffer());
 

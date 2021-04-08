@@ -35,15 +35,11 @@ TEST(GetMaxInlineSlmNeeded, GivenProgramWithKernelsNotRequirignSlmThenReturn0) {
 }
 
 TEST(GetMaxInlineSlmNeeded, GivenProgramWithKernelsThenReturnMaxOfInlineSlmNeededByKernels) {
-    iOpenCL::SPatchAllocateLocalSurface slmTokens[3] = {};
-    slmTokens[0].TotalInlineLocalMemorySize = 16;
-    slmTokens[1].TotalInlineLocalMemorySize = 64;
-    slmTokens[2].TotalInlineLocalMemorySize = 32;
     NEO::ProgramInfo programInfo;
     programInfo.kernelInfos = {new NEO::KernelInfo(), new NEO::KernelInfo(), new NEO::KernelInfo()};
-    populateKernelDescriptor(programInfo.kernelInfos[0]->kernelDescriptor, slmTokens[0]);
-    populateKernelDescriptor(programInfo.kernelInfos[1]->kernelDescriptor, slmTokens[1]);
-    populateKernelDescriptor(programInfo.kernelInfos[2]->kernelDescriptor, slmTokens[2]);
+    programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.slmInlineSize = 16;
+    programInfo.kernelInfos[1]->kernelDescriptor.kernelAttributes.slmInlineSize = 64;
+    programInfo.kernelInfos[2]->kernelDescriptor.kernelAttributes.slmInlineSize = 32;
     EXPECT_EQ(64U, NEO::getMaxInlineSlmNeeded(programInfo));
 }
 

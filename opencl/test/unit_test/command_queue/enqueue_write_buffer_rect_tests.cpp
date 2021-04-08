@@ -171,7 +171,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, WhenWritingBufferThenInd
 
     EXPECT_NE(dshBefore, pDSH->getUsed());
     EXPECT_NE(iohBefore, pIOH->getUsed());
-    if (kernel->requiresSshForBuffers()) {
+    if (kernel->usesBindfulAddressingForBuffers()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
 }
@@ -573,23 +573,23 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
     if (hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
         const auto &surfaceState = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 0);
 
-        if (kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
+        if (kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().pointerSize == sizeof(uint64_t)) {
             auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() +
-                                           kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                           kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
             EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedHostPtr, 4)), *pKernelArg);
             EXPECT_EQ(*pKernelArg, surfaceState.getSurfaceBaseAddress());
 
-        } else if (kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
+        } else if (kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().pointerSize == sizeof(uint32_t)) {
             auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() +
-                                           kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                           kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
             EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedHostPtr, 4)), static_cast<uint64_t>(*pKernelArg));
             EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceState.getSurfaceBaseAddress());
         }
     }
 
-    if (kernelInfo.kernelArgInfo[2].kernelArgPatchInfoVector[0].size == 4 * sizeof(uint32_t)) { // size of  uint4 SrcOrigin
+    if (kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size == 4 * sizeof(uint32_t)) { // size of  uint4 SrcOrigin
         auto dstOffset = (uint32_t *)(kernel->getCrossThreadData() +
-                                      kernelInfo.kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset);
+                                      kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].offset);
         EXPECT_EQ(hostOffset.x + ptrDiff(misalignedHostPtr, alignDown(misalignedHostPtr, 4)), *dstOffset);
     } else {
         // SrcOrigin arg should be 16 bytes in size, if that changes, above if path should be modified

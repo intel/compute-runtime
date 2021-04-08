@@ -30,37 +30,18 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         ClDeviceFixture::SetUp();
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
 
         pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
         pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
 
-        SPatchMediaVFEState mediaVFEstate = {};
-        mediaVFEstate.PerThreadScratchSpace = 1024;
-        mediaVFEstate.ScratchSpaceOffset = 0;
-        populateKernelDescriptor(pKernelInfo->kernelDescriptor, mediaVFEstate, 0);
+        pKernelInfo->setPerThreadScratchSize(1024, 0);
+        pKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
 
-        SPatchAllocateStatelessPrintfSurface printfSurface = {};
-        populateKernelDescriptor(pKernelInfo->kernelDescriptor, printfSurface);
-
-        KernelArgPatchInfo kernelArg1PatchInfo;
-        KernelArgPatchInfo kernelArg2PatchInfo;
-        KernelArgPatchInfo kernelArg3PatchInfo;
-
-        pKernelInfo->kernelArgInfo.resize(3);
-
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArg1PatchInfo);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x10;
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
-
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector.push_back(kernelArg2PatchInfo);
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
-        pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
-
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArg3PatchInfo);
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset = 0x50;
-        pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
+        pKernelInfo->addArgBuffer(0, 0x10, sizeof(void *));
+        pKernelInfo->addArgBuffer(1, 0x30, sizeof(void *));
+        pKernelInfo->addArgBuffer(2, 0x50, sizeof(void *));
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
@@ -81,7 +62,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         ClDeviceFixture::TearDown();
     }
 
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;
     char pCrossThreadData[128];
@@ -873,11 +854,11 @@ TEST_F(DispatchInfoBuilderTest, WhenSettingKernelArgThenAddressesAreCorrect) {
     EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvmAlloc(2, svmPtr, &svmAlloc));
 
     for (auto &dispatchInfo : multiDispatchInfo) {
-        auto crossthreadOffset0 = pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
+        auto crossthreadOffset0 = pKernelInfo->argAsPtr(0).stateless;
         EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + crossthreadOffset0)));
-        auto crossthreadOffset1 = pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset;
+        auto crossthreadOffset1 = pKernelInfo->argAsPtr(1).stateless;
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + crossthreadOffset1)));
-        auto crossthreadOffset2 = pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset;
+        auto crossthreadOffset2 = pKernelInfo->argAsPtr(2).stateless;
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + crossthreadOffset2)));
     }
 

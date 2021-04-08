@@ -656,7 +656,7 @@ TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSyst
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     //check if cross thread is updated
-    auto crossThreadLocation = reinterpret_cast<uintptr_t *>(ptrOffset(mockKernel.mockKernel->getCrossThreadData(), mockKernel.kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset));
+    auto crossThreadLocation = reinterpret_cast<uintptr_t *>(ptrOffset(mockKernel.mockKernel->getCrossThreadData(), mockKernel.kernelInfo.argAsPtr(0).stateless));
     auto systemAddress = reinterpret_cast<uintptr_t>(systemPointer);
 
     EXPECT_EQ(*crossThreadLocation, systemAddress);

@@ -44,23 +44,10 @@ class KernelArgAcceleratorFixture : public ContextFixture, public ClDeviceFixtur
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
 
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
-        KernelArgPatchInfo kernelArgPatchInfo;
-
-        pKernelInfo->kernelArgInfo.resize(1);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-
-        pKernelInfo->kernelArgInfo[0].samplerArgumentType = iOpenCL::SAMPLER_OBJECT_VME;
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20;
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(uint32_t);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = 1;
-
-        pKernelInfo->kernelArgInfo[0].offsetVmeMbBlockType = 0x04;
-        pKernelInfo->kernelArgInfo[0].offsetVmeSubpixelMode = 0x0c;
-        pKernelInfo->kernelArgInfo[0].offsetVmeSadAdjustMode = 0x14;
-        pKernelInfo->kernelArgInfo[0].offsetVmeSearchPathType = 0x1c;
+        pKernelInfo->addArgAccelerator(0, 0x20, 0x04, 0x14, 0x1c, 0x0c);
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
@@ -87,7 +74,7 @@ class KernelArgAcceleratorFixture : public ContextFixture, public ClDeviceFixtur
     cl_motion_estimation_desc_intel desc;
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     char pCrossThreadData[64];
 };
 
@@ -107,22 +94,18 @@ TEST_F(KernelArgAcceleratorTest, WhenCreatingVmeAcceleratorThenCorrectKernelArgs
 
     char *crossThreadData = pKernel->getCrossThreadData();
 
-    const auto &arginfo = pKernelInfo->kernelArgInfo[0];
+    const auto vmeDescriptor = reinterpret_cast<ArgDescVme *>(pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors[0].get());
 
-    uint32_t *pMbBlockType = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData),
-                                       arginfo.offsetVmeMbBlockType);
+    uint32_t *pMbBlockType = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData), vmeDescriptor->mbBlockType);
     EXPECT_EQ(desc.mb_block_type, *pMbBlockType);
 
-    uint32_t *pSubpixelMode = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData),
-                                        arginfo.offsetVmeSubpixelMode);
+    uint32_t *pSubpixelMode = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData), vmeDescriptor->subpixelMode);
     EXPECT_EQ(desc.subpixel_mode, *pSubpixelMode);
 
-    uint32_t *pSadAdjustMode = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData),
-                                         arginfo.offsetVmeSadAdjustMode);
+    uint32_t *pSadAdjustMode = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData), vmeDescriptor->sadAdjustMode);
     EXPECT_EQ(desc.sad_adjust_mode, *pSadAdjustMode);
 
-    uint32_t *pSearchPathType = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData),
-                                          arginfo.offsetVmeSearchPathType);
+    uint32_t *pSearchPathType = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData), vmeDescriptor->searchPathType);
     EXPECT_EQ(desc.search_path_type, *pSearchPathType);
 
     status = clReleaseAcceleratorINTEL(accelerator);

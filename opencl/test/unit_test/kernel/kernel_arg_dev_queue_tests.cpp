@@ -22,17 +22,10 @@ struct KernelArgDevQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
 
         pDeviceQueue = createQueueObject();
 
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
-        pKernelInfo->kernelArgInfo.resize(1);
-        pKernelInfo->kernelArgInfo[0].isDeviceQueue = true;
-
-        kernelArgPatchInfo.crossthreadOffset = 0x4;
-        kernelArgPatchInfo.size = 0x4;
-        kernelArgPatchInfo.sourceOffset = 0;
-
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+        pKernelInfo->addArgDevQueue(0, crossThreadOffset, 4);
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pDevice));
         pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
@@ -63,12 +56,12 @@ struct KernelArgDevQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
 
     static const uint32_t crossThreadDataSize = 0x10;
     static const char crossThreadDataInit = 0x7e;
+    const CrossThreadDataOffset crossThreadOffset = 0x4;
 
     std::unique_ptr<MockProgram> program;
     DeviceQueue *pDeviceQueue = nullptr;
     MockKernel *pKernel = nullptr;
-    std::unique_ptr<KernelInfo> pKernelInfo;
-    KernelArgPatchInfo kernelArgPatchInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
 };
 
 HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GivenKernelWithDevQueueArgWhenSettingArgHandleThenCorrectHandleIsSet) {
@@ -82,7 +75,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GivenDeviceQueueWhenSettingAr
     EXPECT_EQ(ret, CL_SUCCESS);
 
     auto gpuAddress = static_cast<uint32_t>(pDeviceQueue->getQueueBuffer()->getGpuAddressToPatch());
-    auto patchLocation = ptrOffset(pKernel->mockCrossThreadData.data(), kernelArgPatchInfo.crossthreadOffset);
+    auto patchLocation = ptrOffset(pKernel->mockCrossThreadData.data(), crossThreadOffset);
     EXPECT_EQ(*(reinterpret_cast<uint32_t *>(patchLocation)), gpuAddress);
 }
 

@@ -23,9 +23,7 @@
 #include <memory>
 
 using namespace NEO;
-namespace NEO {
-void populateKernelDescriptor(KernelDescriptor &dst, const SPatchDataParameterStream &token);
-}
+using namespace iOpenCL;
 
 class MockSchedulerKernel : public SchedulerKernel {
   public:
@@ -34,23 +32,19 @@ class MockSchedulerKernel : public SchedulerKernel {
 
     static MockSchedulerKernel *create(Program &program, KernelInfo *&info) {
         info = new KernelInfo;
-        SPatchDataParameterStream dataParameterStream;
-        dataParameterStream.DataParameterStreamSize = 8;
-        dataParameterStream.Size = 8;
-        populateKernelDescriptor(info->kernelDescriptor, dataParameterStream);
 
+        info->kernelDescriptor.kernelAttributes.crossThreadDataSize = 8;
         info->kernelDescriptor.kernelAttributes.simdSize = 32;
         info->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = false;
 
-        KernelArgInfo bufferArg;
-        bufferArg.isBuffer = true;
+        ArgDescriptor bufferArg;
+        auto &asPtr = bufferArg.as<ArgDescPointer>(true);
 
         for (uint32_t i = 0; i < 9; i++) {
-            bufferArg.kernelArgPatchInfoVector.resize(1);
-            bufferArg.kernelArgPatchInfoVector[0].crossthreadOffset = 0;
-            bufferArg.kernelArgPatchInfoVector[0].size = 0;
-            bufferArg.kernelArgPatchInfoVector[0].sourceOffset = 0;
-            info->kernelArgInfo.push_back(std::move(bufferArg));
+            asPtr.stateless = 0;
+            asPtr.pointerSize = 0;
+            asPtr.bufferOffset = 0;
+            info->kernelDescriptor.payloadMappings.explicitArgs.push_back(std::move(bufferArg));
         }
 
         MockSchedulerKernel *mock = Kernel::create<MockSchedulerKernel>(&program, *info, *program.getDevices()[0], nullptr);
@@ -101,18 +95,15 @@ TEST(SchedulerKernelTest, WhenSchedulerKernelIsCreatedThenCurbeSizeIsCorrect) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     KernelInfo info;
-    uint32_t crossTrheadDataSize = 32;
+    uint32_t crossThreadDataSize = 32;
     uint32_t dshSize = 48;
 
-    SPatchDataParameterStream dataParameterStream;
-    dataParameterStream.DataParameterStreamSize = crossTrheadDataSize;
-    populateKernelDescriptor(info.kernelDescriptor, dataParameterStream);
-
+    info.kernelDescriptor.kernelAttributes.crossThreadDataSize = crossThreadDataSize;
     info.heapInfo.DynamicStateHeapSize = dshSize;
 
     MockSchedulerKernel kernel(&program, info, *device);
 
-    uint32_t expectedCurbeSize = alignUp(crossTrheadDataSize, 64) + alignUp(dshSize, 64) + alignUp(SCHEDULER_DYNAMIC_PAYLOAD_SIZE, 64);
+    uint32_t expectedCurbeSize = alignUp(crossThreadDataSize, 64) + alignUp(dshSize, 64) + alignUp(SCHEDULER_DYNAMIC_PAYLOAD_SIZE, 64);
     EXPECT_GE((size_t)expectedCurbeSize, kernel.getCurbeSize());
 }
 

@@ -177,9 +177,10 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImageThenSurfaceStateIsCorrect) {
     mockCmdQ->storeMultiDispatchInfo = true;
     enqueueFillImage<FamilyType>();
 
-    auto index = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo().kernelArgInfo[0].offsetHeap / sizeof(RENDER_SURFACE_STATE);
+    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
+    uint32_t index = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(0).template as<ArgDescImage>().bindful) / sizeof(RENDER_SURFACE_STATE);
 
-    const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), static_cast<uint32_t>(index));
+    const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), index);
     const auto &imageDesc = image->getImageDesc();
     EXPECT_EQ(imageDesc.image_width, surfaceState.getWidth());
     EXPECT_EQ(imageDesc.image_height, surfaceState.getHeight());

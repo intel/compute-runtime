@@ -536,7 +536,7 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
 bool CommandQueue::setupDebugSurface(Kernel *kernel) {
     auto debugSurface = getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
 
-    DEBUG_BREAK_IF(!kernel->requiresSshForBuffers());
+    DEBUG_BREAK_IF(!kernel->usesBindfulAddressingForBuffers());
     auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap()),
                                   kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful);
     void *addressToPatch = reinterpret_cast<void *>(debugSurface->getGpuAddress());

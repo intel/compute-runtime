@@ -833,7 +833,7 @@ TEST_F(PerformanceHintEnqueueTest, GivenKernelWithCoherentPtrWhenEnqueueKernelIs
     std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
     kernelArguments.resize(1);
     kernelArguments[0] = kernelArgInfo;
-    mockKernel.kernelInfo.kernelArgInfo.resize(1);
+    mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
     mockKernel.mockKernel->setKernelArguments(kernelArguments);
 
     retVal = pCmdQ->enqueueKernel(mockKernel.mockKernel, 2, nullptr, globalWorkGroupSize, preferredWorkGroupSize, 0, nullptr, nullptr);

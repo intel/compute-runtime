@@ -20,13 +20,12 @@ inline bool ClHwHelperHw<GfxFamily>::requiresAuxResolves(const KernelInfo &kerne
 
 template <typename GfxFamily>
 inline bool ClHwHelperHw<GfxFamily>::hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const {
-    bool hasStatelessAccessToBuffer = false;
-    for (uint32_t i = 0; i < kernelInfo.kernelArgInfo.size(); ++i) {
-        if (kernelInfo.kernelArgInfo[i].isBuffer) {
-            hasStatelessAccessToBuffer |= !kernelInfo.kernelArgInfo[i].pureStatefulBufferAccess;
+    for (const auto &arg : kernelInfo.kernelDescriptor.payloadMappings.explicitArgs) {
+        if (arg.is<ArgDescriptor::ArgTPointer>() && !arg.as<ArgDescPointer>().isPureStateful()) {
+            return true;
         }
     }
-    return hasStatelessAccessToBuffer;
+    return false;
 }
 
 template <typename GfxFamily>

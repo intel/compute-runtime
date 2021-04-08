@@ -63,21 +63,16 @@ class ImageSetArgTest : public ClDeviceFixture,
 
     void SetUp() override {
         ClDeviceFixture::SetUp();
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         // define kernel info
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-        pKernelInfo->usesSsh = true;
 
         // setup kernel arg offsets
-        pKernelInfo->kernelArgInfo.resize(2);
-        pKernelInfo->kernelArgInfo[1].offsetHeap = 0x00;
-        pKernelInfo->kernelArgInfo[0].offsetHeap = 0x40;
-
-        pKernelInfo->kernelArgInfo[1].isImage = true;
-        pKernelInfo->kernelArgInfo[0].isImage = true;
+        pKernelInfo->addArgImage(0, 0x00);
+        pKernelInfo->addArgImage(1, 0x40);
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
         retVal = CL_INVALID_VALUE;
@@ -111,7 +106,7 @@ class ImageSetArgTest : public ClDeviceFixture,
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
     MultiDeviceKernel *pMultiDeviceKernel = nullptr;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     char surfaceStateHeap[0x80] = {};
     Image *srcImage = nullptr;
     GraphicsAllocation *srcAllocation = nullptr;
@@ -125,7 +120,7 @@ HWTEST_F(ImageSetArgTest, WhenSettingKernelArgImageThenSurfaceBaseAddressIsSetCo
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
 
     srcImage->setImageArg(const_cast<RENDER_SURFACE_STATE *>(surfaceState), false, 0, pClDevice->getRootDeviceIndex(), false);
 
@@ -200,7 +195,7 @@ HWTEST_F(ImageSetArgTest, givenCubeMapIndexWhenSetKernelArgImageIsCalledThenModi
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
 
     src2dImage->setImageArg(const_cast<RENDER_SURFACE_STATE *>(surfaceState), false, 0, pClDevice->getRootDeviceIndex(), false);
 
@@ -303,7 +298,7 @@ HWTEST_F(ImageSetArgTest, givenNonCubeMapIndexWhenSetKernelArgImageIsCalledThenD
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
 
     EXPECT_EQ(srcImage->getCubeFaceIndex(), __GMM_NO_CUBE_MAP);
     srcImage->setImageArg(const_cast<RENDER_SURFACE_STATE *>(surfaceState), false, 0, pClDevice->getRootDeviceIndex(), false);
@@ -332,7 +327,7 @@ HWTEST_F(ImageSetArgTest, givenOffsetedBufferWhenSetKernelArgImageIscalledThenFu
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
 
     auto graphicsAllocation = srcAllocation;
     graphicsAllocation->setGpuBaseAddress(12345u);
@@ -362,7 +357,7 @@ HWTEST_F(ImageSetArgTest, WhenSettingKernelArgThenPropertiesAreSetCorrectly) {
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
 
     size_t rPitch = srcImage->getImageDesc().image_row_pitch;
 
@@ -413,7 +408,7 @@ HWTEST_F(ImageSetArgTest, givenImage2DWithMipMapsWhenSetKernelArgIsCalledThenMip
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
     EXPECT_EQ((uint32_t)mipLevel, surfaceState->getSurfaceMinLod());
     EXPECT_EQ((uint32_t)mipCount, surfaceState->getMipCountLod() + 1);
 }
@@ -434,7 +429,7 @@ HWTEST_F(ImageSetArgTest, Given2dArrayWhenSettingKernelArgThenPropertiesAreSetCo
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     size_t rPitch = srcImage->getImageDesc().image_row_pitch;
@@ -482,7 +477,7 @@ HWTEST_F(ImageSetArgTest, Given1dArrayWhenSettingKernelArgThenPropertiesAreSetCo
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     SetupChannels<FamilyType>(image1Darray->getImageFormat().image_channel_order);
@@ -538,7 +533,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAuxC
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
 
     EXPECT_FALSE(Image::isDepthFormat(image->getImageFormat()));
     EXPECT_TRUE(surfaceState->getMultisampledSurfaceStorageFormat() ==
@@ -574,7 +569,7 @@ HWTEST_F(ImageSetArgTest, givenDepthFormatWhenSetArgIsCalledThenProgramAuxFields
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
 
     EXPECT_TRUE(Image::isDepthFormat(image->getImageFormat()));
     EXPECT_TRUE(surfaceState->getMultisampledSurfaceStorageFormat() ==
@@ -605,7 +600,7 @@ HWTEST_F(ImageSetArgTest, givenMultisampledR32Floatx8x24DepthStencilFormatWhenSe
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
-                                                                           pKernelInfo->kernelArgInfo[0].offsetHeap));
+                                                                           pKernelInfo->argAsImg(0).bindful));
 
     EXPECT_TRUE(Image::isDepthFormat(image->getImageFormat()));
     EXPECT_TRUE(surfaceState->getSurfaceFormat() == SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS);
@@ -632,7 +627,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationAndRenderCompressionWhenSetArgOnMult
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
-                                                                                 pKernelInfo->kernelArgInfo[0].offsetHeap));
+                                                                                 pKernelInfo->argAsImg(0).bindful));
 
     EXPECT_TRUE(surfaceState->getMultisampledSurfaceStorageFormat() ==
                 RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
@@ -662,7 +657,7 @@ HWTEST_F(ImageSetArgTest, givenDepthFormatAndRenderCompressionWhenSetArgOnMultis
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
-                                                                                 pKernelInfo->kernelArgInfo[0].offsetHeap));
+                                                                                 pKernelInfo->argAsImg(0).bindful));
 
     EXPECT_TRUE(Image::isDepthFormat(image->getImageFormat()));
     EXPECT_TRUE(surfaceState->getMultisampledSurfaceStorageFormat() ==
@@ -699,7 +694,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
-                                                                           pKernelInfo->kernelArgInfo[0].offsetHeap));
+                                                                           pKernelInfo->argAsImg(0).bindful));
 
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(surfaceState, mcsAlloc->getDefaultGmm()));
     EXPECT_EQ(1u, surfaceState->getAuxiliarySurfacePitch());
@@ -730,7 +725,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
-                                                                                 pKernelInfo->kernelArgInfo[0].offsetHeap));
+                                                                                 pKernelInfo->argAsImg(0).bindful));
 
     EXPECT_NE(0u, surfaceState->getAuxiliarySurfaceBaseAddress());
 }
@@ -765,7 +760,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
-                                                                                 pKernelInfo->kernelArgInfo[0].offsetHeap));
+                                                                                 pKernelInfo->argAsImg(0).bindful));
 
     EXPECT_EQ(pitchValue, surfaceState->getAuxiliarySurfacePitch());
     EXPECT_EQ(qPitchValue, surfaceState->getAuxiliarySurfaceQpitch());
@@ -800,7 +795,7 @@ HWTEST_F(ImageSetArgTest, GivenImageFrom1dBufferWhenSettingKernelArgThenProperti
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
     auto image = castToObject<Image>(imageFromBuffer);
 
@@ -844,7 +839,7 @@ HWTEST_F(ImageSetArgTest, GivenImageWithClLuminanceFormatWhenSettingKernelArgThe
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
     //for CL_LUMINANCE format we override channels to RED to be spec complaint.
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectRed());
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectGreen());
@@ -923,24 +918,16 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
   protected:
     void SetUp() override {
         ClDeviceFixture::SetUp();
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
         // define kernel info
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-        pKernelInfo->usesSsh = true;
 
         // setup kernel arg offsets
-        pKernelInfo->kernelArgInfo.resize(2);
-        pKernelInfo->kernelArgInfo[1].offsetHeap = 0x00;
-        pKernelInfo->kernelArgInfo[0].offsetHeap = 0x40;
-
-        pKernelInfo->kernelArgInfo[1].isImage = true;
-        pKernelInfo->kernelArgInfo[0].isImage = true;
-
-        pKernelInfo->kernelArgInfo[1].isMediaBlockImage = true;
-        pKernelInfo->kernelArgInfo[0].isMediaBlockImage = true;
+        pKernelInfo->addArgImage(0, 0x00, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK);
+        pKernelInfo->addArgImage(0, 0x40, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK);
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
         retVal = CL_INVALID_VALUE;
@@ -973,7 +960,7 @@ HWTEST_F(ImageMediaBlockSetArgTest, WhenSettingKernelArgImageThenPropertiesAreCo
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+                  pKernelInfo->argAsImg(0).bindful));
 
     size_t rPitch = srcImage->getImageDesc().image_row_pitch;
 

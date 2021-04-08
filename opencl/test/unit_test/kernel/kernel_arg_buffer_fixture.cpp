@@ -32,22 +32,13 @@ void KernelArgBufferFixture::SetUp() {
     ContextFixture::SetUp(1, &device);
 
     // define kernel info
-    pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-
-    // setup kernel arg offsets
-    KernelArgPatchInfo kernelArgPatchInfo;
 
     pKernelInfo->heapInfo.pSsh = pSshLocal;
     pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal);
-    pKernelInfo->usesSsh = true;
-    pKernelInfo->requiresSshForBuffers = true;
 
-    pKernelInfo->kernelArgInfo.resize(1);
-    pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-
-    pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
-    pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
+    pKernelInfo->addArgBuffer(0, 0x30, sizeof(void *), 0x0);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessConfiguration() ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
 

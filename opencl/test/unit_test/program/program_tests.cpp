@@ -1467,8 +1467,8 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
     EXPECT_EQ(3u, numArgs);
 
     uint32_t sizeOfPtr = sizeof(void *);
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size, sizeOfPtr);
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].size, sizeOfPtr);
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(0).as<ArgDescPointer>().pointerSize, sizeOfPtr);
+    EXPECT_EQ(pKernelInfo->getArgDescriptorAt(1).as<ArgDescPointer>().pointerSize, sizeOfPtr);
 
     delete pKernel;
 }
@@ -1491,7 +1491,7 @@ TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
 
     auto pKernelInfo = pProgram->getKernelInfo("device_side_block_motion_estimate_intel", rootDeviceIndex);
     ASSERT_NE(nullptr, pKernelInfo);
-    EXPECT_EQ(true, pKernelInfo->isVmeWorkload);
+    EXPECT_EQ(true, pKernelInfo->kernelDescriptor.kernelAttributes.flags.usesVme);
 
     auto pKernel = Kernel::create(
         pProgram,
@@ -2067,16 +2067,8 @@ TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfaces
 
     uint32_t crossThreadOffsetBlock = 0;
 
-    KernelInfo *infoBlock = new KernelInfo;
-
-    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
-    privateSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
-    privateSurfaceBlock.DataParamSize = 8;
-    privateSurfaceBlock.Size = 8;
-    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock.Token = 0;
-    privateSurfaceBlock.PerThreadPrivateMemorySize = 0;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
+    auto infoBlock = new MockKernelInfo;
+    infoBlock->setPrivateMemory(0, false, 8, crossThreadOffsetBlock, 0);
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
@@ -2092,16 +2084,8 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 
     uint32_t crossThreadOffsetBlock = 0;
 
-    KernelInfo *infoBlock = new KernelInfo;
-
-    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
-    privateSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
-    privateSurfaceBlock.DataParamSize = 8;
-    privateSurfaceBlock.Size = 8;
-    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock.Token = 0;
-    privateSurfaceBlock.PerThreadPrivateMemorySize = 1000;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
+    auto infoBlock = new MockKernelInfo;
+    infoBlock->setPrivateMemory(1000, false, 8, crossThreadOffsetBlock, 0);
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
@@ -2117,16 +2101,8 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 
     uint32_t crossThreadOffsetBlock = 0;
 
-    KernelInfo *infoBlock = new KernelInfo;
-
-    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
-    privateSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
-    privateSurfaceBlock.DataParamSize = 8;
-    privateSurfaceBlock.Size = 8;
-    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock.Token = 0;
-    privateSurfaceBlock.PerThreadPrivateMemorySize = 1000;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
+    auto infoBlock = new MockKernelInfo;
+    infoBlock->setPrivateMemory(1000, false, 8, crossThreadOffsetBlock, 0);
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
@@ -2150,16 +2126,8 @@ TEST_F(ProgramTests, givenProgramWithBlockKernelsWhenfreeBlockResourcesisCalledT
 
     uint32_t crossThreadOffsetBlock = 0;
 
-    KernelInfo *infoBlock = new KernelInfo;
-
-    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
-    privateSurfaceBlock.DataParamOffset = crossThreadOffsetBlock;
-    privateSurfaceBlock.DataParamSize = 8;
-    privateSurfaceBlock.Size = 8;
-    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock.Token = 0;
-    privateSurfaceBlock.PerThreadPrivateMemorySize = 1000;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
+    auto infoBlock = new MockKernelInfo;
+    infoBlock->setPrivateMemory(1000, false, 8, crossThreadOffsetBlock, 0);
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
@@ -2957,16 +2925,8 @@ using ProgramMultiRootDeviceTests = MultiRootDeviceFixture;
 
 TEST_F(ProgramMultiRootDeviceTests, WhenPrivateSurfaceIsCreatedThenItHasCorrectRootDeviceIndex) {
     auto program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*device1));
-    auto infoBlock = std::make_unique<KernelInfo>();
-
-    SPatchAllocateStatelessPrivateSurface privateSurfaceBlock = {};
-    privateSurfaceBlock.DataParamOffset = 0;
-    privateSurfaceBlock.DataParamSize = 8;
-    privateSurfaceBlock.Size = 8;
-    privateSurfaceBlock.SurfaceStateHeapOffset = 0;
-    privateSurfaceBlock.Token = 0;
-    privateSurfaceBlock.PerThreadPrivateMemorySize = 1000;
-    populateKernelDescriptor(infoBlock->kernelDescriptor, privateSurfaceBlock);
+    auto infoBlock = std::make_unique<MockKernelInfo>();
+    infoBlock->setPrivateMemory(1000, false, 8, 0, 0);
 
     program->blockKernelManager->addBlockKernelInfo(infoBlock.release());
     program->allocateBlockPrivateSurfaces(*device1);

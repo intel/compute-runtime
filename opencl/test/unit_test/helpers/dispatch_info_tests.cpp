@@ -29,17 +29,10 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
         ClDeviceFixture::SetUp();
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
 
-        pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-
-        SPatchMediaVFEState mediaVFEstate = {};
-        mediaVFEstate.PerThreadScratchSpace = 1024;
-        mediaVFEstate.ScratchSpaceOffset = 0;
-        populateKernelDescriptor(pKernelInfo->kernelDescriptor, mediaVFEstate, 0);
-
-        SPatchAllocateStatelessPrintfSurface printfSurface = {};
-        populateKernelDescriptor(pKernelInfo->kernelDescriptor, printfSurface);
+        pKernelInfo->setPerThreadScratchSize(1024, 0);
+        pKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
 
         pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
@@ -54,7 +47,7 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
         ClDeviceFixture::TearDown();
     }
 
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;
 };

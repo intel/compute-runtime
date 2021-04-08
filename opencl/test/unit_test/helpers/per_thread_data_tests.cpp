@@ -27,27 +27,18 @@ struct PerThreadDataTests : public ClDeviceFixture,
     void SetUp() override {
         ClDeviceFixture::SetUp();
 
-        SPatchThreadPayload threadPayload = {};
-        threadPayload.LocalIDXPresent = localIdX ? 1 : 0;
-        threadPayload.LocalIDYPresent = localIdY ? 1 : 0;
-        threadPayload.LocalIDZPresent = localIdZ ? 1 : 0;
-        threadPayload.LocalIDFlattenedPresent = flattenedId;
-        threadPayload.UnusedPerThreadConstantPresent =
-            !(localIdX || localIdY || localIdZ || flattenedId);
-        populateKernelDescriptor(kernelInfo.kernelDescriptor, threadPayload);
+        kernelInfo.setLocalIds({localIdX, localIdY, localIdZ});
+        kernelInfo.kernelDescriptor.kernelAttributes.flags.usesFlattenedLocalIds = flattenedId;
+        kernelInfo.kernelDescriptor.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent = !(localIdX || localIdY || localIdZ || flattenedId);
 
+        numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
         simd = 32;
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = simd;
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
 
-        kernelInfo.kernelDescriptor.kernelAttributes.simdSize = kernelInfo.getMaxSimdSize();
-        numChannels = threadPayload.LocalIDXPresent +
-                      threadPayload.LocalIDYPresent +
-                      threadPayload.LocalIDZPresent;
         grfSize = 32;
-
         indirectHeapMemorySize = 4096;
         indirectHeapMemory = reinterpret_cast<uint8_t *>(alignedMalloc(indirectHeapMemorySize, 32));
         ASSERT_TRUE(isAligned<32>(indirectHeapMemory));
@@ -67,7 +58,7 @@ struct PerThreadDataTests : public ClDeviceFixture,
     size_t indirectHeapMemorySize;
 
     SKernelBinaryHeaderCommon kernelHeader;
-    KernelInfo kernelInfo;
+    MockKernelInfo kernelInfo;
 };
 
 typedef PerThreadDataTests<> PerThreadDataXYZTests;

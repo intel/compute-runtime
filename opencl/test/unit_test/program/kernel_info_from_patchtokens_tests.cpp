@@ -31,69 +31,6 @@ TEST(KernelInfoFromPatchTokens, GivenValidEmptyKernelFromPatchtokensThenReturnEm
     EXPECT_EQ(src.header->KernelUnpaddedSize, dst.heapInfo.KernelUnpaddedSize);
 }
 
-TEST(KernelInfoFromPatchTokens, GivenValidKernelWithArgThenMetadataIsProperlyPopulated) {
-    PatchTokensTestData::ValidProgramWithKernelAndArg src;
-    NEO::KernelInfo dst = {};
-    NEO::populateKernelInfo(dst, src.kernels[0], 4);
-    ASSERT_EQ(1U, dst.kernelArgInfo.size());
-    EXPECT_EQ(NEO::KernelArgMetadata::AccessReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
-    EXPECT_EQ(NEO::KernelArgMetadata::AddrGlobal, dst.kernelArgInfo[0].metadata.addressQualifier);
-    NEO::KernelArgMetadata::TypeQualifiers typeQualifiers = {};
-    typeQualifiers.constQual = true;
-    EXPECT_EQ(typeQualifiers.packed, dst.kernelArgInfo[0].metadata.typeQualifiers.packed);
-    EXPECT_EQ(0U, dst.kernelArgInfo[0].metadata.argByValSize);
-    ASSERT_NE(nullptr, dst.kernelArgInfo[0].metadataExtended);
-    EXPECT_STREQ("__global", dst.kernelArgInfo[0].metadataExtended->addressQualifier.c_str());
-    EXPECT_STREQ("read_write", dst.kernelArgInfo[0].metadataExtended->accessQualifier.c_str());
-    EXPECT_STREQ("custom_arg", dst.kernelArgInfo[0].metadataExtended->argName.c_str());
-    EXPECT_STREQ("int*", dst.kernelArgInfo[0].metadataExtended->type.c_str());
-    EXPECT_STREQ("const", dst.kernelArgInfo[0].metadataExtended->typeQualifiers.c_str());
-}
-
-TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgThenArgAccessQualifierIsPopulatedBasedOnArgInfo) {
-    PatchTokensTestData::ValidProgramWithKernelAndArg src;
-    iOpenCL::SPatchImageMemoryObjectKernelArgument imageArg = {};
-    imageArg.Token = iOpenCL::PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT;
-    imageArg.Writeable = false;
-    src.kernels[0].tokens.kernelArgs[0].objectArg = &imageArg;
-    NEO::KernelInfo dst = {};
-    NEO::populateKernelInfo(dst, src.kernels[0], 4);
-    ASSERT_EQ(1U, dst.kernelArgInfo.size());
-    EXPECT_EQ(NEO::KernelArgMetadata::AccessReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
-}
-
-TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgWhenArgInfoIsMissingThenArgAccessQualifierIsPopulatedBasedOnImageArgWriteableFlag) {
-    PatchTokensTestData::ValidProgramWithKernelAndArg src;
-    iOpenCL::SPatchImageMemoryObjectKernelArgument imageArg = {};
-    imageArg.Token = iOpenCL::PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT;
-    src.kernels[0].tokens.kernelArgs[0].objectArg = &imageArg;
-    src.kernels[0].tokens.kernelArgs[0].argInfo = nullptr;
-    {
-        imageArg.Writeable = false;
-        NEO::KernelInfo dst = {};
-        NEO::populateKernelInfo(dst, src.kernels[0], 4);
-        ASSERT_EQ(1U, dst.kernelArgInfo.size());
-        EXPECT_EQ(NEO::KernelArgMetadata::AccessReadOnly, dst.kernelArgInfo[0].metadata.accessQualifier);
-    }
-
-    {
-        imageArg.Writeable = true;
-        NEO::KernelInfo dst = {};
-        NEO::populateKernelInfo(dst, src.kernels[0], 4);
-        ASSERT_EQ(1U, dst.kernelArgInfo.size());
-        EXPECT_EQ(NEO::KernelArgMetadata::AccessReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
-    }
-}
-
-TEST(KernelInfoFromPatchTokens, GivenValidKernelWithNonDelimitedArgTypeThenUsesArgTypeAsIs) {
-    PatchTokensTestData::ValidProgramWithKernelAndArg src;
-    src.arg0TypeMutable[4] = '*';
-    NEO::KernelInfo dst = {};
-    NEO::populateKernelInfo(dst, src.kernels[0], 4);
-    ASSERT_EQ(1U, dst.kernelArgInfo.size());
-    EXPECT_STREQ("int**", dst.kernelArgInfo[0].metadataExtended->type.c_str());
-}
-
 TEST(KernelInfoFromPatchTokens, GivenDataParameterStreamWithEmptySizeThenTokenIsIgnored) {
     std::vector<uint8_t> storage;
     auto src = PatchTokensTestData::ValidEmptyKernel::create(storage);
@@ -250,31 +187,6 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithGtpinInfoTokenThenKernelInfoIsPro
     EXPECT_NE(nullptr, kernelInfo.igcInfoForGtpin);
 }
 
-TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgThenKernelInfoIsProperlyPopulated) {
-    std::vector<uint8_t> storage;
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
-
-    iOpenCL::SPatchGlobalMemoryObjectKernelArgument globalMemArg = {};
-    globalMemArg.Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
-    globalMemArg.Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
-    globalMemArg.ArgumentNumber = 1;
-    globalMemArg.Offset = 0x40;
-
-    kernelTokens.tokens.kernelArgs.resize(2);
-    kernelTokens.tokens.kernelArgs[1].objectArg = &globalMemArg;
-    NEO::KernelInfo kernelInfo = {};
-    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
-    EXPECT_TRUE(kernelInfo.usesSsh);
-    EXPECT_EQ(1U, kernelInfo.argumentsToPatchNum);
-    ASSERT_EQ(2U, kernelInfo.kernelArgInfo.size());
-    EXPECT_TRUE(kernelInfo.kernelArgInfo[1].isBuffer);
-    ASSERT_EQ(1U, kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector.size());
-    EXPECT_EQ(0U, kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
-    EXPECT_EQ(0U, kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].sourceOffset);
-    EXPECT_EQ(0U, kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].size);
-    EXPECT_EQ(globalMemArg.Offset, kernelInfo.kernelArgInfo[1].offsetHeap);
-}
-
 TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgWhenAddressingModeIsBindlessThenBindlessOffsetIsSetProperly) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
@@ -410,41 +322,4 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithStatelessObjectArgWhenAddressingM
     auto &argPointer = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>(true);
     EXPECT_FALSE(NEO::isValidOffset(argPointer.bindless));
     EXPECT_TRUE(NEO::isValidOffset(argPointer.bindful));
-}
-
-TEST(KernelInfoFromPatchTokens, GivenDefaultModeThenKernelDescriptorIsNotBeingPopulated) {
-    std::vector<uint8_t> storage;
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
-
-    iOpenCL::SPatchGlobalMemoryObjectKernelArgument globalMemArg = {};
-    globalMemArg.Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
-    globalMemArg.Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
-    globalMemArg.ArgumentNumber = 1;
-    globalMemArg.Offset = 0x40;
-
-    kernelTokens.tokens.kernelArgs.resize(2);
-    kernelTokens.tokens.kernelArgs[1].objectArg = &globalMemArg;
-    NEO::useKernelDescriptor = false;
-    NEO::KernelInfo kernelInfo = {};
-    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
-    EXPECT_TRUE(kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.empty());
-    NEO::useKernelDescriptor = true;
-}
-
-TEST(KernelInfoFromPatchTokens, WhenUseKernelDescriptorIsEnabledThenKernelDescriptorIsBeingPopulated) {
-    std::vector<uint8_t> storage;
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
-
-    iOpenCL::SPatchGlobalMemoryObjectKernelArgument globalMemArg = {};
-    globalMemArg.Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
-    globalMemArg.Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
-    globalMemArg.ArgumentNumber = 1;
-    globalMemArg.Offset = 0x40;
-
-    kernelTokens.tokens.kernelArgs.resize(2);
-    kernelTokens.tokens.kernelArgs[1].objectArg = &globalMemArg;
-    NEO::KernelInfo kernelInfo = {};
-    NEO::useKernelDescriptor = true;
-    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
-    EXPECT_FALSE(kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.empty());
 }

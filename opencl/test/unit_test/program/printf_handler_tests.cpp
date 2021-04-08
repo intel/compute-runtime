@@ -24,13 +24,8 @@ TEST(PrintfHandlerTest, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenR
     MockClDevice *device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     MockContext context;
 
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-
-    SPatchAllocateStatelessPrintfSurface printfSurface = {};
-    printfSurface.DataParamOffset = 0;
-    printfSurface.DataParamSize = 8;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, printfSurface);
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
 
     MockProgram *pProgram = new MockProgram(&context, false, toClDeviceVector(*device));
     MockKernel *pKernel = new MockKernel(pProgram, *pKernelInfo, *device);
@@ -47,17 +42,12 @@ TEST(PrintfHandlerTest, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenR
     delete device;
 }
 
-TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResultIsNullptr) {
+TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenGetSurfaceIsCalledThenResultIsNullptr) {
     MockClDevice *device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     MockContext context;
 
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-
-    SPatchAllocateStatelessPrintfSurface printfSurface = {};
-    printfSurface.DataParamOffset = 0;
-    printfSurface.DataParamSize = 8;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, printfSurface);
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
 
     MockProgram *pProgram = new MockProgram(&context, false, toClDeviceVector(*device));
 
@@ -120,16 +110,10 @@ TEST(PrintfHandlerTest, givenMultiDispatchInfoWithMultipleKernelsWhenCreatingAnd
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto program = std::make_unique<MockProgram>(&context, false, toClDeviceVector(*device));
 
-    auto pMainKernelInfo = std::make_unique<KernelInfo>();
-    pMainKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
+    auto pMainKernelInfo = std::make_unique<MockKernelInfo>();
+    pMainKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
 
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-
-    SPatchAllocateStatelessPrintfSurface printfSurface = {};
-    printfSurface.DataParamOffset = 0;
-    printfSurface.DataParamSize = 8;
-    populateKernelDescriptor(pMainKernelInfo->kernelDescriptor, printfSurface);
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
 
     auto mainKernel = std::make_unique<MockKernel>(program.get(), *pMainKernelInfo, *device);
     auto kernel1 = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *device);
@@ -195,13 +179,8 @@ TEST(PrintfHandlerTest, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenPrep
             auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
             MockContext context{pClDevice.get()};
 
-            auto pKernelInfo = std::make_unique<KernelInfo>();
-            pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-
-            SPatchAllocateStatelessPrintfSurface printfSurface = {};
-            printfSurface.DataParamOffset = 0;
-            printfSurface.DataParamSize = 8;
-            populateKernelDescriptor(pKernelInfo->kernelDescriptor, printfSurface);
+            auto pKernelInfo = std::make_unique<MockKernelInfo>();
+            pKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
 
             auto program = std::make_unique<MockProgram>(&context, false, toClDeviceVector(*pClDevice));
             uint64_t crossThread[10];
@@ -224,18 +203,13 @@ TEST(PrintfHandlerTest, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenPrep
 using PrintfHandlerMultiRootDeviceTests = MultiRootDeviceFixture;
 
 TEST_F(PrintfHandlerMultiRootDeviceTests, GivenPrintfSurfaceThenItHasCorrectRootDeviceIndex) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-
-    SPatchAllocateStatelessPrintfSurface printfSurface = {};
-    printfSurface.DataParamOffset = 0;
-    printfSurface.DataParamSize = 8;
-    populateKernelDescriptor(pKernelInfo->kernelDescriptor, printfSurface);
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
 
     auto program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*device1));
 
-    uint64_t crossThread[10];
     auto kernel = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *device1);
+    uint64_t crossThread[10];
     kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
     MockMultiDispatchInfo multiDispatchInfo(device1, kernel.get());

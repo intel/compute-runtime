@@ -311,10 +311,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     auto scratchSize = GetParam().scratchSize;
 
     MockKernelWithInternals mockKernel(*pClDevice);
-
-    SPatchMediaVFEState mediaVFEstate;
-    mediaVFEstate.PerThreadScratchSpace = scratchSize;
-    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
+    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
     uint32_t sizeToProgram = (scratchSize / static_cast<uint32_t>(MemoryConstants::kiloByte));
     uint32_t bitValue = 0u;
@@ -363,14 +360,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     // Generically validate this command
     PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
 
-    scratchSize *= 2;
     //skip if size to big 4MB, no point in stressing memory allocator.
     if (allocationSize > 4194304) {
         return;
     }
 
-    mediaVFEstate.PerThreadScratchSpace = scratchSize;
-    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
+    scratchSize *= 2;
+    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
     auto itorfirstBBEnd = find<typename FamilyType::MI_BATCH_BUFFER_END *>(itorWalker, cmdList.end());
     ASSERT_NE(cmdList.end(), itorfirstBBEnd);
@@ -447,10 +443,7 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
     uint32_t scratchSize = 1024u;
 
     MockKernelWithInternals mockKernel(*pClDevice);
-
-    SPatchMediaVFEState mediaVFEstate;
-    mediaVFEstate.PerThreadScratchSpace = scratchSize;
-    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
+    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
     uint32_t sizeToProgram = (scratchSize / static_cast<uint32_t>(MemoryConstants::kiloByte));
     uint32_t bitValue = 0u;
@@ -469,7 +462,7 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
 
     // Enqueue With ScratchSize bigger than previous
     scratchSize = 8196;
-    mediaVFEstate.PerThreadScratchSpace = scratchSize;
+    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
     enqueueKernel<FamilyType, false>(mockKernel);
 
@@ -490,10 +483,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
         auto scratchSize = 1024;
 
         MockKernelWithInternals mockKernel(*pClDevice);
-
-        SPatchMediaVFEState mediaVFEstate;
-        mediaVFEstate.PerThreadScratchSpace = scratchSize;
-        populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
+        mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
         enqueueKernel<FamilyType>(mockKernel);
         auto graphicsAllocation = csr->getScratchAllocation();
@@ -522,8 +512,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
         //now re-try to see if SBA is not programmed
 
         scratchSize *= 2;
-
-        mediaVFEstate.PerThreadScratchSpace = scratchSize;
+        mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
         enqueueKernel<FamilyType>(mockKernel);
 
@@ -544,13 +533,8 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfThenPatchCrossThreadData)
     typedef typename FamilyType::PARSE PARSE;
 
     MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
     mockKernel.crossThreadData[64] = 0;
-
-    SPatchAllocateStatelessPrintfSurface patchData;
-    patchData.Size = 256;
-    patchData.DataParamOffset = 64;
-    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, patchData);
+    mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 64);
 
     enqueueKernel<FamilyType, false>(mockKernel);
 
@@ -561,14 +545,10 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3
     typedef typename FamilyType::PARSE PARSE;
 
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
-    MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-    mockKernel.crossThreadData[64] = 0;
 
-    SPatchAllocateStatelessPrintfSurface patchData;
-    patchData.Size = 256;
-    patchData.DataParamOffset = 64;
-    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, patchData);
+    MockKernelWithInternals mockKernel(*pClDevice);
+    mockKernel.crossThreadData[64] = 0;
+    mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 64);
 
     auto &csr = mockCmdQueue.getGpgpuCommandStreamReceiver();
     auto latestSentTaskCount = csr.peekTaskCount();
@@ -607,16 +587,12 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
     typedef typename FamilyType::PARSE PARSE;
 
     UserEvent userEvent(context);
-
     MockCommandQueueHw<FamilyType> mockCommandQueue(context, pClDevice, nullptr);
-    MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-    mockKernel.crossThreadData[64] = 0;
 
-    SPatchAllocateStatelessPrintfSurface patchData;
-    patchData.Size = 256;
-    patchData.DataParamOffset = 64;
-    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, patchData);
+    MockKernelWithInternals mockKernel(*pClDevice);
+    mockKernel.crossThreadData[64] = 0;
+    mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 64);
+
     auto &csr = mockCommandQueue.getGpgpuCommandStreamReceiver();
     auto latestSentDcFlushTaskCount = csr.peekTaskCount();
 
@@ -658,20 +634,9 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
         auto userEvent = make_releaseable<UserEvent>(context);
 
         MockKernelWithInternals mockKernel(*pClDevice);
-        mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
-
-        SPatchAllocateStatelessPrintfSurface patchData;
-        patchData.SurfaceStateHeapOffset = undefined<uint32_t>;
-        patchData.Size = 256;
-        patchData.DataParamSize = 8;
-        patchData.DataParamOffset = 0;
-        populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, patchData);
-
-        auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData());
-
+        mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
         std::string testString = "test";
-
-        mockKernel.kernelInfo.kernelDescriptor.kernelMetadata.printfStringsMap.insert(std::make_pair(0, testString));
+        mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
 
         cl_uint workDim = 1;
         size_t globalWorkOffset[3] = {0, 0, 0};
@@ -691,6 +656,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
 
         ASSERT_EQ(CL_SUCCESS, retVal);
 
+        auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData());
         auto printfAllocation = reinterpret_cast<uint32_t *>(*crossThreadData);
         printfAllocation[0] = 8;
         printfAllocation[1] = 0;
@@ -841,23 +807,15 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     buffer3.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
-    mockKernel.kernelInfo.kernelArgInfo.resize(6);
-    for (auto &kernelInfo : mockKernel.kernelInfo.kernelArgInfo) {
-        kernelInfo.kernelArgPatchInfoVector.resize(1);
-    }
 
-    mockKernel.kernelInfo.kernelArgInfo.at(0).isBuffer = true;
-    mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
-    mockKernel.kernelInfo.kernelArgInfo.at(1).isBuffer = true;
-    mockKernel.kernelInfo.kernelArgInfo.at(1).pureStatefulBufferAccess = true;
-    mockKernel.kernelInfo.kernelArgInfo.at(2).isBuffer = true;
-    mockKernel.kernelInfo.kernelArgInfo.at(2).pureStatefulBufferAccess = false;
-    mockKernel.kernelInfo.kernelArgInfo.at(3).isBuffer = true;
-    mockKernel.kernelInfo.kernelArgInfo.at(3).pureStatefulBufferAccess = true;
-    mockKernel.kernelInfo.kernelArgInfo.at(4).isBuffer = true;
-    mockKernel.kernelInfo.kernelArgInfo.at(4).pureStatefulBufferAccess = false;
-    mockKernel.kernelInfo.kernelArgInfo.at(5).isBuffer = true;
-    mockKernel.kernelInfo.kernelArgInfo.at(5).pureStatefulBufferAccess = false;
+    auto &args = mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs;
+    args.resize(6);
+    args[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
+    args[1].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = false;
+    args[2].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
+    args[3].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = false;
+    args[4].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
+    args[5].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
 
     mockKernel.mockKernel->initialize();
     EXPECT_TRUE(mockKernel.mockKernel->auxTranslationRequired);
@@ -905,9 +863,8 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
     cl_mem clMem = &buffer;
 
     buffer.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-    mockKernel.kernelInfo.kernelArgInfo.resize(1);
-    mockKernel.kernelInfo.kernelArgInfo.at(0).kernelArgPatchInfoVector.resize(1);
-    mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->auxTranslationRequired = true;
     mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
@@ -945,9 +902,8 @@ HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhe
     cl_mem clMem = &buffer;
 
     buffer.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-    mockKernel.kernelInfo.kernelArgInfo.resize(1);
-    mockKernel.kernelInfo.kernelArgInfo.at(0).kernelArgPatchInfoVector.resize(1);
-    mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->auxTranslationRequired = true;
     mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);

@@ -2188,7 +2188,6 @@ TEST_F(GTPinTests, givenParentKernelWhenGtPinAddingSurfaceStateThenItIsNotAddedA
     GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*pContext));
 
-    parentKernel->mockKernelInfo->usesSsh = true;
     parentKernel->sshLocalSize = 64;
     parentKernel->pSshLocal.reset(new char[64]);
 
@@ -2414,7 +2413,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
     pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-    pKernelInfo->usesSsh = true;
 
     auto pProgramm = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pDevice));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(context.get(), pDevice, nullptr));
@@ -2486,7 +2484,6 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     MockKernelWithInternals kernel(*pDevice);
-    kernel.kernelInfo.usesSsh = true;
     kernelOperation->setHeaps(ih1, ih2, ih3);
 
     bool flushDC = false;

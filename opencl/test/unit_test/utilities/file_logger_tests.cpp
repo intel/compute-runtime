@@ -345,21 +345,14 @@ TEST(FileLogger, GivenNullMdiWhenDumpingKernelsThenFileIsNotCreated) {
 }
 
 TEST(FileLogger, GivenDebugFunctionalityWhenDebugFlagIsDisabledThenDoNotDumpKernelArgsForMdi) {
-    auto kernelInfo = std::make_unique<KernelInfo>();
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
     auto multiDispatchInfo = std::unique_ptr<MockMultiDispatchInfo>(new MockMultiDispatchInfo(device.get(), kernel.get()));
 
-    KernelArgPatchInfo kernelArgPatchInfo;
-
-    kernelArgPatchInfo.size = 32;
-    kernelArgPatchInfo.sourceOffset = 0;
-    kernelArgPatchInfo.crossthreadOffset = 32;
-
-    kernelInfo->kernelArgInfo.resize(1);
-    kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+    kernelInfo->addArgImmediate(0, 32, 32);
 
     size_t crossThreadDataSize = 64;
     auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
@@ -381,21 +374,14 @@ TEST(FileLogger, GivenDebugFunctionalityWhenDebugFlagIsDisabledThenDoNotDumpKern
 }
 
 TEST(FileLogger, GivenMdiWhenDumpingKernelArgsThenFileIsCreated) {
-    auto kernelInfo = std::make_unique<KernelInfo>();
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
     auto multiDispatchInfo = std::unique_ptr<MockMultiDispatchInfo>(new MockMultiDispatchInfo(device.get(), kernel.get()));
 
-    KernelArgPatchInfo kernelArgPatchInfo;
-
-    kernelArgPatchInfo.size = 32;
-    kernelArgPatchInfo.sourceOffset = 0;
-    kernelArgPatchInfo.crossthreadOffset = 32;
-
-    kernelInfo->kernelArgInfo.resize(1);
-    kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+    kernelInfo->addArgImmediate(0, 32, 32);
 
     size_t crossThreadDataSize = 64;
     auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
@@ -444,21 +430,14 @@ TEST(FileLogger, GivenEmptyKernelWhenDumpingKernelArgsThenFileIsNotCreated) {
 }
 
 TEST(FileLogger, GivenImmediateWhenDumpingKernelArgsThenFileIsCreated) {
-    auto kernelInfo = std::make_unique<KernelInfo>();
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
 
-    KernelArgPatchInfo kernelArgPatchInfo;
-
-    kernelArgPatchInfo.size = 32;
-    kernelArgPatchInfo.sourceOffset = 0;
-    kernelArgPatchInfo.crossthreadOffset = 32;
-
-    kernelInfo->kernelArgInfo.resize(1);
-    kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+    kernelInfo->addArgImmediate(0, 32, 32);
 
     size_t crossThreadDataSize = 64;
     auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
@@ -479,20 +458,13 @@ TEST(FileLogger, GivenImmediateWhenDumpingKernelArgsThenFileIsCreated) {
 }
 
 TEST(FileLogger, GivenImmediateZeroSizeWhenDumpingKernelArgsThenFileIsNotCreated) {
-    auto kernelInfo = std::make_unique<KernelInfo>();
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
 
-    KernelArgPatchInfo kernelArgPatchInfo;
-
-    kernelArgPatchInfo.size = 0;
-    kernelArgPatchInfo.sourceOffset = 0;
-    kernelArgPatchInfo.crossthreadOffset = 32;
-
-    kernelInfo->kernelArgInfo.resize(1);
-    kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+    kernelInfo->addArgImmediate(0, 0, 32);
 
     size_t crossThreadDataSize = sizeof(64);
     auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
@@ -509,17 +481,14 @@ TEST(FileLogger, GivenImmediateZeroSizeWhenDumpingKernelArgsThenFileIsNotCreated
 }
 
 TEST(FileLogger, GivenLocalBufferWhenDumpingKernelArgsThenFileIsNotCreated) {
-    auto kernelInfo = std::make_unique<KernelInfo>();
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(toClDeviceVector(*device));
     auto kernel = std::unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
 
-    KernelArgPatchInfo kernelArgPatchInfo;
-
-    kernelInfo->kernelArgInfo.resize(1);
-    kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrLocal;
+    kernelInfo->addArgBuffer(0);
+    kernelInfo->setAddressQualifier(0, KernelArgMetadata::AddrLocal);
 
     std::string testFile = "testfile";
     DebugVariables flags;
@@ -532,19 +501,15 @@ TEST(FileLogger, GivenLocalBufferWhenDumpingKernelArgsThenFileIsNotCreated) {
 }
 
 TEST(FileLogger, GivenBufferNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
-    auto kernelInfo = std::make_unique<KernelInfo>();
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
     auto kernel = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
 
-    KernelArgPatchInfo kernelArgPatchInfo;
-
-    kernelInfo->kernelArgInfo.resize(1);
-    kernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
-    kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].metadataExtended->type = "uint8 *buffer";
+    kernelInfo->addArgBuffer(0);
+    kernelInfo->addExtendedMetadata(0, "", "uint8 *buffer");
 
     kernel->initialize();
 
@@ -569,18 +534,13 @@ TEST(FileLogger, GivenBufferWhenDumpingKernelArgsThenFileIsCreated) {
     auto buffer = BufferHelper<>::create(context.get());
     cl_mem clObj = buffer;
 
-    auto kernelInfo = std::make_unique<KernelInfo>();
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
     auto kernel = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
 
-    KernelArgPatchInfo kernelArgPatchInfo;
-
-    kernelInfo->kernelArgInfo.resize(1);
-    kernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
-    kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].metadataExtended->type = "uint8 *buffer";
-    kernelInfo->kernelArgInfo.at(0).isBuffer = true;
+    kernelInfo->addArgBuffer(0);
+    kernelInfo->addExtendedMetadata(0, "", "uint8 *buffer");
 
     kernel->initialize();
 
@@ -607,19 +567,15 @@ TEST(FileLogger, GivenBufferWhenDumpingKernelArgsThenFileIsCreated) {
 }
 
 TEST(FileLogger, GivenSamplerWhenDumpingKernelArgsThenFileIsNotCreated) {
-    auto kernelInfo = std::make_unique<KernelInfo>();
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(context.get(), false, toClDeviceVector(*device)));
     auto kernel = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
 
-    KernelArgPatchInfo kernelArgPatchInfo;
-
-    kernelInfo->kernelArgInfo.resize(1);
-    kernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
-    kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].metadataExtended->type = "sampler test";
+    kernelInfo->addArgSampler(0);
+    kernelInfo->addExtendedMetadata(0, "", "sampler test");
 
     kernel->initialize();
 
@@ -635,7 +591,7 @@ TEST(FileLogger, GivenSamplerWhenDumpingKernelArgsThenFileIsNotCreated) {
 }
 
 TEST(FileLogger, GivenImageNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
-    auto kernelInfo = std::make_unique<KernelInfo>();
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
     kernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
@@ -645,16 +601,10 @@ TEST(FileLogger, GivenImageNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
     char surfaceStateHeap[0x80];
     kernelInfo->heapInfo.pSsh = surfaceStateHeap;
     kernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-    kernelInfo->usesSsh = true;
 
-    KernelArgPatchInfo kernelArgPatchInfo;
-
-    kernelInfo->kernelArgInfo.resize(1);
-    kernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
-    kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].metadataExtended->type = "image2d buffer";
-    kernelInfo->kernelArgInfo[0].isImage = true;
-    kernelInfo->kernelArgInfo[0].offsetImgWidth = 0x4;
+    kernelInfo->addArgImage(0);
+    kernelInfo->argAsImg(0).metadataPayload.imgWidth = 0x4;
+    kernelInfo->addExtendedMetadata(0, "", "image2d buffer");
 
     kernel->initialize();
 

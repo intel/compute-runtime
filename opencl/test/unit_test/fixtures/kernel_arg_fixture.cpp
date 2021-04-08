@@ -21,44 +21,36 @@ using namespace NEO;
 KernelImageArgTest::~KernelImageArgTest() = default;
 
 void KernelImageArgTest::SetUp() {
-    pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-
-    KernelArgPatchInfo kernelArgPatchInfo;
 
     pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->usesSsh = true;
 
     constexpr int numImages = 5;
-    pKernelInfo->kernelArgInfo.resize(numImages);
-    pKernelInfo->kernelArgInfo[4].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
 
-    pKernelInfo->kernelArgInfo[0].offsetImgWidth = 0x4;
-    pKernelInfo->kernelArgInfo[0].offsetFlatBaseOffset = 0x8;
-    pKernelInfo->kernelArgInfo[0].offsetFlatWidth = 0x10;
-    pKernelInfo->kernelArgInfo[0].offsetFlatHeight = 0x18;
-    pKernelInfo->kernelArgInfo[0].offsetFlatPitch = 0x24;
-    pKernelInfo->kernelArgInfo[0].offsetNumSamples = 0x3c;
-    offsetNumMipLevelsImage0 = 0x40;
-    pKernelInfo->kernelArgInfo[0].offsetNumMipLevels = offsetNumMipLevelsImage0;
-    pKernelInfo->kernelArgInfo[1].offsetImgHeight = 0xc;
-    pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20;
-    pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].size = sizeof(void *);
-    pKernelInfo->kernelArgInfo[3].offsetImgDepth = 0x30;
-    pKernelInfo->kernelArgInfo[4].offsetHeap = 0x20;
-    pKernelInfo->kernelArgInfo[4].offsetObjectId = 0x0;
+    pKernelInfo->addArgImage(0, 0);
+    auto &img0 = pKernelInfo->argAsImg(0);
+    img0.metadataPayload.imgWidth = 0x4;
+    img0.metadataPayload.flatBaseOffset = 0x8;
+    img0.metadataPayload.flatWidth = 0x10;
+    img0.metadataPayload.flatHeight = 0x18;
+    img0.metadataPayload.flatPitch = 0x24;
+    img0.metadataPayload.numSamples = 0x3c;
+    img0.metadataPayload.numMipLevels = offsetNumMipLevelsImage0;
 
-    pKernelInfo->kernelArgInfo[4].isImage = true;
-    pKernelInfo->kernelArgInfo[3].isImage = true;
-    pKernelInfo->kernelArgInfo[2].isImage = true;
-    pKernelInfo->kernelArgInfo[1].isImage = true;
-    pKernelInfo->kernelArgInfo[0].isImage = true;
+    pKernelInfo->addArgImage(1, 0);
+    pKernelInfo->argAsImg(1).metadataPayload.imgHeight = 0xc;
+
+    pKernelInfo->addArgImmediate(2, sizeof(void *), 0x20);
+
+    pKernelInfo->addArgImage(3, 0);
+
+    pKernelInfo->addArgImage(4, 0x20);
+    pKernelInfo->addExtendedDeviceSideEnqueueDescriptor(4, 0);
+
     pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessConfiguration() ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
+    pKernelInfo->kernelDescriptor.kernelAttributes.imageAddressingMode = ApiSpecificConfig::getBindlessConfiguration() ? KernelDescriptor::AddressingMode::Bindless : KernelDescriptor::AddressingMode::Bindful;
 
     ClDeviceFixture::SetUp();
     context.reset(new MockContext(pClDevice));

@@ -29,7 +29,7 @@ template <typename FamilyType>
 uint32_t argMocs(Kernel &kernel, size_t argIndex) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     auto surfaceStateHeapAddress = kernel.getSurfaceStateHeap();
-    auto surfaceStateHeapAddressOffset = kernel.getKernelInfo().kernelArgInfo[argIndex].offsetHeap;
+    auto surfaceStateHeapAddressOffset = static_cast<size_t>(kernel.getKernelInfo().getArgDescriptorAt(static_cast<uint32_t>(argIndex)).as<ArgDescPointer>().bindful);
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(surfaceStateHeapAddress, surfaceStateHeapAddressOffset));
     return surfaceState->getMemoryObjectControlState();
 }
@@ -62,8 +62,6 @@ using clMemLocallyUncachedResourceFixture = Test<HelloWorldFixture<HelloWorldFix
 HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, GivenAtLeastOneLocallyUncacheableResourceWhenSettingKernelArgumentsThenKernelIsUncacheable) {
     cl_int retVal = CL_SUCCESS;
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
-    mockKernel.kernelInfo.usesSsh = true;
-    mockKernel.kernelInfo.requiresSshForBuffers = true;
 
     auto kernel = mockKernel.mockKernel;
     auto pMultiDeviceKernel = mockKernel.mockMultiDeviceKernel;
@@ -142,8 +140,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     auto kernel = mockKernel.mockKernel;
     auto pMultiDeviceKernel = mockKernel.mockMultiDeviceKernel;
-    mockKernel.kernelInfo.usesSsh = true;
-    mockKernel.kernelInfo.requiresSshForBuffers = true;
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -218,12 +214,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     auto kernel = mockKernel.mockKernel;
     auto pMultiDeviceKernel = mockKernel.mockMultiDeviceKernel;
-    mockKernel.kernelInfo.usesSsh = true;
-    mockKernel.kernelInfo.requiresSshForBuffers = true;
-    mockKernel.kernelInfo.kernelArgInfo[0].pureStatefulBufferAccess = true;
-    mockKernel.kernelInfo.kernelArgInfo[1].pureStatefulBufferAccess = true;
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    mockKernel.kernelInfo.setBufferStateful(0);
+    mockKernel.kernelInfo.setBufferStateful(1);
 
     auto bufferCacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferCacheable1 = clUniquePtr(castToObject<Buffer>(bufferCacheable1));
@@ -298,8 +290,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, WhenUnsettingUn
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     auto pMultiDeviceKernel = mockKernel.mockMultiDeviceKernel;
     auto kernel = mockKernel.mockKernel;
-    mockKernel.kernelInfo.usesSsh = true;
-    mockKernel.kernelInfo.requiresSshForBuffers = true;
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -365,12 +355,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     auto kernel = mockKernel.mockKernel;
     auto pMultiDeviceKernel = mockKernel.mockMultiDeviceKernel;
-    mockKernel.kernelInfo.usesSsh = true;
-    mockKernel.kernelInfo.requiresSshForBuffers = true;
-    mockKernel.kernelInfo.kernelArgInfo[0].pureStatefulBufferAccess = true;
-    mockKernel.kernelInfo.kernelArgInfo[1].pureStatefulBufferAccess = true;
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    mockKernel.kernelInfo.setBufferStateful(0);
+    mockKernel.kernelInfo.setBufferStateful(1);
 
     auto bufferCacheable = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
 

@@ -433,7 +433,7 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
     callOneWorkItemNDRKernel();
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), &pKernel->getKernelInfo().kernelDescriptor, rootDeviceIndex));
     EXPECT_NE(iohBefore, pIOH->getUsed());
-    if (pKernel->requiresSshForBuffers() || (pKernel->getKernelInfo().patchInfo.imageMemObjKernelArgs.size() > 0)) {
+    if (pKernel->usesBindfulAddressingForBuffers() || pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesImages) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
 }
@@ -514,10 +514,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameScra
     uint32_t scratchSize = 4096u;
 
     MockKernelWithInternals mockKernel(*pClDevice);
-
-    SPatchMediaVFEState mediaVFEstate;
-    mediaVFEstate.PerThreadScratchSpace = scratchSize;
-    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 0);
+    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
     auto sizeToProgram = PreambleHelper<FamilyType>::getScratchSizeValueToProgramMediaVfeState(scratchSize);
 
@@ -554,10 +551,7 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueingKernelThatRequirePrivateScratchThenPri
     uint32_t privateScratchSize = 4096u;
 
     MockKernelWithInternals mockKernel(*pClDevice);
-
-    SPatchMediaVFEState mediaVFEstate;
-    mediaVFEstate.PerThreadScratchSpace = privateScratchSize;
-    populateKernelDescriptor(mockKernel.kernelInfo.kernelDescriptor, mediaVFEstate, 1);
+    mockKernel.kernelInfo.setPerThreadScratchSize(privateScratchSize, 1);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
@@ -1321,7 +1315,7 @@ HWTEST_F(EnqueueKernelTest, givenVMEKernelWhenEnqueueKernelThenDispatchFlagsHave
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
     size_t gws[3] = {1, 0, 0};
-    mockKernel.kernelInfo.isVmeWorkload = true;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme = true;
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
 }
@@ -1373,7 +1367,7 @@ HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsD
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
     size_t gws[3] = {1, 0, 0};
-    mockKernel.kernelInfo.isVmeWorkload = false;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme = false;
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
 }

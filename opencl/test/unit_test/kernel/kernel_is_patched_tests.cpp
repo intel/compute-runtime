@@ -64,39 +64,25 @@ TEST_F(PatchedKernelTest, givenKernelWithoutAllArgsSetWhenIsPatchedIsCalledThenR
     clReleaseMemObject(buffer);
 }
 
-TEST_F(PatchedKernelTest, givenKernelWithAllArgsSetWithSvmAllocWhenIsPatchedIsCalledThenReturnsTrue) {
-    auto argsNum = kernel->getKernelArgsNumber();
-    for (uint32_t i = 0; i < argsNum; i++) {
-        kernel->setArgSvmAlloc(0, nullptr, nullptr);
-    }
-    EXPECT_FALSE(kernel->isPatched());
-    for (uint32_t i = 0; i < argsNum; i++) {
-        kernel->setArgSvmAlloc(i, nullptr, nullptr);
-    }
-    EXPECT_TRUE(kernel->isPatched());
+TEST_F(PatchedKernelTest, givenArgSvmAllocWhenArgIsSetThenArgIsPatched) {
+    EXPECT_FALSE(kernel->getKernelArguments()[0].isPatched);
+    kernel->setArgSvmAlloc(0, nullptr, nullptr);
+    EXPECT_TRUE(kernel->getKernelArguments()[0].isPatched);
 }
 
-TEST_F(PatchedKernelTest, givenKernelWithAllArgsSetWithSvmWhenIsPatchedIsCalledThenReturnsTrue) {
+TEST_F(PatchedKernelTest, givenArgSvmWhenArgIsSetThenArgIsPatched) {
     uint32_t size = sizeof(int);
-    auto argsNum = kernel->getKernelArgsNumber();
-    for (uint32_t i = 0; i < argsNum; i++) {
-        kernel->setArgSvm(0, size, nullptr, nullptr, 0u);
-    }
-    EXPECT_FALSE(kernel->isPatched());
-    for (uint32_t i = 0; i < argsNum; i++) {
-        kernel->setArgSvm(i, size, nullptr, nullptr, 0u);
-    }
-    EXPECT_TRUE(kernel->isPatched());
+    EXPECT_FALSE(kernel->getKernelArguments()[0].isPatched);
+    kernel->setArgSvm(0, size, nullptr, nullptr, 0);
+    EXPECT_TRUE(kernel->getKernelArguments()[0].isPatched);
 }
 
 TEST_F(PatchedKernelTest, givenKernelWithOneArgumentToPatchWhichIsNonzeroIndexedWhenThatArgumentIsSetThenKernelIsPatched) {
     uint32_t size = sizeof(int);
     MockKernelWithInternals mockKernel(*device.get(), context.get());
-    EXPECT_EQ(0u, mockKernel.kernelInfo.argumentsToPatchNum);
-    mockKernel.kernelInfo.storeKernelArgPatchInfo(1, 0, 0, 0, 0);
-    EXPECT_EQ(1u, mockKernel.kernelInfo.argumentsToPatchNum);
-    mockKernel.kernelInfo.storeKernelArgPatchInfo(1, 0, 0, 0, 0);
-    EXPECT_EQ(1u, mockKernel.kernelInfo.argumentsToPatchNum);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.numArgsToPatch = 1;
+    mockKernel.kernelInfo.addArgBuffer(1, 0);
+
     kernel.reset(mockKernel.mockKernel);
     kernel->initialize();
     EXPECT_FALSE(kernel->Kernel::isPatched());

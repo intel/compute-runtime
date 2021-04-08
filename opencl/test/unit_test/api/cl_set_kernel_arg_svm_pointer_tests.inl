@@ -22,23 +22,14 @@ class KernelArgSvmFixture : public ApiFixture<> {
         ApiFixture::SetUp();
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
 
-        // define kernel info
-        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-        // setup kernel arg offsets
-        KernelArgPatchInfo kernelArgPatchInfo;
 
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal);
         pKernelInfo->heapInfo.pSsh = pSshLocal;
-        pKernelInfo->usesSsh = true;
-        pKernelInfo->requiresSshForBuffers = true;
 
-        pKernelInfo->kernelArgInfo.resize(1);
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
-        pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
-        pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrGlobal;
+        pKernelInfo->addArgBuffer(0, 0x30, sizeof(void *));
+        pKernelInfo->setAddressQualifier(0, KernelArgMetadata::AddrGlobal);
 
         pMockMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), nullptr);
         pMockKernel = static_cast<MockKernel *>(pMockMultiDeviceKernel->getKernel(testedRootDeviceIndex));
@@ -57,7 +48,7 @@ class KernelArgSvmFixture : public ApiFixture<> {
     cl_int retVal = CL_SUCCESS;
     MockKernel *pMockKernel = nullptr;
     MultiDeviceKernel *pMockMultiDeviceKernel = nullptr;
-    std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernelInfo> pKernelInfo;
     char pSshLocal[64]{};
     char pCrossThreadData[64]{};
 };
@@ -100,7 +91,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKern
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenLocalAddressAndNullArgValueWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
-    pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrLocal;
+    pKernelInfo->setAddressQualifier(0, KernelArgMetadata::AddrLocal);
 
     auto retVal = clSetKernelArgSVMPointer(
         pMockMultiDeviceKernel, // cl_kernel kernel
@@ -161,7 +152,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndConstantAddressWhenSettingKerne
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
 
-        pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrConstant;
+        pKernelInfo->setAddressQualifier(0, KernelArgMetadata::AddrConstant);
 
         auto retVal = clSetKernelArgSVMPointer(
             pMockMultiDeviceKernel, // cl_kernel kernel

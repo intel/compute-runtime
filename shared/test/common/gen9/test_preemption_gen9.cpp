@@ -14,6 +14,8 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
+#include "patch_shared.h"
+
 using namespace NEO;
 
 template <>

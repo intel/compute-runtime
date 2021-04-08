@@ -8,6 +8,8 @@
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
 
+#include "patch_g7.h"
+
 TEST_F(KernelDataTest, GIVENpatchTokenAllocateStatelessEventPoolSurfaceWHENdecodeTokensTHENtokenLocatedInPatchInfo) {
     iOpenCL::SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;
     allocateStatelessEventPoolSurface.Token = PATCH_TOKEN_ALLOCATE_STATELESS_EVENT_POOL_SURFACE;
@@ -63,14 +65,12 @@ TEST_F(KernelDataTest, GIVENpatchTokenStatelessDeviceQueueKernelArgumentWHENdeco
 
     buildAndDecode();
 
-    ASSERT_GE(pKernelInfo->kernelArgInfo.size(), size_t(4u));
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[3].isDeviceQueue, true);
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset,
-              deviceQueueKernelArgument.DataParamOffset);
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].size,
-              deviceQueueKernelArgument.DataParamSize);
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[3].offsetHeap,
-              deviceQueueKernelArgument.SurfaceStateHeapOffset);
+    ASSERT_GE(pKernelInfo->getExplicitArgs().size(), size_t(4u));
+    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).getExtendedTypeInfo().isDeviceQueue);
+    const auto &argAsPtr = pKernelInfo->getArgDescriptorAt(3).as<ArgDescPointer>();
+    EXPECT_EQ(deviceQueueKernelArgument.DataParamOffset, argAsPtr.stateless);
+    EXPECT_EQ(deviceQueueKernelArgument.DataParamSize, argAsPtr.pointerSize);
+    EXPECT_EQ(deviceQueueKernelArgument.SurfaceStateHeapOffset, argAsPtr.bindful);
 }
 
 TEST_F(KernelDataTest, GIVENdataParameterParentEventWHENdecodeTokensTHENoffsetLocatedInWorkloadInfo) {
@@ -131,8 +131,10 @@ TEST_F(KernelDataTest, GIVENdataParameterObjectIdWHENdecodeTokensTHENoffsetLocat
 
     buildAndDecode();
 
-    ASSERT_GE(pKernelInfo->kernelArgInfo.size(), size_t(argNum + 1));
-    EXPECT_EQ(pKernelInfo->kernelArgInfo[argNum].offsetObjectId, offsetObjectId);
+    ASSERT_GE(pKernelInfo->getExplicitArgs().size(), size_t(argNum + 1));
+    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argNum).getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor);
+    auto deviceSideEnqueueDesc = reinterpret_cast<NEO::ArgDescriptorDeviceSideEnqueue *>(pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors[argNum].get());
+    EXPECT_EQ(offsetObjectId, deviceSideEnqueueDesc->objectId);
 }
 
 TEST_F(KernelDataTest, GIVENdataParameterChildSimdSizeWHENdecodeTokensTHENchildsIdsStoredInKernelInfoWithOffset) {

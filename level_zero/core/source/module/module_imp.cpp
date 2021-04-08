@@ -347,7 +347,6 @@ ModuleImp::~ModuleImp() {
 
 bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
     bool success = true;
-    NEO::useKernelDescriptor = true;
 
     std::string buildOptions;
     std::string internalBuildOptions;
