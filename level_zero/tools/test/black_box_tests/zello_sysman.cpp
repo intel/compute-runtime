@@ -95,6 +95,7 @@ void usage() {
                  "\n  -E,   --event                 set and listen to events black box test"
                  "\n  -r,   --reset force|noforce   selectively run device reset test"
                  "\n  -i,   --firmware <image>      selectively run device firmware test <image> is the firmware binary needed to flash"
+                 "\n  -F,   --fabricport            selectively run fabricport black box test"
                  "\n  -h,   --help                  display help message"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
@@ -824,12 +825,12 @@ void testSysmanFabricPort(ze_device_handle_t &device) {
 
         VALIDATECALL(zesFabricPortGetProperties(handle, &fabricPortProperties));
         if (verbose) {
-            std::cout << "Model = " << fabricPortProperties.model << std::endl;
-            std::cout << "On Subdevice = " << fabricPortProperties.onSubdevice << std::endl;
+            std::cout << "Model = \"" << fabricPortProperties.model << "\"" << std::endl;
+            std::cout << "On Subdevice = " << static_cast<uint32_t>(fabricPortProperties.onSubdevice) << std::endl;
             std::cout << "Subdevice Id = " << fabricPortProperties.subdeviceId << std::endl;
             std::cout << "Port ID = [" << fabricPortProperties.portId.fabricId
                       << ":" << fabricPortProperties.portId.attachId
-                      << ":" << fabricPortProperties.portId.portNumber << "]" << std::endl;
+                      << ":" << static_cast<uint32_t>(fabricPortProperties.portId.portNumber) << "]" << std::endl;
             std::cout << "Max Rx Speed = " << fabricPortProperties.maxRxSpeed.bitRate
                       << " pbs, " << fabricPortProperties.maxRxSpeed.width << " lanes" << std::endl;
             std::cout << "Max Tx Speed = " << fabricPortProperties.maxTxSpeed.bitRate
@@ -838,13 +839,13 @@ void testSysmanFabricPort(ze_device_handle_t &device) {
 
         VALIDATECALL(zesFabricPortGetLinkType(handle, &fabricPortLinkType));
         if (verbose) {
-            std::cout << "Link Type = " << fabricPortLinkType.desc << std::endl;
+            std::cout << "Link Type = \"" << fabricPortLinkType.desc << "\"" << std::endl;
         }
 
         VALIDATECALL(zesFabricPortGetConfig(handle, &fabricPortConfig));
         if (verbose) {
-            std::cout << "Enabled = " << fabricPortConfig.enabled << std::endl;
-            std::cout << "Beaconing = " << fabricPortConfig.beaconing << std::endl;
+            std::cout << "Enabled = " << static_cast<uint32_t>(fabricPortConfig.enabled) << std::endl;
+            std::cout << "Beaconing = " << static_cast<uint32_t>(fabricPortConfig.beaconing) << std::endl;
         }
 
         VALIDATECALL(zesFabricPortGetState(handle, &fabricPortState));
@@ -856,7 +857,7 @@ void testSysmanFabricPort(ze_device_handle_t &device) {
                       << std::hex << fabricPortState.failureReasons << std::endl;
             std::cout << "Remote Port ID = [" << fabricPortState.remotePortId.fabricId
                       << ":" << fabricPortState.remotePortId.attachId
-                      << ":" << fabricPortState.remotePortId.portNumber << "]" << std::endl;
+                      << ":" << static_cast<uint32_t>(fabricPortState.remotePortId.portNumber) << "]" << std::endl;
             std::cout << "Rx Speed = " << fabricPortState.rxSpeed.bitRate
                       << " pbs, " << fabricPortState.rxSpeed.width << " lanes" << std::endl;
             std::cout << "Tx Speed = " << fabricPortState.txSpeed.bitRate
