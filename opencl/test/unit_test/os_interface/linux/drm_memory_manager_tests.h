@@ -22,7 +22,7 @@
 
 namespace NEO {
 
-extern StackVec<void *, 10> mmapVector;
+extern std::vector<void *> mmapVector;
 
 class DrmMemoryManagerBasic : public ::testing::Test {
   public:

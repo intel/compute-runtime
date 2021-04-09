@@ -21,7 +21,7 @@ off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
 int closeInputFd = 0;
 std::atomic<int> closeCalledCount(0);
-StackVec<void *, 10> mmapVector;
+std::vector<void *> mmapVector(64);
 
 TestedDrmMemoryManager::TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(gemCloseWorkerMode::gemCloseWorkerInactive,
                                                                                                                  false,

@@ -25,7 +25,6 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
-std::vector<void *> mmapVector;
 
 TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInDevicePoolIsCalledThenNullptrAndStatusRetryIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
@@ -130,9 +129,6 @@ class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
 
         device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, rootDeviceIndex));
         memoryManager = std::make_unique<TestedDrmMemoryManager>(localMemoryEnabled, false, false, *executionEnvironment);
-    }
-    void TearDown() override {
-        mmapVector.clear();
     }
 
   protected:
