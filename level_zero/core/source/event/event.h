@@ -46,6 +46,7 @@ struct Event : _ze_event_handle_t {
     virtual NEO::GraphicsAllocation &getAllocation();
 
     void increasePacketsInUse() { packetsInUse++; }
+    void setPacketsInUse(uint32_t newPacketsInUse) { packetsInUse = newPacketsInUse; }
     void resetPackets() { packetsInUse = 0; }
     uint64_t getGpuAddress() { return gpuAddress; }
     void *getHostAddress() { return hostAddress; }

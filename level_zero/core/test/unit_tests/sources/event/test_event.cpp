@@ -357,6 +357,18 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsOfPacketTagBuff
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, allocation->getAllocationType());
 }
 
+TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsSetThenCorrectOffsetIsReturned) {
+    EXPECT_EQ(0u, event->getPacketsInUse());
+    auto gpuAddr = event->getGpuAddress();
+    EXPECT_EQ(gpuAddr, event->getTimestampPacketAddress());
+
+    event->setPacketsInUse(4u);
+    EXPECT_EQ(4u, event->getPacketsInUse());
+
+    gpuAddr += (4u * NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+    EXPECT_EQ(gpuAddr, event->getTimestampPacketAddress());
+}
+
 TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsIncreasedThenCorrectOffsetIsReturned) {
     EXPECT_EQ(0u, event->getPacketsInUse());
     auto gpuAddr = event->getGpuAddress();

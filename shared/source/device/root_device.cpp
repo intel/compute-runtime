@@ -44,7 +44,8 @@ SubDevice *RootDevice::createSubDevice(uint32_t subDeviceIndex) {
 
 bool RootDevice::createDeviceImpl() {
     auto deviceMask = executionEnvironment->rootDeviceEnvironments[this->rootDeviceIndex]->deviceAffinityMask;
-    deviceBitfield = maxNBitValue(HwHelper::getSubDevicesCount(&getHardwareInfo()));
+    uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
+    deviceBitfield = maxNBitValue(subDeviceCount);
     deviceBitfield &= deviceMask;
     numSubDevices = static_cast<uint32_t>(deviceBitfield.count());
     if (numSubDevices == 1) {
@@ -52,8 +53,8 @@ bool RootDevice::createDeviceImpl() {
     }
     UNRECOVERABLE_IF(!subdevices.empty());
     if (numSubDevices) {
-        subdevices.resize(HwHelper::getSubDevicesCount(&getHardwareInfo()), nullptr);
-        for (auto i = 0u; i < HwHelper::getSubDevicesCount(&getHardwareInfo()); i++) {
+        subdevices.resize(subDeviceCount, nullptr);
+        for (auto i = 0u; i < subDeviceCount; i++) {
             if (!deviceBitfield.test(i)) {
                 continue;
             }

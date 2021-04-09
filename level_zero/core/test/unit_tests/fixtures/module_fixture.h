@@ -249,6 +249,15 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
                                                       moduleBuildLog, ModuleType::User));
     }
 
+    void createKernel(uint32_t rootDeviceIndex) {
+        ze_kernel_desc_t desc = {};
+        desc.pKernelName = kernelName.c_str();
+
+        kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
+        kernel->module = modules[rootDeviceIndex].get();
+        kernel->initialize(&desc);
+    }
+
     void TearDown() override {
         MultiDeviceFixture::TearDown();
     }
@@ -257,6 +266,7 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::vector<std::unique_ptr<L0::Module>> modules;
+    std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
 };
 
 struct ImportHostPointerModuleFixture : public ModuleFixture {
