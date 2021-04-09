@@ -694,13 +694,13 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
     DrmAllocation *drmAlloc = static_cast<DrmAllocation *>(gfxAllocation);
     this->unregisterAllocation(gfxAllocation);
 
-    if (drmAlloc->getMmapPtr()) {
-        this->munmapFunction(drmAlloc->getMmapPtr(), drmAlloc->getMmapSize());
-    }
-
     for (auto &engine : this->registeredEngines) {
         auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->memoryOperationsInterface.get());
         memoryOperationsInterface->evictWithinOsContext(engine.osContext, *gfxAllocation);
+    }
+
+    if (drmAlloc->getMmapPtr()) {
+        this->munmapFunction(drmAlloc->getMmapPtr(), drmAlloc->getMmapSize());
     }
 
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
