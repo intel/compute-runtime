@@ -660,41 +660,12 @@ TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuTimeIsFalseRetu
 }
 
 using DeviceGetMemoryTests = DeviceTest;
+using PlatformsNotSupported = IsAtMostProduct<IGFX_DG1>;
 
-TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWithCountZeroThenOneIsReturned) {
+HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForUnsuportedPlatformsThenErrorIsReturned, PlatformsNotSupported) {
     uint32_t count = 0;
     ze_result_t res = device->getMemoryProperties(&count, nullptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-}
-
-TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWithNullPtrThenInvalidArgumentIsReturned) {
-    uint32_t count = 0;
-    ze_result_t res = device->getMemoryProperties(&count, nullptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    count++;
-    res = device->getMemoryProperties(&count, nullptr);
-    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
-    EXPECT_EQ(1u, count);
-}
-
-TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWithNonNullPtrThenPropertiesAreReturned) {
-    uint32_t count = 0;
-    ze_result_t res = device->getMemoryProperties(&count, nullptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    count++;
-    ze_device_memory_properties_t memProperties = {};
-    res = device->getMemoryProperties(&count, &memProperties);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    EXPECT_EQ(memProperties.maxClockRate, this->neoDevice->getDeviceInfo().maxClockFrequency);
-    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
-    EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
 }
 
 struct DeviceHasNoDoubleFp64Test : public ::testing::Test {

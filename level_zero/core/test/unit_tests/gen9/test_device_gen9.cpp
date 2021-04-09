@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
+
 #include "test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -26,6 +28,13 @@ HWTEST2_F(DevicePropertyTest, givenReturnedDevicePropertiesThenExpectedPropertie
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ECC);
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
     EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_INTEGRATED, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
+}
+
+using DeviceHwConfigForMaxClkRateTest = Test<DeviceFixture>;
+HWTEST2_F(DeviceHwConfigForMaxClkRateTest, givenValidHwConfidWhenCheckingMaxClkRateForGen9ThenZeroMaxClkRateReturned, IsGen9) {
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_EQ(0u, hwInfoConfig.getDeviceMemoryMaxClkRate(&hwInfo));
 }
 
 using DeviceQueueGroupTest = Test<DeviceFixture>;
