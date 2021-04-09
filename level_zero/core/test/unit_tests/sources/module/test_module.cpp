@@ -300,7 +300,7 @@ HWTEST_F(ModuleTest, GivenIncorrectNameWhenCreatingKernelThenResultErrorInvalidA
 
     ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_NAME, res);
 }
 template <typename T1, typename T2>
 struct ModuleSpecConstantsTests : public DeviceFixture,
