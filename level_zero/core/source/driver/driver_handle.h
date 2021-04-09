@@ -38,9 +38,6 @@ struct DriverHandle : _ze_driver_handle_t {
                                               ze_memory_allocation_properties_t *pMemAllocProperties,
                                               ze_device_handle_t *phDevice) = 0;
 
-    virtual ze_result_t allocDeviceMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc, size_t size,
-                                       size_t alignment, void **ptr) = 0;
-
     virtual ze_result_t allocSharedMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc,
                                        const ze_host_mem_alloc_desc_t *hostDesc,
                                        size_t size,

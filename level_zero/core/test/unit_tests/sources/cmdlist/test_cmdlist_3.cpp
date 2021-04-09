@@ -310,9 +310,9 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingDeviceMem
     void *src_buffer = nullptr;
     void *dst_buffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    result = device->getDriverHandle()->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &src_buffer);
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &src_buffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    result = device->getDriverHandle()->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dst_buffer);
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dst_buffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     uint32_t width = 16;
@@ -377,7 +377,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWit
 
     void *dst_buffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    result = device->getDriverHandle()->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dst_buffer);
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dst_buffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};

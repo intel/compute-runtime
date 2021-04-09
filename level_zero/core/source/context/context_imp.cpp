@@ -62,16 +62,81 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
     return ZE_RESULT_SUCCESS;
 }
 
+bool ContextImp::isDeviceDefinedForThisContext(Device *inDevice) {
+    return (this->getDevices().find(inDevice->toHandle()) != this->getDevices().end());
+}
+
 ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                        const ze_device_mem_alloc_desc_t *deviceDesc,
                                        size_t size,
                                        size_t alignment, void **ptr) {
-    DEBUG_BREAK_IF(nullptr == this->driverHandle);
-    return this->driverHandle->allocDeviceMem(hDevice,
-                                              deviceDesc,
-                                              size,
-                                              alignment,
-                                              ptr);
+
+    if (isDeviceDefinedForThisContext(Device::fromHandle(hDevice)) == false) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+
+    bool relaxedSizeAllowed = false;
+    if (deviceDesc->pNext) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC) {
+            const ze_external_memory_export_desc_t *externalMemoryExportDesc =
+                reinterpret_cast<const ze_external_memory_export_desc_t *>(extendedDesc);
+            // ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF supported by default for all
+            // device allocations for the purpose of IPC, so just check correct
+            // flag is passed.
+            if (externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD) {
+            const ze_external_memory_import_fd_t *externalMemoryImportDesc =
+                reinterpret_cast<const ze_external_memory_import_fd_t *>(extendedDesc);
+            if (externalMemoryImportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+            }
+            ze_ipc_memory_flags_t flags = {};
+            *ptr = this->driverHandle->importFdHandle(hDevice, flags, externalMemoryImportDesc->fd);
+            if (nullptr == *ptr) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            return ZE_RESULT_SUCCESS;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
+            const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
+                reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
+            if (!(relaxedLimitsDesc->flags & ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            relaxedSizeAllowed = true;
+        }
+    }
+
+    if (relaxedSizeAllowed == false &&
+        (size > this->driverHandle->devices[0]->getNEODevice()->getHardwareCapabilities().maxMemAllocSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+
+    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+    auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto deviceBitfields = this->driverHandle->deviceBitfields;
+
+    deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
+
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, this->driverHandle->rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.allocationFlags.flags.shareable = 1u;
+    unifiedMemoryProperties.device = neoDevice;
+
+    if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
+        unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
+    }
+
+    void *usmPtr =
+        this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    if (usmPtr == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+    *ptr = usmPtr;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,

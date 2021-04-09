@@ -1341,11 +1341,11 @@ TEST_F(KernelBindlessUncachedMemoryTests,
     {
         void *devicePtr = nullptr;
         ze_device_mem_alloc_desc_t deviceDesc = {};
-        ze_result_t res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
-                                                                    &deviceDesc,
-                                                                    16384u,
-                                                                    0u,
-                                                                    &devicePtr);
+        ze_result_t res = context->allocDeviceMem(device->toHandle(),
+                                                  &deviceDesc,
+                                                  16384u,
+                                                  0u,
+                                                  &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -1359,11 +1359,11 @@ TEST_F(KernelBindlessUncachedMemoryTests,
     {
         void *devicePtr = nullptr;
         ze_device_mem_alloc_desc_t deviceDesc = {};
-        ze_result_t res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
-                                                                    &deviceDesc,
-                                                                    16384u,
-                                                                    0u,
-                                                                    &devicePtr);
+        ze_result_t res = context->allocDeviceMem(device->toHandle(),
+                                                  &deviceDesc,
+                                                  16384u,
+                                                  0u,
+                                                  &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -1392,11 +1392,11 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         void *devicePtr = nullptr;
         ze_device_mem_alloc_desc_t deviceDesc = {};
         deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
-        ze_result_t res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
-                                                                    &deviceDesc,
-                                                                    16384u,
-                                                                    0u,
-                                                                    &devicePtr);
+        ze_result_t res = context->allocDeviceMem(device->toHandle(),
+                                                  &deviceDesc,
+                                                  16384u,
+                                                  0u,
+                                                  &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -1411,11 +1411,11 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         void *devicePtr = nullptr;
         ze_device_mem_alloc_desc_t deviceDesc = {};
         deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
-        ze_result_t res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
-                                                                    &deviceDesc,
-                                                                    16384u,
-                                                                    0u,
-                                                                    &devicePtr);
+        ze_result_t res = context->allocDeviceMem(device->toHandle(),
+                                                  &deviceDesc,
+                                                  16384u,
+                                                  0u,
+                                                  &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -1444,11 +1444,11 @@ TEST_F(KernelBindlessUncachedMemoryTests,
         void *devicePtr = nullptr;
         ze_device_mem_alloc_desc_t deviceDesc = {};
         deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
-        ze_result_t res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
-                                                                    &deviceDesc,
-                                                                    16384u,
-                                                                    0u,
-                                                                    &devicePtr);
+        ze_result_t res = context->allocDeviceMem(device->toHandle(),
+                                                  &deviceDesc,
+                                                  16384u,
+                                                  0u,
+                                                  &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -1462,11 +1462,11 @@ TEST_F(KernelBindlessUncachedMemoryTests,
     {
         void *devicePtr = nullptr;
         ze_device_mem_alloc_desc_t deviceDesc = {};
-        ze_result_t res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
-                                                                    &deviceDesc,
-                                                                    16384u,
-                                                                    0u,
-                                                                    &devicePtr);
+        ze_result_t res = context->allocDeviceMem(device->toHandle(),
+                                                  &deviceDesc,
+                                                  16384u,
+                                                  0u,
+                                                  &devicePtr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         auto alloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());

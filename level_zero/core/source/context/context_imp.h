@@ -109,15 +109,17 @@ struct ContextImp : Context {
                             const ze_image_desc_t *desc,
                             ze_image_handle_t *phImage) override;
 
-    std::vector<Device *> &getDevices() {
+    std::map<ze_device_handle_t, Device *> &getDevices() {
         return devices;
     }
 
     std::set<uint32_t> rootDeviceIndices = {};
     std::map<uint32_t, NEO::DeviceBitfield> subDeviceBitfields;
 
+    bool isDeviceDefinedForThisContext(Device *inDevice);
+
   protected:
-    std::vector<Device *> devices;
+    std::map<ze_device_handle_t, Device *> devices;
     DriverHandleImp *driverHandle = nullptr;
 };
 

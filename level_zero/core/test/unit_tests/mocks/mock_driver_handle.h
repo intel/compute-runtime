@@ -52,7 +52,7 @@ struct Mock<DriverHandle> : public DriverHandleImp {
                                const ze_device_mem_alloc_desc_t *deviceDesc,
                                size_t size,
                                size_t alignment,
-                               void **ptr) override;
+                               void **ptr);
 
     ze_result_t importExternalPointer(void *ptr, size_t size) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

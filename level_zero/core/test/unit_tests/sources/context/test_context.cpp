@@ -37,7 +37,7 @@ TEST_F(MultiDeviceContextTests,
     ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
     for (size_t i = 0; i < driverHandle->devices.size(); i++) {
-        EXPECT_EQ(driverHandle->devices[i], contextImp->getDevices()[i]);
+        EXPECT_NE(contextImp->getDevices().find(driverHandle->devices[i]->toHandle()), contextImp->getDevices().end());
     }
 
     res = L0::Context::fromHandle(hContext)->destroy();
@@ -58,7 +58,30 @@ TEST_F(MultiDeviceContextTests,
     ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
     EXPECT_EQ(contextImp->getDevices().size(), count);
-    EXPECT_EQ(contextImp->getDevices()[0], driverHandle->devices[1]);
+    EXPECT_FALSE(contextImp->isDeviceDefinedForThisContext(driverHandle->devices[0]));
+    EXPECT_TRUE(contextImp->isDeviceDefinedForThisContext(driverHandle->devices[1]));
+
+    res = L0::Context::fromHandle(hContext)->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultiDeviceContextTests,
+       whenAllocatingDeviceMemoryWithDeviceNotDefinedForContextThenDeviceLostIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+
+    ze_device_handle_t device = driverHandle->devices[1]->toHandle();
+
+    ze_result_t res = driverHandle->createContext(&desc, 1u, &device, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    size_t size = 4096;
+    void *ptr = nullptr;
+    res = contextImp->allocDeviceMem(driverHandle->devices[0]->toHandle(), &deviceDesc, size, 0u, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
 
     res = L0::Context::fromHandle(hContext)->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
