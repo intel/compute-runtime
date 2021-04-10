@@ -109,6 +109,8 @@ struct ContextImp : Context {
                             const ze_image_desc_t *desc,
                             ze_image_handle_t *phImage) override;
 
+    void addDeviceAndSubDevices(Device *device);
+
     std::map<ze_device_handle_t, Device *> &getDevices() {
         return devices;
     }

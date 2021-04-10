@@ -45,11 +45,11 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
 
     if (numDevices == 0) {
         for (auto device : this->devices) {
-            context->getDevices().insert(std::make_pair(device->toHandle(), device));
+            context->addDeviceAndSubDevices(device);
         }
     } else {
         for (uint32_t i = 0; i < numDevices; i++) {
-            context->getDevices().insert(std::make_pair(phDevices[i], Device::fromHandle(phDevices[i])));
+            context->addDeviceAndSubDevices(Device::fromHandle(phDevices[i]));
         }
     }
 

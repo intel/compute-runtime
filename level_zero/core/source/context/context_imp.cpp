@@ -42,6 +42,14 @@ ContextImp::ContextImp(DriverHandle *driverHandle) {
     this->driverHandle = static_cast<DriverHandleImp *>(driverHandle);
 }
 
+void ContextImp::addDeviceAndSubDevices(Device *device) {
+    this->devices.insert(std::make_pair(device->toHandle(), device));
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    for (auto subDevice : deviceImp->subDevices) {
+        this->addDeviceAndSubDevices(subDevice);
+    }
+}
+
 ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t size,
                                      size_t alignment,
