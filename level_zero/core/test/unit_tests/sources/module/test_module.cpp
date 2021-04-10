@@ -141,6 +141,10 @@ HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, 
 
 using ModuleUncachedBufferTest = Test<ModuleFixture>;
 
+struct KernelImpUncachedTest : public KernelImp {
+    using KernelImp::kernelRequiresUncachedMocsCount;
+};
+
 HWTEST2_F(ModuleUncachedBufferTest,
           givenKernelWithNonUncachedArgumentAndPreviouslyNotSetUncachedThenUncachedMocsNotSet, ModuleTestSupport) {
     ze_kernel_handle_t kernelHandle;
@@ -186,7 +190,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
+    auto kernelImp = reinterpret_cast<KernelImpUncachedTest *>(L0::Kernel::fromHandle(kernelHandle));
 
     void *devicePtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -202,6 +206,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     uint32_t argIndex = 0u;
     kernelImp->setKernelArgUncached(argIndex, true);
+    kernelImp->kernelRequiresUncachedMocsCount++;
     kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
     EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
 
@@ -238,7 +243,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     uint32_t argIndex = 0u;
     kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
-    EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
+    EXPECT_TRUE(kernelImp->getKernelRequiresUncachedMocs());
 
     Kernel::fromHandle(kernelHandle)->destroy();
 
@@ -257,7 +262,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
+    auto kernelImp = reinterpret_cast<KernelImpUncachedTest *>(L0::Kernel::fromHandle(kernelHandle));
 
     void *devicePtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -274,8 +279,9 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     uint32_t argIndex = 0u;
     kernelImp->setKernelArgUncached(argIndex, true);
+    kernelImp->kernelRequiresUncachedMocsCount++;
     kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc);
-    EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
+    EXPECT_TRUE(kernelImp->getKernelRequiresUncachedMocs());
 
     auto argInfo = kernelImp->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
     auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
