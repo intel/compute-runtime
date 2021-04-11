@@ -401,13 +401,13 @@ TEST_F(EnqueueKernelTest, GivenInvalidEventListCountWhenEnqueuingNDCountKernelIN
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-HWTEST_F(EnqueueKernelTest, bumpsTaskLevel) {
+HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenTaskLevelIsIncremented) {
     auto taskLevelBefore = pCmdQ->taskLevel;
     callOneWorkItemNDRKernel();
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWTEST_F(EnqueueKernelTest, alignsToCSR) {
+HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenCsrTaskLevelIsIncremented) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -418,14 +418,14 @@ HWTEST_F(EnqueueKernelTest, alignsToCSR) {
     EXPECT_EQ(pCmdQ->taskLevel + 1, csr.peekTaskLevel());
 }
 
-HWTEST_F(EnqueueKernelTest, addsCommands) {
+HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenCommandsAreAdded) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     callOneWorkItemNDRKernel();
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
-HWTEST_F(EnqueueKernelTest, addsIndirectData) {
+HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
@@ -774,6 +774,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeAndBatchedKe
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
     EXPECT_EQ(1, mockCsrmockCsr->flushCalledCount);
 }
+
 HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIsEnqueuedTwiceThenTwoSubmissionsAreRecorded) {
     auto &mockCsrmockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     mockCsrmockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
