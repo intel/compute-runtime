@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,6 +89,14 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                         ze_event_handle_t hEvent,
                                         uint32_t numWaitEvents,
                                         ze_event_handle_t *phWaitEvents) override;
+
+    ze_result_t setSyncModeQueue(bool syncMode) override {
+        isSyncModeQueue = syncMode;
+        return ZE_RESULT_SUCCESS;
+    }
+
+  protected:
+    bool isSyncModeQueue = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

@@ -198,6 +198,8 @@ struct CommandList : _ze_command_list_handle_t {
         return hostPtrMap;
     };
 
+    virtual ze_result_t setSyncModeQueue(bool syncMode) = 0;
+
   protected:
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     uint32_t commandListPerThreadScratchSize = 0u;

@@ -239,6 +239,48 @@ TEST_F(CommandQueueCreate, whenCommandQueueCreatedThenExpectLinearStreamInitiali
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueCreate, givenQueueInAsyncModeAndRugularCmdListWithAppendBarrierThenFlushTaskIsNotUsed) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)));
+    ASSERT_NE(nullptr, commandList);
+
+    commandList->appendBarrier(nullptr, 0, nullptr);
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCreate, givenQueueInSyncModeAndRugularCmdListWithAppendBarrierThenFlushTaskIsNotUsed) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)));
+    ASSERT_NE(nullptr, commandList);
+
+    commandList->appendBarrier(nullptr, 0, nullptr);
+
+    commandQueue->destroy();
+}
+
 using CommandQueueSBASupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 struct MockMemoryManagerCommandQueueSBA : public MemoryManagerMock {

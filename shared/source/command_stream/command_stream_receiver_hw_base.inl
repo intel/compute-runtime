@@ -32,7 +32,6 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "command_stream_receiver_hw_ext.inl"
-#include "pipe_control_args.h"
 #include "stream_properties.h"
 
 namespace NEO {
@@ -1107,6 +1106,19 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvent, bool isStartOfDispatch, bool isEndOfDispatch) {
+    if (isWaitOnEvent) {
+        this->flushSemaphoreWait(eventAlloc, immediateGpuAddress, immediateData, args, isStartOfDispatch, isEndOfDispatch);
+    } else {
+        if (this->osContext->getEngineType() == aub_stream::ENGINE_BCS) {
+            this->flushMiFlushDW(eventAlloc, immediateGpuAddress, immediateData);
+        } else {
+            this->flushPipeControl(eventAlloc, immediateGpuAddress, immediateData, args);
+        }
+    }
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
     auto lock = obtainUniqueOwnership();
 
@@ -1116,7 +1128,23 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
     EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), taskCount, false, true);
 
     makeResident(*tagAllocation);
-    makeResident(*commandStream.getGraphicsAllocation());
+
+    this->flushSmallTask(commandStream, commandStreamStart);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData) {
+    auto lock = obtainUniqueOwnership();
+
+    auto &commandStream = getCS(EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
+    auto commandStreamStart = commandStream.getUsed();
+
+    if (eventAlloc) {
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, immediateGpuAddress, immediateData, false, true);
+        makeResident(*eventAlloc);
+    } else {
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0, 0, false, false);
+    }
 
     this->flushSmallTask(commandStream, commandStreamStart);
 }
@@ -1139,9 +1167,68 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
                                                                                         args);
 
     makeResident(*tagAllocation);
-    makeResident(*commandStream.getGraphicsAllocation());
 
     this->flushSmallTask(commandStream, commandStreamStart);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::flushPipeControl(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args) {
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
+    auto lock = obtainUniqueOwnership();
+    auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl());
+    auto commandStreamStart = commandStream.getUsed();
+
+    if (eventAlloc) {
+        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(commandStream,
+                                                                                            PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                                                                                            immediateGpuAddress,
+                                                                                            immediateData,
+                                                                                            peekHwInfo(),
+                                                                                            args);
+        makeResident(*eventAlloc);
+    } else {
+        NEO::PipeControlArgs args;
+        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
+    }
+
+    this->flushSmallTask(commandStream, commandStreamStart);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::flushSemaphoreWait(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isStartOfDispatch, bool isEndOfDispatch) {
+    auto lock = obtainUniqueOwnership();
+    if (isStartOfDispatch && args.dcFlushEnable) {
+        if (this->osContext->getEngineType() == aub_stream::ENGINE_BCS) {
+            LinearStream &commandStream = getCS(EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
+            cmdStreamStart = commandStream.getUsed();
+            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0, 0, false, false);
+        } else {
+            LinearStream &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl());
+            cmdStreamStart = commandStream.getUsed();
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
+        }
+    }
+
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    LinearStream &commandStream = getCS(NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait());
+    if (isStartOfDispatch && !args.dcFlushEnable) {
+        cmdStreamStart = commandStream.getUsed();
+    }
+
+    NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream,
+                                                               immediateGpuAddress,
+                                                               static_cast<uint32_t>(immediateData),
+                                                               MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+
+    makeResident(*eventAlloc);
+
+    if (isEndOfDispatch) {
+        this->flushSmallTask(commandStream, cmdStreamStart);
+        cmdStreamStart = 0;
+    }
 }
 
 template <typename GfxFamily>

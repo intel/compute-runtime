@@ -94,8 +94,12 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled) override;
 
     void flushTagUpdate() override;
+    void flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvent, bool isStartOfDispatch, bool isEndOfDispatch) override;
     void flushMiFlushDW();
+    void flushMiFlushDW(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData);
     void flushPipeControl();
+    void flushPipeControl(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args);
+    void flushSemaphoreWait(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isStartOfDispatch, bool isEndOfDispatch);
     void flushSmallTask(LinearStream &commandStreamTask,
                         size_t commandStreamStartTask);
     void flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
@@ -168,6 +172,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     std::unique_ptr<DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>> directSubmission;
     std::unique_ptr<DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>> blitterDirectSubmission;
+
+    size_t cmdStreamStart = 0;
 };
 
 } // namespace NEO

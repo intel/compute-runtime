@@ -852,6 +852,223 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     commandList->cmdQImmediate = nullptr;
 }
 
+TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEventWithTimestampThenUpdateTaskCountNeededFlagIsDisabled) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(1u, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = 0;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &event);
+
+    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, event_object->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
+
+    commandList->appendSignalEvent(event);
+    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
+
+    auto result = event_object->hostSignal();
+    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThenUpdateTaskCountNeededFlagIsDisabled) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(1u, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &event);
+
+    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, event_object->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
+
+    commandList->appendBarrier(event, 0, nullptr);
+    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
+
+    auto result = event_object->hostSignal();
+    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+
+    commandList->appendBarrier(nullptr, 0, nullptr);
+    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
+}
+
+TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventResetThenUpdateTaskCountNeededFlagIsDisabled) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(1u, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &event);
+
+    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, event_object->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
+
+    commandList->appendEventReset(event);
+    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
+
+    auto result = event_object->hostSignal();
+    EXPECT_EQ(false, event_object->updateTaskCountEnabled);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+}
+
+HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhenAppendWaitEventsWithHostScopeAndTimeStampThenTaskCountNeededFlagIsDisabled) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(1u, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    auto &commandContainer = commandList->commandContainer;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 2;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+    auto event2 = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+    ze_event_handle_t events[] = {event->toHandle(), event2->toHandle()};
+
+    auto used = commandContainer.getCommandStream()->getUsed();
+    commandList->appendWaitOnEvents(2, events);
+    EXPECT_EQ(false, event->updateTaskCountEnabled);
+    EXPECT_EQ(false, event2->updateTaskCountEnabled);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    EXPECT_EQ(used, commandContainer.getCommandStream()->getUsed());
+}
+
+TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListForCopyEnigneThenItHasImmediateCommandQueueCreated) {
+    auto engines = neoDevice->getEngineGroups();
+    uint32_t numaAvailableEngineGroups = 0;
+    for (uint32_t ordinal = 0; ordinal < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups); ordinal++) {
+        if (engines[ordinal].size()) {
+            numaAvailableEngineGroups++;
+        }
+    }
+    for (uint32_t ordinal = 0; ordinal < numaAvailableEngineGroups; ordinal++) {
+        uint32_t engineGroupIndex = ordinal;
+        device->mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+        for (uint32_t index = 0; index < engines[engineGroupIndex].size(); index++) {
+            ze_command_queue_desc_t desc = {};
+            desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+            desc.ordinal = ordinal;
+            desc.index = index;
+            ze_result_t returnValue;
+            std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+            ASSERT_NE(nullptr, commandList);
+
+            EXPECT_EQ(device, commandList->device);
+            EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->cmdListType);
+            EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+            ze_event_pool_desc_t eventPoolDesc = {};
+            eventPoolDesc.count = 3;
+            eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+            ze_event_desc_t eventDesc = {};
+            eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+            eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+            auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+            auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+            auto event1 = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+            auto event2 = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+            ze_event_handle_t events[] = {event1->toHandle(), event2->toHandle()};
+
+            commandList->appendBarrier(nullptr, 0, nullptr);
+            commandList->appendBarrier(event->toHandle(), 2, events);
+            EXPECT_EQ(true, event->updateTaskCountEnabled);
+            EXPECT_EQ(true, event1->updateTaskCountEnabled);
+            EXPECT_EQ(true, event2->updateTaskCountEnabled);
+
+            auto result = event->hostSignal();
+            EXPECT_EQ(false, event->updateTaskCountEnabled);
+            ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+            result = event1->hostSignal();
+            EXPECT_EQ(false, event1->updateTaskCountEnabled);
+            ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+            result = event2->hostSignal();
+            EXPECT_EQ(false, event2->updateTaskCountEnabled);
+            ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+        }
+    }
+}
+
 using HostPointerManagerCommandListTest = Test<HostPointerManagerFixure>;
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenImportedHostPointerWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,

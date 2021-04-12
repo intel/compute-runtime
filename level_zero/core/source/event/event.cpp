@@ -268,6 +268,8 @@ ze_result_t EventImp::queryStatusKernelTimestamp() {
 ze_result_t EventImp::queryStatus() {
     uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
     uint32_t queryVal = Event::STATE_CLEARED;
+    ze_result_t retVal;
+
     if (metricStreamer != nullptr) {
         *hostAddr = metricStreamer->getNotificationState();
     }
@@ -276,7 +278,18 @@ ze_result_t EventImp::queryStatus() {
         return queryStatusKernelTimestamp();
     }
     memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), static_cast<void *>(hostAddr), sizeof(uint32_t));
-    return queryVal == Event::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
+    retVal = (queryVal == Event::STATE_CLEARED) ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
+
+    if (retVal == ZE_RESULT_NOT_READY) {
+        return retVal;
+    }
+
+    if (updateTaskCountEnabled) {
+        this->csr->flushTagUpdate();
+        updateTaskCountEnabled = false;
+    }
+
+    return retVal;
 }
 
 ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
@@ -316,6 +329,11 @@ ze_result_t EventImp::hostEventSetValue(uint32_t eventVal) {
     UNRECOVERABLE_IF(hostAddr == nullptr);
     memcpy_s(static_cast<void *>(hostAddr), sizeof(uint32_t), static_cast<void *>(&eventVal), sizeof(uint32_t));
 
+    if (updateTaskCountEnabled) {
+        this->csr->flushTagUpdate();
+        updateTaskCountEnabled = false;
+    }
+
     NEO::CpuIntrinsics::clFlush(hostAddr);
 
     return ZE_RESULT_SUCCESS;
@@ -328,6 +346,7 @@ ze_result_t EventImp::hostSignal() {
 ze_result_t EventImp::hostSynchronize(uint64_t timeout) {
     std::chrono::high_resolution_clock::time_point time1, time2;
     uint64_t timeDiff = 0;
+
     ze_result_t ret = ZE_RESULT_NOT_READY;
 
     if (this->csr->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
@@ -342,7 +361,7 @@ ze_result_t EventImp::hostSynchronize(uint64_t timeout) {
     while (true) {
         ret = queryStatus();
         if (ret == ZE_RESULT_SUCCESS) {
-            return ZE_RESULT_SUCCESS;
+            return ret;
         }
 
         NEO::WaitUtils::waitFunction(nullptr, 0u);

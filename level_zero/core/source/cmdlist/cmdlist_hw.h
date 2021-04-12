@@ -144,6 +144,10 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t executeCommandListImmediate(bool performMigration) override;
     size_t getReserveSshSize();
 
+    ze_result_t setSyncModeQueue(bool syncMode) override {
+        return ZE_RESULT_SUCCESS;
+    }
+
   protected:
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
                                                               uint64_t dstOffset, void *srcPtr,

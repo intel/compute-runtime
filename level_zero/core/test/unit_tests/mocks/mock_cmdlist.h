@@ -317,6 +317,9 @@ struct MockCommandList : public CommandList {
                      (L0::Device * device,
                       NEO::EngineGroupType engineGroupType));
 
+    ADDMETHOD_NOBASE(setSyncModeQueue, ze_result_t, ZE_RESULT_SUCCESS,
+                     (bool syncMode));
+
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;
 };

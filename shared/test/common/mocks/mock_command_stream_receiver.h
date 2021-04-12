@@ -47,6 +47,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
     void flushTagUpdate() override{};
+    void flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvents, bool startOfDispatch, bool endOfDispatch) override{};
     void updateTagFromWait() override{};
 
     bool isMultiOsContextCapable() const override { return multiOsContextCapable; }

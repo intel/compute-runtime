@@ -62,6 +62,7 @@ struct Event : _ze_event_handle_t {
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
     bool isTimestampEvent = false;
+    bool updateTaskCountEnabled = false;
 
     std::unique_ptr<NEO::TimestampPackets<uint32_t>[]> kernelTimestampsData = nullptr;
     uint64_t globalStartTS;

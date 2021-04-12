@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,10 @@
 #pragma once
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 
 namespace L0 {
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions,
@@ -40,12 +42,33 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret == ZE_RESULT_SUCCESS) {
-        executeCommandListImmediate(true);
+    bool isTimestampEvent = false;
+    for (uint32_t i = 0; i < numWaitEvents; i++) {
+        auto event = Event::fromHandle(phWaitEvents[i]);
+        isTimestampEvent |= (event->isTimestampEvent) ? true : false;
     }
-    return ret;
+    if (hSignalEvent) {
+        auto signalEvent = Event::fromHandle(hSignalEvent);
+        isTimestampEvent |= signalEvent->isTimestampEvent;
+    }
+    if (isSyncModeQueue || isTimestampEvent) {
+        auto ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
+        if (ret == ZE_RESULT_SUCCESS) {
+            executeCommandListImmediate(true);
+        }
+        return ret;
+    } else {
+        auto ret = appendWaitOnEvents(numWaitEvents, phWaitEvents);
+        if (!hSignalEvent) {
+            NEO::PipeControlArgs args;
+            auto cmdQueueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
+            NEO::CommandStreamReceiver *csr = cmdQueueImp->getCsr();
+            csr->flushNonKernelTask(nullptr, 0, 0, args, false, false, false);
+        } else {
+            ret = appendSignalEvent(hSignalEvent);
+        }
+        return ret;
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -102,19 +125,42 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hEvent) {
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hEvent);
-    if (ret == ZE_RESULT_SUCCESS) {
-        executeCommandListImmediate(true);
+    auto event = Event::fromHandle(hEvent);
+    if (isSyncModeQueue || event->isTimestampEvent) {
+        auto ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hEvent);
+        if (ret == ZE_RESULT_SUCCESS) {
+            executeCommandListImmediate(true);
+        }
+        return ret;
+    } else {
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = (!event->signalScope) ? false : true;
+        auto cmdQueueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
+        NEO::CommandStreamReceiver *csr = cmdQueueImp->getCsr();
+        csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_SIGNALED, args, false, false, false);
+        event->updateTaskCountEnabled = true;
+        return ZE_RESULT_SUCCESS;
     }
-    return ret;
 }
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_event_handle_t hEvent) {
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendEventReset(hEvent);
-    if (ret == ZE_RESULT_SUCCESS) {
-        executeCommandListImmediate(true);
+    auto event = Event::fromHandle(hEvent);
+    if (isSyncModeQueue || event->isTimestampEvent) {
+        auto ret = CommandListCoreFamily<gfxCoreFamily>::appendEventReset(hEvent);
+        if (ret == ZE_RESULT_SUCCESS) {
+            executeCommandListImmediate(true);
+        }
+        return ret;
+    } else {
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = (!event->signalScope) ? false : true;
+        auto cmdQueueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
+        NEO::CommandStreamReceiver *csr = cmdQueueImp->getCsr();
+        csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_CLEARED, args, false, false, false);
+        event->updateTaskCountEnabled = true;
+        return ZE_RESULT_SUCCESS;
     }
-    return ret;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -128,11 +174,37 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent) {
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phEvent);
-    if (ret == ZE_RESULT_SUCCESS) {
-        executeCommandListImmediate(true);
+    bool isTimestampEvent = false;
+    for (uint32_t i = 0; i < numEvents; i++) {
+        auto event = Event::fromHandle(phEvent[i]);
+        isTimestampEvent |= (event->isTimestampEvent) ? true : false;
     }
-    return ret;
+    if (isSyncModeQueue || isTimestampEvent) {
+        auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phEvent);
+        if (ret == ZE_RESULT_SUCCESS) {
+            executeCommandListImmediate(true);
+        }
+        return ret;
+    } else {
+        bool dcFlushRequired = false;
+        for (uint32_t i = 0; i < numEvents; i++) {
+            auto event = Event::fromHandle(phEvent[i]);
+            dcFlushRequired |= (!event->waitScope) ? false : true;
+        }
+
+        auto cmdQueueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
+        NEO::CommandStreamReceiver *csr = cmdQueueImp->getCsr();
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = dcFlushRequired;
+        for (uint32_t i = 0; i < numEvents; i++) {
+            auto event = Event::fromHandle(phEvent[i]);
+            bool isStartOfDispatch = (i == 0);
+            bool isEndOfDispatch = (i == numEvents - 1);
+            csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_CLEARED, args, true, isStartOfDispatch, isEndOfDispatch);
+            event->updateTaskCountEnabled = true;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

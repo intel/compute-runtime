@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,8 +64,11 @@ CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::En
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
             commandList = nullptr;
+        } else {
+            commandList->setSyncModeQueue(false);
         }
     }
+
     return commandList;
 }
 
@@ -91,7 +94,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             commandList = nullptr;
             return commandList;
         }
-
         NEO::CommandStreamReceiver *csr = nullptr;
         auto deviceImp = static_cast<DeviceImp *>(device);
         if (internalUsage) {
@@ -112,6 +114,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->cmdQImmediate = commandQueue;
         commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
         commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
+        commandList->setSyncModeQueue(desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
         return commandList;
     }
 

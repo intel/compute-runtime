@@ -23,6 +23,7 @@
 #include "shared/source/utilities/spinlock.h"
 
 #include "csr_properties_flags.h"
+#include "pipe_control_args.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -211,6 +212,7 @@ class CommandStreamReceiver {
     virtual uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled) = 0;
 
     virtual void flushTagUpdate() = 0;
+    virtual void flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvents, bool isStartOfDispatch, bool isEndOfDispatch) = 0;
     virtual void updateTagFromWait() = 0;
 
     ScratchSpaceController *getScratchSpaceController() const {
