@@ -506,8 +506,12 @@ class MockEvent : public ::L0::Event {
                                                              MemoryPool::System4KBPages));
         gpuAddress = mockAllocation->getGpuAddress();
     }
-    NEO::GraphicsAllocation &getAllocation() override {
+    NEO::GraphicsAllocation &getAllocation(L0::Device *device) override {
         return *mockAllocation.get();
+    }
+
+    uint64_t getGpuAddress(L0::Device *device) override {
+        return mockAllocation.get()->getGpuAddress();
     }
 
     ze_result_t destroy() override {
@@ -1043,13 +1047,13 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCo
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
-    auto baseAddr = event->getGpuAddress();
+    auto baseAddr = event->getGpuAddress(device);
     auto contextOffset = NEO::TimestampPackets<uint32_t>::getContextStartOffset();
     auto globalOffset = NEO::TimestampPackets<uint32_t>::getGlobalStartOffset();
-    EXPECT_EQ(event->getTimestampPacketAddress(), baseAddr);
+    EXPECT_EQ(event->getTimestampPacketAddress(device), baseAddr);
 
     commandList->appendEventForProfilingCopyCommand(event->toHandle(), true);
     EXPECT_EQ(event->getPacketsInUse(), 0u);
@@ -1079,14 +1083,14 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCop
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
     commandList->appendEventForProfilingCopyCommand(event->toHandle(), false);
 
     auto contextOffset = NEO::TimestampPackets<uint32_t>::getContextEndOffset();
     auto globalOffset = NEO::TimestampPackets<uint32_t>::getGlobalEndOffset();
-    auto baseAddr = event->getGpuAddress();
+    auto baseAddr = event->getGpuAddress(device);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));

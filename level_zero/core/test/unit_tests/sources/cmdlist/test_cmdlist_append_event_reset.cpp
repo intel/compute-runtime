@@ -46,7 +46,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenPost
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_INITIAL);
-            auto gpuAddress = event->getGpuAddress();
+            auto gpuAddress = event->getGpuAddress(device);
             EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
             EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
             postSyncFound = true;
@@ -80,7 +80,7 @@ HWTEST_F(CommandListAppendEventReset, givenCopyOnlyCmdlistWhenResetEventAppended
         auto cmd = genCmdCast<MI_FLUSH_DW *>(*it);
         if (cmd->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_INITIAL);
-            auto gpuAddress = event->getGpuAddress();
+            auto gpuAddress = event->getGpuAddress(device);
             EXPECT_EQ(cmd->getDestinationAddress(), gpuAddress);
             postSyncFound = true;
         }
@@ -133,13 +133,13 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
     commandList->appendEventReset(event->toHandle());
     ASSERT_EQ(0u, event->getPacketsInUse());
     auto contextOffset = NEO::TimestampPackets<uint32_t>::getContextEndOffset();
-    auto baseAddr = event->getGpuAddress();
+    auto baseAddr = event->getGpuAddress(device);
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
 
     GenCmdList cmdList;
@@ -176,11 +176,11 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
     eventDesc.index = 0;
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
 
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
     commandList->appendEventReset(event->toHandle());
-    auto gpuAddress = event->getGpuAddress();
+    auto gpuAddress = event->getGpuAddress(device);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(

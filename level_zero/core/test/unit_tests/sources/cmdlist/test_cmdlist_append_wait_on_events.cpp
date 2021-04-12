@@ -47,7 +47,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventThenSemaphoreWait
 
         auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
-        EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & addressSpace, event->getGpuAddress() & addressSpace);
+        EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & addressSpace, event->getGpuAddress(device) & addressSpace);
         EXPECT_EQ(cmd->getWaitMode(),
                   MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
     }
@@ -81,7 +81,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenTwoEventsWhenWaitOnEventsAppendedThe
 
         auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
-        EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & addressSpace, event->getGpuAddress() & addressSpace);
+        EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & addressSpace, event->getGpuAddress(device) & addressSpace);
         EXPECT_EQ(cmd->getWaitMode(),
                   MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
     }
@@ -165,7 +165,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTim
 
     auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
-    EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & addressSpace, event->getGpuAddress() & addressSpace);
+    EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & addressSpace, event->getGpuAddress(device) & addressSpace);
     EXPECT_EQ(cmd->getWaitMode(),
               MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
 

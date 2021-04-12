@@ -353,21 +353,6 @@ std::vector<NEO::SvmAllocationData *> DriverHandleImp::findAllocationsWithinRang
     return allocDataArray;
 }
 
-ze_result_t DriverHandleImp::createEventPool(const ze_event_pool_desc_t *desc,
-                                             uint32_t numDevices,
-                                             ze_device_handle_t *phDevices,
-                                             ze_event_pool_handle_t *phEventPool) {
-    EventPool *eventPool = EventPool::create(this, numDevices, phDevices, desc);
-
-    if (eventPool == nullptr) {
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-    }
-
-    *phEventPool = eventPool->toHandle();
-
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t DriverHandleImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
                                                     ze_event_pool_handle_t *phEventPool) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

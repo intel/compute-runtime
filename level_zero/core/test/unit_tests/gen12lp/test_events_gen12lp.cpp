@@ -32,7 +32,7 @@ struct TimestampEvent : public Test<DeviceFixture> {
         eventDesc.signal = 0;
         eventDesc.wait = 0;
 
-        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
         ASSERT_NE(nullptr, eventPool);
         event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
         ASSERT_NE(nullptr, event);

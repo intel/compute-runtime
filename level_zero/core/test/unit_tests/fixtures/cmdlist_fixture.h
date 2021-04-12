@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ class CommandListFixture : public DeviceFixture {
         eventDesc.wait = 0;
         eventDesc.signal = 0;
 
-        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
         event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
     }
 

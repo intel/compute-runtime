@@ -291,7 +291,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -318,7 +318,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_FALSE(cmd->getDcFlushEnable());
-            auto gpuAddress = event->getGpuAddress();
+            auto gpuAddress = event->getGpuAddress(device);
             EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
             EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
             postSyncFound = true;
@@ -329,7 +329,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
     {
         auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
                                    std::end(commandList->commandContainer.getResidencyContainer()),
-                                   &event->getAllocation());
+                                   &event->getAllocation(device));
         EXPECT_NE(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
     }
 }
@@ -353,7 +353,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     eventDesc.index = 0;
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -420,7 +420,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     {
         auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
                                    std::end(commandList->commandContainer.getResidencyContainer()),
-                                   &event->getAllocation());
+                                   &event->getAllocation(device));
         EXPECT_NE(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
     }
 }
@@ -446,7 +446,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
         ZE_EVENT_SCOPE_FLAG_HOST,
         ZE_EVENT_SCOPE_FLAG_HOST};
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -510,7 +510,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenAppendLaunchKernelS
         ZE_EVENT_SCOPE_FLAG_HOST,
         ZE_EVENT_SCOPE_FLAG_HOST};
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
     EXPECT_EQ(0u, event->getPacketsInUse());
     ze_group_count_t groupCount{1, 1, 1};
@@ -878,7 +878,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemapho
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
-    std::unique_ptr<EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    std::unique_ptr<EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     std::unique_ptr<Event> event(Event::create(eventPool.get(), &eventDesc, device));
     ze_event_handle_t hEventHandle = event->toHandle();
 
@@ -901,7 +901,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemapho
         EXPECT_EQ(cmd->getCompareOperation(),
                   MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(static_cast<uint32_t>(-1), cmd->getSemaphoreDataDword());
-        EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & device->getHwInfo().capabilityTable.gpuAddressSpace, event->getGpuAddress() & device->getHwInfo().capabilityTable.gpuAddressSpace);
+        EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & device->getHwInfo().capabilityTable.gpuAddressSpace, event->getGpuAddress(device) & device->getHwInfo().capabilityTable.gpuAddressSpace);
     }
 }
 
@@ -924,7 +924,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenMultipleValidWaitEventsThenAddSemap
     ze_event_desc_t eventDesc2 = {};
     eventDesc2.index = 1;
 
-    std::unique_ptr<EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    std::unique_ptr<EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     std::unique_ptr<Event> event1(Event::create(eventPool.get(), &eventDesc1, device));
     std::unique_ptr<Event> event2(Event::create(eventPool.get(), &eventDesc2, device));
     ze_event_handle_t hEventHandle1 = event1->toHandle();

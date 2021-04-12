@@ -44,7 +44,7 @@ HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventThenPipeControlIs
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
-            auto gpuAddress = event->getGpuAddress();
+            auto gpuAddress = event->getGpuAddress(device);
             EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
             EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
             postSyncFound = true;
@@ -109,7 +109,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendin
     eventDesc.index = 0;
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
-    auto eventPoolHostVisible = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto eventPoolHostVisible = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto eventHostVisible = std::unique_ptr<Event>(Event::create(eventPoolHostVisible.get(), &eventDesc, device));
 
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
@@ -197,12 +197,12 @@ HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeC
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
     commandList->appendSignalEvent(event->toHandle());
     auto contextOffset = NEO::TimestampPackets<uint32_t>::getContextEndOffset();
-    auto baseAddr = event->getGpuAddress();
+    auto baseAddr = event->getGpuAddress(device);
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
 
     GenCmdList cmdList;

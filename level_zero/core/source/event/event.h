@@ -43,18 +43,17 @@ struct Event : _ze_event_handle_t {
 
     inline ze_event_handle_t toHandle() { return this; }
 
-    virtual NEO::GraphicsAllocation &getAllocation();
+    virtual NEO::GraphicsAllocation &getAllocation(Device *device) = 0;
 
     void increasePacketsInUse() { packetsInUse++; }
     void setPacketsInUse(uint32_t newPacketsInUse) { packetsInUse = newPacketsInUse; }
     void resetPackets() { packetsInUse = 0; }
-    uint64_t getGpuAddress() { return gpuAddress; }
+    virtual uint64_t getGpuAddress(Device *device) = 0;
     void *getHostAddress() { return hostAddress; }
     uint32_t getPacketsInUse() { return packetsInUse; }
-    uint64_t getTimestampPacketAddress();
+    uint64_t getTimestampPacketAddress(Device *device);
 
     void *hostAddress = nullptr;
-    uint64_t gpuAddress;
     uint32_t packetsInUse = 0u;
 
     ze_event_scope_flags_t signalScope = 0u;
@@ -72,12 +71,13 @@ struct Event : _ze_event_handle_t {
     NEO::CommandStreamReceiver *csr = nullptr;
 
   protected:
+    uint64_t gpuAddress;
     NEO::GraphicsAllocation *allocation = nullptr;
 };
 
 struct EventImp : public Event {
     EventImp(EventPool *eventPool, int index, Device *device)
-        : device(device), eventPool(eventPool) {}
+        : device(device), index(index), eventPool(eventPool) {}
 
     ~EventImp() override {}
 
@@ -91,7 +91,12 @@ struct EventImp : public Event {
 
     ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override;
 
+    NEO::GraphicsAllocation &getAllocation(Device *device) override;
+
+    uint64_t getGpuAddress(Device *device) override;
+
     Device *device;
+    int index;
     EventPool *eventPool;
 
   protected:
@@ -102,7 +107,7 @@ struct EventImp : public Event {
 };
 
 struct EventPool : _ze_event_pool_handle_t {
-    static EventPool *create(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc);
+    static EventPool *create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc);
     virtual ~EventPool() = default;
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) = 0;
@@ -133,7 +138,7 @@ struct EventPoolImp : public EventPool {
         }
     }
 
-    ze_result_t initialize(DriverHandle *driver,
+    ze_result_t initialize(DriverHandle *driver, Context *context,
                            uint32_t numDevices,
                            ze_device_handle_t *phDevices,
                            uint32_t numEvents);

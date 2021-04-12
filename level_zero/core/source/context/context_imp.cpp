@@ -376,8 +376,15 @@ ze_result_t ContextImp::createEventPool(const ze_event_pool_desc_t *desc,
                                         uint32_t numDevices,
                                         ze_device_handle_t *phDevices,
                                         ze_event_pool_handle_t *phEventPool) {
-    DEBUG_BREAK_IF(nullptr == this->driverHandle);
-    return this->driverHandle->createEventPool(desc, numDevices, phDevices, phEventPool);
+    EventPool *eventPool = EventPool::create(this->driverHandle, this, numDevices, phDevices, desc);
+
+    if (eventPool == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
+    *phEventPool = eventPool->toHandle();
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ContextImp::createImage(ze_device_handle_t hDevice,
