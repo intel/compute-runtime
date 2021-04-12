@@ -128,6 +128,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
         static_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::System64KBPages);
         auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
                                          allocationData.hostPtr,
+                                         allocationDataAlign.size,
                                          allocationDataAlign.alignment,
                                          allocationData.flags.uncacheable,
                                          allocationData.flags.preferRenderCompressed,
@@ -315,7 +316,7 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uin
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateShareableMemory(const AllocationData &allocationData) {
-    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr, allocationData.size, false);
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr, allocationData.size, 0u, false);
     GraphicsAllocation *alloc = nullptr;
 
     auto ptr = allocateSystemMemory(alignUp(allocationData.size, MemoryConstants::pageSize), MemoryConstants::pageSize);

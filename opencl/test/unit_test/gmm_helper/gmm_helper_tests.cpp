@@ -71,7 +71,7 @@ TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
 TEST_F(GmmTests, WhenGmmIsCreatedThenAllResourceAreCreated) {
     std::unique_ptr<MemoryManager> mm(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
-    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, 0, false));
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
@@ -86,7 +86,7 @@ TEST_F(GmmTests, GivenUncacheableWhenGmmIsCreatedThenAllResourceAreCreated) {
     std::unique_ptr<MemoryManager> mm(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, 0, true));
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
@@ -103,7 +103,7 @@ TEST_F(GmmTests, givenHostPointerWithHighestBitSetWhenGmmIsCreatedThenItHasTheSa
     auto address = reinterpret_cast<void *>(addressWithHighestBitSet);
     auto expectedAddress = castToUint64(address);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), address, 4096, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), address, 4096, 0, false));
     EXPECT_EQ(gmm->resourceParams.pExistingSysMem, expectedAddress);
 }
 
@@ -113,7 +113,7 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGmm
     MemoryManager *mm = new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment);
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
-    auto gmmRes = new Gmm(getGmmClientContext(), pSysMem, maxSize, false);
+    auto gmmRes = new Gmm(getGmmClientContext(), pSysMem, maxSize, 0, false);
 
     ASSERT_TRUE(gmmRes->gmmResourceInfo.get() != nullptr);
 
@@ -127,7 +127,7 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGmm
 TEST_F(GmmTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm) {
     auto size = 4096u;
     void *incomingPtr = (void *)0x1000;
-    auto gmmRes = new Gmm(getGmmClientContext(), incomingPtr, size, false);
+    auto gmmRes = new Gmm(getGmmClientContext(), incomingPtr, size, 0, false);
     auto gmmRes2 = new Gmm(getGmmClientContext(), gmmRes->gmmResourceInfo->peekHandle());
 
     //copy is being made
@@ -204,20 +204,20 @@ TEST_F(GmmTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
 TEST_F(GmmTests, givenWidthWhenCreatingResourceThenSetWidth64Field) {
     const void *dummyPtr = reinterpret_cast<void *>(0x123);
     size_t allocationSize = std::numeric_limits<size_t>::max();
-    Gmm gmm(getGmmClientContext(), dummyPtr, allocationSize, false);
+    Gmm gmm(getGmmClientContext(), dummyPtr, allocationSize, 0, false);
     EXPECT_EQ(static_cast<uint64_t>(allocationSize), gmm.resourceParams.BaseWidth64);
 }
 
 TEST_F(GmmTests, givenNullptrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet) {
     void *pSysMem = nullptr;
-    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, 0, false));
 
     EXPECT_EQ(gmm->resourceParams.NoGfxMemory, 1u);
 }
 
 TEST_F(GmmTests, givenPtrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet) {
     void *pSysMem = reinterpret_cast<void *>(0x1111);
-    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, 0, false));
 
     EXPECT_EQ(gmm->resourceParams.NoGfxMemory, 0u);
 }
@@ -432,7 +432,7 @@ struct GmmMediaCompressedTests : public GmmTests {
     void SetUp() override {
         GmmTests::SetUp();
         StorageInfo info;
-        gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 4, false, true, true, info);
+        gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 4, 0, false, true, true, info);
         flags = gmm->gmmResourceInfo->getResourceFlags();
         flags->Gpu.CCS = true;
         flags->Gpu.UnifiedAuxSurface = true;
@@ -696,7 +696,7 @@ TEST_F(GmmTests, GivenPlaneWhenCopyingResourceBltThenResourceIsCopiedCorrectly) 
 }
 
 TEST_F(GmmTests, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityThenReturnTrue) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, 0, false));
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
     mockResource->setUnifiedAuxTranslationCapable();
@@ -707,8 +707,14 @@ TEST_F(GmmTests, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityTh
     EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
 }
 
+TEST_F(GmmTests, givenAlignmentValueWhenConstructingGmmThenSetAlignmentInResourceCreateObject) {
+    const uint32_t alignment = 8096;
+    Gmm gmm{getGmmClientContext(), nullptr, 1, alignment, false};
+    EXPECT_EQ(alignment, gmm.resourceParams.BaseAlignment);
+}
+
 TEST_F(GmmTests, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThenReturnFalse) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, 0, false));
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
     mockResource->mockResourceCreateParams.Flags.Gpu.CCS = 0;
@@ -761,12 +767,12 @@ TEST_F(GmmTests, whenResourceIsCreatedThenHandleItsOwnership) {
 using GmmEnvironmentTest = MockExecutionEnvironmentGmmFixtureTest;
 
 TEST_F(GmmEnvironmentTest, givenGmmWithNotSetMCSInResourceInfoGpuFlagsWhenCallHasMultisampleControlSurfaceThenReturnFalse) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, 0, false));
     EXPECT_FALSE(gmm->hasMultisampleControlSurface());
 }
 
 TEST_F(GmmEnvironmentTest, givenGmmWithSetMCSInResourceInfoGpuFlagsWhenCallhasMultisampleControlSurfaceThenReturnTrue) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, 0, false));
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockResource->setMultisampleControlSurface();
     EXPECT_TRUE(gmm->hasMultisampleControlSurface());
@@ -826,7 +832,7 @@ TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceT
 
 using GmmCompressionTest = GmmTests;
 TEST_F(GmmCompressionTest, givenEnabledAndPreferredE2ECWhenApplyingForBuffersThenSetValidFlags) {
-    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, 0, false));
     gmm->resourceParams = {};
 
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
@@ -840,7 +846,7 @@ TEST_F(GmmCompressionTest, givenEnabledAndPreferredE2ECWhenApplyingForBuffersThe
 
 TEST_F(GmmCompressionTest, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingForBuffersThenSetValidFlags) {
     DebugManagerStateRestore restore;
-    Gmm gmm(getGmmClientContext(), nullptr, 1, false);
+    Gmm gmm(getGmmClientContext(), nullptr, 1, 0, false);
     gmm.resourceParams = {};
 
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
@@ -865,7 +871,7 @@ TEST_F(GmmCompressionTest, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingForBu
 }
 
 TEST_F(GmmCompressionTest, givenEnabledAndNotPreferredE2ECWhenApplyingForBuffersThenDontSetValidFlags) {
-    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, 0, false));
     gmm->resourceParams = {};
 
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
@@ -878,7 +884,7 @@ TEST_F(GmmCompressionTest, givenEnabledAndNotPreferredE2ECWhenApplyingForBuffers
 }
 
 TEST_F(GmmCompressionTest, givenDisabledAndPreferredE2ECWhenApplyingForBuffersThenDontSetValidFlags) {
-    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, 0, false));
     gmm->resourceParams = {};
 
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = false;

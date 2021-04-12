@@ -18,7 +18,7 @@ TEST_F(WddmTests, whenCreatingAllocation64kThenDoNotCreateResource) {
     init();
 
     D3DKMT_HANDLE handle;
-    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 20, false, true, true, {});
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 20, 0, false, true, true, {});
 
     EXPECT_TRUE(wddm->createAllocation64k(&gmm, handle));
     auto gdiParam = getMockAllocationFcn();

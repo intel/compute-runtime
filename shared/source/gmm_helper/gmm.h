@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,8 @@ class Gmm {
     virtual ~Gmm();
     Gmm() = delete;
     Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo);
-    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable);
-    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo);
+    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable);
+    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo);
     Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);

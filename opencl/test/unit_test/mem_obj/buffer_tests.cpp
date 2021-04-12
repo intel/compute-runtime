@@ -1643,7 +1643,7 @@ HWTEST_F(BufferSetSurfaceTests, givenRenderCompressedGmmResourceWhenSurfaceState
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-    auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, false);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, 0, false);
     graphicsAllocation->setDefaultGmm(gmm);
     gmm->isRenderCompressed = true;
 
@@ -1664,7 +1664,7 @@ HWTEST_F(BufferSetSurfaceTests, givenNonRenderCompressedGmmResourceWhenSurfaceSt
     auto retVal = CL_SUCCESS;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, false);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, 0, false);
     buffer->getGraphicsAllocation(rootDeviceIndex)->setDefaultGmm(gmm);
     gmm->isRenderCompressed = false;
 

@@ -23,7 +23,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOpe
     cl_int retVal;
     auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, false);
+    auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, 0, false);
     gmm->isRenderCompressed = false;
     auto allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     allocation->setDefaultGmm(gmm);

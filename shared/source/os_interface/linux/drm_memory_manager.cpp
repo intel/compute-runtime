@@ -420,7 +420,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateShareableMemory(const AllocationData &allocationData) {
-    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr, allocationData.size, false);
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr, allocationData.size, 0u, false);
     size_t bufferSize = allocationData.size;
     uint64_t gpuRange = acquireGpuRange(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB);
 

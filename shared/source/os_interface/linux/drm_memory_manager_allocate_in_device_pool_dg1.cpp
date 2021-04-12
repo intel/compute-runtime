@@ -205,6 +205,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
                                     nullptr,
                                     sizeAligned,
+                                    0,
                                     allocationData.flags.uncacheable,
                                     allocationData.flags.preferRenderCompressed,
                                     false,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,14 +18,15 @@
 #include "shared/source/helpers/surface_format_info.h"
 
 namespace NEO {
-Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(clientContext, alignedPtr, alignedSize, uncacheable, false, true, {}) {}
+Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable) : Gmm(clientContext, alignedPtr, alignedSize, alignment, uncacheable, false, true, {}) {}
 
-Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo) : clientContext(clientContext) {
+Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo) : clientContext(clientContext) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
     resourceParams.BaseHeight = 1;
     resourceParams.Depth = 1;
+    resourceParams.BaseAlignment = static_cast<uint32_t>(alignment);
     if (!uncacheable) {
         resourceParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
     } else {

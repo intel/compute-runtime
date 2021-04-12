@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ TEST_F(GlReusedBufferTests, givenMultipleBuffersWithReusedAllocationWhenReleasin
 
 TEST_F(GlReusedBufferTests, givenMultipleBuffersWithReusedAllocationWhenCreatingThenReuseGmmResourceToo) {
     std::unique_ptr<Buffer> glBuffer1(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
-    glBuffer1->getGraphicsAllocation(rootDeviceIndex)->setDefaultGmm(new Gmm(context.getDevice(0)->getGmmClientContext(), (void *)0x100, 1, false));
+    glBuffer1->getGraphicsAllocation(rootDeviceIndex)->setDefaultGmm(new Gmm(context.getDevice(0)->getGmmClientContext(), (void *)0x100, 1, 0, false));
 
     std::unique_ptr<Buffer> glBuffer2(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
 
