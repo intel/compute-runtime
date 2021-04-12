@@ -217,8 +217,7 @@ TEST_F(Wddm23TestsWithoutWddmInit, whenInitCalledThenInitializeNewGdiDDIsAndCall
 
 TEST_F(Wddm23TestsWithoutWddmInit, whenCreateHwQueueFailedThenReturnFalseFromInit) {
     wddmMockInterface->forceCreateHwQueueFail = true;
-    init();
-    EXPECT_FALSE(osContext->isInitialized());
+    EXPECT_ANY_THROW(init());
 }
 
 TEST_F(Wddm23TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHwQueueThenReturnFailure) {
@@ -229,8 +228,7 @@ TEST_F(Wddm23TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHw
     };
     auto myMockGdi = new MyMockGdi();
     wddm->resetGdi(myMockGdi);
-    init();
-    EXPECT_FALSE(osContext->isInitialized());
+    EXPECT_ANY_THROW(init());
     EXPECT_EQ(1u, wddmMockInterface->createHwQueueCalled);
     EXPECT_FALSE(wddmMockInterface->createHwQueueResult);
 }

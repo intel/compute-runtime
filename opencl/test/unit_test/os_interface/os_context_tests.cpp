@@ -13,7 +13,6 @@ using namespace NEO;
 
 TEST(OSContext, whenCreatingDefaultOsContextThenExpectInitializedAlways) {
     OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
-    EXPECT_TRUE(osContext->isInitialized());
     EXPECT_FALSE(osContext->isLowPriority());
     EXPECT_FALSE(osContext->isInternalEngine());
     EXPECT_FALSE(osContext->isRootDevice());

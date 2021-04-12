@@ -28,21 +28,16 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield device
       residencyController(wddm, contextId) {
 
     auto wddmInterface = wddm.getWddmInterface();
-    if (!wddm.createContext(*this)) {
-        return;
-    }
-    if (wddmInterface->hwQueuesSupported()) {
-        if (!wddmInterface->createHwQueue(*this)) {
-            return;
-        }
-    }
-    initialized = wddmInterface->createMonitoredFence(*this);
-    residencyController.registerCallback();
-};
+    UNRECOVERABLE_IF(!wddm.createContext(*this));
 
-bool OsContextWin::isInitialized() const {
-    return (initialized && residencyController.isInitialized());
-}
+    if (wddmInterface->hwQueuesSupported()) {
+        UNRECOVERABLE_IF(!wddmInterface->createHwQueue(*this));
+    }
+    UNRECOVERABLE_IF(!wddmInterface->createMonitoredFence(*this));
+
+    residencyController.registerCallback();
+    UNRECOVERABLE_IF(!residencyController.isInitialized());
+};
 
 OsContextWin::~OsContextWin() {
     wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);

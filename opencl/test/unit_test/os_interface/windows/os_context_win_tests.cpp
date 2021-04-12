@@ -26,29 +26,23 @@ struct OsContextWinTest : public WddmTestWithMockGdiDll {
 };
 
 TEST_F(OsContextWinTest, givenWddm20WhenCreatingOsContextThenOsContextIsInitialized) {
-    osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false);
-    EXPECT_TRUE(osContext->isInitialized());
+    EXPECT_NO_THROW(osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false));
+    EXPECT_NE(nullptr, osContext);
 }
 
-TEST_F(OsContextWinTest, givenWddm20WhenCreatingWddmContextFailThenOsContextIsNotInitialized) {
+TEST_F(OsContextWinTest, givenWddm20WhenCreatingWddmContextFailThenOsContextCreationFails) {
     wddm->device = INVALID_HANDLE;
-
-    osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false);
-    EXPECT_FALSE(osContext->isInitialized());
+    EXPECT_ANY_THROW(osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false));
 }
 
-TEST_F(OsContextWinTest, givenWddm20WhenCreatingWddmMonitorFenceFailThenOsContextIsNotInitialized) {
+TEST_F(OsContextWinTest, givenWddm20WhenCreatingWddmMonitorFenceFailThenOsContextCreationFails) {
     *getCreateSynchronizationObject2FailCallFcn() = true;
-
-    osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false);
-    EXPECT_FALSE(osContext->isInitialized());
+    EXPECT_ANY_THROW(osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false));
 }
 
-TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackFailThenOsContextIsNotInitialized) {
+TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackFailThenOsContextCreationFails) {
     *getRegisterTrimNotificationFailCallFcn() = true;
-
-    osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false);
-    EXPECT_FALSE(osContext->isInitialized());
+    EXPECT_ANY_THROW(osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false));
 }
 
 TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackIsDisabledThenOsContextIsInitialized) {
@@ -56,6 +50,6 @@ TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackIsDisabledThenOsCont
     DebugManager.flags.DoNotRegisterTrimCallback.set(true);
     *getRegisterTrimNotificationFailCallFcn() = true;
 
-    osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false);
-    EXPECT_TRUE(osContext->isInitialized());
+    EXPECT_NO_THROW(osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false));
+    EXPECT_NE(nullptr, osContext);
 }

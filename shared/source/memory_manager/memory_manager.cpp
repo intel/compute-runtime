@@ -258,7 +258,6 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
     auto contextId = ++latestContextId;
     auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->osInterface.get(),
                                        contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
-    UNRECOVERABLE_IF(!osContext->isInitialized());
     osContext->incRefInternal();
 
     registeredEngines.emplace_back(commandStreamReceiver, osContext);
