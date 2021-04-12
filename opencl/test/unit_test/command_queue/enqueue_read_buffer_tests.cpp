@@ -26,7 +26,7 @@
 
 using namespace NEO;
 
-HWTEST_F(EnqueueReadBufferTypeTest, null_mem_object) {
+HWTEST_F(EnqueueReadBufferTypeTest, GivenNullBufferWhenReadingBufferThenInvalidMemObjectErrorIsReturned) {
     auto data = 1;
     auto retVal = clEnqueueReadBuffer(
         pCmdQ,
@@ -42,7 +42,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, null_mem_object) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, null_user_pointer) {
+HWTEST_F(EnqueueReadBufferTypeTest, GivenNullUserPointerWhenReadingBufferThenInvalidValueErrorIsReturned) {
     auto data = 1;
 
     auto retVal = clEnqueueReadBuffer(
@@ -59,7 +59,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, null_user_pointer) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, GPGPUWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, WhenReadingBufferThenGpgpuWalkerIsProgrammedCorrectly) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
     srcBuffer->forceDisallowCPUCopy = true;
@@ -93,7 +93,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, GPGPUWalker) {
     }
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, bumpsTaskLevel) {
+HWTEST_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenTaskLevelIsIncremented) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
     srcBuffer->forceDisallowCPUCopy = true;
@@ -101,7 +101,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, bumpsTaskLevel) {
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, alignsToCSR_Blocking) {
+HWTEST_F(EnqueueReadBufferTypeTest, GivenBlockingWhenReadingBufferThenAlignedToCsr) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -114,7 +114,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, alignsToCSR_Blocking) {
     EXPECT_EQ(oldCsrTaskLevel, pCmdQ->taskLevel);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, alignsToCSR_NonBlocking) {
+HWTEST_F(EnqueueReadBufferTypeTest, GivenNonBlockingWhenReadingBufferThenAlignedToCsr) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -125,7 +125,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, alignsToCSR_NonBlocking) {
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, addsCommands) {
+HWTEST_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenCommandsAreAdded) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     srcBuffer->forceDisallowCPUCopy = true;
@@ -133,7 +133,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsCommands) {
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
+HWTEST_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenIndirectDataIsAdded) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
@@ -165,7 +165,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
     }
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, LoadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenLoadRegisterImmediateL3CntlregIsCorrect) {
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
@@ -183,7 +183,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, WhenEnqueueIsDoneThenStat
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, MediaInterfaceDescriptorLoad) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, WhenReadingBufferThenMediaInterfaceDescriptorLoadIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -212,7 +212,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, MediaInterfaceDescriptorL
     FamilyType::PARSE::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorCmd);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, InterfaceDescriptorData) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, WhenReadingBufferThenInterfaceDescriptorDataIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -250,20 +250,20 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, InterfaceDescriptorData) 
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, PipelineSelect) {
+HWTEST_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenPipelineSelectIsProgrammedOnce) {
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, MediaVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, WhenReadingBufferThenMediaVfeStateIsCorrect) {
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, blockingRequiresPipeControlAfterWalkerWithDCFlushSet) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, GivenBlockingWhenReadingBufferThenPipeControlAfterWalkerWithDcFlushSetIsAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     srcBuffer->forceDisallowCPUCopy = true;
@@ -604,7 +604,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenForcedCpuCopyWhenEnqueueReadCompressedB
     EXPECT_TRUE(mockCmdQ->cpuDataTransferHandlerCalled);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, gicenEnqueueReadBufferCalledWhenLockedPtrInTransferPropertisIsNotAvailableThenItIsNotUnlocked) {
+HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferCalledWhenLockedPtrInTransferPropertisIsNotAvailableThenItIsNotUnlocked) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
 
