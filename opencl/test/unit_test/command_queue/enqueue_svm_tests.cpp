@@ -1599,7 +1599,7 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     EXPECT_EQ(0u, residencyContainer.size());
 }
 
-HWTEST_P(UpdateResidencyContainerMultipleDevicesTest, givenAllocationItIsAddedToContainerOnlyIfMaskMatches) {
+HWTEST_P(UpdateResidencyContainerMultipleDevicesTest, givenAllocationThenItIsAddedToContainerOnlyIfMaskMatches) {
     uint32_t pCmdBuffer[1024];
     MockGraphicsAllocation gfxAllocation(device->getDevice().getRootDeviceIndex(),
                                          static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
