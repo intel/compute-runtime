@@ -459,6 +459,10 @@ TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtual
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 
+    if (drm->isPerContextVMRequired()) {
+        GTEST_SKIP();
+    }
+
     auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
     for (auto id = 0u; id < numSubDevices; id++) {
         EXPECT_EQ(id + 1, drm->getVirtualMemoryAddressSpace(id));
@@ -499,7 +503,12 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
 
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
-    EXPECT_FALSE(drm->isPerContextVMRequired());
+
+    if (drm->isPerContextVMRequired()) {
+        ::testing::internal::GetCapturedStdout();
+        ::testing::internal::GetCapturedStderr();
+        GTEST_SKIP();
+    }
 
     auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
     for (auto id = 0u; id < numSubDevices; id++) {
@@ -531,7 +540,10 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
     EXPECT_EQ(0u, static_cast<DrmWrap *>(drm.get())->virtualMemoryIds.size());
 
     std::string errStr = ::testing::internal::GetCapturedStderr();
-    EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("INFO: Device doesn't support GEM Virtual Memory")));
+    if (!drm->isPerContextVMRequired()) {
+
+        EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("INFO: Device doesn't support GEM Virtual Memory")));
+    }
     ::testing::internal::GetCapturedStdout();
 }
 

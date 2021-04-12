@@ -99,10 +99,12 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
     }
 
     if (!drmObject->queryMemoryInfo()) {
+        drmObject->setPerContextVMRequired(true);
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
     }
 
     if (!drmObject->queryEngineInfo()) {
+        drmObject->setPerContextVMRequired(true);
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
     }
 
