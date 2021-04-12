@@ -220,7 +220,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     EXPECT_FALSE(aubCsr->isFileOpen());
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentCalledMultipleTimesAffectsResidencyOnce) {
+HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentCalledMultipleTimesThenAffectsResidencyOnce) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
@@ -1170,7 +1170,7 @@ HWTEST_F(AubCommandStreamReceiverTests, WhenBlitBufferIsCalledThenCounterIsCorre
     EXPECT_EQ(1u, aubCsr->blitBufferCalled);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenDebugOverwritesForImplicitFlushesWhenTheyAreUsedTheyDoNotAffectAubCapture) {
+HWTEST_F(AubCommandStreamReceiverTests, givenDebugOverwritesForImplicitFlushesWhenTheyAreUsedThenTheyDoNotAffectAubCapture) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.PerformImplicitFlushForIdleGpu.set(1);
     DebugManager.flags.PerformImplicitFlushForNewResource.set(1);
