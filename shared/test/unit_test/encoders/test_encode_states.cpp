@@ -14,6 +14,8 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+
 using namespace NEO;
 
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
@@ -186,7 +188,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationNo
                                                  nullptr, pDevice->getGmmHelper(), false, 1u);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, state->getSurfaceType());
-    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, state->getCoherencyType());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), state->getCoherencyType());
 
     alignedFree(stateBuffer);
 }

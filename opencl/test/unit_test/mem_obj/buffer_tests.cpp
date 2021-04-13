@@ -20,6 +20,7 @@
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/gen_common/matchers.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -1672,7 +1673,7 @@ HWTEST_F(BufferSetSurfaceTests, givenNonRenderCompressedGmmResourceWhenSurfaceSt
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
     EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE == surfaceState.getAuxiliarySurfaceMode());
-    EXPECT_TRUE(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT == surfaceState.getCoherencyType());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT) == surfaceState.getCoherencyType());
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgrammedThenBaseAddressAndLengthAreAlignedToDword) {

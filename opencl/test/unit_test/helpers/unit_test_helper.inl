@@ -81,6 +81,11 @@ inline bool UnitTestHelper<GfxFamily>::requiresTimestampPacketsInSystemMemory() 
 }
 
 template <typename GfxFamily>
+auto UnitTestHelper<GfxFamily>::getCoherencyTypeSupported(COHERENCY_TYPE coherencyType) -> decltype(coherencyType) {
+    return coherencyType;
+}
+
+template <typename GfxFamily>
 const bool UnitTestHelper<GfxFamily>::tiledImagesSupported = true;
 
 template <typename GfxFamily>

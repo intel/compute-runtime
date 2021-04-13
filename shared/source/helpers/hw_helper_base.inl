@@ -147,10 +147,10 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironm
     Gmm *gmm = gfxAlloc ? gfxAlloc->getDefaultGmm() : nullptr;
     if (gmm && gmm->isRenderCompressed && !forceNonAuxMode) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
-        state.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+        EncodeSurfaceState<Family>::setCoherencyType(&state, RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
         EncodeSurfaceState<Family>::setBufferAuxParamsForCCS(&state);
     } else {
-        state.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
+        EncodeSurfaceState<Family>::setCoherencyType(&state, RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
         state.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     }
     *surfaceState = state;

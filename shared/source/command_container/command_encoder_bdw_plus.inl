@@ -420,6 +420,11 @@ bool EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch() {
 }
 
 template <typename Family>
+void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType) {
+    surfaceState->setCoherencyType(coherencyType);
+}
+
+template <typename Family>
 void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      uint64_t compareAddress,
                                                      uint32_t compareData,

@@ -11,6 +11,7 @@
 
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/kernel_info_from_patchtokens.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "test.h"
 
@@ -310,7 +311,6 @@ HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKerne
     EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());
-    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, debugSurfaceState->getCoherencyType());
 }
 
 using ModuleWithDebuggerL0Test = Test<L0DebuggerHwFixture>;

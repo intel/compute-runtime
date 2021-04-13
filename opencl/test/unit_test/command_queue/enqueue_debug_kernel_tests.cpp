@@ -13,6 +13,7 @@
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/helpers/kernel_filename_helper.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -138,7 +139,7 @@ HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSurfaceStateFor
         EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 
         EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());
-        EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, debugSurfaceState->getCoherencyType());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), debugSurfaceState->getCoherencyType());
     }
 }
 
