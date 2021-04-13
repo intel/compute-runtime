@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -30,7 +30,7 @@ if(TESTS_GEN12LP)
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_gen12lp.inl
-      ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_gen12lp.cpp
+      ${NEO_SOURCE_DIR}/shared/test/common/gen12lp/unit_test_helper_gen12lp.cpp
   )
 
   get_property(NEO_CORE_TESTS_GEN12LP GLOBAL PROPERTY NEO_CORE_TESTS_GEN12LP)

@@ -7,6 +7,7 @@
 
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "opencl/source/command_queue/enqueue_kernel.h"
 #include "opencl/source/command_queue/hardware_interface.h"
@@ -14,7 +15,6 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"

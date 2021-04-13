@@ -12,9 +12,8 @@
 #include "shared/test/common/fixtures/command_container_fixture.h"
 #include "shared/test/common/fixtures/front_window_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
-
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 
 using namespace NEO;
 

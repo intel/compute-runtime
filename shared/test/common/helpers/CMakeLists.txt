@@ -30,6 +30,8 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/variable_backup.h
 )
 

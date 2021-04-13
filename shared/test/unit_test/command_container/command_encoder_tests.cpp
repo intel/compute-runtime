@@ -7,8 +7,8 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 
-#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "test.h"
 
 using namespace NEO;
