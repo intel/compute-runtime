@@ -8,20 +8,18 @@
 #pragma once
 #include "shared/source/helpers/aux_translation.h"
 
-#include "opencl/source/helpers/properties_helper.h"
-
 #include "hw_cmds.h"
 
 namespace NEO {
 
-class Kernel;
+struct KernelDescriptor;
 struct HardwareInfo;
 
 template <typename GfxFamily>
 struct UnitTestHelper {
     static bool isL3ConfigProgrammable();
 
-    static bool evaluateDshUsage(size_t sizeBeforeEnqueue, size_t sizeAfterEnqueue, Kernel *kernel, uint32_t rootDeviceIndex);
+    static bool evaluateDshUsage(size_t sizeBeforeEnqueue, size_t sizeAfterEnqueue, const KernelDescriptor *kernelDescriptor, uint32_t rootDeviceIndex);
 
     static bool isPageTableManagerSupported(const HardwareInfo &hwInfo);
 

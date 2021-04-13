@@ -156,8 +156,9 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
+    auto kernelDescriptor = &kernel->getKernelInfo().kernelDescriptor;
 
-    EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), kernel, rootDeviceIndex));
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), kernelDescriptor, rootDeviceIndex));
     EXPECT_NE(iohBefore, pIOH->getUsed());
     if (kernel->requiresSshForBuffers()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());

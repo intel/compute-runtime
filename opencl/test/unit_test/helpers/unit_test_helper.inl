@@ -13,7 +13,7 @@ bool UnitTestHelper<GfxFamily>::isL3ConfigProgrammable() {
 };
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::evaluateDshUsage(size_t sizeBeforeEnqueue, size_t sizeAfterEnqueue, Kernel *kernel, uint32_t rootDeviceIndex) {
+bool UnitTestHelper<GfxFamily>::evaluateDshUsage(size_t sizeBeforeEnqueue, size_t sizeAfterEnqueue, const KernelDescriptor *kernelDescriptor, uint32_t rootDeviceIndex) {
     if (sizeBeforeEnqueue != sizeAfterEnqueue) {
         return true;
     }
