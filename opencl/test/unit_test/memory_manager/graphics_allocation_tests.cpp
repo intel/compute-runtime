@@ -150,6 +150,44 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsTimestampPacketThenCpuAccessIsR
     EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER));
 }
 
+TEST(GraphicsAllocationTest, whenAllocationRequiresCpuAccessThenAllocationIsLockable) {
+    auto firstAllocationIdx = static_cast<int>(GraphicsAllocation::AllocationType::UNKNOWN);
+    auto lastAllocationIdx = static_cast<int>(GraphicsAllocation::AllocationType::COUNT);
+
+    for (int allocationIdx = firstAllocationIdx; allocationIdx != lastAllocationIdx; allocationIdx++) {
+        auto allocationType = static_cast<GraphicsAllocation::AllocationType>(allocationIdx);
+        if (GraphicsAllocation::isCpuAccessRequired(allocationType)) {
+            EXPECT_TRUE(GraphicsAllocation::isLockable(allocationType));
+        }
+    }
+}
+
+TEST(GraphicsAllocationTest, whenAllocationTypeIsISAThenAllocationIsLockable) {
+    EXPECT_TRUE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::KERNEL_ISA));
+    EXPECT_TRUE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL));
+}
+
+TEST(GraphicsAllocationTest, whenAllocationTypeIsBufferThenAllocationIsLockable) {
+    EXPECT_TRUE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::BUFFER));
+    EXPECT_TRUE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY));
+}
+
+TEST(GraphicsAllocationTest, whenAllocationTypeIsGpuTimestampDeviceBufferThenAllocationIsLockable) {
+    EXPECT_TRUE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER));
+}
+
+TEST(GraphicsAllocationTest, whenAllocationTypeIsSvmGpuThenAllocationIsLockable) {
+    EXPECT_TRUE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::SVM_GPU));
+}
+
+TEST(GraphicsAllocationTest, whenAllocationTypeIsBufferCompressedThenAllocationIsNotLockable) {
+    EXPECT_FALSE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED));
+}
+
+TEST(GraphicsAllocationTest, whenAllocationTypeIsImageThenAllocationIsNotLockable) {
+    EXPECT_FALSE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::IMAGE));
+}
+
 TEST(GraphicsAllocationTest, givenDefaultAllocationWhenGettingNumHandlesThenOneIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
     EXPECT_EQ(1u, graphicsAllocation.getNumGmms());
