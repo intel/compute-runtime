@@ -35,13 +35,6 @@ struct DriverHandleImp : public DriverHandle {
                                       ze_memory_allocation_properties_t *pMemAllocProperties,
                                       ze_device_handle_t *phDevice) override;
 
-    ze_result_t allocSharedMem(ze_device_handle_t hDevice,
-                               const ze_device_mem_alloc_desc_t *deviceDesc,
-                               const ze_host_mem_alloc_desc_t *hostDesc,
-                               size_t size,
-                               size_t alignment,
-                               void **ptr) override;
-
     ze_result_t getMemAddressRange(const void *ptr, void **pBase, size_t *pSize) override;
     ze_result_t freeMem(const void *ptr) override;
     NEO::MemoryManager *getMemoryManager() override;

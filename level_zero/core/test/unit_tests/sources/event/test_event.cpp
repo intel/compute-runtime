@@ -80,7 +80,7 @@ struct EventPoolFailTests : public ::testing::Test {
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
-        context->subDeviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
     void TearDown() override {

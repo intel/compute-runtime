@@ -578,7 +578,7 @@ HWTEST_F(CommandListDualStroage, givenIndirectDispatchWithSharedDualStorageMemor
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
-    auto result = device->getDriverHandle()->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &alloc);
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &alloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_group_count_t *pThreadGroupDimensions = static_cast<ze_group_count_t *>(ptrOffset(alloc, sizeof(ze_group_count_t)));

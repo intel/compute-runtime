@@ -57,7 +57,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
                                                                            this->rootDeviceIndices,
-                                                                           this->subDeviceBitfields);
+                                                                           this->deviceBitfields);
 
     auto usmPtr = this->driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size,
                                                                                           unifiedMemoryProperties);
@@ -153,13 +153,60 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                                        size_t size,
                                        size_t alignment,
                                        void **ptr) {
-    DEBUG_BREAK_IF(nullptr == this->driverHandle);
-    return this->driverHandle->allocSharedMem(hDevice,
-                                              deviceDesc,
-                                              hostDesc,
-                                              size,
-                                              alignment,
-                                              ptr);
+    bool relaxedSizeAllowed = false;
+    if (deviceDesc->pNext) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
+            const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
+                reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
+            if (!(relaxedLimitsDesc->flags & ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            relaxedSizeAllowed = true;
+        }
+    }
+
+    if (relaxedSizeAllowed == false &&
+        (size > this->devices.begin()->second->getNEODevice()->getHardwareCapabilities().maxMemAllocSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+
+    auto neoDevice = this->devices.begin()->second->getNEODevice();
+
+    auto deviceBitfields = this->deviceBitfields;
+    NEO::Device *unifiedMemoryPropertiesDevice = nullptr;
+    if (hDevice) {
+        if (isDeviceDefinedForThisContext(Device::fromHandle(hDevice)) == false) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
+
+        neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+        auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+        unifiedMemoryPropertiesDevice = neoDevice;
+        deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
+    }
+
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY,
+                                                                           this->rootDeviceIndices,
+                                                                           deviceBitfields);
+    unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
+
+    if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
+        unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
+    }
+
+    auto usmPtr =
+        this->driverHandle->svmAllocsManager->createSharedUnifiedMemoryAllocation(size,
+                                                                                  unifiedMemoryProperties,
+                                                                                  static_cast<void *>(neoDevice->getSpecializedDevice<L0::Device>()));
+
+    if (usmPtr == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+    *ptr = usmPtr;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ContextImp::freeMem(const void *ptr) {

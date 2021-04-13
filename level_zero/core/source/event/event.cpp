@@ -89,7 +89,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
         }
 
         uint32_t rootDeviceIndex = rootDeviceIndices.at(0);
-        auto &deviceBitfield = contextImp->subDeviceBitfields.at(rootDeviceIndex);
+        auto &deviceBitfield = contextImp->deviceBitfields.at(rootDeviceIndex);
 
         NEO::AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
                                                           true,

@@ -116,7 +116,7 @@ struct ContextImp : Context {
     }
 
     std::set<uint32_t> rootDeviceIndices = {};
-    std::map<uint32_t, NEO::DeviceBitfield> subDeviceBitfields;
+    std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
 

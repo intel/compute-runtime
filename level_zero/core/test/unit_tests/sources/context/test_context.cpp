@@ -113,6 +113,29 @@ TEST_F(MultiDeviceContextTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(MultiDeviceContextTests,
+       whenAllocatingSharedMemoryWithDeviceNotDefinedForContextThenDeviceLostIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+
+    ze_device_handle_t device = driverHandle->devices[1]->toHandle();
+
+    ze_result_t res = driverHandle->createContext(&desc, 1u, &device, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    size_t size = 4096;
+    void *ptr = nullptr;
+    res = contextImp->allocSharedMem(driverHandle->devices[0]->toHandle(), &deviceDesc, &hostDesc, size, 0u, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
+
+    res = L0::Context::fromHandle(hContext)->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 struct SVMAllocsManagerContextMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerContextMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
     void *createHostUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties) override {
