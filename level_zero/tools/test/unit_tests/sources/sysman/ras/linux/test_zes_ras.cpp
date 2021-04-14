@@ -151,8 +151,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPer
         memset(setConfig.detailedThresholds.category, 1, sizeof(setConfig.detailedThresholds.category));
         EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesRasSetConfig(handle, &setConfig));
     }
-    pSysmanDeviceImp->pRasHandleContext->handleList.pop_back();
-    delete pTestRasImp;
+    pSysmanDeviceImp->pRasHandleContext->releaseRasHandles();
 }
 
 } // namespace ult

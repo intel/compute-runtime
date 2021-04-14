@@ -41,6 +41,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     Device *getDeviceHandle();
     SysmanDeviceImp *getSysmanDeviceImp();
     std::string getPciRootPortDirectoryPath(std::string realPciPath);
+    void releasePmtObject();
 
   protected:
     XmlParser *pXmlParser = nullptr;

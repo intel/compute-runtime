@@ -39,6 +39,7 @@ struct RasHandleContext {
     ~RasHandleContext();
 
     void init(std::vector<ze_device_handle_t> &deviceHandles);
+    void releaseRasHandles();
 
     ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas);
 

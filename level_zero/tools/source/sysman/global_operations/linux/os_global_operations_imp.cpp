@@ -170,6 +170,8 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     }
 
     pLinuxSysmanImp->getSysmanDeviceImp()->pEngineHandleContext->releaseEngines();
+    pLinuxSysmanImp->getSysmanDeviceImp()->pRasHandleContext->releaseRasHandles();
+    pLinuxSysmanImp->releasePmtObject();
     static_cast<DeviceImp *>(getDevice())->releaseResources();
     for (auto &&fd : myPidFds) {
         // Close open filedescriptors to the device

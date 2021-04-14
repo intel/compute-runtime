@@ -117,6 +117,12 @@ LinuxSysmanImp::LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) {
     this->pParentSysmanDeviceImp = pParentSysmanDeviceImp;
 }
 
+void LinuxSysmanImp::releasePmtObject() {
+    for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
+        delete subDeviceIdToPmtEntry.second;
+    }
+}
+
 LinuxSysmanImp::~LinuxSysmanImp() {
     if (nullptr != pSysfsAccess) {
         delete pSysfsAccess;
@@ -142,9 +148,7 @@ LinuxSysmanImp::~LinuxSysmanImp() {
         delete pPmuInterface;
         pPmuInterface = nullptr;
     }
-    for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
-        delete subDeviceIdToPmtEntry.second;
-    }
+    releasePmtObject();
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {

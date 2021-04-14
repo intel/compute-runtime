@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,17 @@
 
 namespace L0 {
 
-RasHandleContext::~RasHandleContext() {
+void RasHandleContext::releaseRasHandles() {
     for (Ras *pRas : handleList) {
         delete pRas;
     }
+    handleList.clear();
 }
+
+RasHandleContext::~RasHandleContext() {
+    releaseRasHandles();
+}
+
 void RasHandleContext::createHandle(zes_ras_error_type_t type, ze_device_handle_t deviceHandle) {
     Ras *pRas = new RasImp(pOsSysman, type, deviceHandle);
     handleList.push_back(pRas);
