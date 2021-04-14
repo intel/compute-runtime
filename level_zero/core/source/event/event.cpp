@@ -158,7 +158,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 
     if (eventPool->isEventPoolUsedForTimestamp) {
         event->isTimestampEvent = true;
-        event->timestampsData = std::make_unique<NEO::TimestampPackets<uint32_t>>();
+        event->kernelTimestampsData = std::make_unique<NEO::TimestampPackets<uint32_t>[]>(EventPacketsCount::maxKernelSplit);
     }
 
     auto alloc = eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
@@ -177,28 +177,60 @@ NEO::GraphicsAllocation &EventImp::getAllocation(Device *device) {
     return *this->eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
 }
 
-uint64_t Event::getTimestampPacketAddress(Device *device) {
-    return getGpuAddress(device) + packetsInUse * NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
+void Event::resetPackets() {
+    for (uint32_t i = 0; i < kernelCount; i++) {
+        kernelTimestampsData[i].setPacketsUsed(1);
+    }
+    kernelCount = 1;
+}
+
+uint32_t Event::getPacketsInUse() {
+    if (isTimestampEvent) {
+        uint32_t packetsInUse = 0;
+        for (uint32_t i = 0; i < kernelCount; i++) {
+            packetsInUse += kernelTimestampsData[i].getPacketsUsed();
+        };
+        return packetsInUse;
+    } else {
+        return 1;
+    }
+}
+
+void Event::setPacketsInUse(uint32_t value) {
+    kernelTimestampsData[getCurrKernelDataIndex()].setPacketsUsed(value);
+};
+
+uint64_t Event::getPacketAddress(Device *device) {
+    uint64_t address = getGpuAddress(device);
+    if (isTimestampEvent && kernelCount > 1) {
+        for (uint32_t i = 0; i < kernelCount - 1; i++) {
+            address += kernelTimestampsData[i].getPacketsUsed() *
+                       NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
+        }
+    }
+    return address;
 }
 
 ze_result_t EventImp::calculateProfilingData() {
-    globalStartTS = timestampsData->getGlobalStartValue(0);
-    globalEndTS = timestampsData->getGlobalEndValue(0);
-    contextStartTS = timestampsData->getContextStartValue(0);
-    contextEndTS = timestampsData->getContextEndValue(0);
+    globalStartTS = kernelTimestampsData[0].getGlobalStartValue(0);
+    globalEndTS = kernelTimestampsData[0].getGlobalEndValue(0);
+    contextStartTS = kernelTimestampsData[0].getContextStartValue(0);
+    contextEndTS = kernelTimestampsData[0].getContextEndValue(0);
 
-    for (auto i = 1u; i < packetsInUse; i++) {
-        if (globalStartTS > timestampsData->getGlobalStartValue(i)) {
-            globalStartTS = timestampsData->getGlobalStartValue(i);
-        }
-        if (contextStartTS > timestampsData->getContextStartValue(i)) {
-            contextStartTS = timestampsData->getContextStartValue(i);
-        }
-        if (contextEndTS < timestampsData->getContextEndValue(i)) {
-            contextEndTS = timestampsData->getContextEndValue(i);
-        }
-        if (globalEndTS < timestampsData->getGlobalEndValue(i)) {
-            globalEndTS = timestampsData->getGlobalEndValue(i);
+    for (uint32_t i = 0; i < kernelCount; i++) {
+        for (auto packetId = 0u; packetId < kernelTimestampsData[i].getPacketsUsed(); packetId++) {
+            if (globalStartTS > kernelTimestampsData[i].getGlobalStartValue(packetId)) {
+                globalStartTS = kernelTimestampsData[i].getGlobalStartValue(packetId);
+            }
+            if (contextStartTS > kernelTimestampsData[i].getContextStartValue(packetId)) {
+                contextStartTS = kernelTimestampsData[i].getContextStartValue(packetId);
+            }
+            if (contextEndTS < kernelTimestampsData[i].getContextEndValue(packetId)) {
+                contextEndTS = kernelTimestampsData[i].getContextEndValue(packetId);
+            }
+            if (globalEndTS < kernelTimestampsData[i].getGlobalEndValue(packetId)) {
+                globalEndTS = kernelTimestampsData[i].getGlobalEndValue(packetId);
+            }
         }
     }
 
@@ -206,16 +238,30 @@ ze_result_t EventImp::calculateProfilingData() {
 }
 
 void EventImp::assignTimestampData(void *address) {
-    uint32_t packetsToCopy = packetsInUse ? packetsInUse : NEO::TimestampPacketSizeControl::preferredPacketCount;
-
-    for (uint32_t i = 0; i < packetsToCopy; i++) {
-        timestampsData->assignDataToAllTimestamps(i, address);
-        address = ptrOffset(address, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+    for (uint32_t i = 0; i < kernelCount; i++) {
+        uint32_t packetsToCopy = kernelTimestampsData[i].getPacketsUsed();
+        for (uint32_t packetId = 0; packetId < packetsToCopy; packetId++) {
+            kernelTimestampsData[i].assignDataToAllTimestamps(packetId, address);
+            address = ptrOffset(address, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+        }
     }
 }
 
 ze_result_t Event::destroy() {
     delete this;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t EventImp::queryStatusKernelTimestamp() {
+    assignTimestampData(hostAddress);
+    for (uint32_t i = 0; i < kernelCount; i++) {
+        uint32_t packetsToCheck = kernelTimestampsData[i].getPacketsUsed();
+        for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++) {
+            if (kernelTimestampsData[i].getContextEndValue(packetId) == Event::STATE_CLEARED) {
+                return ZE_RESULT_NOT_READY;
+            }
+        }
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -227,9 +273,7 @@ ze_result_t EventImp::queryStatus() {
     }
     this->csr->downloadAllocations();
     if (isTimestampEvent) {
-        auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
-        auto timeStampAddress = baseAddr + NEO::TimestampPackets<uint32_t>::getContextEndOffset();
-        hostAddr = reinterpret_cast<uint64_t *>(timeStampAddress);
+        return queryStatusKernelTimestamp();
     }
     memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), static_cast<void *>(hostAddr), sizeof(uint32_t));
     return queryVal == Event::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
@@ -248,13 +292,15 @@ ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
             NEO::CpuIntrinsics::clFlush(tsptr);
         }
     };
-
-    for (uint32_t i = 0; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
-        eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getContextStartOffset());
-        eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getGlobalStartOffset());
-        eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getContextEndOffset());
-        eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getGlobalEndOffset());
-        baseAddr += NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
+    for (uint32_t i = 0; i < kernelCount; i++) {
+        uint32_t packetsToSet = kernelTimestampsData[i].getPacketsUsed();
+        for (uint32_t i = 0; i < packetsToSet; i++) {
+            eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getContextStartOffset());
+            eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getGlobalStartOffset());
+            eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getContextEndOffset());
+            eventTsSetFunc(baseAddr + NEO::TimestampPackets<uint32_t>::getGlobalEndOffset());
+            baseAddr += NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
+        }
     }
     assignTimestampData(hostAddress);
 
@@ -317,8 +363,17 @@ ze_result_t EventImp::hostSynchronize(uint64_t timeout) {
 }
 
 ze_result_t EventImp::reset() {
-    resetPackets();
-    return hostEventSetValue(Event::STATE_INITIAL);
+    if (isTimestampEvent) {
+        kernelCount = EventPacketsCount::maxKernelSplit;
+        for (uint32_t i = 0; i < kernelCount; i++) {
+            kernelTimestampsData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
+        }
+        hostEventSetValue(Event::STATE_INITIAL);
+        resetPackets();
+        return ZE_RESULT_SUCCESS;
+    } else {
+        return hostEventSetValue(Event::STATE_INITIAL);
+    }
 }
 
 ze_result_t EventImp::queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) {

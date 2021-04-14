@@ -23,6 +23,11 @@ typedef uint64_t FlushStamp;
 struct EventPool;
 struct MetricStreamer;
 
+namespace EventPacketsCount {
+constexpr uint32_t maxKernelSplit = 3;
+constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketSizeControl::preferredPacketCount;
+} // namespace EventPacketsCount
+
 struct Event : _ze_event_handle_t {
     virtual ~Event() = default;
     virtual ze_result_t destroy();
@@ -45,22 +50,20 @@ struct Event : _ze_event_handle_t {
 
     virtual NEO::GraphicsAllocation &getAllocation(Device *device) = 0;
 
-    void increasePacketsInUse() { packetsInUse++; }
-    void setPacketsInUse(uint32_t newPacketsInUse) { packetsInUse = newPacketsInUse; }
-    void resetPackets() { packetsInUse = 0; }
     virtual uint64_t getGpuAddress(Device *device) = 0;
+    uint32_t getPacketsInUse();
+    uint64_t getPacketAddress(Device *device);
+    void resetPackets();
     void *getHostAddress() { return hostAddress; }
-    uint32_t getPacketsInUse() { return packetsInUse; }
-    uint64_t getTimestampPacketAddress(Device *device);
-
+    void setPacketsInUse(uint32_t value);
+    uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
     void *hostAddress = nullptr;
-    uint32_t packetsInUse = 0u;
-
+    uint32_t kernelCount = 1u;
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
     bool isTimestampEvent = false;
 
-    std::unique_ptr<NEO::TimestampPackets<uint32_t>> timestampsData = nullptr;
+    std::unique_ptr<NEO::TimestampPackets<uint32_t>[]> kernelTimestampsData = nullptr;
     uint64_t globalStartTS;
     uint64_t globalEndTS;
     uint64_t contextStartTS;
@@ -101,6 +104,7 @@ struct EventImp : public Event {
 
   protected:
     ze_result_t calculateProfilingData();
+    ze_result_t queryStatusKernelTimestamp();
     ze_result_t hostEventSetValue(uint32_t eventValue);
     ze_result_t hostEventSetValueTimestamps(uint32_t eventVal);
     void assignTimestampData(void *address);
@@ -162,9 +166,10 @@ struct EventPoolImp : public EventPool {
     size_t numEvents;
 
   protected:
-    const uint32_t eventSize = static_cast<uint32_t>(alignUp(NEO::TimestampPacketSizeControl::preferredPacketCount * NEO::TimestampPackets<uint32_t>::getSinglePacketSize(),
-                                                             MemoryConstants::cacheLineSize));
-    const uint32_t eventAlignment = MemoryConstants::cacheLineSize;
+    const uint32_t eventAlignment = 4 * MemoryConstants::cacheLineSize;
+    const uint32_t eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets *
+                                                                 NEO::TimestampPackets<uint32_t>::getSinglePacketSize(),
+                                                             eventAlignment));
 };
 
 } // namespace L0

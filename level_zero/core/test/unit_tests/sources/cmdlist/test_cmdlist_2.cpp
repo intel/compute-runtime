@@ -1092,7 +1092,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToMemoryCopy
 
     commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100, event->toHandle(), 0, nullptr);
     EXPECT_GT(commandList.appendMemoryCopyBlitCalledTimes, 1u);
-    EXPECT_EQ(event->getPacketsInUse(), 0u);
+    EXPECT_EQ(1u, event->getPacketsInUse());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -1180,7 +1180,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenTimestampPassedToMemoryCopyThen
     commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100, event->toHandle(), 0, nullptr);
     EXPECT_GT(commandList.appendMemoryCopyKernelWithGACalledTimes, 0u);
     EXPECT_EQ(commandList.appendMemoryCopyBlitCalledTimes, 0u);
-    EXPECT_EQ(event->getPacketsInUse(), 0u);
+    EXPECT_EQ(1u, event->getPacketsInUse());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(

@@ -136,8 +136,10 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
+    event->setPacketsInUse(16u);
     commandList->appendEventReset(event->toHandle());
-    ASSERT_EQ(0u, event->getPacketsInUse());
+    ASSERT_EQ(1u, event->getPacketsInUse());
+
     auto contextOffset = NEO::TimestampPackets<uint32_t>::getContextEndOffset();
     auto baseAddr = event->getGpuAddress(device);
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
@@ -148,7 +150,7 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
 
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, itorPC.size());
-    bool postSyncFound = false;
+    uint32_t postSyncFound = 0u;
     for (auto it : itorPC) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
@@ -157,10 +159,11 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
             EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
             EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
             EXPECT_FALSE(cmd->getDcFlushEnable());
-            postSyncFound = true;
+            postSyncFound++;
+            gpuAddress += NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
         }
     }
-    ASSERT_TRUE(postSyncFound);
+    ASSERT_EQ(EventPacketsCount::eventPackets, postSyncFound);
 }
 
 HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPipeControlWithDcFlushAppended, SklPlusMatcher) {

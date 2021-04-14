@@ -54,8 +54,6 @@ GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCo
     data.globalEnd = 4u;
 
     event->hostAddress = &data;
-
-    event->packetsInUse = 1;
     ze_kernel_timestamp_result_t result = {};
 
     event->queryKernelTimestamp(&result);
@@ -81,7 +79,7 @@ GEN12LPTEST_F(TimestampEvent, givenEventMoreThanOneTimestampsPacketWhenQueryKern
     data[2].globalEnd = 7u;
 
     event->hostAddress = &data;
-    event->packetsInUse = 3;
+    event->setPacketsInUse(3u);
     ze_kernel_timestamp_result_t result = {};
 
     event->queryKernelTimestamp(&result);

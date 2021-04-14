@@ -132,8 +132,10 @@ TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelT
 
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
-    uint32_t packetsSize = NEO::TimestampPacketSizeControl::preferredPacketCount * static_cast<uint32_t>(NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
-    uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(packetsSize, MemoryConstants::cacheLineSize));
+    uint32_t maxKernelSplit = 3;
+    uint32_t packetsSize = maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount *
+                           static_cast<uint32_t>(NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+    uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(packetsSize, 4 * MemoryConstants::cacheLineSize));
     EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }
 
@@ -243,6 +245,37 @@ TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamRece
     ASSERT_NE(nullptr, event);
     ASSERT_NE(nullptr, event.get()->csr);
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event.get()->csr);
+}
+
+TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndOffsetAreSet) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event);
+
+    ze_result_t result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    uint64_t gpuAddr = event->getGpuAddress(device);
+    EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
+
+    event->hostSignal();
+    result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
+
+    event->reset();
+    result = event->queryStatus();
+    EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
 TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErrorIsReturned) {
@@ -414,16 +447,18 @@ TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventF
 }
 
 TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCorrectDataAreSet) {
-    EXPECT_NE(nullptr, event->timestampsData);
-
-    for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
-        EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->timestampsData->getContextStartValue(i));
-        EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->timestampsData->getGlobalStartValue(i));
-        EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->timestampsData->getContextEndValue(i));
-        EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->timestampsData->getGlobalEndValue(i));
+    EXPECT_NE(nullptr, event->kernelTimestampsData);
+    for (auto j = 0u; j < EventPacketsCount::maxKernelSplit; j++) {
+        for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
+            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelTimestampsData[j].getContextStartValue(i));
+            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelTimestampsData[j].getGlobalStartValue(i));
+            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelTimestampsData[j].getContextEndValue(i));
+            EXPECT_EQ(static_cast<uint64_t>(Event::State::STATE_INITIAL), event->kernelTimestampsData[j].getGlobalEndValue(i));
+        }
+        EXPECT_EQ(1u, event->kernelTimestampsData[j].getPacketsUsed());
     }
 
-    EXPECT_EQ(0u, event->getPacketsInUse());
+    EXPECT_EQ(1u, event->kernelCount);
 }
 
 TEST_F(TimestampEventCreate, givenSingleTimestampEventThenAllocationSizeCreatedForAllTimestamps) {
@@ -443,27 +478,45 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsOfPacketTagBuff
 }
 
 TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsSetThenCorrectOffsetIsReturned) {
-    EXPECT_EQ(0u, event->getPacketsInUse());
+    EXPECT_EQ(1u, event->getPacketsInUse());
     auto gpuAddr = event->getGpuAddress(device);
-    EXPECT_EQ(gpuAddr, event->getTimestampPacketAddress(device));
+    EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
 
     event->setPacketsInUse(4u);
     EXPECT_EQ(4u, event->getPacketsInUse());
 
     gpuAddr += (4u * NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
-    EXPECT_EQ(gpuAddr, event->getTimestampPacketAddress(device));
+
+    event->kernelCount = 2;
+    event->setPacketsInUse(2u);
+    EXPECT_EQ(6u, event->getPacketsInUse());
+    EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
+
+    gpuAddr += (2u * NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+    event->kernelCount = 3;
+    EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
+    EXPECT_EQ(7u, event->getPacketsInUse());
 }
 
-TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsIncreasedThenCorrectOffsetIsReturned) {
-    EXPECT_EQ(0u, event->getPacketsInUse());
-    auto gpuAddr = event->getGpuAddress(device);
-    EXPECT_EQ(gpuAddr, event->getTimestampPacketAddress(device));
+TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAreSet) {
+    EXPECT_NE(nullptr, event->kernelTimestampsData);
+    event->hostSignal();
+    ze_result_t result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    event->increasePacketsInUse();
-    EXPECT_EQ(1u, event->getPacketsInUse());
-
-    gpuAddr += NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
-    EXPECT_EQ(gpuAddr, event->getTimestampPacketAddress(device));
+    event->reset();
+    result = event->queryStatus();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+    for (auto j = 0u; j < EventPacketsCount::maxKernelSplit; j++) {
+        for (auto i = 0u; i < NEO::TimestampPacketSizeControl::preferredPacketCount; i++) {
+            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelTimestampsData[j].getContextStartValue(i));
+            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelTimestampsData[j].getGlobalStartValue(i));
+            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelTimestampsData[j].getContextEndValue(i));
+            EXPECT_EQ(Event::State::STATE_INITIAL, event->kernelTimestampsData[j].getGlobalEndValue(i));
+        }
+        EXPECT_EQ(1u, event->kernelTimestampsData[j].getPacketsUsed());
+    }
+    EXPECT_EQ(1u, event->kernelCount);
 }
 
 HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
