@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,9 +42,18 @@ inline void BlitterDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBu
 }
 
 template <typename GfxFamily>
+inline void BlitterDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer) {
+}
+
+template <typename GfxFamily>
 inline size_t BlitterDispatcher<GfxFamily>::getSizeCacheFlush(const HardwareInfo &hwInfo) {
     size_t size = EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
     return size;
+}
+
+template <typename GfxFamily>
+inline size_t BlitterDispatcher<GfxFamily>::getSizeTlbFlush() {
+    return 0u;
 }
 
 } // namespace NEO

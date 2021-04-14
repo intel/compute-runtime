@@ -8,6 +8,8 @@
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -46,8 +48,11 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::allocateResources;
     using BaseClass::currentTagData;
     using BaseClass::DrmDirectSubmission;
+    using BaseClass::getSizeNewResourceHandler;
     using BaseClass::getTagAddressValue;
+    using BaseClass::handleNewResourcesSubmission;
     using BaseClass::handleResidency;
+    using BaseClass::isNewResourceHandleNeeded;
     using BaseClass::submit;
     using BaseClass::switchRingBuffers;
     using BaseClass::tagAddress;
@@ -100,4 +105,155 @@ HWTEST_F(DrmDirectSubmissionTest, whenCheckForDirectSubmissionSupportThenProperV
 
     auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
     EXPECT_EQ(directSubmissionSupported, hwHelper.isDirectSubmissionSupported() && executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm()->isVmBindAvailable());
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenDispatchCommandBufferThenTlbIsFlushed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(1);
+
+    MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
+                                                                     *osContext.get());
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
+
+    directSubmission.handleNewResourcesSubmission();
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+    EXPECT_TRUE(pipeControl->getTlbInvalidate());
+
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundhWhenDispatchCommandBufferThenTlbIsFlushed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(-1);
+
+    MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
+                                                                     *osContext.get());
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    drm->setNewResourceBound(true);
+
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
+
+    directSubmission.handleNewResourcesSubmission();
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+    EXPECT_TRUE(pipeControl->getTlbInvalidate());
+    EXPECT_FALSE(drm->getNewResourceBound());
+
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givennoNewResourceBoundhWhenDispatchCommandBufferThenTlbIsNotFlushed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(-1);
+
+    MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
+                                                                     *osContext.get());
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    drm->setNewResourceBound(false);
+
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+
+    directSubmission.handleNewResourcesSubmission();
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+    EXPECT_EQ(pipeControl, nullptr);
+    EXPECT_FALSE(drm->getNewResourceBound());
+
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlusZeroAndNewResourceBoundhWhenDispatchCommandBufferThenTlbIsNotFlushed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(0);
+
+    MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
+                                                                     *osContext.get());
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    drm->setNewResourceBound(true);
+
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+
+    directSubmission.handleNewResourcesSubmission();
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+    EXPECT_EQ(pipeControl, nullptr);
+    EXPECT_FALSE(drm->getNewResourceBound());
+
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenBlitterDispatcherWhenHandleNewResourceThenDoNotFlushTlb) {
+    using MI_FLUSH = typename FamilyType::MI_FLUSH_DW;
+    using Dispatcher = BlitterDispatcher<FamilyType>;
+
+    auto osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm(),
+                                                      0u, device->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup,
+                                                      false);
+    MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
+                                                                     *osContext.get());
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    drm->setNewResourceBound(true);
+
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
+
+    directSubmission.handleNewResourcesSubmission();
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto *miFlush = hwParse.getCommand<MI_FLUSH>();
+    EXPECT_EQ(miFlush, nullptr);
+    EXPECT_TRUE(drm->getNewResourceBound());
+
+    EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
 }

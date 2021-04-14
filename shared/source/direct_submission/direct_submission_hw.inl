@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -261,6 +261,8 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch() {
         size += Dispatcher::getSizeMonitorFence(*hwInfo);
     }
 
+    size += getSizeNewResourceHandler();
+
     return size;
 }
 
@@ -329,6 +331,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         buffersSwitched = true;
     }
 
+    handleNewResourcesSubmission();
+
     void *currentPosition = dispatchWorkloadSection(batchBuffer);
 
     if (ringStart) {
@@ -373,6 +377,15 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchDisablePrefetcher
 
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDisablePrefetcher() {
+    return 0u;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::handleNewResourcesSubmission() {
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeNewResourceHandler() {
     return 0u;
 }
 

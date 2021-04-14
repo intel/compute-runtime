@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,9 +53,22 @@ inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuf
 }
 
 template <typename GfxFamily>
+inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer) {
+    PipeControlArgs args(false);
+    args.tlbInvalidation = true;
+    args.pipeControlFlushEnable = true;
+    MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdBuffer, args);
+}
+
+template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeCacheFlush(const HardwareInfo &hwInfo) {
     size_t size = MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
     return size;
+}
+
+template <typename GfxFamily>
+inline size_t RenderDispatcher<GfxFamily>::getSizeTlbFlush() {
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
 }
 
 } // namespace NEO

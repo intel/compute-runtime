@@ -174,6 +174,9 @@ class Drm {
     uint64_t getNextFenceVal(uint32_t vmHandleId) { return ++fenceVal[vmHandleId]; }
     uint64_t *getFenceAddr(uint32_t vmHandleId) { return &pagingFence[vmHandleId]; }
 
+    void setNewResourceBound(bool value) { this->newResourceBound = value; };
+    bool getNewResourceBound() { return this->newResourceBound; };
+
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
     bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, int &sliceCount, int &subSliceCount, int &euCount);
@@ -187,6 +190,7 @@ class Drm {
     bool bindAvailable = false;
     bool directSubmissionActive = false;
     bool contextDebugSupported = false;
+    bool newResourceBound = false;
     std::once_flag checkBindOnce;
     std::unique_ptr<HwDeviceId> hwDeviceId;
     int deviceId = 0;

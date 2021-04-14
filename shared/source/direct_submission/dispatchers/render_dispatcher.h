@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,8 @@ class RenderDispatcher : public Dispatcher<GfxFamily> {
     static size_t getSizeMonitorFence(const HardwareInfo &hwInfo);
 
     static void dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo);
+    static void dispatchTlbFlush(LinearStream &cmdBuffer);
     static size_t getSizeCacheFlush(const HardwareInfo &hwInfo);
+    static size_t getSizeTlbFlush();
 };
 } // namespace NEO

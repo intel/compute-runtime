@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,9 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     bool submit(uint64_t gpuAddress, size_t size) override;
 
     bool handleResidency() override;
+    bool isNewResourceHandleNeeded();
+    void handleNewResourcesSubmission() override;
+    size_t getSizeNewResourceHandler() override;
     void handleSwitchRingBuffers() override;
     uint64_t updateTagValue() override;
     void getTagAddressValue(TagData &tagData) override;
