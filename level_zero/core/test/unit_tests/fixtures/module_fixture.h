@@ -75,6 +75,9 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
             delete mockKernelInfo;
             delete mockKernelDescriptor;
         }
+        void resizeExplicitArgs(size_t size) {
+            kernelDescriptor->payloadMappings.explicitArgs.resize(size);
+        }
         NEO::KernelDescriptor *mockKernelDescriptor = nullptr;
         char kernelHeap[MemoryConstants::pageSize] = {};
         NEO::KernelInfo *mockKernelInfo = nullptr;
@@ -102,6 +105,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     class MockKernel : public WhiteBox<L0::KernelImp> {
       public:
+        using KernelImp::kernelArgHandlers;
         using KernelImp::kernelHasIndirectAccess;
         using L0::KernelImp::privateMemoryGraphicsAllocation;
 

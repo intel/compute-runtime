@@ -515,6 +515,10 @@ ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t KernelImp::setArgUnknown(uint32_t argIndex, size_t argSize, const void *argVal) {
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const void *argVal) {
     const auto &allArgs = kernelImmData->getDescriptor().payloadMappings.explicitArgs;
     const auto &currArg = allArgs[argIndex];
@@ -671,7 +675,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     for (const auto &argT : kernelImmData->getDescriptor().payloadMappings.explicitArgs) {
         switch (argT.type) {
         default:
-            UNRECOVERABLE_IF(true);
+            this->kernelArgHandlers.push_back(&KernelImp::setArgUnknown);
             break;
         case NEO::ArgDescriptor::ArgTPointer:
             this->kernelArgHandlers.push_back(&KernelImp::setArgBuffer);

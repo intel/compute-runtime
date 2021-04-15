@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -32,6 +34,30 @@ void NEO::populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary
 
 namespace L0 {
 namespace ult {
+
+using KernelInitTest = Test<ModuleImmutableDataFixture>;
+
+TEST_F(KernelInitTest, givenKernelToInitWhenItHasUnknownArgThenUnknowKernelArgHandlerAssigned) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernelImmData->resizeExplicitArgs(1);
+    kernel->initialize(&desc);
+    EXPECT_EQ(kernel->kernelArgHandlers[0], &KernelImp::setArgUnknown);
+    EXPECT_EQ(mockKernelImmData->getDescriptor().payloadMappings.explicitArgs[0].type, NEO::ArgDescriptor::ArgTUnknown);
+}
+
+TEST(KernelArgTest, givenKernelWhenSetArgUnknownCalledThenSuccessRteurned) {
+    Mock<Kernel> mockKernel;
+    EXPECT_EQ(mockKernel.setArgUnknown(0, 0, nullptr), ZE_RESULT_SUCCESS);
+}
 
 using KernelImpSetGroupSizeTest = Test<DeviceFixture>;
 
