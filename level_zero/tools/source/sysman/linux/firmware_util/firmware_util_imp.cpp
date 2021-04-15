@@ -8,18 +8,30 @@
 #include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util_imp.h"
 
 namespace L0 {
-const std::string FirmwareUtilImp::fwUtilLibraryFile = "libigsc.so.0";
-const std::string FirmwareUtilImp::fwDeviceInitByDevice = "igsc_device_init_by_device_info";
-const std::string FirmwareUtilImp::fwDeviceGetDeviceInfo = "igsc_device_get_device_info";
-const std::string FirmwareUtilImp::fwDeviceFwVersion = "igsc_device_fw_version";
-const std::string FirmwareUtilImp::fwDeviceIteratorCreate = "igsc_device_iterator_create";
-const std::string FirmwareUtilImp::fwDeviceIteratorNext = "igsc_device_iterator_next";
-const std::string FirmwareUtilImp::fwDeviceIteratorDestroy = "igsc_device_iterator_destroy";
-const std::string FirmwareUtilImp::fwDeviceFwUpdate = "igsc_device_fw_update";
-const std::string FirmwareUtilImp::fwImageOpromInit = "igsc_image_oprom_init";
-const std::string FirmwareUtilImp::fwImageOpromType = "igsc_image_oprom_type";
-const std::string FirmwareUtilImp::fwDeviceOpromUpdate = "igsc_device_oprom_update";
-const std::string FirmwareUtilImp::fwDeviceOpromVersion = "igsc_device_oprom_version";
+const std::string fwUtilLibraryFile = "libigsc.so.0";
+const std::string fwDeviceInitByDevice = "igsc_device_init_by_device_info";
+const std::string fwDeviceGetDeviceInfo = "igsc_device_get_device_info";
+const std::string fwDeviceFwVersion = "igsc_device_fw_version";
+const std::string fwDeviceIteratorCreate = "igsc_device_iterator_create";
+const std::string fwDeviceIteratorNext = "igsc_device_iterator_next";
+const std::string fwDeviceIteratorDestroy = "igsc_device_iterator_destroy";
+const std::string fwDeviceFwUpdate = "igsc_device_fw_update";
+const std::string fwImageOpromInit = "igsc_image_oprom_init";
+const std::string fwImageOpromType = "igsc_image_oprom_type";
+const std::string fwDeviceOpromUpdate = "igsc_device_oprom_update";
+const std::string fwDeviceOpromVersion = "igsc_device_oprom_version";
+
+pIgscDeviceInitByDevice deviceInitByDevice;
+pIgscDeviceGetDeviceInfo deviceGetDeviceInfo;
+pIgscDeviceFwVersion deviceGetFwVersion;
+pIgscDeviceIteratorCreate deviceIteratorCreate;
+pIgscDeviceIteratorNext deviceItreatorNext;
+pIgscDeviceIteratorDestroy deviceItreatorDestroy;
+pIgscDeviceFwUpdate deviceFwUpdate;
+pIgscImageOpromInit imageOpromInit;
+pIgscImageOpromType imageOpromType;
+pIgscDeviceOpromUpdate deviceOpromUpdate;
+pIgscDeviceOpromVersion deviceOpromVersion;
 
 template <class T>
 bool FirmwareUtilImp::getSymbolAddr(const std::string name, T &proc) {
@@ -166,7 +178,7 @@ FirmwareUtilImp::~FirmwareUtilImp() {
 FirmwareUtil *FirmwareUtil::create() {
     FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp();
     UNRECOVERABLE_IF(nullptr == pFwUtilImp);
-    pFwUtilImp->libraryHandle = NEO::OsLibrary::load(pFwUtilImp->fwUtilLibraryFile);
+    pFwUtilImp->libraryHandle = NEO::OsLibrary::load(fwUtilLibraryFile);
     if (pFwUtilImp->libraryHandle == nullptr || pFwUtilImp->loadEntryPoints() == false) {
         if (nullptr != pFwUtilImp->libraryHandle) {
             delete pFwUtilImp->libraryHandle;

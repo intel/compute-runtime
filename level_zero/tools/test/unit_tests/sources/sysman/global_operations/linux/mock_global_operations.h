@@ -44,8 +44,8 @@ const std::string engine0("0");
 const std::string engine1("1");
 const std::string engine2("2");
 const std::string engine3("3");
-std::string driverVersion("5.0.0-37-generic SMP mod_unload");
-std::string srcVersion("5.0.0-37");
+const std::string driverVersion("5.0.0-37-generic SMP mod_unload");
+const std::string srcVersion("5.0.0-37");
 const std::string ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
 const std::string mockFunctionResetPath("/MOCK_FUNCTION_LEVEL_RESET_PATH");
 const std::string mockDeviceDir("/MOCK_DEVICE_DIR");
@@ -404,6 +404,38 @@ struct Mock<GlobalOperationsFsAccess> : public GlobalOperationsFsAccess {
     MOCK_METHOD(ze_result_t, read, (const std::string file, uint32_t &val), (override));
     MOCK_METHOD(ze_result_t, write, (const std::string file, const std::string val), (override));
     MOCK_METHOD(ze_result_t, canWrite, (const std::string file), (override));
+};
+
+class FirmwareInterface : public FirmwareUtil {};
+template <>
+struct Mock<FirmwareInterface> : public FirmwareUtil {
+
+    ze_result_t mockFwDeviceInit(void) {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t mockFwDeviceInitFail(void) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    ze_result_t mockIfrReturnTrue(bool &ifrStatus) {
+        ifrStatus = true;
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t mockIfrReturnFail(bool &ifrStatus) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    ze_result_t mockIfrReturnFalse(bool &ifrStatus) {
+        ifrStatus = false;
+        return ZE_RESULT_SUCCESS;
+    }
+    Mock<FirmwareInterface>() = default;
+
+    MOCK_METHOD(ze_result_t, fwDeviceInit, (), (override));
+    MOCK_METHOD(ze_result_t, fwGetVersion, (std::string & fwVersion), (override));
+    MOCK_METHOD(ze_result_t, opromGetVersion, (std::string & fwVersion), (override));
+    MOCK_METHOD(ze_result_t, getFirstDevice, (igsc_device_info * info), (override));
+    MOCK_METHOD(ze_result_t, fwFlashGSC, (void *pImage, uint32_t size), (override));
+    MOCK_METHOD(ze_result_t, fwFlashOprom, (void *pImage, uint32_t size), (override));
+    MOCK_METHOD(ze_result_t, fwIfrApplied, (bool &ifrStatus), (override));
 };
 
 class PublicLinuxGlobalOperationsImp : public L0::LinuxGlobalOperationsImp {

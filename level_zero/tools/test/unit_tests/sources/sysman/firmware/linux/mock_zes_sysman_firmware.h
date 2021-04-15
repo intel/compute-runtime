@@ -70,6 +70,7 @@ struct Mock<FirmwareInterface> : public FirmwareUtil {
     MOCK_METHOD(ze_result_t, getFirstDevice, (igsc_device_info * info), (override));
     MOCK_METHOD(ze_result_t, fwFlashGSC, (void *pImage, uint32_t size), (override));
     MOCK_METHOD(ze_result_t, fwFlashOprom, (void *pImage, uint32_t size), (override));
+    MOCK_METHOD(ze_result_t, fwIfrApplied, (bool &ifrStatus), (override));
 };
 
 class PublicLinuxFirmwareImp : public L0::LinuxFirmwareImp {

@@ -45,6 +45,18 @@ typedef int (*pIgscDeviceOpromVersion)(struct igsc_device_handle *handle,
                                        uint32_t oprom_type,
                                        struct igsc_oprom_version *version);
 
+extern pIgscDeviceInitByDevice deviceInitByDevice;
+extern pIgscDeviceGetDeviceInfo deviceGetDeviceInfo;
+extern pIgscDeviceFwVersion deviceGetFwVersion;
+extern pIgscDeviceIteratorCreate deviceIteratorCreate;
+extern pIgscDeviceIteratorNext deviceItreatorNext;
+extern pIgscDeviceIteratorDestroy deviceItreatorDestroy;
+extern pIgscDeviceFwUpdate deviceFwUpdate;
+extern pIgscImageOpromInit imageOpromInit;
+extern pIgscImageOpromType imageOpromType;
+extern pIgscDeviceOpromUpdate deviceOpromUpdate;
+extern pIgscDeviceOpromVersion deviceOpromVersion;
+
 class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
   public:
     FirmwareUtilImp();
@@ -55,6 +67,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t opromGetVersion(std::string &fwVersion) override;
     ze_result_t fwFlashGSC(void *pImage, uint32_t size) override;
     ze_result_t fwFlashOprom(void *pImage, uint32_t size) override;
+    ze_result_t fwIfrApplied(bool &ifrStatus) override;
 
     template <class T>
     bool getSymbolAddr(const std::string name, T &proc);
@@ -64,29 +77,5 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     bool loadEntryPoints();
 
     NEO::OsLibrary *libraryHandle = nullptr;
-    static const std::string fwUtilLibraryFile;
-    static const std::string fwDeviceInitByDevice;
-    static const std::string fwDeviceGetDeviceInfo;
-    static const std::string fwDeviceFwVersion;
-    static const std::string fwDeviceIteratorCreate;
-    static const std::string fwDeviceIteratorNext;
-    static const std::string fwDeviceIteratorDestroy;
-    static const std::string fwDeviceFwUpdate;
-    static const std::string fwImageOpromInit;
-    static const std::string fwImageOpromType;
-    static const std::string fwDeviceOpromUpdate;
-    static const std::string fwDeviceOpromVersion;
-
-    pIgscDeviceInitByDevice deviceInitByDevice = nullptr;
-    pIgscDeviceGetDeviceInfo deviceGetDeviceInfo = nullptr;
-    pIgscDeviceFwVersion deviceGetFwVersion = nullptr;
-    pIgscDeviceIteratorCreate deviceIteratorCreate = nullptr;
-    pIgscDeviceIteratorNext deviceItreatorNext = nullptr;
-    pIgscDeviceIteratorDestroy deviceItreatorDestroy = nullptr;
-    pIgscDeviceFwUpdate deviceFwUpdate = nullptr;
-    pIgscImageOpromInit imageOpromInit = nullptr;
-    pIgscImageOpromType imageOpromType = nullptr;
-    pIgscDeviceOpromUpdate deviceOpromUpdate = nullptr;
-    pIgscDeviceOpromVersion deviceOpromVersion = nullptr;
 };
 } // namespace L0

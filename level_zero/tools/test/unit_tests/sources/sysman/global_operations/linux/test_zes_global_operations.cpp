@@ -268,20 +268,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsNotWedgedWhenCallingGetDevice
     EXPECT_EQ(0u, deviceState.reset);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenWedgedFileNotFoundWhenCallingGetDeviceStateThenZeResultErrorUnsupportedFeatureIsReturned) {
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValWedgedFileNotFound));
-    zes_device_state_t deviceState;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetState(device, &deviceState));
-}
-
-TEST_F(SysmanGlobalOperationsFixture, GivenWedgedFileInsufficientPermissionsWhenCallingGetDeviceStateThenZeResultErrorInsufficientPermissionsIsReturned) {
-    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValWedgedFileInsufficientPermissions));
-    zes_device_state_t deviceState;
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesDeviceGetState(device, &deviceState));
-}
-
 TEST_F(SysmanGlobalOperationsFixture, GivenPermissionDeniedWhenCallingGetDeviceStateThenZeResultErrorInsufficientPermissionsIsReturned) {
     ON_CALL(*pSysfsAccess.get(), getRealPath(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getRealPathVal));

@@ -31,6 +31,10 @@ void WddmGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPER
 void WddmGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
 }
 
+void WddmGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
+}
+void WddmGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
+}
 ze_result_t WddmGlobalOperationsImp::reset(ze_bool_t force) {
     uint32_t value = 0;
     KmdSysman::RequestProperty request;
