@@ -34,6 +34,7 @@ bool makeFakeDevicePath = false;
 bool allowFakeDevicePath = false;
 uint32_t ioctlVmCreateCalled = 0u;
 int ioctlVmCreateReturned = 0u;
+uint32_t vmFlags = 0u;
 uint64_t ioctlVmCreateExtensionArg = 0ull;
 constexpr unsigned long int invalidIoctl = static_cast<unsigned long int>(-1);
 int setErrno = 0;
@@ -73,6 +74,7 @@ int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
         auto control = static_cast<drm_i915_gem_vm_control *>(arg);
         ioctlVmCreateExtensionArg = control->extensions;
         control->vm_id = ++vmId;
+        vmFlags |= control->flags;
         return ioctlVmCreateReturned;
     }
     if (request == DRM_IOCTL_I915_GEM_VM_DESTROY) {
