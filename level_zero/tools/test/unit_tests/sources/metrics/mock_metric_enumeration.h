@@ -210,6 +210,7 @@ struct Mock<MetricGroup> : public MetricGroup {
 };
 
 struct MetricGroupImpTest : public MetricGroupImp {
+    using MetricGroupImp::copyValue;
     using MetricGroupImp::pReferenceConcurrentGroup;
     using MetricGroupImp::pReferenceMetricSet;
 };
