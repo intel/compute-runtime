@@ -17,8 +17,6 @@ const std::string vendorIntel("Intel(R) Corporation");
 const std::string unknown("unknown");
 const std::string intelPciId("0x8086");
 const std::string deviceDir("device");
-const std::string vendorFile("device/vendor");
-const std::string deviceFile("device/device");
 const std::string subsystemVendorFile("device/subsystem_vendor");
 const std::string driverFile("device/driver");
 const std::string agamaVersionFile("/sys/module/i915/agama_version");
@@ -69,10 +67,6 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
     ze_result_t getValString(const std::string file, std::string &val) {
         if (file.compare(subsystemVendorFile) == 0) {
             val = "0x8086";
-        } else if (file.compare(deviceFile) == 0) {
-            val = "0x3ea5";
-        } else if (file.compare(vendorFile) == 0) {
-            val = "0x8086";
         } else if (file.compare("clients/8/pid") == 0) {
             val = bPid4;
         } else {
@@ -83,10 +77,6 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
 
     ze_result_t getFalseValString(const std::string file, std::string &val) {
         if (file.compare(subsystemVendorFile) == 0) {
-            val = "0xa086";
-        } else if (file.compare(deviceFile) == 0) {
-            val = "0xa123";
-        } else if (file.compare(vendorFile) == 0) {
             val = "0xa086";
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;

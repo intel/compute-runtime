@@ -19,8 +19,6 @@
 namespace L0 {
 
 const std::string LinuxGlobalOperationsImp::deviceDir("device");
-const std::string LinuxGlobalOperationsImp::vendorFile("device/vendor");
-const std::string LinuxGlobalOperationsImp::deviceFile("device/device");
 const std::string LinuxGlobalOperationsImp::subsystemVendorFile("device/subsystem_vendor");
 const std::string LinuxGlobalOperationsImp::driverFile("device/driver");
 const std::string LinuxGlobalOperationsImp::functionLevelReset("device/reset");
@@ -67,23 +65,17 @@ void LinuxGlobalOperationsImp::getBrandName(char (&brandName)[ZES_STRING_PROPERT
 }
 
 void LinuxGlobalOperationsImp::getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) {
-    std::string strVal;
-    ze_result_t result = pSysfsAccess->read(deviceFile, strVal);
-    if (ZE_RESULT_SUCCESS != result) {
-        std::strncpy(modelName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
-        return;
-    }
-    std::strncpy(modelName, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
+    NEO::Device *neoDevice = pDevice->getNEODevice();
+    std::string deviceModelName = neoDevice->getDeviceName(neoDevice->getHardwareInfo());
+    std::strncpy(modelName, deviceModelName.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 
 void LinuxGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) {
-    std::string strVal;
-    ze_result_t result = pSysfsAccess->read(vendorFile, strVal);
-    if (ZE_RESULT_SUCCESS != result) {
-        std::strncpy(vendorName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
-        return;
-    }
-    if (strVal.compare(intelPciId) == 0) {
+    ze_device_properties_t coreDeviceProperties;
+    pDevice->getProperties(&coreDeviceProperties);
+    std::stringstream pciId;
+    pciId << std::hex << coreDeviceProperties.vendorId;
+    if (("0x" + pciId.str()).compare(intelPciId) == 0) {
         std::strncpy(vendorName, vendorIntel.c_str(), ZES_STRING_PROPERTY_SIZE);
     } else {
         std::strncpy(vendorName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);

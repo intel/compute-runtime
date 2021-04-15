@@ -38,7 +38,6 @@ constexpr int64_t engines6 = 1u;
 constexpr int64_t engines7 = 1u;
 constexpr uint32_t totalProcessStates = 5u; // Three process States for three pids
 constexpr uint32_t totalProcessStatesForFaultyClients = 3u;
-const std::string expectedModelName("0x3ea5");
 class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<Mock<GlobalOperationsSysfsAccess>> pSysfsAccess;
@@ -50,6 +49,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     OsGlobalOperations *pOsGlobalOperationsPrev = nullptr;
     L0::GlobalOperations *pGlobalOperationsPrev = nullptr;
     L0::GlobalOperationsImp *pGlobalOperationsImp;
+    std::string expectedModelName;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -74,6 +74,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pGlobalOperationsImp = static_cast<L0::GlobalOperationsImp *>(pSysmanDeviceImp->pGlobalOperations);
         pOsGlobalOperationsPrev = pGlobalOperationsImp->pOsGlobalOperations;
         pGlobalOperationsImp->pOsGlobalOperations = nullptr;
+        expectedModelName = neoDevice->getDeviceName(neoDevice->getHardwareInfo());
         pGlobalOperationsImp->init();
     }
 
@@ -151,12 +152,12 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDevice
     EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDevicePropertiesWhenRespectiveFilesAreNotIncorrectThenVerifyzesDeviceGetPropertiesCallSucceeds) {
-    zes_device_properties_t properties;
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDevicePropertiesWhenVendorIsUnKnownThenVerifyzesDeviceGetPropertiesCallSucceeds) {
     ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getFalseValString));
+    neoDevice->deviceInfo.vendorId = 1806; //Unknown Vendor id
     pGlobalOperationsImp->init();
-
+    zes_device_properties_t properties;
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(0 == unknown.compare(properties.vendorName));

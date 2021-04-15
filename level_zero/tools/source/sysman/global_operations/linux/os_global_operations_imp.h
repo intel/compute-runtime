@@ -43,8 +43,6 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
 
   private:
     static const std::string deviceDir;
-    static const std::string vendorFile;
-    static const std::string deviceFile;
     static const std::string subsystemVendorFile;
     static const std::string driverFile;
     static const std::string functionLevelReset;
