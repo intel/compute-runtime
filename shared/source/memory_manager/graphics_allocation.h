@@ -98,8 +98,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         DEBUG_MODULE_AREA,
         UNIFIED_SHARED_MEMORY,
         WORK_PARTITION_SURFACE,
-        GPU_TIMESTAMP_DEVICE_BUFFER,
-        COUNT
+        GPU_TIMESTAMP_DEVICE_BUFFER
     };
 
     ~GraphicsAllocation() override;
@@ -229,13 +228,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::SEMAPHORE_BUFFER ||
                allocationType == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
                allocationType == AllocationType::DEBUG_MODULE_AREA;
-    }
-    static bool isLockable(AllocationType allocationType) {
-        return isCpuAccessRequired(allocationType) ||
-               isIsaAllocationType(allocationType) ||
-               allocationType == AllocationType::BUFFER ||
-               allocationType == AllocationType::BUFFER_HOST_MEMORY ||
-               allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
     }
 
     static bool isIsaAllocationType(GraphicsAllocation::AllocationType type) {
