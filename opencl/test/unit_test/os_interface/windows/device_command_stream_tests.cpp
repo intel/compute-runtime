@@ -56,7 +56,6 @@ using namespace ::testing;
 class WddmCommandStreamFixture {
   public:
     std::unique_ptr<MockDevice> device;
-    std::unique_ptr<OsContext> osContext;
     DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr;
     MockWddmMemoryManager *memoryManager = nullptr;
     WddmMock *wddm = nullptr;
@@ -72,14 +71,11 @@ class WddmCommandStreamFixture {
         executionEnvironment->memoryManager.reset(memoryManager);
         wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->getWddm());
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
-        osContext.reset(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
-                                          0, device->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup,
-                                          false));
-        osContext->setDefaultContext(true);
-        csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment, 0, device->getDeviceBitfield());
-
-        device->resetCommandStreamReceiver(csr);
         ASSERT_NE(nullptr, device);
+
+        csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment, 0, device->getDeviceBitfield());
+        device->resetCommandStreamReceiver(csr);
+        csr->getOsContext().ensureContextInitialized();
     }
 
     virtual void TearDown() {

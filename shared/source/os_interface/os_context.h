@@ -14,6 +14,7 @@
 #include "engine_node.h"
 
 #include <memory>
+#include <mutex>
 
 namespace NEO {
 class OSInterface;
@@ -24,14 +25,19 @@ struct HardwareInfo;
 class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
     OsContext() = delete;
-
     static OsContext *create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
                              EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
+
+    bool isImmediateContextInitializationEnabled(bool isDefaultEngine) const;
+    bool isInitialized() const { return contextInitialized; }
+    void ensureContextInitialized();
+
     uint32_t getContextId() const { return contextId; }
     uint32_t getNumSupportedDevices() const { return numSupportedDevices; }
     DeviceBitfield getDeviceBitfield() const { return deviceBitfield; }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     aub_stream::EngineType &getEngineType() { return engineType; }
+    bool isRegular() const { return engineUsage == EngineUsage::Regular; }
     bool isLowPriority() const { return engineUsage == EngineUsage::LowPriority; }
     bool isInternalEngine() const { return engineUsage == EngineUsage::Internal; }
     bool isRootDevice() const { return rootDevice; }
@@ -48,14 +54,8 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
                                              bool &startInContext);
 
   protected:
-    OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice)
-        : contextId(contextId),
-          deviceBitfield(deviceBitfield),
-          preemptionMode(preemptionMode),
-          numSupportedDevices(static_cast<uint32_t>(deviceBitfield.count())),
-          engineType(typeUsage.first),
-          engineUsage(typeUsage.second),
-          rootDevice(rootDevice) {}
+    OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
+    virtual void initializeContext() {}
 
     const uint32_t contextId;
     const DeviceBitfield deviceBitfield;
@@ -66,5 +66,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const bool rootDevice = false;
     bool defaultContext = false;
     bool directSubmissionActive = false;
+    std::once_flag contextInitializedFlag = {};
+    bool contextInitialized = false;
 };
 } // namespace NEO

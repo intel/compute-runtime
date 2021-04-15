@@ -25,8 +25,9 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield device
                            EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice)
     : OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice),
       wddm(wddm),
-      residencyController(wddm, contextId) {
+      residencyController(wddm, contextId) {}
 
+void OsContextWin::initializeContext() {
     auto wddmInterface = wddm.getWddmInterface();
     UNRECOVERABLE_IF(!wddm.createContext(*this));
 
@@ -40,9 +41,11 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield device
 };
 
 OsContextWin::~OsContextWin() {
-    wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
-    wddm.getWddmInterface()->destroyMonitorFence(residencyController.getMonitoredFence());
-    wddm.destroyContext(wddmContextHandle);
+    if (contextInitialized) {
+        wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
+        wddm.getWddmInterface()->destroyMonitorFence(residencyController.getMonitoredFence());
+        wddm.destroyContext(wddmContextHandle);
+    }
 }
 
 } // namespace NEO

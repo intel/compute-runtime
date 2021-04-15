@@ -140,6 +140,7 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
 
     {
         OsContextLinux osContext1(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+        osContext1.ensureContextInitialized();
 
         EXPECT_EQ(1u, osContext1.getDrmContextIds().size());
         EXPECT_EQ(drmMock.receivedCreateContextId, osContext1.getDrmContextIds()[0]);
@@ -147,6 +148,7 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
 
         {
             OsContextLinux osContext2(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+            osContext2.ensureContextInitialized();
             EXPECT_EQ(1u, osContext2.getDrmContextIds().size());
             EXPECT_EQ(drmMock.receivedCreateContextId, osContext2.getDrmContextIds()[0]);
             EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
@@ -165,6 +167,7 @@ TEST(DrmTest, whenCreatingDrmContextWithVirtualMemoryAddressSpaceThenProperVmIdI
     ASSERT_EQ(1u, drmMock.virtualMemoryIds.size());
 
     OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
 
     EXPECT_EQ(drmMock.receivedContextParamRequest.value, drmMock.getVirtualMemoryAddressSpace(0u));
 }
@@ -179,6 +182,7 @@ TEST(DrmTest, whenCreatingDrmContextWithNoVirtualMemoryAddressSpaceThenProperCon
     ASSERT_EQ(0u, drmMock.virtualMemoryIds.size());
 
     OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
 
     EXPECT_EQ(0u, drmMock.receivedCreateContextId);
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
@@ -196,6 +200,7 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
         drmMock.checkNonPersistentContextsSupport();
         expectedCount += 2;
         OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+        osContext.ensureContextInitialized();
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
     {
@@ -203,6 +208,7 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
         drmMock.checkNonPersistentContextsSupport();
         ++expectedCount;
         OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+        osContext.ensureContextInitialized();
         expectedCount += 2;
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
@@ -216,16 +222,20 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     drmMock.preemptionSupported = false;
 
     OsContextLinux osContext1(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext1.ensureContextInitialized();
     OsContextLinux osContext2(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::LowPriority}, PreemptionMode::Disabled, false);
+    osContext2.ensureContextInitialized();
 
     EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 
     drmMock.preemptionSupported = true;
 
     OsContextLinux osContext3(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext3.ensureContextInitialized();
     EXPECT_EQ(3u, drmMock.receivedContextParamRequestCount);
 
     OsContextLinux osContext4(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::LowPriority}, PreemptionMode::Disabled, false);
+    osContext4.ensureContextInitialized();
     EXPECT_EQ(5u, drmMock.receivedContextParamRequestCount);
     EXPECT_EQ(drmMock.receivedCreateContextId, drmMock.receivedContextParamRequest.ctx_id);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
@@ -240,6 +250,7 @@ TEST(DrmTest, givenDirectSubmissionEnabledOnBlitterWhenCreateBcsEngineThenLowPri
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
     OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
     EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
 
     DebugManagerStateRestore restorer;
@@ -247,6 +258,7 @@ TEST(DrmTest, givenDirectSubmissionEnabledOnBlitterWhenCreateBcsEngineThenLowPri
     DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1);
 
     OsContextLinux osContext2(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext2.ensureContextInitialized();
     EXPECT_EQ(3u, drmMock.receivedContextParamRequestCount);
     EXPECT_EQ(drmMock.receivedCreateContextId, drmMock.receivedContextParamRequest.ctx_id);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
@@ -254,6 +266,7 @@ TEST(DrmTest, givenDirectSubmissionEnabledOnBlitterWhenCreateBcsEngineThenLowPri
     EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
 
     OsContextLinux osContext3(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext3.ensureContextInitialized();
     EXPECT_EQ(4u, drmMock.receivedContextParamRequestCount);
 }
 
@@ -264,6 +277,7 @@ TEST(DrmTest, givenDirectSubmissionEnabledOnBlitterAndDirectSubmissionLowPriorit
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
     OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
     EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
 
     DebugManagerStateRestore restorer;
@@ -272,6 +286,7 @@ TEST(DrmTest, givenDirectSubmissionEnabledOnBlitterAndDirectSubmissionLowPriorit
     DebugManager.flags.DirectSubmissionLowPriorityBlitter.set(0);
 
     OsContextLinux osContext2(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext2.ensureContextInitialized();
     EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 }
 
@@ -462,6 +477,7 @@ TEST(DrmTest, givenDrmWhenCreatingOsContextThenCreateDrmContextWithVmId) {
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
 
     EXPECT_EQ(SysCalls::vmId, drmMock.getVirtualMemoryAddressSpace(0));
 
@@ -477,9 +493,11 @@ TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicit
     EXPECT_TRUE(drmMock.requirePerContextVM);
 
     OsContextLinux osContext1(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext1.ensureContextInitialized();
     EXPECT_EQ(0u, drmMock.receivedCreateContextId);
 
     OsContextLinux osContext2(drmMock, 5u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext2.ensureContextInitialized();
     EXPECT_EQ(0u, drmMock.receivedCreateContextId);
 }
 
@@ -493,6 +511,7 @@ TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicit
     drmMock.StoredRetValForVmId = 20;
 
     OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
     EXPECT_EQ(0u, drmMock.receivedCreateContextId);
     EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
 
@@ -512,6 +531,7 @@ TEST(DrmTest, givenNoPerContextVmsDrmWhenCreatingOsContextsThenVmIdIsNotQueriedA
     drmMock.StoredRetValForVmId = 1;
 
     OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
     EXPECT_EQ(0u, drmMock.receivedCreateContextId);
     EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
 
@@ -531,6 +551,7 @@ TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextTh
     drmMock.contextDebugSupported = true;
 
     OsContextLinux osContext(drmMock, 5u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
 
     // drmMock returns ctxId == 0
     EXPECT_EQ(0u, drmMock.passedContextDebugId);
@@ -548,6 +569,7 @@ TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextFo
     drmMock.contextDebugSupported = true;
 
     OsContextLinux osContext(drmMock, 5u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Internal}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
 
     EXPECT_EQ(static_cast<uint32_t>(-1), drmMock.passedContextDebugId);
 }

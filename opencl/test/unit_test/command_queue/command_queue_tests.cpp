@@ -1509,17 +1509,21 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
         properties[4] = 0;
     }
 
-    template <typename GfxFamily, int ccsCount, int bcsCount>
+    template <typename GfxFamily, int rcsCount, int ccsCount, int bcsCount>
     class MockHwHelper : public HwHelperHw<GfxFamily> {
       public:
         const HwHelper::EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
             HwHelper::EngineInstancesContainer result{};
+            for (int i = 0; i < rcsCount; i++) {
+                result.push_back({aub_stream::ENGINE_RCS, EngineUsage::Regular});
+            }
             for (int i = 0; i < ccsCount; i++) {
                 result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
             }
             for (int i = 0; i < bcsCount; i++) {
                 result.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
             }
+
             return result;
         }
 
@@ -1544,7 +1548,7 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
 };
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseCorrectEngine) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1>>();
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 
@@ -1569,7 +1573,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1>>();
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
     UltClDeviceFactory deviceFactory{1, 2};
     MockContext context{deviceFactory.rootDevices[0]};
     cl_command_queue_properties properties[5] = {};
@@ -1585,7 +1589,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWh
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1>>();
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
     UltClDeviceFactory deviceFactory{1, 2};
     MockContext context{deviceFactory.subDevices[0]};
     cl_command_queue_properties properties[5] = {};
@@ -1611,7 +1615,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1>>();
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 0, 1>>();
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 
@@ -1624,4 +1628,35 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQu
     EXPECT_TRUE(queueBcs.isQueueFamilySelected());
     EXPECT_EQ(properties[1], queueBcs.getQueueFamilyIndex());
     EXPECT_EQ(properties[3], queueBcs.getQueueIndexWithinFamily());
+}
+
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenCreatingQueueThenInitializeOsContext) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
+
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1, 1>>();
+    MockContext context{};
+    cl_command_queue_properties properties[5] = {};
+
+    OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::Regular).osContext;
+    EXPECT_FALSE(osContext.isInitialized());
+
+    fillProperties(properties, 1, 0);
+    MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
+    ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
+    EXPECT_TRUE(osContext.isInitialized());
+}
+
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedBcsOsContextWhenCreatingQueueThenInitializeOsContext) {
+    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1, 1>>();
+    MockContext context{};
+    cl_command_queue_properties properties[5] = {};
+
+    OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular).osContext;
+    EXPECT_FALSE(osContext.isInitialized());
+
+    fillProperties(properties, 2, 0);
+    MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
+    ASSERT_EQ(&osContext, queue.bcsEngine->osContext);
+    EXPECT_TRUE(osContext.isInitialized());
 }

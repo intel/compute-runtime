@@ -29,6 +29,8 @@ class OsContextLinux : public OsContext {
     void waitForPagingFence();
 
   protected:
+    void initializeContext() override;
+
     unsigned int engineFlag = 0;
     std::vector<uint32_t> drmContextIds;
     std::vector<uint32_t> drmVmIds;

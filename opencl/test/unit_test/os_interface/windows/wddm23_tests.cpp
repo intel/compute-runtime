@@ -48,6 +48,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1,
                                                    HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                    preemptionMode, false);
+        osContext->ensureContextInitialized();
     }
 
     void TearDown() override {

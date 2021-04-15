@@ -235,6 +235,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdT
                                                  HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                  PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                                  false);
+    osContext->ensureContextInitialized();
     csr->setupContext(*osContext);
 
     auto &cs = csr->getCS();
@@ -1340,6 +1341,7 @@ struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDire
         osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
                                           0, device->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup,
                                           false));
+        osContext->ensureContextInitialized();
         csr->initDirectSubmission(*device.get(), *osContext.get());
     }
 

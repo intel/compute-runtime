@@ -79,6 +79,11 @@ class CommandQueueHw : public CommandQueue {
         if (requestedSliceCount > 0) {
             sliceCount = requestedSliceCount;
         }
+
+        gpgpuEngine->osContext->ensureContextInitialized();
+        if (bcsEngine) {
+            bcsEngine->osContext->ensureContextInitialized();
+        }
     }
 
     static CommandQueue *create(Context *context,

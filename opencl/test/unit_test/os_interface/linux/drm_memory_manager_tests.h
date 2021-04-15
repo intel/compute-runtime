@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -54,6 +55,8 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     }
 
     void SetUp(DrmMockCustom *mock, bool localMemoryEnabled) {
+        DebugManager.flags.DeferOsContextInitialization.set(0);
+
         environmentWrapper.setCsrType<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>>();
         allocationData.rootDeviceIndex = rootDeviceIndex;
         this->mock = mock;
@@ -113,6 +116,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     AllocationData allocationData{};
     DrmMockCustom::Ioctls additionalDestroyDeviceIoctls{};
     EnvironmentWithCsrWrapper environmentWrapper;
+    DebugManagerStateRestore restore;
 };
 
 class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
@@ -132,6 +136,8 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     DrmMockCustom *mock;
 
     void SetUp() {
+        DebugManager.flags.DeferOsContextInitialization.set(0);
+
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         uint32_t i = 0;
@@ -159,6 +165,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     ExecutionEnvironment *executionEnvironment = nullptr;
     std::unique_ptr<MockDevice> device;
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
+    DebugManagerStateRestore restore;
     const uint32_t rootDeviceIndex = 1u;
     const uint32_t numRootDevices = 2u;
 };

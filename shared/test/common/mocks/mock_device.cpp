@@ -86,6 +86,7 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     memoryManager->getRegisteredEngines().emplace_back(registeredEngine);
     osContext->incRefInternal();
     newCsr->setupContext(*osContext);
+    osContext->ensureContextInitialized();
     commandStreamReceivers[engineIndex].reset(newCsr);
     commandStreamReceivers[engineIndex]->initializeTagAllocation();
     commandStreamReceivers[engineIndex]->createGlobalFenceAllocation();

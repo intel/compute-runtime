@@ -36,6 +36,8 @@ class OsContextWin : public OsContext {
     MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
 
   protected:
+    void initializeContext() override;
+
     D3DKMT_HANDLE wddmContextHandle = 0;
     HardwareQueue hardwareQueue;
     Wddm &wddm;

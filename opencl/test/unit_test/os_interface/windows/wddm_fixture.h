@@ -49,6 +49,7 @@ struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
         auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1u, engine, preemptionMode,
                                                    false);
+        osContext->ensureContextInitialized();
         mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(wddm->temporaryResources.get());
     }
 
@@ -85,6 +86,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnv
         auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engine, preemptionMode,
                                                    false);
+        osContext->ensureContextInitialized();
     }
 
     void TearDown() override {

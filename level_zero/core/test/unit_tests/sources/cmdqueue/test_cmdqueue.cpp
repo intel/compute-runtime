@@ -636,6 +636,24 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueI
     commandQueue->destroy();
 }
 
+TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityEngineNotInitializedWhenCreateLowPriorityCommandQueueIsCalledThenEngineIsInitialized) {
+    NEO::CommandStreamReceiver *lowPriorityCsr = nullptr;
+    device->getCsrForLowPriority(&lowPriorityCsr);
+    ASSERT_FALSE(lowPriorityCsr->getOsContext().isInitialized());
+
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+    ze_command_queue_handle_t commandQueueHandle = {};
+    ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(lowPriorityCsr->getOsContext().isInitialized());
+
+    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    commandQueue->destroy();
+}
+
 TEST_F(DeviceCreateCommandQueueTest, givenNormalPriorityDescWhenCreateCommandQueueIsCalledWithValidArgumentThenCsrIsAssignedWithOrdinalAndIndex) {
     ze_command_queue_desc_t desc{};
     desc.ordinal = 0u;

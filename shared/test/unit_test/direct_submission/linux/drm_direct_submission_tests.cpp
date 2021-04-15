@@ -32,6 +32,7 @@ struct DrmDirectSubmissionTest : public DrmMemoryManagerBasic {
         osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm(),
                                                      0u, device->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup,
                                                      false);
+        osContext->ensureContextInitialized();
     }
 
     void TearDown() override {

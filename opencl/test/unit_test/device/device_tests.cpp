@@ -573,6 +573,32 @@ TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupIndexThenRetur
     EXPECT_ANY_THROW(device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(5u)));
 }
 
+TEST(DeviceGenEngineTest, givenDeferredContextInitializationEnabledWhenCreatingEnginesThenInitializeOnlyOsContextsWhichRequireIt) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DeferOsContextInitialization.set(1);
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+    const auto defaultEngineType = getChosenEngineType(device->getHardwareInfo());
+    EXPECT_NE(0u, device->getEngines().size());
+    for (const EngineControl &engine : device->getEngines()) {
+        OsContext *osContext = engine.osContext;
+        const bool isDefaultEngine = defaultEngineType == osContext->getEngineType() && osContext->isRegular();
+        const bool shouldBeInitialized = osContext->isImmediateContextInitializationEnabled(isDefaultEngine);
+        EXPECT_EQ(shouldBeInitialized, osContext->isInitialized());
+    }
+}
+
+TEST(DeviceGenEngineTest, givenDeferredContextInitializationDisabledWhenCreatingEnginesThenInitializeAllOsContexts) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DeferOsContextInitialization.set(0);
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+    EXPECT_NE(0u, device->getEngines().size());
+    for (const EngineControl &engine : device->getEngines()) {
+        EXPECT_TRUE(engine.osContext->isInitialized());
+    }
+}
+
 using DeviceQueueFamiliesTests = ::testing::Test;
 
 HWTEST_F(DeviceQueueFamiliesTests, whenGettingQueueFamilyCapabilitiesAllThenReturnCorrectValue) {

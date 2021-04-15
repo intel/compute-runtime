@@ -34,6 +34,7 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     auto osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1,
                                                     HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                                     preemptionMode, false);
+    osContext->ensureContextInitialized();
     EXPECT_EQ(osContext->getWddm(), wddm);
     EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);
 }

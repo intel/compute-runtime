@@ -30,6 +30,7 @@ struct WddmDirectSubmissionFixture : public WddmFixture {
         executionEnvironment->memoryManager.reset(new WddmMemoryManager{*executionEnvironment});
         device.reset(MockDevice::create<MockDevice>(executionEnvironment.get(), 0u));
         osContext = std::make_unique<OsContextWin>(*wddm, 0u, device->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, false);
+        osContext->ensureContextInitialized();
         device->setPreemptionMode(PreemptionMode::ThreadGroup);
     }
 

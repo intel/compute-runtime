@@ -13,6 +13,38 @@
 #include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
+OsContext::OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice)
+    : contextId(contextId),
+      deviceBitfield(deviceBitfield),
+      preemptionMode(preemptionMode),
+      numSupportedDevices(static_cast<uint32_t>(deviceBitfield.count())),
+      engineType(typeUsage.first),
+      engineUsage(typeUsage.second),
+      rootDevice(rootDevice) {}
+
+bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) const {
+    if (DebugManager.flags.DeferOsContextInitialization.get() == 0) {
+        return true;
+    }
+
+    if (engineUsage == EngineUsage::Internal) {
+        return true;
+    }
+
+    if (isDefaultEngine) {
+        return true;
+    }
+
+    return false;
+}
+
+void OsContext::ensureContextInitialized() {
+    std::call_once(contextInitializedFlag, [this] {
+        initializeContext();
+        contextInitialized = true;
+    });
+}
+
 bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &submitOnInit) {
     bool enableDirectSubmission = this->isDirectSubmissionSupported(hwInfo);
 
@@ -85,4 +117,5 @@ bool OsContext::checkDirectSubmissionSupportsEngine(const DirectSubmissionProper
 
     return supported;
 }
+
 } // namespace NEO

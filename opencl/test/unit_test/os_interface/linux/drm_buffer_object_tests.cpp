@@ -403,6 +403,7 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectB
 
     auto contextId = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount() / 2;
     auto osContext = device->getExecutionEnvironment()->memoryManager->getRegisteredEngines()[contextId].osContext;
+    osContext->ensureContextInitialized();
 
     bo.bind(osContext, 0);
     EXPECT_TRUE(bo.bindInfo[contextId][0]);

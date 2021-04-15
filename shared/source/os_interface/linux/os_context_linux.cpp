@@ -30,7 +30,9 @@ OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, Devic
 OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield deviceBitfield,
                                EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice)
     : OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice),
-      drm(drm) {
+      drm(drm) {}
+
+void OsContextLinux::initializeContext() {
     auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(*hwInfo);
 
@@ -96,8 +98,10 @@ void OsContextLinux::waitForPagingFence() {
 }
 
 OsContextLinux::~OsContextLinux() {
-    for (auto drmContextId : drmContextIds) {
-        drm.destroyDrmContext(drmContextId);
+    if (contextInitialized) {
+        for (auto drmContextId : drmContextIds) {
+            drm.destroyDrmContext(drmContextId);
+        }
     }
 }
 } // namespace NEO

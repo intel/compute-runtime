@@ -70,6 +70,7 @@ class MockWddmMemoryManagerFixture {
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
                                                               HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                               1, PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
+        osContext->ensureContextInitialized();
 
         osContext->incRefInternal();
         mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(wddm->getTemporaryResourcesContainer());
