@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_sip.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/extensions.h"
@@ -33,25 +34,20 @@
 
 using namespace NEO;
 
-namespace NEO {
-namespace MockSipData {
-extern SipKernelType calledType;
-extern bool called;
-} // namespace MockSipData
-} // namespace NEO
-
 struct PlatformTest : public ::testing::Test {
     void SetUp() override {
-        MockSipData::calledType = SipKernelType::COUNT;
-        MockSipData::called = false;
+        MockSipData::clearUseFlags();
+        backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, true);
+
         pPlatform.reset(new MockPlatform());
     }
     void TearDown() override {
-        MockSipData::calledType = SipKernelType::COUNT;
-        MockSipData::called = false;
+        MockSipData::clearUseFlags();
     }
-    cl_int retVal = CL_SUCCESS;
     std::unique_ptr<MockPlatform> pPlatform;
+    std::unique_ptr<VariableBackup<bool>> backupSipInitType;
+
+    cl_int retVal = CL_SUCCESS;
 };
 
 struct MockPlatformWithMockExecutionEnvironment : public MockPlatform {

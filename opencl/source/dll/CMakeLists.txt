@@ -18,12 +18,12 @@ set(RUNTIME_SRCS_DLL_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger_dll.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices.cpp
+    ${NEO_SHARED_DIRECTORY}/built_ins/sip_init.cpp
     ${NEO_SHARED_DIRECTORY}/dll/options_dll.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
-    ${NEO_SHARED_DIRECTORY}/helpers/built_ins_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/cpuintrinsics.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/debug_settings_reader_creator.cpp

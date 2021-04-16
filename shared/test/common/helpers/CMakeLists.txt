@@ -10,7 +10,6 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests_gen12lp.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/built_ins_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager_state_restore.h
     ${CMAKE_CURRENT_SOURCE_DIR}/default_hw_info.h
@@ -23,6 +22,7 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_management.h
     ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/sip_init.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_traits.h

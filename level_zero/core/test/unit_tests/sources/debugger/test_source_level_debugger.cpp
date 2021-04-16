@@ -219,7 +219,7 @@ HWTEST2_F(SLDebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUs
         EXPECT_EQ(0u, stateSip.size());
     }
 
-    auto sipIsa = NEO::SipKernel::getSipKernelAllocation(*device);
+    auto sipIsa = NEO::SipKernel::getSipKernel(*device).getSipAllocation();
     auto debugSurface = deviceL0->getDebugSurface();
     bool sipFound = false;
     bool debugSurfaceFound = false;

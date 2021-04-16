@@ -14,7 +14,6 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/built_ins_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -646,10 +645,10 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
     if (neoDevice->getCompilerInterface()) {
         auto hwInfo = neoDevice->getHardwareInfo();
         if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread || neoDevice->getDebugger()) {
-            auto sipType = NEO::SipKernel::getSipKernelType(hwInfo.platform.eRenderCoreFamily, neoDevice->getDebugger());
-            NEO::initSipKernel(sipType, *neoDevice);
+            bool ret = NEO::SipKernel::initSipKernel(NEO::SipKernel::getSipKernelType(*neoDevice), *neoDevice);
+            UNRECOVERABLE_IF(!ret);
 
-            auto stateSaveAreaHeader = NEO::SipKernel::getSipStateSaveAreaHeader(*neoDevice);
+            auto &stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
             if (debugSurface && stateSaveAreaHeader.size() > 0) {
                 auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
                 NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),

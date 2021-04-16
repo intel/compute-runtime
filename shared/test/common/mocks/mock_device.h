@@ -49,6 +49,7 @@ class MockDevice : public RootDevice {
     using Device::executionEnvironment;
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
+    using Device::isDebuggerActive;
     using RootDevice::createEngines;
     using RootDevice::defaultEngineIndex;
     using RootDevice::getDeviceBitfield;
@@ -127,7 +128,17 @@ class MockDevice : public RootDevice {
         return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
     }
 
+    bool isDebuggerActive() const override {
+        if (isDebuggerActiveParentCall) {
+            return Device::isDebuggerActive();
+        }
+        return isDebuggerActiveReturn;
+    }
+
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
+
+    bool isDebuggerActiveParentCall = true;
+    bool isDebuggerActiveReturn = false;
 };
 
 template <>

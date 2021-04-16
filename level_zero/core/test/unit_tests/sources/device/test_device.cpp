@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/os_interface/os_inc_base.h"
@@ -30,13 +31,6 @@
 #include <memory>
 
 using ::testing::Return;
-
-namespace NEO {
-namespace MockSipData {
-extern SipKernelType calledType;
-extern bool called;
-} // namespace MockSipData
-} // namespace NEO
 
 namespace L0 {
 namespace ult {
@@ -66,6 +60,7 @@ TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInit
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     VariableBackup<bool> mockSipCalled(&NEO::MockSipData::called, false);
     VariableBackup<NEO::SipKernelType> mockSipCalledType(&NEO::MockSipData::calledType, NEO::SipKernelType::COUNT);
+    VariableBackup<bool> backupSipInitType(&MockSipData::useMockSip, true);
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
@@ -103,7 +98,8 @@ TEST(L0DeviceTest, givenDebuggerEnabledButIGCNotReturnsSSAHThenSSAHIsNotCopied) 
     driverHandle->enableProgramDebugging = true;
 
     driverHandle->initialize(std::move(devices));
-    auto stateSaveAreaHeader = NEO::SipKernel::getSipStateSaveAreaHeader(*neoDevice);
+    auto sipType = SipKernel::getSipKernelType(*neoDevice);
+    auto &stateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
     EXPECT_EQ(static_cast<size_t>(0), stateSaveAreaHeader.size());
 }
 
@@ -111,6 +107,7 @@ TEST(L0DeviceTest, givenDisabledPreemptionWhenCreatingDeviceThenSipKernelIsNotIn
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     VariableBackup<bool> mockSipCalled(&NEO::MockSipData::called, false);
     VariableBackup<NEO::SipKernelType> mockSipCalledType(&NEO::MockSipData::calledType, NEO::SipKernelType::COUNT);
+    VariableBackup<bool> backupSipInitType(&MockSipData::useMockSip, true);
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;

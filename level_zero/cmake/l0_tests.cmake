@@ -66,7 +66,7 @@ add_library(compute_runtime_mockable_extra
             EXCLUDE_FROM_ALL
             ${CMAKE_CURRENT_LIST_DIR}/l0_tests.cmake
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
-            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/built_ins_helper.cpp
+            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compiler_interface_spirv.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compiler_interface_spirv.h

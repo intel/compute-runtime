@@ -510,7 +510,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || sourceLevelDebuggerActive) {
-        makeResident(*SipKernel::getSipKernelAllocation(device));
+        makeResident(*SipKernel::getSipKernel(device).getSipAllocation());
         if (debugSurface) {
             makeResident(*debugSurface);
         }

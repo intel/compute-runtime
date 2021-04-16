@@ -11,7 +11,6 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/built_ins_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
@@ -38,11 +37,11 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
     auto initializer = [&] {
         std::vector<char> sipBinary;
-        std::vector<char> stateSaveAareHeader;
+        std::vector<char> stateSaveAreaHeader;
         auto compilerInteface = device.getCompilerInterface();
         UNRECOVERABLE_IF(compilerInteface == nullptr);
 
-        auto ret = compilerInteface->getSipKernelBinary(device, type, sipBinary, stateSaveAareHeader);
+        auto ret = compilerInteface->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
 
         UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::Success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
@@ -62,7 +61,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
                                                              device, sipAllocation, 0, sipBinary.data(),
                                                              sipBinary.size());
         }
-        sipBuiltIn.first.reset(new SipKernel(type, sipAllocation, std::move(stateSaveAareHeader)));
+        sipBuiltIn.first.reset(new SipKernel(type, sipAllocation, std::move(stateSaveAreaHeader)));
     };
     std::call_once(sipBuiltIn.second, initializer);
     UNRECOVERABLE_IF(sipBuiltIn.first == nullptr);

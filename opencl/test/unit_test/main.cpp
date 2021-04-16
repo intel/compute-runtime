@@ -54,10 +54,6 @@ extern const char *executionDirectorySuffix;
 
 std::thread::id tempThreadID;
 
-namespace MockSipData {
-extern std::unique_ptr<MockSipKernel> mockSipKernel;
-}
-
 namespace PagaFaultManagerTestConfig {
 bool disabled = false;
 }
@@ -160,8 +156,11 @@ void handle_SIGABRT(int sig_no) {
 }
 #endif
 
-void initializeTestHelpers() {
+void initializeTestHelpers(TestMode currentTestmode) {
     MockSipData::mockSipKernel.reset(new MockSipKernel());
+    if (currentTestmode == TestMode::AubTests || currentTestmode == TestMode::AubTestsWithTbx) {
+        MockSipData::useMockSip = false;
+    }
 }
 
 void cleanTestHelpers() {
@@ -465,7 +464,7 @@ int main(int argc, char **argv) {
     } else {
         GmmInterface::initialize(nullptr, nullptr);
     }
-    initializeTestHelpers();
+    initializeTestHelpers(testMode);
 
     retVal = RUN_ALL_TESTS();
 

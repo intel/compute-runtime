@@ -39,20 +39,21 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingL0DebuggerThenValidDebuggerInst
 }
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIsReturned) {
-    auto systemRoutine = SipKernel::getSipKernelAllocation(*neoDevice);
+    neoDevice->setDebuggerActive(true);
+    auto systemRoutine = SipKernel::getSipKernel(*neoDevice).getSipAllocation();
     ASSERT_NE(nullptr, systemRoutine);
 
-    auto sipType = SipKernel::getSipKernelType(neoDevice->getHardwareInfo().platform.eRenderCoreFamily, true);
+    auto sipType = SipKernel::getSipKernelType(*neoDevice);
     auto expectedSipAllocation = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getSipAllocation();
 
     EXPECT_EQ(expectedSipAllocation, systemRoutine);
 }
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
-    auto stateSaveAreaHeader = SipKernel::getSipStateSaveAreaHeader(*neoDevice);
+    auto &stateSaveAreaHeader = SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
 
-    auto sipType = SipKernel::getSipKernelType(neoDevice->getHardwareInfo().platform.eRenderCoreFamily, true);
-    auto expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
+    auto sipType = SipKernel::getSipKernelType(*neoDevice);
+    auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
 
     EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
 }
@@ -75,10 +76,10 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
 
     driverHandle->initialize(std::move(devices));
 
-    auto stateSaveAreaHeader = SipKernel::getSipStateSaveAreaHeader(*neoDevice);
+    auto &stateSaveAreaHeader = SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
 
-    auto sipType = SipKernel::getSipKernelType(neoDevice->getHardwareInfo().platform.eRenderCoreFamily, false);
-    auto expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
+    auto sipType = SipKernel::getSipKernelType(*neoDevice);
+    auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
 
     EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
 }
@@ -181,7 +182,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValid
 
         STATE_SIP *stateSip = genCmdCast<STATE_SIP *>(*stateSipCmds[0]);
 
-        auto systemRoutine = SipKernel::getSipKernelAllocation(*neoDevice);
+        auto systemRoutine = SipKernel::getSipKernel(*neoDevice).getSipAllocation();
         ASSERT_NE(nullptr, systemRoutine);
         EXPECT_EQ(systemRoutine->getGpuAddress(), stateSip->getSystemInstructionPointer());
     }
@@ -512,7 +513,7 @@ HWTEST2_F(L0DebuggerInternalUsageTest, givenDebuggingEnabledWhenInternalCmdQIsUs
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().getContextId());
-    auto sipIsa = NEO::SipKernel::getSipKernelAllocation(*neoDevice);
+    auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
     auto debugSurface = device->getDebugSurface();
     bool sbaFound = false;
     bool sipFound = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,8 +29,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
     STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().platform.eRenderCoreFamily, mockDevice->isDebuggerActive());
-    EXPECT_EQ(mockDevice->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
+    EXPECT_EQ(SipKernel::getSipKernel(*mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
 template <typename GfxFamily>
@@ -55,8 +54,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisa
     STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().platform.eRenderCoreFamily, mockDevice->isDebuggerActive());
-    EXPECT_EQ(mockDevice->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
+    EXPECT_EQ(SipKernel::getSipKernel(*mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
 template <typename GfxFamily>
@@ -81,8 +79,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
     STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().platform.eRenderCoreFamily, mockDevice->isDebuggerActive());
-    EXPECT_EQ(mockDevice->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
+    EXPECT_EQ(SipKernel::getSipKernel(*mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
 template <typename GfxFamily>

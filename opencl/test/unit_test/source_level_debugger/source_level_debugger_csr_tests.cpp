@@ -44,8 +44,7 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
                        dispatchFlags,
                        baseDevice);
 
-    auto sipType = SipKernel::getSipKernelType(baseDevice.getHardwareInfo().platform.eRenderCoreFamily, true);
-    auto sipAllocation = baseDevice.getBuiltIns()->getSipKernel(sipType, baseDevice).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(baseDevice).getSipAllocation();
     bool found = false;
     for (auto allocation : mockCsr->copyOfAllocations) {
         if (allocation == sipAllocation) {
@@ -75,6 +74,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
         std::unique_ptr<MockGraphicsAllocation> allocation(new MockGraphicsAllocation(buffer, MemoryConstants::pageSize));
         std::unique_ptr<IndirectHeap> heap(new IndirectHeap(allocation.get()));
 
+        auto &baseDevice = device->getDevice();
+
         mockCsr->flushTask(commandStream,
                            0,
                            *heap.get(),
@@ -82,10 +83,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            *heap.get(),
                            0,
                            dispatchFlags,
-                           device->getDevice());
+                           baseDevice);
 
-        auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().platform.eRenderCoreFamily, true);
-        auto sipAllocation = device->getBuiltIns()->getSipKernel(sipType, device->getDevice()).getSipAllocation();
+        auto sipAllocation = SipKernel::getSipKernel(baseDevice).getSipAllocation();
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(preambleStream);
@@ -126,6 +126,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
         std::unique_ptr<MockGraphicsAllocation> allocation(new MockGraphicsAllocation(buffer, MemoryConstants::pageSize));
         std::unique_ptr<IndirectHeap> heap(new IndirectHeap(allocation.get()));
 
+        auto &baseDevice = device->getDevice();
+
         mockCsr->flushTask(commandStream,
                            0,
                            *heap.get(),
@@ -133,7 +135,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            *heap.get(),
                            0,
                            dispatchFlags,
-                           device->getDevice());
+                           baseDevice);
 
         mockCsr->flushBatchedSubmissions();
 
@@ -144,10 +146,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            *heap.get(),
                            0,
                            dispatchFlags,
-                           device->getDevice());
+                           baseDevice);
 
-        auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().platform.eRenderCoreFamily, true);
-        auto sipAllocation = device->getBuiltIns()->getSipKernel(sipType, device->getDevice()).getSipAllocation();
+        auto sipAllocation = SipKernel::getSipKernel(baseDevice).getSipAllocation();
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(preambleStream);

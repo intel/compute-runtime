@@ -7,6 +7,7 @@
 
 #include "platform.h"
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -14,7 +15,6 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/built_ins_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -139,10 +139,9 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         pClDevice = new ClDevice{*pDevice, this};
         this->clDevices.push_back(pClDevice);
 
-        auto hwInfo = pClDevice->getHardwareInfo();
         if (pClDevice->getPreemptionMode() == PreemptionMode::MidThread || pClDevice->isDebuggerActive()) {
-            auto sipType = SipKernel::getSipKernelType(hwInfo.platform.eRenderCoreFamily, pClDevice->isDebuggerActive());
-            initSipKernel(sipType, *pDevice);
+            bool ret = SipKernel::initSipKernel(SipKernel::getSipKernelType(*pDevice), *pDevice);
+            UNRECOVERABLE_IF(!ret);
         }
     }
 

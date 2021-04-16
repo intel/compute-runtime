@@ -286,7 +286,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         if (sipKernelUsed) {
-            auto sipIsa = NEO::SipKernel::getSipKernelAllocation(*neoDevice);
+            auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
             residencyContainer.push_back(sipIsa);
         }
 

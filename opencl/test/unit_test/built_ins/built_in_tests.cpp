@@ -2141,15 +2141,6 @@ TEST_F(BuiltInTests, givenSipKernelWhenAllocationFailsThenItHasNullptrGraphicsAl
     EXPECT_EQ(nullptr, sipAllocation);
 }
 
-TEST_F(BuiltInTests, givenSameDeviceIsUsedWhenUsingStaticGetterThenExpectRetrieveSameAllocation) {
-    const SipKernel &sipKern = pDevice->getBuiltIns()->getSipKernel(SipKernelType::Csr, pContext->getDevice(0)->getDevice());
-    auto sipAllocation = sipKern.getSipAllocation();
-    EXPECT_NE(nullptr, sipAllocation);
-    auto staticSipAllocation = SipKernel::getSipKernelAllocation(*pDevice);
-    EXPECT_NE(nullptr, staticSipAllocation);
-    EXPECT_EQ(sipAllocation, staticSipAllocation);
-}
-
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuiltinCodeBinary) {
     DebugManager.flags.RebuildPrecompiledKernels.set(true);
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());

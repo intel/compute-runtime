@@ -50,6 +50,14 @@ class MemoryAllocation : public GraphicsAllocation {
     }
 
     void overrideMemoryPool(MemoryPool::Type pool);
+
+    void clearUsageInfo() {
+        for (auto &info : usageInfos) {
+            info.inspectionId = 0u;
+            info.residencyTaskCount = objectNotResident;
+            info.taskCount = objectNotUsed;
+        }
+    }
 };
 
 class OsAgnosticMemoryManager : public MemoryManager {

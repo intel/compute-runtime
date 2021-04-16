@@ -66,11 +66,11 @@ set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/built_ins_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
 )

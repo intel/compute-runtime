@@ -40,12 +40,19 @@ TEST(Sip, givenSipKernelClassWhenAskedForMaxDebugSurfaceSizeThenCorrectValueIsRe
 }
 
 TEST(Sip, givenDebuggingInactiveWhenSipTypeIsQueriedThenCsrSipTypeIsReturned) {
-    auto sipType = SipKernel::getSipKernelType(renderCoreFamily, false);
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto sipType = SipKernel::getSipKernelType(*mockDevice);
     EXPECT_EQ(SipKernelType::Csr, sipType);
 }
 
 TEST(DebugSip, givenDebuggingActiveWhenSipTypeIsQueriedThenDbgCsrSipTypeIsReturned) {
-    auto sipType = SipKernel::getSipKernelType(renderCoreFamily, true);
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+    mockDevice->setDebuggerActive(true);
+
+    auto sipType = SipKernel::getSipKernelType(*mockDevice);
     EXPECT_LE(SipKernelType::DbgCsr, sipType);
 }
 

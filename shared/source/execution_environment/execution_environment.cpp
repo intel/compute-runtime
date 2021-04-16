@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -24,6 +25,7 @@ ExecutionEnvironment::~ExecutionEnvironment() {
     if (memoryManager) {
         memoryManager->commonCleanup();
         for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {
+            SipKernel::freeSipKernels(rootDeviceEnvironment.get(), memoryManager.get());
             if (rootDeviceEnvironment->builtins.get()) {
                 rootDeviceEnvironment->builtins.get()->freeSipKernels(memoryManager.get());
             }

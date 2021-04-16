@@ -36,7 +36,7 @@ void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
 
     if (isMidThreadPreemption || debuggingEnabled) {
-        auto sipAllocation = SipKernel::getSipKernelAllocation(device);
+        auto sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
 
         auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
         STATE_SIP cmd = GfxFamily::cmdInitStateSip;

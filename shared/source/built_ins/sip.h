@@ -16,6 +16,8 @@ namespace NEO {
 
 class Device;
 class GraphicsAllocation;
+class MemoryManager;
+struct RootDeviceEnvironment;
 
 class SipKernel {
   public:
@@ -30,17 +32,29 @@ class SipKernel {
         return type;
     }
 
-    static const size_t maxDbgSurfaceSize;
-
     MOCKABLE_VIRTUAL GraphicsAllocation *getSipAllocation() const;
     MOCKABLE_VIRTUAL const std::vector<char> &getStateSaveAreaHeader() const;
-    static SipKernelType getSipKernelType(GFXCORE_FAMILY family, bool debuggingActive);
-    static GraphicsAllocation *getSipKernelAllocation(Device &device);
-    static const std::vector<char> &getSipStateSaveAreaHeader(Device &device);
+
+    static bool initSipKernel(SipKernelType type, Device &device);
+    static void freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, MemoryManager *memoryManager);
+
+    static const SipKernel &getSipKernel(Device &device);
+    static SipKernelType getSipKernelType(Device &device);
+
+    static const size_t maxDbgSurfaceSize;
+    static SipClassType classType;
 
   protected:
-    SipKernelType type = SipKernelType::COUNT;
-    GraphicsAllocation *sipAllocation = nullptr;
+    static bool initSipKernelImpl(SipKernelType type, Device &device);
+    static const SipKernel &getSipKernelImpl(Device &device);
+
+    static bool initBuiltinsSipKernel(SipKernelType type, Device &device);
+    static bool initRawBinaryFromFileKernel(SipKernelType type, Device &device, std::string &fileName);
+
+    static void selectSipClassType(std::string &fileName);
+
     const std::vector<char> stateSaveAreaHeader;
+    GraphicsAllocation *sipAllocation = nullptr;
+    SipKernelType type = SipKernelType::COUNT;
 };
 } // namespace NEO

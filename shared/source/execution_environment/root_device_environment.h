@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/helpers/options.h"
 
 #include <cstdint>
@@ -28,6 +29,7 @@ class HwDeviceId;
 class MemoryManager;
 class MemoryOperationsHandler;
 class OSInterface;
+class SipKernel;
 class SWTagsManager;
 struct HardwareInfo;
 
@@ -58,6 +60,7 @@ struct RootDeviceEnvironment {
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
     void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex);
 
+    std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
     std::unique_ptr<GmmHelper> gmmHelper;
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<GmmPageTableMngr> pageTableManager;

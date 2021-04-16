@@ -58,6 +58,7 @@ DECLARE_DEBUG_VARIABLE(bool, ZebinIgnoreIcbeVersion, false, "Ignore IGC\'s ICBE 
 DECLARE_DEBUG_VARIABLE(bool, UseExternalAllocatorForSshAndDsh, false, "Use 32 bit external Allocator for ssh and dsh in Level Zero")
 DECLARE_DEBUG_VARIABLE(bool, UseBindlessDebugSip, false, "Use bindless debug system routine")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "DeviceId selected for testing")
+DECLARE_DEBUG_VARIABLE(std::string, LoadBinarySipFromFile, std::string("unk"), "Select binary file to load SIP kernel raw binary")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceL1Caching, -1, "-1: default, 0: disable, 1: enable, When set to true driver will program L1 cache policy for surface state and stateless accessess")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceAuxTranslationEnabled, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, SchedulerSimulationReturnInstance, 0, "prints execution model related debug information")

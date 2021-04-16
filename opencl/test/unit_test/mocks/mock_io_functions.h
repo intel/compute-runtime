@@ -15,6 +15,7 @@
 namespace NEO {
 namespace IoFunctions {
 extern uint32_t mockFopenCalled;
+extern FILE *mockFopenReturned;
 extern uint32_t mockVfptrinfCalled;
 extern uint32_t mockFcloseCalled;
 extern uint32_t mockGetenvCalled;
@@ -29,7 +30,7 @@ extern std::unordered_map<std::string, std::string> *mockableEnvValues;
 
 inline FILE *mockFopen(const char *filename, const char *mode) {
     mockFopenCalled++;
-    return reinterpret_cast<FILE *>(0x40);
+    return mockFopenReturned;
 }
 
 inline int mockVfptrinf(FILE *stream, const char *format, va_list arg) {

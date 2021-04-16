@@ -31,6 +31,8 @@ class MockSipKernel : public SipKernel {
     GraphicsAllocation *getSipAllocation() const override;
     const std::vector<char> &getStateSaveAreaHeader() const override;
 
+    void createMockSipAllocation();
+
     std::unique_ptr<MemoryAllocation> mockSipMemoryAllocation;
     const std::vector<char> mockStateSaveAreaHeader = {'s', 's', 'a', 'h'};
     MockExecutionEnvironment executionEnvironment;
@@ -40,5 +42,9 @@ namespace MockSipData {
 extern std::unique_ptr<MockSipKernel> mockSipKernel;
 extern SipKernelType calledType;
 extern bool called;
+extern bool returned;
+extern bool useMockSip;
+
+void clearUseFlags();
 } // namespace MockSipData
 } // namespace NEO

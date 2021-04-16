@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_sip.h"
 
 #include "opencl/source/platform/extensions.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
@@ -30,22 +31,17 @@
 
 namespace NEO {
 extern const char *familyName[];
-namespace MockSipData {
-extern SipKernelType calledType;
-extern bool called;
-} // namespace MockSipData
 } // namespace NEO
 
 using namespace NEO;
 
 struct DeviceGetCapsTest : public ::testing::Test {
     void SetUp() override {
-        MockSipData::calledType = SipKernelType::COUNT;
-        MockSipData::called = false;
+        MockSipData::clearUseFlags();
+        backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, true);
     }
     void TearDown() override {
-        MockSipData::calledType = SipKernelType::COUNT;
-        MockSipData::called = false;
+        MockSipData::clearUseFlags();
     }
 
     void verifyOpenclCAllVersions(MockClDevice &clDevice) {
@@ -110,6 +106,8 @@ struct DeviceGetCapsTest : public ::testing::Test {
 
         EXPECT_EQ(clDevice.getDeviceInfo().openclCFeatures.end(), ++openclCFeatureIterator);
     }
+
+    std::unique_ptr<VariableBackup<bool>> backupSipInitType;
 };
 
 TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {

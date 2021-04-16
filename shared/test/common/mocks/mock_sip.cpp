@@ -7,38 +7,19 @@
 
 #include "shared/test/common/mocks/mock_sip.h"
 
-#include "shared/source/helpers/file_io.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/test_files.h"
-
-#include "cif/macros/enable.h"
-#include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
 #include <fstream>
 #include <map>
 
 namespace NEO {
 MockSipKernel::MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) : SipKernel(type, sipAlloc, {'s', 's', 'a', 'h'}) {
-    this->mockSipMemoryAllocation =
-        std::make_unique<MemoryAllocation>(0u,
-                                           GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL,
-                                           nullptr,
-                                           MemoryConstants::pageSize * 10u,
-                                           0u,
-                                           MemoryConstants::pageSize,
-                                           MemoryPool::System4KBPages, 3u);
+    createMockSipAllocation();
 }
 
 MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr, {'s', 's', 'a', 'h'}) {
-    this->mockSipMemoryAllocation =
-        std::make_unique<MemoryAllocation>(0u,
-                                           GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL,
-                                           nullptr,
-                                           MemoryConstants::pageSize * 10u,
-                                           0u,
-                                           MemoryConstants::pageSize,
-                                           MemoryPool::System4KBPages, 3u);
+    createMockSipAllocation();
 }
 
 MockSipKernel::~MockSipKernel() = default;
@@ -56,4 +37,16 @@ GraphicsAllocation *MockSipKernel::getSipAllocation() const {
 const std::vector<char> &MockSipKernel::getStateSaveAreaHeader() const {
     return mockStateSaveAreaHeader;
 }
+
+void MockSipKernel::createMockSipAllocation() {
+    this->mockSipMemoryAllocation =
+        std::make_unique<MemoryAllocation>(0u,
+                                           GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL,
+                                           nullptr,
+                                           MemoryConstants::pageSize * 10u,
+                                           0u,
+                                           MemoryConstants::pageSize,
+                                           MemoryPool::System4KBPages, 3u);
+}
+
 } // namespace NEO

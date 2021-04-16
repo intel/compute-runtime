@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+
+#include "shared/source/built_ins/sip.h"
 
 #include "gtest/gtest.h"
 

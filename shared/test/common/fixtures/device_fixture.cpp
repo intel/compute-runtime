@@ -7,6 +7,8 @@
 
 #include "shared/test/common/fixtures/device_fixture.h"
 
+#include "shared/source/built_ins/sip.h"
+
 #include "gtest/gtest.h"
 
 namespace NEO {
