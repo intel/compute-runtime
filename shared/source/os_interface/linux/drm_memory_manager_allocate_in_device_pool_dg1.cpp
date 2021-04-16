@@ -144,10 +144,16 @@ uint64_t getGpuAddress(HeapAssigner &heapAssigner, const HardwareInfo &hwInfo, G
         sizeAllocated = 0;
         break;
     default:
+        const bool prefer2MBAlignment = DebugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0 && sizeAllocated >= 2 * MemoryConstants::megaByte;
+        const bool prefer57bitAddressing = gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !resource48Bit;
+
         auto heapIndex = HeapIndex::HEAP_STANDARD64KB;
-        if ((gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0) && !resource48Bit) {
+        if (prefer2MBAlignment) {
+            heapIndex = HeapIndex::HEAP_STANDARD2MB;
+        } else if (prefer57bitAddressing) {
             heapIndex = HeapIndex::HEAP_EXTENDED;
         }
+
         gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocate(heapIndex, sizeAllocated));
         break;
     }
