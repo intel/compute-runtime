@@ -129,12 +129,7 @@ HWTEST2_F(DeviceQueueGroupTest,
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
-            auto hwInfoConfig = NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-            if (hwInfoConfig->isEvenContextCountRequired()) {
-                EXPECT_EQ(properties[i].numQueues, 2u);
-            } else {
-                EXPECT_EQ(properties[i].numQueues, 1u);
-            }
+            EXPECT_EQ(properties[i].numQueues, 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
         } else if (i == static_cast<uint32_t>(NEO::EngineGroupType::Compute)) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
@@ -178,12 +173,7 @@ HWTEST2_F(DeviceQueueGroupTest,
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
-            auto hwInfoConfig = NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-            if (hwInfoConfig->isEvenContextCountRequired()) {
-                EXPECT_EQ(properties[i].numQueues, 2u);
-            } else {
-                EXPECT_EQ(properties[i].numQueues, 1u);
-            }
+            EXPECT_EQ(properties[i].numQueues, 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
         } else if (i == static_cast<uint32_t>(NEO::EngineGroupType::Compute)) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);

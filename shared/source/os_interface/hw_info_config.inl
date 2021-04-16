@@ -32,11 +32,6 @@ uint64_t HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isEvenContextCountRequired() {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData){};
 
 template <PRODUCT_FAMILY gfxProduct>

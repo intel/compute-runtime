@@ -84,11 +84,6 @@ cl_unified_shared_memory_capabilities_intel HwInfoConfigHw<IGFX_UNKNOWN>::getSha
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvenContextCountRequired() {
-    return false;
-}
-
-template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo){};
 
 template <>

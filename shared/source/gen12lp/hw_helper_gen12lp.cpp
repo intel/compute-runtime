@@ -196,11 +196,6 @@ const HwHelper::EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInsta
         engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
     }
 
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig->isEvenContextCountRequired() && engines.size() & 1) {
-        engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::Regular});
-    }
-
     return engines;
 };
 

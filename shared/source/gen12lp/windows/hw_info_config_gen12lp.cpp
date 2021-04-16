@@ -35,11 +35,6 @@ void HwInfoConfigHw<IGFX_DG1>::adjustPlatformForProductFamily(HardwareInfo *hwIn
     Gen12LPCommonFunctions::adjustPlatformForProductFamily(hwInfo->platform, GFXCORE_FAMILY::IGFX_GEN12LP_CORE);
 }
 
-template <>
-bool HwInfoConfigHw<IGFX_DG1>::isEvenContextCountRequired() {
-    return true;
-}
-
 template class HwInfoConfigHw<IGFX_DG1>;
 #endif
 #ifdef SUPPORT_RKL

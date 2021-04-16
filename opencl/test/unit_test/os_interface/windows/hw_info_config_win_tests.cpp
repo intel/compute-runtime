@@ -62,11 +62,6 @@ void HwInfoConfigHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo *
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvenContextCountRequired() {
-    return false;
-}
-
-template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData){};
 
 template <>
