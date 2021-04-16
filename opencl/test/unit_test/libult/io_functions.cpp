@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,21 @@ fopenFuncPtr fopenPtr = &mockFopen;
 vfprintfFuncPtr vfprintfPtr = &mockVfptrinf;
 fcloseFuncPtr fclosePtr = &mockFclose;
 getenvFuncPtr getenvPtr = &mockGetenv;
+fseekFuncPtr fseekPtr = &mockFseek;
+ftellFuncPtr ftellPtr = &mockFtell;
+rewindFuncPtr rewindPtr = &mockRewind;
+freadFuncPtr freadPtr = &mockFread;
 
 uint32_t mockFopenCalled = 0;
 uint32_t mockVfptrinfCalled = 0;
 uint32_t mockFcloseCalled = 0;
 uint32_t mockGetenvCalled = 0;
+uint32_t mockFseekCalled = 0;
+uint32_t mockFtellCalled = 0;
+long int mockFtellReturn = 0;
+uint32_t mockRewindCalled = 0;
+uint32_t mockFreadCalled = 0;
+size_t mockFreadReturn = 0;
 
 std::unordered_map<std::string, std::string> *mockableEnvValues = nullptr;
 

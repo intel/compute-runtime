@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,12 @@ extern uint32_t mockFopenCalled;
 extern uint32_t mockVfptrinfCalled;
 extern uint32_t mockFcloseCalled;
 extern uint32_t mockGetenvCalled;
+extern uint32_t mockFseekCalled;
+extern uint32_t mockFtellCalled;
+extern long int mockFtellReturn;
+extern uint32_t mockRewindCalled;
+extern uint32_t mockFreadCalled;
+extern size_t mockFreadReturn;
 
 extern std::unordered_map<std::string, std::string> *mockableEnvValues;
 
@@ -42,6 +48,25 @@ inline char *mockGetenv(const char *name) noexcept {
         return const_cast<char *>(mockableEnvValues->find(name)->second.c_str());
     }
     return nullptr;
+}
+
+inline int mockFseek(FILE *stream, long int offset, int origin) {
+    mockFseekCalled++;
+    return 0;
+}
+
+inline long int mockFtell(FILE *stream) {
+    mockFtellCalled++;
+    return mockFtellReturn;
+}
+
+inline void mockRewind(FILE *stream) {
+    mockRewindCalled++;
+}
+
+inline size_t mockFread(void *ptr, size_t size, size_t count, FILE *stream) {
+    mockFreadCalled++;
+    return mockFreadReturn;
 }
 
 } // namespace IoFunctions
