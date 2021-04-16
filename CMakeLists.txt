@@ -109,7 +109,7 @@ add_definitions(
                 -DCL_USE_DEPRECATED_OPENCL_2_2_APIS
 )
 
-if(WIN32)
+if(WIN32 OR WDDM_LINUX)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -DWDDM_VERSION_NUMBER=23 -DNOMINMAX)
   add_definitions(-DLEGACY_D3DAPI_VERSION=20)
 endif()
@@ -357,17 +357,17 @@ if(WIN32 OR WDDM_LINUX)
     set(CONST_FROM_WDK_10_0_18328_0 "CONST")
   endif()
   add_compile_options(-DCONST_FROM_WDK_10_0_18328_0=${CONST_FROM_WDK_10_0_18328_0})
-
-  set(WDK_INCLUDE_PATHS
-      "${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/um"
-      "${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/shared"
-      "${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/km"
-  )
-
+  set(WDK_INCLUDE_PATHS "")
   if(WDDM_LINUX AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../wsl")
     get_filename_component(WSL_HEADERS "../wsl" ABSOLUTE)
     list(APPEND WDK_INCLUDE_PATHS ${WSL_HEADERS})
   endif()
+
+  list(APPEND WDK_INCLUDE_PATHS
+       "${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/um"
+       "${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/shared"
+       "${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/km"
+  )
 
   message(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
 endif()
@@ -803,13 +803,17 @@ endif()
 
 # Compiler warning flags
 if(NOT MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wempty-body")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wignored-qualifiers")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wtype-limits")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wuninitialized")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Winvalid-pch")
+  if(NOT WDDM_LINUX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wempty-body")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wignored-qualifiers")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wtype-limits")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wuninitialized")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Winvalid-pch")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-literal-suffix -Wno-error -w")
+  endif()
 
   if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
     # clang only
@@ -833,7 +837,9 @@ if(NOT MSVC)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-noexcept-type") # Added for gtest
     endif()
   endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+  if(NOT WDDM_LINUX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+  endif()
   if(USE_SANITIZE_UB)
     check_cxx_compiler_flag(-fsanitize=undefined COMPILER_SUPPORTS_UNDEFINED_BEHAVIOR_SANITIZER)
     if(COMPILER_SUPPORTS_UNDEFINED_BEHAVIOR_SANITIZER)
