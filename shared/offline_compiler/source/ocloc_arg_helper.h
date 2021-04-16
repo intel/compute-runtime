@@ -11,6 +11,7 @@
 
 #include <cctype>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -53,6 +54,7 @@ class OclocArgHelper {
     uint64_t **lenOutputs = nullptr;
     bool hasOutput = false;
     const std::vector<DeviceProduct> deviceProductTable;
+    std::map<std::string, unsigned int> genIGFXMap;
     void moveOutputs();
     MessagePrinter messagePrinter;
     Source *findSourceFile(const std::string &filename);
@@ -102,4 +104,6 @@ class OclocArgHelper {
         messagePrinter.printf(format, std::forward<Args>(args)...);
     }
     std::string returnProductNameForDevice(unsigned short deviceId);
+    bool isGen(const std::string &device);
+    unsigned int returnIGFXforGen(const std::string &device);
 };

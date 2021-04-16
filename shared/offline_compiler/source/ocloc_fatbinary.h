@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,11 @@
 class OclocArgHelper;
 namespace NEO {
 
-bool requestedFatBinary(const std::vector<std::string> &args);
-inline bool requestedFatBinary(int argc, const char *argv[]) {
+bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *helper);
+inline bool requestedFatBinary(int argc, const char *argv[], OclocArgHelper *helper) {
     std::vector<std::string> args;
     args.assign(argv, argv + argc);
-    return requestedFatBinary(args);
+    return requestedFatBinary(args, helper);
 }
 
 int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelper);
@@ -34,7 +34,6 @@ inline int buildFatBinary(int argc, const char *argv[], OclocArgHelper *argHelpe
 std::vector<PRODUCT_FAMILY> getAllSupportedTargetPlatforms();
 std::vector<ConstStringRef> toProductNames(const std::vector<PRODUCT_FAMILY> &productIds);
 PRODUCT_FAMILY asProductId(ConstStringRef product, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms);
-std::vector<GFXCORE_FAMILY> asGfxCoreIdList(ConstStringRef core);
 void appendPlatformsForGfxCore(GFXCORE_FAMILY core, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms, std::vector<PRODUCT_FAMILY> &out);
 std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef deviceArg, OclocArgHelper *argHelper);
 

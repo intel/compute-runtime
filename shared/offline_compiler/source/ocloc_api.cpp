@@ -102,7 +102,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             int retValue = OfflineCompiler::ErrorCode::SUCCESS;
             std::unique_ptr<MultiCommand> pMulti{(MultiCommand::create(allArgs, retValue, helper.get()))};
             return retValue;
-        } else if (requestedFatBinary(allArgs)) {
+        } else if (requestedFatBinary(allArgs, helper.get())) {
             return buildFatBinary(allArgs, helper.get());
         } else if (numArgs > 1 && ConstStringRef("validate") == allArgs[1]) {
             return NEO::Ocloc::validate(allArgs, helper.get());

@@ -23,13 +23,13 @@
 
 namespace NEO {
 
-bool requestedFatBinary(const std::vector<std::string> &args) {
+bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *helper) {
     for (size_t argIndex = 1; argIndex < args.size(); argIndex++) {
         const auto &currArg = args[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < args.size());
         if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
             ConstStringRef deviceArg(args[argIndex + 1]);
-            return deviceArg.contains("*") || deviceArg.contains("-") || deviceArg.contains(",") || deviceArg.containsCaseInsensitive("gen") || deviceArg.startsWith("XE_");
+            return deviceArg.contains("*") || deviceArg.contains("-") || deviceArg.contains(",") || helper->isGen(deviceArg.str());
         }
     }
     return false;
@@ -54,34 +54,6 @@ PRODUCT_FAMILY asProductId(ConstStringRef product, const std::vector<PRODUCT_FAM
         }
     }
     return IGFX_UNKNOWN;
-}
-
-std::vector<GFXCORE_FAMILY> asGfxCoreIdList(ConstStringRef core) {
-    std::vector<GFXCORE_FAMILY> result;
-
-    constexpr size_t genPrefixLength = 3;
-    auto coreSuffixBeg = core.begin() + genPrefixLength;
-    size_t coreSuffixLength = core.end() - coreSuffixBeg;
-    ConstStringRef coreSuffix(coreSuffixBeg, coreSuffixLength);
-
-    for (unsigned int coreId = 0; coreId < IGFX_MAX_CORE; ++coreId) {
-        auto name = familyName[coreId];
-        if (name == nullptr)
-            continue;
-
-        auto nameSuffix = name + genPrefixLength;
-        auto nameNumberEnd = nameSuffix;
-        for (; *nameNumberEnd != '\0' && isdigit(*nameNumberEnd); ++nameNumberEnd)
-            ;
-        size_t nameNumberLength = nameNumberEnd - nameSuffix;
-        if (nameNumberLength > coreSuffixLength)
-            continue;
-
-        if (ConstStringRef(nameSuffix, std::min(coreSuffixLength, strlen(nameSuffix))) == coreSuffix)
-            result.push_back(static_cast<GFXCORE_FAMILY>(coreId));
-    }
-
-    return result;
 }
 
 void appendPlatformsForGfxCore(GFXCORE_FAMILY core, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms, std::vector<PRODUCT_FAMILY> &out) {
@@ -112,12 +84,14 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
 
             if (range.size() == 1) {
                 // open range , from-max or min-to
-                if (range[0].containsCaseInsensitive("gen") || range[0].startsWith("XE_")) {
-                    auto coreIdList = asGfxCoreIdList(range[0]);
-                    if (coreIdList.empty()) {
+                if (argHelper->isGen(range[0].str())) {
+                    std::vector<GFXCORE_FAMILY> coreIdList;
+                    auto coreId = argHelper->returnIGFXforGen(range[0].str());
+                    if (coreId == 0) {
                         argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
+                    coreIdList.push_back(static_cast<GFXCORE_FAMILY>(coreId));
                     if ('-' == set[0]) {
                         // to
                         auto coreId = coreIdList.back();
@@ -152,25 +126,22 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
                     }
                 }
             } else {
-                if (range[0].contains("gen") || range[0].startsWith("XE_")) {
-                    if (false == range[1].contains("gen") && false == range[1].startsWith("XE_")) {
+                if (argHelper->isGen(range[0].str())) {
+                    if (false == argHelper->isGen(range[1].str())) {
                         argHelper->printf("Ranges mixing platforms and gfxCores is not supported : %s - should be genFrom-genTo or platformFrom-platformTo\n", set.str().c_str());
                         return {};
                     }
-                    auto coreFromList = asGfxCoreIdList(range[0]);
-                    auto coreToList = asGfxCoreIdList(range[1]);
-                    if (coreFromList.empty()) {
+                    auto coreFrom = argHelper->returnIGFXforGen(range[0].str());
+                    auto coreTo = argHelper->returnIGFXforGen(range[1].str());
+                    if (coreFrom == 0) {
                         argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
-                    if (coreToList.empty()) {
+                    if (coreTo == 0) {
                         argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
-
-                    auto coreFrom = coreFromList.front();
-                    auto coreTo = coreToList.back();
-                    if (coreFrom > coreTo) {
+                    if (static_cast<GFXCORE_FAMILY>(coreFrom) > static_cast<GFXCORE_FAMILY>(coreTo)) {
                         std::swap(coreFrom, coreTo);
                     }
                     while (coreFrom <= coreTo) {
@@ -197,17 +168,16 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
                     requestedPlatforms.insert(requestedPlatforms.end(), from, to);
                 }
             }
-        } else if (set.containsCaseInsensitive("gen") || deviceArg.startsWith("XE_")) {
+        } else if (argHelper->isGen(set.str())) {
             if (set.size() == genArg.size()) {
                 argHelper->printf("Invalid gen-based device : %s - gen should be followed by a number\n", set.str().c_str());
             } else {
-                auto coreIdList = asGfxCoreIdList(set);
-                if (coreIdList.empty()) {
+                auto coreId = argHelper->returnIGFXforGen(set.str());
+                if (coreId == 0) {
                     argHelper->printf("Unknown device : %s\n", set.str().c_str());
                     return {};
                 }
-                for (auto coreId : coreIdList)
-                    appendPlatformsForGfxCore(coreId, allSupportedPlatforms, requestedPlatforms);
+                appendPlatformsForGfxCore(static_cast<GFXCORE_FAMILY>(coreId), allSupportedPlatforms, requestedPlatforms);
             }
         } else {
             auto prodId = asProductId(set, allSupportedPlatforms);

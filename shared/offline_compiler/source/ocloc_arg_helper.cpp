@@ -13,6 +13,7 @@
 
 #include "hw_cmds.h"
 
+#include <algorithm>
 #include <cstring>
 #include <sstream>
 
@@ -59,6 +60,13 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
     }
     for (uint32_t i = 0; i < numInputHeaders; ++i) {
         headers.push_back(Source(dataInputHeaders[i], static_cast<size_t>(lenInputHeaders[i]), nameInputHeaders[i]));
+    }
+    for (unsigned int i = 0; i < IGFX_MAX_CORE; ++i) {
+        if (NEO::familyName[i] == nullptr)
+            continue;
+        std::string gen = NEO::familyName[i];
+        std::transform(gen.begin(), gen.end(), gen.begin(), ::tolower);
+        genIGFXMap.insert({gen, i});
     }
 }
 
@@ -170,4 +178,20 @@ std::string OclocArgHelper::returnProductNameForDevice(unsigned short deviceId) 
         }
     }
     return res;
+}
+
+bool OclocArgHelper::isGen(const std::string &device) {
+    std::string buf(device);
+    std::transform(buf.begin(), buf.end(), buf.begin(), ::tolower);
+    auto it = genIGFXMap.find(buf);
+    return it == genIGFXMap.end() ? false : true;
+}
+
+unsigned int OclocArgHelper::returnIGFXforGen(const std::string &device) {
+    std::string buf(device);
+    std::transform(buf.begin(), buf.end(), buf.begin(), ::tolower);
+    auto it = genIGFXMap.find(buf);
+    if (it == genIGFXMap.end())
+        return 0;
+    return it->second;
 }

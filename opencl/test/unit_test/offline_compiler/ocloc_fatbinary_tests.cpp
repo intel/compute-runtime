@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/offline_compiler/ocloc_fatbinary_tests.h"
 
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 
 #include <algorithm>
@@ -17,18 +18,21 @@ namespace NEO {
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
     const char *args[] = {"ocloc", "-aaa", "*", "-device", "*"};
 
-    EXPECT_FALSE(NEO::requestedFatBinary(0, nullptr));
-    EXPECT_FALSE(NEO::requestedFatBinary(1, args));
-    EXPECT_FALSE(NEO::requestedFatBinary(2, args));
-    EXPECT_FALSE(NEO::requestedFatBinary(3, args));
-    EXPECT_FALSE(NEO::requestedFatBinary(4, args));
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+
+    EXPECT_FALSE(NEO::requestedFatBinary(0, nullptr, argHelper.get()));
+    EXPECT_FALSE(NEO::requestedFatBinary(1, args, argHelper.get()));
+    EXPECT_FALSE(NEO::requestedFatBinary(2, args, argHelper.get()));
+    EXPECT_FALSE(NEO::requestedFatBinary(3, args, argHelper.get()));
+    EXPECT_FALSE(NEO::requestedFatBinary(4, args, argHelper.get()));
 }
 
-TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgProvidedAndContainsFatbinaryArgFormatThenReturnsTrue) {
+TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgProvidedWhenFatBinaryFormatWithRangeIsPassedThenTrueIsReturned) {
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+
     const char *allPlatforms[] = {"ocloc", "-device", "*"};
     const char *manyPlatforms[] = {"ocloc", "-device", "a,b"};
     const char *manyGens[] = {"ocloc", "-device", "gen0,gen1"};
-    const char *gen[] = {"ocloc", "-device", "gen0"};
     const char *rangePlatformFrom[] = {"ocloc", "-device", "skl-"};
     const char *rangePlatformTo[] = {"ocloc", "-device", "-skl"};
     const char *rangePlatformBounds[] = {"ocloc", "-device", "skl-icllp"};
@@ -36,21 +40,41 @@ TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgProvidedAndContainsFatbinary
     const char *rangeGenTo[] = {"ocloc", "-device", "-gen5"};
     const char *rangeGenBounds[] = {"ocloc", "-device", "gen0-gen5"};
 
-    EXPECT_TRUE(NEO::requestedFatBinary(3, allPlatforms));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, manyPlatforms));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, manyGens));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, gen));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, rangePlatformFrom));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, rangePlatformTo));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, rangePlatformBounds));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, rangeGenFrom));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, rangeGenTo));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, rangeGenBounds));
+    EXPECT_TRUE(NEO::requestedFatBinary(3, allPlatforms, argHelper.get()));
+    EXPECT_TRUE(NEO::requestedFatBinary(3, manyPlatforms, argHelper.get()));
+    EXPECT_TRUE(NEO::requestedFatBinary(3, manyGens, argHelper.get()));
+    EXPECT_TRUE(NEO::requestedFatBinary(3, rangePlatformFrom, argHelper.get()));
+    EXPECT_TRUE(NEO::requestedFatBinary(3, rangePlatformTo, argHelper.get()));
+    EXPECT_TRUE(NEO::requestedFatBinary(3, rangePlatformBounds, argHelper.get()));
+    EXPECT_TRUE(NEO::requestedFatBinary(3, rangeGenFrom, argHelper.get()));
+    EXPECT_TRUE(NEO::requestedFatBinary(3, rangeGenTo, argHelper.get()));
+    EXPECT_TRUE(NEO::requestedFatBinary(3, rangeGenBounds, argHelper.get()));
+}
+
+TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgProvidedWhenUnknownGenNameIsPassedThenRequestedFatBinaryReturnsFalse) {
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+    const char *unknownGen[] = {"ocloc", "-device", "gen0"};
+    const char *unknownGenCaseInsensitive[] = {"ocloc", "-device", "Gen0"};
+
+    EXPECT_FALSE(NEO::requestedFatBinary(3, unknownGen, argHelper.get()));
+    EXPECT_FALSE(NEO::requestedFatBinary(3, unknownGenCaseInsensitive, argHelper.get()));
+}
+
+TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgProvidedWhenKnownGenNameIsPassedThenRequestedFatBinaryReturnsTrue) {
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+    unsigned int i = 0;
+    for (; i < IGFX_MAX_CORE; ++i) {
+        if (NEO::familyName[i] != nullptr)
+            break;
+    }
+    const char *genFromFamilyName[] = {"ocloc", "-device", NEO::familyName[i]};
+    EXPECT_TRUE(NEO::requestedFatBinary(3, genFromFamilyName, argHelper.get()));
 }
 
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgProvidedButDoesnNotContainFatbinaryArgFormatThenReturnsFalse) {
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
     const char *skl[] = {"ocloc", "-device", "skl"};
-    EXPECT_FALSE(NEO::requestedFatBinary(3, skl));
+    EXPECT_FALSE(NEO::requestedFatBinary(3, skl, argHelper.get()));
 }
 
 TEST(OclocFatBinaryGetAllSupportedTargetPlatforms, WhenRequestedThenReturnsAllPlatformsWithNonNullHardwarePrefixes) {
@@ -91,21 +115,51 @@ TEST(OclocFatBinaryAsProductId, GivenDisabledPlatformNameThenReturnsUnknownPlatf
 }
 
 TEST(OclocFatBinaryAsGfxCoreIdList, GivenEnabledGfxCoreNameThenReturnsNonEmptyList) {
+
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+
     for (unsigned int coreId = 0; coreId < IGFX_MAX_CORE; ++coreId) {
         if (nullptr != NEO::familyName[coreId]) {
-            EXPECT_FALSE(NEO::asGfxCoreIdList(ConstStringRef(NEO::familyName[coreId], strlen(NEO::familyName[coreId]))).empty());
-            std::string caseInsesitive = NEO::familyName[coreId];
-            caseInsesitive[0] = 'g';
-            EXPECT_FALSE(NEO::asGfxCoreIdList(caseInsesitive).empty());
+            EXPECT_TRUE(argHelper->isGen(ConstStringRef(NEO::familyName[coreId]).str()));
+            std::string caseInsensitive = NEO::familyName[coreId];
+            std::transform(caseInsensitive.begin(), caseInsensitive.begin() + 1, caseInsensitive.begin(), ::tolower);
+            EXPECT_TRUE(argHelper->isGen(caseInsensitive));
         }
     }
 }
 
 TEST(OclocFatBinaryAsGfxCoreIdList, GivenDisabledGfxCoreNameThenReturnsEmptyList) {
-    EXPECT_TRUE(NEO::asGfxCoreIdList(ConstStringRef("genA")).empty());
-    EXPECT_TRUE(NEO::asGfxCoreIdList(ConstStringRef("gen0")).empty());
-    EXPECT_TRUE(NEO::asGfxCoreIdList(ConstStringRef("gen1")).empty());
-    EXPECT_TRUE(NEO::asGfxCoreIdList(ConstStringRef("gen2")).empty());
+
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+
+    EXPECT_FALSE(argHelper->isGen(ConstStringRef("genA").str()));
+    EXPECT_FALSE(argHelper->isGen(ConstStringRef("gen0").str()));
+    EXPECT_FALSE(argHelper->isGen(ConstStringRef("gen1").str()));
+    EXPECT_FALSE(argHelper->isGen(ConstStringRef("gen2").str()));
+}
+
+TEST(OclocFatBinaryAsGfxCoreIdList, GivenEnabledGfxCoreNameThenReturnsNonNullIGFX) {
+
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+
+    for (unsigned int coreId = 0; coreId < IGFX_MAX_CORE; ++coreId) {
+        if (nullptr != NEO::familyName[coreId]) {
+            EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef(NEO::familyName[coreId]).str()), coreId);
+            std::string caseInsensitive = NEO::familyName[coreId];
+            std::transform(caseInsensitive.begin(), caseInsensitive.begin() + 1, caseInsensitive.begin(), ::tolower);
+            EXPECT_EQ(argHelper->returnIGFXforGen(caseInsensitive), coreId);
+        }
+    }
+}
+
+TEST(OclocFatBinaryAsGfxCoreIdList, GivenDisabledGfxCoreNameThenReturnsNullIGFX) {
+
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+
+    EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef("genA").str()), 0u);
+    EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef("gen0").str()), 0u);
+    EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef("gen1").str()), 0u);
+    EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef("gen2").str()), 0u);
 }
 
 TEST(OclocFatBinaryAppendPlatformsForGfxCore, GivenCoreIdThenAppendsEnabledProductIdsThatMatch) {

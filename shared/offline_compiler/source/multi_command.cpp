@@ -16,7 +16,7 @@ namespace NEO {
 int MultiCommand::singleBuild(const std::vector<std::string> &args) {
     int retVal = OfflineCompiler::ErrorCode::SUCCESS;
 
-    if (requestedFatBinary(args)) {
+    if (requestedFatBinary(args, argHelper)) {
         retVal = buildFatBinary(args, argHelper);
     } else {
         std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(args.size(), args, true, retVal, argHelper)};
