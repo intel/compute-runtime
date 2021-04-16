@@ -561,7 +561,11 @@ bool CommandStreamReceiver::createGlobalFenceAllocation() {
 
 bool CommandStreamReceiver::createPreemptionAllocation() {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    AllocationProperties properties{rootDeviceIndex, hwInfo->capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, osContext->getDeviceBitfield()};
+    size_t preemptionSurfaceSize = hwInfo->capabilityTable.requiredPreemptionSurfaceSize;
+    if (DebugManager.flags.OverrideCsrAllocationSize.get() > 0) {
+        preemptionSurfaceSize = DebugManager.flags.OverrideCsrAllocationSize.get();
+    }
+    AllocationProperties properties{rootDeviceIndex, preemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, deviceBitfield};
     properties.flags.uncacheable = hwInfo->workaroundTable.waCSRUncachable;
     properties.alignment = 256 * MemoryConstants::kiloByte;
     this->preemptionAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
