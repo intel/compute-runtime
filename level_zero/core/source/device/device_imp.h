@@ -86,7 +86,7 @@ struct DeviceImp : public Device {
     ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) override;
     ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) override;
     NEO::Device *getActiveDevice() const;
-    ze_result_t getMemoryPropertiesImp(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties);
+    void getDeviceMemoryName(std::string &memoryName);
 
     NEO::Device *neoDevice = nullptr;
     bool isSubdevice = false;

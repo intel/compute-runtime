@@ -254,7 +254,29 @@ ze_result_t DeviceImp::getP2PProperties(ze_device_handle_t hPeerDevice,
 }
 
 ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) {
-    return getMemoryPropertiesImp(pCount, pMemProperties);
+    if (*pCount == 0) {
+        *pCount = 1;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    if (*pCount > 1) {
+        *pCount = 1;
+    }
+
+    if (nullptr == pMemProperties) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    const auto &deviceInfo = this->neoDevice->getDeviceInfo();
+
+    std::string memoryName;
+    getDeviceMemoryName(memoryName);
+    strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, memoryName.c_str());
+    pMemProperties->maxClockRate = deviceInfo.maxClockFrequency;
+    pMemProperties->maxBusWidth = deviceInfo.addressBits;
+    pMemProperties->totalSize = deviceInfo.globalMemSize;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties) {

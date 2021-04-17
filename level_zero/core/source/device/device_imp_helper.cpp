@@ -25,8 +25,7 @@ bool DeviceImp::isMultiDeviceCapable() const {
 void DeviceImp::processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_module_properties_t *pKernelProperties) {
 }
 
-ze_result_t DeviceImp::getMemoryPropertiesImp(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+void DeviceImp::getDeviceMemoryName(std::string &memoryName) {
+    memoryName = "DDR";
 }
-
 } // namespace L0

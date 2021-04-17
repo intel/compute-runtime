@@ -85,10 +85,4 @@ uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *
 
     return (supported ? getHostMemCapabilitiesValue() : 0);
 }
-
-template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) {
-    return 0u;
-}
-
 } // namespace NEO

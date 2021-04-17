@@ -24,7 +24,8 @@ HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPaWhenGettingMemoryPropertiesTh
     ze_device_memory_properties_t memProperties = {};
     uint32_t pCount = 1u;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, device->getMemoryProperties(&pCount, &memProperties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMemoryProperties(&pCount, &memProperties));
+    EXPECT_EQ(0, strcmp(memProperties.name, "DDR"));
 }
 
 using DeviceQueueGroupTest = Test<DeviceFixture>;
