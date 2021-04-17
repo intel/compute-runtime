@@ -55,6 +55,25 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t alignment,
                                      void **ptr) {
 
+    bool relaxedSizeAllowed = false;
+    if (hostDesc->pNext) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(hostDesc->pNext);
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
+            const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
+                reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
+            if (!(relaxedLimitsDesc->flags & ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            relaxedSizeAllowed = true;
+        }
+    }
+
+    if (relaxedSizeAllowed == false &&
+        (size > this->driverHandle->devices[0]->getNEODevice()->getHardwareCapabilities().maxMemAllocSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
                                                                            this->rootDeviceIndices,
                                                                            this->deviceBitfields);

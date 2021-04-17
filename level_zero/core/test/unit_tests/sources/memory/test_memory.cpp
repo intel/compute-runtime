@@ -164,6 +164,11 @@ struct SVMAllocsManagerRelaxedSizeMock : public NEO::SVMAllocsManager {
                                               void *cmdQ) override {
         return alignedMalloc(4096u, 4096u);
     }
+
+    void *createHostUnifiedMemoryAllocation(size_t size,
+                                            const UnifiedMemoryProperties &memoryProperties) override {
+        return alignedMalloc(4096u, 4096u);
+    }
 };
 
 struct DriverHandleRelaxedSizeMock : public DriverHandleImp {
@@ -208,6 +213,92 @@ struct MemoryRelaxedSizeTests : public ::testing::Test {
     L0::Device *device = nullptr;
     std::unique_ptr<ContextImp> context;
 };
+
+TEST_F(MemoryRelaxedSizeTests,
+       givenCallToHostAllocWithAllowedSizeAndWithoutRelaxedFlagThenAllocationIsMade) {
+    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize - 1;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    result = driverHandle->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryRelaxedSizeTests,
+       givenCallToHostAllocWithLargerThanAllowedSizeAndWithoutRelaxedFlagThenAllocationIsNotMade) {
+    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
+    EXPECT_EQ(nullptr, ptr);
+}
+
+TEST_F(MemoryRelaxedSizeTests,
+       givenCallToHostAllocWithLargerThanAllowedSizeAndRelaxedFlagThenAllocationIsMade) {
+    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
+    relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
+    relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
+    hostDesc.pNext = &relaxedSizeDesc;
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    result = driverHandle->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryRelaxedSizeTests,
+       givenCallToHostAllocWithLargerThanAllowedSizeAndRelaxedFlagWithIncorrectFlagThenAllocationIsNotMade) {
+    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
+    relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
+    relaxedSizeDesc.flags = static_cast<ze_relaxed_allocation_limits_exp_flag_t>(ZE_BIT(1));
+    hostDesc.pNext = &relaxedSizeDesc;
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(nullptr, ptr);
+}
+
+TEST_F(MemoryRelaxedSizeTests,
+       givenCallToHostAllocWithLargerThanAllowedSizeAndRelaxedDescriptorWithWrongStypeThenUnsupportedSizeIsReturned) {
+    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
+    relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
+    relaxedSizeDesc.flags = static_cast<ze_relaxed_allocation_limits_exp_flag_t>(ZE_BIT(1));
+    hostDesc.pNext = &relaxedSizeDesc;
+    ze_result_t result = context->allocHostMem(&hostDesc,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
+    EXPECT_EQ(nullptr, ptr);
+}
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithAllowedSizeAndWithoutRelaxedFlagThenAllocationIsMade) {
