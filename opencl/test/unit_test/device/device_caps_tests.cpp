@@ -1200,7 +1200,7 @@ TEST(DeviceGetCaps, givenDebugFlagToDisableDeviceEnqueuesWhenCreatingDeviceThenD
     EXPECT_EQ(0u, caps.maxOnDeviceEvents);
 }
 
-HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedItIsLimitedTo1024) {
+HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedThenItIsLimitedTo1024) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
     HardwareInfo myHwInfo = *defaultHwInfo;
