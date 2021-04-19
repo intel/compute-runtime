@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ class GetDeviceQueueInfoTest : public DeviceHostQueueFixture<DeviceQueue> {
     DeviceQueue *deviceQueue = nullptr;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, context) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueContextWhenGettingDeviceQueueInfoThenSuccessIsReturned) {
     cl_context contextReturned = nullptr;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -43,7 +43,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, context) {
     EXPECT_EQ((cl_context)pContext, contextReturned);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, device) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueDeviceWhenGettingDeviceQueueInfoThenSuccessIsReturned) {
     cl_device_id deviceExpected = testedClDevice;
     cl_device_id deviceIdReturned = nullptr;
 
@@ -56,7 +56,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, device) {
     EXPECT_EQ(deviceExpected, deviceIdReturned);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, queueProperties) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueuePropertiesWhenGettingDeviceQueueInfoThenSuccessIsReturned) {
     cl_command_queue_properties propertiesReturned = 0;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -68,7 +68,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, queueProperties) {
     EXPECT_EQ(deviceQueueProperties::allProperties[1], propertiesReturned);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, queueSize) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueSizeWhenGettingDeviceQueueInfoThenSuccessIsReturned) {
     cl_uint queueSizeReturned = 0;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -81,7 +81,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, queueSize) {
 }
 
 // OCL 2.1
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, queueDeviceDefault) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenQueueDeviceDefaultWhenGettingDeviceQueueInfoThenSuccessIsReturned) {
     cl_command_queue commandQueueReturned = nullptr;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -95,11 +95,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, queueDeviceDefault) {
     EXPECT_EQ(deviceQueue, commandQueueReturned);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, profiling) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, WhenGettingDeviceQueueInfoThenProfilingIsEnabled) {
     EXPECT_TRUE(deviceQueue->isProfilingEnabled());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, invalidParameter) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, GivenInvalidParamWhenGettingDeviceQueueInfoThenInvalidValueErrorIsReturned) {
     uint32_t tempValue = 0;
 
     retVal = deviceQueue->getCommandQueueInfo(
