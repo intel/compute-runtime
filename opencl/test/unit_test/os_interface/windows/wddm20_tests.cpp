@@ -1533,3 +1533,23 @@ TEST(VerifyAdapterType, whenAdapterSupportsRenderThenCreateHwDeviceId) {
     auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, adapterLuid);
     EXPECT_NE(nullptr, hwDeviceId.get());
 }
+
+TEST_F(WddmTestWithMockGdiDll, givenInvalidInputwhenSettingAllocationPriorityThenFalseIsReturned) {
+    init();
+    EXPECT_FALSE(wddm->setAllocationPriority(nullptr, 0, DXGI_RESOURCE_PRIORITY_MAXIMUM));
+    EXPECT_FALSE(wddm->setAllocationPriority(nullptr, 5, DXGI_RESOURCE_PRIORITY_MAXIMUM));
+    {
+        D3DKMT_HANDLE handles[] = {ALLOCATION_HANDLE, 0};
+        EXPECT_FALSE(wddm->setAllocationPriority(handles, 2, DXGI_RESOURCE_PRIORITY_MAXIMUM));
+    }
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenValidInputwhenSettingAllocationPriorityThenTrueIsReturned) {
+    init();
+    D3DKMT_HANDLE handles[] = {ALLOCATION_HANDLE, ALLOCATION_HANDLE + 1};
+    EXPECT_TRUE(wddm->setAllocationPriority(handles, 2, DXGI_RESOURCE_PRIORITY_MAXIMUM));
+    EXPECT_EQ(DXGI_RESOURCE_PRIORITY_MAXIMUM, getLastPriorityFcn());
+
+    EXPECT_TRUE(wddm->setAllocationPriority(handles, 2, DXGI_RESOURCE_PRIORITY_NORMAL));
+    EXPECT_EQ(DXGI_RESOURCE_PRIORITY_NORMAL, getLastPriorityFcn());
+}

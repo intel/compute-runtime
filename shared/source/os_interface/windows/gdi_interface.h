@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,6 +64,7 @@ class Gdi {
     ThkWrapper<IN D3DKMT_EVICT *> evict;
     ThkWrapper<IN D3DKMT_REGISTERTRIMNOTIFICATION *> registerTrimNotification;
     ThkWrapper<IN D3DKMT_UNREGISTERTRIMNOTIFICATION *> unregisterTrimNotification;
+    ThkWrapper<IN CONST D3DKMT_SETALLOCATIONPRIORITY *> setAllocationPriority;
 
     // HW queue
     ThkWrapper<IN OUT D3DKMT_CREATEHWQUEUE *> createHwQueue;

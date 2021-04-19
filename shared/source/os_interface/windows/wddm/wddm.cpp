@@ -504,6 +504,29 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     return status;
 }
 
+bool Wddm::setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority) {
+    D3DKMT_SETALLOCATIONPRIORITY setAllocationPriority = {};
+
+    StackVec<UINT, 4> priorities{};
+
+    priorities.resize(allocationCount);
+    for (auto i = 0u; i < allocationCount; i++) {
+        priorities[i] = priority;
+    }
+
+    setAllocationPriority.hDevice = device;
+    setAllocationPriority.AllocationCount = allocationCount;
+    setAllocationPriority.hResource = NULL;
+    setAllocationPriority.phAllocationList = handles;
+    setAllocationPriority.pPriorities = priorities.data();
+
+    auto status = getGdi()->setAllocationPriority(&setAllocationPriority);
+
+    DEBUG_BREAK_IF(STATUS_SUCCESS != status);
+
+    return STATUS_SUCCESS == status;
+}
+
 bool Wddm::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DDDI_ALLOCATIONINFO AllocationInfo = {0};

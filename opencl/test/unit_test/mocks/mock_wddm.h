@@ -96,6 +96,7 @@ class WddmMock : public Wddm {
         }
         return verifyAdapterLuidReturnValue;
     }
+    bool setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority) override;
 
     bool configureDeviceAddressSpace() {
         configureDeviceAddressSpaceResult.called++;
@@ -147,6 +148,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult getPagingFenceAddressResult;
     WddmMockHelpers::CallResult reserveGpuVirtualAddressResult;
     WddmMockHelpers::CallResult waitOnPagingFenceFromCpuResult;
+    WddmMockHelpers::CallResult setAllocationPriorityResult;
 
     NTSTATUS createAllocationStatus = STATUS_SUCCESS;
     bool verifyAdapterLuidReturnValue = true;
@@ -163,6 +165,7 @@ class WddmMock : public Wddm {
     bool callBaseMakeResident = true;
     bool callBaseCreatePagingLogger = true;
     bool shutdownStatus = false;
+    bool callBaseSetAllocationPriority = true;
 };
 
 struct GmockWddm : WddmMock {

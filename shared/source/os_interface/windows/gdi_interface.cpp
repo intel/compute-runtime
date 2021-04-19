@@ -79,6 +79,7 @@ bool Gdi::getAllProcAddresses() {
     evict = reinterpret_cast<PFND3DKMT_EVICT>(gdiDll.getProcAddress("D3DKMTEvict"));
     registerTrimNotification = reinterpret_cast<PFND3DKMT_REGISTERTRIMNOTIFICATION>(gdiDll.getProcAddress("D3DKMTRegisterTrimNotification"));
     unregisterTrimNotification = reinterpret_cast<PFND3DKMT_UNREGISTERTRIMNOTIFICATION>(gdiDll.getProcAddress("D3DKMTUnregisterTrimNotification"));
+    setAllocationPriority = reinterpret_cast<PFND3DKMT_SETALLOCATIONPRIORITY>(gdiDll.getProcAddress("D3DKMTSetAllocationPriority"));
 
     // For debug purposes
     getDeviceState = reinterpret_cast<PFND3DKMT_GETDEVICESTATE>(gdiDll.getProcAddress("D3DKMTGetDeviceState"));

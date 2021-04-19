@@ -52,6 +52,7 @@ D3DKMTUnregisterTrimNotification
 D3DKMTCreateHwQueue
 D3DKMTDestroyHwQueue
 D3DKMTSubmitCommandToHwQueue
+D3DKMTSetAllocationPriority
 MockSetAdapterInfo
 MockSetSizes
 GetMockSizes
@@ -72,3 +73,4 @@ getDestroySynchronizationObjectData
 getMonitorFenceCpuFenceAddress
 getCreateSynchronizationObject2FailCall
 getRegisterTrimNotificationFailCall
+getLastPriority

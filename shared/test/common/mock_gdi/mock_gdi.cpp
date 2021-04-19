@@ -15,6 +15,7 @@ D3DDDI_RESERVEGPUVIRTUALADDRESS gLastCallReserveGpuVaArg = {0};
 uint32_t gMapGpuVaFailConfigCount = 0;
 uint32_t gMapGpuVaFailConfigMax = 0;
 uint64_t gGpuAddressSpace = 0ull;
+uint32_t gLastPriority = 0ull;
 
 #ifdef __cplusplus // If used by C++ code,
 extern "C" { // we need to export the C interface
@@ -396,6 +397,28 @@ NTSTATUS __stdcall D3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESYNCHR
     return STATUS_SUCCESS;
 }
 
+NTSTATUS __stdcall D3DKMTSetAllocationPriority(IN CONST D3DKMT_SETALLOCATIONPRIORITY *setAllocationPriority) {
+    if (setAllocationPriority == nullptr || setAllocationPriority->hDevice != DEVICE_HANDLE) {
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if (setAllocationPriority->hResource == NULL && (setAllocationPriority->AllocationCount == 0 || setAllocationPriority->phAllocationList == NULL)) {
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (setAllocationPriority->pPriorities == NULL) {
+        return STATUS_INVALID_PARAMETER;
+    }
+    auto priority = setAllocationPriority->pPriorities[0];
+    gLastPriority = priority;
+    for (auto i = 0u; i < setAllocationPriority->AllocationCount; i++) {
+        if (setAllocationPriority->phAllocationList[i] == 0 || setAllocationPriority->pPriorities[i] != priority) {
+            return STATUS_INVALID_PARAMETER;
+        }
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static D3DKMT_CREATEHWQUEUE createHwQueueData = {};
 
 NTSTATUS __stdcall D3DKMTCreateHwQueue(IN OUT D3DKMT_CREATEHWQUEUE *createHwQueue) {
@@ -523,4 +546,8 @@ bool *getCreateSynchronizationObject2FailCall() {
 
 bool *getRegisterTrimNotificationFailCall() {
     return &registerTrimNotificationFailCall;
+}
+
+uint32_t getLastPriority() {
+    return gLastPriority;
 }

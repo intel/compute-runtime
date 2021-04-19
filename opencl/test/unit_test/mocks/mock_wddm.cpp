@@ -301,6 +301,17 @@ void WddmMock::createPagingFenceLogger() {
     }
 }
 
+bool WddmMock::setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority) {
+    if (callBaseSetAllocationPriority) {
+        auto status = Wddm::setAllocationPriority(handles, allocationCount, priority);
+        setAllocationPriorityResult.success = status;
+        setAllocationPriorityResult.called++;
+        setAllocationPriorityResult.uint64ParamPassed = priority;
+        return status;
+    }
+    return setAllocationPriorityResult.success;
+}
+
 void *GmockWddm::virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
     void *tmp = reinterpret_cast<void *>(virtualAllocAddress);
     size += MemoryConstants::pageSize;

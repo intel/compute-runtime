@@ -78,3 +78,4 @@ void InitGfxPartition();
 VOID *getMonitorFenceCpuFenceAddress();
 bool *getCreateSynchronizationObject2FailCall();
 bool *getRegisterTrimNotificationFailCall();
+uint32_t getLastPriority();
