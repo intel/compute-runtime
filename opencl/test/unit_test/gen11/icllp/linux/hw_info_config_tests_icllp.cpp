@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ struct HwInfoConfigTestLinuxIcllp : HwInfoConfigTestLinux {
     }
 };
 
-ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, configureHwInfoIcllp) {
+ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenIcllpThenHwInfoIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -42,7 +42,7 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, configureHwInfoIcllp) {
     EXPECT_FALSE(outHwInfo.featureTable.ftrTileY);
 }
 
-ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, negative) {
+ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenInvalidDeviceIdWhenConfiguringHwInfoThenNegativeOneReturned) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     drm->StoredRetValForDeviceID = -1;
@@ -70,7 +70,7 @@ template <typename T>
 class IcllpHwInfoTests : public ::testing::Test {};
 typedef ::testing::Types<ICLLP_1x8x8, ICLLP_1x4x8, ICLLP_1x6x8> icllpTestTypes;
 TYPED_TEST_CASE(IcllpHwInfoTests, icllpTestTypes);
-TYPED_TEST(IcllpHwInfoTests, gtSetupIsCorrect) {
+TYPED_TEST(IcllpHwInfoTests, WhenGettingSystemInfoThenParamsAreValid) {
     HardwareInfo hwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
