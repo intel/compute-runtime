@@ -113,7 +113,7 @@ class GfxPartition {
     static constexpr size_t internalFrontWindowPoolSize = 1 * MemoryConstants::megaByte;
 
     static const std::array<HeapIndex, 4> heap32Names;
-    static const std::array<HeapIndex, 7> heapNonSvmNames;
+    static const std::array<HeapIndex, 8> heapNonSvmNames;
 
   protected:
     bool initAdditionalRange(uint32_t cpuAddressWidth, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, size_t numRootDevices);

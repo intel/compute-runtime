@@ -402,3 +402,51 @@ TEST(GfxPartitionTest, givenInternalHeapWhenAllocatingSmallOrBigChunkThenAddress
         gfxPartition.heapFree(heaps[i], address, sizeToAlloc);
     }
 }
+
+using GfxPartitionTestForAllHeapTypes = ::testing::TestWithParam<HeapIndex>;
+
+TEST_P(GfxPartitionTestForAllHeapTypes, givenHeapIndexWhenFreeGpuAddressRangeIsCalledThenFreeMemory) {
+    MockGfxPartition gfxPartition;
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1);
+    const HeapIndex heapIndex = GetParam();
+    const size_t allocationSize = static_cast<size_t>(gfxPartition.getHeapSize(heapIndex)) * 3 / 4;
+    if (allocationSize == 0) {
+        GTEST_SKIP();
+    }
+    if (is32bit) {
+        auto it = std::find(GfxPartition::heap32Names.begin(), GfxPartition::heap32Names.end(), heapIndex);
+        auto is64bitHeap = it == GfxPartition::heap32Names.end();
+        if (is64bitHeap) {
+            GTEST_SKIP();
+        }
+    }
+    size_t sizeToAllocate{};
+
+    // Allocate majority of the heap
+    sizeToAllocate = allocationSize;
+    auto address = gfxPartition.heapAllocate(heapIndex, sizeToAllocate);
+    const size_t sizeAllocated = sizeToAllocate;
+    EXPECT_NE(0ull, address);
+    EXPECT_GE(sizeAllocated, allocationSize);
+
+    // Another one cannot be allocated
+    sizeToAllocate = allocationSize;
+    EXPECT_EQ(0ull, gfxPartition.heapAllocate(heapIndex, sizeToAllocate));
+
+    // Allocation is possible again after freeing
+    gfxPartition.freeGpuAddressRange(address, sizeAllocated);
+    sizeToAllocate = allocationSize;
+    EXPECT_NE(0ull, gfxPartition.heapAllocate(heapIndex, sizeToAllocate));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    GfxPartitionTestForAllHeapTypesTests,
+    GfxPartitionTestForAllHeapTypes,
+    ::testing::Values(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
+                      HeapIndex::HEAP_INTERNAL,
+                      HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY,
+                      HeapIndex::HEAP_EXTERNAL,
+                      HeapIndex::HEAP_STANDARD,
+                      HeapIndex::HEAP_STANDARD64KB,
+                      HeapIndex::HEAP_STANDARD2MB,
+                      HeapIndex::HEAP_EXTENDED));

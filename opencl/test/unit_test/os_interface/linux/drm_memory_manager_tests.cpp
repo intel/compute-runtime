@@ -3899,7 +3899,7 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedBu
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndReleaseGpuRangeIsCalledThenGpuAddressIsDecanonized) {
     constexpr size_t reservedCpuAddressRangeSize = is64bit ? (6 * 4 * GB) : 0;
     auto hwInfo = defaultHwInfo.get();
-    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    auto mockGfxPartition = std::make_unique<GmockGfxPartition>();
     mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1);
     auto size = 2 * MemoryConstants::megaByte;
     auto gpuAddress = mockGfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size);

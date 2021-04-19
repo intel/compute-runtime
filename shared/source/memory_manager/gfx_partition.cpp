@@ -19,12 +19,13 @@ const std::array<HeapIndex, 4> GfxPartition::heap32Names{{HeapIndex::HEAP_INTERN
                                                           HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY,
                                                           HeapIndex::HEAP_EXTERNAL}};
 
-const std::array<HeapIndex, 7> GfxPartition::heapNonSvmNames{{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
+const std::array<HeapIndex, 8> GfxPartition::heapNonSvmNames{{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
                                                               HeapIndex::HEAP_INTERNAL,
                                                               HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY,
                                                               HeapIndex::HEAP_EXTERNAL,
                                                               HeapIndex::HEAP_STANDARD,
                                                               HeapIndex::HEAP_STANDARD64KB,
+                                                              HeapIndex::HEAP_STANDARD2MB,
                                                               HeapIndex::HEAP_EXTENDED}};
 
 GfxPartition::GfxPartition(OSMemory::ReservedCpuAddressRange &sharedReservedCpuAddressRange) : reservedCpuAddressRange(sharedReservedCpuAddressRange), osMemory(OSMemory::create()) {}
