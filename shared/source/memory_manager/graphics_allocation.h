@@ -236,7 +236,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::BUFFER ||
                allocationType == AllocationType::BUFFER_HOST_MEMORY ||
                allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
-               allocationType == AllocationType::SVM_GPU;
+               allocationType == AllocationType::SVM_GPU ||
+               allocationType == AllocationType::SHARED_RESOURCE_COPY;
     }
 
     static bool isIsaAllocationType(GraphicsAllocation::AllocationType type) {
