@@ -35,7 +35,13 @@ struct DebugSessionMock : public L0::DebugSession {
     ze_result_t readEvent(uint64_t timeout, zet_debug_event_t *event) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+
+    void startAsyncThread() override {
+        asyncThreadStarted = true;
+    }
+
     zet_debug_config_t config;
+    bool asyncThreadStarted = false;
 };
 
 } // namespace ult

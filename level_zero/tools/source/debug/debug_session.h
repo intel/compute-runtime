@@ -29,6 +29,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual ze_result_t readEvent(uint64_t timeout, zet_debug_event_t *event) = 0;
 
     Device *getConnectedDevice() { return connectedDevice; }
+    virtual void startAsyncThread() = 0;
 
   protected:
     DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device){};
