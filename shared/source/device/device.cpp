@@ -83,7 +83,15 @@ bool Device::createDeviceImpl() {
         }
     }
 
-    executionEnvironment->memoryManager->setDefaultEngineIndex(defaultEngineIndex);
+    uint32_t defaultEngineIndexWithinMemoryManager = 0;
+    for (auto engineIndex = 0u; engineIndex < executionEnvironment->memoryManager->getRegisteredEnginesCount(); engineIndex++) {
+        OsContext *engine = executionEnvironment->memoryManager->getRegisteredEngines()[engineIndex].osContext;
+        if (engine == getDefaultEngine().osContext) {
+            defaultEngineIndexWithinMemoryManager = engineIndex;
+            break;
+        }
+    }
+    executionEnvironment->memoryManager->setDefaultEngineIndex(defaultEngineIndexWithinMemoryManager);
 
     auto osInterface = getRootDeviceEnvironment().osInterface.get();
 
