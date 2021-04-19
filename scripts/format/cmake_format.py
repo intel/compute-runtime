@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -30,6 +30,7 @@ def remove_extra_spaces(line):
     line = re.sub(r'\)AND\(', ') AND (', line)
     line = re.sub(r'\)OR\(', ') OR (', line)
     line = re.sub(r'NOT\(', 'NOT (', line)
+    line = re.sub(r' *\) *(?=[A-Z])', ') ', line)
     return line
 
 
