@@ -26,6 +26,7 @@ HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPaWhenGettingMemoryPropertiesTh
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMemoryProperties(&pCount, &memProperties));
     EXPECT_EQ(0, strcmp(memProperties.name, "DDR"));
+    EXPECT_EQ(0u, memProperties.maxClockRate);
 }
 
 using DeviceQueueGroupTest = Test<DeviceFixture>;

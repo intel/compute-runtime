@@ -43,6 +43,11 @@ void HwInfoConfigHw<IGFX_UNKNOWN>::getKernelExtendedProperties(uint32_t *fp16, u
 }
 
 template <>
+uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) {
+    return 0;
+}
+
+template <>
 uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getSharedSystemMemCapabilities() {
     return 0;
 }

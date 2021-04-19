@@ -56,6 +56,7 @@ constexpr uint64_t minTimeoutInMicroSeconds = 1000u;
 constexpr uint16_t milliSecsToMicroSecs = 1000;
 constexpr uint32_t milliFactor = 1000u;
 constexpr uint32_t microFacor = milliFactor * milliFactor;
+constexpr uint64_t gigaUnitTransferToUnitTransfer = 1000 * 1000 * 1000;
 
 constexpr int32_t memoryBusWidth = 128; // bus width in bits
 constexpr int32_t numMemoryChannels = 8;

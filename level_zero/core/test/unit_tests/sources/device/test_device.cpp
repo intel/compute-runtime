@@ -686,13 +686,14 @@ TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWithNonNullPtrThenPro
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
 
-    count++;
     ze_device_memory_properties_t memProperties = {};
     res = device->getMemoryProperties(&count, &memProperties);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
 
-    EXPECT_EQ(memProperties.maxClockRate, this->neoDevice->getDeviceInfo().maxClockFrequency);
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_EQ(memProperties.maxClockRate, hwInfoConfig.getDeviceMemoryMaxClkRate(&hwInfo));
     EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
     EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
 }

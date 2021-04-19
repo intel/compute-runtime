@@ -37,6 +37,7 @@ class HwInfoConfig {
     virtual uint64_t getSharedSystemMemCapabilities() = 0;
     virtual bool isEvenContextCountRequired() = 0;
     virtual void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) = 0;
+    virtual uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) = 0;
     uint32_t threadsPerEu;
 };
 
@@ -58,6 +59,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint64_t getSharedSystemMemCapabilities() override;
     bool isEvenContextCountRequired() override;
     void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) override;
+    uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) override;
 
   protected:
     HwInfoConfigHw() = default;
