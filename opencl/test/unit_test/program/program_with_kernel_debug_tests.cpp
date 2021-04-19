@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
@@ -110,6 +112,34 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhenProgramIsCompiledThenOptionsIncludeClOptDisableFlag) {
     MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
     sourceLevelDebugger->isOptDisabled = true;
+    pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
+
+    cl_int retVal = pProgram->compile(pProgram->getDevices(), nullptr,
+                                      0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr(CompilerOptions::optDisable.data()));
+}
+
+TEST_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableZeroWhenOptDisableIsTrueFromDebuggerThenOptDisableIsNotAdded) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.DebuggerOptDisable.set(0);
+
+    MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
+    sourceLevelDebugger->isOptDisabled = true;
+    pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
+
+    cl_int retVal = pProgram->compile(pProgram->getDevices(), nullptr,
+                                      0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_THAT(pProgram->getOptions(), ::testing::Not(::testing::HasSubstr(CompilerOptions::optDisable.data())));
+}
+
+TEST_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableOneWhenOptDisableIsFalseFromDebuggerThenOptDisableIsAdded) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.DebuggerOptDisable.set(1);
+
+    MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
+    sourceLevelDebugger->isOptDisabled = false;
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
     cl_int retVal = pProgram->compile(pProgram->getDevices(), nullptr,

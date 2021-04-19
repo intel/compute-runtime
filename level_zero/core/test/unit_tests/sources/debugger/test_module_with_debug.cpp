@@ -49,6 +49,54 @@ TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenModuleIsCreatedTh
     EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, L0::BuildOptions::optDisable));
 };
 
+TEST_F(DeviceWithDebuggerEnabledTest, GivenDebugVarDebuggerOptDisableZeroWhenOptDisableIsTrueFromDebuggerThenOptDisableIsNotAdded) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.DebuggerOptDisable.set(0);
+
+    NEO::MockCompilerEnableGuard mock(true);
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    debugger->isOptDisabled = true;
+
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(deviceL0, moduleBuildLog, ModuleType::User));
+    ASSERT_NE(nullptr, module.get());
+    module->initialize(&moduleDesc, device);
+
+    EXPECT_FALSE(CompilerOptions::contains(cip->buildOptions, L0::BuildOptions::optDisable));
+};
+
+TEST_F(DeviceWithDebuggerEnabledTest, GivenDebugVarDebuggerOptDisableOneWhenOptDisableIsFalseFromDebuggerThenOptDisableIsAdded) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.DebuggerOptDisable.set(1);
+
+    NEO::MockCompilerEnableGuard mock(true);
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    debugger->isOptDisabled = false;
+
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(deviceL0, moduleBuildLog, ModuleType::User));
+    ASSERT_NE(nullptr, module.get());
+    module->initialize(&moduleDesc, device);
+
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, L0::BuildOptions::optDisable));
+};
+
 TEST_F(DeviceWithDebuggerEnabledTest, GivenDebuggeableKernelWhenModuleIsInitializedThenDebugEnabledIsTrue) {
     NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();

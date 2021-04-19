@@ -94,6 +94,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, GpuScratchRegWriteRegisterOffset, 0, "register o
 DECLARE_DEBUG_VARIABLE(int32_t, GpuScratchRegWriteRegisterData, 0, "register data for GPU scratch register write after walker")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSlmAllocationSize, -1, "-1: default, >=0: program value for shared local memory size")
 DECLARE_DEBUG_VARIABLE(int32_t, DebuggerLogBitmask, 0, "0: logs disabled, 1 - INFO, 2 - ERROR, 1<<10 - Dump elf, see DebugVariables::DEBUGGER_LOG_BITMASK")
+DECLARE_DEBUG_VARIABLE(int32_t, DebuggerOptDisable, -1, "-1: default from debugger query, 0: do not add opt-disable, 1: add opt-disable")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

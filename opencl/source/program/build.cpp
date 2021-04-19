@@ -212,7 +212,7 @@ bool Program::appendKernelDebugOptions(ClDevice &clDevice, std::string &internal
     CompilerOptions::concatenateAppend(options, CompilerOptions::generateDebugInfo);
 
     auto debugger = clDevice.getSourceLevelDebugger();
-    if (debugger && debugger->isOptimizationDisabled()) {
+    if (debugger && (NEO::SourceLevelDebugger::shouldAppendOptDisable(*debugger))) {
         CompilerOptions::concatenateAppend(options, CompilerOptions::optDisable);
     }
     return true;

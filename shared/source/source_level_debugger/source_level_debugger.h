@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/os_interface/os_library.h"
 
@@ -22,6 +23,15 @@ class SourceLevelDebugger : public Debugger {
     SourceLevelDebugger(const SourceLevelDebugger &ref) = delete;
     SourceLevelDebugger &operator=(const SourceLevelDebugger &) = delete;
     static SourceLevelDebugger *create();
+
+    static bool shouldAppendOptDisable(const SourceLevelDebugger &debugger) {
+        if ((debugger.isOptimizationDisabled() && NEO::DebugManager.flags.DebuggerOptDisable.get() != 0) ||
+            NEO::DebugManager.flags.DebuggerOptDisable.get() == 1) {
+            return true;
+        }
+
+        return false;
+    }
 
     MOCKABLE_VIRTUAL bool isDebuggerActive();
     MOCKABLE_VIRTUAL bool notifyNewDevice(uint32_t deviceHandle);

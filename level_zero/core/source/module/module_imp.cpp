@@ -84,9 +84,10 @@ bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize
     std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, BuildOptions::hasBufferOffsetArg);
 
     if (device->getNEODevice()->getDeviceInfo().debuggerActive) {
-        if (device->getSourceLevelDebugger()->isOptimizationDisabled()) {
+        if (NEO::SourceLevelDebugger::shouldAppendOptDisable(*device->getSourceLevelDebugger())) {
             NEO::CompilerOptions::concatenateAppend(options, BuildOptions::optDisable);
         }
+
         options = NEO::CompilerOptions::concatenate(options, NEO::CompilerOptions::generateDebugInfo);
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
     }
