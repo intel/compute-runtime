@@ -23,7 +23,7 @@ OsContext::OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, EngineTy
       rootDevice(rootDevice) {}
 
 bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) const {
-    if (DebugManager.flags.DeferOsContextInitialization.get() == 0) {
+    if (DebugManager.flags.DeferOsContextInitialization.get() != 1) {
         return true;
     }
 

@@ -1633,6 +1633,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQu
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenCreatingQueueThenInitializeOsContext) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
+    DebugManager.flags.DeferOsContextInitialization.set(1);
 
     auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1, 1>>();
     MockContext context{};
@@ -1648,6 +1649,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedBcsOsContextWhenCreatingQueueThenInitializeOsContext) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DeferOsContextInitialization.set(1);
+
     auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1, 1>>();
     MockContext context{};
     cl_command_queue_properties properties[5] = {};

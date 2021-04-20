@@ -82,7 +82,7 @@ struct DeferredOsContextCreationTests : ::testing::Test {
 TEST_F(DeferredOsContextCreationTests, givenRegularEngineWhenCreatingOsContextThenOsContextIsInitializedDeferred) {
     DebugManagerStateRestore restore{};
 
-    expectDeferredContextCreation(engineTypeUsageRegular, false);
+    expectImmediateContextCreation(engineTypeUsageRegular, false);
 
     DebugManager.flags.DeferOsContextInitialization.set(1);
     expectDeferredContextCreation(engineTypeUsageRegular, false);
@@ -123,7 +123,7 @@ TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipl
                     PreemptionMode preemptionMode,
                     bool rootDevice) : OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice) {}
 
-        void initializeContext() {
+        void initializeContext() override {
             initializeContextCalled++;
         }
 

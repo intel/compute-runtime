@@ -678,7 +678,16 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueI
     commandQueue->destroy();
 }
 
-TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityEngineNotInitializedWhenCreateLowPriorityCommandQueueIsCalledThenEngineIsInitialized) {
+struct DeferredContextCreationDeviceCreateCommandQueueTest : DeviceCreateCommandQueueTest {
+    void SetUp() override {
+        DebugManager.flags.DeferOsContextInitialization.set(1);
+        DeviceCreateCommandQueueTest::SetUp();
+    }
+
+    DebugManagerStateRestore restore;
+};
+
+TEST_F(DeferredContextCreationDeviceCreateCommandQueueTest, givenLowPriorityEngineNotInitializedWhenCreateLowPriorityCommandQueueIsCalledThenEngineIsInitialized) {
     NEO::CommandStreamReceiver *lowPriorityCsr = nullptr;
     device->getCsrForLowPriority(&lowPriorityCsr);
     ASSERT_FALSE(lowPriorityCsr->getOsContext().isInitialized());
