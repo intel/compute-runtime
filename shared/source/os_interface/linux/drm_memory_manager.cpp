@@ -210,8 +210,9 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
 }
 
 void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const {
-    if (forcePinEnabled && pinBBs.at(allocationData.rootDeviceIndex) != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
-        pinBBs.at(allocationData.rootDeviceIndex)->pin(&bo, 1, registeredEngines[defaultEngineIndex].osContext, 0, getDefaultDrmContextId());
+    auto rootDeviceIndex = allocationData.rootDeviceIndex;
+    if (forcePinEnabled && pinBBs.at(rootDeviceIndex) != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
+        pinBBs.at(rootDeviceIndex)->pin(&bo, 1, registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext, 0, getDefaultDrmContextId(rootDeviceIndex));
     }
 }
 
@@ -382,15 +383,16 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
     auto alignedSize = alignSizeWholePage(allocationData.hostPtr, allocationData.size);
     auto realAllocationSize = alignedSize;
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
+    auto rootDeviceIndex = allocationData.rootDeviceIndex;
 
-    auto gpuVirtualAddress = acquireGpuRange(alignedSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+    auto gpuVirtualAddress = acquireGpuRange(alignedSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
     if (!gpuVirtualAddress) {
         return nullptr;
     }
 
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(reinterpret_cast<uintptr_t>(alignedPtr), realAllocationSize, 0, allocationData.rootDeviceIndex));
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(reinterpret_cast<uintptr_t>(alignedPtr), realAllocationSize, 0, rootDeviceIndex));
     if (!bo) {
-        releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, allocationData.rootDeviceIndex);
+        releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, rootDeviceIndex);
         return nullptr;
     }
 
@@ -398,10 +400,10 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
 
     if (validateHostPtrMemory) {
         auto boPtr = bo.get();
-        int result = pinBBs.at(allocationData.rootDeviceIndex)->validateHostPtr(&boPtr, 1, registeredEngines[defaultEngineIndex].osContext, 0, getDefaultDrmContextId());
+        int result = pinBBs.at(rootDeviceIndex)->validateHostPtr(&boPtr, 1, registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext, 0, getDefaultDrmContextId(rootDeviceIndex));
         if (result != 0) {
             unreference(bo.release(), true);
-            releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, allocationData.rootDeviceIndex);
+            releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, rootDeviceIndex);
             return nullptr;
         }
     }
@@ -806,7 +808,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     }
 
     if (validateHostPtrMemory) {
-        int result = pinBBs.at(rootDeviceIndex)->validateHostPtr(allocatedBos, numberOfBosAllocated, registeredEngines[defaultEngineIndex].osContext, 0, getDefaultDrmContextId());
+        int result = pinBBs.at(rootDeviceIndex)->validateHostPtr(allocatedBos, numberOfBosAllocated, registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext, 0, getDefaultDrmContextId(rootDeviceIndex));
 
         if (result == EFAULT) {
             for (uint32_t i = 0; i < numberOfBosAllocated; i++) {
@@ -922,8 +924,8 @@ int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex)
     return openFd.fd;
 }
 
-uint32_t DrmMemoryManager::getDefaultDrmContextId() const {
-    auto osContextLinux = static_cast<OsContextLinux *>(registeredEngines[defaultEngineIndex].osContext);
+uint32_t DrmMemoryManager::getDefaultDrmContextId(uint32_t rootDeviceIndex) const {
+    auto osContextLinux = static_cast<OsContextLinux *>(registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext);
     return osContextLinux->getDrmContextIds()[0];
 }
 

@@ -177,7 +177,7 @@ class MemoryManager {
     EngineControl *getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
     void unregisterEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
-    void setDefaultEngineIndex(uint32_t index) { defaultEngineIndex = index; }
+    void setDefaultEngineIndex(uint32_t rootDeviceIndex, uint32_t engineIndex) { defaultEngineIndex[rootDeviceIndex] = engineIndex; }
     virtual bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy);
     HeapIndex selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM, bool useFrontWindow);
     static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment);
@@ -235,12 +235,12 @@ class MemoryManager {
     bool asyncDeleterEnabled = false;
     std::vector<bool> enable64kbpages;
     std::vector<bool> localMemorySupported;
+    std::vector<uint32_t> defaultEngineIndex;
     bool supportsMultiStorageResources = true;
     ExecutionEnvironment &executionEnvironment;
     EngineControlContainer registeredEngines;
     std::unique_ptr<HostPtrManager> hostPtrManager;
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
-    uint32_t defaultEngineIndex = 0;
     std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
     std::vector<std::unique_ptr<GfxPartition>> gfxPartitions;
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> localMemoryUsageBankSelector;

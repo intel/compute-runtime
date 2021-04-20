@@ -380,7 +380,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmContextIdWhenAllocationIsCreatedThenPinWith
     for (auto engine : memoryManager->registeredEngines) {
         engine.osContext->incRefInternal();
     }
-    auto drmContextId = memoryManager->getDefaultDrmContextId();
+    auto drmContextId = memoryManager->getDefaultDrmContextId(rootDeviceIndex);
     ASSERT_NE(nullptr, memoryManager->pinBBs[rootDeviceIndex]);
     EXPECT_NE(0u, drmContextId);
 

@@ -42,6 +42,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 
     bool anyLocalMemorySupported = false;
 
+    defaultEngineIndex.resize(executionEnvironment.rootDeviceEnvironments.size());
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); ++rootDeviceIndex) {
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
         localMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(HwHelper::getSubDevicesCount(hwInfo)));

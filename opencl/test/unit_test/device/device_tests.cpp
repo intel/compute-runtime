@@ -192,9 +192,10 @@ HWTEST_F(DeviceTest, givenNoHwCsrTypeAndModifiedDefaultEngineIndexWhenIsSimulati
 HWTEST_F(DeviceTest, givenDeviceWithoutSubDevicesWhenCreatingContextsThenMemoryManagerDefaultContextIsSetCorrectly) {
     UltDeviceFactory factory(1, 1);
     MockDevice &device = *factory.rootDevices[0];
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     MockMemoryManager *memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
 
-    OsContext *defaultOsContextMemoryManager = memoryManager->registeredEngines[memoryManager->defaultEngineIndex].osContext;
+    OsContext *defaultOsContextMemoryManager = memoryManager->registeredEngines[memoryManager->defaultEngineIndex[rootDeviceIndex]].osContext;
     OsContext *defaultOsContextRootDevice = device.getDefaultEngine().osContext;
     EXPECT_EQ(defaultOsContextRootDevice, defaultOsContextMemoryManager);
 }
@@ -202,9 +203,10 @@ HWTEST_F(DeviceTest, givenDeviceWithoutSubDevicesWhenCreatingContextsThenMemoryM
 HWTEST_F(DeviceTest, givenDeviceWithSubDevicesWhenCreatingContextsThenMemoryManagerDefaultContextIsSetCorrectly) {
     UltDeviceFactory factory(1, 2);
     MockDevice &device = *factory.rootDevices[0];
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     MockMemoryManager *memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
 
-    OsContext *defaultOsContextMemoryManager = memoryManager->registeredEngines[memoryManager->defaultEngineIndex].osContext;
+    OsContext *defaultOsContextMemoryManager = memoryManager->registeredEngines[memoryManager->defaultEngineIndex[rootDeviceIndex]].osContext;
     OsContext *defaultOsContextRootDevice = device.getDefaultEngine().osContext;
     EXPECT_EQ(defaultOsContextRootDevice, defaultOsContextMemoryManager);
 }
@@ -214,9 +216,11 @@ HWTEST_F(DeviceTest, givenMultiDeviceWhenCreatingContextsThenMemoryManagerDefaul
     MockDevice &device = *factory.rootDevices[2];
     MockMemoryManager *memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
 
-    OsContext *defaultOsContextMemoryManager = memoryManager->registeredEngines[memoryManager->defaultEngineIndex].osContext;
-    OsContext *defaultOsContextRootDevice = device.getDefaultEngine().osContext;
-    EXPECT_EQ(defaultOsContextRootDevice, defaultOsContextMemoryManager);
+    for (auto &pRootDevice : factory.rootDevices) {
+        OsContext *defaultOsContextMemoryManager = memoryManager->registeredEngines[memoryManager->defaultEngineIndex[pRootDevice->getRootDeviceIndex()]].osContext;
+        OsContext *defaultOsContextRootDevice = pRootDevice->getDefaultEngine().osContext;
+        EXPECT_EQ(defaultOsContextRootDevice, defaultOsContextMemoryManager);
+    }
 }
 
 TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCalled) {

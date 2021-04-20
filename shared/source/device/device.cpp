@@ -91,7 +91,7 @@ bool Device::createDeviceImpl() {
             break;
         }
     }
-    executionEnvironment->memoryManager->setDefaultEngineIndex(defaultEngineIndexWithinMemoryManager);
+    executionEnvironment->memoryManager->setDefaultEngineIndex(getRootDeviceIndex(), defaultEngineIndexWithinMemoryManager);
 
     auto osInterface = getRootDeviceEnvironment().osInterface.get();
 
