@@ -364,8 +364,8 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingDeviceMem
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    device->getDriverHandle()->freeMem(src_buffer);
-    device->getDriverHandle()->freeMem(dst_buffer);
+    context->freeMem(src_buffer);
+    context->freeMem(dst_buffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsNotFound, PlatformSupport) {
@@ -425,7 +425,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWit
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    device->getDriverHandle()->freeMem(dst_buffer);
+    context->freeMem(dst_buffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, PlatformSupport) {
@@ -489,7 +489,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWit
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    device->getDriverHandle()->freeMem(dst_buffer);
+    context->freeMem(dst_buffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, PlatformSupport) {
@@ -550,7 +550,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithS
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    device->getDriverHandle()->freeMem(dst_buffer);
+    context->freeMem(dst_buffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsAddedAndPCDueToSignalEventIsAddedWithDCFlush, PlatformSupport) {
@@ -605,7 +605,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
     EXPECT_TRUE(cmd->getDcFlushEnable());
 
-    device->getDriverHandle()->freeMem(dst_buffer);
+    context->freeMem(dst_buffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsNotAddedAndPCDueToSignalEventIsAddedWithOutDCFlush, PlatformSupport) {
@@ -657,7 +657,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
     EXPECT_FALSE(cmd->getDcFlushEnable());
 
-    device->getDriverHandle()->freeMem(dst_buffer);
+    context->freeMem(dst_buffer);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, Platforms) {

@@ -34,18 +34,9 @@ struct DriverHandle : _ze_driver_handle_t {
     virtual ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) = 0;
     virtual ze_result_t getExtensionProperties(uint32_t *pCount,
                                                ze_driver_extension_properties_t *pExtensionProperties) = 0;
-    virtual ze_result_t getMemAllocProperties(const void *ptr,
-                                              ze_memory_allocation_properties_t *pMemAllocProperties,
-                                              ze_device_handle_t *phDevice) = 0;
 
-    virtual ze_result_t freeMem(const void *ptr) = 0;
     virtual NEO::MemoryManager *getMemoryManager() = 0;
     virtual void setMemoryManager(NEO::MemoryManager *memoryManager) = 0;
-    virtual ze_result_t getMemAddressRange(const void *ptr, void **pBase, size_t *pSize) = 0;
-    virtual ze_result_t closeIpcMemHandle(const void *ptr) = 0;
-    virtual ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) = 0;
-    virtual ze_result_t openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc_mem_handle_t handle,
-                                         ze_ipc_memory_flags_t flags, void **ptr) = 0;
     virtual ze_result_t openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc, ze_event_pool_handle_t *phEventPool) = 0;
     virtual ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) = 0;
     virtual bool findAllocationDataForRange(const void *buffer,

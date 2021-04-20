@@ -136,7 +136,7 @@ HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, 
 
     Kernel::fromHandle(kernelHandle)->destroy();
 
-    device->getDriverHandle()->freeMem(devicePtr);
+    context->freeMem(devicePtr);
 }
 
 using ModuleUncachedBufferTest = Test<ModuleFixture>;
@@ -176,7 +176,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     Kernel::fromHandle(kernelHandle)->destroy();
 
-    device->getDriverHandle()->freeMem(devicePtr);
+    context->freeMem(devicePtr);
 }
 
 HWTEST2_F(ModuleUncachedBufferTest,
@@ -212,7 +212,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     Kernel::fromHandle(kernelHandle)->destroy();
 
-    device->getDriverHandle()->freeMem(devicePtr);
+    context->freeMem(devicePtr);
 }
 
 HWTEST2_F(ModuleUncachedBufferTest,
@@ -247,7 +247,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     Kernel::fromHandle(kernelHandle)->destroy();
 
-    device->getDriverHandle()->freeMem(devicePtr);
+    context->freeMem(devicePtr);
 }
 
 HWTEST2_F(ModuleUncachedBufferTest,
@@ -295,7 +295,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     Kernel::fromHandle(kernelHandle)->destroy();
 
-    device->getDriverHandle()->freeMem(devicePtr);
+    context->freeMem(devicePtr);
 }
 
 HWTEST_F(ModuleTest, GivenIncorrectNameWhenCreatingKernelThenResultErrorInvalidArgumentErrorIsReturned) {
@@ -735,7 +735,7 @@ HWTEST_F(DeviceModuleSetArgBufferTest,
     argBufferValue = *reinterpret_cast<uint64_t *>(const_cast<uint8_t *>(argBufferPtr));
     EXPECT_NE(argBufferValue, reinterpret_cast<uint64_t>(validBufferPtr));
 
-    driverHandle->freeMem(validBufferPtr);
+    context->freeMem(validBufferPtr);
     Kernel::fromHandle(kernelHandle)->destroy();
 }
 
@@ -780,7 +780,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
             }
         }
 
-        driverHandle->freeMem(ptr);
+        context->freeMem(ptr);
         Kernel::fromHandle(kernelHandle)->destroy();
     }
 }

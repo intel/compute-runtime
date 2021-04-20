@@ -560,7 +560,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
     itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
 
-    device->getDriverHandle()->freeMem(alloc);
+    context->freeMem(alloc);
 }
 
 HWTEST_F(CommandListDualStroage, givenIndirectDispatchWithSharedDualStorageMemoryWhenAppendingThenWorkGroupCountAndGlobalWorkSizeIsSetInCrossThreadData) {
@@ -655,7 +655,7 @@ HWTEST_F(CommandListDualStroage, givenIndirectDispatchWithSharedDualStorageMemor
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
     EXPECT_EQ(CS_GPR_R1, cmd2->getRegisterAddress());
 
-    device->getDriverHandle()->freeMem(alloc);
+    context->freeMem(alloc);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenStateIsCleaned) {
@@ -974,7 +974,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
 
     auto cmd = genCmdCast<GPGPU_WALKER *>(*itorWalker);
     EXPECT_TRUE(cmd->getPredicateEnable());
-    device->getDriverHandle()->freeMem(reinterpret_cast<void *>(numLaunchArgs));
+    context->freeMem(reinterpret_cast<void *>(numLaunchArgs));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMultipleKernelsThenUsesMathAndWalker) {
@@ -1011,7 +1011,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
 
     itor = find<MI_MATH *>(itor, cmdList.end());
     ASSERT_EQ(cmdList.end(), itor);
-    device->getDriverHandle()->freeMem(reinterpret_cast<void *>(numLaunchArgs));
+    context->freeMem(reinterpret_cast<void *>(numLaunchArgs));
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenInvalidEventListWhenAppendLaunchCooperativeKernelIsCalledThenErrorIsReturned) {

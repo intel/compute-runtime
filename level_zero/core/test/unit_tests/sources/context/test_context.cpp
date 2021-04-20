@@ -144,17 +144,10 @@ struct SVMAllocsManagerContextMock : public NEO::SVMAllocsManager {
                   memoryProperties.rootDeviceIndices.end());
         EXPECT_NE(memoryProperties.rootDeviceIndices.find(expectedRootDeviceIndexes[1]),
                   memoryProperties.rootDeviceIndices.end());
-
-        return alignedMalloc(4096u, 4096u);
+        return NEO::SVMAllocsManager::createHostUnifiedMemoryAllocation(size, memoryProperties);
     }
+
     std::vector<uint32_t> expectedRootDeviceIndexes;
-};
-
-struct DriverHandleContexteMock : public DriverHandleImp {
-    ze_result_t freeMem(const void *ptr) override {
-        alignedFree(const_cast<void *>(ptr));
-        return ZE_RESULT_SUCCESS;
-    }
 };
 
 struct ContextHostAllocTests : public ::testing::Test {
@@ -163,7 +156,7 @@ struct ContextHostAllocTests : public ::testing::Test {
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;
         auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
-        driverHandle = std::make_unique<DriverHandleContexteMock>();
+        driverHandle = std::make_unique<DriverHandleImp>();
         ze_result_t res = driverHandle->initialize(std::move(devices));
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -188,7 +181,7 @@ struct ContextHostAllocTests : public ::testing::Test {
     DebugManagerStateRestore restorer;
     NEO::SVMAllocsManager *prevSvmAllocsManager;
     SVMAllocsManagerContextMock *currSvmAllocsManager;
-    std::unique_ptr<DriverHandleContexteMock> driverHandle;
+    std::unique_ptr<DriverHandleImp> driverHandle;
     std::vector<ze_device_handle_t> zeDevices;
     const uint32_t numRootDevices = 4u;
     uint32_t numberOfDevicesInContext = 2u;
@@ -213,7 +206,7 @@ TEST_F(ContextHostAllocTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, hostPtr);
 
-    res = driverHandle->freeMem(hostPtr);
+    res = context->freeMem(hostPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     context->destroy();

@@ -101,21 +101,6 @@ ze_result_t DriverHandleImp::getIPCProperties(ze_driver_ipc_properties_t *pIPCPr
     return ZE_RESULT_SUCCESS;
 }
 
-inline ze_memory_type_t parseUSMType(InternalMemoryType memoryType) {
-    switch (memoryType) {
-    case InternalMemoryType::SHARED_UNIFIED_MEMORY:
-        return ZE_MEMORY_TYPE_SHARED;
-    case InternalMemoryType::DEVICE_UNIFIED_MEMORY:
-        return ZE_MEMORY_TYPE_DEVICE;
-    case InternalMemoryType::HOST_UNIFIED_MEMORY:
-        return ZE_MEMORY_TYPE_HOST;
-    default:
-        return ZE_MEMORY_TYPE_UNKNOWN;
-    }
-
-    return ZE_MEMORY_TYPE_UNKNOWN;
-}
-
 ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, void **pfunc) {
     auto funcAddr = extensionFunctionsLookupMap.find(std::string(pFuncName));
     if (funcAddr != extensionFunctionsLookupMap.end()) {
@@ -139,48 +124,6 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
         strncpy_s(pExtensionProperties[i].name, ZE_MAX_EXTENSION_NAME,
                   extension.first.c_str(), extension.first.length() + 1);
         pExtensionProperties[i].version = extension.second;
-    }
-
-    return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t DriverHandleImp::getMemAllocProperties(const void *ptr,
-                                                   ze_memory_allocation_properties_t *pMemAllocProperties,
-                                                   ze_device_handle_t *phDevice) {
-    auto alloc = svmAllocsManager->getSVMAlloc(ptr);
-    if (nullptr == alloc) {
-        pMemAllocProperties->type = ZE_MEMORY_TYPE_UNKNOWN;
-        return ZE_RESULT_SUCCESS;
-    }
-
-    pMemAllocProperties->type = parseUSMType(alloc->memoryType);
-    pMemAllocProperties->id = alloc->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
-
-    if (phDevice != nullptr) {
-        if (alloc->device == nullptr) {
-            *phDevice = nullptr;
-        } else {
-            auto device = static_cast<NEO::Device *>(alloc->device)->getSpecializedDevice<DeviceImp>();
-            DEBUG_BREAK_IF(device == nullptr);
-            *phDevice = device->toHandle();
-        }
-    }
-
-    if (pMemAllocProperties->pNext) {
-        ze_base_properties_t *extendedProperties =
-            reinterpret_cast<ze_base_properties_t *>(pMemAllocProperties->pNext);
-        if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
-            ze_external_memory_export_fd_t *extendedMemoryExportProperties =
-                reinterpret_cast<ze_external_memory_export_fd_t *>(extendedProperties);
-            if (extendedMemoryExportProperties->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
-                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
-            }
-            if (pMemAllocProperties->type != ZE_MEMORY_TYPE_DEVICE) {
-                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            }
-            uint64_t handle = alloc->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->getMemoryManager());
-            extendedMemoryExportProperties->fd = static_cast<int>(handle);
-        }
     }
 
     return ZE_RESULT_SUCCESS;

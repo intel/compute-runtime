@@ -31,19 +31,10 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) override;
     ze_result_t getExtensionProperties(uint32_t *pCount,
                                        ze_driver_extension_properties_t *pExtensionProperties) override;
-    ze_result_t getMemAllocProperties(const void *ptr,
-                                      ze_memory_allocation_properties_t *pMemAllocProperties,
-                                      ze_device_handle_t *phDevice) override;
 
-    ze_result_t getMemAddressRange(const void *ptr, void **pBase, size_t *pSize) override;
-    ze_result_t freeMem(const void *ptr) override;
     NEO::MemoryManager *getMemoryManager() override;
     void setMemoryManager(NEO::MemoryManager *memoryManager) override;
     MOCKABLE_VIRTUAL void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAlloc);
-    ze_result_t closeIpcMemHandle(const void *ptr) override;
-    ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override;
-    ze_result_t openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc_mem_handle_t handle,
-                                 ze_ipc_memory_flags_t flags, void **ptr) override;
     ze_result_t openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc, ze_event_pool_handle_t *phEventPool) override;
     ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) override;
     NEO::SVMAllocsManager *getSvmAllocsManager() override;

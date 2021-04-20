@@ -1379,7 +1379,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
 
         mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
         EXPECT_FALSE(mockKernel.getKernelRequiresUncachedMocs());
-        device->getDriverHandle()->freeMem(devicePtr);
+        context->freeMem(devicePtr);
     }
 
     {
@@ -1397,7 +1397,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
 
         mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
         EXPECT_FALSE(mockKernel.getKernelRequiresUncachedMocs());
-        device->getDriverHandle()->freeMem(devicePtr);
+        context->freeMem(devicePtr);
     }
 }
 
@@ -1430,7 +1430,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
 
         mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
         EXPECT_TRUE(mockKernel.getKernelRequiresUncachedMocs());
-        device->getDriverHandle()->freeMem(devicePtr);
+        context->freeMem(devicePtr);
     }
 
     {
@@ -1449,7 +1449,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
 
         mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
         EXPECT_TRUE(mockKernel.getKernelRequiresUncachedMocs());
-        device->getDriverHandle()->freeMem(devicePtr);
+        context->freeMem(devicePtr);
     }
 }
 
@@ -1482,7 +1482,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
 
         mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
         EXPECT_TRUE(mockKernel.getKernelRequiresUncachedMocs());
-        device->getDriverHandle()->freeMem(devicePtr);
+        context->freeMem(devicePtr);
     }
 
     {
@@ -1500,7 +1500,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
 
         mockKernel.setArgBufferWithAlloc(0, 0x1234, alloc);
         EXPECT_FALSE(mockKernel.getKernelRequiresUncachedMocs());
-        device->getDriverHandle()->freeMem(devicePtr);
+        context->freeMem(devicePtr);
     }
 }
 
