@@ -99,6 +99,7 @@ void RootDevice::initializeRootCommandStreamReceiver() {
                                                                     preemptionMode,
                                                                     true);
 
+    osContext->ensureContextInitialized();
     rootCommandStreamReceiver->setupContext(*osContext);
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
