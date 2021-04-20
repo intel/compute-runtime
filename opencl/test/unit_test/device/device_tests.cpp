@@ -189,6 +189,16 @@ HWTEST_F(DeviceTest, givenNoHwCsrTypeAndModifiedDefaultEngineIndexWhenIsSimulati
     }
 }
 
+TEST_F(DeviceTest, givenRootDeviceWithSubDevicesWhenCreatingThenRootDeviceContextIsInitialized) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DeferOsContextInitialization.set(1);
+
+    UltDeviceFactory factory(1, 2);
+    MockDevice &device = *factory.rootDevices[0];
+
+    EXPECT_TRUE(device.getDefaultEngine().osContext->isInitialized());
+}
+
 HWTEST_F(DeviceTest, givenDeviceWithoutSubDevicesWhenCreatingContextsThenMemoryManagerDefaultContextIsSetCorrectly) {
     UltDeviceFactory factory(1, 1);
     MockDevice &device = *factory.rootDevices[0];
