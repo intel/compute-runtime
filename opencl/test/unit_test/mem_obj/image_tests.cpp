@@ -1190,6 +1190,38 @@ TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPr
     EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
 }
 
+TEST(ImageTest, givenImageWhenGettingCompressionOfImageThenCorrectValueIsReturned) {
+    MockContext context;
+    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&context));
+    EXPECT_NE(nullptr, image);
+
+    auto allocation = image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
+    allocation->getDefaultGmm()->isRenderCompressed = true;
+    size_t sizeReturned = 0;
+    cl_bool usesCompression;
+    cl_int retVal = CL_SUCCESS;
+    retVal = image->getMemObjectInfo(
+        CL_MEM_USES_COMPRESSION_INTEL,
+        sizeof(cl_bool),
+        &usesCompression,
+        &sizeReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(sizeof(cl_bool), sizeReturned);
+    EXPECT_TRUE(usesCompression);
+
+    allocation->getDefaultGmm()->isRenderCompressed = false;
+    sizeReturned = 0;
+    usesCompression = cl_bool{CL_FALSE};
+    retVal = image->getMemObjectInfo(
+        CL_MEM_USES_COMPRESSION_INTEL,
+        sizeof(cl_bool),
+        &usesCompression,
+        &sizeReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(sizeof(cl_bool), sizeReturned);
+    EXPECT_FALSE(usesCompression);
+}
+
 using ImageTests = ::testing::Test;
 HWTEST_F(ImageTests, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorrectValue) {
     if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {

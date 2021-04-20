@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,7 +124,8 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     cl_context ctx = nullptr;
     uint64_t internalHandle = 0llu;
     auto allocation = getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
-    cl_bool usesCompression = allocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
+    Gmm *gmm;
+    cl_bool usesCompression;
 
     switch (paramName) {
     case CL_MEM_TYPE:
@@ -188,6 +189,12 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_USES_COMPRESSION_INTEL:
+        gmm = allocation->getDefaultGmm();
+        if (gmm != nullptr) {
+            usesCompression = gmm->isRenderCompressed;
+        } else {
+            usesCompression = allocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
+        }
         srcParam = &usesCompression;
         srcParamSize = sizeof(cl_bool);
         break;
