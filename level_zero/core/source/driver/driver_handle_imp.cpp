@@ -459,9 +459,11 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
     if (iter != deviceImp->peerAllocations.allocations.end()) {
         peerAllocData = &iter->second;
         alloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
+        UNRECOVERABLE_IF(alloc == nullptr);
         peerPtr = reinterpret_cast<void *>(alloc->getGpuAddress());
     } else {
         alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+        UNRECOVERABLE_IF(alloc == nullptr);
         uint64_t handle = alloc->peekInternalHandle(this->getMemoryManager());
         ze_ipc_memory_flags_t flags = {};
         peerPtr = this->importFdHandle(device, flags, handle, &alloc);
