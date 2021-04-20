@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@ class ThreadLinux : public Thread {
   public:
     ThreadLinux(pthread_t threadId);
     void join() override;
+    void yield() override;
     ~ThreadLinux() override = default;
 
   protected:

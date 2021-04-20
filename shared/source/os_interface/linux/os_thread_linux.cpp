@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,4 +19,9 @@ std::unique_ptr<Thread> Thread::create(void *(*func)(void *), void *arg) {
 void ThreadLinux::join() {
     pthread_join(threadId, nullptr);
 }
+
+void ThreadLinux::yield() {
+    pthread_yield();
+}
+
 } // namespace NEO
