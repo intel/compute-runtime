@@ -157,6 +157,91 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderD
     EXPECT_STREQ("00:03.0", hwDeviceIds[1]->getPciPath());
 }
 
+TEST(DrmTest, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {
+    struct DrmMock : public Drm {
+        using Drm::ioctlStatistics;
+    };
+    ::testing::internal::CaptureStdout();
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = static_cast<DrmMock *>(DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]).release());
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintIoctlTimes.set(true);
+
+    EXPECT_TRUE(drm->ioctlStatistics.empty());
+
+    int euTotal = 0u;
+    uint32_t contextId = 1u;
+
+    drm->getEuTotal(euTotal);
+    EXPECT_EQ(drm->ioctlStatistics.size(), 1u);
+
+    drm->getEuTotal(euTotal);
+    EXPECT_EQ(drm->ioctlStatistics.size(), 1u);
+
+    drm->setLowPriorityContextParam(contextId);
+    EXPECT_EQ(drm->ioctlStatistics.size(), 2u);
+
+    auto euTotalData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GETPARAM);
+    ASSERT_TRUE(euTotalData != drm->ioctlStatistics.end());
+    EXPECT_EQ(euTotalData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GETPARAM));
+    EXPECT_EQ(euTotalData->second.second, 2u);
+    EXPECT_NE(euTotalData->second.first, 0);
+    auto firstTime = euTotalData->second.first;
+
+    auto lowPriorityData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM);
+    ASSERT_TRUE(lowPriorityData != drm->ioctlStatistics.end());
+    EXPECT_EQ(lowPriorityData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM));
+    EXPECT_EQ(lowPriorityData->second.second, 1u);
+    EXPECT_NE(lowPriorityData->second.first, 0);
+
+    drm->getEuTotal(euTotal);
+    EXPECT_EQ(drm->ioctlStatistics.size(), 2u);
+
+    euTotalData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GETPARAM);
+    ASSERT_TRUE(euTotalData != drm->ioctlStatistics.end());
+    EXPECT_EQ(euTotalData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GETPARAM));
+    EXPECT_EQ(euTotalData->second.second, 3u);
+    EXPECT_NE(euTotalData->second.first, 0);
+
+    auto secondTime = euTotalData->second.first;
+    EXPECT_GT(secondTime, firstTime);
+
+    lowPriorityData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM);
+    ASSERT_TRUE(lowPriorityData != drm->ioctlStatistics.end());
+    EXPECT_EQ(lowPriorityData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM));
+    EXPECT_EQ(lowPriorityData->second.second, 1u);
+    EXPECT_NE(lowPriorityData->second.first, 0);
+
+    drm->destroyDrmContext(contextId);
+    EXPECT_EQ(drm->ioctlStatistics.size(), 3u);
+
+    euTotalData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GETPARAM);
+    ASSERT_TRUE(euTotalData != drm->ioctlStatistics.end());
+    EXPECT_EQ(euTotalData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GETPARAM));
+    EXPECT_EQ(euTotalData->second.second, 3u);
+    EXPECT_NE(euTotalData->second.first, 0);
+
+    lowPriorityData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM);
+    ASSERT_TRUE(lowPriorityData != drm->ioctlStatistics.end());
+    EXPECT_EQ(lowPriorityData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM));
+    EXPECT_EQ(lowPriorityData->second.second, 1u);
+    EXPECT_NE(lowPriorityData->second.first, 0);
+
+    auto destroyData = drm->ioctlStatistics.find(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY);
+    ASSERT_TRUE(destroyData != drm->ioctlStatistics.end());
+    EXPECT_EQ(destroyData->first, static_cast<unsigned long>(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY));
+    EXPECT_EQ(destroyData->second.second, 1u);
+    EXPECT_NE(destroyData->second.first, 0);
+
+    delete drm;
+
+    std::string output = ::testing::internal::GetCapturedStdout();
+    EXPECT_STRNE(output.c_str(), "");
+}
+
 TEST(DrmTest, GivenSelectedNonExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevicesAndNoDevicesAreCreated) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);

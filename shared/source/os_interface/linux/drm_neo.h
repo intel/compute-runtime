@@ -27,6 +27,7 @@
 #include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <unordered_map>
 #include <vector>
 
 struct GT_SYSTEM_INFO;
@@ -213,6 +214,9 @@ class Drm {
     std::unique_ptr<uint8_t[]> query(uint32_t queryId, uint32_t queryItemFlags, int32_t &length);
 
     StackVec<uint32_t, size_t(ResourceClass::MaxSize)> classHandles;
+
+    std::unordered_map<unsigned long, std::pair<long long, uint64_t>> ioctlStatistics;
+    void printIoctlStatistics();
 
 #pragma pack(1)
     struct PCIConfig {

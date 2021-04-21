@@ -69,7 +69,31 @@ int Drm::ioctl(unsigned long request, void *arg) {
     int ret;
     SYSTEM_ENTER();
     do {
+        auto measureTime = DebugManager.flags.PrintIoctlTimes.get();
+        std::chrono::steady_clock::time_point start;
+        std::chrono::steady_clock::time_point end;
+
+        if (measureTime) {
+            start = std::chrono::steady_clock::now();
+        }
+
         ret = SysCalls::ioctl(getFileDescriptor(), request, arg);
+
+        if (measureTime) {
+            end = std::chrono::steady_clock::now();
+            auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+
+            std::pair<long long, uint64_t> ioctlData{};
+            auto ioctlDataIt = this->ioctlStatistics.find(request);
+            if (ioctlDataIt != this->ioctlStatistics.end()) {
+                ioctlData = ioctlDataIt->second;
+            }
+
+            ioctlData.first += elapsedTime;
+            ioctlData.second++;
+
+            this->ioctlStatistics[request] = ioctlData;
+        }
     } while (ret == -1 && (errno == EINTR || errno == EAGAIN || errno == EBUSY));
     SYSTEM_LEAVE(request);
     return ret;
@@ -442,6 +466,19 @@ std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId, uint32_t queryItemFlags,
     return data;
 }
 
+void Drm::printIoctlStatistics() {
+    if (!DebugManager.flags.PrintIoctlTimes.get()) {
+        return;
+    }
+
+    printf("\n                 --- Ioctls statistics ---\n");
+    printf("        Request  Total time(ns)      Count   Avg time per ioctl\n");
+    for (const auto &ioctlData : this->ioctlStatistics) {
+        printf("%15lu %15llu %10lu %20f\n", ioctlData.first, ioctlData.second.first, ioctlData.second.second, ioctlData.second.first / static_cast<double>(ioctlData.second.second));
+    }
+    printf("\n");
+}
+
 bool Drm::createVirtualMemoryAddressSpace(uint32_t vmCount) {
     for (auto i = 0u; i < vmCount; i++) {
         uint32_t id = i;
@@ -501,6 +538,7 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
 
 Drm::~Drm() {
     destroyVirtualMemoryAddressSpace();
+    this->printIoctlStatistics();
 }
 
 } // namespace NEO
