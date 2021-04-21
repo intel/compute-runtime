@@ -553,7 +553,7 @@ TEST(SysCalls, WhenSysCallsPollCalledThenCallIsRedirectedToOs) {
     pollFd.events = 0;
 
     auto result = NEO::SysCalls::poll(&pollFd, 1, 0);
-    EXPECT_EQ(0, result);
+    EXPECT_LE(0, result);
 }
 
 TEST(SysCalls, WhenSysCallsFstatCalledThenCallIsRedirectedToOs) {
