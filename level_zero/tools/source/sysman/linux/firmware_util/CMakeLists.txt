@@ -10,13 +10,15 @@ if(libigsc_FOUND)
       ${CMAKE_CURRENT_SOURCE_DIR}/firmware_util_imp.h
       ${CMAKE_CURRENT_SOURCE_DIR}/firmware_util.h
   )
-  if($(libigsc_VERSION) GREATER "2")
-    set(L0_SRCS_TOOLS_SYSMAN_LINUX_FIRMWARE_UTIL_HELPER
-        ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/firmware_util_imp_helper.cpp
-    )
-  else()
+  if(libigsc_VERSION VERSION_LESS 0.3)
+    message(STATUS "default libigsc version: ${libigsc_VERSION}")
     set(L0_SRCS_TOOLS_SYSMAN_LINUX_FIRMWARE_UTIL_HELPER
         ${CMAKE_CURRENT_SOURCE_DIR}/firmware_util_imp_helper.cpp
+    )
+  else()
+    message(STATUS "LIBIGSC version: ${libigsc_VERSION}")
+    set(L0_SRCS_TOOLS_SYSMAN_LINUX_FIRMWARE_UTIL_HELPER
+        ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/firmware_util_imp_helper.cpp
     )
   endif()
 else()

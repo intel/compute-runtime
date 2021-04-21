@@ -96,6 +96,7 @@ void usage() {
                  "\n  -r,   --reset force|noforce   selectively run device reset test"
                  "\n  -i,   --firmware <image>      selectively run device firmware test <image> is the firmware binary needed to flash"
                  "\n  -F,   --fabricport            selectively run fabricport black box test"
+                 "\n  -d,   --diagnostics           selectively run diagnostics black box test"
                  "\n  -h,   --help                  display help message"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
@@ -930,6 +931,66 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
         }
     }
 }
+
+void testSysmanDiagnostics(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  diagnostics tests ---- " << std::endl;
+    uint32_t count = 0;
+    uint32_t subTestCount = 0;
+    zes_diag_test_t tests = {};
+    zes_diag_result_t results;
+    uint32_t start = 0, end = 0;
+    VALIDATECALL(zesDeviceEnumDiagnosticTestSuites(device, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve diagnostics domains" << std::endl;
+        return;
+    }
+    std::vector<zes_diag_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumDiagnosticTestSuites(device, &count, handles.data()));
+
+    for (auto handle : handles) {
+        zes_diag_properties_t diagProperties = {};
+
+        VALIDATECALL(zesDiagnosticsGetProperties(handle, &diagProperties));
+        if (verbose) {
+            std::cout << "diagnostics name = " << diagProperties.name << std::endl;
+            std::cout << "On Subdevice = " << diagProperties.onSubdevice << std::endl;
+            std::cout << "Subdevice Id = " << diagProperties.subdeviceId << std::endl;
+            std::cout << "diagnostics have sub tests = " << diagProperties.haveTests << std::endl;
+        }
+        if (diagProperties.haveTests != 0) {
+            VALIDATECALL(zesDiagnosticsGetTests(handle, &subTestCount, &tests));
+            if (verbose) {
+                std::cout << "diagnostics subTestCount = " << subTestCount << "for " << diagProperties.name << std::endl;
+                for (uint32_t i = 0; i < subTestCount; i++) {
+                    std::cout << "subTest#" << tests.index << " = " << tests.name << std::endl;
+                }
+            }
+            end = subTestCount - 1;
+        }
+        VALIDATECALL(zesDiagnosticsRunTests(handle, start, end, &results));
+        if (verbose) {
+            switch (results) {
+            case ZES_DIAG_RESULT_NO_ERRORS:
+                std::cout << "No errors have occurred" << std::endl;
+                break;
+            case ZES_DIAG_RESULT_REBOOT_FOR_REPAIR:
+                std::cout << "diagnostics successful and repair applied, reboot needed" << std::endl;
+                break;
+            case ZES_DIAG_RESULT_FAIL_CANT_REPAIR:
+                std::cout << "diagnostics run, unable to fix" << std::endl;
+                break;
+            case ZES_DIAG_RESULT_ABORT:
+                std::cout << "diagnostics run fialed, unknown error" << std::endl;
+                break;
+            case ZES_DIAG_RESULT_FORCE_UINT32:
+            default:
+                std::cout << "undefined error" << std::endl;
+            }
+        }
+    }
+}
+
 bool validateGetenv(const char *name) {
     const char *env = getenv(name);
     if ((nullptr == env) || (0 == strcmp("0", env)))
@@ -963,10 +1024,11 @@ int main(int argc, char *argv[]) {
         {"reset", required_argument, nullptr, 'r'},
         {"fabricport", no_argument, nullptr, 'F'},
         {"firmware", optional_argument, nullptr, 'i'},
+        {"diagnostics", no_argument, nullptr, 'd'},
         {0, 0, 0, 0},
     };
     bool force = false;
-    while ((opt = getopt_long(argc, argv, "hpfsectogmrFEi:", long_opts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hdpfsectogmrFEi:", long_opts, nullptr)) != -1) {
         switch (opt) {
         case 'h':
             usage();
@@ -1062,7 +1124,11 @@ int main(int argc, char *argv[]) {
                 testSysmanFabricPort(device);
             });
             break;
-
+        case 'd':
+            std::for_each(devices.begin(), devices.end(), [&](auto device) {
+                testSysmanDiagnostics(device);
+            });
+            break;
         default:
             usage();
             exit(0);

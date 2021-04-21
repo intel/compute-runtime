@@ -9,15 +9,24 @@
 
 namespace L0 {
 
-bool WddmDiagnosticsImp::isDiagnosticsSupported(void) {
-    return false;
-}
-
 void WddmDiagnosticsImp::osGetDiagProperties(zes_diag_properties_t *pProperties){};
 
-std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman) {
+ze_result_t WddmDiagnosticsImp::osGetDiagTests(uint32_t *pCount, zes_diag_test_t *pTests) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmDiagnosticsImp::osRunDiagTests(uint32_t start, uint32_t end, zes_diag_result_t *pResult) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman, const std::string &diagTests) {
     std::unique_ptr<WddmDiagnosticsImp> pWddmDiagnosticsImp = std::make_unique<WddmDiagnosticsImp>();
     return pWddmDiagnosticsImp;
 }
 
+void OsDiagnostics::getSupportedDiagTests(std::vector<std::string> &supportedDiagTests, OsSysman *pOsSysman) {
+}
+
+void OsDiagnostics::getSupportedDiagTestsFromFW(void *pFwInterface, std::vector<std::string> &supportedDiagTests) {
+}
 } // namespace L0

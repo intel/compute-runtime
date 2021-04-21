@@ -16,15 +16,21 @@ namespace L0 {
 
 class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass {
   public:
-    bool isDiagnosticsSupported(void) override;
     void osGetDiagProperties(zes_diag_properties_t *pProperties) override;
+    ze_result_t osGetDiagTests(uint32_t *pCount, zes_diag_test_t *pTests) override;
+    ze_result_t osRunDiagTests(uint32_t start, uint32_t end, zes_diag_result_t *pResult) override;
+    ze_result_t osRunDiagTestsinFW(zes_diag_result_t *pResult);
     LinuxDiagnosticsImp() = default;
-    LinuxDiagnosticsImp(OsSysman *pOsSysman);
+    LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string &diagTests);
     ~LinuxDiagnosticsImp() override = default;
+    std::string osDiagType = "unknown";
 
   protected:
     FirmwareUtil *pFwInterface = nullptr;
-    bool isFWInitalized = false;
+    SysfsAccess *pSysfsAccess = nullptr;
+
+  private:
+    static const std::string quiescentGpuFile;
 };
 
 } // namespace L0

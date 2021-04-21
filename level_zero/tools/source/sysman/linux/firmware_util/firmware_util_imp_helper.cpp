@@ -14,4 +14,12 @@ namespace L0 {
 ze_result_t FirmwareUtilImp::fwIfrApplied(bool &ifrStatus) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
+
+ze_result_t FirmwareUtilImp::fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
 } // namespace L0

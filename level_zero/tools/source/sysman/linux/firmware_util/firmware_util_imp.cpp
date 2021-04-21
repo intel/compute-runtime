@@ -187,7 +187,6 @@ FirmwareUtil *FirmwareUtil::create() {
         delete pFwUtilImp;
         return nullptr;
     }
-
     return static_cast<FirmwareUtil *>(pFwUtilImp);
 }
 } // namespace L0

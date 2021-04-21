@@ -20,14 +20,17 @@ ze_result_t DiagnosticsImp::diagnosticsGetProperties(zes_diag_properties_t *pPro
     return ZE_RESULT_SUCCESS;
 }
 
-void DiagnosticsImp::init() {
-    this->isDiagnosticsEnabled = pOsDiagnostics->isDiagnosticsSupported();
+ze_result_t DiagnosticsImp::diagnosticsGetTests(uint32_t *pCount, zes_diag_test_t *pTests) {
+    return pOsDiagnostics->osGetDiagTests(pCount, pTests);
 }
 
-DiagnosticsImp::DiagnosticsImp(OsSysman *pOsSysman) {
-    pOsDiagnostics = OsDiagnostics::create(pOsSysman);
+ze_result_t DiagnosticsImp::diagnosticsRunTests(uint32_t start, uint32_t end, zes_diag_result_t *pResult) {
+    return pOsDiagnostics->osRunDiagTests(start, end, pResult);
+}
+
+DiagnosticsImp::DiagnosticsImp(OsSysman *pOsSysman, const std::string &initalizedDiagTest) {
+    pOsDiagnostics = OsDiagnostics::create(pOsSysman, initalizedDiagTest);
     UNRECOVERABLE_IF(nullptr == pOsDiagnostics);
-    init();
 }
 
 DiagnosticsImp::~DiagnosticsImp() {

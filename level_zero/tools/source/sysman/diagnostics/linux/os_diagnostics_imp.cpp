@@ -11,25 +11,37 @@
 
 namespace L0 {
 
-bool LinuxDiagnosticsImp::isDiagnosticsSupported(void) {
+void OsDiagnostics::getSupportedDiagTests(std::vector<std::string> &supportedDiagTests, OsSysman *pOsSysman) {
+    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     if (pFwInterface != nullptr) {
-        isFWInitalized = ((ZE_RESULT_SUCCESS == pFwInterface->fwDeviceInit()) ? true : false);
-        return this->isFWInitalized;
+        getSupportedDiagTestsFromFW(pFwInterface, supportedDiagTests);
     }
-    return false;
 }
 
 void LinuxDiagnosticsImp::osGetDiagProperties(zes_diag_properties_t *pProperties) {
+    pProperties->onSubdevice = false;
+    pProperties->haveTests = 0; // osGetDiagTests is Unsupported
+    strncpy_s(pProperties->name, ZES_STRING_PROPERTY_SIZE, osDiagType.c_str(), osDiagType.size());
     return;
 }
 
-LinuxDiagnosticsImp::LinuxDiagnosticsImp(OsSysman *pOsSysman) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
+ze_result_t LinuxDiagnosticsImp::osGetDiagTests(uint32_t *pCount, zes_diag_test_t *pTests) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman) {
-    std::unique_ptr<LinuxDiagnosticsImp> pLinuxDiagnosticsImp = std::make_unique<LinuxDiagnosticsImp>(pOsSysman);
+ze_result_t LinuxDiagnosticsImp::osRunDiagTests(uint32_t start, uint32_t end, zes_diag_result_t *pResult) {
+    return osRunDiagTestsinFW(pResult);
+}
+
+LinuxDiagnosticsImp::LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string &diagTests) : osDiagType(diagTests) {
+    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
+    pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+}
+
+std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman, const std::string &diagTests) {
+    std::unique_ptr<LinuxDiagnosticsImp> pLinuxDiagnosticsImp = std::make_unique<LinuxDiagnosticsImp>(pOsSysman, diagTests);
     return pLinuxDiagnosticsImp;
 }
 

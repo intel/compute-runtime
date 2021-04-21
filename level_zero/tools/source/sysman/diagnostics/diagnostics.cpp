@@ -18,17 +18,17 @@ DiagnosticsHandleContext::~DiagnosticsHandleContext() {
     handleList.clear();
 }
 
-void DiagnosticsHandleContext::createHandle() {
-    Diagnostics *pDiagnostics = new DiagnosticsImp(pOsSysman);
-    if (pDiagnostics->isDiagnosticsEnabled == true) {
-        handleList.push_back(pDiagnostics);
-    } else {
-        delete pDiagnostics;
-    }
+void DiagnosticsHandleContext::createHandle(const std::string &diagTests) {
+    Diagnostics *pDiagnostics = new DiagnosticsImp(pOsSysman, diagTests);
+    handleList.push_back(pDiagnostics);
 }
 
 void DiagnosticsHandleContext::init() {
-    createHandle();
+
+    OsDiagnostics::getSupportedDiagTests(supportedDiagTests, pOsSysman);
+    for (const std::string &diagTests : supportedDiagTests) {
+        createHandle(diagTests);
+    }
 }
 
 ze_result_t DiagnosticsHandleContext::diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) {
