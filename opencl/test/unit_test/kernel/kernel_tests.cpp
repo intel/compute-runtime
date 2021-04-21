@@ -2162,21 +2162,21 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     auto result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_EQ(result, mockKernel.mockKernel->kernelSubmissionMap.end());
 
-    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::STANDARD_TUNNING_IN_PROGRESS);
     EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
 
-    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &subdeviceContainer);
+    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &subdeviceContainer);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS);
     EXPECT_TRUE(mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
 
-    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
@@ -2189,7 +2189,7 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
 
     container.getNode(0u)->assignDataToAllTimestamps(0, data);
 
-    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
@@ -2203,7 +2203,7 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
 
     subdeviceContainer.getNode(0u)->assignDataToAllTimestamps(0, data);
 
-    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
@@ -2219,7 +2219,7 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
 
     subdeviceContainer.getNode(1u)->assignDataToAllTimestamps(0, data);
 
-    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
@@ -2228,7 +2228,7 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::TUNNING_DONE);
     EXPECT_EQ(result->second.singleSubdevicePrefered, mockKernel.mockKernel->singleSubdevicePreferedInCurrentEnqueue);
 
-    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
     EXPECT_EQ(result->second.status, MockKernel::TunningStatus::TUNNING_DONE);
@@ -2252,7 +2252,7 @@ HWTEST_F(KernelResidencyTest, givenSimpleKernelTunningAndNoAtomicsWhenPerformTun
     auto result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_EQ(result, mockKernel.mockKernel->kernelSubmissionMap.end());
 
-    mockKernel.mockKernel->performKernelTunning(commandStreamReceiver, lws, gws, offsets, &container);
+    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
 
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_EQ(result, mockKernel.mockKernel->kernelSubmissionMap.end());

@@ -133,11 +133,11 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserStartConfirmation, DebugPauseState::hasUserStartConfirmation);
     }
 
-    mainKernel->performKernelTunning(commandQueue.getGpgpuCommandStreamReceiver(),
-                                     multiDispatchInfo.begin()->getLocalWorkgroupSize(),
-                                     multiDispatchInfo.begin()->getActualWorkgroupSize(),
-                                     multiDispatchInfo.begin()->getOffset(),
-                                     currentTimestampPacketNodes);
+    mainKernel->performKernelTuning(commandQueue.getGpgpuCommandStreamReceiver(),
+                                    multiDispatchInfo.begin()->getLocalWorkgroupSize(),
+                                    multiDispatchInfo.begin()->getActualWorkgroupSize(),
+                                    multiDispatchInfo.begin()->getOffset(),
+                                    currentTimestampPacketNodes);
 
     size_t currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
