@@ -36,6 +36,7 @@ struct EncodeDispatchKernel {
                        DispatchKernelEncoderI *dispatchInterface,
                        uint64_t eventAddress,
                        bool isTimestampEvent,
+                       bool L3FlushEnable,
                        Device *device,
                        PreemptionMode preemptionMode,
                        bool &requiresUncachedMocs,

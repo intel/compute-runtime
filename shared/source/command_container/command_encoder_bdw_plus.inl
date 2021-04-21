@@ -25,7 +25,7 @@ namespace NEO {
 template <typename Family>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                           const void *pThreadGroupDimensions, bool isIndirect, bool isPredicate, DispatchKernelEncoderI *dispatchInterface,
-                                          uint64_t eventAddress, bool isTimestampEvent, Device *device, PreemptionMode preemptionMode, bool &requiresUncachedMocs,
+                                          uint64_t eventAddress, bool isTimestampEvent, bool L3FlushEnable, Device *device, PreemptionMode preemptionMode, bool &requiresUncachedMocs,
                                           uint32_t &partitionCount, bool isInternal) {
 
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
