@@ -22,4 +22,9 @@ cl_ulong ClHwHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelInfo &kern
     return kernelInfo.kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
 }
 
+template <typename GfxFamily>
+cl_device_feature_capabilities_intel ClHwHelperHw<GfxFamily>::getSupportedDeviceFeatureCapabilities() const {
+    return 0;
+}
+
 } // namespace NEO

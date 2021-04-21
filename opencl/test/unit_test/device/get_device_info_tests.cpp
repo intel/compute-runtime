@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/cl_device/cl_device_info_map.h"
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
@@ -992,3 +993,124 @@ TEST(GetDeviceInfoTest, givenDeviceWithSubDevicesWhenGettingNumberOfComputeUnits
     EXPECT_EQ(expectedComputeUnitsForRootDevice, numComputeUnits);
     EXPECT_EQ(sizeof(numComputeUnits), retSize);
 }
+
+struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
+    void SetUp() override {
+        param = GetParam();
+    }
+
+    void verifyDeviceAttribute(ClDevice &device) {
+        size_t sizeReturned = GetInfo::invalidSourceSize;
+        auto retVal = device.getDeviceInfo(
+            param,
+            0,
+            nullptr,
+            &sizeReturned);
+        if (CL_SUCCESS != retVal) {
+            ASSERT_EQ(CL_SUCCESS, retVal) << " param = " << param;
+        }
+        ASSERT_NE(GetInfo::invalidSourceSize, sizeReturned);
+
+        auto object = std::make_unique<char[]>(sizeReturned);
+        retVal = device.getDeviceInfo(
+            param,
+            sizeReturned,
+            object.get(),
+            nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        switch (param) {
+        case CL_DEVICE_IP_VERSION_INTEL: {
+            auto pDeviceIpVersion = reinterpret_cast<cl_version *>(object.get());
+            auto &hwInfo = device.getHardwareInfo();
+            auto &clHwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+            EXPECT_EQ(clHwHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
+            EXPECT_EQ(sizeof(cl_version), sizeReturned);
+            break;
+        }
+        case CL_DEVICE_ID_INTEL: {
+            auto pDeviceId = reinterpret_cast<cl_uint *>(object.get());
+            EXPECT_EQ(device.getHardwareInfo().platform.usDeviceID, *pDeviceId);
+            EXPECT_EQ(sizeof(cl_uint), sizeReturned);
+            break;
+        }
+        case CL_DEVICE_NUM_SLICES_INTEL: {
+            auto pNumSlices = reinterpret_cast<cl_uint *>(object.get());
+            const auto &gtSysInfo = device.getHardwareInfo().gtSystemInfo;
+            EXPECT_EQ(gtSysInfo.SliceCount * device.getNumAvailableDevices(), *pNumSlices);
+            EXPECT_EQ(sizeof(cl_uint), sizeReturned);
+            break;
+        }
+        case CL_DEVICE_NUM_SUB_SLICES_PER_SLICE_INTEL: {
+            auto pNumSubslicesPerSlice = reinterpret_cast<cl_uint *>(object.get());
+            const auto &gtSysInfo = device.getHardwareInfo().gtSystemInfo;
+            EXPECT_EQ(gtSysInfo.SubSliceCount / gtSysInfo.SliceCount, *pNumSubslicesPerSlice);
+            EXPECT_EQ(sizeof(cl_uint), sizeReturned);
+            break;
+        }
+        case CL_DEVICE_NUM_EUS_PER_SUB_SLICE_INTEL: {
+            auto pNumEusPerSubslice = reinterpret_cast<cl_uint *>(object.get());
+            const auto &gtSysInfo = device.getHardwareInfo().gtSystemInfo;
+            EXPECT_EQ(gtSysInfo.MaxEuPerSubSlice, *pNumEusPerSubslice);
+            EXPECT_EQ(sizeof(cl_uint), sizeReturned);
+            break;
+        }
+        case CL_DEVICE_NUM_THREADS_PER_EU_INTEL: {
+            auto pNumThreadsPerEu = reinterpret_cast<cl_uint *>(object.get());
+            const auto &gtSysInfo = device.getHardwareInfo().gtSystemInfo;
+            EXPECT_EQ(gtSysInfo.ThreadCount / gtSysInfo.EUCount, *pNumThreadsPerEu);
+            EXPECT_EQ(sizeof(cl_uint), sizeReturned);
+            break;
+        }
+        case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
+            auto pCapabilities = reinterpret_cast<cl_device_feature_capabilities_intel *>(object.get());
+            auto &hwInfo = device.getHardwareInfo();
+            auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+            EXPECT_EQ(clHwHelper.getSupportedDeviceFeatureCapabilities(), *pCapabilities);
+            EXPECT_EQ(sizeof(cl_device_feature_capabilities_intel), sizeReturned);
+            break;
+        }
+        default:
+            EXPECT_TRUE(false);
+            break;
+        }
+    }
+
+    cl_device_info param;
+};
+
+TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedOnClDeviceThenReturnCorrectAttributeValue) {
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    ASSERT_EQ(0u, pClDevice->subDevices.size());
+
+    verifyDeviceAttribute(*pClDevice);
+}
+
+TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedOnRootDeviceAndSubDevicesThenReturnCorrectAttributeValues) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+
+    auto pRootClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    ASSERT_EQ(2u, pRootClDevice->subDevices.size());
+
+    verifyDeviceAttribute(*pRootClDevice);
+
+    for (const auto &pClSubDevice : pRootClDevice->subDevices) {
+        verifyDeviceAttribute(*pClSubDevice);
+    }
+}
+
+cl_device_info deviceAttributeQueryParams[] = {
+    CL_DEVICE_IP_VERSION_INTEL,
+    CL_DEVICE_ID_INTEL,
+    CL_DEVICE_NUM_SLICES_INTEL,
+    CL_DEVICE_NUM_SUB_SLICES_PER_SLICE_INTEL,
+    CL_DEVICE_NUM_EUS_PER_SUB_SLICE_INTEL,
+    CL_DEVICE_NUM_THREADS_PER_EU_INTEL,
+    CL_DEVICE_FEATURE_CAPABILITIES_INTEL};
+
+INSTANTIATE_TEST_CASE_P(
+    Device_,
+    DeviceAttributeQueryTest,
+    testing::ValuesIn(deviceAttributeQueryParams));

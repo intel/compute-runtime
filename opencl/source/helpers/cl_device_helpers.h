@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,9 @@
 #include <cstdint>
 namespace NEO {
 class ClDevice;
+struct ClDeviceInfoParam;
 
 namespace ClDeviceHelper {
-void getExtraDeviceInfo(const ClDevice &clDevice, cl_device_info paramName, cl_uint &param, const void *&src, size_t &size, size_t &retSize);
+void getExtraDeviceInfo(const ClDevice &clDevice, cl_device_info paramName, ClDeviceInfoParam &param, const void *&src, size_t &size, size_t &retSize);
 }; // namespace ClDeviceHelper
 } // namespace NEO

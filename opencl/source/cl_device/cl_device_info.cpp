@@ -10,6 +10,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_time.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -65,7 +66,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     size_t srcSize = GetInfo::invalidSourceSize;
     size_t retSize = 0;
     size_t value = 0u;
-    cl_uint param;
+    ClDeviceInfoParam param{};
     const void *src = nullptr;
 
     // clang-format off
@@ -176,8 +177,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES:
         if (paramValueSize == sizeof(cl_bool)) {
             srcSize = retSize = sizeof(cl_bool);
-            param = (deviceInfo.deviceEnqueueSupport > 0u) ? CL_TRUE : CL_FALSE;
-            src = &param;
+            param.boolean = (deviceInfo.deviceEnqueueSupport > 0u) ? CL_TRUE : CL_FALSE;
+            src = &param.boolean;
         } else {
             getCap<CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES>(src, srcSize, retSize);
         }
@@ -185,8 +186,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_NUM_SIMULTANEOUS_INTEROPS_INTEL:
         if (simultaneousInterops.size() > 1u) {
             srcSize = retSize = sizeof(cl_uint);
-            param = 1u;
-            src = &param;
+            param.uint = 1u;
+            src = &param.uint;
         }
         break;
     case CL_DEVICE_SIMULTANEOUS_INTEROPS_INTEL:
@@ -202,9 +203,9 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_REFERENCE_COUNT: {
         cl_int ref = this->getReference();
         DEBUG_BREAK_IF(ref != 1 && !deviceInfo.parentDevice);
-        param = static_cast<cl_uint>(ref);
-        src = &param;
-        retSize = srcSize = sizeof(param);
+        param.uint = static_cast<cl_uint>(ref);
+        src = &param.uint;
+        retSize = srcSize = sizeof(param.uint);
         break;
     }
     case CL_DEVICE_PARTITION_PROPERTIES:
@@ -242,6 +243,49 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         src = deviceInfo.supportedThreadArbitrationPolicies.data();
         retSize = srcSize = deviceInfo.supportedThreadArbitrationPolicies.size() * sizeof(cl_uint);
         break;
+    case CL_DEVICE_IP_VERSION_INTEL: {
+        auto &clHwHelper = ClHwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
+        param.uint = clHwHelper.getDeviceIpVersion(getHardwareInfo());
+        src = &param.uint;
+        retSize = srcSize = sizeof(cl_version);
+        break;
+    }
+    case CL_DEVICE_ID_INTEL:
+        param.uint = getHardwareInfo().platform.usDeviceID;
+        src = &param.uint;
+        retSize = srcSize = sizeof(cl_uint);
+        break;
+    case CL_DEVICE_NUM_SLICES_INTEL:
+        param.uint = static_cast<cl_uint>(getHardwareInfo().gtSystemInfo.SliceCount * ((subDevices.size() > 0) ? subDevices.size() : 1));
+        src = &param.uint;
+        retSize = srcSize = sizeof(cl_uint);
+        break;
+    case CL_DEVICE_NUM_SUB_SLICES_PER_SLICE_INTEL: {
+        const auto &gtSysInfo = getHardwareInfo().gtSystemInfo;
+        param.uint = gtSysInfo.SubSliceCount / gtSysInfo.SliceCount;
+        src = &param.uint;
+        retSize = srcSize = sizeof(cl_uint);
+        break;
+    }
+    case CL_DEVICE_NUM_EUS_PER_SUB_SLICE_INTEL:
+        param.uint = getHardwareInfo().gtSystemInfo.MaxEuPerSubSlice;
+        src = &param.uint;
+        retSize = srcSize = sizeof(cl_uint);
+        break;
+    case CL_DEVICE_NUM_THREADS_PER_EU_INTEL: {
+        const auto &gtSysInfo = getHardwareInfo().gtSystemInfo;
+        param.uint = gtSysInfo.ThreadCount / gtSysInfo.EUCount;
+        src = &param.uint;
+        retSize = srcSize = sizeof(cl_uint);
+        break;
+    }
+    case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
+        auto &clHwHelper = ClHwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
+        param.bitfield = clHwHelper.getSupportedDeviceFeatureCapabilities();
+        src = &param.bitfield;
+        retSize = srcSize = sizeof(cl_device_feature_capabilities_intel);
+        break;
+    }
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !getSharedDeviceInfo().imageSupport) {
             src = &value;

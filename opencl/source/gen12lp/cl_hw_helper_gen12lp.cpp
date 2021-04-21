@@ -23,6 +23,16 @@ void populateFactoryTable<ClHwHelperHw<Family>>() {
     clHwHelperFactory[gfxCore] = &ClHwHelperHw<Family>::get();
 }
 
+template <>
+cl_device_feature_capabilities_intel ClHwHelperHw<Family>::getSupportedDeviceFeatureCapabilities() const {
+    return CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
+}
+
+template <>
+cl_version ClHwHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
+    return makeDeviceIpVersion(12, 0, makeDeviceRevision(hwInfo));
+}
+
 template class ClHwHelperHw<Family>;
 
 } // namespace NEO

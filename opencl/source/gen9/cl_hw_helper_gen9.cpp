@@ -23,6 +23,11 @@ void populateFactoryTable<ClHwHelperHw<Family>>() {
     clHwHelperFactory[gfxCore] = &ClHwHelperHw<Family>::get();
 }
 
+template <>
+cl_version ClHwHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
+    return makeDeviceIpVersion(9, 0, 0);
+}
+
 template class ClHwHelperHw<Family>;
 
 } // namespace NEO

@@ -7,8 +7,10 @@
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 
 using HwHelperTestGen9 = HwHelperTest;
 
@@ -59,6 +61,14 @@ GEN9TEST_F(HwHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenD
 GEN9TEST_F(HwHelperTestGen9, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
     EXPECT_EQ(3u, pDevice->engines.size());
+}
+
+GEN9TEST_F(HwHelperTestGen9, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(9, 0, 0), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
+}
+
+GEN9TEST_F(HwHelperTestGen9, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
+    EXPECT_EQ(0u, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities());
 }
 
 using MemorySynchronizatiopCommandsTestsGen9 = ::testing::Test;

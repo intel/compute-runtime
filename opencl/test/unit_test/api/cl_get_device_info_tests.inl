@@ -243,7 +243,8 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_subgroup_non_uniform_arithmetic ",
         "cl_khr_subgroup_shuffle ",
         "cl_khr_subgroup_shuffle_relative ",
-        "cl_khr_subgroup_clustered_reduce "};
+        "cl_khr_subgroup_clustered_reduce "
+        "cl_intel_device_attribute_query "};
 
     for (auto extension : supportedExtensions) {
         auto foundOffset = extensionString.find(extension);

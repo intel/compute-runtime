@@ -19,6 +19,7 @@ namespace NEO {
 
 class Context;
 class ClDevice;
+struct HardwareInfo;
 struct KernelInfo;
 struct MultiDispatchInfo;
 
@@ -34,9 +35,14 @@ class ClHwHelper {
     virtual bool preferBlitterForLocalToLocalTransfers() const = 0;
     virtual bool isSupportedKernelThreadArbitrationPolicy() const = 0;
     virtual std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const = 0;
+    virtual cl_version getDeviceIpVersion(const HardwareInfo &hwInfo) const = 0;
+    virtual cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities() const = 0;
 
   protected:
     virtual bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const = 0;
+
+    static uint8_t makeDeviceRevision(const HardwareInfo &hwInfo);
+    static cl_version makeDeviceIpVersion(uint16_t major, uint8_t minor, uint8_t revision);
 
     ClHwHelper() = default;
 };
@@ -57,6 +63,8 @@ class ClHwHelperHw : public ClHwHelper {
     bool preferBlitterForLocalToLocalTransfers() const override;
     bool isSupportedKernelThreadArbitrationPolicy() const override;
     std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const override;
+    cl_version getDeviceIpVersion(const HardwareInfo &hwInfo) const override;
+    cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities() const override;
 
   protected:
     bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const override;

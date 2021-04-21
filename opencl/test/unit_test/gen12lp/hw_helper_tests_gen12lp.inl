@@ -11,6 +11,7 @@
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -477,4 +478,21 @@ HWTEST2_F(HwHelperTestGen12Lp, givenRevisionEnumThenProperValueForIsWorkaroundRe
             EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
         }
     }
+}
+
+HWTEST2_F(HwHelperTestGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsTGLLP) {
+    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 0, 0), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
+}
+
+HWTEST2_F(HwHelperTestGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsRKL) {
+    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 0, 0), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
+}
+
+HWTEST2_F(HwHelperTestGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsADLS) {
+    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 0, 0), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
+    cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
+    EXPECT_EQ(expectedCapabilities, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities());
 }

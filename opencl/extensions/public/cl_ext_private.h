@@ -192,3 +192,21 @@ typedef struct _cl_queue_family_properties_intel {
     cl_uint count;
     char name[CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL];
 } cl_queue_family_properties_intel;
+
+/******************************
+*   DEVICE ATTRIBUTE QUERY    *
+*******************************/
+
+/* For GPU devices, version 1.0.0: */
+#define CL_DEVICE_IP_VERSION_INTEL 0x4250
+#define CL_DEVICE_ID_INTEL 0x4251
+#define CL_DEVICE_NUM_SLICES_INTEL 0x4252
+#define CL_DEVICE_NUM_SUB_SLICES_PER_SLICE_INTEL 0x4253
+#define CL_DEVICE_NUM_EUS_PER_SUB_SLICE_INTEL 0x4254
+#define CL_DEVICE_NUM_THREADS_PER_EU_INTEL 0x4255
+#define CL_DEVICE_FEATURE_CAPABILITIES_INTEL 0x4256
+
+typedef cl_bitfield cl_device_feature_capabilities_intel;
+
+/* For GPU devices, version 1.0.0: */
+#define CL_DEVICE_FEATURE_FLAG_DP4A_INTEL (1 << 0)

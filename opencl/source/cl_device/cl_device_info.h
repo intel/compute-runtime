@@ -19,6 +19,14 @@ namespace NEO {
 
 using OpenClCFeaturesContainer = StackVec<cl_name_version, 15>;
 
+struct ClDeviceInfoParam {
+    union {
+        cl_bool boolean;
+        cl_uint uint;
+        cl_bitfield bitfield;
+    };
+};
+
 // clang-format off
 struct ClDeviceInfo {
     cl_name_version                                                                                   ilsWithVersion[1];
