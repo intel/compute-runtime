@@ -197,7 +197,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     CsrDependencies csrDeps;
     BlitPropertiesContainer blitPropertiesContainer;
 
-    eventsRequest.fillCsrDependenciesForTaskCountContainer(csrDeps, getGpgpuCommandStreamReceiver());
+    if (this->context->getRootDeviceIndices().size() > 1) {
+        eventsRequest.fillCsrDependenciesForTaskCountContainer(csrDeps, getGpgpuCommandStreamReceiver());
+    }
 
     bool enqueueWithBlitAuxTranslation = isBlitAuxTranslationRequired(multiDispatchInfo);
 
@@ -227,7 +229,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                             blockedCommandsData, surfacesForResidency, numSurfaceForResidency);
     auto commandStreamStart = commandStream.getUsed();
 
-    TimestampPacketHelper::programCsrDependenciesForForTaskCountContainer<GfxFamily>(commandStream, csrDeps);
+    if (this->context->getRootDeviceIndices().size() > 1) {
+        TimestampPacketHelper::programCsrDependenciesForForTaskCountContainer<GfxFamily>(commandStream, csrDeps);
+    }
 
     if (enqueueWithBlitAuxTranslation) {
         processDispatchForBlitAuxTranslation(multiDispatchInfo, blitPropertiesContainer, timestampPacketDependencies,
