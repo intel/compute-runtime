@@ -223,7 +223,6 @@ TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevic
     auto subDevice = device->subdevices.at(0);
 
     EXPECT_EQ(subDevice, subDevice->getDeviceById(0));
-    EXPECT_THROW(subDevice->getDeviceById(1), std::exception);
 }
 
 TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDeviceCreatesCorrectNumberOfEngines) {

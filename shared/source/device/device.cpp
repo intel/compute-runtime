@@ -336,7 +336,6 @@ uint32_t Device::getNumAvailableDevices() const {
 
 Device *Device::getDeviceById(uint32_t deviceId) const {
     if (subdevices.empty()) {
-        UNRECOVERABLE_IF(deviceId > 0);
         return const_cast<Device *>(this);
     }
     UNRECOVERABLE_IF(deviceId >= subdevices.size());
