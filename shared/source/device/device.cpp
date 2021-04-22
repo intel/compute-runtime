@@ -57,7 +57,46 @@ Device::~Device() {
     executionEnvironment->decRefInternal();
 }
 
+SubDevice *Device::createSubDevice(uint32_t subDeviceIndex) {
+    return Device::create<SubDevice>(executionEnvironment, subDeviceIndex, *getRootDevice());
+}
+
+bool Device::createSubDevices() {
+    if (!subDevicesAllowed()) {
+        return true;
+    }
+
+    auto deviceMask = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->deviceAffinityMask;
+    uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
+    deviceBitfield = maxNBitValue(subDeviceCount);
+    deviceBitfield &= deviceMask;
+    numSubDevices = static_cast<uint32_t>(deviceBitfield.count());
+    if (numSubDevices == 1) {
+        numSubDevices = 0;
+    }
+    UNRECOVERABLE_IF(!subdevices.empty());
+    if (numSubDevices) {
+        subdevices.resize(subDeviceCount, nullptr);
+        for (auto i = 0u; i < subDeviceCount; i++) {
+            if (!deviceBitfield.test(i)) {
+                continue;
+            }
+            auto subDevice = createSubDevice(i);
+            if (!subDevice) {
+                return false;
+            }
+            subdevices[i] = subDevice;
+        }
+    }
+
+    return true;
+}
+
 bool Device::createDeviceImpl() {
+    if (!createSubDevices()) {
+        return false;
+    }
+
     auto &hwInfo = getHardwareInfo();
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
@@ -119,6 +158,8 @@ bool Device::createDeviceImpl() {
     if (DebugManager.flags.EnableSWTags.get() && !getRootDeviceEnvironment().tagsManager->isInitialized()) {
         getRootDeviceEnvironment().tagsManager->initialize(*this);
     }
+
+    createBindlessHeapsHelper();
 
     return true;
 }

@@ -126,12 +126,16 @@ class Device : public ReferenceTrackedObject<Device> {
         return device;
     }
 
-    virtual bool createDeviceImpl();
+    MOCKABLE_VIRTUAL bool createDeviceImpl();
     virtual bool createEngines();
     void addEngineToEngineGroup(EngineControl &engine);
     bool createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage);
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
+    MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
     virtual uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
+    virtual void createBindlessHeapsHelper() {}
+    bool createSubDevices();
+    virtual bool subDevicesAllowed() const { return true; };
 
     DeviceInfo deviceInfo = {};
 

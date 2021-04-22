@@ -545,9 +545,15 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultiple
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableFormatQuery.set(true);
     DebugManager.flags.CreateMultipleSubDevices.set(2);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_THAT(caps.deviceExtensions, ::testing::HasSubstr(std::string("cl_intel_sharing_format_query ")));
+
+    auto rootDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    EXPECT_THAT(rootDevice->getDeviceInfo().deviceExtensions, ::testing::Not(::testing::HasSubstr(std::string("cl_intel_sharing_format_query "))));
+
+    auto subDevice0 = rootDevice->getDeviceById(0);
+    EXPECT_THAT(subDevice0->getDeviceInfo().deviceExtensions, ::testing::HasSubstr(std::string("cl_intel_sharing_format_query ")));
+
+    auto subDevice1 = rootDevice->getDeviceById(1);
+    EXPECT_THAT(subDevice1->getDeviceInfo().deviceExtensions, ::testing::HasSubstr(std::string("cl_intel_sharing_format_query ")));
 }
 
 TEST_F(DeviceGetCapsTest, givenOpenCLVersion20WhenCapsAreCreatedThenDeviceDoesntReportClKhrSubgroupsExtension) {

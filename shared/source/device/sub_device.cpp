@@ -11,8 +11,9 @@
 
 namespace NEO {
 
-SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, RootDevice &rootDevice)
-    : Device(executionEnvironment), subDeviceIndex(subDeviceIndex), rootDevice(rootDevice) {
+SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice)
+    : Device(executionEnvironment), subDeviceIndex(subDeviceIndex), rootDevice(static_cast<RootDevice &>(rootDevice)) {
+    UNRECOVERABLE_IF(rootDevice.isSubDevice());
     deviceBitfield = 0;
     deviceBitfield.set(subDeviceIndex);
 }

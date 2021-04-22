@@ -16,7 +16,6 @@ class RootDevice : public Device {
   public:
     RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex);
     ~RootDevice() override;
-    bool createDeviceImpl() override;
 
     uint32_t getRootDeviceIndex() const override;
     Device *getRootDevice() const override;
@@ -24,9 +23,9 @@ class RootDevice : public Device {
 
   protected:
     bool createEngines() override;
+    void createBindlessHeapsHelper() override;
 
     void initializeRootCommandStreamReceiver();
-    MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
 
     const uint32_t rootDeviceIndex;
 };

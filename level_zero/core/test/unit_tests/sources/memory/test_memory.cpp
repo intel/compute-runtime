@@ -1982,8 +1982,7 @@ struct MemoryBitfieldTest : testing::Test {
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
         memoryManager = new NEO::MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        neoDevice = new NEO::RootDevice(executionEnvironment, 0);
-        static_cast<RootDevice *>(neoDevice)->createDeviceImpl();
+        neoDevice = NEO::Device::create<RootDevice>(executionEnvironment, 0u);
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
@@ -2041,11 +2040,10 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     }
     auto memoryManager = new NEO::MockMemoryManager(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
-    NEO::Device *neoDevice0 = new NEO::RootDevice(executionEnvironment, 0);
-    static_cast<NEO::RootDevice *>(neoDevice0)->createDeviceImpl();
+    NEO::Device *neoDevice0 = NEO::Device::create<RootDevice>(executionEnvironment, 0u);
     DebugManager.flags.CreateMultipleSubDevices.set(4);
-    NEO::Device *neoDevice1 = new NEO::RootDevice(executionEnvironment, 1);
-    static_cast<NEO::RootDevice *>(neoDevice1)->createDeviceImpl();
+    NEO::Device *neoDevice1 = NEO::Device::create<RootDevice>(executionEnvironment, 1u);
+
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice0));
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice1));
