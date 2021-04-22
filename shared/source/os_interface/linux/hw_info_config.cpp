@@ -90,36 +90,42 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     }
     platform->usRevId = static_cast<unsigned short>(val);
 
-    int sliceCount;
-    int subSliceCount;
-    int euCount;
+    Drm::QueryTopologyData topologyData = {};
 
-    bool status = drm->queryTopology(*outHwInfo, sliceCount, subSliceCount, euCount);
+    bool status = drm->queryTopology(*outHwInfo, topologyData);
 
     if (!status) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
 
-        sliceCount = gtSystemInfo->SliceCount;
+        topologyData.sliceCount = gtSystemInfo->SliceCount;
 
-        ret = drm->getEuTotal(euCount);
+        ret = drm->getEuTotal(topologyData.euCount);
         if (ret != 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
             *outHwInfo = {};
             return ret;
         }
 
-        ret = drm->getSubsliceTotal(subSliceCount);
+        ret = drm->getSubsliceTotal(topologyData.subSliceCount);
         if (ret != 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
             *outHwInfo = {};
             return ret;
         }
+
+        topologyData.maxEuCount = topologyData.euCount / topologyData.subSliceCount;
+        topologyData.maxSliceCount = topologyData.sliceCount;
+        topologyData.maxSubSliceCount = topologyData.subSliceCount;
     }
 
-    gtSystemInfo->SliceCount = static_cast<uint32_t>(sliceCount);
-    gtSystemInfo->SubSliceCount = static_cast<uint32_t>(subSliceCount);
-    gtSystemInfo->EUCount = static_cast<uint32_t>(euCount);
+    gtSystemInfo->SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
+    gtSystemInfo->SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
+    gtSystemInfo->EUCount = static_cast<uint32_t>(topologyData.euCount);
     gtSystemInfo->ThreadCount = this->threadsPerEu * gtSystemInfo->EUCount;
+
+    gtSystemInfo->MaxEuPerSubSlice = topologyData.maxEuCount;
+    gtSystemInfo->MaxSubSlicesSupported = topologyData.maxSubSliceCount;
+    gtSystemInfo->MaxSlicesSupported = topologyData.maxSliceCount;
 
     uint64_t gttSizeQuery = 0;
     featureTable->ftrSVM = true;

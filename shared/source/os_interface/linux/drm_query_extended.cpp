@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-bool Drm::queryTopology(const HardwareInfo &hwInfo, int &sliceCount, int &subSliceCount, int &euCount) {
+bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyData) {
     int32_t length;
     auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, DrmQueryItemFlags::topology, length);
     auto data = reinterpret_cast<drm_i915_query_topology_info *>(dataQuery.get());
@@ -20,7 +20,11 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, int &sliceCount, int &subSli
         return false;
     }
 
-    return translateTopologyInfo(data, sliceCount, subSliceCount, euCount);
+    topologyData.maxSliceCount = data->max_slices;
+    topologyData.maxSubSliceCount = data->max_subslices;
+    topologyData.maxEuCount = data->max_eus_per_subslice;
+
+    return translateTopologyInfo(data, topologyData.sliceCount, topologyData.subSliceCount, topologyData.euCount);
 }
 
 bool Drm::isDebugAttachAvailable() {
