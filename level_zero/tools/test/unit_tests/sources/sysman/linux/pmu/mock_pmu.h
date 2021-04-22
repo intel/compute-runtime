@@ -23,7 +23,8 @@ class MockPmuInterfaceImpForSysman : public PmuInterfaceImp {
   public:
     using PmuInterfaceImp::getErrorNo;
     using PmuInterfaceImp::perfEventOpen;
-    using PmuInterfaceImp::readCounters;
+    using PmuInterfaceImp::readFunction;
+    using PmuInterfaceImp::syscallFunction;
     MockPmuInterfaceImpForSysman(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 };
 template <>
@@ -37,41 +38,22 @@ struct Mock<MockPmuInterfaceImpForSysman> : public MockPmuInterfaceImpForSysman 
         return -1;
     }
 
-    int mockedPmuReadAfterClearAndSuccessReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
-        memset(data, 0, sizeOfdata);
-        return 0;
-    }
-
-    int mockedPmuReadAndFailureReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
-        return -1;
-    }
-
-    ssize_t mockReadCounterSuccess(int fd, uint64_t *data, ssize_t sizeOfdata) {
-        data[0] = mockEventVal;
-        data[1] = mockTimeStamp;
-        return sizeOfdata;
-    }
-
-    ssize_t mockedReadCountersForGroupSuccess(int fd, uint64_t *data, ssize_t sizeOfdata) {
+    int mockedReadCountersForGroupSuccess(int fd, uint64_t *data, ssize_t sizeOfdata) {
         data[0] = mockEventCount;
         data[1] = mockTimeStamp;
         data[2] = mockEvent1Val;
         data[3] = mockEvent2Val;
-        return sizeOfdata;
+        return 0;
     }
 
-    ssize_t mockReadCounterFailure(int fd, uint64_t *data, ssize_t sizeOfdata) {
-        return -1;
-    }
     int mockGetErrorNoSuccess() {
         return EINVAL;
     }
     int mockGetErrorNoFailure() {
         return EBADF;
     }
-
+    MOCK_METHOD(int, pmuRead, (int fd, uint64_t *data, ssize_t sizeOfdata), (override));
     MOCK_METHOD(int64_t, perfEventOpen, (perf_event_attr * attr, pid_t pid, int cpu, int groupFd, uint64_t flags), (override));
-    MOCK_METHOD(ssize_t, readCounters, (int fd, uint64_t *data, ssize_t sizeOfdata), (override));
     MOCK_METHOD(int, getErrorNo, (), (override));
 };
 
@@ -85,5 +67,6 @@ struct Mock<PmuFsAccess> : public PmuFsAccess {
         return ZE_RESULT_SUCCESS;
     }
 };
+
 } // namespace ult
 } // namespace L0

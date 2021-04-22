@@ -24,9 +24,10 @@ class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL int pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) override;
 
   protected:
-    MOCKABLE_VIRTUAL int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags);
-    MOCKABLE_VIRTUAL ssize_t readCounters(int fd, uint64_t *data, ssize_t sizeOfdata);
     MOCKABLE_VIRTUAL int getErrorNo();
+    MOCKABLE_VIRTUAL int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags);
+    decltype(&read) readFunction = read;
+    decltype(&syscall) syscallFunction = syscall;
 
   private:
     uint32_t getEventType();

@@ -42,17 +42,13 @@ uint32_t PmuInterfaceImp::getEventType() {
     return eventTypeVal;
 }
 
-ssize_t PmuInterfaceImp::readCounters(int fd, uint64_t *data, ssize_t sizeOfdata) {
-    return read(fd, data, sizeOfdata);
-}
-
 int PmuInterfaceImp::getErrorNo() {
     return errno;
 }
 
 inline int64_t PmuInterfaceImp::perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) {
     attr->size = sizeof(*attr);
-    return syscall(perfEventOpenSyscallNumber, attr, pid, cpu, groupFd, flags);
+    return this->syscallFunction(perfEventOpenSyscallNumber, attr, pid, cpu, groupFd, flags);
 }
 
 int64_t PmuInterfaceImp::pmuInterfaceOpen(uint64_t config, int group, uint32_t format) {
@@ -82,7 +78,7 @@ int64_t PmuInterfaceImp::pmuInterfaceOpen(uint64_t config, int group, uint32_t f
 
 int PmuInterfaceImp::pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) {
     ssize_t len;
-    len = readCounters(fd, data, sizeOfdata);
+    len = this->readFunction(fd, data, sizeOfdata);
     if (len != sizeOfdata) {
         return -1;
     }

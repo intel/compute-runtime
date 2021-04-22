@@ -31,10 +31,10 @@ struct SysmanPmuFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<PmuFsAccess>::readValSuccess));
         ON_CALL(*pPmuInterface.get(), perfEventOpen(_, _, _, _, _))
             .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockedPerfEventOpenAndSuccessReturn));
+        ON_CALL(*pPmuInterface.get(), pmuRead(_, _, _))
+            .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockedReadCountersForGroupSuccess));
         ON_CALL(*pPmuInterface.get(), getErrorNo())
             .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockGetErrorNoSuccess));
-        ON_CALL(*pPmuInterface.get(), readCounters(_, _, _))
-            .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockReadCounterSuccess));
     }
     void TearDown() override {
         SysmanDeviceFixture::TearDown();
@@ -43,38 +43,48 @@ struct SysmanPmuFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuReadAndReadCountersFunctionReturnsSuccessThenSuccessIsReturned) {
+inline static ssize_t openReadReturnSuccess(int fd, void *data, size_t sizeOfdata) {
+    uint64_t dataVal[2] = {mockEventVal, mockTimeStamp};
+    memcpy_s(data, sizeOfdata, dataVal, sizeOfdata);
+    return sizeOfdata;
+}
+
+inline static ssize_t openReadReturnFailure(int fd, void *data, size_t sizeOfdata) {
+    return -1;
+}
+
+inline static long int syscallReturnSuccess(long int sysNo, ...) noexcept {
+    return mockPmuFd;
+}
+
+TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuReadThenSuccessIsReturned) {
+    MockPmuInterfaceImpForSysman *pmuInterface = new MockPmuInterfaceImpForSysman(pLinuxSysmanImp);
+    pmuInterface->readFunction = openReadReturnSuccess;
     uint64_t data[2];
     int validFd = 10;
-    EXPECT_EQ(0, pLinuxSysmanImp->pPmuInterface->pmuRead(validFd, data, sizeof(data)));
+    EXPECT_EQ(0, pmuInterface->pmuRead(validFd, data, sizeof(data)));
     EXPECT_EQ(mockEventVal, data[0]);
     EXPECT_EQ(mockTimeStamp, data[1]);
-}
-
-TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuReadAndReadCountersFunctionReturnsFailureThenFailureIsReturned) {
-    ON_CALL(*pPmuInterface.get(), readCounters(_, _, _))
-        .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockReadCounterFailure));
-    int validFd = 10;
-    uint64_t data[2];
-    EXPECT_EQ(-1, pLinuxSysmanImp->pPmuInterface->pmuRead(validFd, data, sizeof(data)));
-}
-
-TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingReadCountersAndInvalidFdIsPassedToReadSyscallThenFailureIsReturned) {
-    MockPmuInterfaceImpForSysman *pmuInterface = new MockPmuInterfaceImpForSysman(pLinuxSysmanImp);
-    uint64_t data[2];
-    int invalidFd = -1;
-    EXPECT_EQ(-1, pmuInterface->readCounters(invalidFd, data, sizeof(data)));
     delete pmuInterface;
 }
 
-TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPerfEventOpenAndInvalidConfigIsPassedThenFailureIsReturned) {
+TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPerEventOpenThenSuccessIsReturned) {
     MockPmuInterfaceImpForSysman *pmuInterface = new MockPmuInterfaceImpForSysman(pLinuxSysmanImp);
+    pmuInterface->syscallFunction = syscallReturnSuccess;
     struct perf_event_attr attr = {};
     int cpu = 0;
-    attr.type = 0;
     attr.read_format = static_cast<uint64_t>(PERF_FORMAT_TOTAL_TIME_ENABLED);
-    attr.config = 0;
-    EXPECT_LT(pmuInterface->perfEventOpen(&attr, -1, cpu, -1, 0), 0);
+    attr.config = 11;
+    EXPECT_EQ(mockPmuFd, pmuInterface->perfEventOpen(&attr, -1, cpu, -1, 0));
+    delete pmuInterface;
+}
+
+TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingThenFailureIsReturned) {
+    MockPmuInterfaceImpForSysman *pmuInterface = new MockPmuInterfaceImpForSysman(pLinuxSysmanImp);
+    pmuInterface->readFunction = openReadReturnFailure;
+    int validFd = 10;
+    uint64_t data[2];
+    EXPECT_EQ(-1, pmuInterface->pmuRead(validFd, data, sizeof(data)));
     delete pmuInterface;
 }
 
@@ -84,8 +94,6 @@ TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuInterfaceOpenAndPerfEv
 }
 
 TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenReadingGroupOfEventsUsingGroupFdThenSuccessIsReturned) {
-    ON_CALL(*pPmuInterface.get(), readCounters(_, _, _))
-        .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockedReadCountersForGroupSuccess));
     uint64_t configForEvent1 = 10;
     int64_t groupFd = pLinuxSysmanImp->pPmuInterface->pmuInterfaceOpen(configForEvent1, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP); // To get group leader
     uint64_t configForEvent2 = 15;
@@ -114,13 +122,12 @@ TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuInterfaceOpenAndPerfEv
     EXPECT_EQ(-1, pLinuxSysmanImp->pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED));
 }
 
-TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingReadCountersAndInvalidFdIsPassedToReadSyscallThenErrorNoInavlidFileDescriptorIsSet) {
+TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenAndDomainErrorOccursThenDomainErrorIsReturnedBygetErrorNoFunction) {
     MockPmuInterfaceImpForSysman *pmuInterface = new MockPmuInterfaceImpForSysman(pLinuxSysmanImp);
-    uint64_t data[2];
-    int invalidFd = -1;
-    EXPECT_EQ(-1, pmuInterface->readCounters(invalidFd, data, sizeof(data)));
-    EXPECT_EQ(EBADF, pmuInterface->getErrorNo());
+    log(-1.0); //Domain error injected
+    EXPECT_EQ(EDOM, pmuInterface->getErrorNo());
     delete pmuInterface;
 }
+
 } // namespace ult
 } // namespace L0
