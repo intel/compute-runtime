@@ -77,7 +77,17 @@ int Drm::ioctl(unsigned long request, void *arg) {
             start = std::chrono::steady_clock::now();
         }
 
+        auto printIoctl = DebugManager.flags.PrintIoctlEntries.get();
+
+        if (printIoctl) {
+            printf("IOCTL %lu called\n", request);
+        }
+
         ret = SysCalls::ioctl(getFileDescriptor(), request, arg);
+
+        if (printIoctl) {
+            printf("IOCTL %lu returns %d, errno %d\n", request, ret, errno);
+        }
 
         if (measureTime) {
             end = std::chrono::steady_clock::now();

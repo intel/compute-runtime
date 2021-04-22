@@ -157,6 +157,23 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderD
     EXPECT_STREQ("00:03.0", hwDeviceIds[1]->getPciPath());
 }
 
+TEST(DrmTest, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
+    ::testing::internal::CaptureStdout();
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintIoctlEntries.set(true);
+
+    uint32_t contextId = 1u;
+    drm->destroyDrmContext(contextId);
+
+    std::string output = ::testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(output.c_str(), "IOCTL 1074291822 called\nIOCTL 1074291822 returns 0, errno 9\n");
+}
+
 TEST(DrmTest, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {
     struct DrmMock : public Drm {
         using Drm::ioctlStatistics;
