@@ -19,8 +19,7 @@ inline const std::string getGdiName() {
     }
 }
 
-Gdi::Gdi() : gdiDll(getGdiName(), nullptr),
-             initialized(false) {
+Gdi::Gdi() : gdiDll(getGdiName(), nullptr) {
     if (gdiDll.isLoaded()) {
         initialized = Gdi::getAllProcAddresses();
     }
