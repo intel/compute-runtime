@@ -599,4 +599,9 @@ bool HwHelperHw<GfxFamily>::isSubDeviceEngineSupported(const HardwareInfo &hwInf
     return true;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isBlitterForImagesSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO

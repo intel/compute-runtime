@@ -746,13 +746,15 @@ bool CommandQueue::blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOp
 }
 
 bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region) {
-    auto blitEnqueuImageAllowed = false;
+    const auto &hwInfo = device->getHardwareInfo();
+    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto blitEnqueuImageAllowed = hwHelper.isBlitterForImagesSupported(hwInfo);
 
     if (DebugManager.flags.EnableBlitterForReadWriteImage.get() != -1) {
         blitEnqueuImageAllowed = DebugManager.flags.EnableBlitterForReadWriteImage.get();
-        blitEnqueuImageAllowed &= (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
     }
 
+    blitEnqueuImageAllowed &= (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
     return blitEnqueuImageAllowed;
 }
 
