@@ -1943,6 +1943,24 @@ TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferMultiGraphicsAllo
     EXPECT_TRUE(MemoryPool::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
 }
 
+TEST(MultiRootDeviceBufferTest2, WhenBufferIsCreatedThenSecondAndSubsequentAllocationsAreCreatedFromExisitingStorage) {
+    cl_int retVal = 0;
+    MockDefaultContext context;
+    auto memoryManager = static_cast<MockMemoryManager *>(context.getMemoryManager());
+    memoryManager->createGraphicsAllocationFromExistingStorageCalled = 0u;
+    memoryManager->allocationsFromExistingStorage.clear();
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, MemoryConstants::pageSize, nullptr, retVal));
+
+    EXPECT_EQ(3u, context.getRootDeviceIndices().size());
+    EXPECT_NE(nullptr, buffer->getMultiGraphicsAllocation().getGraphicsAllocation(0u));
+    EXPECT_NE(nullptr, buffer->getMultiGraphicsAllocation().getGraphicsAllocation(1u));
+    EXPECT_NE(nullptr, buffer->getMultiGraphicsAllocation().getGraphicsAllocation(2u));
+
+    EXPECT_EQ(2u, memoryManager->createGraphicsAllocationFromExistingStorageCalled);
+    EXPECT_EQ(memoryManager->allocationsFromExistingStorage[0], buffer->getMultiGraphicsAllocation().getGraphicsAllocation(1u));
+    EXPECT_EQ(memoryManager->allocationsFromExistingStorage[1], buffer->getMultiGraphicsAllocation().getGraphicsAllocation(2u));
+}
+
 TEST_F(MultiRootDeviceBufferTest, givenBufferWhenGetSurfaceSizeCalledWithoutAlignSizeForAuxTranslationThenCorrectValueReturned) {
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;

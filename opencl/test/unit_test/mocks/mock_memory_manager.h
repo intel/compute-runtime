@@ -78,6 +78,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override;
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) override;
+    GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override;
 
     void *allocateSystemMemory(size_t size, size_t alignment) override;
 
@@ -137,6 +138,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
+    uint32_t createGraphicsAllocationFromExistingStorageCalled = 0u;
+    std::vector<GraphicsAllocation *> allocationsFromExistingStorage{};
     AllocationData alignAllocationData;
     uint32_t successAllocatedGraphicsMemoryIndex = 0u;
     uint32_t maxSuccessAllocatedGraphicsMemoryIndex = std::numeric_limits<uint32_t>::max();

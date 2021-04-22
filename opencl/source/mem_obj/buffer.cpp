@@ -275,7 +275,7 @@ Buffer *Buffer::create(Context *context,
                                                                                                        allocationInfo[rootDeviceIndex].allocateMemory, size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                        *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex));
                 allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
-                allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, ptr);
+                allocationInfo[rootDeviceIndex].memory = memoryManager->createGraphicsAllocationFromExistingStorage(allocProperties, ptr, multiGraphicsAllocation);
             } else {
                 AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                                                                        allocationInfo[rootDeviceIndex].allocateMemory, size, allocationInfo[rootDeviceIndex].allocationType, context->areMultiStorageAllocationsPreferred(),
