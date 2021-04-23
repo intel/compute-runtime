@@ -579,7 +579,9 @@ TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     auto graphicsAllocation = kernelInfo->getGraphicsAllocation();
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
-    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.KernelHeapSize);
+    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    size_t isaPadding = hwHelper.getPaddingForISAAllocation();
+    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.KernelHeapSize + isaPadding);
 
     auto kernelIsa = graphicsAllocation->getUnderlyingBuffer();
     EXPECT_NE(kernelInfo->heapInfo.pKernelHeap, kernelIsa);

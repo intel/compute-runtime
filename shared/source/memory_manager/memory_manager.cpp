@@ -409,7 +409,12 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     allocationData.hostPtr = hostPtr;
-    allocationData.size = properties.size;
+    if (properties.allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA ||
+        properties.allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL) {
+        allocationData.size = properties.size + hwHelper.getPaddingForISAAllocation();
+    } else {
+        allocationData.size = properties.size;
+    }
     allocationData.type = properties.allocationType;
     allocationData.storageInfo = storageInfo;
     allocationData.alignment = properties.alignment ? properties.alignment : MemoryConstants::preferredAlignment;

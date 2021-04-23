@@ -48,6 +48,7 @@ class HwHelper {
     virtual uint32_t getBindingTableStateAlignement() const = 0;
     virtual size_t getInterfaceDescriptorDataSize() const = 0;
     virtual size_t getMaxBarrierRegisterPerSlice() const = 0;
+    virtual size_t getPaddingForISAAllocation() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const = 0;
     virtual uint32_t getPitchAlignmentForImage(const HardwareInfo *hwInfo) const = 0;
     virtual uint32_t getMaxNumSamplers() const = 0;
@@ -196,6 +197,8 @@ class HwHelperHw : public HwHelper {
     const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const override;
 
     size_t getMaxBarrierRegisterPerSlice() const override;
+
+    size_t getPaddingForISAAllocation() const override;
 
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
 

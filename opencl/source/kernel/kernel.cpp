@@ -734,7 +734,11 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
 
     auto currentAllocationSize = pKernelInfo->kernelAllocation->getUnderlyingBufferSize();
     bool status = false;
-    if (currentAllocationSize >= newKernelHeapSize) {
+
+    const auto &hwInfo = clDevice.getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    size_t isaPadding = hwHelper.getPaddingForISAAllocation();
+    if (currentAllocationSize >= newKernelHeapSize + isaPadding) {
         auto &hwInfo = clDevice.getDevice().getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         status = MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *pKernelInfo->getGraphicsAllocation()),

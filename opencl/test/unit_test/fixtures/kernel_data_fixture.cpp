@@ -116,7 +116,10 @@ void KernelDataTest::buildAndDecode() {
     if (kernelHeapSize) {
         auto kernelAllocation = pKernelInfo->getGraphicsAllocation();
         UNRECOVERABLE_IF(kernelAllocation == nullptr);
-        EXPECT_EQ(kernelAllocation->getUnderlyingBufferSize(), kernelHeapSize);
+        auto &device = pContext->getDevice(0)->getDevice();
+        auto &hwHelper = NEO::HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        size_t isaPadding = hwHelper.getPaddingForISAAllocation();
+        EXPECT_EQ(kernelAllocation->getUnderlyingBufferSize(), kernelHeapSize + isaPadding);
         auto kernelIsa = kernelAllocation->getUnderlyingBuffer();
         EXPECT_EQ(0, memcmp(kernelIsa, pKernelInfo->heapInfo.pKernelHeap, kernelHeapSize));
     } else {

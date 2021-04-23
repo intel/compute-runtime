@@ -27,7 +27,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeT
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    EXPECT_EQ(initialHeapSize, firstAllocationSize);
+    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
     auto firstAllocationId = static_cast<MemoryAllocation *>(firstAllocation)->id;
 
@@ -38,8 +39,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeT
     auto secondAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, secondAllocation);
     auto secondAllocationSize = secondAllocation->getUnderlyingBufferSize();
-    EXPECT_NE(initialHeapSize, secondAllocationSize);
-    EXPECT_EQ(newHeapSize, secondAllocationSize);
+    EXPECT_NE(secondAllocationSize, initialHeapSize + isaPadding);
+    EXPECT_EQ(secondAllocationSize, newHeapSize + isaPadding);
     auto secondAllocationId = static_cast<MemoryAllocation *>(secondAllocation)->id;
 
     EXPECT_NE(firstAllocationId, secondAllocationId);
@@ -57,7 +58,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThen
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    EXPECT_EQ(initialHeapSize, firstAllocationSize);
+    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
     auto firstAllocationId = static_cast<MemoryAllocation *>(firstAllocation)->id;
 
@@ -68,7 +70,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThen
     auto secondAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, secondAllocation);
     auto secondAllocationSize = secondAllocation->getUnderlyingBufferSize();
-    EXPECT_EQ(initialHeapSize, secondAllocationSize);
+    EXPECT_EQ(secondAllocationSize, initialHeapSize + isaPadding);
     auto secondAllocationId = static_cast<MemoryAllocation *>(secondAllocation)->id;
 
     EXPECT_EQ(firstAllocationId, secondAllocationId);
@@ -86,7 +88,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeT
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    EXPECT_EQ(initialHeapSize, firstAllocationSize);
+    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
     auto firstAllocationId = static_cast<MemoryAllocation *>(firstAllocation)->id;
 
@@ -97,7 +100,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeT
     auto secondAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, secondAllocation);
     auto secondAllocationSize = secondAllocation->getUnderlyingBufferSize();
-    EXPECT_EQ(initialHeapSize, secondAllocationSize);
+    EXPECT_EQ(secondAllocationSize, initialHeapSize + isaPadding);
     auto secondAllocationId = static_cast<MemoryAllocation *>(secondAllocation)->id;
 
     EXPECT_EQ(firstAllocationId, secondAllocationId);

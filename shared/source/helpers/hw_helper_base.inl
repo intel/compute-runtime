@@ -60,6 +60,11 @@ size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
 }
 
 template <typename Family>
+size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
+    return 512;
+}
+
+template <typename Family>
 uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInfo) const {
     return 4u;
 }

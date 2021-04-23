@@ -1104,6 +1104,20 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonIntern
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
 }
 
+TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithIsaThenPaddingIsAdded) {
+    uint32_t kernelHeap = 0;
+    KernelInfo kernelInfo;
+    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+
+    KernelImmutableData kernelImmutableData(device);
+    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
+    auto graphicsAllocation = kernelImmutableData.getIsaGraphicsAllocation();
+    auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    size_t isaPadding = hwHelper.getPaddingForISAAllocation();
+    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo.heapInfo.KernelHeapSize + isaPadding);
+}
+
 TEST_F(KernelIsaTests, givenGlobalBuffersWhenCreatingKernelImmutableDataThenBuffersAreAddedToResidencyContainer) {
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
