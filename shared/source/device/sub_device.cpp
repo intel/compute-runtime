@@ -12,10 +12,16 @@
 namespace NEO {
 
 SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice)
-    : Device(executionEnvironment), subDeviceIndex(subDeviceIndex), rootDevice(static_cast<RootDevice &>(rootDevice)) {
+    : Device(executionEnvironment), rootDevice(static_cast<RootDevice &>(rootDevice)), subDeviceIndex(subDeviceIndex) {
     UNRECOVERABLE_IF(rootDevice.isSubDevice());
     deviceBitfield = 0;
     deviceBitfield.set(subDeviceIndex);
+}
+
+SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice, aub_stream::EngineType engineType)
+    : SubDevice(executionEnvironment, subDeviceIndex, rootDevice) {
+    this->engineType = engineType;
+    engineInstanced = true;
 }
 
 void SubDevice::incRefInternal() {

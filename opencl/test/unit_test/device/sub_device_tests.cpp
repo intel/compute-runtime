@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/sub_device.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
@@ -262,6 +263,91 @@ TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWhenGettingGlobalMemorySizeThe
         auto mockSubDevice = static_cast<MockSubDevice *>(subDevice);
         auto subDeviceBitfield = static_cast<uint32_t>(mockSubDevice->getDeviceBitfield().to_ulong());
         EXPECT_EQ(expectedGlobalMemorySize, mockSubDevice->getGlobalMemorySize(subDeviceBitfield));
+    }
+}
+
+TEST(SubDevicesTest, whenCreatingEngineInstancedSubDeviceThenSetCorrectSubdeviceIndex) {
+    class MyRootDevice : public RootDevice {
+      public:
+        using RootDevice::createEngineInstancedSubDevice;
+        using RootDevice::RootDevice;
+    };
+
+    auto executionEnvironment = new ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    DeviceFactory::createMemoryManagerFunc(*executionEnvironment);
+
+    auto rootDevice = std::unique_ptr<MyRootDevice>(Device::create<MyRootDevice>(executionEnvironment, 0));
+
+    auto subDevice = std::unique_ptr<SubDevice>(rootDevice->createEngineInstancedSubDevice(1, defaultHwInfo->capabilityTable.defaultEngineType));
+
+    ASSERT_NE(nullptr, subDevice.get());
+
+    EXPECT_EQ(2u, subDevice->getDeviceBitfield().to_ulong());
+}
+
+TEST(SubDevicesTest, givenDebugFlagSetAndMoreThanOneCcsWhenCreatingRootDeviceWithoutGenericSubDevicesThenCreateEngineInstanced) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
+
+    auto executionEnvironment = new ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    UltDeviceFactory deviceFactory(1, 1, *executionEnvironment);
+
+    auto &rootDevice = deviceFactory.rootDevices[0];
+    auto &hwInfo = rootDevice->getHardwareInfo();
+    uint32_t ccsCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+    EXPECT_EQ(ccsCount, rootDevice->getNumAvailableDevices());
+
+    for (uint32_t i = 0; i < ccsCount; i++) {
+        auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + i);
+        auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(i));
+        ASSERT_NE(nullptr, subDevice);
+
+        EXPECT_TRUE(subDevice->engineInstanced);
+        EXPECT_EQ(engineType, subDevice->engineType);
+    }
+}
+
+TEST(SubDevicesTest, givenDebugFlagSetAndSingleCcsWhenCreatingRootDeviceWithoutGenericSubDevicesThenCreateEngineInstanced) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
+
+    auto executionEnvironment = new ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    UltDeviceFactory deviceFactory(1, 1, *executionEnvironment);
+
+    auto &rootDevice = deviceFactory.rootDevices[0];
+
+    EXPECT_EQ(1u, rootDevice->getNumAvailableDevices());
+    EXPECT_FALSE(rootDevice->getDeviceById(0)->isSubDevice());
+}
+
+TEST(SubDevicesTest, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevicesThenDontCreateEngineInstanced) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EngineInstancedSubDevices.set(true);
+
+    UltDeviceFactory deviceFactory(1, 2);
+
+    auto &rootDevice = deviceFactory.rootDevices[0];
+
+    for (uint32_t i = 0; i < 2; i++) {
+        auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(i));
+        ASSERT_NE(nullptr, subDevice);
+
+        EXPECT_FALSE(subDevice->engineInstanced);
+        EXPECT_EQ(1u, subDevice->getNumAvailableDevices());
+        EXPECT_EQ(aub_stream::EngineType::NUM_ENGINES, subDevice->engineType);
     }
 }
 

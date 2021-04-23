@@ -28,6 +28,8 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
                                                   const DeviceBitfield deviceBitfield);
 
 struct MockSubDevice : public SubDevice {
+    using SubDevice::engineInstanced;
+    using SubDevice::engineType;
     using SubDevice::getDeviceBitfield;
     using SubDevice::getGlobalMemorySize;
     using SubDevice::SubDevice;
@@ -122,6 +124,10 @@ class MockDevice : public RootDevice {
 
     SubDevice *createSubDevice(uint32_t subDeviceIndex) override {
         return Device::create<MockSubDevice>(executionEnvironment, subDeviceIndex, *this);
+    }
+
+    SubDevice *createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_stream::EngineType engineType) override {
+        return Device::create<MockSubDevice>(executionEnvironment, subDeviceIndex, *this, engineType);
     }
 
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {

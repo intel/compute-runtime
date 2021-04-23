@@ -61,11 +61,11 @@ SubDevice *Device::createSubDevice(uint32_t subDeviceIndex) {
     return Device::create<SubDevice>(executionEnvironment, subDeviceIndex, *getRootDevice());
 }
 
-bool Device::createSubDevices() {
-    if (!subDevicesAllowed()) {
-        return true;
-    }
+SubDevice *Device::createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_stream::EngineType engineType) {
+    return Device::create<SubDevice>(executionEnvironment, subDeviceIndex, *getRootDevice(), engineType);
+}
 
+bool Device::genericSubDevicesAllowed() {
     auto deviceMask = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->deviceAffinityMask;
     uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
     deviceBitfield = maxNBitValue(subDeviceCount);
@@ -74,19 +74,60 @@ bool Device::createSubDevices() {
     if (numSubDevices == 1) {
         numSubDevices = 0;
     }
+
+    return (numSubDevices > 0);
+}
+
+bool Device::engineInstancedSubDevicesAllowed() const {
+    return (DebugManager.flags.EngineInstancedSubDevices.get() &&
+            (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1));
+}
+
+bool Device::createEngineInstancedSubDevices() {
+    UNRECOVERABLE_IF(deviceBitfield.count() != 1);
     UNRECOVERABLE_IF(!subdevices.empty());
-    if (numSubDevices) {
-        subdevices.resize(subDeviceCount, nullptr);
-        for (auto i = 0u; i < subDeviceCount; i++) {
-            if (!deviceBitfield.test(i)) {
-                continue;
-            }
-            auto subDevice = createSubDevice(i);
-            if (!subDevice) {
-                return false;
-            }
-            subdevices[i] = subDevice;
+
+    numSubDevices = getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+    subdevices.resize(numSubDevices, nullptr);
+    uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+
+    for (uint32_t i = 0; i < numSubDevices; i++) {
+        auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + i);
+        auto subDevice = createEngineInstancedSubDevice(subDeviceIndex, engineType);
+        UNRECOVERABLE_IF(!subDevice);
+        subdevices[i] = subDevice;
+    }
+
+    return true;
+}
+
+bool Device::createGenericSubDevices() {
+    UNRECOVERABLE_IF(!subdevices.empty());
+    uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
+
+    subdevices.resize(subDeviceCount, nullptr);
+
+    for (auto i = 0u; i < subDeviceCount; i++) {
+        if (!deviceBitfield.test(i)) {
+            continue;
         }
+        auto subDevice = createSubDevice(i);
+        if (!subDevice) {
+            return false;
+        }
+        subdevices[i] = subDevice;
+    }
+
+    return true;
+}
+
+bool Device::createSubDevices() {
+    if (genericSubDevicesAllowed()) {
+        return createGenericSubDevices();
+    }
+
+    if (engineInstancedSubDevicesAllowed()) {
+        return createEngineInstancedSubDevices();
     }
 
     return true;
