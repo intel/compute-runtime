@@ -55,6 +55,11 @@ bool HwHelperHw<Family>::obtainBlitterPreference(const HardwareInfo &hwInfo) con
     return false;
 }
 
+template <typename Family>
+bool HwHelperHw<Family>::isRegularVfeUsed(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
 template <typename GfxFamily>
 const HwHelper::EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     return {

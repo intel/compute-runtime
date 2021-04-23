@@ -35,14 +35,19 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendMemoryCopyBlitRegion;
     using BaseClass::appendSignalEventPostWalker;
     using BaseClass::applyMemoryRangesBarrier;
+    using BaseClass::clearCommandsToPatch;
     using BaseClass::commandListPerThreadScratchSize;
     using BaseClass::commandListPreemptionMode;
+    using BaseClass::commandsToPatch;
     using BaseClass::engineGroupType;
+    using BaseClass::finalStreamState;
     using BaseClass::getAlignedAllocation;
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::hostPtrMap;
     using BaseClass::initialize;
+    using BaseClass::requiredStreamState;
+    using BaseClass::updateStreamProperties;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
 };
@@ -55,6 +60,10 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     : public L0::CommandListCoreFamilyImmediate<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
+    using BaseClass::clearCommandsToPatch;
+    using BaseClass::commandsToPatch;
+    using BaseClass::finalStreamState;
+    using BaseClass::requiredStreamState;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 };

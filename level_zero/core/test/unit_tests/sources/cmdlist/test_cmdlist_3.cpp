@@ -1069,6 +1069,37 @@ TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListF
     }
 }
 
+HWTEST2_F(CommandListCreate, whenGettingCommandsToPatchThenCorrectValuesAreReturned, Platforms) {
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    EXPECT_EQ(&commandList->requiredStreamState, &commandList->getRequiredStreamState());
+    EXPECT_EQ(&commandList->finalStreamState, &commandList->getFinalStreamState());
+    EXPECT_EQ(&commandList->commandsToPatch, &commandList->getCommandsToPatch());
+}
+
+HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatchIsCalledThenCommandsAreCorrectlyCleared, Platforms) {
+    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+
+    CommandList::CommandToPatch commandToPatch{};
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
+    pCommandList->commandsToPatch.clear();
+
+    commandToPatch.type = CommandList::CommandToPatch::CommandType::FrontEndState;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
+    pCommandList->commandsToPatch.clear();
+
+    commandToPatch.pCommand = new VFE_STATE_TYPE;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+}
+
 using HostPointerManagerCommandListTest = Test<HostPointerManagerFixure>;
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenImportedHostPointerWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,

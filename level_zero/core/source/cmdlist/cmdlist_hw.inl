@@ -55,6 +55,11 @@ inline ze_result_t parseErrorCode(NEO::ErrorCode returnValue) {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
+    clearCommandsToPatch();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programThreadArbitrationPolicy(Device *device) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto &hwHelper = NEO::HwHelper::get(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
@@ -77,6 +82,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
     commandListPreemptionMode = device->getDevicePreemptionMode();
     commandListPerThreadScratchSize = 0u;
+    requiredStreamState = {};
+    finalStreamState = requiredStreamState;
+    containsAnyKernel = false;
+    clearCommandsToPatch();
 
     if (!isCopyOnly()) {
         if (!NEO::ApiSpecificConfig::getBindlessConfiguration()) {
@@ -1826,6 +1835,47 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
+
+    if (!containsAnyKernel) {
+        requiredStreamState.setCooperativeKernelProperties(kernel.usesSyncBuffer(), device->getHwInfo());
+        finalStreamState = requiredStreamState;
+        containsAnyKernel = true;
+        return;
+    }
+
+    auto &hwInfo = device->getHwInfo();
+    auto programVfe = finalStreamState.setCooperativeKernelProperties(kernel.usesSyncBuffer(), hwInfo);
+    if (programVfe) {
+        auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
+        auto pVfeState = new VFE_STATE_TYPE;
+        NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, hwInfo, 0, 0, device->getMaxNumHwThreads(),
+                                                        NEO::AdditionalKernelExecInfo::NotApplicable, finalStreamState);
+        commandsToPatch.push_back({pVfeStateAddress, pVfeState, CommandToPatch::FrontEndState});
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
+
+    for (auto &commandToPatch : commandsToPatch) {
+        switch (commandToPatch.type) {
+        case CommandList::CommandToPatch::FrontEndState:
+            UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
+            delete reinterpret_cast<VFE_STATE_TYPE *>(commandToPatch.pCommand);
+            break;
+        default:
+            UNRECOVERABLE_IF(true);
+        }
+    }
+    commandsToPatch.clear();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

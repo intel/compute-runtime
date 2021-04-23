@@ -10,8 +10,12 @@
 namespace NEO {
 
 struct StreamProperties {
-    bool setCooperativeKernelProperties(bool isCooperative) {
+    bool setCooperativeKernelProperties(int32_t cooperativeKernelProperties, const HardwareInfo &hwInfo) {
         return false;
+    }
+
+    int32_t getCooperativeKernelProperties() const {
+        return -1;
     }
 };
 

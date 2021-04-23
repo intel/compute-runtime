@@ -121,4 +121,10 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::ResidencyContainer &
     }
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint64_t scratchAddress) {
+    auto &commandsToPatch = commandList.getCommandsToPatch();
+    UNRECOVERABLE_IF(!commandsToPatch.empty());
+}
+
 } // namespace L0

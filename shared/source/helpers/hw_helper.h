@@ -65,6 +65,7 @@ class HwHelper {
     virtual bool hvAlign4Required() const = 0;
     virtual bool isBufferSizeSuitableForRenderCompression(const size_t size) const = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isRegularVfeUsed(const HardwareInfo &hwInfo) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool allowRenderCompression(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
@@ -227,6 +228,8 @@ class HwHelperHw : public HwHelper {
     bool isBufferSizeSuitableForRenderCompression(const size_t size) const override;
 
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
+
+    bool isRegularVfeUsed(const HardwareInfo &hwInfo) const override;
 
     bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) override;
 

@@ -174,10 +174,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         linearStreamSizeEstimate += sizeof(MI_BATCH_BUFFER_END);
     }
 
+    auto &hwInfo = device->getHwInfo();
     if (hFence) {
         fence = Fence::fromHandle(hFence);
         spaceForResidency += residencyContainerSpaceForFence;
-        linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(device->getHwInfo());
+        linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
     }
 
     spaceForResidency += residencyContainerSpaceForTagWrite;
@@ -201,9 +202,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             linearStreamSizeEstimate += estimatePipelineSelect();
         }
 
-        if (frontEndStateDirty) {
-            linearStreamSizeEstimate += estimateFrontEndCmdSize();
-        }
+        linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, numCommandLists, phCommandLists);
 
         if (gsbaStateDirty) {
             linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
@@ -216,7 +215,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         linearStreamSizeEstimate += NEO::SWTagsManager::estimateSpaceForSWTags<GfxFamily>();
     }
 
-    linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(device->getHwInfo());
+    linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
     size_t alignedSize = alignUp<size_t>(linearStreamSizeEstimate, minCmdBufferPtrAlign);
     size_t padding = alignedSize - linearStreamSizeEstimate;
     reserveLinearStreamSize(alignedSize);
@@ -256,9 +255,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             commandQueueDebugCmdsProgrammed = true;
         }
 
-        if (frontEndStateDirty) {
-            programFrontEnd(scratchSpaceController->getScratchPatchAddress(), scratchSpaceController->getPerThreadScratchSpaceSize(), child);
-        }
         if (gsbaStateDirty) {
             auto indirectHeap = CommandList::fromHandle(phCommandLists[0])->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
             programStateBaseAddress(scratchSpaceController->calculateNewGSH(), indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(), child);
@@ -332,6 +328,22 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             statePreemption = commandListPreemption;
         }
 
+        if (!isCopyOnlyCommandQueue) {
+            auto &requiredStreamState = commandList->getRequiredStreamState();
+            auto programVfe = streamProperties.setCooperativeKernelProperties(requiredStreamState.getCooperativeKernelProperties(), hwInfo);
+            if (frontEndStateDirty) {
+                programVfe = true;
+                frontEndStateDirty = false;
+            }
+            if (programVfe) {
+                programFrontEnd(scratchSpaceController->getScratchPatchAddress(), scratchSpaceController->getPerThreadScratchSpaceSize(), child);
+            }
+            auto &finalStreamState = commandList->getFinalStreamState();
+            streamProperties.setCooperativeKernelProperties(finalStreamState.getCooperativeKernelProperties(), hwInfo);
+        }
+
+        patchCommands(*commandList, scratchSpaceController->getScratchPatchAddress());
+
         for (size_t iter = 0; iter < cmdBufferCount; iter++) {
             auto allocation = cmdBufferAllocations[iter];
             NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&child, allocation->getGpuAddress(), true);
@@ -381,7 +393,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                 child, POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
                 fence->getGpuAddress(),
                 Fence::STATE_SIGNALED,
-                device->getHwInfo(),
+                hwInfo,
                 args);
         }
     }
@@ -443,6 +455,33 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSize() {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     return NEO::PreambleHelper<GfxFamily>::getVFECommandsSize();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandLists(
+    bool isFrontEndStateDirty, uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
+
+    auto streamPropertiesCopy = streamProperties;
+    auto singleFrontEndCmdSize = estimateFrontEndCmdSize();
+    auto &hwInfo = device->getHwInfo();
+    size_t estimatedSize = 0;
+
+    for (size_t i = 0; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        auto &requiredStreamState = commandList->getRequiredStreamState();
+        auto isVfeRequired = streamPropertiesCopy.setCooperativeKernelProperties(requiredStreamState.getCooperativeKernelProperties(), hwInfo);
+        if (isFrontEndStateDirty) {
+            isVfeRequired = true;
+            isFrontEndStateDirty = false;
+        }
+        if (isVfeRequired) {
+            estimatedSize += singleFrontEndCmdSize;
+        }
+        auto &finalStreamState = commandList->getFinalStreamState();
+        streamPropertiesCopy.setCooperativeKernelProperties(finalStreamState.getCooperativeKernelProperties(), hwInfo);
+    }
+
+    return estimatedSize;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

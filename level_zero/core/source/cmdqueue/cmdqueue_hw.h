@@ -16,6 +16,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 
 #include "igfxfmid.h"
+#include "stream_properties.h"
 
 namespace L0 {
 
@@ -39,6 +40,8 @@ struct CommandQueueHw : public CommandQueueImp {
     size_t estimateStateBaseAddressCmdSize();
     MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream);
 
+    size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool isFrontEndStateDirty, uint32_t numCommandLists,
+                                                          ze_command_list_handle_t *phCommandLists);
     size_t estimateFrontEndCmdSize();
     size_t estimatePipelineSelect();
     void programPipelineSelect(NEO::LinearStream &commandStream);
@@ -50,6 +53,9 @@ struct CommandQueueHw : public CommandQueueImp {
                                              uint32_t perThreadScratchSpaceSize);
 
     bool getPreemptionCmdProgramming() override;
+    void patchCommands(CommandList &commandList, uint64_t scratchAddress);
+
+    NEO::StreamProperties streamProperties{};
 };
 
 } // namespace L0
