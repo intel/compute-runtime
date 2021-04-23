@@ -761,7 +761,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 }
 
 HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrThenAddSizeForSemaphores) {
-    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     MockContext context2(device2.get());
     auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
 
@@ -861,7 +861,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
-    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     device2->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -914,6 +914,47 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     }
 }
 
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingOnDifferentRootDeviceThenDontProgramSemaphoresOnCsrStream) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    device2->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    MockContext context2(device2.get());
+
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
+
+    const cl_uint eventsOnWaitlist = 6;
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp6(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+
+    UserEvent event1;
+    event1.setStatus(CL_COMPLETE);
+    UserEvent event2;
+    event2.setStatus(CL_COMPLETE);
+    Event event3(cmdQ1.get(), 0, 0, 0);
+    event3.addTimestampPacketNodes(timestamp3);
+    Event event4(cmdQ2.get(), 0, 0, 0);
+    event4.addTimestampPacketNodes(timestamp4);
+    Event event5(cmdQ1.get(), 0, 0, 0);
+    event5.addTimestampPacketNodes(timestamp5);
+    Event event6(cmdQ2.get(), 0, 0, 0);
+    event6.addTimestampPacketNodes(timestamp6);
+
+    cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
+
+    cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
+
+    verifyDependencyCounterValues(event4.getTimestampPacketNodes(), 0);
+    verifyDependencyCounterValues(event6.getTimestampPacketNodes(), 0);
+}
+
 HWTEST_F(TimestampPacketTests, givenMultipleDevicesOnCsrWhenIncrementingCpuDependenciesCountThenIncrementByTargetCsrDeviceCountValue) {
     DeviceBitfield osContext0DeviceBitfiled = 0b011;
     DeviceBitfield osContext1DeviceBitfiled = 0b1011;
@@ -926,7 +967,7 @@ HWTEST_F(TimestampPacketTests, givenMultipleDevicesOnCsrWhenIncrementingCpuDepen
     EXPECT_EQ(3u, osContext1->getNumSupportedDevices());
 
     auto device0 = std::make_unique<MockClDevice>(Device::create<MockDevice>(factory.rootDevices[0]->getExecutionEnvironment(), 0u));
-    auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(factory.rootDevices[0]->getExecutionEnvironment(), 1u));
+    auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(factory.rootDevices[0]->getExecutionEnvironment(), 0u));
 
     device0->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     device0->getUltCommandStreamReceiver<FamilyType>().setupContext(*osContext0);
@@ -966,7 +1007,7 @@ HWTEST_F(TimestampPacketTests, givenMultipleDevicesOnCsrWhenIncrementingCpuDepen
 }
 
 HWTEST_F(TimestampPacketTests, givenAllDependencyTypesModeWhenFillingFromDifferentCsrsThenPushEverything) {
-    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
 
     auto &csr1 = device->getUltCommandStreamReceiver<FamilyType>();
     auto &csr2 = device2->getUltCommandStreamReceiver<FamilyType>();
@@ -1053,7 +1094,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockedThenProgramSemaphoresOnCsrStreamOnFlush) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     device2->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -1145,7 +1186,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using WALKER = WALKER_TYPE<FamilyType>;
 
-    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     device2->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     MockContext context2(device2.get());
@@ -1484,7 +1525,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingWithOmitTim
 HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueueingThenMakeAllTimestampsResident) {
     TagAllocator<TimestampPackets<uint32_t>> tagAllocator(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1, 1,
                                                           sizeof(TimestampPackets<uint32_t>), false, device->getDeviceBitfield());
-    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
 
     auto &ultCsr = device->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.timestampPacketWriteEnabled = true;
@@ -1736,7 +1777,7 @@ HWTEST_F(TimestampPacketTests, givenBlockedEnqueueWithoutKernelWhenSubmittingThe
 
 HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingMarkerWithoutKernelThenInheritTimestampPacketsAndProgramSemaphores) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     device2->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -1779,7 +1820,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingMarkerWi
 
 HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingBarrierWithoutKernelThenInheritTimestampPacketsAndProgramSemaphores) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     device2->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;

@@ -29,6 +29,11 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
             continue;
         }
 
+        auto sameRootDevice = event->getCommandQueue()->getClDevice().getRootDeviceIndex() == currentCsr.getRootDeviceIndex();
+        if (!sameRootDevice) {
+            continue;
+        }
+
         auto sameCsr = (&event->getCommandQueue()->getGpgpuCommandStreamReceiver() == &currentCsr);
         bool pushDependency = (CsrDependencies::DependenciesType::OnCsr == depsType && sameCsr) ||
                               (CsrDependencies::DependenciesType::OutOfCsr == depsType && !sameCsr) ||
