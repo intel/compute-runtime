@@ -88,6 +88,13 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler/sampler_imp.h
 )
 
+if(SUPPORT_XEHP_PLUS)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_xe_hp_core_plus.inl
+  )
+endif()
+
 target_include_directories(${L0_STATIC_LIB_NAME}
                            PUBLIC
                            ${CMAKE_CURRENT_SOURCE_DIR}/

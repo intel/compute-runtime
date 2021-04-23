@@ -7,8 +7,7 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
-
-#include "storage_info.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
 
 #include <cstdint>
 #include <cstdlib>

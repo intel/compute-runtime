@@ -85,10 +85,10 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenGettingMemoryRegionClassAndInstan
     auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
     EXPECT_EQ(8 * GB, regionSize);
 
-    regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::Bank0);
+    regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(0));
     EXPECT_EQ(regionInfo[1].region.memory_class, regionClassAndInstance.memory_class);
     EXPECT_EQ(regionInfo[1].region.memory_instance, regionClassAndInstance.memory_instance);
-    regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::Bank0);
+    regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0));
     EXPECT_EQ(16 * GB, regionSize);
 }
 

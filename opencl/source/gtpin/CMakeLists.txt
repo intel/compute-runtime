@@ -20,6 +20,12 @@ if(NOT DISABLED_GTPIN_SUPPORT)
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_defs.h
   )
 
+  if(SUPPORT_XEHP_PLUS)
+    list(APPEND RUNTIME_SRCS_GTPIN
+         ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper_xehp_plus.inl
+    )
+  endif()
+
   if(WIN32)
     set(MSVC_DEF_ADDITIONAL_EXPORTS "${MSVC_DEF_ADDITIONAL_EXPORTS}\nGTPin_Init")
   endif()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,6 +101,9 @@ struct FeatureTableBase {
             bool ftrRcsNode : 1;
             bool ftrLocalMemory : 1;
             bool ftrLocalMemoryAllows4KB : 1;
+            bool ftrFlatPhysCCS : 1;
+            bool ftrMultiTileArch : 1;
+            bool ftrCCSMultiInstance : 1;
         };
         uint64_t packed[2];
     };

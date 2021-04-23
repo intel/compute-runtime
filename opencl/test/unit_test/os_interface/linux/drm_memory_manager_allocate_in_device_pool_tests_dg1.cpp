@@ -184,7 +184,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObj
     auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0),
                                                                                             gpuAddress,
                                                                                             size,
-                                                                                            (1 << (MemoryBanks::Bank0 - 1)),
+                                                                                            (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
                                                                                             1));
     ASSERT_NE(nullptr, bo);
 
@@ -1507,7 +1507,7 @@ TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCal
 
     auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
     ASSERT_NE(nullptr, memoryInfo);
-    EXPECT_EQ(memoryInfo->getMemoryRegionSize(MemoryBanks::Bank0), memoryManager.getLocalMemorySize(0u, 0xF));
+    EXPECT_EQ(memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0)), memoryManager.getLocalMemorySize(0u, 0xF));
 }
 
 TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledButMemoryInfoIsNotAvailableThenSizeZeroIsReturned) {

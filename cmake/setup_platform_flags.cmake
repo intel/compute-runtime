@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,6 +8,16 @@ SET_FLAGS_FOR("GEN8" "BDW")
 SET_FLAGS_FOR("GEN9" "SKL" "KBL" "BXT" "GLK" "CFL")
 SET_FLAGS_FOR("GEN11" "ICLLP" "LKF" "EHL")
 SET_FLAGS_FOR("GEN12LP" "TGLLP" "RKL" "ADLS")
+
+foreach(GEN_TYPE ${XEHP_PLUS_GENS})
+  if(TESTS_${GEN_TYPE})
+    set(TESTS_XEHP_PLUS 1)
+  endif()
+  if(SUPPORT_${GEN_TYPE})
+    set(SUPPORT_XEHP_PLUS 1)
+  endif()
+  set(SUPPORT_DEVICE_ENQUEUE_${GEN_TYPE} FALSE CACHE BOOL "Disabled support ${GEN_TYPE} for device side enqueue" FORCE)
+endforeach()
 
 # Add supported and tested platforms
 if(SUPPORT_GEN8)
@@ -176,6 +186,24 @@ if(SUPPORT_GEN12LP)
     if(TESTS_ADLS)
       ADD_ITEM_FOR_GEN("PLATFORMS" "TESTED" "GEN12LP" "ADLS")
       ADD_PRODUCT("TESTED" "ADLS" "IGFX_ALDERLAKE_S")
+    endif()
+  endif()
+endif()
+
+if(SUPPORT_XE_HP_CORE)
+  set(CORE_XE_HP_CORE_REVISIONS 0)
+  if(TESTS_XE_HP_CORE)
+    ADD_ITEM_FOR_GEN("FAMILY_NAME" "TESTED" "XE_HP_CORE" "XeHpFamily")
+  endif()
+  if(SUPPORT_XEHP)
+    ADD_PRODUCT("SUPPORTED" "XEHP" "IGFX_XE_HP_SDV")
+    ADD_PLATFORM_FOR_GEN("SUPPORTED" "XE_HP_CORE" "XEHP" "CORE")
+    ADD_PLATFORM_FOR_GEN("SUPPORTED_IMAGES" "XE_HP_CORE" "XEHP" "CORE")
+    set(PREFERRED_PLATFORM "XEHP")
+    if(TESTS_XEHP)
+      set(PREFERRED_FAMILY_NAME "XeHpFamily")
+      ADD_ITEM_FOR_GEN("PLATFORMS" "TESTED" "XE_HP_CORE" "XEHP")
+      ADD_PRODUCT("TESTED" "XEHP" "IGFX_XE_HP_SDV")
     endif()
   endif()
 endif()

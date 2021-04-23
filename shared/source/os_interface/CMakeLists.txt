@@ -39,5 +39,9 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc_base.h
 )
 
+if(SUPPORT_XEHP_PLUS)
+  list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_xehp_plus.inl)
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE ${NEO_CORE_OS_INTERFACE})
 add_subdirectories()

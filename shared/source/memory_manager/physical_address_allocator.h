@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,60 @@ class PhysicalAddressAllocator {
     std::atomic<uint64_t> mainAllocator;
     std::mutex pageReserveMutex;
     const uint64_t initialPageAddress = 0x1000;
+};
+
+template <typename GfxFamily>
+class PhysicalAddressAllocatorHw : public PhysicalAddressAllocator {
+
+  public:
+    PhysicalAddressAllocatorHw(uint64_t bankSize, uint32_t numOfBanks) : memoryBankSize(bankSize), numberOfBanks(numOfBanks) {
+        if (numberOfBanks > 0) {
+            bankAllocators = new std::atomic<uint64_t>[numberOfBanks];
+            bankAllocators[0].store(initialPageAddress);
+
+            for (uint32_t i = 1; i < numberOfBanks; i++) {
+                bankAllocators[i].store(i * memoryBankSize);
+            }
+        }
+    }
+
+    ~PhysicalAddressAllocatorHw() override {
+        if (bankAllocators) {
+            delete bankAllocators;
+        }
+    }
+
+    uint64_t reservePage(uint32_t memoryBank, size_t pageSize, size_t alignement) override {
+        std::unique_lock<std::mutex> lock(pageReserveMutex);
+
+        if (memoryBank == MemoryBanks::MainBank || numberOfBanks == 0) {
+            auto currentAddress = mainAllocator.load();
+            auto alignmentSize = alignUp(currentAddress, alignement) - currentAddress;
+            mainAllocator += alignmentSize;
+            return mainAllocator.fetch_add(pageSize);
+        }
+        UNRECOVERABLE_IF(memoryBank > numberOfBanks);
+
+        auto index = memoryBank - MemoryBanks::getBankForLocalMemory(0);
+
+        auto currentAddress = bankAllocators[index].load();
+        auto alignmentSize = alignUp(currentAddress, alignement) - currentAddress;
+        bankAllocators[index] += alignmentSize;
+
+        auto address = bankAllocators[index].fetch_add(pageSize);
+
+        UNRECOVERABLE_IF(address > ((index + 1) * memoryBankSize));
+
+        return address;
+    }
+
+    uint64_t getBankSize() { return memoryBankSize; }
+    uint32_t getNumberOfBanks() { return numberOfBanks; }
+
+  protected:
+    std::atomic<uint64_t> *bankAllocators = nullptr;
+    uint64_t memoryBankSize = 0;
+    uint32_t numberOfBanks = 0;
 };
 
 } // namespace NEO

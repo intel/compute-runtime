@@ -84,6 +84,7 @@ enum class ClientGen : uint32_t
     Gen11,
     Gen11LP,
     Gen12,
+    XE_HP,
     // ...
     Last
 };

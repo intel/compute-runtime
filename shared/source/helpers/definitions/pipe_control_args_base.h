@@ -19,6 +19,7 @@ struct PipeControlArgsBase {
     bool genericMediaStateClear = false;
     bool hdcPipelineFlush = false;
     bool tlbInvalidation = false;
+    bool compressionControlSurfaceCcsFlush = false;
     bool notifyEnable = false;
 
   protected:

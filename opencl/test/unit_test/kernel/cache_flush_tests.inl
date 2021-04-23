@@ -14,8 +14,8 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/command_queue/embargo/resource_barrier.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/command_queue/resource_barrier.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/helpers/cmd_buffer_validator.h"

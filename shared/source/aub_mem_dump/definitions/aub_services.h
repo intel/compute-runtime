@@ -102,7 +102,8 @@ struct CmdServicesMemTraceVersion {
             Lkf = 25,
             Ehl = 28,
             Dg1 = 30,
-            Adls = 37
+            Adls = 37,
+            XeHP_SDV = 29,
         };
     };
     struct RecordingMethodValues {
@@ -777,7 +778,11 @@ struct CmdServicesMemTraceMemoryWrite {
             TraceKernelInstructions = 26,
             TraceVolumeMap = 9,
             TraceCubeMap = 7,
-            TraceLogicalRingContextBcs = 49
+            TraceLogicalRingContextBcs = 49,
+            TracePpgttLevel1 = 65,
+            TracePpgttLevel2 = 66,
+            TracePpgttLevel3 = 67,
+            TracePpgttLevel4 = 68
         };
     };
     struct TilingValues {

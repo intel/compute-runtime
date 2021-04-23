@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "opencl/extensions/public/cl_ext_private.h"
+
 #include "CL/cl.h"
 
 #include <cstdint>
@@ -15,5 +17,6 @@ struct ClDeviceInfoParam;
 
 namespace ClDeviceHelper {
 void getExtraDeviceInfo(const ClDevice &clDevice, cl_device_info paramName, ClDeviceInfoParam &param, const void *&src, size_t &size, size_t &retSize);
+cl_device_feature_capabilities_intel getExtraCapabilities();
 }; // namespace ClDeviceHelper
 } // namespace NEO

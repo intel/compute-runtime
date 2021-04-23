@@ -18,3 +18,6 @@
 #ifdef SUPPORT_GEN12LP
 #include "shared/source/gen12lp/aub_mapper.h"
 #endif
+#ifdef SUPPORT_XE_HP_CORE
+#include "shared/source/xe_hp_core/aub_mapper.h"
+#endif

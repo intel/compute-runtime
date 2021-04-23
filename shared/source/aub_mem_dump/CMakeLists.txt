@@ -22,5 +22,11 @@ if(NOT DEFINED AUB_STREAM_PROJECT_NAME)
   )
 endif()
 
+if(SUPPORT_XEHP_PLUS)
+  list(APPEND NEO_CORE_AUB_MEM_DUMP
+       ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_xehp_plus.inl
+  )
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_AUB_MEM_DUMP ${NEO_CORE_AUB_MEM_DUMP})
 add_subdirectories()

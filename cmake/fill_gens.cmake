@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,3 +8,5 @@ list(APPEND ALL_GEN_TYPES "GEN8")
 list(APPEND ALL_GEN_TYPES "GEN9")
 list(APPEND ALL_GEN_TYPES "GEN11")
 list(APPEND ALL_GEN_TYPES "GEN12LP")
+list(APPEND ALL_GEN_TYPES "XE_HP_CORE")
+list(APPEND XEHP_PLUS_GENS "XE_HP_CORE")

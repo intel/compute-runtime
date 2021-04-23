@@ -18,5 +18,12 @@ set(NEO_CORE_AUB
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.h
 )
+
+if(SUPPORT_XEHP_PLUS)
+  list(APPEND NEO_CORE_AUB
+       ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_xehp_plus.inl
+  )
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_AUB ${NEO_CORE_AUB})
 add_subdirectories()

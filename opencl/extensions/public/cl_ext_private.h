@@ -211,6 +211,27 @@ typedef cl_bitfield cl_device_feature_capabilities_intel;
 /* For GPU devices, version 1.0.0: */
 #define CL_DEVICE_FEATURE_FLAG_DP4A_INTEL (1 << 0)
 
+////// RESOURCE BARRIER EXT
+#define CL_COMMAND_RESOURCE_BARRIER 0x10010
+
+typedef cl_uint cl_resource_barrier_type;
+#define CL_RESOURCE_BARRIER_TYPE_ACQUIRE 0x1 // FLUSH+EVICT
+#define CL_RESOURCE_BARRIER_TYPE_RELEASE 0x2 // FLUSH
+#define CL_RESOURCE_BARRIER_TYPE_DISCARD 0x3 // DISCARD
+
+typedef cl_uint cl_resource_memory_scope;
+#define CL_MEMORY_SCOPE_DEVICE 0x0 // INCLUDES CROSS-TILE
+#define CL_MEMORY_SCOPE_ALL_SVM_DEVICES 0x1 // CL_MEMORY_SCOPE_DEVICE + CROSS-DEVICE
+
+#pragma pack(push, 1)
+typedef struct _cl_resource_barrier_descriptor_intel {
+    void *svm_allocation_pointer;
+    cl_mem mem_object;
+    cl_resource_barrier_type type;
+    cl_resource_memory_scope scope;
+} cl_resource_barrier_descriptor_intel;
+#pragma pack(pop)
+
 /****************************************
  * cl_khr_pci_bus_info extension *
  ***************************************/

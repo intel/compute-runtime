@@ -56,7 +56,7 @@ set(IGDRCL_SRCS_tests_command_queue
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_read_buffer_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_read_image_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_read_image_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/enqueue_resource_barier_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_resource_barier_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_svm_mem_copy_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_svm_mem_fill_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_svm_tests.cpp

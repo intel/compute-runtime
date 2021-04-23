@@ -18,3 +18,6 @@
 #ifdef SUPPORT_GEN12LP
 #include "shared/source/gen12lp/hw_cmds.h"
 #endif
+#ifdef SUPPORT_XE_HP_CORE
+#include "shared/source/xe_hp_core/hw_cmds.h"
+#endif

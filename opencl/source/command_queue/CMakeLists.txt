@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -27,7 +27,7 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_read_buffer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_read_buffer_rect.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_read_image.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/enqueue_resource_barrier.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_resource_barrier.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_svm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_buffer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_buffer_rect.h
@@ -41,8 +41,18 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_bdw_plus.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/local_work_size.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/resource_barrier.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.h
 )
+
+if(SUPPORT_XEHP_PLUS)
+  list(APPEND RUNTIME_SRCS_COMMAND_QUEUE
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_xehp_plus.inl
+  )
+endif()
+
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_COMMAND_QUEUE})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_COMMAND_QUEUE ${RUNTIME_SRCS_COMMAND_QUEUE})
 add_subdirectories()

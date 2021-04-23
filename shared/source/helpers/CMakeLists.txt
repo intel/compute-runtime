@@ -10,6 +10,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/address_patch.h
     ${CMAKE_CURRENT_SOURCE_DIR}/affinity_mask.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_defines.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aux_translation.h
@@ -110,14 +112,37 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/mi_flush_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/pipe_control_args_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/pipe_control_args.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/pipe_control_args.cpp
 )
 
-set_property(GLOBAL PROPERTY NEO_CORE_HELPERS ${NEO_CORE_HELPERS})
-set(NEO_CORE_SRCS_HELPERS_WINDOWS
+if(SUPPORT_XEHP_PLUS)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/extra_allocation_data_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/preamble_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_xehp_plus.inl
+  )
+endif()
+
+if(WIN32)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/app_resource_helper.cpp
+  )
+else()
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/app_resource_helper.cpp
+  )
+endif()
+
+set(NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.h
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.inl
 )
-set_property(GLOBAL PROPERTY NEO_CORE_SRCS_HELPERS_WINDOWS ${NEO_CORE_SRCS_HELPERS_WINDOWS})
+
+set_property(GLOBAL PROPERTY NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS ${NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS})
+set_property(GLOBAL PROPERTY NEO_CORE_HELPERS ${NEO_CORE_HELPERS})
 
 add_subdirectories()

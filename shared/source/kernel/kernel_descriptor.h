@@ -28,6 +28,7 @@ using InstructionsSegmentOffset = uint16_t;
 
 struct ExtendedInfoBase {
     virtual ~ExtendedInfoBase() = default;
+    virtual bool specialPipelineSelectModeRequired() const { return false; }
 };
 
 struct KernelDescriptor final {

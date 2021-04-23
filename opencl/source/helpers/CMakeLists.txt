@@ -54,6 +54,13 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/validators.h
 )
 
+if(SUPPORT_XEHP_PLUS)
+  list(APPEND RUNTIME_SRCS_HELPERS_BASE
+       ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_xehp_plus.inl
+  )
+endif()
+
 set(RUNTIME_SRCS_HELPERS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks_tgllp_plus.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/kmd_notify_properties_windows.cpp

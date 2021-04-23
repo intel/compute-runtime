@@ -9,6 +9,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/adapter_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/adapter_info_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_app_resource_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_tests_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi_interface.h

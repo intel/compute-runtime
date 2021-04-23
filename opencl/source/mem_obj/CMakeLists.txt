@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -27,6 +27,12 @@ set(RUNTIME_SRCS_MEM_OBJ
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/buffer_ext.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/image_ext.inl
 )
+
+if(SUPPORT_XEHP_PLUS)
+  list(APPEND RUNTIME_SRCS_MEM_OBJ
+       ${CMAKE_CURRENT_SOURCE_DIR}/image_xehp_plus.inl
+  )
+endif()
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_MEM_OBJ})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_MEM_OBJ ${RUNTIME_SRCS_MEM_OBJ})

@@ -354,7 +354,7 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
     if (!memoryInfo) {
         return 0;
     }
-    return memoryInfo->getMemoryRegionSize(MemoryBanks::Bank0);
+    return memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0));
 }
 
 } // namespace NEO

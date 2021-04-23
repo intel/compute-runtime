@@ -46,5 +46,14 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy.h
 )
 
+if(SUPPORT_XEHP_PLUS)
+  list(APPEND NEO_CORE_COMMAND_STREAM
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/preemption_xehp_plus.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_xehp_plus.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_xehp_plus.h
+  )
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_COMMAND_STREAM ${NEO_CORE_COMMAND_STREAM})
 add_subdirectories()
