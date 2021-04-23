@@ -38,6 +38,28 @@ TEST(DrmTest, WhenGettingDeviceIdThenCorrectIdReturned) {
     delete pDrm;
 }
 
+TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    {
+        drm.setPciPath("ab:cd.e");
+        auto adapterBdf = drm.getAdapterBDF();
+        EXPECT_EQ(0xabu, adapterBdf.Bus);
+        EXPECT_EQ(0xcdu, adapterBdf.Device);
+        EXPECT_EQ(0xeu, adapterBdf.Function);
+    }
+
+    {
+        drm.setPciPath("01:23.4");
+        auto adapterBdf = drm.getAdapterBDF();
+        EXPECT_EQ(0x1u, adapterBdf.Bus);
+        EXPECT_EQ(0x23u, adapterBdf.Device);
+        EXPECT_EQ(0x4u, adapterBdf.Function);
+    }
+}
+
 TEST(DrmTest, GivenInvalidPciPathWhenFrequencyIsQueriedThenReturnError) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/engine_info.h"
@@ -95,6 +96,7 @@ class Drm {
 
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     inline int getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
+    ADAPTER_BDF getAdapterBDF() const;
     int createDrmVirtualMemory(uint32_t &drmVmId);
     void destroyDrmVirtualMemory(uint32_t drmVmId);
     uint32_t createDrmContext(uint32_t drmVmId, bool isDirectSubmission);

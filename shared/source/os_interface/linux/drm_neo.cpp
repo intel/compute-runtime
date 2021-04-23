@@ -558,4 +558,21 @@ Drm::~Drm() {
     this->printIoctlStatistics();
 }
 
+ADAPTER_BDF Drm::getAdapterBDF() const {
+
+    ADAPTER_BDF adapterBDF{};
+    constexpr int pciBusInfoTokensNum = 3;
+
+    uint32_t bus, device, function;
+
+    if (std::sscanf(hwDeviceId->getPciPath(), "%02x:%02x.%01x", &bus, &device, &function) != pciBusInfoTokensNum) {
+        return {};
+    }
+    adapterBDF.Bus = bus;
+    adapterBDF.Function = function;
+    adapterBDF.Device = device;
+
+    return adapterBDF;
+}
+
 } // namespace NEO

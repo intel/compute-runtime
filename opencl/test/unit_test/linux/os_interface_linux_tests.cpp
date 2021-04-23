@@ -18,13 +18,15 @@ namespace NEO {
 extern GMM_INIT_IN_ARGS passedInputArgs;
 extern bool copyInputArgs;
 
-TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenProperFileDescriptorIsSet) {
+TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenFileDescriptorIsSetWithValueOfAdapterBdf) {
     MockExecutionEnvironment executionEnvironment;
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     auto osInterface = new OSInterface();
     rootDeviceEnvironment->osInterface.reset(osInterface);
 
     auto drm = new DrmMock(fakeFd, *rootDeviceEnvironment);
+    drm->setPciPath("01:23.4");
+
     osInterface->get()->setDrm(drm);
 
     GMM_INIT_IN_ARGS gmmInputArgs = {};
@@ -32,8 +34,11 @@ TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenProperFileDescriptorI
     osInterface->setGmmInputArgs(&gmmInputArgs);
     EXPECT_NE(0u, gmmInputArgs.FileDescriptor);
 
-    auto expectedFileDescriptor = drm->getFileDescriptor();
-    EXPECT_EQ(static_cast<uint32_t>(expectedFileDescriptor), gmmInputArgs.FileDescriptor);
+    ADAPTER_BDF expectedAdapterBDF{};
+    expectedAdapterBDF.Bus = 0x1;
+    expectedAdapterBDF.Device = 0x23;
+    expectedAdapterBDF.Function = 0x4;
+    EXPECT_EQ(expectedAdapterBDF.Data, gmmInputArgs.FileDescriptor);
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, gmmInputArgs.ClientType);
 }
 
