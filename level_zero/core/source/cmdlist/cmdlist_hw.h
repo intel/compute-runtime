@@ -152,8 +152,8 @@ struct CommandListCoreFamily : CommandListImp {
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
                                                               uint64_t dstOffset, void *srcPtr,
                                                               NEO::GraphicsAllocation *srcPtrAlloc,
-                                                              uint64_t srcOffset, uint32_t size,
-                                                              uint32_t elementSize, Builtin builtin,
+                                                              uint64_t srcOffset, uint64_t size,
+                                                              uint64_t elementSize, Builtin builtin,
                                                               ze_event_handle_t hSignalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
@@ -161,7 +161,7 @@ struct CommandListCoreFamily : CommandListImp {
                                                       uint64_t dstOffset, uintptr_t srcPtr,
                                                       NEO::GraphicsAllocation *srcPtrAlloc,
                                                       uint64_t srcOffset,
-                                                      uint32_t size);
+                                                      uint64_t size);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcAlloc,
                                                             NEO::GraphicsAllocation *dstAlloc,

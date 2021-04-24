@@ -704,8 +704,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
                                                                                void *srcPtr,
                                                                                NEO::GraphicsAllocation *srcPtrAlloc,
                                                                                uint64_t srcOffset,
-                                                                               uint32_t size,
-                                                                               uint32_t elementSize,
+                                                                               uint64_t size,
+                                                                               uint64_t elementSize,
                                                                                Builtin builtin,
                                                                                ze_event_handle_t hSignalEvent) {
 
@@ -727,12 +727,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
     builtinFunction->setArgBufferWithAlloc(0u, *reinterpret_cast<uintptr_t *>(dstPtr), dstPtrAlloc);
     builtinFunction->setArgBufferWithAlloc(1u, *reinterpret_cast<uintptr_t *>(srcPtr), srcPtrAlloc);
 
-    uint32_t elems = size / elementSize;
+    uint64_t elems = size / elementSize;
     builtinFunction->setArgumentValue(2, sizeof(elems), &elems);
     builtinFunction->setArgumentValue(3, sizeof(dstOffset), &dstOffset);
     builtinFunction->setArgumentValue(4, sizeof(srcOffset), &srcOffset);
 
-    uint32_t groups = (size + ((groupSizeX * elementSize) - 1)) / (groupSizeX * elementSize);
+    uint32_t groups = static_cast<uint32_t>((size + ((static_cast<uint64_t>(groupSizeX) * elementSize) - 1)) / (static_cast<uint64_t>(groupSizeX) * elementSize));
     ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
 
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
@@ -744,7 +744,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
                                                                        uint64_t dstOffset, uintptr_t srcPtr,
                                                                        NEO::GraphicsAllocation *srcPtrAlloc,
                                                                        uint64_t srcOffset,
-                                                                       uint32_t size) {
+                                                                       uint64_t size) {
     dstOffset += ptrDiff<uintptr_t>(dstPtr, dstPtrAlloc->getGpuAddress());
     srcOffset += ptrDiff<uintptr_t>(srcPtr, srcPtrAlloc->getGpuAddress());
 
@@ -925,12 +925,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                                   dstAllocationStruct.alloc, dstAllocationStruct.offset,
                                                   srcAllocationStruct.alignedAllocationPtr,
-                                                  srcAllocationStruct.alloc, srcAllocationStruct.offset, static_cast<uint32_t>(leftSize))
+                                                  srcAllocationStruct.alloc, srcAllocationStruct.offset, leftSize)
                            : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
                                                           dstAllocationStruct.alloc, dstAllocationStruct.offset,
                                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
                                                           srcAllocationStruct.alloc, srcAllocationStruct.offset,
-                                                          static_cast<uint32_t>(leftSize), 1,
+                                                          leftSize, 1UL,
                                                           Builtin::CopyBufferToBufferSide,
                                                           hSignalEvent);
     }
@@ -939,13 +939,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                                   dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
                                                   srcAllocationStruct.alignedAllocationPtr,
-                                                  srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset, static_cast<uint32_t>(middleSizeBytes))
+                                                  srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset, middleSizeBytes)
                            : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
                                                           dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
                                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
                                                           srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset,
-                                                          static_cast<uint32_t>(middleSizeBytes),
-                                                          static_cast<uint32_t>(middleElSize),
+                                                          middleSizeBytes,
+                                                          middleElSize,
                                                           Builtin::CopyBufferToBufferMiddle,
                                                           hSignalEvent);
     }
@@ -954,12 +954,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                                   dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
                                                   srcAllocationStruct.alignedAllocationPtr,
-                                                  srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset, static_cast<uint32_t>(rightSize))
+                                                  srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset, rightSize)
                            : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
                                                           dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
                                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
                                                           srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset,
-                                                          static_cast<uint32_t>(rightSize), 1u,
+                                                          rightSize, 1UL,
                                                           Builtin::CopyBufferToBufferSide,
                                                           hSignalEvent);
     }
