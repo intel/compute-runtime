@@ -48,6 +48,8 @@ struct CommandQueueHw : public CommandQueueImp {
                                              NEO::ScratchSpaceController *scratchController,
                                              bool &gsbaState, bool &frontEndState,
                                              uint32_t perThreadScratchSpaceSize);
+
+    bool getPreemptionCmdProgramming() override;
 };
 
 } // namespace L0

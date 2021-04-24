@@ -144,7 +144,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         spaceForResidency += commandList->commandContainer.getResidencyContainer().size();
         auto commandListPreemption = commandList->getCommandListPreemptionMode();
         if (statePreemption != commandListPreemption) {
-            preemptionSize += sizeof(PIPE_CONTROL);
+            if (preemptionCmdSyncProgramming) {
+                preemptionSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+            }
             preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(commandListPreemption, statePreemption);
             statePreemption = commandListPreemption;
         }
@@ -276,6 +278,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                                                commandQueuePreemptionMode,
                                                                csr->getPreemptionAllocation());
         }
+
         statePreemption = cmdQueuePreemption;
 
         const bool sipKernelUsed = devicePreemption == NEO::PreemptionMode::MidThread ||
@@ -318,8 +321,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                     "ComandList Preemption Mode update");
             }
 
-            NEO::PipeControlArgs args;
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(child, args);
+            if (preemptionCmdSyncProgramming) {
+                NEO::PipeControlArgs args;
+                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(child, args);
+            }
             NEO::PreemptionHelper::programCmdStream<GfxFamily>(child,
                                                                commandListPreemption,
                                                                statePreemption,
@@ -479,4 +484,11 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountWrite(NEO::LinearStream &co
             args);
     }
 }
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandQueueHw<gfxCoreFamily>::getPreemptionCmdProgramming() {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    return NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(NEO::PreemptionMode::MidThread, NEO::PreemptionMode::Initial) > 0u;
+}
+
 } // namespace L0

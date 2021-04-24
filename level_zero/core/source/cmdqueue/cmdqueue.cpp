@@ -39,6 +39,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
         UNRECOVERABLE_IF(commandStream == nullptr);
         commandStream->replaceGraphicsAllocation(bufferAllocation);
         isCopyOnlyCommandQueue = copyOnly;
+        preemptionCmdSyncProgramming = getPreemptionCmdProgramming();
     }
     return returnValue;
 }

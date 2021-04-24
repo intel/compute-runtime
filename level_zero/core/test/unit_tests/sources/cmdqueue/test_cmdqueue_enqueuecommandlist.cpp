@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/preemption.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
@@ -40,6 +41,9 @@ struct CommandQueueExecuteCommandLists : public Test<DeviceFixture> {
 
         DeviceFixture::TearDown();
     }
+
+    template <typename FamilyType>
+    void twoCommandListCommandPreemptionTest(bool preemptionCmdProgramming);
 
     const static uint32_t numCommandLists = 2;
     ze_command_list_handle_t commandLists[numCommandLists];
@@ -389,13 +393,19 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsA
     }
 }
 
-HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenExecutingThenQueuePreemptionIsSwitchedAndStateSipProgrammedOnce, IsSklOrAbove) {
-    const ze_command_queue_desc_t desc = {};
+template <typename FamilyType>
+void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool preemptionCmdProgramming) {
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
     ze_result_t returnValue;
     auto commandQueue = whitebox_cast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
+    commandQueue->preemptionCmdSyncProgramming = preemptionCmdProgramming;
+    preemptionCmdProgramming = NEO::PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(NEO::PreemptionMode::ThreadGroup, NEO::PreemptionMode::Disabled) > 0u;
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
     auto commandListDisabled = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
@@ -432,58 +442,90 @@ HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionM
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    GenCmdList::iterator itorStateSip = cmdList.begin();
+    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
     auto preemptionMode = neoDevice->getPreemptionMode();
+    GenCmdList::iterator itor = cmdList.begin();
+
+    GenCmdList::iterator itorStateSip = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
     if (preemptionMode == NEO::PreemptionMode::MidThread) {
-        itorStateSip = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(itorStateSip, cmdList.end());
+
+        itor = itorStateSip;
+    } else {
+        EXPECT_EQ(itorStateSip, cmdList.end());
     }
-    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(itorStateSip, cmdList.end());
-    EXPECT_NE(itorLri, cmdList.end());
 
-    //Initial cmdQ preemption
-    MI_LOAD_REGISTER_IMM *lriCmd = static_cast<MI_LOAD_REGISTER_IMM *>(*itorLri);
-    EXPECT_EQ(0x2580u, lriCmd->getRegisterOffset());
+    MI_LOAD_REGISTER_IMM *lriCmd = nullptr;
+    auto itorLri = find<MI_LOAD_REGISTER_IMM *>(itor, cmdList.end());
+    if (preemptionCmdProgramming) {
+        EXPECT_NE(itorLri, cmdList.end());
+        //Initial cmdQ preemption
+        lriCmd = static_cast<MI_LOAD_REGISTER_IMM *>(*itorLri);
+        EXPECT_EQ(0x2580u, lriCmd->getRegisterOffset());
+
+        itor = itorLri;
+    } else {
+        EXPECT_EQ(itorLri, cmdList.end());
+    }
+
     uint32_t data = 0;
-
     //next should be BB_START to 1st Disabled preemption Cmd List
-    auto itorBBStart = find<MI_BATCH_BUFFER_START *>(itorLri, cmdList.end());
+    auto itorBBStart = find<MI_BATCH_BUFFER_START *>(itor, cmdList.end());
     EXPECT_NE(itorBBStart, cmdList.end());
+    itor = itorBBStart;
 
-    //next should be PIPE_CONTROL and LRI switching to thread-group
-    auto itorPipeControl = find<PIPE_CONTROL *>(itorBBStart, cmdList.end());
-    EXPECT_NE(itorPipeControl, cmdList.end());
+    itorLri = find<MI_LOAD_REGISTER_IMM *>(itor, cmdList.end());
+    if (preemptionCmdProgramming) {
+        EXPECT_NE(itorLri, cmdList.end());
 
-    itorLri = find<MI_LOAD_REGISTER_IMM *>(itorPipeControl, cmdList.end());
-    EXPECT_NE(itorLri, cmdList.end());
+        lriCmd = static_cast<MI_LOAD_REGISTER_IMM *>(*itorLri);
+        EXPECT_EQ(0x2580u, lriCmd->getRegisterOffset());
+        data = (1 << 1) | (((1 << 1) | (1 << 2)) << 16);
+        EXPECT_EQ(data, lriCmd->getDataDword());
 
-    lriCmd = static_cast<MI_LOAD_REGISTER_IMM *>(*itorLri);
-    EXPECT_EQ(0x2580u, lriCmd->getRegisterOffset());
-    data = (1 << 1) | (((1 << 1) | (1 << 2)) << 16);
-    EXPECT_EQ(data, lriCmd->getDataDword());
+        //verify presence of sync PIPE_CONTROL just before LRI switching to thread-group
+        if (commandQueue->preemptionCmdSyncProgramming) {
+            auto itorPipeControl = find<PIPE_CONTROL *>(itor, itorLri);
+            EXPECT_NE(itorPipeControl, cmdList.end());
+        }
+
+        itor = itorLri;
+    } else {
+        EXPECT_EQ(itorLri, cmdList.end());
+    }
+
     //start of thread-group command list
-    itorBBStart = find<MI_BATCH_BUFFER_START *>(itorLri, cmdList.end());
+    itorBBStart = find<MI_BATCH_BUFFER_START *>(itor, cmdList.end());
     EXPECT_NE(itorBBStart, cmdList.end());
+    itor = itorBBStart;
 
-    //next should be PIPE_CONTROL and LRI switching to disabled preemption again
-    itorPipeControl = find<PIPE_CONTROL *>(itorBBStart, cmdList.end());
-    EXPECT_NE(itorPipeControl, cmdList.end());
+    itorLri = find<MI_LOAD_REGISTER_IMM *>(itor, cmdList.end());
+    if (preemptionCmdProgramming) {
+        EXPECT_NE(itorLri, cmdList.end());
+        lriCmd = static_cast<MI_LOAD_REGISTER_IMM *>(*itorLri);
+        EXPECT_EQ(0x2580u, lriCmd->getRegisterOffset());
+        data = (1 << 2) | (((1 << 1) | (1 << 2)) << 16);
+        EXPECT_EQ(data, lriCmd->getDataDword());
 
-    itorLri = find<MI_LOAD_REGISTER_IMM *>(itorPipeControl, cmdList.end());
-    EXPECT_NE(itorLri, cmdList.end());
+        //verify presence of sync PIPE_CONTROL just before LRI switching to thread-group
+        if (commandQueue->preemptionCmdSyncProgramming) {
+            auto itorPipeControl = find<PIPE_CONTROL *>(itor, itorLri);
+            EXPECT_NE(itorPipeControl, cmdList.end());
+        }
 
-    lriCmd = static_cast<MI_LOAD_REGISTER_IMM *>(*itorLri);
-    EXPECT_EQ(0x2580u, lriCmd->getRegisterOffset());
-    data = (1 << 2) | (((1 << 1) | (1 << 2)) << 16);
-    EXPECT_EQ(data, lriCmd->getDataDword());
+        itor = itorLri;
+    } else {
+        EXPECT_EQ(itorLri, cmdList.end());
+    }
+
     //start of thread-group command list
-    itorBBStart = find<MI_BATCH_BUFFER_START *>(itorLri, cmdList.end());
+    itorBBStart = find<MI_BATCH_BUFFER_START *>(itor, cmdList.end());
     EXPECT_NE(itorBBStart, cmdList.end());
+    itor = itorBBStart;
 
     // BB end
-    auto itorBBEnd = find<MI_BATCH_BUFFER_START *>(itorBBStart, cmdList.end());
+    auto itorBBEnd = find<MI_BATCH_BUFFER_START *>(itor, cmdList.end());
     EXPECT_NE(itorBBStart, cmdList.end());
 
     auto allStateSips = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
@@ -494,17 +536,26 @@ HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionM
     }
 
     auto firstExecMmioCount = countMmio<FamilyType>(cmdList.begin(), itorBBEnd, 0x2580u);
-    EXPECT_EQ(4u, firstExecMmioCount);
+    size_t expectedMmioCount = preemptionCmdProgramming ? 4u : 0u;
+    EXPECT_EQ(expectedMmioCount, firstExecMmioCount);
 
     // Count next MMIOs for preemption - only two should be present as last cmdlist from 1st exec
     // and first cmdlist from 2nd exec has the same mode - cmdQ state should remember it
-
     auto secondExecMmioCount = countMmio<FamilyType>(itorBBEnd, cmdList.end(), 0x2580u);
-    EXPECT_EQ(2u, secondExecMmioCount);
+    expectedMmioCount = preemptionCmdProgramming ? 2u : 0u;
+    EXPECT_EQ(expectedMmioCount, secondExecMmioCount);
 
     commandListDisabled->destroy();
     commandListThreadGroup->destroy();
     commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenExecutingThenQueuePreemptionIsSwitchedAndStateSipProgrammedOnce, IsSklOrAbove) {
+    twoCommandListCommandPreemptionTest<FamilyType>(false);
+}
+
+HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenNoCmdStreamPreemptionRequiredThenNoCmdStreamProgrammingAndStateSipProgrammedOnce, IsSklOrAbove) {
+    twoCommandListCommandPreemptionTest<FamilyType>(true);
 }
 
 struct CommandQueueExecuteCommandListSWTagsTests : public Test<DeviceFixture> {
