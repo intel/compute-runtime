@@ -307,40 +307,33 @@ int Drm::getErrno() {
 int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWorkaroundTable) {
     HardwareInfo *hwInfo = const_cast<HardwareInfo *>(device->pHwInfo);
     int ret;
+    int sliceTotal;
+    int subSliceTotal;
+    int euTotal;
 
-    Drm::QueryTopologyData topologyData = {};
-
-    bool status = queryTopology(*hwInfo, topologyData);
+    bool status = queryTopology(*hwInfo, sliceTotal, subSliceTotal, euTotal);
 
     if (!status) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
 
-        topologyData.sliceCount = hwInfo->gtSystemInfo.SliceCount;
+        sliceTotal = hwInfo->gtSystemInfo.SliceCount;
 
-        ret = getEuTotal(topologyData.euCount);
+        ret = getEuTotal(euTotal);
         if (ret != 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
             return ret;
         }
 
-        ret = getSubsliceTotal(topologyData.subSliceCount);
+        ret = getSubsliceTotal(subSliceTotal);
         if (ret != 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
             return ret;
         }
-
-        topologyData.maxEuCount = topologyData.euCount;
-        topologyData.maxSliceCount = topologyData.sliceCount;
-        topologyData.maxSubSliceCount = topologyData.subSliceCount;
     }
 
-    hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
-    hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
-    hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
-
-    hwInfo->gtSystemInfo.MaxSubSlicesSupported = topologyData.maxSubSliceCount;
-    hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = topologyData.maxSubSliceCount;
-    hwInfo->gtSystemInfo.MaxSlicesSupported = topologyData.maxSliceCount;
+    hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(sliceTotal);
+    hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(subSliceTotal);
+    hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(euTotal);
 
     status = querySystemInfo();
     if (!status) {

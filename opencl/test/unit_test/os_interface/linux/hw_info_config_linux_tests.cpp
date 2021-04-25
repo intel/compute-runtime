@@ -301,8 +301,8 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenInvalidTopologyDataWhenConfiguringThenRe
         drm->StoredSSVal = storedSSVal;
         drm->StoredEUVal = 0;
 
-        Drm::QueryTopologyData topologyData = {};
-        EXPECT_FALSE(drm->queryTopology(outHwInfo, topologyData));
+        int sliceCount, subSliceCount, euCount;
+        EXPECT_FALSE(drm->queryTopology(outHwInfo, sliceCount, subSliceCount, euCount));
     }
 
     {
@@ -311,8 +311,8 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenInvalidTopologyDataWhenConfiguringThenRe
         drm->StoredSSVal = 0;
         drm->StoredEUVal = storedEUVal;
 
-        Drm::QueryTopologyData topologyData = {};
-        EXPECT_FALSE(drm->queryTopology(outHwInfo, topologyData));
+        int sliceCount, subSliceCount, euCount;
+        EXPECT_FALSE(drm->queryTopology(outHwInfo, sliceCount, subSliceCount, euCount));
     }
 
     {
@@ -321,8 +321,8 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenInvalidTopologyDataWhenConfiguringThenRe
         drm->StoredSSVal = storedSSVal;
         drm->StoredEUVal = storedEUVal;
 
-        Drm::QueryTopologyData topologyData = {};
-        EXPECT_FALSE(drm->queryTopology(outHwInfo, topologyData));
+        int sliceCount, subSliceCount, euCount;
+        EXPECT_FALSE(drm->queryTopology(outHwInfo, sliceCount, subSliceCount, euCount));
     }
 }
 
