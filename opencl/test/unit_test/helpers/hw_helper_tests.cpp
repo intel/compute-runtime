@@ -1243,3 +1243,14 @@ TEST_F(HwHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(0u, hwHelper.getNumCacheRegions(*defaultHwInfo));
 }
+
+TEST_F(HwHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
+    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+
+    for (auto isPureStateful : {false, true}) {
+        ArgDescPointer argAsPtr{};
+        argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
+
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clHwHelper.requiresNonAuxMode(argAsPtr));
+    }
+}

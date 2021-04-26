@@ -889,13 +889,17 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
     bool disableL3 = false;
     bool forceNonAuxMode = false;
     bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
+    auto &hwInfo = getDevice().getHardwareInfo();
+    auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
     if (isAuxTranslationKernel) {
         if (((AuxTranslationDirection::AuxToNonAux == auxTranslationDirection) && argIndex == 1) ||
             ((AuxTranslationDirection::NonAuxToAux == auxTranslationDirection) && argIndex == 0)) {
             forceNonAuxMode = true;
         }
         disableL3 = (argIndex == 0);
-    } else if (svmAlloc && svmAlloc->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED && !argAsPtr.isPureStateful()) {
+    } else if (svmAlloc && svmAlloc->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
+               clHwHelper.requiresNonAuxMode(argAsPtr)) {
         forceNonAuxMode = true;
     }
 
@@ -1376,6 +1380,8 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         bool forceNonAuxMode = false;
         bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
         auto graphicsAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+        auto &hwInfo = pClDevice->getHardwareInfo();
+        auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
         if (isAuxTranslationKernel) {
             if (((AuxTranslationDirection::AuxToNonAux == auxTranslationDirection) && argIndex == 1) ||
@@ -1384,7 +1390,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
             }
             disableL3 = (argIndex == 0);
         } else if (graphicsAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
-                   !argAsPtr.isPureStateful()) {
+                   clHwHelper.requiresNonAuxMode(argAsPtr)) {
             forceNonAuxMode = true;
         }
 

@@ -14,6 +14,11 @@
 namespace NEO {
 
 template <typename GfxFamily>
+inline bool ClHwHelperHw<GfxFamily>::requiresNonAuxMode(const ArgDescPointer &argAsPtr) const {
+    return !argAsPtr.isPureStateful();
+}
+
+template <typename GfxFamily>
 inline bool ClHwHelperHw<GfxFamily>::requiresAuxResolves(const KernelInfo &kernelInfo) const {
     return hasStatelessAccessToBuffer(kernelInfo);
 }
