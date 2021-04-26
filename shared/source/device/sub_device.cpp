@@ -7,6 +7,7 @@
 
 #include "shared/source/device/sub_device.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/root_device.h"
 
 namespace NEO {
@@ -46,6 +47,15 @@ Device *SubDevice::getRootDevice() const {
 uint64_t SubDevice::getGlobalMemorySize(uint32_t deviceBitfield) const {
     auto globalMemorySize = Device::getGlobalMemorySize(static_cast<uint32_t>(maxNBitValue(rootDevice.getNumSubDevices())));
     return globalMemorySize / rootDevice.getNumAvailableDevices();
+}
+
+bool SubDevice::engineInstancedSubDevicesAllowed() const {
+    if (engineInstanced) {
+        return false;
+    }
+
+    return (DebugManager.flags.EngineInstancedSubDevices.get() &&
+            (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1));
 }
 
 } // namespace NEO

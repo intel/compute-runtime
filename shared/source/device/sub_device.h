@@ -27,7 +27,7 @@ class SubDevice : public Device {
   protected:
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const override;
     bool genericSubDevicesAllowed() override { return false; };
-    bool engineInstancedSubDevicesAllowed() const override { return false; };
+    bool engineInstancedSubDevicesAllowed() const override;
 
     RootDevice &rootDevice;
     const uint32_t subDeviceIndex;
