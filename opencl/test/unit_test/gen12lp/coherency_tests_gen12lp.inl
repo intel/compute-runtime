@@ -60,7 +60,7 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
     GraphicsAllocation *alloc = nullptr;
 };
 
-GEN12LPTEST_F(Gen12LpCoherencyRequirements, coherencyCmdSizeWithoutSharedHandles) {
+GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesWhenGettingCmdSizeThenSizeIsCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
     if (hwHelper.is3DPipelineSelectWARequired(device->getHardwareInfo())) {
@@ -87,7 +87,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, coherencyCmdSizeWithoutSharedHandles
     EXPECT_EQ(cmdsSize, retSize);
 }
 
-GEN12LPTEST_F(Gen12LpCoherencyRequirements, coherencyCmdSizeWithSharedHandles) {
+GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesWhenGettingCmdSizeThenSizeIsCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
     auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
     if (hwHelper.is3DPipelineSelectWARequired(device->getHardwareInfo())) {
@@ -114,7 +114,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, coherencyCmdSizeWithSharedHandles) {
     EXPECT_EQ(cmdsSize, retSize);
 }
 
-GEN12LPTEST_F(Gen12LpCoherencyRequirements, coherencyCmdValuesWithoutSharedHandles) {
+GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesThenCoherencyCmdValuesAreCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     auto cmdsSizeWABeginOffset = 0;
     auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
@@ -154,7 +154,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, coherencyCmdValuesWithoutSharedHandl
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd + cmdsSizeWABeginOffset, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-GEN12LPTEST_F(Gen12LpCoherencyRequirements, coherencyCmdValuesWithSharedHandles) {
+GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesThenCoherencyCmdValuesAreCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
     auto cmdsSizeWABeginOffset = 0;
     auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);

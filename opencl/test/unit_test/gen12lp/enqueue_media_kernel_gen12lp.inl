@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,7 +167,7 @@ GEN12LPTEST_F(MediaKernelTest, givenGen12LpCsrWhenEnqueueVmeKernelThenVmeSubslic
     EXPECT_FALSE(csr->lastVmeSubslicesConfig);
 }
 
-GEN12LPTEST_F(MediaKernelTest, givenGen12LpCmdSizeForVme) {
+GEN12LPTEST_F(MediaKernelTest, GivenGen12lpWhenGettingCmdSizeForMediaSamplerThenZeroIsReturned) {
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     csr->lastVmeSubslicesConfig = false;

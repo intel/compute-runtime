@@ -44,7 +44,7 @@ HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenForcingLowQualityFilteringAnd
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
 }
 
-GEN12LPTEST_F(Gen12LpSamplerTest, defaultLowQualityFilter) {
+GEN12LPTEST_F(Gen12LpSamplerTest, GivenDefaultWhenGettingLowLowQualityFilterStateThenItIsDisabled) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto state = FamilyType::cmdInitSamplerState;
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
