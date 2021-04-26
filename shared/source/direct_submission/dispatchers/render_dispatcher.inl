@@ -57,6 +57,8 @@ inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffe
     PipeControlArgs args(false);
     args.tlbInvalidation = true;
     args.pipeControlFlushEnable = true;
+    args.textureCacheInvalidationEnable = true;
+
     MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdBuffer, args);
 }
 
