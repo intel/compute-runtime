@@ -6,7 +6,7 @@
 
 set(RUNTIME_SRCS_SHARINGS_VA
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/va_device.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/va_device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/va_device.h
     ${CMAKE_CURRENT_SOURCE_DIR}/va_device_shared.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/va_extension.cpp
