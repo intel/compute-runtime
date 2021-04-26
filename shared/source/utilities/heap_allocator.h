@@ -40,6 +40,11 @@ class HeapAllocator {
     }
 
     uint64_t allocate(size_t &sizeToAllocate) {
+        return allocateWithCustomAlignment(sizeToAllocate, this->allocationAlignment);
+    }
+
+    uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) {
+        UNRECOVERABLE_IF(alignment % allocationAlignment != 0); // custom alignment have to be a multiple of allocator alignment
         sizeToAllocate = alignUp(sizeToAllocate, allocationAlignment);
 
         std::lock_guard<std::mutex> lock(mtx);
@@ -53,16 +58,26 @@ class HeapAllocator {
 
         for (;;) {
             size_t sizeOfFreedChunk = 0;
-            uint64_t ptrReturn = getFromFreedChunks(sizeToAllocate, freedChunks, sizeOfFreedChunk);
+            uint64_t ptrReturn = getFromFreedChunks(sizeToAllocate, freedChunks, sizeOfFreedChunk, alignment);
 
             if (ptrReturn == 0llu) {
                 if (sizeToAllocate > sizeThreshold) {
-                    if (pLeftBound + sizeToAllocate <= pRightBound) {
+                    const uint64_t misalignment = alignUp(pLeftBound, alignment) - pLeftBound;
+                    if (pLeftBound + misalignment + sizeToAllocate <= pRightBound) {
+                        if (misalignment) {
+                            storeInFreedChunks(pLeftBound, static_cast<size_t>(misalignment), freedChunks);
+                            pLeftBound += misalignment;
+                        }
                         ptrReturn = pLeftBound;
                         pLeftBound += sizeToAllocate;
                     }
                 } else {
-                    if (pRightBound - sizeToAllocate >= pLeftBound) {
+                    const uint64_t misalignment = pRightBound - alignDown(pRightBound, alignment);
+                    if (pLeftBound + sizeToAllocate + misalignment <= pRightBound) {
+                        if (misalignment) {
+                            pRightBound -= misalignment;
+                            storeInFreedChunks(pRightBound, static_cast<size_t>(misalignment), freedChunks);
+                        }
                         pRightBound -= sizeToAllocate;
                         ptrReturn = pRightBound;
                     }
@@ -76,6 +91,7 @@ class HeapAllocator {
                 } else {
                     availableSize -= sizeToAllocate;
                 }
+                DEBUG_BREAK_IF(!isAligned(ptrReturn, alignment));
                 return ptrReturn;
             }
 
@@ -133,13 +149,18 @@ class HeapAllocator {
     std::vector<HeapChunk> freedChunksBig;
     std::mutex mtx;
 
-    uint64_t getFromFreedChunks(size_t size, std::vector<HeapChunk> &freedChunks, size_t &sizeOfFreedChunk) {
+    uint64_t getFromFreedChunks(size_t size, std::vector<HeapChunk> &freedChunks, size_t &sizeOfFreedChunk, size_t requiredAlignment) {
         size_t elements = freedChunks.size();
         size_t bestFitIndex = -1;
         size_t bestFitSize = 0;
         sizeOfFreedChunk = 0;
 
         for (size_t i = 0; i < elements; i++) {
+            const bool chunkAligned = isAligned(freedChunks[i].ptr, requiredAlignment);
+            if (!chunkAligned) {
+                continue;
+            }
+
             if (freedChunks[i].size == size) {
                 auto ptr = freedChunks[i].ptr;
                 freedChunks.erase(freedChunks.begin() + i);
