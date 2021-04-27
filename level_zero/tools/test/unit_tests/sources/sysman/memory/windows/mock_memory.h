@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,12 +35,19 @@ struct Mock<MemoryKmdSysManager> : public MemoryKmdSysManager {
     uint32_t mockMemoryChannels = 2;
     uint32_t mockMemoryMaxBandwidth = 4256000000;
     uint32_t mockMemoryCurrentBandwidth = 561321;
+    uint32_t mockMemoryDomains = 1;
 
     void getMemoryProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
         pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderOut);
 
         switch (pRequest->inRequestId) {
+        case KmdSysman::Requests::Memory::NumMemoryDomains: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = mockMemoryDomains;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
         case KmdSysman::Requests::Memory::MemoryType: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockMemoryType;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,21 @@
 
 namespace L0 {
 bool WddmMemoryImp::isMemoryModuleSupported() {
-    return pDevice->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(pDevice->getRootDeviceIndex());
+    uint32_t value = 0;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+
+    request.commandId = KmdSysman::Command::Get;
+    request.componentId = KmdSysman::Component::MemoryComponent;
+    request.requestId = KmdSysman::Requests::Memory::NumMemoryDomains;
+
+    if (pKmdSysManager->requestSingle(request, response) != ZE_RESULT_SUCCESS) {
+        return false;
+    }
+
+    memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+
+    return (value > 0);
 }
 ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     ze_result_t status = ZE_RESULT_SUCCESS;
