@@ -307,33 +307,40 @@ int Drm::getErrno() {
 int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWorkaroundTable) {
     HardwareInfo *hwInfo = const_cast<HardwareInfo *>(device->pHwInfo);
     int ret;
-    int sliceTotal;
-    int subSliceTotal;
-    int euTotal;
 
-    bool status = queryTopology(*hwInfo, sliceTotal, subSliceTotal, euTotal);
+    Drm::QueryTopologyData topologyData = {};
+
+    bool status = queryTopology(*hwInfo, topologyData);
 
     if (!status) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
 
-        sliceTotal = hwInfo->gtSystemInfo.SliceCount;
+        topologyData.sliceCount = hwInfo->gtSystemInfo.SliceCount;
 
-        ret = getEuTotal(euTotal);
+        ret = getEuTotal(topologyData.euCount);
         if (ret != 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
             return ret;
         }
 
-        ret = getSubsliceTotal(subSliceTotal);
+        ret = getSubsliceTotal(topologyData.subSliceCount);
         if (ret != 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
             return ret;
         }
+
+        topologyData.maxEuCount = topologyData.euCount / topologyData.subSliceCount;
+        topologyData.maxSliceCount = topologyData.sliceCount;
+        topologyData.maxSubSliceCount = topologyData.subSliceCount / topologyData.sliceCount;
     }
 
-    hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(sliceTotal);
-    hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(subSliceTotal);
-    hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(euTotal);
+    hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
+    hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
+    hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
+
+    hwInfo->gtSystemInfo.MaxEuPerSubSlice = topologyData.maxEuCount;
+    hwInfo->gtSystemInfo.MaxSubSlicesSupported = topologyData.maxSubSliceCount * topologyData.maxSliceCount;
+    hwInfo->gtSystemInfo.MaxSlicesSupported = topologyData.maxSliceCount;
 
     status = querySystemInfo();
     if (!status) {
@@ -514,16 +521,20 @@ uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) {
     return 0;
 }
 
-bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, int &sliceCount, int &subSliceCount, int &euCount) {
+bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, int &sliceCount, int &subSliceCount, int &euCount, int &maxSliceCount) {
     sliceCount = 0;
     subSliceCount = 0;
     euCount = 0;
+    maxSliceCount = queryTopologyInfo->max_slices;
+    std::vector<int> sliceIndices;
+    sliceIndices.reserve(maxSliceCount);
 
     for (int x = 0; x < queryTopologyInfo->max_slices; x++) {
         bool isSliceEnable = (queryTopologyInfo->data[x / 8] >> (x % 8)) & 1;
         if (!isSliceEnable) {
             continue;
         }
+        sliceIndices.push_back(x);
         sliceCount++;
         for (int y = 0; y < queryTopologyInfo->max_subslices; y++) {
             size_t yOffset = (queryTopologyInfo->subslice_offset + x * queryTopologyInfo->subslice_stride + y / 8);
@@ -543,6 +554,9 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
         }
     }
 
+    if (sliceIndices.size()) {
+        maxSliceCount = sliceIndices[sliceIndices.size() - 1] + 1;
+    }
     return (sliceCount && subSliceCount && euCount);
 }
 

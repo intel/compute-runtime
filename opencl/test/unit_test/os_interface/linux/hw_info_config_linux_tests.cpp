@@ -301,8 +301,8 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenInvalidTopologyDataWhenConfiguringThenRe
         drm->StoredSSVal = storedSSVal;
         drm->StoredEUVal = 0;
 
-        int sliceCount, subSliceCount, euCount;
-        EXPECT_FALSE(drm->queryTopology(outHwInfo, sliceCount, subSliceCount, euCount));
+        Drm::QueryTopologyData topologyData = {};
+        EXPECT_FALSE(drm->queryTopology(outHwInfo, topologyData));
     }
 
     {
@@ -311,8 +311,8 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenInvalidTopologyDataWhenConfiguringThenRe
         drm->StoredSSVal = 0;
         drm->StoredEUVal = storedEUVal;
 
-        int sliceCount, subSliceCount, euCount;
-        EXPECT_FALSE(drm->queryTopology(outHwInfo, sliceCount, subSliceCount, euCount));
+        Drm::QueryTopologyData topologyData = {};
+        EXPECT_FALSE(drm->queryTopology(outHwInfo, topologyData));
     }
 
     {
@@ -321,8 +321,8 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenInvalidTopologyDataWhenConfiguringThenRe
         drm->StoredSSVal = storedSSVal;
         drm->StoredEUVal = storedEUVal;
 
-        int sliceCount, subSliceCount, euCount;
-        EXPECT_FALSE(drm->queryTopology(outHwInfo, sliceCount, subSliceCount, euCount));
+        Drm::QueryTopologyData topologyData = {};
+        EXPECT_FALSE(drm->queryTopology(outHwInfo, topologyData));
     }
 }
 
@@ -551,4 +551,53 @@ TEST(HwInfoConfigLinuxTest, whenAdjustPlatformForProductFamilyCalledThenDoNothin
 
     EXPECT_EQ(GFXCORE_FAMILY::IGFX_UNKNOWN_CORE, localHwInfo.platform.eRenderCoreFamily);
     EXPECT_EQ(GFXCORE_FAMILY::IGFX_UNKNOWN_CORE, localHwInfo.platform.eDisplayCoreFamily);
+}
+
+using HwConfigLinux = ::testing::Test;
+
+HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwInfoThenMaxValuesAreSetInGtSystemInfo, MatchAny) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
+    auto drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->setGtType(GTTYPE_GT1);
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->get()->setDrm(static_cast<Drm *>(drm));
+
+    auto hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    HardwareInfo outHwInfo;
+    auto hwConfig = HwInfoConfigHw<productFamily>::get();
+
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = drm->StoredSSVal * 2;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = drm->StoredSSVal * 2;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 16;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = drm->StoredSVal * 4;
+
+    int ret = hwConfig->configureHwInfo(&hwInfo, &outHwInfo, osInterface.get());
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(static_cast<uint32_t>(drm->StoredSSVal * 2), outHwInfo.gtSystemInfo.MaxSubSlicesSupported);
+    EXPECT_EQ(static_cast<uint32_t>(drm->StoredSSVal * 2), outHwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
+    EXPECT_EQ(16u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
+    EXPECT_EQ(static_cast<uint32_t>(drm->StoredSVal * 4), outHwInfo.gtSystemInfo.MaxSlicesSupported);
+
+    drm->StoredSVal = 3;
+    drm->StoredSSVal = 12;
+    drm->StoredEUVal = 12 * 8;
+
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = drm->StoredSSVal / 2;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = drm->StoredSSVal / 2;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 1;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = drm->StoredSVal / 2;
+
+    ret = hwConfig->configureHwInfo(&hwInfo, &outHwInfo, osInterface.get());
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(12u, outHwInfo.gtSystemInfo.MaxSubSlicesSupported);
+    EXPECT_EQ(static_cast<uint32_t>(drm->StoredEUVal / drm->StoredSSVal), outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
+    EXPECT_EQ(static_cast<uint32_t>(drm->StoredSVal), outHwInfo.gtSystemInfo.MaxSlicesSupported);
+
+    EXPECT_EQ(hwInfo.gtSystemInfo.MaxDualSubSlicesSupported, outHwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
 }

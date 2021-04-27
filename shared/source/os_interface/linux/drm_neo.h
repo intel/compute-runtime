@@ -66,6 +66,16 @@ class Drm {
         MaxSize
     };
 
+    struct QueryTopologyData {
+        int sliceCount;
+        int subSliceCount;
+        int euCount;
+
+        int maxSliceCount;
+        int maxSubSliceCount;
+        int maxEuCount;
+    };
+
     virtual ~Drm();
 
     virtual int ioctl(unsigned long request, void *arg);
@@ -106,7 +116,7 @@ class Drm {
     MOCKABLE_VIRTUAL bool querySystemInfo();
     MOCKABLE_VIRTUAL bool queryEngineInfo();
     MOCKABLE_VIRTUAL bool queryMemoryInfo();
-    bool queryTopology(const HardwareInfo &hwInfo, int &sliceCount, int &subSliceCount, int &euCount);
+    bool queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &data);
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
     void destroyVirtualMemoryAddressSpace();
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId);
@@ -182,7 +192,7 @@ class Drm {
 
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
-    bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, int &sliceCount, int &subSliceCount, int &euCount);
+    bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, int &sliceCount, int &subSliceCount, int &euCount, int &maxSliceCount);
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
     bool sliceCountChangeSupported = false;

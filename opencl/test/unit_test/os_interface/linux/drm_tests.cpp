@@ -595,3 +595,27 @@ TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextFo
 
     EXPECT_EQ(static_cast<uint32_t>(-1), drmMock.passedContextDebugId);
 }
+
+TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSystemInfoAreSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.failRetTopology = true;
+
+    drm.StoredEUVal = 48;
+    drm.StoredSSVal = 6;
+    hwInfo->gtSystemInfo.SliceCount = 2;
+
+    auto setupHardwareInfo = [](HardwareInfo *, bool) {};
+    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo, GTTYPE_UNDEFINED};
+
+    drm.setupHardwareInfo(&device, false);
+
+    EXPECT_EQ(hwInfo->gtSystemInfo.SliceCount, hwInfo->gtSystemInfo.MaxSlicesSupported);
+    EXPECT_EQ(6u, hwInfo->gtSystemInfo.MaxSubSlicesSupported);
+    EXPECT_EQ(8u, hwInfo->gtSystemInfo.MaxEuPerSubSlice);
+}
