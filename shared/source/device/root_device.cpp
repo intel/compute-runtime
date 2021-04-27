@@ -44,12 +44,13 @@ void RootDevice::createBindlessHeapsHelper() {
 }
 
 bool RootDevice::createEngines() {
-    if (getNumSubDevices() < 2) {
-        return Device::createEngines();
-    } else {
+    if (hasGenericSubDevices) {
         this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
         initializeRootCommandStreamReceiver();
+    } else {
+        return Device::createEngines();
     }
+
     return true;
 }
 

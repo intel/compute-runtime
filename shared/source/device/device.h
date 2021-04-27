@@ -155,6 +155,7 @@ class Device : public ReferenceTrackedObject<Device> {
     ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t defaultEngineIndex = 0;
     uint32_t numSubDevices = 0;
+    bool hasGenericSubDevices = false;
 
     std::atomic<uint32_t> selectorCopyEngine{0};
 

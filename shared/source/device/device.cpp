@@ -118,6 +118,7 @@ bool Device::createGenericSubDevices() {
         subdevices[i] = subDevice;
     }
 
+    hasGenericSubDevices = true;
     return true;
 }
 

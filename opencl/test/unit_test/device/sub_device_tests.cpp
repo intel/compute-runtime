@@ -244,7 +244,8 @@ TEST(RootDevicesTest, givenRootDeviceWithSubdevicesWhenCreateEnginesThenDeviceCr
 
     auto executionEnvironment = new MockExecutionEnvironment;
     MockDevice device(executionEnvironment, 0);
-    device.numSubDevices = 2;
+    device.createSubDevices();
+    EXPECT_EQ(2u, device.getNumAvailableDevices());
     EXPECT_EQ(0u, device.engines.size());
     device.createEngines();
     EXPECT_EQ(1u, device.engines.size());
@@ -305,6 +306,8 @@ TEST(SubDevicesTest, givenDebugFlagSetAndMoreThanOneCcsWhenCreatingRootDeviceWit
 
     EXPECT_EQ(ccsCount, rootDevice->getNumAvailableDevices());
 
+    EXPECT_FALSE(rootDevice->engines[0].osContext->isRootDevice());
+
     for (uint32_t i = 0; i < ccsCount; i++) {
         auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + i);
         auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(i));
@@ -329,6 +332,7 @@ TEST(SubDevicesTest, givenDebugFlagSetAndSingleCcsWhenCreatingRootDeviceWithoutG
 
     auto &rootDevice = deviceFactory.rootDevices[0];
 
+    EXPECT_FALSE(rootDevice->engines[0].osContext->isRootDevice());
     EXPECT_EQ(1u, rootDevice->getNumAvailableDevices());
     EXPECT_FALSE(rootDevice->getDeviceById(0)->isSubDevice());
 }
@@ -346,11 +350,14 @@ TEST(SubDevicesTest, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevice
     UltDeviceFactory deviceFactory(1, 2, *executionEnvironment);
 
     auto &rootDevice = deviceFactory.rootDevices[0];
+    EXPECT_EQ(1u, rootDevice->engines.size());
+    EXPECT_TRUE(rootDevice->engines[0].osContext->isRootDevice());
 
     for (uint32_t i = 0; i < 2; i++) {
         auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(i));
         ASSERT_NE(nullptr, subDevice);
 
+        EXPECT_FALSE(subDevice->engines[0].osContext->isRootDevice());
         EXPECT_FALSE(subDevice->engineInstanced);
         EXPECT_EQ(1u, subDevice->getNumAvailableDevices());
         EXPECT_EQ(aub_stream::EngineType::NUM_ENGINES, subDevice->engineType);
@@ -373,10 +380,14 @@ TEST(SubDevicesTest, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevice
 
     auto &rootDevice = deviceFactory.rootDevices[0];
 
+    EXPECT_EQ(1u, rootDevice->engines.size());
+    EXPECT_TRUE(rootDevice->engines[0].osContext->isRootDevice());
+
     for (uint32_t i = 0; i < 2; i++) {
         auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(i));
         ASSERT_NE(nullptr, subDevice);
 
+        EXPECT_FALSE(subDevice->engines[0].osContext->isRootDevice());
         EXPECT_FALSE(subDevice->engineInstanced);
         EXPECT_EQ(ccsCount, subDevice->getNumAvailableDevices());
         EXPECT_EQ(aub_stream::EngineType::NUM_ENGINES, subDevice->engineType);
@@ -386,6 +397,7 @@ TEST(SubDevicesTest, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevice
             auto engineSubDevice = static_cast<MockSubDevice *>(subDevice->getDeviceById(j));
             ASSERT_NE(nullptr, engineSubDevice);
 
+            EXPECT_FALSE(engineSubDevice->engines[0].osContext->isRootDevice());
             EXPECT_TRUE(engineSubDevice->engineInstanced);
             EXPECT_EQ(1u, engineSubDevice->getNumAvailableDevices());
             EXPECT_EQ(engineType, engineSubDevice->engineType);
