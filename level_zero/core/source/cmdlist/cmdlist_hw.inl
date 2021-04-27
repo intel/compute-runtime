@@ -1459,10 +1459,13 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
 
     if (srcAllocFound == false) {
         alloc = device->getDriverHandle()->findHostPointerAllocation(ptr, static_cast<size_t>(bufferSize), device->getRootDeviceIndex());
-        if (alloc == nullptr) {
+        if (alloc != nullptr) {
+            alignedPtr = static_cast<uintptr_t>(alloc->getGpuAddress());
+            offset = reinterpret_cast<size_t>(ptr) - reinterpret_cast<size_t>(alloc->getUnderlyingBuffer());
+        } else {
             alloc = getHostPtrAlloc(buffer, bufferSize);
+            alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
         }
-        alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
 
         hostPointerNeedsFlush = true;
     } else {

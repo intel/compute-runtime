@@ -45,7 +45,7 @@ struct HostPointerManagerFixure {
         EXPECT_NE(nullptr, hostDriverHandle->hostPointerManager.get());
         openHostPointerManager = static_cast<L0::ult::HostPointerManager *>(hostDriverHandle->hostPointerManager.get());
 
-        heapPointer = hostDriverHandle->getMemoryManager()->allocateSystemMemory(4 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+        heapPointer = hostDriverHandle->getMemoryManager()->allocateSystemMemory(heapSize, MemoryConstants::pageSize);
         ASSERT_NE(nullptr, heapPointer);
 
         ze_context_desc_t desc;
@@ -71,6 +71,7 @@ struct HostPointerManagerFixure {
     L0::Context *context;
 
     void *heapPointer = nullptr;
+    size_t heapSize = 4 * MemoryConstants::pageSize;
 };
 
 } // namespace ult

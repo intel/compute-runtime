@@ -1138,6 +1138,33 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
+HWTEST2_F(HostPointerManagerCommandListTest,
+          givenHostPointerImportedWhenGettingPointerFromAnotherPageThenRetrieveBaseAddressAndProperOffset,
+          Platforms) {
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+
+    size_t pointerSize = MemoryConstants::pageSize;
+    size_t offset = 100u + 2 * MemoryConstants::pageSize;
+    void *offsetPointer = ptrOffset(heapPointer, offset);
+
+    auto ret = hostDriverHandle->importExternalPointer(heapPointer, heapSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto hostAllocation = hostDriverHandle->findHostPointerAllocation(offsetPointer, pointerSize, device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, hostAllocation);
+
+    AlignedAllocationData outData = commandList->getAlignedAllocation(device, offsetPointer, pointerSize);
+    auto expectedAlignedAddress = static_cast<uintptr_t>(hostAllocation->getGpuAddress());
+    EXPECT_EQ(heapPointer, hostAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
+    EXPECT_EQ(hostAllocation, outData.alloc);
+    EXPECT_EQ(offset, outData.offset);
+
+    ret = hostDriverHandle->releaseImportedPointer(heapPointer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
 HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, Platforms) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
