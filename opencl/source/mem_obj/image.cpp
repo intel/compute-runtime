@@ -344,8 +344,8 @@ Image *Image::create(Context *context,
                                                                                                                       const_cast<MemoryProperties &>(memoryPropertiesToSet), hwInfo,
                                                                                                                       context->getDeviceBitfieldForAllocation(rootDeviceIndex));
                             allocProperties.flags.crossRootDeviceAccess = true;
-
-                            hostPtrForced = alignedMalloc(hostPtrMinSize, MemoryConstants::pageSize64k);
+                            auto hostPtrForcedSize = alignUp(hostPtrMinSize, MemoryConstants::pageSize);
+                            hostPtrForced = alignedMalloc(hostPtrForcedSize, MemoryConstants::pageSize);
                             allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtrForced);
                             if (allocationInfo[rootDeviceIndex].memory) {
                                 cpuPtr = reinterpret_cast<void *>(allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer());

@@ -1628,6 +1628,15 @@ HWTEST_F(ImageTransformTest, givenSurfaceBaseAddressAndUnifiedSurfaceWhenSetUnif
 
 using ImageMultiRootDeviceTests = MultiRootDeviceFixture;
 
+TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedThenImageAllocationHostPtrForcedHasCorrectAlignment) {
+    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(context.get()));
+
+    auto hostPtrForced = image->getAllocatedMapPtr();
+
+    ASSERT_NE(nullptr, hostPtrForced);
+    EXPECT_EQ(0u, (uintptr_t)hostPtrForced % MemoryConstants::pageSize);
+}
+
 TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedThenImageAllocationHasCorrectRootDeviceIndex) {
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(context.get()));
 
