@@ -178,13 +178,15 @@ bool Context::createImpl(const cl_context_properties *properties,
         return false;
     }
 
+    bool containsDeviceWithSubdevices = false;
     for (const auto &device : inputDevices) {
         rootDeviceIndices.insert(device->getRootDeviceIndex());
+        containsDeviceWithSubdevices |= device->getNumAvailableDevices() > 1;
     }
 
     this->driverDiagnostics = driverDiagnostics.release();
-    if (rootDeviceIndices.size() > 1 && !DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
-        DEBUG_BREAK_IF("No support for context with multiple root devices");
+    if (rootDeviceIndices.size() > 1 && containsDeviceWithSubdevices && !DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
+        DEBUG_BREAK_IF("No support for context with multiple devices with subdevices");
         errcodeRet = CL_OUT_OF_HOST_MEMORY;
         return false;
     }

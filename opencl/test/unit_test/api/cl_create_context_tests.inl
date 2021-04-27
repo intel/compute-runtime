@@ -83,16 +83,34 @@ TEST_F(clCreateContextTests, GivenNullUserDataWhenCreatingContextThenContextIsCr
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenOutOrHostMemoryErrorIsReturned) {
+TEST_F(clCreateContextTests, givenMultipleRootDevicesWithoutSubDevicesWhenCreatingContextThenContextIsCreated) {
     UltClDeviceFactory deviceFactory{2, 0};
+    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+    auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    clReleaseContext(context);
+}
+
+TEST_F(clCreateContextTests, givenMultipleSubDevicesFromDifferentRootDevicesWhenCreatingContextThenContextIsCreated) {
+    UltClDeviceFactory deviceFactory{2, 2};
+    cl_device_id devices[] = {deviceFactory.subDevices[0], deviceFactory.subDevices[1], deviceFactory.subDevices[2], deviceFactory.subDevices[3]};
+    auto context = clCreateContext(nullptr, 4u, devices, eventCallBack, nullptr, &retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    clReleaseContext(context);
+}
+
+TEST_F(clCreateContextTests, givenMultipleRootDevicesWithSubDevicesWhenCreatingContextThenOutOfHostMemoryErrorIsReturned) {
+    UltClDeviceFactory deviceFactory{2, 2};
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
     auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
     EXPECT_EQ(nullptr, context);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
 
-TEST_F(clCreateContextTests, givenEnabledMultipleRootDeviceSupportWhenCreateContextWithMultipleRootDevicesThenContextIsCreated) {
-    UltClDeviceFactory deviceFactory{2, 0};
+TEST_F(clCreateContextTests, givenEnabledMultipleRootDeviceSupportWhenCreateContextWithMultipleRootDevicesWithSubDevicesThenContextIsCreated) {
+    UltClDeviceFactory deviceFactory{2, 2};
     DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
     auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
