@@ -946,6 +946,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     typedef typename FamilyType::BINDING_TABLE_STATE BINDING_TABLE_STATE;
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
+    typedef typename FamilyType::SAMPLER_BORDER_COLOR_STATE SAMPLER_BORDER_COLOR_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
@@ -960,7 +961,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
-    const uint32_t samplerTableOffset = 64;
+    const uint32_t samplerTableOffset = static_cast<uint32_t>(alignUp(sizeof(SAMPLER_BORDER_COLOR_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE));
     const uint32_t samplerStateSize = sizeof(SAMPLER_STATE) * 2;
     mockKernelWithInternal->kernelInfo.setSamplerTable(0, 2, static_cast<DynamicStateHeapOffset>(samplerTableOffset));
 
@@ -1007,7 +1008,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
         true,
         *pDevice);
 
-    bool isMemorySame = memcmp(borderColorPointer, mockDsh, samplerTableOffset) == 0;
+    auto expectedBorderColor = FamilyType::cmdInitBorderColor;
+    bool isMemorySame = memcmp(borderColorPointer, &expectedBorderColor, sizeof(SAMPLER_BORDER_COLOR_STATE)) == 0;
     EXPECT_TRUE(isMemorySame);
 
     SAMPLER_STATE *pSamplerStatesCopied = reinterpret_cast<SAMPLER_STATE *>(borderColorPointer + samplerTableOffset);

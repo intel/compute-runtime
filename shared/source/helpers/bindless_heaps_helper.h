@@ -44,8 +44,8 @@ class BindlessHeapsHelper {
     SurfaceStateInHeapInfo allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType);
     uint64_t getGlobalHeapsBase();
     void *getSpaceInHeap(size_t ssSize, BindlesHeapType heapType);
-    uint32_t getDefaultBorderColorOffset();
-    uint32_t getAlphaBorderColorOffset();
+    uint32_t getBorderColorOffset();
+    void setBorderColor(void *borderColor, size_t size);
     IndirectHeap *getHeap(BindlesHeapType heapType);
     void placeSSAllocationInReuseVectorOnFreeMemory(GraphicsAllocation *gfxAllocation);
 
@@ -54,6 +54,7 @@ class BindlessHeapsHelper {
     MemoryManager *memManager = nullptr;
     bool isMultiOsContextCapable = false;
     const uint32_t rootDeviceIndex;
+    uint32_t borderColorOffset = std::numeric_limits<uint32_t>::max();
     std::unique_ptr<IndirectHeap> surfaceStateHeaps[BindlesHeapType::NUM_HEAP_TYPES];
     GraphicsAllocation *borderColorStates;
     std::vector<GraphicsAllocation *> ssHeapsAllocations;

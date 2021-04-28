@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
@@ -44,9 +45,12 @@ class IndirectHeap : public LinearStream {
     uint64_t getHeapGpuStartOffset() const;
     uint64_t getHeapGpuBase() const;
     uint32_t getHeapSizeInPages() const;
+    uint32_t getBorderColorOffset() const;
+    void setBorderColor(void *borderColor, size_t size);
 
   protected:
     bool canBeUtilizedAs4GbHeap = false;
+    uint32_t borderColorOffset = std::numeric_limits<uint32_t>::max();
 };
 
 inline void IndirectHeap::align(size_t alignment) {
@@ -76,5 +80,14 @@ inline uint64_t IndirectHeap::getHeapGpuBase() const {
     } else {
         return this->graphicsAllocation->getGpuAddress();
     }
+}
+
+inline uint32_t IndirectHeap::getBorderColorOffset() const {
+    return borderColorOffset;
+}
+inline void IndirectHeap::setBorderColor(void *borderColor, size_t size) {
+    borderColorOffset = static_cast<uint32_t>(getUsed());
+    auto ptr = getSpace(size);
+    memcpy_s(ptr, size, borderColor, size);
 }
 } // namespace NEO

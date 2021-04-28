@@ -36,7 +36,6 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
                                                 const void *fnDynamicStateHeap,
                                                 BindlessHeapsHelper *bindlessHeapHelper) {
     auto sizeSamplerState = sizeof(SAMPLER_STATE) * samplerCount;
-    auto borderColorSize = samplerStateOffset - borderColorOffset;
 
     SAMPLER_STATE *dstSamplerState = nullptr;
     uint32_t samplerStateOffsetInDsh = 0;
@@ -44,27 +43,21 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
     dsh->align(EncodeStates<Family>::alignIndirectStatePointer);
     uint32_t borderColorOffsetInDsh = 0;
     if (!ApiSpecificConfig::getBindlessConfiguration()) {
-        borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
-        auto borderColor = dsh->getSpace(borderColorSize);
-
-        memcpy_s(borderColor, borderColorSize, ptrOffset(fnDynamicStateHeap, borderColorOffset),
-                 borderColorSize);
-
+        borderColorOffsetInDsh = dsh->getBorderColorOffset();
+        if (borderColorOffsetInDsh == std::numeric_limits<uint32_t>::max()) {
+            auto borderColor = Family::cmdInitBorderColor;
+            dsh->setBorderColor(&borderColor, sizeof(borderColor));
+            borderColorOffsetInDsh = dsh->getBorderColorOffset();
+        }
         dsh->align(INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
         samplerStateOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
-
         dstSamplerState = reinterpret_cast<SAMPLER_STATE *>(dsh->getSpace(sizeSamplerState));
     } else {
-        auto borderColor = reinterpret_cast<const SAMPLER_BORDER_COLOR_STATE *>(ptrOffset(fnDynamicStateHeap, borderColorOffset));
-        if (borderColor->getBorderColorRed() != 0.0f ||
-            borderColor->getBorderColorGreen() != 0.0f ||
-            borderColor->getBorderColorBlue() != 0.0f ||
-            (borderColor->getBorderColorAlpha() != 0.0f && borderColor->getBorderColorAlpha() != 1.0f)) {
-            UNRECOVERABLE_IF(true);
-        } else if (borderColor->getBorderColorAlpha() == 0.0f) {
-            borderColorOffsetInDsh = bindlessHeapHelper->getDefaultBorderColorOffset();
-        } else {
-            borderColorOffsetInDsh = bindlessHeapHelper->getAlphaBorderColorOffset();
+        borderColorOffsetInDsh = bindlessHeapHelper->getBorderColorOffset();
+        if (borderColorOffsetInDsh == std::numeric_limits<uint32_t>::max()) {
+            auto borderColor = Family::cmdInitBorderColor;
+            bindlessHeapHelper->setBorderColor(&borderColor, sizeof(borderColor));
+            borderColorOffsetInDsh = bindlessHeapHelper->getBorderColorOffset();
         }
         dsh->align(INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
         auto samplerStateInDsh = bindlessHeapHelper->allocateSSInHeap(sizeSamplerState, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
