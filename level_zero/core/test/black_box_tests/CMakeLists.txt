@@ -62,3 +62,5 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     target_link_libraries(zello_world_global_work_offset PUBLIC ocloc_lib)
   endif()
 endif()
+
+add_subdirectories()
