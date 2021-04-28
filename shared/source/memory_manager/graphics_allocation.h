@@ -233,7 +233,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     static bool isLockable(AllocationType allocationType) {
         return isCpuAccessRequired(allocationType) ||
                isIsaAllocationType(allocationType) ||
-               allocationType == AllocationType::BUFFER ||
                allocationType == AllocationType::BUFFER_HOST_MEMORY ||
                allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
                allocationType == AllocationType::SVM_GPU ||

@@ -167,8 +167,11 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsISAThenAllocationIsLockable) {
     EXPECT_TRUE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL));
 }
 
-TEST(GraphicsAllocationTest, whenAllocationTypeIsBufferThenAllocationIsLockable) {
-    EXPECT_TRUE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::BUFFER));
+TEST(GraphicsAllocationTest, whenAllocationTypeIsBufferThenAllocationIsNotLockable) {
+    EXPECT_FALSE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::BUFFER));
+}
+
+TEST(GraphicsAllocationTest, whenAllocationTypeIsBufferHostMemoryThenAllocationIsLockable) {
     EXPECT_TRUE(GraphicsAllocation::isLockable(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY));
 }
 
