@@ -119,6 +119,35 @@ TEST_F(KernelArgSvmTest, GivenValidSvmAllocWhenSettingKernelArgThenArgumentsAreS
     delete[] svmPtr;
 }
 
+TEST_F(KernelArgSvmTest, GivenSvmAllocWithUncacheableWhenSettingKernelArgThenKernelHasUncacheableArgs) {
+    auto svmPtr = std::make_unique<char[]>(256);
+
+    MockGraphicsAllocation svmAlloc(svmPtr.get(), 256);
+    svmAlloc.setUncacheable(true);
+
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr.get(), &svmAlloc);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pKernel->hasUncacheableStatelessArgs());
+}
+
+TEST_F(KernelArgSvmTest, GivenSvmAllocWithoutUncacheableAndKenelWithUncachebleArgWhenSettingKernelArgThenKernelDoesNotHaveUncacheableArgs) {
+    auto svmPtr = std::make_unique<char[]>(256);
+
+    MockGraphicsAllocation svmAlloc(svmPtr.get(), 256);
+    svmAlloc.setUncacheable(true);
+
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr.get(), &svmAlloc);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(pKernel->hasUncacheableStatelessArgs());
+
+    svmAlloc.setUncacheable(false);
+    pKernel->kernelArguments[0].isStatelessUncacheable = true;
+    retVal = pKernel->setArgSvmAlloc(0, svmPtr.get(), &svmAlloc);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(pKernel->hasUncacheableStatelessArgs());
+}
+
 HWTEST_F(KernelArgSvmTest, GivenValidSvmAllocStatefulWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     char *svmPtr = new char[256];
 

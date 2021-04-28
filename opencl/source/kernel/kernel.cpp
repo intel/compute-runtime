@@ -907,6 +907,10 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
         forceNonAuxMode = true;
     }
 
+    bool argWasUncacheable = kernelArguments[argIndex].isStatelessUncacheable;
+    bool argIsUncacheable = svmAlloc ? svmAlloc->isUncacheable() : false;
+    statelessUncacheableArgsCount += (argIsUncacheable ? 1 : 0) - (argWasUncacheable ? 1 : 0);
+
     void *ptrToPatch = patchBufferOffset(argAsPtr, svmPtr, svmAlloc);
     if (isValidOffset(argAsPtr.bindful)) {
         auto surfaceState = ptrOffset(getSurfaceStateHeap(), argAsPtr.bindful);
