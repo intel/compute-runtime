@@ -288,72 +288,167 @@ TEST(SubDevicesTest, whenCreatingEngineInstancedSubDeviceThenSetCorrectSubdevice
     EXPECT_EQ(2u, subDevice->getDeviceBitfield().to_ulong());
 }
 
-TEST(SubDevicesTest, givenDebugFlagSetAndMoreThanOneCcsWhenCreatingRootDeviceWithoutGenericSubDevicesThenCreateEngineInstanced) {
+struct EngineInstancedDeviceTests : public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.EngineInstancedSubDevices.set(true);
+    }
+
+    bool createDevices(uint32_t numGenericSubDevices, uint32_t numCcs) {
+        auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        executionEnvironment->prepareRootDeviceEnvironments(1);
+
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = numCcs;
+        hwInfo->featureTable.ftrCCSNode = (numCcs > 0);
+        HwHelper::get(hwInfo->platform.eRenderCoreFamily).adjustDefaultEngineType(hwInfo);
+
+        if (!multiCcsDevice(*hwInfo, numCcs)) {
+            return false;
+        }
+
+        deviceFactory = std::make_unique<UltDeviceFactory>(1, numGenericSubDevices, *executionEnvironment.release());
+        rootDevice = deviceFactory->rootDevices[0];
+        EXPECT_NE(nullptr, rootDevice);
+
+        return true;
+    }
+
+    bool hasRootCsrOnly(MockDevice *device) {
+        return ((device->engines.size() == 1) &&
+                device->engines[0].osContext->isRootDevice());
+    }
+
+    bool isEngineInstanced(MockSubDevice *subDevice, aub_stream::EngineType engineType, uint32_t subDeviceIndex, DeviceBitfield deviceBitfield) {
+        bool isEngineInstanced = !subDevice->engines[0].osContext->isRootDevice();
+        isEngineInstanced &= subDevice->engineInstanced;
+        isEngineInstanced &= (subDevice->getNumAvailableDevices() == 1);
+        isEngineInstanced &= (engineType == subDevice->engineType);
+        isEngineInstanced &= (subDeviceIndex == subDevice->getSubDeviceIndex());
+        isEngineInstanced &= (deviceBitfield == subDevice->getDeviceBitfield());
+
+        return isEngineInstanced;
+    }
+
+    template <typename MockDeviceT>
+    bool hasAllEngines(MockDeviceT *device) {
+        auto &hwInfo = device->getHardwareInfo();
+        auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+
+        for (size_t i = 0; i < gpgpuEngines.size(); i++) {
+            if (device->engines[i].getEngineType() != gpgpuEngines[i].first) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool multiCcsDevice(const HardwareInfo &hwInfo, uint32_t expectedNumCcs) {
+        auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+
+        uint32_t numCcs = 0;
+
+        for (auto &engine : gpgpuEngines) {
+            if (EngineHelpers::isCcs(engine.first) && (engine.second == EngineUsage::Regular)) {
+                numCcs++;
+            }
+        }
+
+        return (numCcs == expectedNumCcs);
+    }
+
+    bool hasEngineInstancedEngines(MockSubDevice *device, aub_stream::EngineType engineType) {
+        bool ccsFound = false;
+
+        for (auto &engine : device->engines) {
+            if ((engine.getEngineType() != engineType) && !EngineHelpers::isBcs(engine.getEngineType())) {
+                return false;
+            }
+
+            auto osContext = engine.osContext;
+
+            if ((engine.getEngineType() == engineType) &&
+                osContext->isDefaultContext() &&
+                osContext->isRegular() &&
+                !osContext->isLowPriority() &&
+                !osContext->isInternalEngine()) {
+                EXPECT_FALSE(ccsFound);
+                ccsFound = true;
+            }
+        }
+
+        return ccsFound;
+    }
+
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+    MockDevice *rootDevice = nullptr;
+};
 
-    auto executionEnvironment = new ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndMoreThanOneCcsWhenCreatingRootDeviceWithoutGenericSubDevicesThenCreateEngineInstanced) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 2;
 
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
 
-    UltDeviceFactory deviceFactory(1, 1, *executionEnvironment);
-
-    auto &rootDevice = deviceFactory.rootDevices[0];
     auto &hwInfo = rootDevice->getHardwareInfo();
-    uint32_t ccsCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
 
+    EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
     EXPECT_EQ(ccsCount, rootDevice->getNumAvailableDevices());
 
-    EXPECT_FALSE(rootDevice->engines[0].osContext->isRootDevice());
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+    EXPECT_TRUE(hasAllEngines(rootDevice));
 
     for (uint32_t i = 0; i < ccsCount; i++) {
         auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + i);
         auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(i));
         ASSERT_NE(nullptr, subDevice);
 
-        EXPECT_TRUE(subDevice->engineInstanced);
-        EXPECT_EQ(engineType, subDevice->engineType);
+        EXPECT_TRUE(isEngineInstanced(subDevice, engineType, 0, 1));
+        EXPECT_TRUE(hasEngineInstancedEngines(subDevice, engineType));
     }
 }
 
-TEST(SubDevicesTest, givenDebugFlagSetAndSingleCcsWhenCreatingRootDeviceWithoutGenericSubDevicesThenCreateEngineInstanced) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
+TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndZeroCcsesWhenCreatingRootDeviceWithoutGenericSubDevicesThenCreateEngineInstanced) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 0;
 
-    auto executionEnvironment = new ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    EXPECT_TRUE(createDevices(genericDevicesCount, ccsCount));
 
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+    EXPECT_TRUE(hasAllEngines(rootDevice));
 
-    UltDeviceFactory deviceFactory(1, 1, *executionEnvironment);
-
-    auto &rootDevice = deviceFactory.rootDevices[0];
-
-    EXPECT_FALSE(rootDevice->engines[0].osContext->isRootDevice());
     EXPECT_EQ(1u, rootDevice->getNumAvailableDevices());
     EXPECT_FALSE(rootDevice->getDeviceById(0)->isSubDevice());
 }
 
-TEST(SubDevicesTest, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevicesAndSingleCcsThenDontCreateEngineInstanced) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
+TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndSingleCcsWhenCreatingRootDeviceWithoutGenericSubDevicesThenDontCreateEngineInstanced) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 1;
 
-    auto executionEnvironment = new ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
 
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+    EXPECT_TRUE(hasAllEngines(rootDevice));
 
-    UltDeviceFactory deviceFactory(1, 2, *executionEnvironment);
+    EXPECT_EQ(1u, rootDevice->getNumAvailableDevices());
+    EXPECT_FALSE(rootDevice->getDeviceById(0)->isSubDevice());
+}
 
-    auto &rootDevice = deviceFactory.rootDevices[0];
-    EXPECT_EQ(1u, rootDevice->engines.size());
-    EXPECT_TRUE(rootDevice->engines[0].osContext->isRootDevice());
+TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevicesAndZeroCcsesThenDontCreateEngineInstanced) {
+    constexpr uint32_t genericDevicesCount = 2;
+    constexpr uint32_t ccsCount = 0;
 
-    for (uint32_t i = 0; i < 2; i++) {
+    EXPECT_TRUE(createDevices(genericDevicesCount, ccsCount));
+
+    EXPECT_TRUE(hasRootCsrOnly(rootDevice));
+
+    for (uint32_t i = 0; i < genericDevicesCount; i++) {
         auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(i));
         ASSERT_NE(nullptr, subDevice);
 
@@ -361,29 +456,45 @@ TEST(SubDevicesTest, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevice
         EXPECT_FALSE(subDevice->engineInstanced);
         EXPECT_EQ(1u, subDevice->getNumAvailableDevices());
         EXPECT_EQ(aub_stream::EngineType::NUM_ENGINES, subDevice->engineType);
+
+        EXPECT_TRUE(hasAllEngines(subDevice));
     }
 }
 
-TEST(SubDevicesTest, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevicesThenCreateEngineInstanced) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
+TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevicesAndSingleCcsThenDontCreateEngineInstanced) {
+    constexpr uint32_t genericDevicesCount = 2;
+    constexpr uint32_t ccsCount = 1;
 
-    uint32_t ccsCount = 2;
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
 
-    auto executionEnvironment = new ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    EXPECT_TRUE(hasRootCsrOnly(rootDevice));
 
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = ccsCount;
+    for (uint32_t i = 0; i < genericDevicesCount; i++) {
+        auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(i));
+        ASSERT_NE(nullptr, subDevice);
 
-    UltDeviceFactory deviceFactory(1, 2, *executionEnvironment);
+        EXPECT_FALSE(subDevice->engines[0].osContext->isRootDevice());
+        EXPECT_FALSE(subDevice->engineInstanced);
+        EXPECT_EQ(1u, subDevice->getNumAvailableDevices());
+        EXPECT_EQ(aub_stream::EngineType::NUM_ENGINES, subDevice->engineType);
 
-    auto &rootDevice = deviceFactory.rootDevices[0];
+        EXPECT_TRUE(hasAllEngines(subDevice));
+    }
+}
 
-    EXPECT_EQ(1u, rootDevice->engines.size());
-    EXPECT_TRUE(rootDevice->engines[0].osContext->isRootDevice());
+TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevicesThenCreateEngineInstanced) {
+    constexpr uint32_t genericDevicesCount = 2;
+    constexpr uint32_t ccsCount = 2;
 
-    for (uint32_t i = 0; i < 2; i++) {
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    EXPECT_TRUE(hasRootCsrOnly(rootDevice));
+
+    for (uint32_t i = 0; i < genericDevicesCount; i++) {
         auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(i));
         ASSERT_NE(nullptr, subDevice);
 
@@ -392,19 +503,35 @@ TEST(SubDevicesTest, givenDebugFlagSetWhenCreatingRootDeviceWithGenericSubDevice
         EXPECT_EQ(ccsCount, subDevice->getNumAvailableDevices());
         EXPECT_EQ(aub_stream::EngineType::NUM_ENGINES, subDevice->engineType);
 
+        EXPECT_TRUE(hasAllEngines(subDevice));
+
         for (uint32_t j = 0; j < ccsCount; j++) {
             auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + j);
             auto engineSubDevice = static_cast<MockSubDevice *>(subDevice->getDeviceById(j));
             ASSERT_NE(nullptr, engineSubDevice);
 
-            EXPECT_FALSE(engineSubDevice->engines[0].osContext->isRootDevice());
-            EXPECT_TRUE(engineSubDevice->engineInstanced);
-            EXPECT_EQ(1u, engineSubDevice->getNumAvailableDevices());
-            EXPECT_EQ(engineType, engineSubDevice->engineType);
-            EXPECT_EQ(subDevice->getSubDeviceIndex(), engineSubDevice->getSubDeviceIndex());
-            EXPECT_EQ(subDevice->getDeviceBitfield(), engineSubDevice->getDeviceBitfield());
+            EXPECT_TRUE(isEngineInstanced(engineSubDevice, engineType, subDevice->getSubDeviceIndex(), subDevice->getDeviceBitfield()));
+            EXPECT_TRUE(hasEngineInstancedEngines(engineSubDevice, engineType));
         }
     }
+}
+
+TEST_F(EngineInstancedDeviceTests, givenEngineInstancedSubDeviceWhenEngineCreationFailsThenReturnFalse) {
+    constexpr uint32_t genericDevicesCount = 2;
+    constexpr uint32_t ccsCount = 0;
+
+    EXPECT_TRUE(createDevices(genericDevicesCount, ccsCount));
+
+    auto subDevice = static_cast<MockSubDevice *>(rootDevice->getDeviceById(0));
+
+    auto &hwInfo = rootDevice->getHardwareInfo();
+    auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+
+    subDevice->engineInstanced = true;
+    subDevice->failOnCreateEngine = true;
+    subDevice->engineType = gpgpuEngines[0].first;
+
+    EXPECT_FALSE(subDevice->createEnginesForEngineInstancedDevice());
 }
 
 TEST(SubDevicesTest, whenInitializeRootCsrThenDirectSubmissionIsNotInitialized) {

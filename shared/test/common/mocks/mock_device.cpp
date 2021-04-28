@@ -96,6 +96,13 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     }
 }
 
+bool MockSubDevice::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) {
+    if (failOnCreateEngine) {
+        return false;
+    }
+    return SubDevice::createEngine(deviceCsrIndex, engineTypeUsage);
+}
+
 MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(ExecutionEnvironment *executionEnvironment, uint32_t internalDeviceIndex) : MockDevice(executionEnvironment, internalDeviceIndex) {
     executionEnvironment->memoryManager.reset(new MockAllocSysMemAgnosticMemoryManager(*executionEnvironment));
 }

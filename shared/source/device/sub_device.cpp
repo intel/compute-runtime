@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/root_device.h"
+#include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
 
@@ -56,6 +57,32 @@ bool SubDevice::engineInstancedSubDevicesAllowed() const {
 
     return (DebugManager.flags.EngineInstancedSubDevices.get() &&
             (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1));
+}
+
+bool SubDevice::createEngines() {
+    if (engineInstanced) {
+        return createEnginesForEngineInstancedDevice();
+    }
+
+    return Device::createEngines();
+}
+
+bool SubDevice::createEnginesForEngineInstancedDevice() {
+    this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
+
+    auto &hwInfo = getHardwareInfo();
+    auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+
+    uint32_t deviceCsrIndex = 0;
+
+    for (auto &engine : gpgpuEngines) {
+        if (EngineHelpers::isBcs(engine.first) || (engine.first == this->engineType)) {
+            if (!createEngine(deviceCsrIndex++, engine)) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 } // namespace NEO

@@ -29,6 +29,7 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 
 struct MockSubDevice : public SubDevice {
     using Device::engines;
+    using SubDevice::createEnginesForEngineInstancedDevice;
     using SubDevice::engineInstanced;
     using SubDevice::engineType;
     using SubDevice::getDeviceBitfield;
@@ -39,6 +40,9 @@ struct MockSubDevice : public SubDevice {
         return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
     }
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
+
+    bool failOnCreateEngine = false;
+    bool createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) override;
 };
 
 class MockDevice : public RootDevice {
