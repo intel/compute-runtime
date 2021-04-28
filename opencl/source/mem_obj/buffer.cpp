@@ -621,16 +621,10 @@ bool Buffer::isReadWriteOnCpuAllowed(const Device &device) {
         return false;
     }
 
-    if (graphicsAllocation->storageInfo.getNumBanks() > 1) {
+    if (graphicsAllocation->isAllocatedInLocalMemoryPool()) {
         return false;
     }
 
-    const auto &hardwareInfo = device.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto isCpuAccessDisallowed = LocalMemoryAccessMode::CpuAccessDisallowed == hwHelper.getLocalMemoryAccessMode(hardwareInfo);
-    if (isCpuAccessDisallowed) {
-        return false;
-    }
     return true;
 }
 
