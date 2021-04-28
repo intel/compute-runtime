@@ -106,6 +106,32 @@ HWTEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeDisabledWhenS
     EXPECT_EQ(nullptr, mockKernel.perThreadDataForWholeThreadGroup);
 }
 
+HWTEST_F(KernelImpSetGroupSizeTest, givenIncorrectGroupSizeWhenSettingGroupSizeThenInvalidGroupSizeDimensionErrorIsReturned) {
+    Mock<Kernel> mockKernel;
+    Mock<Module> mockModule(this->device, nullptr);
+    for (auto i = 0u; i < 3u; i++) {
+        mockKernel.descriptor.kernelAttributes.requiredWorkgroupSize[i] = 2;
+    }
+    mockKernel.module = &mockModule;
+
+    uint32_t groupSize[3] = {1, 1, 1};
+    auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, ret);
+}
+
+HWTEST_F(KernelImpSetGroupSizeTest, givenZeroGroupSizeWhenSettingGroupSizeThenInvalidArgumentErrorIsReturned) {
+    Mock<Kernel> mockKernel;
+    Mock<Module> mockModule(this->device, nullptr);
+    for (auto i = 0u; i < 3u; i++) {
+        mockKernel.descriptor.kernelAttributes.requiredWorkgroupSize[i] = 2;
+    }
+    mockKernel.module = &mockModule;
+
+    uint32_t groupSize[3] = {0, 0, 0};
+    auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
 using SetKernelArg = Test<ModuleFixture>;
 using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 

@@ -292,6 +292,18 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     this->groupSize[1] = groupSizeY;
     this->groupSize[2] = groupSizeZ;
     const NEO::KernelDescriptor &kernelDescriptor = kernelImmData->getDescriptor();
+    for (uint32_t i = 0u; i < 3u; i++) {
+        if (kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != 0 &&
+            kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != this->groupSize[i]) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "Invalid group size {%d, %d, %d} specified, requiredWorkGroupSize = {%d, %d, %d}\n",
+                                  this->groupSize[0], this->groupSize[1], this->groupSize[2],
+                                  kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0],
+                                  kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1],
+                                  kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
+            return ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION;
+        }
+    }
 
     auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
     this->numThreadsPerThreadGroup = static_cast<uint32_t>((itemsInGroup + simdSize - 1u) / simdSize);
