@@ -2525,6 +2525,46 @@ TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCant
     }
 }
 
+HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinWithSupportForSharedAllocationWhenGtPinHelperFunctionsAreCalledThenCheckIfSharedAllocationCabBeUsed) {
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+        GTEST_SKIP();
+    }
+
+    class MockGTPinHwHelperHw : public GTPinHwHelperHw<FamilyType> {
+      public:
+        bool canUseSharedAllocation(const HardwareInfo &hwInfo) const override {
+            canUseSharedAllocationCalled = true;
+            return true;
+        }
+        mutable bool canUseSharedAllocationCalled = false;
+    };
+
+    const auto family = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+    MockGTPinHwHelperHw mockGTPinHwHelperHw;
+    VariableBackup<GTPinHwHelper *> gtpinHwHelperBackup{&gtpinHwHelperFactory[family], &mockGTPinHwHelperHw};
+
+    resource_handle_t resource = nullptr;
+    cl_context ctxt = (cl_context)((Context *)pContext);
+
+    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    gtpinCreateBuffer((gtpin::context_handle_t)ctxt, 256, &resource);
+    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+
+    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    uint8_t *address = nullptr;
+    gtpinMapBuffer((gtpin::context_handle_t)ctxt, resource, &address);
+    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+
+    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    gtpinUnmapBuffer((gtpin::context_handle_t)ctxt, resource);
+    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+
+    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    gtpinFreeBuffer((gtpin::context_handle_t)ctxt, resource);
+    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+}
+
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedThenAllocateBufferInSharedMemory) {
     GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
