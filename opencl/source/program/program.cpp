@@ -498,9 +498,17 @@ void Program::setBuildStatus(cl_build_status status) {
 void Program::setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_program_binary_type binaryType) {
     for (const auto &device : deviceVector) {
         deviceBuildInfos[device].buildStatus = CL_BUILD_SUCCESS;
+        if (deviceBuildInfos[device].programBinaryType != binaryType) {
+            std::unique_lock<std::mutex> lock(lockMutex);
+            clDevicesInProgram.push_back(device);
+        }
         deviceBuildInfos[device].programBinaryType = binaryType;
         for (const auto &subDevice : deviceBuildInfos[device].associatedSubDevices) {
             deviceBuildInfos[subDevice].buildStatus = CL_BUILD_SUCCESS;
+            if (deviceBuildInfos[subDevice].programBinaryType != binaryType) {
+                std::unique_lock<std::mutex> lock(lockMutex);
+                clDevicesInProgram.push_back(subDevice);
+            }
             deviceBuildInfos[subDevice].programBinaryType = binaryType;
         }
     }
@@ -549,6 +557,14 @@ void Program::prependFilePathToOptions(const std::string &filename) {
     if (!filename.empty() && options.compare(0, cmcOption.size(), cmcOption.data())) {
         // Add "-s" flag first so it will be ignored by clang in case the options already have this flag set.
         options = std::string("-s ") + filename + " " + options;
+    }
+}
+
+const ClDeviceVector &Program::getDevicesInProgram() const {
+    if (clDevicesInProgram.empty()) {
+        return clDevices;
+    } else {
+        return clDevicesInProgram;
     }
 }
 

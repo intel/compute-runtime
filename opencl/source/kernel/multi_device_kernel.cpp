@@ -40,7 +40,7 @@ MultiDeviceKernel::MultiDeviceKernel(KernelVectorType kernelVector, const Kernel
 const std::vector<Kernel::SimpleKernelArgInfo> &MultiDeviceKernel::getKernelArguments() const { return defaultKernel->getKernelArguments(); }
 cl_int MultiDeviceKernel::getInfo(cl_kernel_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const { return defaultKernel->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet); }
 cl_int MultiDeviceKernel::getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const { return defaultKernel->getArgInfo(argIndx, paramName, paramValueSize, paramValue, paramValueSizeRet); }
-const ClDeviceVector &MultiDeviceKernel::getDevices() const { return program->getDevices(); }
+const ClDeviceVector &MultiDeviceKernel::getDevices() const { return program->getDevicesInProgram(); }
 size_t MultiDeviceKernel::getKernelArgsNumber() const { return defaultKernel->getKernelArgsNumber(); }
 Context &MultiDeviceKernel::getContext() const { return defaultKernel->getContext(); }
 bool MultiDeviceKernel::getHasIndirectAccess() const { return defaultKernel->getHasIndirectAccess(); }

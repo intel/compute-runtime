@@ -32,7 +32,7 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
         KernelVectorType kernels{};
         kernels.resize(program->getMaxRootDeviceIndex() + 1);
 
-        for (auto &pDevice : program->getDevices()) {
+        for (auto &pDevice : program->getDevicesInProgram()) {
             auto rootDeviceIndex = pDevice->getRootDeviceIndex();
             if (kernels[rootDeviceIndex]) {
                 continue;

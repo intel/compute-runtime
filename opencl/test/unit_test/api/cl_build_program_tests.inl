@@ -119,6 +119,57 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMultipleDevicesThenProgramBuildSucceeds) {
+    MockUnrestrictiveContextMultiGPU context;
+    cl_program pProgram = nullptr;
+    cl_int binaryStatus = CL_SUCCESS;
+    std::unique_ptr<char[]> pBinary = nullptr;
+    size_t binarySize = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+
+    pBinary = loadDataFromFile(
+        testFile.c_str(),
+        binarySize);
+
+    ASSERT_NE(0u, binarySize);
+    ASSERT_NE(nullptr, pBinary);
+
+    const size_t numBinaries = 6;
+    const unsigned char *binaries[numBinaries];
+    std::fill(binaries, binaries + numBinaries, reinterpret_cast<const unsigned char *>(pBinary.get()));
+    cl_device_id devicesForProgram[] = {context.pRootDevice0, context.pSubDevice00, context.pSubDevice01, context.pRootDevice1, context.pSubDevice10, context.pSubDevice11};
+    size_t sizeBinaries[numBinaries];
+    std::fill(sizeBinaries, sizeBinaries + numBinaries, binarySize);
+
+    pProgram = clCreateProgramWithBinary(
+        &context,
+        numBinaries,
+        devicesForProgram,
+        sizeBinaries,
+        binaries,
+        &binaryStatus,
+        &retVal);
+
+    pBinary.reset();
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clBuildProgram(
+        pProgram,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOptionsIsCalledThenStoredOptionsAreUsed) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
@@ -530,6 +581,194 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelsWhenBuildingTh
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWhenCreatingKernelThenProgramAndKernelDevicesMatchAndSuccessIsReturned) {
+    MockUnrestrictiveContextMultiGPU context;
+    cl_program pProgram = nullptr;
+    size_t sourceSize = 0;
+    cl_int retVal = CL_INVALID_PROGRAM;
+    std::string testFile;
+
+    testFile.append(clFiles);
+    testFile.append("copybuffer.cl");
+    auto pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+    pProgram = clCreateProgramWithSource(
+        &context,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_device_id firstDevice = context.pRootDevice0;
+    cl_device_id firstSubDevice = context.pSubDevice00;
+    cl_device_id secondSubDevice = context.pSubDevice01;
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &firstDevice,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_kernel pKernel = clCreateKernel(pProgram, "fullCopy", &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    MultiDeviceKernel *kernel = castToObject<MultiDeviceKernel>(pKernel);
+    auto devs = kernel->getDevices();
+    EXPECT_EQ(devs[0], firstDevice);
+    EXPECT_EQ(devs[1], firstSubDevice);
+    EXPECT_EQ(devs[2], secondSubDevice);
+
+    retVal = clReleaseKernel(pKernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWithCreatedKernelWhenBuildingProgramForSecondDeviceThenInvalidOperationReturned) {
+    MockUnrestrictiveContextMultiGPU context;
+    cl_program pProgram = nullptr;
+    size_t sourceSize = 0;
+    cl_int retVal = CL_INVALID_PROGRAM;
+    std::string testFile;
+
+    testFile.append(clFiles);
+    testFile.append("copybuffer.cl");
+    auto pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+    pProgram = clCreateProgramWithSource(
+        &context,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_device_id firstDevice = context.pRootDevice0;
+    cl_device_id secondDevice = context.pRootDevice1;
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &firstDevice,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_kernel kernel = clCreateKernel(pProgram, "fullCopy", &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &secondDevice,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+
+    retVal = clReleaseKernel(kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &secondDevice,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    kernel = clCreateKernel(pProgram, "fullCopy", &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseKernel(kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForMultipleDevicesSeparatelyWithCreatedKernelThenProgramAndKernelDevicesMatch) {
+    MockUnrestrictiveContextMultiGPU context;
+    cl_program pProgram = nullptr;
+    size_t sourceSize = 0;
+    cl_int retVal = CL_INVALID_PROGRAM;
+    std::string testFile;
+
+    testFile.append(clFiles);
+    testFile.append("copybuffer.cl");
+    auto pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+    pProgram = clCreateProgramWithSource(
+        &context,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_device_id firstDevice = context.pRootDevice0;
+    cl_device_id secondDevice = context.pRootDevice1;
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &firstDevice,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &secondDevice,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_kernel pKernel = clCreateKernel(pProgram, "fullCopy", &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    MultiDeviceKernel *kernel = castToObject<MultiDeviceKernel>(pKernel);
+    Program *program = castToObject<Program>(pProgram);
+    EXPECT_EQ(kernel->getDevices(), program->getDevices());
+
+    retVal = clReleaseKernel(pKernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }

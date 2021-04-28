@@ -1731,7 +1731,7 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
         KernelInfoContainer kernelInfos;
         kernelInfos.resize(pProgram->getMaxRootDeviceIndex() + 1);
 
-        for (const auto &pClDevice : pProgram->getDevices()) {
+        for (const auto &pClDevice : pProgram->getDevicesInProgram()) {
             auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
             auto pKernelInfo = pProgram->getKernelInfo(kernelName, rootDeviceIndex);
             if (pKernelInfo) {
@@ -1786,7 +1786,7 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
             for (unsigned int i = 0; i < numKernelsInProgram; ++i) {
                 KernelInfoContainer kernelInfos;
                 kernelInfos.resize(pProgram->getMaxRootDeviceIndex() + 1);
-                for (const auto &pClDevice : pProgram->getDevices()) {
+                for (const auto &pClDevice : pProgram->getDevicesInProgram()) {
                     auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
                     auto kernelInfo = pProgram->getKernelInfo(i, rootDeviceIndex);
                     DEBUG_BREAK_IF(kernelInfo == nullptr);
