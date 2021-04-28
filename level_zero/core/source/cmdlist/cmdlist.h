@@ -48,7 +48,7 @@ struct CommandList : _ze_command_list_handle_t {
         void *pCommand = nullptr;
         CommandType type = Invalid;
     };
-    using CommandsToPatch = StackVec<CommandToPatch, 1>;
+    using CommandsToPatch = StackVec<CommandToPatch, 16>;
 
     virtual ze_result_t close() = 0;
     virtual ze_result_t destroy() = 0;

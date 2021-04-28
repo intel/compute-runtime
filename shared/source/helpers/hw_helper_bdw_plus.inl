@@ -56,8 +56,8 @@ bool HwHelperHw<Family>::obtainBlitterPreference(const HardwareInfo &hwInfo) con
 }
 
 template <typename Family>
-bool HwHelperHw<Family>::isRegularVfeUsed(const HardwareInfo &hwInfo) const {
-    return true;
+FrontEndType HwHelperHw<Family>::getFrontEndType(const HardwareInfo &hwInfo) const {
+    return FrontEndType::Video;
 }
 
 template <typename GfxFamily>

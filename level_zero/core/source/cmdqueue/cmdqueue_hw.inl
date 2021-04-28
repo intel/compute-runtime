@@ -440,14 +440,13 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uin
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto engineGroupType = hwHelper.getEngineGroupType(csr->getOsContext().getEngineType(), hwInfo);
     auto pVfeState = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(&commandStream, hwInfo, engineGroupType);
-    NEO::StreamProperties emptyProperties{};
     NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState,
                                                     hwInfo,
                                                     perThreadScratchSpaceSize,
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
                                                     NEO::AdditionalKernelExecInfo::NotApplicable,
-                                                    emptyProperties);
+                                                    streamProperties);
     csr->setMediaVFEStateDirty(false);
 }
 
