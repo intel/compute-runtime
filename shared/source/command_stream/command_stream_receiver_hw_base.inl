@@ -1366,17 +1366,35 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPerDssBackedBuffer(const
 }
 
 template <typename GfxFamily>
+template <typename TagSizeT>
+std::unique_ptr<TagAllocatorBase> CommandStreamReceiverHw<GfxFamily>::createTimestampPacketAllocator() {
+    // dont release nodes in aub/tbx mode, to avoid removing semaphores optimization or reusing returned tags
+    bool doNotReleaseNodes = (getType() > CommandStreamReceiverType::CSR_HW) ||
+                             DebugManager.flags.DisableTimestampPacketOptimizations.get();
+
+    using TimestampPacketsT = TimestampPackets<TagSizeT>;
+
+    auto allocator = new TagAllocator<TimestampPacketsT>(
+        rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), getTimestampPacketAllocatorAlignment(),
+        sizeof(TimestampPacketsT), doNotReleaseNodes, osContext->getDeviceBitfield());
+
+    return std::unique_ptr<TagAllocatorBase>(allocator);
+}
+
+template <typename GfxFamily>
 TagAllocatorBase *CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocator() {
     if (timestampPacketAllocator.get() == nullptr) {
-        // dont release nodes in aub/tbx mode, to avoid removing semaphores optimization or reusing returned tags
-        bool doNotReleaseNodes = (getType() > CommandStreamReceiverType::CSR_HW) ||
-                                 DebugManager.flags.DisableTimestampPacketOptimizations.get();
-
-        using TimestampPacketsT = TimestampPackets<typename GfxFamily::TimestampPacketType>;
-
-        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketsT>>(
-            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), getTimestampPacketAllocatorAlignment(),
-            sizeof(TimestampPacketsT), doNotReleaseNodes, osContext->getDeviceBitfield());
+        if (DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
+            if (DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
+                timestampPacketAllocator = createTimestampPacketAllocator<uint32_t>();
+            } else if (DebugManager.flags.OverrideTimestampPacketSize.get() == 8) {
+                timestampPacketAllocator = createTimestampPacketAllocator<uint64_t>();
+            } else {
+                UNRECOVERABLE_IF(true);
+            }
+        } else {
+            timestampPacketAllocator = createTimestampPacketAllocator<typename GfxFamily::TimestampPacketType>();
+        }
     }
     return timestampPacketAllocator.get();
 }

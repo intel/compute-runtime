@@ -162,6 +162,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     MOCKABLE_VIRTUAL size_t getTimestampPacketAllocatorAlignment() const;
 
+    template <typename SizeT>
+    std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator();
+
     HeapDirtyState dshState;
     HeapDirtyState iohState;
     HeapDirtyState sshState;

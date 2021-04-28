@@ -97,6 +97,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideSlmAllocationSize, -1, "-1: default, >=0
 DECLARE_DEBUG_VARIABLE(int32_t, DebuggerLogBitmask, 0, "0: logs disabled, 1 - INFO, 2 - ERROR, 1<<10 - Dump elf, see DebugVariables::DEBUGGER_LOG_BITMASK")
 DECLARE_DEBUG_VARIABLE(int32_t, DebuggerOptDisable, -1, "-1: default from debugger query, 0: do not add opt-disable, 1: add opt-disable")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCsrAllocationSize, -1, "-1: default, >0: use value for size of CSR allocation")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampPacketSize, -1, "-1: default, >0: size in bytes. 4 and 8 supported for experiments")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

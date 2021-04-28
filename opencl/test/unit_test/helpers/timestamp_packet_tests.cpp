@@ -358,6 +358,53 @@ HWTEST_F(TimestampPacketTests, givenCommandStreamReceiverHwWhenObtainingPreferre
     EXPECT_EQ(2048u, csr.getPreferredTagPoolSize());
 }
 
+HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenUseCorrectSize) {
+    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
+
+    {
+        CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
+        csr.setupContext(osContext);
+
+        auto allocator = csr.getTimestampPacketAllocator();
+        auto tag = allocator->getTag();
+        auto size = tag->getSinglePacketSize();
+        EXPECT_EQ(4u * sizeof(typename FamilyType::TimestampPacketType), size);
+    }
+
+    {
+        DebugManager.flags.OverrideTimestampPacketSize.set(4);
+
+        CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
+        csr.setupContext(osContext);
+
+        auto allocator = csr.getTimestampPacketAllocator();
+        auto tag = allocator->getTag();
+        auto size = tag->getSinglePacketSize();
+        EXPECT_EQ(4u * sizeof(uint32_t), size);
+    }
+
+    {
+        DebugManager.flags.OverrideTimestampPacketSize.set(8);
+
+        CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
+        csr.setupContext(osContext);
+
+        auto allocator = csr.getTimestampPacketAllocator();
+        auto tag = allocator->getTag();
+        auto size = tag->getSinglePacketSize();
+        EXPECT_EQ(4u * sizeof(uint64_t), size);
+    }
+
+    {
+        DebugManager.flags.OverrideTimestampPacketSize.set(12);
+
+        CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
+        csr.setupContext(osContext);
+
+        EXPECT_ANY_THROW(csr.getTimestampPacketAllocator());
+    }
+}
+
 HWTEST_F(TimestampPacketTests, givenTagAlignmentWhenCreatingAllocatorThenGpuAddressIsAligned) {
     class MyCsr : public CommandStreamReceiverHw<FamilyType> {
       public:
