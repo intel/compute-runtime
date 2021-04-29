@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -28,7 +28,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
   set_property(TARGET ${LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
   set_target_properties(${LIB_NAME} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}")
   target_compile_definitions(${LIB_NAME} PUBLIC PUBLIC GMM_LIB_DLL ${LIB_FLAGS_DEFINITIONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM} PRIVATE OGL=1)
-  target_compile_definitions(${LIB_NAME} PUBLIC ${NEO_CORE_COMPILE_DEFS})
+  target_compile_definitions(${LIB_NAME} PUBLIC ${NEO_CORE_COMPILE_DEFS} ${NEO__IGC_COMPILE_DEFINITIONS})
 
   target_include_directories(${LIB_NAME} PUBLIC
                              ${KMDAF_HEADERS_DIR}
