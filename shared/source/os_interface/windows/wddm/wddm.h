@@ -44,7 +44,7 @@ enum class HeapIndex : uint32_t;
 
 class Wddm {
   public:
-    typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);
+    typedef HRESULT(WINAPI *DXCoreCreateAdapterFactoryFcn)(REFIID riid, void **ppFactory);
     typedef void(WINAPI *GetSystemInfoFcn)(SYSTEM_INFO *pSystemInfo);
     typedef BOOL(WINAPI *VirtualFreeFcn)(LPVOID ptr, SIZE_T size, DWORD flags);
     typedef LPVOID(WINAPI *VirtualAllocFcn)(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type);
@@ -155,7 +155,7 @@ class Wddm {
     void setGmmInputArg(void *args);
 
     WddmVersion getWddmVersion();
-    static CreateDXGIFactoryFcn createDxgiFactory;
+    static DXCoreCreateAdapterFactoryFcn dXCoreCreateAdapterFactory;
 
     uint32_t getRequestedEUCount() const;
 

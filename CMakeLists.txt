@@ -698,7 +698,7 @@ if(MSVC)
   set(LINKER_FLAGS "${LINKER_FLAGS} legacy_stdio_float_rounding.obj")
 
   # Support for WUD
-  set(CMAKE_CXX_STANDARD_LIBRARIES "onecore.lib")
+  set(CMAKE_CXX_STANDARD_LIBRARIES "onecore.lib dxcore.lib")
   foreach(IT kernel32.lib;user32.lib;gdi32.lib;advapi32.lib;ole32.lib;)
     set(LINKER_FLAGS "${LINKER_FLAGS} /NODEFAULTLIB:${IT}")
   endforeach()

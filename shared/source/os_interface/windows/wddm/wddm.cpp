@@ -35,15 +35,19 @@
 
 #include "gmm_memory.h"
 
+// clang-format off
+#include <initguid.h>
+#include <dxcore.h>
 #include <dxgi.h>
+// clang-format on
 
 namespace NEO {
-extern Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory();
+extern Wddm::DXCoreCreateAdapterFactoryFcn getDXCoreCreateAdapterFactory();
 extern Wddm::GetSystemInfoFcn getGetSystemInfo();
 extern Wddm::VirtualAllocFcn getVirtualAlloc();
 extern Wddm::VirtualFreeFcn getVirtualFree();
 
-Wddm::CreateDXGIFactoryFcn Wddm::createDxgiFactory = getCreateDxgiFactory();
+Wddm::DXCoreCreateAdapterFactoryFcn Wddm::dXCoreCreateAdapterFactory = getDXCoreCreateAdapterFactory();
 Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
 Wddm::VirtualAllocFcn Wddm::virtualAllocFnc = getVirtualAlloc();
 Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
@@ -264,6 +268,12 @@ std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &os
     return std::make_unique<HwDeviceId>(OpenAdapterData.hAdapter, adapterLuid, &osEnvironment);
 }
 
+inline bool canUseAdapterBasedOnDriverDesc(const char *driverDescription) {
+    return (strstr(driverDescription, "Intel") != nullptr) ||
+           (strstr(driverDescription, "Citrix") != nullptr) ||
+           (strstr(driverDescription, "Virtual Render") != nullptr);
+}
+
 std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionEnvironment &executionEnvironment) {
     std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
 
@@ -275,13 +285,9 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionE
         return hwDeviceIds;
     }
 
-    DXGI_ADAPTER_DESC1 OpenAdapterDesc = {{0}};
-
-    IDXGIFactory1 *pFactory = nullptr;
-    IDXGIAdapter1 *pAdapter = nullptr;
-
-    HRESULT hr = Wddm::createDxgiFactory(__uuidof(IDXGIFactory), (void **)(&pFactory));
-    if ((hr != S_OK) || (pFactory == nullptr)) {
+    IDXCoreAdapterFactory *adapterFactory = nullptr;
+    HRESULT hr = Wddm::dXCoreCreateAdapterFactory(__uuidof(IDXCoreAdapterFactory), (void **)(&adapterFactory));
+    if ((hr != S_OK) || (adapterFactory == nullptr)) {
         return hwDeviceIds;
     }
 
@@ -291,43 +297,86 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionE
     }
 
     do {
-        DWORD iDevNum = 0;
-        while (pFactory->EnumAdapters1(iDevNum++, &pAdapter) != DXGI_ERROR_NOT_FOUND) {
-            hr = pAdapter->GetDesc1(&OpenAdapterDesc);
-            if (hr == S_OK) {
-                bool createHwDeviceId = false;
-                // Check for adapters that include either "Intel" or "Citrix" (which may
-                // be virtualizing one of our adapters) in the description
-                if ((wcsstr(OpenAdapterDesc.Description, L"Intel") != 0) ||
-                    (wcsstr(OpenAdapterDesc.Description, L"Citrix") != 0) ||
-                    (wcsstr(OpenAdapterDesc.Description, L"Virtual Render") != 0)) {
-                    char deviceId[16];
-                    sprintf_s(deviceId, "%X", OpenAdapterDesc.DeviceId);
-                    createHwDeviceId = (DebugManager.flags.ForceDeviceId.get() == "unk") || (DebugManager.flags.ForceDeviceId.get() == deviceId);
-                }
-                if (createHwDeviceId) {
-                    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnvironment, OpenAdapterDesc.AdapterLuid);
-                    if (hwDeviceId) {
-                        hwDeviceIds.push_back(std::move(hwDeviceId));
-                    }
+        GUID attributes[]{DXCORE_ADAPTER_ATTRIBUTE_D3D12_CORE_COMPUTE};
+        IDXCoreAdapterList *adapterList = nullptr;
+        hr = adapterFactory->CreateAdapterList(1, attributes, __uuidof(IDXCoreAdapterList), (void **)(&adapterList));
+        if ((hr != S_OK) || (adapterList == nullptr)) {
+            DEBUG_BREAK_IF(true);
+            return hwDeviceIds;
+        }
+
+        auto adapterCount = adapterList->GetAdapterCount();
+        IDXCoreAdapter *adapter = nullptr;
+        for (uint32_t i = 0; i < adapterCount; ++i) {
+            hr = adapterList->GetAdapter(i, __uuidof(IDXCoreAdapter), (void **)&adapter);
+            if (S_OK != hr) {
+                DEBUG_BREAK_IF(true);
+                continue;
+            }
+
+            bool isHardware = false;
+            hr = adapter->GetProperty(DXCoreAdapterProperty::IsHardware, &isHardware);
+            DEBUG_BREAK_IF(S_OK != hr);
+
+            if ((S_OK != hr) || (false == isHardware)) {
+                adapter->Release();
+                adapter = nullptr;
+                continue;
+            }
+
+            static constexpr uint32_t maxDriverDescriptionSize = 512;
+            StackVec<char, 512> driverDescription;
+
+            size_t driverDescSize = 0;
+            hr = adapter->GetPropertySize(DXCoreAdapterProperty::DriverDescription, &driverDescSize);
+            DEBUG_BREAK_IF(S_OK != hr);
+            driverDescription.resize(driverDescSize);
+            hr = adapter->GetProperty(DXCoreAdapterProperty::DriverDescription, driverDescription.size(), driverDescription.data());
+            DEBUG_BREAK_IF(S_OK != hr);
+            if ((hr != S_OK) || (false == canUseAdapterBasedOnDriverDesc(driverDescription.data()))) {
+                adapter->Release();
+                adapter = nullptr;
+                continue;
+            }
+            if (DebugManager.flags.ForceDeviceId.get() != "unk") {
+                DXCoreHardwareID hwId = {};
+                adapter->GetProperty(DXCoreAdapterProperty::HardwareID, sizeof(hwId), &hwId);
+                DEBUG_BREAK_IF(S_OK == hr);
+                char *endptr = nullptr;
+                auto reqDeviceId = strtoul(DebugManager.flags.ForceDeviceId.get().c_str(), &endptr, 0);
+                if (reqDeviceId != hwId.deviceID) {
+                    adapter->Release();
+                    adapter = nullptr;
+                    continue;
                 }
             }
-            // Release all the non-Intel adapters
-            pAdapter->Release();
-            pAdapter = nullptr;
+            LUID luid = {};
+            hr = adapter->GetProperty(DXCoreAdapterProperty::InstanceLuid, &luid);
+            if (hr != S_OK) {
+                DEBUG_BREAK_IF(true);
+                adapter->Release();
+                adapter = nullptr;
+                continue;
+            }
+
+            auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnvironment, luid);
+            if (hwDeviceId) {
+                hwDeviceIds.push_back(std::move(hwDeviceId));
+            }
+
+            adapter->Release();
+            adapter = nullptr;
             if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {
                 break;
             }
         }
+        adapterList->Release();
         if (hwDeviceIds.empty()) {
             break;
         }
     } while (hwDeviceIds.size() < numRootDevices);
 
-    if (pFactory != nullptr) {
-        pFactory->Release();
-        pFactory = nullptr;
-    }
+    adapterFactory->Release();
     return hwDeviceIds;
 }
 
