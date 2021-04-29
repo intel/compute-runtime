@@ -27,7 +27,7 @@ DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
 }
 
 void DebuggerL0::initialize() {
-    auto &engines = device->getEngines();
+    auto &engines = device->getMemoryManager()->getRegisteredEngines();
 
     sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(MemoryConstants::pageSize, device->getRootDeviceIndex());
 

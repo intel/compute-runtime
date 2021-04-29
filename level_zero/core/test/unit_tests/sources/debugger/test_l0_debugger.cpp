@@ -91,7 +91,9 @@ HWTEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuff
     EXPECT_NE(0u, debugger->getSbaTrackingGpuVa());
     std::vector<NEO::GraphicsAllocation *> allocations;
 
-    for (auto &engine : device->getNEODevice()->getEngines()) {
+    auto &allEngines = device->getNEODevice()->getMemoryManager()->getRegisteredEngines();
+
+    for (auto &engine : allEngines) {
         auto sbaAllocation = debugger->getSbaTrackingBuffer(engine.osContext->getContextId());
         ASSERT_NE(nullptr, sbaAllocation);
         allocations.push_back(sbaAllocation);
@@ -104,7 +106,7 @@ HWTEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuff
         EXPECT_NE(allocations[i], allocations[i + 1]);
     }
 
-    EXPECT_EQ(device->getNEODevice()->getEngines().size(), getMockDebuggerL0Hw<FamilyType>()->perContextSbaAllocations.size());
+    EXPECT_EQ(allEngines.size(), getMockDebuggerL0Hw<FamilyType>()->perContextSbaAllocations.size());
 }
 
 HWTEST_F(L0DebuggerTest, givenCreatedL0DebuggerThenSbaTrackingBuffersContainValidHeader) {
