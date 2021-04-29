@@ -280,13 +280,13 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                               flushDependenciesForNonKernelCommand, &blitPropertiesContainer);
 
     if (!blockQueue) {
-        csrDeps.makeResident(getGpgpuCommandStreamReceiver());
-
         if (parentKernel) {
             processDeviceEnqueue(devQueueHw, multiDispatchInfo, hwTimeStamps, blocking);
         }
 
         if (enqueueProperties.operation == EnqueueProperties::Operation::GpuKernel) {
+            csrDeps.makeResident(getGpgpuCommandStreamReceiver());
+
             completionStamp = enqueueNonBlocked<commandType>(
                 surfacesForResidency,
                 numSurfaceForResidency,
@@ -320,7 +320,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 timestampPacketDependencies,
                 eventsRequest,
                 eventBuilder,
-                taskLevel);
+                taskLevel,
+                csrDeps);
         } else {
             UNRECOVERABLE_IF(enqueueProperties.operation != EnqueueProperties::Operation::EnqueueWithoutSubmission);
 
@@ -974,13 +975,16 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     TimestampPacketDependencies &timestampPacketDependencies,
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
-    uint32_t taskLevel) {
+    uint32_t taskLevel,
+    CsrDependencies &csrDeps) {
 
     CompletionStamp completionStamp = {this->taskCount, this->taskLevel, this->flushStamp->peekStamp()};
     bool flushGpgpuCsr = true;
 
     if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && !isGpgpuSubmissionForBcsRequired(false)) {
         flushGpgpuCsr = false;
+    } else {
+        csrDeps.makeResident(getGpgpuCommandStreamReceiver());
     }
 
     if (eventBuilder.getEvent() && isProfilingEnabled()) {
@@ -1143,9 +1147,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     const EnqueueProperties enqueueProperties(true, false, false, false, &blitPropertiesContainer);
 
     if (!blockQueue) {
-        csrDeps.makeResident(getGpgpuCommandStreamReceiver());
-
-        completionStamp = enqueueCommandWithoutKernel(nullptr, 0, gpgpuCommandStream, gpgpuCommandStreamStart, blocking, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, taskLevel);
+        completionStamp = enqueueCommandWithoutKernel(nullptr, 0, gpgpuCommandStream, gpgpuCommandStreamStart, blocking, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, taskLevel, csrDeps);
 
         if (eventBuilder.getEvent()) {
             eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());

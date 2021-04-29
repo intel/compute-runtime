@@ -621,6 +621,7 @@ void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocat
         auto osContextId = engine.osContext->getContextId();
         auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
         if (graphicsAllocation.isUsedByOsContext(osContextId) &&
+            engine.commandStreamReceiver->getTagAllocation() != nullptr &&
             allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
             engine.commandStreamReceiver->waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, allocationTaskCount);
         }

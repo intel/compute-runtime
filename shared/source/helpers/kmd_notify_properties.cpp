@@ -19,12 +19,12 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
                                           uint32_t taskCountToWait,
                                           FlushStamp flushStampToWait,
                                           bool forcePowerSavingMode,
-                                          bool directSubmissionActive) {
+                                          bool newResidencyModelActive) {
     if (flushStampToWait == 0) {
         return false;
     }
 
-    if (directSubmissionActive) {
+    if (newResidencyModelActive) {
         return false;
     }
 

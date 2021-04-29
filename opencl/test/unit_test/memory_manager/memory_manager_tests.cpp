@@ -730,6 +730,27 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
+TEST(OsAgnosticMemoryManager, givenDestroyedTagAllocationWhenWaitForCompletiionThenWaitForTaskCountIsNotCalled) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto memoryManager = new OsAgnosticMemoryManager(executionEnvironment);
+    DeviceBitfield deviceBitfield(1);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u, deviceBitfield));
+    executionEnvironment.memoryManager.reset(memoryManager);
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(),
+                                                               HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                               deviceBitfield,
+                                                               PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
+                                                               false);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
+    allocation->updateTaskCount(10, osContext->getContextId());
+
+    EXPECT_GT(allocation->getTaskCount(osContext->getContextId()), csr->peekTaskCount());
+    memoryManager->waitForEnginesCompletion(*allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocateGraphicsMemoryForImageIsCalledThenUseLocalMemoryIsNotSet) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, true, *executionEnvironment);

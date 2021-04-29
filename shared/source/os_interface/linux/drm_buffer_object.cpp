@@ -71,7 +71,7 @@ bool BufferObject::close() {
 }
 
 int BufferObject::wait(int64_t timeoutNs) {
-    if (this->drm->isDirectSubmissionActive()) {
+    if (this->drm->isVmBindAvailable()) {
         return 0;
     }
 
@@ -250,6 +250,11 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
     if (osContext->isDirectSubmissionActive()) {
         retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
     } else {
+        if (this->drm->isVmBindAvailable()) {
+            auto thisBo = this;
+            bindBOsWithinContext(&thisBo, 1u, osContext, vmHandleId);
+            bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
+        }
         StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
         retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
     }

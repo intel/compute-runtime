@@ -318,7 +318,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndDisab
     EXPECT_EQ(1u, helper.updateAcLineStatusCalled);
 }
 
-TEST_F(KmdNotifyTests, givenEnableDirectSubmissionWhenObtainTimeoutParamsThenFalseIsReturned) {
+TEST_F(KmdNotifyTests, givenNewResidencyModelAvailableWhenObtainTimeoutParamsThenFalseIsReturned) {
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
     int64_t timeout = 0;

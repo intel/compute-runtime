@@ -197,6 +197,8 @@ class MemoryManager {
     virtual void registerSysMemAlloc(GraphicsAllocation *allocation){};
     virtual void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex){};
 
+    virtual void disableGemCloseWorkerForNewResidencyModel(){};
+
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);

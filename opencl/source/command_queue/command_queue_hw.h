@@ -393,7 +393,8 @@ class CommandQueueHw : public CommandQueue {
                                                 TimestampPacketDependencies &timestampPacketDependencies,
                                                 EventsRequest &eventsRequest,
                                                 EventBuilder &eventBuilder,
-                                                uint32_t taskLevel);
+                                                uint32_t taskLevel,
+                                                CsrDependencies &csrDeps);
     void processDispatchForCacheFlush(Surface **surfaces,
                                       size_t numSurfaces,
                                       LinearStream *commandStream,

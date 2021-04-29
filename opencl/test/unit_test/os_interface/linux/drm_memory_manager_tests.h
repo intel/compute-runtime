@@ -44,6 +44,7 @@ class DrmMemoryManagerBasic : public ::testing::Test {
 class DrmMemoryManagerFixture : public MemoryManagementFixture {
   public:
     DrmMockCustom *mock = nullptr;
+    bool dontTestIoctlInTearDown = false;
     const uint32_t rootDeviceIndex = 1u;
     const uint32_t numRootDevices = 2u;
     TestedDrmMemoryManager *memoryManager = nullptr;
@@ -103,6 +104,9 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         mock->ioctl_expected.gemWait += additionalDestroyDeviceIoctls.gemWait.load();
         mock->ioctl_expected.gemClose += additionalDestroyDeviceIoctls.gemClose.load();
         delete device;
+        if (dontTestIoctlInTearDown) {
+            mock->reset();
+        }
         mock->testIoctls();
         executionEnvironment->decRefInternal();
         MemoryManagementFixture::TearDown();

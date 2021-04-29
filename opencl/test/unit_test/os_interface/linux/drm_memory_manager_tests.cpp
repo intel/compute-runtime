@@ -90,6 +90,24 @@ TEST_F(DrmMemoryManagerTest, givenDebugVariableWhenCreatingDrmMemoryManagerThenS
     }
 }
 
+TEST_F(DrmMemoryManagerTest, whenNewResidencyModelAvailableThenGemCloseWorkerInactive) {
+    auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm());
+    drm->bindAvailable = true;
+
+    memoryManager->disableGemCloseWorkerForNewResidencyModel();
+
+    for (const auto &engine : memoryManager->getRegisteredEngines()) {
+        auto engineRootDeviceIndex = engine.commandStreamReceiver->getRootDeviceIndex();
+        auto rootDeviceDrm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[engineRootDeviceIndex]->osInterface->get()->getDrm());
+
+        auto csr = static_cast<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(engine.commandStreamReceiver);
+        EXPECT_TRUE(rootDeviceDrm->isVmBindAvailable());
+        EXPECT_EQ(csr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerInactive);
+    }
+
+    this->dontTestIoctlInTearDown = true;
+}
+
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCheckForKmdMigrationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm());
@@ -135,6 +153,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCheckForKmdMigrationThenCo
 
         EXPECT_FALSE(retVal);
     }
+
+    this->dontTestIoctlInTearDown = true;
 }
 
 TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToHostPtrManagerThenfragmentHasCorrectValues) {

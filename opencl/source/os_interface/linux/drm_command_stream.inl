@@ -82,12 +82,14 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
 
     memoryOperationsInterface->mergeWithResidencyContainer(this->osContext, allocationsForResidency);
 
-    if (this->directSubmission.get()) {
+    if (this->drm->isVmBindAvailable()) {
         memoryOperationsInterface->makeResidentWithinOsContext(this->osContext, ArrayRef<GraphicsAllocation *>(&batchBuffer.commandBufferAllocation, 1), true);
+    }
+
+    if (this->directSubmission.get()) {
         return this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
     }
     if (this->blitterDirectSubmission.get()) {
-        memoryOperationsInterface->makeResidentWithinOsContext(this->osContext, ArrayRef<GraphicsAllocation *>(&batchBuffer.commandBufferAllocation, 1), true);
         return this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
     }
 
@@ -200,8 +202,8 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSta
 }
 
 template <typename GfxFamily>
-bool DrmCommandStreamReceiver<GfxFamily>::isAnyDirectSubmissionActive() {
-    return this->drm->isDirectSubmissionActive();
+bool DrmCommandStreamReceiver<GfxFamily>::isNewResidencyModelActive() {
+    return this->drm->isVmBindAvailable();
 }
 
 } // namespace NEO

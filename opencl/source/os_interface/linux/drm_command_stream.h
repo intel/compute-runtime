@@ -43,7 +43,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     MOCKABLE_VIRTUAL void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
-    bool isAnyDirectSubmissionActive() override;
+    bool isNewResidencyModelActive() override;
 
     DrmMemoryManager *getMemoryManager() const;
     GmmPageTableMngr *createPageTableManager() override;

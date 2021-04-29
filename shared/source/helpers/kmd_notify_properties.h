@@ -42,7 +42,7 @@ class KmdNotifyHelper {
                              uint32_t taskCountToWait,
                              FlushStamp flushStampToWait,
                              bool forcePowerSavingMode,
-                             bool directSubmissionActive);
+                             bool newResidencyModelActive);
 
     bool quickKmdSleepForSporadicWaitsEnabled() const { return properties->enableQuickKmdSleepForSporadicWaits; }
     MOCKABLE_VIRTUAL void updateLastWaitForCompletionTimestamp();

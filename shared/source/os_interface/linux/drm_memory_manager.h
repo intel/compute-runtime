@@ -71,6 +71,8 @@ class DrmMemoryManager : public MemoryManager {
     void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) override;
     void unregisterAllocation(GraphicsAllocation *allocation);
 
+    void disableGemCloseWorkerForNewResidencyModel() override;
+
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
     void eraseSharedBufferObject(BufferObject *bo);

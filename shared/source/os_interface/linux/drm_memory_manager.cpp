@@ -728,7 +728,11 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
 }
 
 void DrmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
-    static_cast<DrmAllocation *>(allocation)->getBO()->wait(-1);
+    if (this->getDrm(allocation->getRootDeviceIndex()).isVmBindAvailable()) {
+        waitForEnginesCompletion(*allocation);
+    } else {
+        static_cast<DrmAllocation *>(allocation)->getBO()->wait(-1);
+    }
 }
 
 GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) {
@@ -992,6 +996,17 @@ void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
                                                                        localMemAllocs[allocation->getRootDeviceIndex()].end(),
                                                                        allocation),
                                                            localMemAllocs[allocation->getRootDeviceIndex()].end());
+}
+
+void DrmMemoryManager::disableGemCloseWorkerForNewResidencyModel() {
+    for (auto &engine : this->registeredEngines) {
+        auto rootDeviceIndex = engine.commandStreamReceiver->getRootDeviceIndex();
+        auto &drm = this->getDrm(rootDeviceIndex);
+
+        if (drm.isVmBindAvailable()) {
+            engine.commandStreamReceiver->initializeDefaultsForInternalEngine();
+        }
+    }
 }
 
 void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {

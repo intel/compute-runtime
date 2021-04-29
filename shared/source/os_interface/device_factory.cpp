@@ -13,6 +13,7 @@
 #include "shared/source/device/root_device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -153,6 +154,9 @@ std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvir
             devices.push_back(std::move(device));
         }
     }
+
+    executionEnvironment.memoryManager->disableGemCloseWorkerForNewResidencyModel();
+
     return devices;
 }
 

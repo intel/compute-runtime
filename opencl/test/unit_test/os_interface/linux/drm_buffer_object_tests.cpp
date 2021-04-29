@@ -111,8 +111,8 @@ TEST_F(DrmBufferObjectTest, GivenInvalidTilingWhenSettingTilingThenCallFails) {
     EXPECT_FALSE(ret);
 }
 
-TEST_F(DrmBufferObjectTest, givenDirectSubmissionActiveWhenCallWaitThenNoIoctlIsCalled) {
-    mock->setDirectSubmissionActive(true);
+TEST_F(DrmBufferObjectTest, givenBindAvailableWhenCallWaitThenNoIoctlIsCalled) {
+    mock->bindAvailable = true;
     mock->ioctl_expected.total = 0;
     auto ret = bo->wait(-1);
     EXPECT_FALSE(ret);
