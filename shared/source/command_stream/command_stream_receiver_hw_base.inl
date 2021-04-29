@@ -1107,6 +1107,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvent, bool isStartOfDispatch, bool isEndOfDispatch) {
+    if (!this->isEnginePrologueSent) {
+        auto lock = obtainUniqueOwnership();
+        programHardwareContext(getCS());
+    }
+
     if (isWaitOnEvent) {
         this->flushSemaphoreWait(eventAlloc, immediateGpuAddress, immediateData, args, isStartOfDispatch, isEndOfDispatch);
     } else {
@@ -1332,6 +1337,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogue(const Di
 }
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programEnginePrologue(LinearStream &csr) {
+    this->isEnginePrologueSent = true;
 }
 
 template <typename GfxFamily>
