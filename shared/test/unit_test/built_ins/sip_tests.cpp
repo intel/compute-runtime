@@ -181,3 +181,47 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenAllocationCreationFailsThenSipIsN
     auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
     EXPECT_EQ(nullptr, sipKernel);
 }
+
+TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelTwiceThenSipIsLoadedFromFileAndCreatedOnce) {
+    bool ret = SipKernel::initSipKernel(SipKernelType::Csr, *pDevice);
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(1u, IoFunctions::mockFopenCalled);
+    EXPECT_EQ(1u, IoFunctions::mockFseekCalled);
+    EXPECT_EQ(1u, IoFunctions::mockFtellCalled);
+    EXPECT_EQ(1u, IoFunctions::mockRewindCalled);
+    EXPECT_EQ(1u, IoFunctions::mockFreadCalled);
+    EXPECT_EQ(1u, IoFunctions::mockFcloseCalled);
+
+    EXPECT_EQ(SipKernelType::Csr, SipKernel::getSipKernelType(*pDevice));
+
+    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::Csr);
+    auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
+    ASSERT_NE(nullptr, sipKernel);
+    auto storedAllocation = sipKernel->getSipAllocation();
+
+    auto &refSipKernel = SipKernel::getSipKernel(*pDevice);
+    EXPECT_EQ(sipKernel, &refSipKernel);
+
+    auto sipAllocation = refSipKernel.getSipAllocation();
+    EXPECT_NE(nullptr, storedAllocation);
+    EXPECT_EQ(storedAllocation, sipAllocation);
+
+    ret = SipKernel::initSipKernel(SipKernelType::Csr, *pDevice);
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(1u, IoFunctions::mockFopenCalled);
+    EXPECT_EQ(1u, IoFunctions::mockFseekCalled);
+    EXPECT_EQ(1u, IoFunctions::mockFtellCalled);
+    EXPECT_EQ(1u, IoFunctions::mockRewindCalled);
+    EXPECT_EQ(1u, IoFunctions::mockFreadCalled);
+    EXPECT_EQ(1u, IoFunctions::mockFcloseCalled);
+
+    auto secondSipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
+    ASSERT_NE(nullptr, secondSipKernel);
+    auto secondStoredAllocation = sipKernel->getSipAllocation();
+    EXPECT_NE(nullptr, secondStoredAllocation);
+
+    EXPECT_EQ(sipKernel, secondSipKernel);
+    EXPECT_EQ(storedAllocation, secondStoredAllocation);
+}

@@ -52,6 +52,13 @@ bool SipKernel::initBuiltinsSipKernel(SipKernelType type, Device &device) {
 }
 
 bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, std::string &fileName) {
+    uint32_t sipIndex = static_cast<uint32_t>(type);
+    uint32_t rootDeviceIndex = device.getRootDeviceIndex();
+
+    if (device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex].get() != nullptr) {
+        return true;
+    }
+
     FILE *fileDescriptor = nullptr;
     long int size = 0;
     size_t bytesRead = 0u;
@@ -75,8 +82,7 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
     }
 
     const auto allocType = GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
-
-    AllocationProperties properties = {device.getRootDeviceIndex(), bytesRead, allocType, device.getDeviceBitfield()};
+    AllocationProperties properties = {rootDeviceIndex, bytesRead, allocType, device.getDeviceBitfield()};
     properties.flags.use32BitFrontWindow = false;
 
     auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
@@ -95,8 +101,7 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
     alignedFree(alignedBuffer);
 
     std::vector<char> emptyStateSaveAreaHeader;
-    uint32_t sipIndex = static_cast<uint32_t>(type);
-    device.getExecutionEnvironment()->rootDeviceEnvironments[device.getRootDeviceIndex()]->sipKernels[sipIndex] =
+    device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
         std::make_unique<SipKernel>(type, sipAllocation, std::move(emptyStateSaveAreaHeader));
 
     return true;
