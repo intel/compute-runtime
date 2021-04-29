@@ -79,7 +79,7 @@ const RuntimeCapabilityTable ADLS::capabilityTable{
     false,                                          // supportsOnDemandPageFaults
     false,                                          // supportsIndependentForwardProgress
     false,                                          // hostPtrTrackingEnabled
-    false,                                          // levelZeroSupported
+    true,                                           // levelZeroSupported
     true                                            // isIntegratedDevice
 };
 

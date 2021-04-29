@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,11 @@ RKLTEST_F(RklHwInfo, whenPlatformIsRklThenExpectSvmIsSet) {
 RKLTEST_F(RklHwInfo, givenRklWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
     const HardwareInfo &hardwareInfo = RKL::hwInfo;
     EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSupportsInteger64BitAtomics);
+}
+
+RKLTEST_F(RklHwInfo, givenRklWhenCheckL0ThenReturnTrue) {
+    const HardwareInfo &hardwareInfo = RKL::hwInfo;
+    EXPECT_TRUE(hardwareInfo.capabilityTable.levelZeroSupported);
 }
 
 HWCMDTEST_EXCLUDE_FAMILY(DeviceFactoryTest, givenValidHwConfigStringPrepareDeviceEnvironmentsForProductFamilyOverrideReturnsTrue, IGFX_ROCKETLAKE);
