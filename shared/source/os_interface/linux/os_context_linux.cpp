@@ -43,6 +43,10 @@ void OsContextLinux::initializeContext() {
     bool submitDirect = false;
     this->isDirectSubmissionAvailable(*drm.getRootDeviceEnvironment().getHardwareInfo(), submitDirect);
 
+    if (drm.isPerContextVMRequired()) {
+        this->drmVmIds.resize(deviceBitfield.size(), 0);
+    }
+
     for (auto deviceIndex = 0u; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
             auto drmVmId = drm.getVirtualMemoryAddressSpace(deviceIndex);
@@ -74,7 +78,8 @@ void OsContextLinux::initializeContext() {
                 DEBUG_BREAK_IF(drmVmId == 0);
                 DEBUG_BREAK_IF(ret != 0);
                 UNUSED_VARIABLE(ret);
-                this->drmVmIds.push_back(drmVmId);
+                UNRECOVERABLE_IF(this->drmVmIds.size() <= deviceIndex);
+                this->drmVmIds[deviceIndex] = drmVmId;
             }
         }
     }

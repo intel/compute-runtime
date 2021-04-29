@@ -523,7 +523,7 @@ TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicit
     EXPECT_EQ(0u, drmMock.receivedCreateContextId);
 }
 
-TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPerContextIsQueriedAndStored) {
+TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPerContextIsQueriedAndStored) {
     auto &rootEnv = *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0];
     rootEnv.executionEnvironment.setDebuggingEnabled();
 
@@ -538,9 +538,58 @@ TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicit
     EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
 
     auto &drmVmIds = osContext.getDrmVmIds();
-    EXPECT_EQ(1u, drmVmIds.size());
+    EXPECT_EQ(32u, drmVmIds.size());
 
     EXPECT_EQ(20u, drmVmIds[0]);
+}
+
+TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenImplicitVmIdPerContextIsQueriedAndStoredAtSubDeviceIndex) {
+    auto &rootEnv = *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0];
+    rootEnv.executionEnvironment.setDebuggingEnabled();
+
+    DrmMock drmMock(rootEnv);
+    EXPECT_TRUE(drmMock.requirePerContextVM);
+
+    drmMock.StoredRetValForVmId = 20;
+    DeviceBitfield deviceBitfield(1 << 3);
+
+    OsContextLinux osContext(drmMock, 0u, deviceBitfield, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
+    EXPECT_EQ(0u, drmMock.receivedCreateContextId);
+    EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
+
+    auto &drmVmIds = osContext.getDrmVmIds();
+    EXPECT_EQ(32u, drmVmIds.size());
+
+    EXPECT_EQ(20u, drmVmIds[3]);
+
+    EXPECT_EQ(0u, drmVmIds[0]);
+    EXPECT_EQ(0u, drmVmIds[2]);
+}
+
+TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenImplicitVmIdsPerContextAreQueriedAndStoredAtSubDeviceIndices) {
+    auto &rootEnv = *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0];
+    rootEnv.executionEnvironment.setDebuggingEnabled();
+
+    DrmMock drmMock(rootEnv);
+    EXPECT_TRUE(drmMock.requirePerContextVM);
+
+    drmMock.StoredRetValForVmId = 20;
+    DeviceBitfield deviceBitfield(1 | 1 << 1);
+
+    OsContextLinux osContext(drmMock, 0u, deviceBitfield, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+    osContext.ensureContextInitialized();
+    EXPECT_EQ(0u, drmMock.receivedCreateContextId);
+    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
+
+    auto &drmVmIds = osContext.getDrmVmIds();
+    EXPECT_EQ(32u, drmVmIds.size());
+
+    EXPECT_EQ(20u, drmVmIds[0]);
+    EXPECT_EQ(20u, drmVmIds[1]);
+
+    EXPECT_EQ(0u, drmVmIds[2]);
+    EXPECT_EQ(0u, drmVmIds[31]);
 }
 
 TEST(DrmTest, givenNoPerContextVmsDrmWhenCreatingOsContextsThenVmIdIsNotQueriedAndStored) {
