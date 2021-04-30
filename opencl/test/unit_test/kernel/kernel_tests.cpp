@@ -518,9 +518,14 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     }
     GraphicsAllocation *getClearColorAllocation() override { return nullptr; }
 
+    bool createPreemptionAllocation() override {
+        return createPreemptionAllocationReturn;
+    }
+
     std::map<const void *, size_t> residency;
-    bool passResidencyCallToBaseClass = true;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
+    bool passResidencyCallToBaseClass = true;
+    bool createPreemptionAllocationReturn = true;
 };
 
 TEST_F(KernelPrivateSurfaceTest, WhenChangingResidencyThenCsrResidencySizeIsUpdated) {

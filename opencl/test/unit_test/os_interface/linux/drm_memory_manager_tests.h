@@ -9,6 +9,8 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -126,12 +128,16 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
   public:
     void SetUp() override {
+        backup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
+        ultHwConfig.csrBaseCallCreatePreemption = false;
+
         MemoryManagementFixture::SetUp();
         DrmMemoryManagerFixture::SetUp(new DrmMockCustom, true);
     }
     void TearDown() override {
         DrmMemoryManagerFixture::TearDown();
     }
+    std::unique_ptr<VariableBackup<UltHwConfig>> backup;
 };
 
 class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {

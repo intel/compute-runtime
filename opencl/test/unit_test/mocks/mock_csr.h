@@ -22,6 +22,7 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
     using BaseUltCsrClass = UltCommandStreamReceiver<GfxFamily>;
     using BaseUltCsrClass::BaseUltCsrClass;
     using BaseUltCsrClass::debugPauseStateLock;
+    using BaseUltCsrClass::preemptionAllocation;
 
     MockCsrBase() = delete;
 

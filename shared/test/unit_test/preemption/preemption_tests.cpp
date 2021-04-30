@@ -282,7 +282,7 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
     EXPECT_EQ(nullptr, mockDevice.get());
 }
 
-HWTEST_F(MidThreadPreemptionTests, GivenWaWhenCreatingCsrSurfaceThenSurfaceIsCorrect) {
+HWTEST2_F(MidThreadPreemptionTests, GivenWaWhenCreatingCsrSurfaceThenSurfaceIsCorrect, IsAtMostGen12lp) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.workaroundTable.waCSRUncachable = true;
 
@@ -296,6 +296,11 @@ HWTEST_F(MidThreadPreemptionTests, GivenWaWhenCreatingCsrSurfaceThenSurfaceIsCor
 
     GraphicsAllocation *devCsrSurface = csr.getPreemptionAllocation();
     EXPECT_EQ(csrSurface, devCsrSurface);
+
+    constexpr size_t expectedMask = (256 * MemoryConstants::kiloByte) - 1;
+
+    size_t addressValue = reinterpret_cast<size_t>(devCsrSurface->getUnderlyingBuffer());
+    EXPECT_EQ(0u, expectedMask & addressValue);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, givenDirtyCsrStateWhenStateBaseAddressIsProgrammedThenStateSipIsAdded) {

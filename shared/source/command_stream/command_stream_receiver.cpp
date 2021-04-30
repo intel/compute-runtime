@@ -567,9 +567,9 @@ bool CommandStreamReceiver::createPreemptionAllocation() {
     if (DebugManager.flags.OverrideCsrAllocationSize.get() > 0) {
         preemptionSurfaceSize = DebugManager.flags.OverrideCsrAllocationSize.get();
     }
-    AllocationProperties properties{rootDeviceIndex, preemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, deviceBitfield};
+    AllocationProperties properties{rootDeviceIndex, true, preemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, isMultiOsContextCapable(), false, deviceBitfield};
     properties.flags.uncacheable = hwInfo->workaroundTable.waCSRUncachable;
-    properties.alignment = 256 * MemoryConstants::kiloByte;
+    properties.alignment = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getPreemptionAllocationAlignment();
     this->preemptionAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     return this->preemptionAllocation != nullptr;
 }

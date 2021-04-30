@@ -609,4 +609,9 @@ bool HwHelperHw<GfxFamily>::isBlitterForImagesSupported(const HardwareInfo &hwIn
     return false;
 }
 
+template <typename GfxFamily>
+size_t HwHelperHw<GfxFamily>::getPreemptionAllocationAlignment() const {
+    return 256 * MemoryConstants::kiloByte;
+}
+
 } // namespace NEO

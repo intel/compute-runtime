@@ -1094,6 +1094,8 @@ using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
 
 using IsAtMostGen11 = IsAtMostGfxCore<IGFX_GEN11LP_CORE>;
 
+using IsAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;
+
 using IsAtLeastGen12lp = IsAtLeastGfxCore<IGFX_GEN12LP_CORE>;
 
 using IsBXT = IsProduct<IGFX_BROXTON>;

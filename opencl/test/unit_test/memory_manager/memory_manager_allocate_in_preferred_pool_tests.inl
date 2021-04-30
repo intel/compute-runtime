@@ -541,12 +541,28 @@ TEST(MemoryManagerTest, givenGlobalFenceTypeWhenGetAllocationDataIsCalledThenSys
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
-TEST(MemoryManagerTest, givenPreemptionTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+TEST(MemoryManagerTest, givenPreemptionTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::PREEMPTION, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_TRUE(allocData.flags.useSystemMemory);
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
+}
+
+TEST(MemoryManagerTest, givenPreemptionTypeWhenGetAllocationDataIsCalledThen64kbPagesAllowed) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::PREEMPTION, mockDeviceBitfield};
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_TRUE(allocData.flags.allow64kbPages);
+}
+
+TEST(MemoryManagerTest, givenPreemptionTypeWhenGetAllocationDataIsCalledThen48BitResourceIsTrue) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::PREEMPTION, mockDeviceBitfield};
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_TRUE(allocData.flags.resource48Bit);
 }
 
 TEST(MemoryManagerTest, givenSharedContextImageTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
@@ -1038,7 +1054,6 @@ static const GraphicsAllocation::AllocationType allocationHaveNotToBeForcedTo48B
     GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
     GraphicsAllocation::AllocationType::MAP_ALLOCATION,
     GraphicsAllocation::AllocationType::PIPE,
-    GraphicsAllocation::AllocationType::PREEMPTION,
     GraphicsAllocation::AllocationType::PRINTF_SURFACE,
     GraphicsAllocation::AllocationType::PRIVATE_SURFACE,
     GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER,

@@ -300,6 +300,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SVM_GPU:
     case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
     case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
+    case GraphicsAllocation::AllocationType::PREEMPTION:
         allow64KbPages = true;
     default:
         break;
@@ -344,7 +345,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
     case GraphicsAllocation::AllocationType::MAP_ALLOCATION:
     case GraphicsAllocation::AllocationType::MCS:
-    case GraphicsAllocation::AllocationType::PREEMPTION:
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
     case GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE:
     case GraphicsAllocation::AllocationType::SVM_CPU:
@@ -375,6 +375,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
     case GraphicsAllocation::AllocationType::LINEAR_STREAM:
     case GraphicsAllocation::AllocationType::MCS:
+    case GraphicsAllocation::AllocationType::PREEMPTION:
     case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
     case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
     case GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE:

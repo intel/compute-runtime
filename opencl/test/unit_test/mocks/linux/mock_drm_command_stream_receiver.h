@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/test/common/helpers/ult_hw_config.h"
+
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 
 using namespace NEO;
@@ -15,6 +17,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
   public:
     using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
+    using CommandStreamReceiver::createPreemptionAllocation;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::makeResident;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
@@ -62,5 +65,13 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
 
     std::vector<drm_i915_gem_exec_object2> &getExecStorage() {
         return this->execObjectsStorage;
+    }
+
+    bool createPreemptionAllocation() override {
+        if (ultHwConfig.csrBaseCallCreatePreemption) {
+            return CommandStreamReceiver::createPreemptionAllocation();
+        } else {
+            return ultHwConfig.csrCreatePreemptionReturnValue;
+        }
     }
 };

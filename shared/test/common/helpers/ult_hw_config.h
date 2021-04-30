@@ -19,6 +19,9 @@ struct UltHwConfig {
 
     bool csrBaseCallBlitterDirectSubmissionAvailable = false;
     bool csrSuperBaseCallBlitterDirectSubmissionAvailable = false;
+
+    bool csrBaseCallCreatePreemption = true;
+    bool csrCreatePreemptionReturnValue = true;
 };
 
 extern UltHwConfig ultHwConfig;

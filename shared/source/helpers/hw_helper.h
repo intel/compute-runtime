@@ -147,6 +147,7 @@ class HwHelper {
     virtual bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
     virtual uint32_t getPlanarYuvMaxHeight() const = 0;
     virtual bool isBlitterForImagesSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual size_t getPreemptionAllocationAlignment() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -369,6 +370,8 @@ class HwHelperHw : public HwHelper {
     uint32_t getPlanarYuvMaxHeight() const override;
 
     bool isBlitterForImagesSupported(const HardwareInfo &hwInfo) const override;
+
+    size_t getPreemptionAllocationAlignment() const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
