@@ -555,7 +555,7 @@ TEST(HwInfoConfigLinuxTest, whenAdjustPlatformForProductFamilyCalledThenDoNothin
 
 using HwConfigLinux = ::testing::Test;
 
-HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwInfoThenMaxValuesAreSetInGtSystemInfo, MatchAny) {
+HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwInfoThenMaxSlicesSupportedSetInGtSystemInfo, MatchAny) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
@@ -589,14 +589,14 @@ HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwI
 
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = drm->StoredSSVal / 2;
     hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = drm->StoredSSVal / 2;
-    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 1;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 6;
     hwInfo.gtSystemInfo.MaxSlicesSupported = drm->StoredSVal / 2;
 
     ret = hwConfig->configureHwInfo(&hwInfo, &outHwInfo, osInterface.get());
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(12u, outHwInfo.gtSystemInfo.MaxSubSlicesSupported);
-    EXPECT_EQ(static_cast<uint32_t>(drm->StoredEUVal / drm->StoredSSVal), outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
+    EXPECT_EQ(6u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice); // MaxEuPerSubslice is preserved
     EXPECT_EQ(static_cast<uint32_t>(drm->StoredSVal), outHwInfo.gtSystemInfo.MaxSlicesSupported);
 
     EXPECT_EQ(hwInfo.gtSystemInfo.MaxDualSubSlicesSupported, outHwInfo.gtSystemInfo.MaxDualSubSlicesSupported);

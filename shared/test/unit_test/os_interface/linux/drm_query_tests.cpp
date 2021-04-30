@@ -69,7 +69,7 @@ TEST(DrmQueryTest, GivenDrmWhenQueryingTopologyInfoCorrectMaxValuesAreSet) {
 
 using HwConfigTopologyQuery = ::testing::Test;
 
-HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOnEuAndSubsliceIoctlQueries, MatchAny) {
+HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOnSubsliceIoctlQuery, MatchAny) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
@@ -88,13 +88,13 @@ HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOn
 
     hwInfo.gtSystemInfo.MaxSlicesSupported = 0;
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = 0;
-    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 0;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 6;
 
     auto hwConfig = HwInfoConfigHw<productFamily>::get();
     int ret = hwConfig->configureHwInfo(&hwInfo, &outHwInfo, osInterface.get());
     EXPECT_NE(-1, ret);
 
-    EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount / outHwInfo.gtSystemInfo.SubSliceCount, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
+    EXPECT_EQ(6u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, outHwInfo.gtSystemInfo.MaxSubSlicesSupported);
     EXPECT_EQ(hwInfo.gtSystemInfo.SliceCount, outHwInfo.gtSystemInfo.MaxSlicesSupported);
 
