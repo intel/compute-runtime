@@ -512,7 +512,7 @@ bool Wddm::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) 
 
 NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, D3DKMT_HANDLE *outSharedHandle) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    D3DDDI_ALLOCATIONINFO AllocationInfo = {0};
+    D3DDDI_ALLOCATIONINFO2 AllocationInfo = {0};
     D3DKMT_CREATEALLOCATION CreateAllocation = {0};
 
     if (gmm == nullptr)
@@ -534,10 +534,10 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     CreateAllocation.Flags.CreateShared = outSharedHandle ? TRUE : FALSE;
     CreateAllocation.Flags.RestrictSharedAccess = FALSE;
     CreateAllocation.Flags.CreateResource = outSharedHandle || alignedCpuPtr ? TRUE : FALSE;
-    CreateAllocation.pAllocationInfo = &AllocationInfo;
+    CreateAllocation.pAllocationInfo2 = &AllocationInfo;
     CreateAllocation.hDevice = device;
 
-    status = getGdi()->createAllocation(&CreateAllocation);
+    status = getGdi()->createAllocation2(&CreateAllocation);
     if (status != STATUS_SUCCESS) {
         DEBUG_BREAK_IF(true);
         return status;
@@ -578,7 +578,7 @@ bool Wddm::setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocati
 
 bool Wddm::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     NTSTATUS status = STATUS_SUCCESS;
-    D3DDDI_ALLOCATIONINFO AllocationInfo = {0};
+    D3DDDI_ALLOCATIONINFO2 AllocationInfo = {0};
     D3DKMT_CREATEALLOCATION CreateAllocation = {0};
 
     AllocationInfo.pSystemMem = 0;
@@ -590,10 +590,10 @@ bool Wddm::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     CreateAllocation.pPrivateRuntimeData = NULL;
     CreateAllocation.pPrivateDriverData = NULL;
     CreateAllocation.Flags.CreateResource = FALSE;
-    CreateAllocation.pAllocationInfo = &AllocationInfo;
+    CreateAllocation.pAllocationInfo2 = &AllocationInfo;
     CreateAllocation.hDevice = device;
 
-    status = getGdi()->createAllocation(&CreateAllocation);
+    status = getGdi()->createAllocation2(&CreateAllocation);
 
     if (status != STATUS_SUCCESS) {
         DEBUG_BREAK_IF(true);
@@ -608,7 +608,7 @@ bool Wddm::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
 
 NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    D3DDDI_ALLOCATIONINFO AllocationInfo[maxFragmentsCount] = {{0}};
+    D3DDDI_ALLOCATIONINFO2 AllocationInfo[maxFragmentsCount] = {{0}};
     D3DKMT_CREATEALLOCATION CreateAllocation = {0};
 
     auto allocationCount = 0;
@@ -643,11 +643,11 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
     CreateAllocation.Flags.CreateShared = FALSE;
     CreateAllocation.Flags.RestrictSharedAccess = FALSE;
     CreateAllocation.Flags.CreateResource = FALSE;
-    CreateAllocation.pAllocationInfo = AllocationInfo;
+    CreateAllocation.pAllocationInfo2 = AllocationInfo;
     CreateAllocation.hDevice = device;
 
     while (status == STATUS_UNSUCCESSFUL) {
-        status = getGdi()->createAllocation(&CreateAllocation);
+        status = getGdi()->createAllocation2(&CreateAllocation);
 
         if (status != STATUS_SUCCESS) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, __FUNCTION__ "status: %d", status);
@@ -1109,7 +1109,7 @@ bool Wddm::configureDeviceAddressSpace() {
     deviceCallbacks.PagingQueue = pagingQueue;
     deviceCallbacks.PagingFence = pagingQueueSyncObject;
 
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnAllocate = getGdi()->createAllocation;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnAllocate = getGdi()->createAllocation_;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnDeallocate = getGdi()->destroyAllocation;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA = getGdi()->mapGpuVirtualAddress;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMakeResident = getGdi()->makeResident;

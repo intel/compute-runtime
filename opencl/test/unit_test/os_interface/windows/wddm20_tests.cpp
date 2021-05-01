@@ -798,11 +798,11 @@ TEST_F(Wddm20Tests, givenOpenSharedHandleWhenZeroAllocationsThenReturnNull) {
 
 TEST_F(Wddm20Tests, whenCreateAllocation64kFailsThenReturnFalse) {
     struct FailingCreateAllocation {
-        static NTSTATUS APIENTRY mockCreateAllocation(D3DKMT_CREATEALLOCATION *param) {
+        static NTSTATUS APIENTRY mockCreateAllocation2(D3DKMT_CREATEALLOCATION *param) {
             return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
         };
     };
-    gdi->createAllocation = FailingCreateAllocation::mockCreateAllocation;
+    gdi->createAllocation2 = FailingCreateAllocation::mockCreateAllocation2;
 
     void *fakePtr = reinterpret_cast<void *>(0x123);
     auto gmm = std::make_unique<Gmm>(rootDeviceEnvironemnt->getGmmClientContext(), fakePtr, 100, 0, false);
@@ -815,11 +815,11 @@ TEST_F(Wddm20Tests, whenCreateAllocation64kFailsThenReturnFalse) {
 TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemoryThenCorrectStatusIsReturned) {
     class MockCreateAllocation {
       public:
-        static NTSTATUS APIENTRY mockCreateAllocation(D3DKMT_CREATEALLOCATION *param) {
+        static NTSTATUS APIENTRY mockCreateAllocation2(D3DKMT_CREATEALLOCATION *param) {
             return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
         };
     };
-    gdi->createAllocation = MockCreateAllocation::mockCreateAllocation;
+    gdi->createAllocation2 = MockCreateAllocation::mockCreateAllocation2;
 
     OsHandleStorage handleStorage;
     OsHandleWin handle;
@@ -1260,7 +1260,7 @@ TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoSucceedsThenDeviceCallbacksAr
     expectedDeviceCb.PagingQueue = wddm->getPagingQueue();
     expectedDeviceCb.PagingFence = wddm->getPagingQueueSyncObject();
 
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnAllocate = gdi->createAllocation;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnAllocate = gdi->createAllocation_;
     expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnDeallocate = gdi->destroyAllocation;
     expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA = gdi->mapGpuVirtualAddress;
     expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMakeResident = gdi->makeResident;

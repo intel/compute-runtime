@@ -131,7 +131,11 @@ NTSTATUS __stdcall D3DKMTDestroyContext(IN CONST D3DKMT_DESTROYCONTEXT *destroyC
 static D3DKMT_CREATEALLOCATION pallocation{};
 
 NTSTATUS __stdcall D3DKMTCreateAllocation(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
-    D3DDDI_ALLOCATIONINFO *allocationInfo;
+    return STATUS_INVALID_PARAMETER;
+}
+
+NTSTATUS __stdcall D3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
+    D3DDDI_ALLOCATIONINFO2 *allocationInfo;
     int numOfAllocations;
     bool createResource;
     bool globalShare;
@@ -139,7 +143,7 @@ NTSTATUS __stdcall D3DKMTCreateAllocation(IN OUT D3DKMT_CREATEALLOCATION *alloca
         return STATUS_INVALID_PARAMETER;
     }
     pallocation = *allocation;
-    allocationInfo = allocation->pAllocationInfo;
+    allocationInfo = allocation->pAllocationInfo2;
     if (allocationInfo == NULL) {
         return STATUS_INVALID_PARAMETER;
     }

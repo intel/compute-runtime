@@ -25,7 +25,8 @@ class Gdi {
 
     ThkWrapper<IN OUT D3DKMT_OPENADAPTERFROMHDC *> openAdapterFromHdc{};
     ThkWrapper<IN OUT D3DKMT_OPENADAPTERFROMLUID *> openAdapterFromLuid{};
-    ThkWrapper<IN OUT D3DKMT_CREATEALLOCATION *> createAllocation{};
+    ThkWrapper<IN OUT D3DKMT_CREATEALLOCATION *> createAllocation_{};
+    ThkWrapper<IN OUT D3DKMT_CREATEALLOCATION *> createAllocation2{};
     ThkWrapper<IN CONST D3DKMT_DESTROYALLOCATION *> destroyAllocation{};
     ThkWrapper<IN CONST D3DKMT_DESTROYALLOCATION2 *> destroyAllocation2{};
     ThkWrapper<IN CONST D3DKMT_QUERYADAPTERINFO *> queryAdapterInfo{};
