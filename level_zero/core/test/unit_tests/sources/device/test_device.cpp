@@ -745,12 +745,109 @@ TEST_F(DeviceHasNoDoubleFp64Test, givenDeviceThatDoesntHaveFp64WhenDbgFlagEnable
 
     device->getKernelProperties(&kernelProperties);
     EXPECT_TRUE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT);
     EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST);
     EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO);
     EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF);
     EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_INF_NAN);
     EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_DENORM);
     EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_FMA);
+}
+
+struct DeviceHasFp64Test : public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        HardwareInfo fp64DeviceInfo = *defaultHwInfo;
+        fp64DeviceInfo.capabilityTable.ftrSupportsFP64 = true;
+        fp64DeviceInfo.capabilityTable.ftrSupports64BitMath = true;
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&fp64DeviceInfo, rootDeviceIndex);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::Device *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    const uint32_t rootDeviceIndex = 1u;
+    const uint32_t numRootDevices = 2u;
+};
+
+TEST_F(DeviceHasFp64Test, givenDeviceWithFp64ThenReportCorrectFp64Flags) {
+    ze_device_module_properties_t kernelProperties = {};
+    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
+    kernelProperties.pNext = nullptr;
+
+    device->getKernelProperties(&kernelProperties);
+
+    device->getKernelProperties(&kernelProperties);
+    EXPECT_TRUE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_INF_NAN);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_DENORM);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_FMA);
+
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_INF_NAN);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_DENORM);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_FMA);
+}
+
+struct DeviceHasFp64ButNoBitMathTest : public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        HardwareInfo fp64DeviceInfo = *defaultHwInfo;
+        fp64DeviceInfo.capabilityTable.ftrSupportsFP64 = true;
+        fp64DeviceInfo.capabilityTable.ftrSupports64BitMath = false;
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&fp64DeviceInfo, rootDeviceIndex);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::Device *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    const uint32_t rootDeviceIndex = 1u;
+    const uint32_t numRootDevices = 2u;
+};
+
+TEST_F(DeviceHasFp64ButNoBitMathTest, givenDeviceWithFp64ButNoBitMathThenReportCorrectFp64Flags) {
+    ze_device_module_properties_t kernelProperties = {};
+    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
+    kernelProperties.pNext = nullptr;
+
+    device->getKernelProperties(&kernelProperties);
+
+    device->getKernelProperties(&kernelProperties);
+    EXPECT_TRUE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64);
+    EXPECT_FALSE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_INF_NAN);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_DENORM);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_FMA);
+
+    EXPECT_FALSE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_INF_NAN);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_DENORM);
+    EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_FMA);
 }
 
 struct DeviceHasNo64BitAtomicTest : public ::testing::Test {

@@ -331,6 +331,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
     if (NEO::DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
         pKernelProperties->flags |= ZE_DEVICE_MODULE_FLAG_FP64;
         pKernelProperties->fp64flags = defaultFpFlags | ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT;
+        pKernelProperties->fp32flags |= ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT;
     } else {
         pKernelProperties->fp64flags = 0;
         if (hardwareInfo.capabilityTable.ftrSupportsFP64) {
@@ -338,6 +339,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
             pKernelProperties->fp64flags |= defaultFpFlags;
             if (hardwareInfo.capabilityTable.ftrSupports64BitMath) {
                 pKernelProperties->fp64flags |= ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT;
+                pKernelProperties->fp32flags |= ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT;
             }
         }
     }
