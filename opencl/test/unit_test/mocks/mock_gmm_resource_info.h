@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,7 +75,11 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     bool is64KBPageSuitable() const override { return is64KBPageSuitableValue; }
 
-    GMM_RESOURCE_INFO *peekHandle() const override { return mockResourceInfoHandle; }
+    GMM_RESOURCE_INFO *peekGmmResourceInfo() const override { return mockResourceInfoHandle; }
+
+    void *peekHandle() const override { return mockResourceInfoHandle; }
+
+    size_t peekHandleSize() const override { return sizeof(GMM_RESOURCE_INFO); }
 
     GMM_RESOURCE_INFO *mockResourceInfoHandle = (GMM_RESOURCE_INFO *)this;
     GMM_RESCREATE_PARAMS mockResourceCreateParams = {};
@@ -89,6 +93,9 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     void setUnifiedAuxPitchTiles(uint32_t value);
     void setAuxQPitch(uint32_t value);
     void setMipTailStartLod(uint32_t newMipTailStartLod) { mipTailStartLod = newMipTailStartLod; }
+
+    using GmmResourceInfo::clientContext;
+    using GmmResourceInfo::createResourceInfo;
 
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;

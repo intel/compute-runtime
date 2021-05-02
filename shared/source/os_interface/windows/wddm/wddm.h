@@ -31,7 +31,6 @@ class WddmAllocation;
 class WddmInterface;
 class WddmResidencyController;
 class WddmResidentAllocationsContainer;
-class HwDeviceId;
 
 struct AllocationStorageData;
 struct HardwareInfo;
@@ -116,11 +115,14 @@ class Wddm {
 
     uint64_t getMaxApplicationAddress() const;
 
-    inline D3DKMT_HANDLE getAdapter() const { return hwDeviceId->getAdapter(); }
+    HwDeviceId *getHwDeviceId() const {
+        return hwDeviceId.get();
+    }
+    D3DKMT_HANDLE getAdapter() const { return hwDeviceId->getAdapter(); }
     D3DKMT_HANDLE getDevice() const { return device; }
     D3DKMT_HANDLE getPagingQueue() const { return pagingQueue; }
     D3DKMT_HANDLE getPagingQueueSyncObject() const { return pagingQueueSyncObject; }
-    inline Gdi *getGdi() const { return hwDeviceId->getGdi(); }
+    Gdi *getGdi() const { return hwDeviceId->getGdi(); }
     MOCKABLE_VIRTUAL bool verifyAdapterLuid(LUID adapterLuid) const;
     LUID getAdapterLuid() const;
 

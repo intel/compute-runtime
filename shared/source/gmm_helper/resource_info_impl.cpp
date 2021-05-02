@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,11 +22,25 @@ GmmResourceInfo::GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_I
     createResourceInfo(resourceInfoPtr);
 }
 
+GmmResourceInfo::~GmmResourceInfo() {
+    if (this->clientContext && this->clientContext->getHandleAllocator()) {
+        this->clientContext->getHandleAllocator()->destroyHandle(this->handle);
+    }
+}
+
 void GmmResourceInfo::createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr) {
     auto customDeleter = [this](GMM_RESOURCE_INFO *gmmResourceInfo) {
         this->clientContext->destroyResInfoObject(gmmResourceInfo);
     };
     this->resourceInfo = UniquePtrType(resourceInfoPtr, customDeleter);
+
+    if (this->clientContext->getHandleAllocator()) {
+        this->handle = this->clientContext->getHandleAllocator()->createHandle(this->resourceInfo.get());
+        this->handleSize = this->clientContext->getHandleAllocator()->getHandleSize();
+    } else {
+        this->handle = this->resourceInfo.get();
+        this->handleSize = sizeof(GMM_RESOURCE_INFO);
+    }
 }
 
 } // namespace NEO

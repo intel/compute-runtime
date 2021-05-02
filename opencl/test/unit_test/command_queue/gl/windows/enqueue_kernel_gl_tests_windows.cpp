@@ -31,7 +31,7 @@ TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenRes
     auto nonSharedBuffer = new MockBuffer;
     MockGlSharing glSharing;
     MockGmm mockGmm;
-    glSharing.uploadDataToBufferInfo(1, 0, mockGmm.gmmResourceInfo->peekHandle());
+    glSharing.uploadDataToBufferInfo(1, 0, mockGmm.gmmResourceInfo->peekGmmResourceInfo());
     pContext->setSharingFunctions(glSharing.sharingFunctions.release());
     auto retVal = CL_SUCCESS;
     auto sharedBuffer = GlBuffer::createSharedGlBuffer(pContext, CL_MEM_READ_WRITE, 1, &retVal);
@@ -54,7 +54,7 @@ TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenRes
     EXPECT_EQ(sharedBufferGpuAddress, address1);
 
     // update address
-    glSharing.uploadDataToBufferInfo(1, 1, mockGmm.gmmResourceInfo->peekHandle());
+    glSharing.uploadDataToBufferInfo(1, 1, mockGmm.gmmResourceInfo->peekGmmResourceInfo());
     pCmdQ->enqueueAcquireSharedObjects(1, &sharedMem, 0, nullptr, nullptr, CL_COMMAND_ACQUIRE_GL_OBJECTS);
 
     callOneWorkItemNDRKernel();

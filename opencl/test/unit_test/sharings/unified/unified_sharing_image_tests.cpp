@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,7 +109,7 @@ struct MemoryManagerReturningCompressedAllocations : UnifiedSharingMockMemoryMan
         auto allocation = UnifiedSharingMockMemoryManager<true>::createGraphicsAllocationFromNTHandle(handle, rootDeviceIndex);
 
         auto gmm = allocation->getDefaultGmm();
-        auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfo>(gmm->gmmResourceInfo->peekHandle());
+        auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfo>(gmm->gmmResourceInfo->peekGmmResourceInfo());
         mockGmmResourceInfo->setUnifiedAuxTranslationCapable();
         gmm->gmmResourceInfo = std::move(mockGmmResourceInfo);
 

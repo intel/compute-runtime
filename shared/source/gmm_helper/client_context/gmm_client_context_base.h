@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 
 #include <memory>
@@ -36,9 +37,18 @@ class GmmClientContextBase {
     MOCKABLE_VIRTUAL uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
     MOCKABLE_VIRTUAL uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
 
+    void setHandleAllocator(std::unique_ptr<GmmHandleAllocator> allocator) {
+        this->handleAllocator = std::move(allocator);
+    }
+
+    GmmHandleAllocator *getHandleAllocator() {
+        return handleAllocator.get();
+    }
+
   protected:
     HardwareInfo *hardwareInfo = nullptr;
     GMM_CLIENT_CONTEXT *clientContext;
     GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo);
+    std::unique_ptr<GmmHandleAllocator> handleAllocator;
 };
 } // namespace NEO

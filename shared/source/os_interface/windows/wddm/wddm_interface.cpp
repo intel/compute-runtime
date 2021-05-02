@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 using namespace NEO;
@@ -77,8 +78,17 @@ bool WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandH
     pHeader->MonitorFenceValue = submitArguments.monitorFence->currentFenceValue;
 
     // Note: Private data should be the CPU VA Address
-    SubmitCommand.pPrivateDriverData = commandHeader;
-    SubmitCommand.PrivateDriverDataSize = sizeof(COMMAND_BUFFER_HEADER);
+    UmKmDataTempStorage<COMMAND_BUFFER_HEADER> internalRepresentation;
+    if (wddm.getHwDeviceId()->getUmKmDataTranslator()->enabled()) {
+        internalRepresentation.resize(wddm.getHwDeviceId()->getUmKmDataTranslator()->getSizeForCommandBufferHeaderDataInternalRepresentation());
+        bool translated = wddm.getHwDeviceId()->getUmKmDataTranslator()->tranlateCommandBufferHeaderDataToInternalRepresentation(internalRepresentation.data(), internalRepresentation.size(), *pHeader);
+        UNRECOVERABLE_IF(false == translated);
+        SubmitCommand.pPrivateDriverData = internalRepresentation.data();
+        SubmitCommand.PrivateDriverDataSize = static_cast<uint32_t>(internalRepresentation.size());
+    } else {
+        SubmitCommand.pPrivateDriverData = pHeader;
+        SubmitCommand.PrivateDriverDataSize = sizeof(COMMAND_BUFFER_HEADER);
+    }
 
     status = wddm.getGdi()->submitCommand(&SubmitCommand);
 

@@ -27,7 +27,7 @@ void MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(ExecutionEnvironment
     for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
         gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[i]->getGmmClientContext(), nullptr, 0, 0, false);
         auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[i]->osInterface->get()->getWddm());
-        wddm->hwDeviceId = std::make_unique<HwDeviceId>(ADAPTER_HANDLE, LUID{}, osEnvironment);
+        wddm->hwDeviceId = std::make_unique<HwDeviceId>(ADAPTER_HANDLE, LUID{}, osEnvironment, std::make_unique<UmKmDataTranslator>());
         wddm->callBaseMapGpuVa = false;
 
         allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();

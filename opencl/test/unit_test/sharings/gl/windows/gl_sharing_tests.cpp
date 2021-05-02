@@ -258,7 +258,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsCreatedAndGmmIsAvailableThenItIsUs
     auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), ptr, 4096u, 0, false);
 
-    mockGlSharing->m_bufferInfoOutput.pGmmResInfo = gmm->gmmResourceInfo->peekHandle();
+    mockGlSharing->m_bufferInfoOutput.pGmmResInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
     mockGlSharing->uploadDataToBufferInfo();
 
     auto retVal = CL_SUCCESS;

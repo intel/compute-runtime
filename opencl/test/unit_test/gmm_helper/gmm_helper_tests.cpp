@@ -128,10 +128,10 @@ TEST_F(GmmTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm
     auto size = 4096u;
     void *incomingPtr = (void *)0x1000;
     auto gmmRes = new Gmm(getGmmClientContext(), incomingPtr, size, 0, false);
-    auto gmmRes2 = new Gmm(getGmmClientContext(), gmmRes->gmmResourceInfo->peekHandle());
+    auto gmmRes2 = new Gmm(getGmmClientContext(), gmmRes->gmmResourceInfo->peekGmmResourceInfo());
 
     //copy is being made
-    EXPECT_NE(gmmRes2->gmmResourceInfo->peekHandle(), gmmRes->gmmResourceInfo->peekHandle());
+    EXPECT_NE(gmmRes2->gmmResourceInfo->peekHandle(), gmmRes->gmmResourceInfo->peekGmmResourceInfo());
 
     auto allocationSize = gmmRes->gmmResourceInfo->getSizeAllocation();
     EXPECT_NE(0u, allocationSize);

@@ -29,7 +29,9 @@ class WddmWithKmDafMock : public Wddm {
     using Wddm::featureTable;
     using Wddm::mapGpuVirtualAddress;
 
-    WddmWithKmDafMock(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::make_unique<HwDeviceId>(ADAPTER_HANDLE, LUID{}, rootDeviceEnvironment.executionEnvironment.osEnvironment.get()), rootDeviceEnvironment) {
+    WddmWithKmDafMock(RootDeviceEnvironment &rootDeviceEnvironment)
+        : Wddm(std::make_unique<HwDeviceId>(ADAPTER_HANDLE, LUID{}, rootDeviceEnvironment.executionEnvironment.osEnvironment.get(), std::make_unique<UmKmDataTranslator>()),
+               rootDeviceEnvironment) {
         kmDafListener.reset(new KmDafListenerMock);
     }
 

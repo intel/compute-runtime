@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,9 +18,10 @@ HwDeviceId::~HwDeviceId() {
     status = static_cast<OsEnvironmentWin *>(osEnvironment)->gdi->closeAdapter(&CloseAdapter);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 }
-HwDeviceId::HwDeviceId(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, OsEnvironment *osEnvironmentIn) : adapter(adapterIn),
-                                                                                                      adapterLuid(adapterLuidIn),
-                                                                                                      osEnvironment(osEnvironmentIn) {}
+HwDeviceId::HwDeviceId(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn,
+                       OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator)
+    : adapter(adapterIn), adapterLuid(adapterLuidIn), osEnvironment(osEnvironmentIn),
+      umKmDataTranslator(std::move(umKmDataTranslator)) {}
 Gdi *HwDeviceId::getGdi() const {
     return static_cast<OsEnvironmentWin *>(osEnvironment)->gdi.get();
 };

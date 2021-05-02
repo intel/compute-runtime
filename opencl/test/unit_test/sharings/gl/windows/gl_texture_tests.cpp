@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,9 +191,9 @@ TEST_F(GlSharingTextureTests, givenGmmResourceAsInputWhenTextureIsCreatedThenItH
     cl_int retVal = CL_INVALID_VALUE;
 
     glSharing->m_textureInfoOutput.globalShareHandle = textureId;
-    glSharing->m_textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekHandle();
+    glSharing->m_textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
     this->tempMM->useForcedGmm = false;
-    glSharing->m_textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekHandle();
+    glSharing->m_textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
 
     glSharing->uploadDataToTextureInfo();
 

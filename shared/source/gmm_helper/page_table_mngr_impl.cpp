@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ GmmPageTableMngr::~GmmPageTableMngr() {
 bool GmmPageTableMngr::updateAuxTable(uint64_t gpuVa, Gmm *gmm, bool map) {
     GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
     ddiUpdateAuxTable.BaseGpuVA = gpuVa;
-    ddiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekHandle();
+    ddiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
     ddiUpdateAuxTable.DoNotWait = true;
     ddiUpdateAuxTable.Map = map ? 1u : 0u;
 

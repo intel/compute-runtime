@@ -43,6 +43,7 @@ target_link_libraries(igdrcl_mt_tests ${TSAN_LIB})
 target_link_libraries(igdrcl_mt_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
 target_link_libraries(igdrcl_mt_tests gmock-gtest)
 target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
+target_link_libraries(igdrcl_mt_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
 
 if(WIN32)
   target_sources(igdrcl_mt_tests PRIVATE

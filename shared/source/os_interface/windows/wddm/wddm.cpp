@@ -25,6 +25,7 @@
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
@@ -33,6 +34,7 @@
 #include "shared/source/sku_info/operations/windows/sku_info_receiver.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "gmm_client_context.h"
 #include "gmm_memory.h"
 
 // clang-format off
@@ -63,6 +65,9 @@ Wddm::Wddm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &root
     this->registryReader.reset(new RegistryReader(false, "System\\CurrentControlSet\\Control\\GraphicsDrivers\\Scheduler"));
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     temporaryResources = std::make_unique<WddmResidentAllocationsContainer>(this);
+    if (hwDeviceIdIn && this->rootDeviceEnvironment.getGmmHelper()) {
+        this->rootDeviceEnvironment.getGmmClientContext()->setHandleAllocator(hwDeviceIdIn->getUmKmDataTranslator()->createGmmHandleAllocator());
+    }
 }
 
 Wddm::~Wddm() {
@@ -128,15 +133,30 @@ bool Wddm::init() {
 
 bool Wddm::queryAdapterInfo() {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    D3DKMT_QUERYADAPTERINFO QueryAdapterInfo = {0};
     ADAPTER_INFO adapterInfo = {0};
+    D3DKMT_QUERYADAPTERINFO QueryAdapterInfo = {0};
     QueryAdapterInfo.hAdapter = getAdapter();
     QueryAdapterInfo.Type = KMTQAITYPE_UMDRIVERPRIVATE;
-    QueryAdapterInfo.pPrivateDriverData = &adapterInfo;
-    QueryAdapterInfo.PrivateDriverDataSize = sizeof(ADAPTER_INFO);
 
-    status = getGdi()->queryAdapterInfo(&QueryAdapterInfo);
-    DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+    if (hwDeviceId->getUmKmDataTranslator()->enabled()) {
+        UmKmDataTempStorage<ADAPTER_INFO, 1> internalRepresentation(hwDeviceId->getUmKmDataTranslator()->getSizeForAdapterInfoInternalRepresentation());
+        QueryAdapterInfo.pPrivateDriverData = internalRepresentation.data();
+        QueryAdapterInfo.PrivateDriverDataSize = static_cast<uint32_t>(internalRepresentation.size());
+
+        status = getGdi()->queryAdapterInfo(&QueryAdapterInfo);
+        DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+
+        if (status == STATUS_SUCCESS) {
+            bool translated = hwDeviceId->getUmKmDataTranslator()->translateAdapterInfoFromInternalRepresentation(adapterInfo, internalRepresentation.data(), internalRepresentation.size());
+            status = translated ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+        }
+    } else {
+        QueryAdapterInfo.pPrivateDriverData = &adapterInfo;
+        QueryAdapterInfo.PrivateDriverDataSize = sizeof(ADAPTER_INFO);
+
+        status = getGdi()->queryAdapterInfo(&QueryAdapterInfo);
+        DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+    }
 
     // translate
     if (status == STATUS_SUCCESS) {
@@ -221,24 +241,15 @@ bool Wddm::destroyDevice() {
     return true;
 }
 
-std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid) {
-    D3DKMT_OPENADAPTERFROMLUID OpenAdapterData = {{0}};
-    OpenAdapterData.AdapterLuid = adapterLuid;
-    auto status = osEnvironment.gdi->openAdapterFromLuid(&OpenAdapterData);
-
-    if (status != STATUS_SUCCESS) {
-        DEBUG_BREAK_IF("openAdapterFromLuid failed");
-        return nullptr;
-    }
-
+bool validDriverStorePath(OsEnvironmentWin &osEnvironment, D3DKMT_HANDLE adapter) {
     D3DKMT_QUERYADAPTERINFO QueryAdapterInfo = {0};
     ADAPTER_INFO adapterInfo = {0};
-    QueryAdapterInfo.hAdapter = OpenAdapterData.hAdapter;
+    QueryAdapterInfo.hAdapter = adapter;
     QueryAdapterInfo.Type = KMTQAITYPE_UMDRIVERPRIVATE;
     QueryAdapterInfo.pPrivateDriverData = &adapterInfo;
     QueryAdapterInfo.PrivateDriverDataSize = sizeof(ADAPTER_INFO);
 
-    status = osEnvironment.gdi->queryAdapterInfo(&QueryAdapterInfo);
+    auto status = osEnvironment.gdi->queryAdapterInfo(&QueryAdapterInfo);
 
     if (status != STATUS_SUCCESS) {
         DEBUG_BREAK_IF("queryAdapterInfo failed");
@@ -247,10 +258,26 @@ std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &os
 
     std::string deviceRegistryPath = adapterInfo.DeviceRegistryPath;
     DriverInfoWindows driverInfo(std::move(deviceRegistryPath));
-    if (!driverInfo.isCompatibleDriverStore()) {
+    return driverInfo.isCompatibleDriverStore();
+}
+
+std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid) {
+    D3DKMT_OPENADAPTERFROMLUID OpenAdapterData = {{0}};
+    OpenAdapterData.AdapterLuid = adapterLuid;
+    auto status = osEnvironment.gdi->openAdapterFromLuid(&OpenAdapterData);
+    if (status != STATUS_SUCCESS) {
+        DEBUG_BREAK_IF("openAdapterFromLuid failed");
         return nullptr;
     }
 
+    std::unique_ptr<UmKmDataTranslator> umKmDataTranslator = createUmKmDataTranslator(*osEnvironment.gdi, OpenAdapterData.hAdapter);
+    if (false == umKmDataTranslator->enabled()) {
+        if (false == validDriverStorePath(osEnvironment, OpenAdapterData.hAdapter)) {
+            return nullptr;
+        }
+    }
+
+    D3DKMT_QUERYADAPTERINFO QueryAdapterInfo = {0};
     D3DKMT_ADAPTERTYPE queryAdapterType = {};
     QueryAdapterInfo.hAdapter = OpenAdapterData.hAdapter;
     QueryAdapterInfo.Type = KMTQAITYPE_ADAPTERTYPE;
@@ -265,7 +292,7 @@ std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &os
         return nullptr;
     }
 
-    return std::make_unique<HwDeviceId>(OpenAdapterData.hAdapter, adapterLuid, &osEnvironment);
+    return std::make_unique<HwDeviceId>(OpenAdapterData.hAdapter, adapterLuid, &osEnvironment, std::move(umKmDataTranslator));
 }
 
 inline bool canUseAdapterBasedOnDriverDesc(const char *driverDescription) {
@@ -520,7 +547,7 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
 
     AllocationInfo.pSystemMem = alignedCpuPtr;
     AllocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
-    AllocationInfo.PrivateDriverDataSize = static_cast<unsigned int>(sizeof(GMM_RESOURCE_INFO));
+    AllocationInfo.PrivateDriverDataSize = static_cast<uint32_t>(gmm->gmmResourceInfo->peekHandleSize());
     AllocationInfo.Flags.Primary = 0;
 
     CreateAllocation.hGlobalShare = 0;
@@ -583,7 +610,7 @@ bool Wddm::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
 
     AllocationInfo.pSystemMem = 0;
     AllocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
-    AllocationInfo.PrivateDriverDataSize = static_cast<unsigned int>(sizeof(GMM_RESOURCE_INFO));
+    AllocationInfo.PrivateDriverDataSize = static_cast<uint32_t>(gmm->gmmResourceInfo->peekHandleSize());
     AllocationInfo.Flags.Primary = 0;
 
     CreateAllocation.NumAllocations = 1;
@@ -624,7 +651,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
             auto PSysMemFromGmm = osHandle->gmm->gmmResourceInfo->getSystemMemPointer();
             DEBUG_BREAK_IF(PSysMemFromGmm != pSysMem);
             AllocationInfo[allocationCount].pSystemMem = osHandles.fragmentStorageData[i].cpuPtr;
-            AllocationInfo[allocationCount].PrivateDriverDataSize = static_cast<unsigned int>(sizeof(GMM_RESOURCE_INFO));
+            AllocationInfo[allocationCount].PrivateDriverDataSize = static_cast<unsigned int>(osHandle->gmm->gmmResourceInfo->peekHandleSize());
             allocationCount++;
         }
     }
@@ -848,9 +875,17 @@ bool Wddm::createContext(OsContextWin &osContext) {
         CreateContext.Flags.DisableGpuTimeout = readEnablePreemptionRegKey();
     }
 
-    CreateContext.PrivateDriverDataSize = sizeof(PrivateData);
+    UmKmDataTempStorage<CREATECONTEXT_PVTDATA> internalRepresentation;
+    if (hwDeviceId->getUmKmDataTranslator()->enabled()) {
+        internalRepresentation.resize(hwDeviceId->getUmKmDataTranslator()->getSizeForCreateContextDataInternalRepresentation());
+        hwDeviceId->getUmKmDataTranslator()->translateCreateContextDataToInternalRepresentation(internalRepresentation.data(), internalRepresentation.size(), PrivateData);
+        CreateContext.pPrivateDriverData = internalRepresentation.data();
+        CreateContext.PrivateDriverDataSize = static_cast<uint32_t>(internalRepresentation.size());
+    } else {
+        CreateContext.PrivateDriverDataSize = sizeof(PrivateData);
+        CreateContext.pPrivateDriverData = &PrivateData;
+    }
     CreateContext.NodeOrdinal = WddmEngineMapper::engineNodeMap(osContext.getEngineType());
-    CreateContext.pPrivateDriverData = &PrivateData;
     CreateContext.ClientHint = D3DKMT_CLIENTHINT_OPENCL;
     CreateContext.hDevice = device;
 
