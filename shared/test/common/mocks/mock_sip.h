@@ -34,7 +34,7 @@ class MockSipKernel : public SipKernel {
     void createMockSipAllocation();
 
     std::unique_ptr<MemoryAllocation> mockSipMemoryAllocation;
-    const std::vector<char> mockStateSaveAreaHeader = {'s', 's', 'a', 'h'};
+    std::vector<char> mockStateSaveAreaHeader = {'s', 's', 'a', 'h'};
     MockExecutionEnvironment executionEnvironment;
 };
 

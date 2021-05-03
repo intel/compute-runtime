@@ -28,11 +28,11 @@ class MockBuiltins : public BuiltIns {
         return *MockSipData::mockSipKernel;
     }
 
-    void overrideSipKernel(std::unique_ptr<SipKernel> kernel) {
+    void overrideSipKernel(std::unique_ptr<MockSipKernel> kernel) {
         sipKernelsOverride[kernel->getType()] = std::move(kernel);
     }
     std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Context &context, Device &device, std::unique_ptr<BuiltinDispatchInfoBuilder> builder);
-    std::map<SipKernelType, std::unique_ptr<SipKernel>> sipKernelsOverride;
+    std::map<SipKernelType, std::unique_ptr<MockSipKernel>> sipKernelsOverride;
     bool getSipKernelCalled = false;
     SipKernelType getSipKernelType = SipKernelType::COUNT;
 };
