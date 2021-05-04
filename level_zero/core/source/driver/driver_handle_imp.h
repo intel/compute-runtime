@@ -10,11 +10,13 @@
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
 
 namespace L0 {
 class HostPointerManager;
+struct Context;
 
 struct DriverHandleImp : public DriverHandle {
     ~DriverHandleImp() override;
@@ -38,6 +40,7 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc, ze_event_pool_handle_t *phEventPool) override;
     ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) override;
     NEO::SVMAllocsManager *getSvmAllocsManager() override;
+    void setSvmAllocsManager(NEO::SVMAllocsManager *) override;
     ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices);
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,
@@ -90,10 +93,9 @@ struct DriverHandleImp : public DriverHandle {
 
     uint64_t uuidTimestamp = 0u;
 
-    NEO::MemoryManager *memoryManager = nullptr;
-    NEO::SVMAllocsManager *svmAllocsManager = nullptr;
-
     uint32_t numDevices = 0;
+
+    Context *mainContext = nullptr;
 
     std::set<uint32_t> rootDeviceIndices = {};
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;

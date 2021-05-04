@@ -96,7 +96,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
                                                           alignedSize,
                                                           allocationType,
                                                           false,
-                                                          (deviceBitfield.count() > 1) && driverHandleImp->svmAllocsManager->getMultiOsContextSupport(),
+                                                          (deviceBitfield.count() > 1) && driverHandleImp->getSvmAllocsManager()->getMultiOsContextSupport(),
                                                           deviceBitfield};
         unifiedMemoryProperties.flags.isUSMHostAllocation = true;
         unifiedMemoryProperties.flags.isUSMDeviceAllocation = false;

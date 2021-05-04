@@ -19,7 +19,6 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_host_pointer_manager.h"
 
 namespace L0 {
@@ -39,29 +38,29 @@ struct HostPointerManagerFixure {
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
         DebugManager.flags.EnableHostPointerImport.set(1);
-        hostDriverHandle = std::make_unique<L0::ult::DriverHandle>();
+        hostDriverHandle = std::make_unique<L0::DriverHandleImp>();
         hostDriverHandle->initialize(std::move(devices));
+
+        ze_context_desc_t desc;
+        ze_result_t ret = hostDriverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+        context = L0::Context::fromHandle(hContext);
+
         device = hostDriverHandle->devices[0];
         EXPECT_NE(nullptr, hostDriverHandle->hostPointerManager.get());
         openHostPointerManager = static_cast<L0::ult::HostPointerManager *>(hostDriverHandle->hostPointerManager.get());
 
         heapPointer = hostDriverHandle->getMemoryManager()->allocateSystemMemory(heapSize, MemoryConstants::pageSize);
         ASSERT_NE(nullptr, heapPointer);
-
-        ze_context_desc_t desc;
-        ze_result_t ret = hostDriverHandle->createContext(&desc, 0u, nullptr, &hContext);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-        context = L0::Context::fromHandle(hContext);
     }
 
     void TearDown() {
-        context->destroy();
-
         hostDriverHandle->getMemoryManager()->freeSystemMemory(heapPointer);
+        context->destroy();
     }
     DebugManagerStateRestore debugRestore;
 
-    std::unique_ptr<L0::ult::DriverHandle> hostDriverHandle;
+    std::unique_ptr<L0::DriverHandleImp> hostDriverHandle;
 
     L0::ult::HostPointerManager *openHostPointerManager = nullptr;
     NEO::MockDevice *neoDevice = nullptr;

@@ -112,7 +112,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppe
         0,
         ZE_EVENT_SCOPE_FLAG_DEVICE};
 
-    auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<Event>(Event::create(eventPool, &eventDesc, device));
     ze_event_handle_t hEventHandle = event->toHandle();
 
     auto result = commandList->appendWaitOnEvents(1, &hEventHandle);

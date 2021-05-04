@@ -31,17 +31,23 @@ class CommandListFixture : public DeviceFixture {
         eventDesc.wait = 0;
         eventDesc.signal = 0;
 
-        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-        event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
+        eventPool = EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc);
+        event = Event::create(eventPool, &eventDesc, device);
     }
 
     void TearDown() override {
+        if (event) {
+            event->destroy();
+        }
+        if (eventPool) {
+            eventPool->destroy();
+        }
         DeviceFixture::TearDown();
     }
 
     std::unique_ptr<L0::ult::CommandList> commandList;
-    std::unique_ptr<EventPool> eventPool;
-    std::unique_ptr<Event> event;
+    EventPool *eventPool = nullptr;
+    Event *event = nullptr;
 };
 
 } // namespace ult

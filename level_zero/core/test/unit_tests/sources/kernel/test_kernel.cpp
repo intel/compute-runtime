@@ -44,14 +44,15 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasUnknownArgThenUnknowKernelArgHa
         std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
 
     createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
-    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ModuleImmutableDataFixture::MockKernel *kernel = new ModuleImmutableDataFixture::MockKernel(module);
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
     mockKernelImmData->resizeExplicitArgs(1);
     kernel->initialize(&desc);
     EXPECT_EQ(kernel->kernelArgHandlers[0], &KernelImp::setArgUnknown);
     EXPECT_EQ(mockKernelImmData->getDescriptor().payloadMappings.explicitArgs[0].type, NEO::ArgDescriptor::ArgTUnknown);
+
+    delete kernel;
 }
 
 TEST(KernelArgTest, givenKernelWhenSetArgUnknownCalledThenSuccessRteurned) {
@@ -258,7 +259,7 @@ HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithNoPrivateMemoryThen
     createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module);
 
     createKernel(kernel.get());
 
@@ -274,7 +275,7 @@ HWTEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPr
     createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module);
 
     createKernel(kernel.get());
 
@@ -309,7 +310,7 @@ HWTEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsaCopie
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module);
 
     createKernel(kernel.get());
 
@@ -339,7 +340,7 @@ HWTEST_F(KernelImmutableDataIsaCopyTests, whenInternalKernelIsCreatedThenIsaIsCo
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module);
 
     createKernel(kernel.get());
 
@@ -364,8 +365,8 @@ HWTEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserK
 
     mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
                                   device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module.get()->translationUnit->globalConstBuffer,
-                                  module.get()->translationUnit->globalVarBuffer,
+                                  module->translationUnit->globalConstBuffer,
+                                  module->translationUnit->globalVarBuffer,
                                   isInternal);
 
     EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes + 1u,
@@ -387,8 +388,8 @@ HWTEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForInter
 
     mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
                                   device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module.get()->translationUnit->globalConstBuffer,
-                                  module.get()->translationUnit->globalVarBuffer,
+                                  module->translationUnit->globalConstBuffer,
+                                  module->translationUnit->globalVarBuffer,
                                   isInternal);
 
     EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
@@ -415,8 +416,8 @@ HWTEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedFor
 
     mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
                                   device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module.get()->translationUnit->globalConstBuffer,
-                                  module.get()->translationUnit->globalVarBuffer,
+                                  module->translationUnit->globalConstBuffer,
+                                  module->translationUnit->globalVarBuffer,
                                   isInternal);
 
     EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
@@ -443,8 +444,8 @@ HWTEST_F(KernelImmutableDataWithNullHeapTests, whenImmutableDataIsInitializedFor
 
     mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
                                   device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module.get()->translationUnit->globalConstBuffer,
-                                  module.get()->translationUnit->globalVarBuffer,
+                                  module->translationUnit->globalConstBuffer,
+                                  module->translationUnit->globalVarBuffer,
                                   isInternal);
 
     EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
@@ -475,7 +476,7 @@ HWTEST_F(KernelImmutableDataWithNullHeapTests, whenInternalKernelIsCreatedWithNu
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module);
 
     auto previousKernelHeap = mockKernelImmData->kernelInfo->heapInfo.pKernelHeap;
     mockKernelImmData->kernelInfo->heapInfo.pKernelHeap = nullptr;
@@ -559,7 +560,7 @@ HWTEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithNoKerne
     createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module);
 
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
@@ -587,7 +588,7 @@ HWTEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelL
 
     {
         std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module);
 
         ze_kernel_desc_t desc = {};
         desc.pKernelName = kernelName.c_str();
@@ -603,7 +604,7 @@ HWTEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelL
 
     {
         std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module);
 
         ze_kernel_desc_t desc = {};
         desc.pKernelName = kernelName.c_str();
@@ -619,7 +620,7 @@ HWTEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelL
 
     {
         std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module);
 
         ze_kernel_desc_t desc = {};
         desc.pKernelName = kernelName.c_str();
@@ -932,7 +933,7 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelAndNoMediavfestateThenSpillMemSi
     ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
+    L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module);
     NEO::KernelInfo *ki = nullptr;
     for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
         ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
@@ -955,7 +956,7 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelAndNollocateStatelessPrivateSurf
     ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
+    L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module);
     NEO::KernelInfo *ki = nullptr;
     for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
         ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
@@ -1222,7 +1223,7 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessT
     desc.pKernelName = kernelName.c_str();
 
     WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.module = module;
     mockKernel.initialize(&desc);
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
     arg.bindless = 0x40;
@@ -1253,7 +1254,7 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulTh
     desc.pKernelName = kernelName.c_str();
 
     WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.module = module;
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
@@ -1293,7 +1294,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenValidBindlessOffsetWhenSetArgBufferWithA
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.module = module;
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -1312,7 +1313,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenValidBindfulOffsetWhenSetArgBufferWithAl
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.module = module;
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -1331,7 +1332,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenUndefiedBidfulAndBindlesstOffsetWhenSetA
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.module = module;
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -1352,7 +1353,7 @@ TEST_F(KernelBindlessUncachedMemoryTests, givenBindlessKernelAndAllocDataNoTfoun
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.module = module;
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -1371,7 +1372,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.module = module;
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -1421,7 +1422,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.module = module;
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -1473,7 +1474,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.module = module;
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -1657,8 +1658,8 @@ TEST_F(KernelPrintHandlerTest, whenPrintPrintfOutputIsCalledThenPrintfBufferIsUs
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
 
-    kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
-    kernel->module = module.get();
+    kernel = new WhiteBox<::L0::Kernel>();
+    kernel->module = module;
     kernel->initialize(&desc);
 
     EXPECT_FALSE(kernel->printfBuffer == nullptr);

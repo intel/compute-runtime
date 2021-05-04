@@ -115,10 +115,27 @@ struct ContextImp : Context {
         return devices;
     }
 
+    NEO::MemoryManager *getMemoryManager() override {
+        return this->memoryManager;
+    }
+    void setMemoryManager(NEO::MemoryManager *memoryManager) override {
+        this->memoryManager = memoryManager;
+    }
+    NEO::SVMAllocsManager *getSvmAllocsManager() override {
+        return this->svmAllocsManager;
+    }
+
+    void setSvmAllocsManager(NEO::SVMAllocsManager *svmManager) override {
+        this->svmAllocsManager = svmManager;
+    }
+
     std::set<uint32_t> rootDeviceIndices = {};
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
+
+    NEO::MemoryManager *memoryManager = nullptr;
+    NEO::SVMAllocsManager *svmAllocsManager = nullptr;
 
   protected:
     std::map<ze_device_handle_t, Device *> devices;

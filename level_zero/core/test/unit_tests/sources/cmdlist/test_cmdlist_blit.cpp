@@ -85,11 +85,19 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBlt
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     MockCommandListForMemFill<gfxCoreFamily> commandList;
+
     MockDriverHandle driverHandleMock;
     NEO::DeviceVector neoDevices;
     neoDevices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandleMock.initialize(std::move(neoDevices));
     device->setDriverHandle(&driverHandleMock);
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+    ze_result_t res = driverHandleMock.createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    L0::ContextImp *contextDriverMock = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
     commandList.initialize(device, NEO::EngineGroupType::Copy);
     uint16_t pattern = 1;
     void *ptr = reinterpret_cast<void *>(0x1234);
@@ -99,6 +107,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBlt
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0), commandList.commandContainer.getCommandStream()->getUsed()));
     auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
+    contextDriverMock->destroy();
     device->setDriverHandle(driverHandle.get());
 }
 
