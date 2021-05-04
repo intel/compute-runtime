@@ -47,6 +47,7 @@ struct DriverHandle : _ze_driver_handle_t {
                                                                              bool *allocationRangeCovered) = 0;
 
     virtual NEO::SVMAllocsManager *getSvmAllocsManager() = 0;
+    virtual void setSvmAllocsManager(NEO::SVMAllocsManager *) = 0;
     virtual ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                            uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) = 0;
     virtual ze_result_t sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,

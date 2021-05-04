@@ -23,8 +23,11 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
+#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
+#include "level_zero/core/test/unit_tests/white_box.h"
 
 #include "gtest/gtest.h"
 
@@ -192,6 +195,16 @@ struct DeviceTest : public ::testing::Test {
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
+
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc;
+        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    }
+
+    void TearDown() override {
+        context->destroy();
     }
 
     DebugManagerStateRestore restorer;
@@ -200,6 +213,7 @@ struct DeviceTest : public ::testing::Test {
     L0::Device *device = nullptr;
     const uint32_t rootDeviceIndex = 1u;
     const uint32_t numRootDevices = 2u;
+    L0::ContextImp *context = nullptr;
 };
 
 TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateManagedMemoryFromHostPtrThenBufferHostAllocationIsCreated) {
@@ -248,12 +262,19 @@ struct DeviceHostPointerTest : public ::testing::Test {
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
 
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc;
+        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
         static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->isMockHostMemoryManager = true;
         static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
 
         device = driverHandle->devices[0];
     }
     void TearDown() override {
+        context->destroy();
     }
 
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
@@ -262,6 +283,7 @@ struct DeviceHostPointerTest : public ::testing::Test {
     L0::Device *device = nullptr;
     const uint32_t rootDeviceIndex = 1u;
     const uint32_t numRootDevices = 2u;
+    L0::ContextImp *context = nullptr;
 };
 
 TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelThenNewAllocationIsCreatedAndHostPointerCopied) {

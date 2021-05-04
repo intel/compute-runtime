@@ -32,18 +32,20 @@ struct TimestampEvent : public Test<DeviceFixture> {
         eventDesc.signal = 0;
         eventDesc.wait = 0;
 
-        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+        eventPool = L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc);
         ASSERT_NE(nullptr, eventPool);
-        event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+        event = L0::Event::create(eventPool, &eventDesc, device);
         ASSERT_NE(nullptr, event);
     }
 
     void TearDown() override {
+        event->destroy();
+        eventPool->destroy();
         DeviceFixture::TearDown();
     }
 
-    std::unique_ptr<L0::EventPool> eventPool;
-    std::unique_ptr<L0::Event> event;
+    L0::EventPool *eventPool = nullptr;
+    L0::Event *event = nullptr;
 };
 
 GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {

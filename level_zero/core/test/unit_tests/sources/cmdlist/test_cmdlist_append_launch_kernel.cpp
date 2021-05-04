@@ -200,7 +200,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(1u, commandList->getPrintfFunctionContainer().size());
-    EXPECT_EQ(kernel.get(), commandList->getPrintfFunctionContainer()[0]);
+    EXPECT_EQ(kernel, commandList->getPrintfFunctionContainer()[0]);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToCommandListMultipleTimesThenKernelIsStoredOnce) {
@@ -215,7 +215,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(1u, commandList->getPrintfFunctionContainer().size());
-    EXPECT_EQ(kernel.get(), commandList->getPrintfFunctionContainer()[0]);
+    EXPECT_EQ(kernel, commandList->getPrintfFunctionContainer()[0]);
 
     result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -595,9 +595,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    Mock<::L0::Kernel> kernel;
-    kernel.descriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 2;
-    kernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;
+    Mock<::L0::Kernel> mockKernel;
+    mockKernel.descriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 2;
+    mockKernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
 
@@ -606,7 +606,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
     auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),
+    result = commandList->appendLaunchKernelIndirect(mockKernel.toHandle(),
                                                      static_cast<ze_group_count_t *>(alloc),
                                                      nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

@@ -14,13 +14,13 @@
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 
 namespace L0 {
@@ -54,6 +54,12 @@ struct ActiveDebuggerFixture {
 
         ASSERT_NE(nullptr, driverHandle);
 
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc;
+        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
         ze_device_handle_t hDevice;
         uint32_t count = 1;
         ze_result_t result = driverHandle->getDevice(&count, &hDevice);
@@ -62,6 +68,7 @@ struct ActiveDebuggerFixture {
         ASSERT_NE(nullptr, deviceL0);
     }
     void TearDown() { // NOLINT(readability-identifier-naming)
+        context->destroy();
         L0::GlobalDriver = nullptr;
     }
 
@@ -70,6 +77,7 @@ struct ActiveDebuggerFixture {
     L0::Device *deviceL0;
     MockActiveSourceLevelDebugger *debugger = nullptr;
     HardwareInfo hwInfo;
+    L0::ContextImp *context = nullptr;
 };
 } // namespace ult
 } // namespace L0

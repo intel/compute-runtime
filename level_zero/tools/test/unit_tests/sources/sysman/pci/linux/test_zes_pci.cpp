@@ -50,6 +50,7 @@ class ZesPciFixture : public ::testing::Test {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
+    L0::Context *context = nullptr;
 
     void SetUp() override {
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
@@ -60,6 +61,12 @@ class ZesPciFixture : public ::testing::Test {
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
+
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc;
+        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto osInterface = device->getOsInterface().get();
@@ -110,6 +117,7 @@ class ZesPciFixture : public ::testing::Test {
         unsetenv("ZES_ENABLE_SYSMAN");
         pLinuxSysmanImp->pSysfsAccess = pOriginalSysfsAccess;
         pLinuxSysmanImp->pFsAccess = pOriginalFsAccess;
+        context->destroy();
     }
     SysmanDevice *pSysmanDevice = nullptr;
     SysmanDeviceImp *pSysmanDeviceImp = nullptr;

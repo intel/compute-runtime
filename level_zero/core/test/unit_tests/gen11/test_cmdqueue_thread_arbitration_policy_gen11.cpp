@@ -13,6 +13,7 @@
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -38,8 +39,13 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
 
         auto driverHandleUlt = whitebox_cast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
         driverHandle.reset(driverHandleUlt);
-
         ASSERT_NE(nullptr, driverHandle);
+
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc = {};
+        returnValue = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
         ze_device_handle_t hDevice;
         uint32_t count = 1;
@@ -63,6 +69,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
     void TearDown() override {
         commandList->destroy();
         commandQueue->destroy();
+        context->destroy();
         L0::GlobalDriver = nullptr;
     }
 
@@ -72,6 +79,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
     std::unique_ptr<L0::ult::WhiteBox<L0::DriverHandle>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device;
+    L0::ContextImp *context = nullptr;
 };
 
 HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,

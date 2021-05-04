@@ -38,15 +38,23 @@ struct L0DebuggerFixture {
 
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
+
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc;
+        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
     }
 
     void TearDown() {
+        context->destroy();
     }
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     NEO::HardwareInfo hwInfo;
+    L0::ContextImp *context = nullptr;
 };
 
 struct L0DebuggerHwFixture : public L0DebuggerFixture {
