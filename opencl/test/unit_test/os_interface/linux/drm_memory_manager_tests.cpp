@@ -4434,4 +4434,12 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithWithAlignmentFromUserptrWhenI
     auto allocation = static_cast<DrmAllocation *>(memoryManager->createAllocWithAlignmentFromUserptr(allocationData, size, 0, 0, 0x1000));
     EXPECT_EQ(allocation, nullptr);
 }
+
+TEST_F(DrmMemoryManagerTest, givenAllocateGraphicsMemoryWithPropertiesCalledWithDebugSurfaceTypeThenDebugSurfaceIsCreated) {
+    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
+    auto debugSurface = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties));
+
+    EXPECT_NE(nullptr, debugSurface);
+    memoryManager->freeGraphicsMemory(debugSurface);
+}
 } // namespace NEO

@@ -227,6 +227,14 @@ DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handl
 }
 
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
+    if (allocationData.type == NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
+        return createMultiHostAllocation(allocationData);
+    }
+
+    return allocateGraphicsMemoryWithAlignmentImpl(allocationData);
+}
+
+DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const AllocationData &allocationData) {
     const size_t minAlignment = getUserptrAlignment();
     size_t cAlignment = alignUp(std::max(allocationData.alignment, minAlignment), minAlignment);
     // When size == 0 allocate allocationAlignment

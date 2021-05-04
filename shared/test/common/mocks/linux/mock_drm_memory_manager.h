@@ -73,6 +73,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::createAllocWithAlignment;
     using DrmMemoryManager::createAllocWithAlignmentFromUserptr;
     using DrmMemoryManager::createGraphicsAllocation;
+    using DrmMemoryManager::createMultiHostAllocation;
     using DrmMemoryManager::eraseSharedBufferObject;
     using DrmMemoryManager::getDefaultDrmContextId;
     using DrmMemoryManager::getDrm;
@@ -115,5 +116,11 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         size = sharingBufferObjects.size();
         return size;
     }
+    void *alignedMallocWrapper(size_t size, size_t alignment) override {
+        alignedMallocSizeRequired = size;
+        return alignedMallocShouldFail ? nullptr : DrmMemoryManager::alignedMallocWrapper(size, alignment);
+    }
+    bool alignedMallocShouldFail = false;
+    size_t alignedMallocSizeRequired = 0u;
 };
 } // namespace NEO
