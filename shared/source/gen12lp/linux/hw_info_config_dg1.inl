@@ -20,7 +20,7 @@ int HwInfoConfigHw<IGFX_DG1>::configureHardwareCustom(HardwareInfo *hwInfo, OSIn
     hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = false;
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
     kmdNotifyProperties.enableKmdNotify = true;
-    kmdNotifyProperties.delayKmdNotifyMicroseconds = 100;
+    kmdNotifyProperties.delayKmdNotifyMicroseconds = 300;
     return 0;
 }
 

@@ -30,5 +30,5 @@ DG1TEST_F(HwHelperTestGen12Lp, GivenDG1WhenConfigureHardwareCustomThenKmdNotifyI
     OSInterface osIface;
     hwInfoConfig->configureHardwareCustom(&hardwareInfo, &osIface);
     EXPECT_TRUE(hardwareInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
-    EXPECT_EQ(100ll, hardwareInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    EXPECT_EQ(300ll, hardwareInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
 }
