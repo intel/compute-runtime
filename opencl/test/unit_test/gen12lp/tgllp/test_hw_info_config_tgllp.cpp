@@ -15,7 +15,7 @@ using namespace NEO;
 
 using TgllpHwInfoConfig = ::testing::Test;
 
-TGLLPTEST_F(TgllpHwInfoConfig, givenHwInfoErrorneousConfigString) {
+TGLLPTEST_F(TgllpHwInfoConfig, givenHwInfoErrorneousConfigStringThenThrow) {
     HardwareInfo hwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
