@@ -367,6 +367,33 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAl
     cmdContainer->getDeallocationContainer().clear();
 }
 
+TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenBorderColorOffestHasBeenReset) {
+    std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
+    cmdContainer->initialize(pDevice);
+    cmdContainer->setDirtyStateForAllHeaps(false);
+    HeapType types[] = {HeapType::SURFACE_STATE,
+                        HeapType::DYNAMIC_STATE};
+
+    for (auto type : types) {
+        auto heap = cmdContainer->getIndirectHeap(type);
+        heap->setBorderColor(nullptr, 0);
+        EXPECT_NE(heap->getBorderColorOffset(), std::numeric_limits<uint32_t>::max());
+        const size_t sizeRequested = 32;
+        const size_t alignment = 32;
+        size_t availableSize = heap->getAvailableSpace();
+
+        heap->getSpace(availableSize - sizeRequested / 2);
+
+        EXPECT_LT(heap->getAvailableSpace(), sizeRequested + alignment);
+        auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(type, sizeRequested, alignment);
+        EXPECT_EQ(heapRequested->getBorderColorOffset(), std::numeric_limits<uint32_t>::max());
+    }
+    for (auto deallocation : cmdContainer->getDeallocationContainer()) {
+        cmdContainer->getDevice()->getMemoryManager()->freeGraphicsMemory(deallocation);
+    }
+    cmdContainer->getDeallocationContainer().clear();
+}
+
 TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenCreatedAlocationHaveDifferentBaseThenHeapIsDirty) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice);

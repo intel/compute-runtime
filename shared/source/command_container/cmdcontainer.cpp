@@ -203,6 +203,7 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
         getResidencyContainer().push_back(newAlloc);
         getDeallocationContainer().push_back(oldAlloc);
         setIndirectHeapAllocation(heapType, newAlloc);
+        indirectHeap->resetBorderColorOffset();
         if (oldBase != newBase) {
             setHeapDirty(heapType);
         }

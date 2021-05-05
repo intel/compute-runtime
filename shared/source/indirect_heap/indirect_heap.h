@@ -47,6 +47,7 @@ class IndirectHeap : public LinearStream {
     uint32_t getHeapSizeInPages() const;
     uint32_t getBorderColorOffset() const;
     void setBorderColor(void *borderColor, size_t size);
+    void resetBorderColorOffset();
 
   protected:
     bool canBeUtilizedAs4GbHeap = false;
@@ -89,5 +90,8 @@ inline void IndirectHeap::setBorderColor(void *borderColor, size_t size) {
     borderColorOffset = static_cast<uint32_t>(getUsed());
     auto ptr = getSpace(size);
     memcpy_s(ptr, size, borderColor, size);
+}
+inline void IndirectHeap::resetBorderColorOffset() {
+    borderColorOffset = std::numeric_limits<uint32_t>::max();
 }
 } // namespace NEO

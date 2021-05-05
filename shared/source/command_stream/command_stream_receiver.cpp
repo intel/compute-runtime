@@ -420,6 +420,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
     if (indirectHeap) {
         indirectHeap->replaceBuffer(heapMemory->getUnderlyingBuffer(), finalHeapSize);
         indirectHeap->replaceGraphicsAllocation(heapMemory);
+        indirectHeap->resetBorderColorOffset();
     } else {
         indirectHeap = new IndirectHeap(heapMemory, requireInternalHeap);
         indirectHeap->overrideMaxSize(finalHeapSize);
@@ -437,6 +438,7 @@ void CommandStreamReceiver::releaseIndirectHeap(IndirectHeap::Type heapType) {
             internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
         heap->replaceBuffer(nullptr, 0);
         heap->replaceGraphicsAllocation(nullptr);
+        heap->resetBorderColorOffset();
     }
 }
 
