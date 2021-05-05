@@ -1,2 +1,2 @@
 #!groovy
-dependenciesRevision='a47b90ed3e2d846d089fcd144e48295ad6199027-1677'
+dependenciesRevision='74873fea2d6531b160532bb398977cc3d0fbf931-1679'
