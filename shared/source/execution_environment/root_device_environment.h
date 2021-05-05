@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/built_ins/sip_kernel_type.h"
+#include "shared/source/helpers/affinity_mask.h"
 #include "shared/source/helpers/options.h"
 
 #include <cstdint>
@@ -32,8 +33,6 @@ class OSInterface;
 class SipKernel;
 class SWTagsManager;
 struct HardwareInfo;
-
-constexpr uint32_t allSubDevicesActive = std::numeric_limits<uint32_t>::max();
 
 struct RootDeviceEnvironment {
   protected:
@@ -74,7 +73,7 @@ struct RootDeviceEnvironment {
     std::unique_ptr<SWTagsManager> tagsManager;
     ExecutionEnvironment &executionEnvironment;
 
-    uint32_t deviceAffinityMask = allSubDevicesActive;
+    AffinityMaskHelper deviceAffinityMask{true};
 
   private:
     std::mutex mtx;

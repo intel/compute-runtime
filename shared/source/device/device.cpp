@@ -66,7 +66,7 @@ SubDevice *Device::createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_s
 }
 
 bool Device::genericSubDevicesAllowed() {
-    auto deviceMask = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->deviceAffinityMask;
+    auto deviceMask = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->deviceAffinityMask.getGenericSubDevicesMask();
     uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
     deviceBitfield = maxNBitValue(subDeviceCount);
     deviceBitfield &= deviceMask;

@@ -158,20 +158,25 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
             }
         }
 
+        const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+        auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
+
         if (enableProgramDebugging) {
             if (neoDevice->getDebugger() != nullptr) {
                 NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                                       "%s", "Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n");
                 UNRECOVERABLE_IF(neoDevice->getDebugger() != nullptr && enableProgramDebugging);
             }
-            neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger = DebuggerL0::create(neoDevice.get());
+            rootDeviceEnvironment->debugger = DebuggerL0::create(neoDevice.get());
         }
 
-        this->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
-        this->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+        this->rootDeviceIndices.insert(rootDeviceIndex);
+        this->deviceBitfields.insert({rootDeviceIndex, neoDevice->getDeviceBitfield()});
 
         auto pNeoDevice = neoDevice.release();
-        auto device = Device::create(this, pNeoDevice, pNeoDevice->getExecutionEnvironment()->rootDeviceEnvironments[pNeoDevice->getRootDeviceIndex()]->deviceAffinityMask, false, &returnValue);
+
+        auto subDevicesMask = static_cast<uint32_t>(rootDeviceEnvironment->deviceAffinityMask.getGenericSubDevicesMask().to_ulong());
+        auto device = Device::create(this, pNeoDevice, subDevicesMask, false, &returnValue);
         this->devices.push_back(device);
 
         multiOsContextDriver |= device->isMultiDeviceCapable();
