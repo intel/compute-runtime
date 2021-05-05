@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,8 @@
 #include <cstring>
 #include <string>
 
-const int maximalStackSizeSizes = 16;
+namespace StringHelpers {
+constexpr int maximalStackSizeSizes = 16;
 
 inline int createCombinedString(
     std::string &dstString,
@@ -28,7 +29,7 @@ inline int createCombinedString(
         retVal = CL_INVALID_VALUE;
     }
 
-    using SourceSizesT = StackVec<size_t, maximalStackSizeSizes>;
+    using SourceSizesT = StackVec<size_t, StringHelpers::maximalStackSizeSizes>;
     SourceSizesT localSizes;
 
     if (retVal == CL_SUCCESS) {
@@ -61,3 +62,25 @@ inline int createCombinedString(
 
     return retVal;
 }
+
+inline std::vector<std::string> split(const std::string &input, const char *delimiter) {
+    std::vector<std::string> outVector;
+    size_t pos = 0;
+
+    while (pos < input.size()) {
+        size_t nextDelimiter = input.find_first_of(delimiter, pos);
+        outVector.emplace_back(input.substr(pos, std::min(nextDelimiter, input.size()) - pos));
+
+        pos = nextDelimiter;
+        if (pos != std::string::npos) {
+            pos++;
+        }
+    }
+
+    return outVector;
+}
+
+inline uint32_t toUint32t(const std::string &input) {
+    return static_cast<uint32_t>(std::stoul(input, nullptr, 0));
+}
+} // namespace StringHelpers

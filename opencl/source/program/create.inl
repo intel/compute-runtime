@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,10 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/string_helpers.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/helpers/string_helpers.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 
@@ -65,7 +65,7 @@ T *Program::create(
     size_t combinedStringSize = 0;
     T *program = nullptr;
 
-    auto retVal = createCombinedString(
+    auto retVal = StringHelpers::createCombinedString(
         combinedString,
         combinedStringSize,
         count,

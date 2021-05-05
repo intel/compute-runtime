@@ -12,6 +12,7 @@
 
 #include <array>
 #include <bitset>
+#include <string>
 #include <vector>
 
 namespace NEO {

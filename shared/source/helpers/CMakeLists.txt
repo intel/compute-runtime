@@ -96,6 +96,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/state_compute_mode_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stdio.h
     ${CMAKE_CURRENT_SOURCE_DIR}/string.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/string_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/surface_format_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_offsets.h
     ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.cpp

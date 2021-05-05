@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #pragma once
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/utilities/directory.h"
 
-#include "opencl/source/helpers/string_helpers.h"
 #include "opencl/source/utilities/logger.h"
 
 #include <map>

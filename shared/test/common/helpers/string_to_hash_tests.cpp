@@ -6,8 +6,7 @@
  */
 
 #include "shared/source/helpers/hash.h"
-
-#include "opencl/source/helpers/string_helpers.h"
+#include "shared/source/helpers/string_helpers.h"
 
 #include "gtest/gtest.h"
 
@@ -21,7 +20,7 @@ TEST(CreateCombinedStrings, GivenSingleStringWhenCreatingCombinedStringThenDstSt
     auto srcStrings = &pSrcString;
     size_t lengths = strlen(srcString);
 
-    auto retVal = createCombinedString(
+    auto retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
         1,
@@ -41,7 +40,7 @@ TEST(CreateCombinedStrings, GivenNullLengthWhenCreatingCombinedStringThenDstStri
     const char *pSrcString = srcString;
     auto srcStrings = &pSrcString;
 
-    auto retVal = createCombinedString(
+    auto retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
         1,
@@ -60,7 +59,7 @@ TEST(CreateCombinedStrings, GivenZeroLengthWhenCreatingCombinedStringThenDstStri
     auto srcStrings = &pSrcString;
     size_t lengths = 0;
 
-    auto retVal = createCombinedString(
+    auto retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
         1,
@@ -81,7 +80,7 @@ TEST(CreateCombinedStrings, GivenMultiStringWhenCreatingCombinedStringThenDstStr
     auto srcStrings = &srcString[0];
     size_t lengths[2] = {strlen(srcString[0]), strlen(srcString[1])};
 
-    auto retVal = createCombinedString(
+    auto retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
         2,
@@ -100,7 +99,7 @@ TEST(CreateCombinedStrings, GivenMultiStringAndNullLengthWhenCreatingCombinedStr
     combined += srcString[1];
     auto srcStrings = &srcString[0];
 
-    auto retVal = createCombinedString(
+    auto retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
         2,
@@ -120,7 +119,7 @@ TEST(CreateCombinedStrings, GivenMultiStringAndZeroLengthWhenCreatingCombinedStr
     auto srcStrings = &srcString[0];
     size_t lengths[2] = {0, strlen(srcString[1])};
 
-    auto retVal = createCombinedString(
+    auto retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
         2,
@@ -140,7 +139,7 @@ TEST(CreateCombinedStrings, GivenMultipleStringsIncludingOneWithErrorWhenCreatin
     std::string combined(expString[0]);
     combined += expString[1];
 
-    auto retVal = createCombinedString(
+    auto retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
         2,
@@ -160,7 +159,7 @@ TEST(CreateCombinedStrings, GivenInvalidInputWhenCreatingCombinedStringThenInval
     const char *srcStrings[2] = {srcString[0], srcString[1]};
     size_t lengths[2] = {0, strlen(srcString[1])};
 
-    auto retVal = createCombinedString(
+    auto retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
         0,
@@ -168,7 +167,7 @@ TEST(CreateCombinedStrings, GivenInvalidInputWhenCreatingCombinedStringThenInval
         lengths);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = createCombinedString(
+    retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
         1,
@@ -177,7 +176,7 @@ TEST(CreateCombinedStrings, GivenInvalidInputWhenCreatingCombinedStringThenInval
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     srcStrings[0] = nullptr;
-    retVal = createCombinedString(
+    retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
         2,
@@ -190,17 +189,17 @@ TEST(CreateCombinedStrings, GivenMultipleStringThatCountIsHigherThanMaximalStack
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
     const char *defaultString = "hello";
-    const char *srcString[maximalStackSizeSizes + 2];
+    const char *srcString[StringHelpers::maximalStackSizeSizes + 2];
     std::string combinedString;
-    for (int i = 0; i < maximalStackSizeSizes + 2; i++) {
+    for (int i = 0; i < StringHelpers::maximalStackSizeSizes + 2; i++) {
         srcString[i] = defaultString;
         combinedString += defaultString;
     }
 
-    auto retVal = createCombinedString(
+    auto retVal = StringHelpers::createCombinedString(
         dstString,
         dstStringSizeInBytes,
-        maximalStackSizeSizes + 2,
+        StringHelpers::maximalStackSizeSizes + 2,
         srcString,
         nullptr);
 

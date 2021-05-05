@@ -12,6 +12,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/affinity_mask.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_environment.h"
@@ -84,8 +85,9 @@ void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices
         }
     }
 }
+
 void ExecutionEnvironment::parseAffinityMask() {
-    auto affinityMaskString = DebugManager.flags.ZE_AFFINITY_MASK.get();
+    const auto &affinityMaskString = DebugManager.flags.ZE_AFFINITY_MASK.get();
 
     if (affinityMaskString.compare("default") == 0 ||
         affinityMaskString.empty()) {
@@ -96,22 +98,18 @@ void ExecutionEnvironment::parseAffinityMask() {
 
     std::vector<AffinityMaskHelper> affinityMaskHelper(numRootDevices);
 
-    size_t pos = 0;
-    while (pos < affinityMaskString.size()) {
-        size_t posNextDot = affinityMaskString.find_first_of(".", pos);
-        size_t posNextComma = affinityMaskString.find_first_of(",", pos);
-        std::string rootDeviceString = affinityMaskString.substr(pos, std::min(posNextDot, posNextComma) - pos);
-        uint32_t rootDeviceIndex = static_cast<uint32_t>(std::stoul(rootDeviceString, nullptr, 0));
+    auto affinityMaskEntries = StringHelpers::split(affinityMaskString, ",");
+
+    for (const auto &entry : affinityMaskEntries) {
+        auto subEntries = StringHelpers::split(entry, ".");
+        uint32_t rootDeviceIndex = StringHelpers::toUint32t(subEntries[0]);
+
         if (rootDeviceIndex < numRootDevices) {
             auto hwInfo = rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
             auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
 
-            pos += rootDeviceString.size();
-            if (posNextDot != std::string::npos &&
-                affinityMaskString.at(pos) == '.' && posNextDot < posNextComma) {
-                pos++;
-                std::string subDeviceString = affinityMaskString.substr(pos, posNextComma - pos);
-                uint32_t subDeviceIndex = static_cast<uint32_t>(std::stoul(subDeviceString, nullptr, 0));
+            if (subEntries.size() == 2) {
+                uint32_t subDeviceIndex = StringHelpers::toUint32t(subEntries[1]);
                 if (subDeviceIndex < subDevicesCount) {
                     affinityMaskHelper[rootDeviceIndex].enableGenericSubDevice(subDeviceIndex);
                 }
@@ -119,10 +117,6 @@ void ExecutionEnvironment::parseAffinityMask() {
                 affinityMaskHelper[rootDeviceIndex].enableAllGenericSubDevices(subDevicesCount);
             }
         }
-        if (posNextComma == std::string::npos) {
-            break;
-        }
-        pos = posNextComma + 1;
     }
 
     std::vector<std::unique_ptr<RootDeviceEnvironment>> filteredEnvironments;
