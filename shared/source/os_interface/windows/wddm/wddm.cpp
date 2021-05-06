@@ -909,15 +909,6 @@ void Wddm::getDeviceState() {
 #endif
 }
 
-void Wddm::handleCompletion(OsContextWin &osContext) {
-    auto &monitoredFence = osContext.getResidencyController().getMonitoredFence();
-    if (monitoredFence.cpuAddress) {
-        auto *currentTag = monitoredFence.cpuAddress;
-        while (*currentTag < monitoredFence.currentFenceValue - 1)
-            ;
-    }
-}
-
 unsigned int Wddm::readEnablePreemptionRegKey() {
     return static_cast<unsigned int>(registryReader->getSetting("EnablePreemption", 1));
 }

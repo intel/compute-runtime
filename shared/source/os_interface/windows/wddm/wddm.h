@@ -203,7 +203,6 @@ class Wddm {
     bool destroyPagingQueue();
     bool destroyDevice();
     void getDeviceState();
-    void handleCompletion(OsContextWin &osContext);
     MOCKABLE_VIRTUAL void createPagingFenceLogger();
 
     static GetSystemInfoFcn getSystemInfo;
