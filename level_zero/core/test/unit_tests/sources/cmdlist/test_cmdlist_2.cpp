@@ -406,6 +406,47 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionC
     EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed(), cmd->getDcFlushEnable());
 }
 
+HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, Platforms) {
+    Mock<CommandQueue> cmdQueue;
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    commandList->device = device;
+    commandList->cmdQImmediate = &cmdQueue;
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+
+    EXPECT_CALL(cmdQueue, executeCommandLists).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
+    EXPECT_CALL(cmdQueue, synchronize).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
+
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->cmdQImmediate = nullptr;
+}
+
+HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyWithInvalidEventThenInvalidArgumentErrorIsReturned, Platforms) {
+    Mock<CommandQueue> cmdQueue;
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    commandList->device = device;
+    commandList->cmdQImmediate = &cmdQueue;
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 1, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    commandList->cmdQImmediate = nullptr;
+}
+
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, Platforms) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
