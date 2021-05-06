@@ -122,26 +122,21 @@ struct OutOfMemoryTests : public ::testing::Test {
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<DriverHandleOutOfMemoryMock>();
         driverHandle->initialize(std::move(devices));
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new SVMAllocsManagerOutOFMemoryMock(driverHandle->memoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
         device = driverHandle->devices[0];
 
-        context = new ContextImp(driverHandle.get());
+        context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), false));
-        driverHandle->mainContext = context;
-
-        prevSvmAllocsManager = context->getSvmAllocsManager();
-        currSvmAllocsManager = new SVMAllocsManagerOutOFMemoryMock(context->getMemoryManager());
-        context->setSvmAllocsManager(currSvmAllocsManager);
     }
 
     void TearDown() override {
-        context->setSvmAllocsManager(prevSvmAllocsManager);
-        context->destroy();
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }
     NEO::SVMAllocsManager *prevSvmAllocsManager;
@@ -149,7 +144,7 @@ struct OutOfMemoryTests : public ::testing::Test {
     std::unique_ptr<DriverHandleOutOfMemoryMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    L0::ContextImp *context = nullptr;
+    std::unique_ptr<ContextImp> context;
 };
 
 TEST_F(OutOfMemoryTests,
@@ -203,26 +198,21 @@ struct MemoryRelaxedSizeTests : public ::testing::Test {
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<DriverHandleImp>();
         driverHandle->initialize(std::move(devices));
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new SVMAllocsManagerRelaxedSizeMock(driverHandle->memoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
         device = driverHandle->devices[0];
 
-        context = new ContextRelaxedSizeMock(driverHandle.get());
+        context = std::make_unique<ContextRelaxedSizeMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), false));
-        driverHandle->mainContext = context;
-
-        prevSvmAllocsManager = context->getSvmAllocsManager();
-        currSvmAllocsManager = new SVMAllocsManagerRelaxedSizeMock(context->getMemoryManager());
-        context->setSvmAllocsManager(currSvmAllocsManager);
     }
 
     void TearDown() override {
-        context->setSvmAllocsManager(prevSvmAllocsManager);
-        context->destroy();
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }
     NEO::SVMAllocsManager *prevSvmAllocsManager;
@@ -230,7 +220,7 @@ struct MemoryRelaxedSizeTests : public ::testing::Test {
     std::unique_ptr<DriverHandleImp> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    L0::ContextImp *context = nullptr;
+    std::unique_ptr<ContextRelaxedSizeMock> context;
 };
 
 TEST_F(MemoryRelaxedSizeTests,
@@ -559,29 +549,21 @@ struct MemoryExportImportFailTest : public ::testing::Test {
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
 
-        context = new ContextFailFdMock(driverHandle.get());
+        context = std::make_unique<ContextFailFdMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), false));
-        driverHandle->mainContext = context;
-
-        driverHandle->setMemoryManager(context->getMemoryManager());
-        driverHandle->setSvmAllocsManager(context->getSvmAllocsManager());
-        driverHandle->mainContext = context;
     }
 
     void TearDown() override {
-        context->destroy();
     }
     std::unique_ptr<DriverHandleFailGetFdMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     ze_context_handle_t hContext;
-    ContextFailFdMock *context = nullptr;
+    std::unique_ptr<ContextFailFdMock> context;
 };
 
 TEST_F(MemoryExportImportFailTest,
@@ -685,27 +667,21 @@ struct MemoryExportImportTest : public ::testing::Test {
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
 
-        context = new ContextFdMock(driverHandle.get());
+        context = std::make_unique<ContextFdMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), false));
-        driverHandle->mainContext = context;
-        driverHandle->setMemoryManager(context->getMemoryManager());
-        driverHandle->setSvmAllocsManager(context->getSvmAllocsManager());
     }
 
     void TearDown() override {
-        context->destroy();
     }
     std::unique_ptr<DriverHandleGetFdMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     ze_context_handle_t hContext;
-    ContextFdMock *context = nullptr;
+    std::unique_ptr<ContextFdMock> context;
 };
 
 TEST_F(MemoryExportImportTest,
@@ -1111,27 +1087,21 @@ struct MemoryGetIpcHandleTest : public ::testing::Test {
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
 
-        context = new ContextGetIpcHandleMock(driverHandle.get());
+        context = std::make_unique<ContextGetIpcHandleMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), false));
-        driverHandle->mainContext = context;
-        driverHandle->setMemoryManager(context->getMemoryManager());
-        driverHandle->setSvmAllocsManager(context->getSvmAllocsManager());
     }
 
     void TearDown() override {
-        context->destroy();
     }
 
     std::unique_ptr<DriverHandleGetIpcHandleMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    ContextGetIpcHandleMock *context = nullptr;
+    std::unique_ptr<ContextGetIpcHandleMock> context;
 };
 
 TEST_F(MemoryGetIpcHandleTest,
@@ -1239,31 +1209,21 @@ struct MemoryOpenIpcHandleTest : public ::testing::Test {
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<DriverHandleImp>();
         driverHandle->initialize(std::move(devices));
+        prevMemoryManager = driverHandle->getMemoryManager();
+        currMemoryManager = new MemoryManagerOpenIpcMock(*neoDevice->executionEnvironment);
+        driverHandle->setMemoryManager(currMemoryManager);
         device = driverHandle->devices[0];
 
-        context = new ContextIpcMock(driverHandle.get());
+        context = std::make_unique<ContextIpcMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
-        {
-            auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
-            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-        }
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), false));
-        driverHandle->mainContext = context;
-
-        prevMemoryManager = context->getMemoryManager();
-        currMemoryManager = new MemoryManagerOpenIpcMock(*neoDevice->executionEnvironment);
-        context->setMemoryManager(currMemoryManager);
-
-        driverHandle->setMemoryManager(context->getMemoryManager());
-        driverHandle->setSvmAllocsManager(context->getSvmAllocsManager());
+        auto neoDevice = device->getNEODevice();
+        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
     void TearDown() override {
-        context->setMemoryManager(prevMemoryManager);
-        context->destroy();
+        driverHandle->setMemoryManager(prevMemoryManager);
         delete currMemoryManager;
     }
     NEO::MemoryManager *prevMemoryManager = nullptr;
@@ -1271,7 +1231,7 @@ struct MemoryOpenIpcHandleTest : public ::testing::Test {
     std::unique_ptr<DriverHandleImp> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    ContextIpcMock *context = nullptr;
+    std::unique_ptr<ContextIpcMock> context;
 };
 
 struct MultipleDevicePeerAllocationTest : public ::testing::Test {
@@ -1294,7 +1254,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
 
         ModuleBuildLog *moduleBuildLog = nullptr;
 
-        module = Module::create(device, &moduleDesc, moduleBuildLog, type);
+        module.reset(Module::create(device, &moduleDesc, moduleBuildLog, type));
     }
 
     void SetUp() override {
@@ -1316,9 +1276,11 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         }
         driverHandle = std::make_unique<DriverHandleImp>();
         driverHandle->initialize(std::move(devices));
+        prevMemoryManager = driverHandle->getMemoryManager();
+        currMemoryManager = new MemoryManagerOpenIpcMock(*executionEnvironment);
+        driverHandle->setMemoryManager(currMemoryManager);
 
-        context = new ContextImp(driverHandle.get());
-        bool multiOsContextDriver = false;
+        context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         for (auto i = 0u; i < numRootDevices; i++) {
             auto device = driverHandle->devices[i];
@@ -1326,39 +1288,20 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
             auto neoDevice = device->getNEODevice();
             context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-            multiOsContextDriver |= device->isMultiDeviceCapable();
         }
-
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), multiOsContextDriver));
-        driverHandle->mainContext = context;
-
-        prevMemoryManager = context->getMemoryManager();
-        currMemoryManager = new MemoryManagerOpenIpcMock(*executionEnvironment);
-        context->setMemoryManager(currMemoryManager);
-
-        driverHandle->setMemoryManager(context->getMemoryManager());
-        driverHandle->setSvmAllocsManager(context->getSvmAllocsManager());
     }
 
     void createKernel() {
         ze_kernel_desc_t desc = {};
         desc.pKernelName = kernelName.c_str();
 
-        kernel = new WhiteBox<::L0::Kernel>();
-        kernel->module = module;
+        kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
+        kernel->module = module.get();
         kernel->initialize(&desc);
     }
 
     void TearDown() override {
-        if (kernel) {
-            kernel->destroy();
-        }
-        if (module) {
-            module->destroy();
-        }
-        context->setMemoryManager(prevMemoryManager);
-        context->destroy();
+        driverHandle->setMemoryManager(prevMemoryManager);
         delete currMemoryManager;
     }
 
@@ -1368,13 +1311,13 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     std::unique_ptr<DriverHandleImp> driverHandle;
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
-    L0::ContextImp *context = nullptr;
+    std::unique_ptr<ContextImp> context;
 
     const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
-    L0::Module *module = nullptr;
-    WhiteBox<::L0::Kernel> *kernel = nullptr;
+    std::unique_ptr<L0::Module> module;
+    std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
 
     const uint32_t numRootDevices = 2u;
     const uint32_t numSubDevices = 2u;
@@ -1795,31 +1738,21 @@ struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<DriverHandleImp>();
         driverHandle->initialize(std::move(devices));
+        prevMemoryManager = driverHandle->getMemoryManager();
+        currMemoryManager = new MemoryManagerIpcMock(*neoDevice->executionEnvironment);
+        driverHandle->setMemoryManager(currMemoryManager);
         device = driverHandle->devices[0];
 
-        context = new ContextImp(driverHandle.get());
+        context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
-        {
-            auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
-            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-        }
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), false));
-        driverHandle->mainContext = context;
-
-        prevMemoryManager = context->getMemoryManager();
-        currMemoryManager = new MemoryManagerIpcMock(*neoDevice->executionEnvironment);
-        context->setMemoryManager(currMemoryManager);
-
-        driverHandle->setMemoryManager(context->getMemoryManager());
-        driverHandle->setSvmAllocsManager(context->getSvmAllocsManager());
+        auto neoDevice = device->getNEODevice();
+        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
     void TearDown() override {
-        context->setMemoryManager(prevMemoryManager);
-        context->destroy();
+        driverHandle->setMemoryManager(prevMemoryManager);
         delete currMemoryManager;
     }
     NEO::MemoryManager *prevMemoryManager = nullptr;
@@ -1827,7 +1760,7 @@ struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
     std::unique_ptr<DriverHandleImp> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    L0::ContextImp *context;
+    std::unique_ptr<ContextImp> context;
 };
 
 TEST_F(MemoryFailedOpenIpcHandleTest,
@@ -1967,7 +1900,7 @@ TEST_F(MemoryTest, givenNoDeviceWhenAllocatingSharedMemoryThenDeviceInAllocation
                                                  &deviceDesc,
                                                  &hostDesc,
                                                  size, alignment, &ptr);
-    auto alloc = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     EXPECT_EQ(alloc->device, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2060,22 +1993,17 @@ struct MemoryBitfieldTest : testing::Test {
         ASSERT_NE(nullptr, driverHandle->devices[0]->toHandle());
         EXPECT_NE(neoDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
 
-        context = new ContextImp(driverHandle.get());
+        context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), false));
-        driverHandle->mainContext = context;
     }
 
     void TearDown() override {
         auto result = context->freeMem(ptr);
         ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-        context->destroy();
     }
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
@@ -2085,7 +2013,7 @@ struct MemoryBitfieldTest : testing::Test {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
-    L0::ContextImp *context = nullptr;
+    std::unique_ptr<ContextImp> context;
 };
 
 TEST_F(MemoryBitfieldTest, givenDeviceWithValidBitfieldWhenAllocatingDeviceMemoryThenPassProperBitfield) {
@@ -2123,15 +2051,13 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     driverHandle->initialize(std::move(devices));
 
     auto device = driverHandle->devices[0];
-    ContextImp *context = new ContextImp(driverHandle.get());
+    std::unique_ptr<ContextImp> context;
+    context = std::make_unique<ContextImp>(driverHandle.get());
     EXPECT_NE(context, nullptr);
     context->getDevices().insert(std::make_pair(device->toHandle(), device));
     auto neoDevice = device->getNEODevice();
     context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
     context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-    context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-    context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), false));
-    driverHandle->mainContext = context;
 
     memoryManager->recentlyPassedDeviceBitfield = {};
     ASSERT_NE(nullptr, driverHandle->devices[1]->toHandle());
@@ -2162,7 +2088,6 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     EXPECT_NE(nullptr, ptr);
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-    context->destroy();
 }
 
 struct AllocHostMemoryTest : public ::testing::Test {
@@ -2433,7 +2358,7 @@ TEST_F(ImportFdUncachedTests,
     void *ptr = driverHandle->importFdHandle(device->toHandle(), flags, handle, nullptr);
     EXPECT_NE(nullptr, ptr);
 
-    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
 
     context->freeMem(ptr);
@@ -2446,7 +2371,7 @@ TEST_F(ImportFdUncachedTests,
     void *ptr = driverHandle->importFdHandle(device->toHandle(), flags, handle, nullptr);
     EXPECT_NE(nullptr, ptr);
 
-    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 0u);
 
     context->freeMem(ptr);
@@ -2472,31 +2397,21 @@ struct SharedAllocFailTests : public ::testing::Test {
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<DriverHandleImp>();
         driverHandle->initialize(std::move(devices));
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new SVMAllocsManagerSharedAllocFailMock(driverHandle->memoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
         device = driverHandle->devices[0];
 
-        context = new ContextImp(driverHandle.get());
+        context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
-        {
-            auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
-            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-        }
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), false));
-        driverHandle->mainContext = context;
-
-        prevSvmAllocsManager = context->getSvmAllocsManager();
-        currSvmAllocsManager = new SVMAllocsManagerSharedAllocFailMock(context->getMemoryManager());
-        context->setSvmAllocsManager(currSvmAllocsManager);
-
-        driverHandle->setMemoryManager(context->getMemoryManager());
-        driverHandle->setSvmAllocsManager(context->getSvmAllocsManager());
+        auto neoDevice = device->getNEODevice();
+        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
     void TearDown() override {
-        context->setSvmAllocsManager(prevSvmAllocsManager);
-        context->destroy();
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }
     NEO::SVMAllocsManager *prevSvmAllocsManager;
@@ -2504,7 +2419,7 @@ struct SharedAllocFailTests : public ::testing::Test {
     std::unique_ptr<DriverHandleImp> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
-    ContextImp *context;
+    std::unique_ptr<ContextImp> context;
 };
 
 TEST_F(SharedAllocFailTests, whenAllocatinSharedMemoryAndAllocationFailsThenOutOfDeviceMemoryIsReturned) {
@@ -2531,7 +2446,7 @@ struct ContextMultiDeviceMock : public L0::ContextImp {
     ContextMultiDeviceMock(L0::DriverHandleImp *driverHandle) : L0::ContextImp(driverHandle) {}
     ze_result_t freeMem(const void *ptr) override {
         SVMAllocsManagerSharedAllocMultiDeviceMock *currSvmAllocsManager =
-            static_cast<SVMAllocsManagerSharedAllocMultiDeviceMock *>(this->driverHandle->getSvmAllocsManager());
+            static_cast<SVMAllocsManagerSharedAllocMultiDeviceMock *>(this->driverHandle->svmAllocsManager);
         if (currSvmAllocsManager->createHostUnifiedMemoryAllocationTimes == 0) {
             return ContextImp::freeMem(ptr);
         }
@@ -2549,43 +2464,32 @@ struct SharedAllocMultiDeviceTests : public ::testing::Test {
         driverHandle = std::make_unique<DriverHandleImp>();
         ze_result_t res = driverHandle->initialize(std::move(devices));
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new SVMAllocsManagerSharedAllocMultiDeviceMock(driverHandle->memoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
 
-        context = new ContextMultiDeviceMock(driverHandle.get());
+        context = std::make_unique<ContextMultiDeviceMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
 
-        bool multiOsContextDriver = false;
         for (uint32_t i = 0; i < numRootDevices; i++) {
             auto device = driverHandle->devices[i];
             context->getDevices().insert(std::make_pair(device->toHandle(), device));
             auto neoDevice = device->getNEODevice();
             context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-            multiOsContextDriver |= device->isMultiDeviceCapable();
         }
-
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), multiOsContextDriver));
-        driverHandle->mainContext = context;
-
-        prevSvmAllocsManager = context->getSvmAllocsManager();
-        currSvmAllocsManager = new SVMAllocsManagerSharedAllocMultiDeviceMock(context->getMemoryManager());
-        context->setSvmAllocsManager(currSvmAllocsManager);
-
-        driverHandle->setMemoryManager(context->getMemoryManager());
-        driverHandle->setSvmAllocsManager(context->getSvmAllocsManager());
     }
 
     void TearDown() override {
-        context->setSvmAllocsManager(prevSvmAllocsManager);
-        context->destroy();
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }
 
     DebugManagerStateRestore restorer;
-    NEO::SVMAllocsManager *prevSvmAllocsManager = nullptr;
-    SVMAllocsManagerSharedAllocMultiDeviceMock *currSvmAllocsManager = nullptr;
+    NEO::SVMAllocsManager *prevSvmAllocsManager;
+    SVMAllocsManagerSharedAllocMultiDeviceMock *currSvmAllocsManager;
     std::unique_ptr<DriverHandleImp> driverHandle;
-    ContextMultiDeviceMock *context = nullptr;
+    std::unique_ptr<ContextMultiDeviceMock> context;
     const uint32_t numRootDevices = 4u;
 };
 

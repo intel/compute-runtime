@@ -30,10 +30,10 @@ class ZesEngineFixture : public SysmanDeviceFixture {
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
-        pMemoryManagerOriginal = context->getMemoryManager();
+        pMemoryManagerOriginal = device->getDriverHandle()->getMemoryManager();
         pMemoryManager = std::make_unique<::testing::NiceMock<MockMemoryManagerInEngineSysman>>(*neoDevice->getExecutionEnvironment());
         pMemoryManager->localMemorySupported[0] = false;
-        context->setMemoryManager(pMemoryManager.get());
+        device->getDriverHandle()->setMemoryManager(pMemoryManager.get());
 
         pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
         pSysfsAccess = std::make_unique<NiceMock<Mock<EngineSysfsAccess>>>();
@@ -67,8 +67,8 @@ class ZesEngineFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
-        context->setMemoryManager(pMemoryManagerOriginal);
         SysmanDeviceFixture::TearDown();
+        device->getDriverHandle()->setMemoryManager(pMemoryManagerOriginal);
         pLinuxSysmanImp->pDrm = pOriginalDrm;
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;

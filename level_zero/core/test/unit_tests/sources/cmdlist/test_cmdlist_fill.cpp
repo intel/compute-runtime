@@ -80,18 +80,11 @@ class AppendFillFixture : public DeviceFixture, public ::testing::Test {
         driverHandle = std::make_unique<Mock<MockDriverFillHandle>>();
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
-
-        ze_context_handle_t hContext;
-        ze_context_desc_t desc;
-        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
     }
 
     void TearDown() override {
         delete[] immediateDstPtr;
         delete[] dstPtr;
-        context->destroy();
     }
 
     std::unique_ptr<Mock<MockDriverFillHandle>> driverHandle;
@@ -101,7 +94,6 @@ class AppendFillFixture : public DeviceFixture, public ::testing::Test {
     static constexpr size_t patternSize = 8;
     uint8_t *dstPtr = nullptr;
     uint8_t pattern[patternSize] = {1, 2, 3, 4};
-    L0::ContextImp *context = nullptr;
 
     static constexpr size_t immediateAllocSize = 106;
     uint8_t immediatePattern = 4;
