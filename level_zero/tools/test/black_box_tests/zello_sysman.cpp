@@ -245,6 +245,7 @@ void testSysmanPci(ze_device_handle_t &device) {
         std::cout << "properties.address.domain = " << properties.address.domain << std::endl;
         std::cout << "properties.address.bus = " << properties.address.bus << std::endl;
         std::cout << "properties.address.device = " << properties.address.device << std::endl;
+        std::cout << "properties.address.function = " << properties.address.function << std::endl;
         std::cout << "properties.maxSpeed.gen = " << properties.maxSpeed.gen << std::endl;
         std::cout << "properties.maxSpeed.width = " << properties.maxSpeed.width << std::endl;
         std::cout << "properties.maxSpeed.maxBandwidth = " << properties.maxSpeed.maxBandwidth << std::endl;
