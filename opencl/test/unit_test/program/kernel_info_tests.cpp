@@ -92,6 +92,9 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateM
     KernelInfo kernelInfo;
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
     executionEnvironment->memoryManager.reset(new MyMemoryManager(*executionEnvironment));
+    if (executionEnvironment->memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     auto device = std::unique_ptr<Device>(Device::create<RootDevice>(executionEnvironment, mockRootDeviceIndex));
     auto retVal = kernelInfo.createKernelAllocation(*device, false);
     EXPECT_FALSE(retVal);

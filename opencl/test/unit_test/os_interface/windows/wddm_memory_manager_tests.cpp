@@ -146,6 +146,9 @@ TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWmmWhenAsyncDeleterIsEnabled
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     EXPECT_NE(nullptr, allocation);
@@ -191,6 +194,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataWithFlagsWhenAllocateGrap
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = 4096u;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
@@ -218,6 +224,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocate32BitGraphicsM
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMThen4KBGraphicsAllocationIsReturned) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     auto size = MemoryConstants::pageSize;
 
     auto svmAllocation = memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), size, GraphicsAllocation::AllocationType::SVM_ZERO_COPY, mockDeviceBitfield});
@@ -229,6 +238,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenA
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMThenMemoryPoolIsSystem64KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(true, false, *executionEnvironment));
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     auto size = MemoryConstants::pageSize;
 
     auto svmAllocation = memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), size, GraphicsAllocation::AllocationType::SVM_ZERO_COPY, mockDeviceBitfield});
@@ -692,6 +704,9 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     rootDeviceEnvironment->setHwInfo(&hwInfo);
 
     auto memoryManager = std::make_unique<MockWddmMemoryManager>(true, false, *executionEnvironment);
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     memoryManager->allocateGraphicsMemoryInNonDevicePool = true;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockRootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, mockDeviceBitfield}, ptr);
 
@@ -886,6 +901,9 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountN
 }
 
 TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedOnlyIfInBounds) {
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     MockWddmAllocation alloc, allocOffseted;
     // three pages
     void *ptr = alignedMalloc(4 * 4096, 4096);
@@ -939,6 +957,9 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
 }
 
 TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemThenOsInternalStorageIsPopulatedCorrectly) {
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     MockWddmAllocation allocation;
     // three pages
     void *ptr = alignedMalloc(3 * 4096, 4096);
@@ -1106,6 +1127,9 @@ TEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForAlignedMa
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestrictionsThenReserveMemRangeForMap) {
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     void *cpuPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     size_t size = 0x1000;
 
@@ -1243,6 +1267,9 @@ TEST_F(BufferWithWddmMemory, GivenNullOsHandleStorageWhenPopulatingThenFilledPoi
 }
 
 TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllocationThenItContainsAllFragmentsWithProperGpuAdrresses) {
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1001);
     auto size = MemoryConstants::pageSize * 10;
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), false, size, context.getDevice(0)->getDeviceBitfield()}, ptr);
@@ -1517,6 +1544,9 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemor
     wddm->init();
     DebugManager.flags.Enable64kbpages.set(true);
     MemoryManagerCreate<WddmMemoryManager> memoryManager64k(true, false, *executionEnvironment);
+    if (memoryManager64k.isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     EXPECT_EQ(0, wddm->createAllocationResult.called);
 
     GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
@@ -1577,6 +1607,9 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequest
 
     DebugManager.flags.Enable64kbpages.set(true);
     MemoryManagerCreate<MockWddmMemoryManager> memoryManager(true, false, *executionEnvironment);
+    if (memoryManager.isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     EXPECT_EQ(0, wddm->createAllocationResult.called);
 
     memoryManager.hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k - MemoryConstants::pageSize;
@@ -1604,6 +1637,9 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForHostBufferAndReq
 
     DebugManager.flags.Enable64kbpages.set(true);
     MemoryManagerCreate<MockWddmMemoryManager> memoryManager(true, false, *executionEnvironment);
+    if (memoryManager.isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     EXPECT_EQ(0, wddm->createAllocationResult.called);
 
     memoryManager.hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k - MemoryConstants::pageSize;
@@ -2021,6 +2057,10 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationAndPreferredGpuVaI
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedThenAllocateMemoryReserveGpuVa) {
+    if (memoryManager->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
+
     size_t size = 2 * MemoryConstants::megaByte;
     MockAllocationProperties properties{csr->getRootDeviceIndex(), true, size, GraphicsAllocation::AllocationType::SVM_CPU, mockDeviceBitfield};
     properties.alignment = size;
@@ -2074,8 +2114,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenDebugVariableWhenCreatingWddmMemoryMana
     }
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRangeAnd32BitThenAllocationGoesToSvmHeap) {
-    if (executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm()) {
+TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRangeAnd32BitThenAllocationGoesToExternalHeap) {
+    if (executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm() || !is32bit) {
         GTEST_SKIP();
     }
 
@@ -2085,12 +2125,12 @@ TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRan
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
-    EXPECT_NE(nullptr, reinterpret_cast<void *>(allocation->getGpuAddress()));
+    uint64_t gpuAddress = allocation->getGpuAddress();
+    EXPECT_NE(0ULL, gpuAddress);
+    EXPECT_EQ(0ULL, gpuAddress & 0xffFFffF000000000);
 
-    auto heap = is32bit ? HeapIndex::HEAP_SVM : HeapIndex::HEAP_STANDARD;
-
-    EXPECT_LT(GmmHelper::canonize(memoryManager->getGfxPartition(0)->getHeapBase(heap)), allocation->getGpuAddress());
-    EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(0)->getHeapLimit(heap)), allocation->getGpuAddress());
+    EXPECT_LT(GmmHelper::canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAddress);
+    EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAddress);
 
     memoryManager->freeGraphicsMemory(allocation);
 }

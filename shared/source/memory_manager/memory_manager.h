@@ -94,6 +94,17 @@ class MemoryManager {
 
     void *lockResource(GraphicsAllocation *graphicsAllocation);
     void unlockResource(GraphicsAllocation *graphicsAllocation);
+    MOCKABLE_VIRTUAL bool peek32bit() {
+        return is32bit;
+    }
+    MOCKABLE_VIRTUAL bool isLimitedGPU(uint32_t rootDeviceIndex) {
+        return peek32bit() && !peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm();
+    }
+    MOCKABLE_VIRTUAL bool isLimitedGPUOnType(uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType type) {
+        return isLimitedGPU(rootDeviceIndex) &&
+               (type != GraphicsAllocation::AllocationType::MAP_ALLOCATION) &&
+               (type != GraphicsAllocation::AllocationType::IMAGE);
+    }
 
     void cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *);
     GraphicsAllocation *createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding);

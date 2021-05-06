@@ -133,6 +133,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     GraphicsAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override;
 
+    bool isLimitedGPU(uint32_t rootDeviceIndex) override {
+        return limitedGPU;
+    }
     void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size()); }
 
     uint32_t freeGraphicsMemoryCalled = 0u;
@@ -155,6 +158,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failInAllocateWithSizeAndAlignment = false;
     bool preferRenderCompressedFlagPassed = false;
     bool allocateForImageCalled = false;
+    bool allocate32BitGraphicsMemoryImplCalled = false;
     bool allocateForShareableCalled = false;
     bool failReserveAddress = false;
     bool failAllocateSystemMemory = false;
@@ -165,6 +169,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool forceFailureInAllocationWithHostPointer = false;
     bool isMockHostMemoryManager = false;
     bool isMockEventPoolCreateMemoryManager = false;
+    bool limitedGPU = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;

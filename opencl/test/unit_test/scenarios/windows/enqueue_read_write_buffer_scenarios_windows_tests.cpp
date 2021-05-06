@@ -77,6 +77,9 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
 };
 
 HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCalledThenStateBaseAddressAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
+    if (executionEnvironment->memoryManager.get()->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     initializeFixture<FamilyType>();
     if (device->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();

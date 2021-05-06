@@ -52,6 +52,9 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
 TEST(BufferTests, WhenBufferIsCreatedThenPinIsSet) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     std::unique_ptr<TestedMemoryManager> mm(new MemoryManagerCreate<TestedMemoryManager>(false, false, executionEnvironment));
+    if (mm->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
     {
         MockContext context;
         auto size = MemoryConstants::pageSize * 32;
@@ -75,6 +78,10 @@ TEST(BufferTests, WhenBufferIsCreatedThenPinIsSet) {
 TEST(BufferTests, GivenHostPtrWhenBufferIsCreatedThenPinIsSet) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(executionEnvironment));
+    if (mm->isLimitedGPU(0)) {
+        GTEST_SKIP();
+    }
+
     {
         MockContext context;
         auto retVal = CL_INVALID_OPERATION;

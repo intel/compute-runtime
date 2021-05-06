@@ -14,7 +14,7 @@ if(WIN32)
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi.h
-      ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gdi_gfx_partition.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi_gfx_partition.cpp
       ${DEF_FILE}
   )
 
