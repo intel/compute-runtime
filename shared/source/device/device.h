@@ -139,7 +139,7 @@ class Device : public ReferenceTrackedObject<Device> {
     bool createGenericSubDevices();
     bool createEngineInstancedSubDevices();
     virtual bool genericSubDevicesAllowed();
-    virtual bool engineInstancedSubDevicesAllowed() const;
+    bool engineInstancedSubDevicesAllowed();
 
     DeviceInfo deviceInfo = {};
 
@@ -153,9 +153,11 @@ class Device : public ReferenceTrackedObject<Device> {
 
     PreemptionMode preemptionMode;
     ExecutionEnvironment *executionEnvironment = nullptr;
+    aub_stream::EngineType engineInstancedType = aub_stream::EngineType::NUM_ENGINES;
     uint32_t defaultEngineIndex = 0;
     uint32_t numSubDevices = 0;
     bool hasGenericSubDevices = false;
+    bool engineInstanced = false;
 
     std::atomic<uint32_t> selectorCopyEngine{0};
 

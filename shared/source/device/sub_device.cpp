@@ -22,7 +22,7 @@ SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDev
 
 SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice, aub_stream::EngineType engineType)
     : SubDevice(executionEnvironment, subDeviceIndex, rootDevice) {
-    this->engineType = engineType;
+    this->engineInstancedType = engineType;
     engineInstanced = true;
 }
 
@@ -50,15 +50,6 @@ uint64_t SubDevice::getGlobalMemorySize(uint32_t deviceBitfield) const {
     return globalMemorySize / rootDevice.getNumAvailableDevices();
 }
 
-bool SubDevice::engineInstancedSubDevicesAllowed() const {
-    if (engineInstanced) {
-        return false;
-    }
-
-    return (DebugManager.flags.EngineInstancedSubDevices.get() &&
-            (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1));
-}
-
 bool SubDevice::createEngines() {
     if (engineInstanced) {
         return createEnginesForEngineInstancedDevice();
@@ -76,7 +67,7 @@ bool SubDevice::createEnginesForEngineInstancedDevice() {
     uint32_t deviceCsrIndex = 0;
 
     for (auto &engine : gpgpuEngines) {
-        if (EngineHelpers::isBcs(engine.first) || (engine.first == this->engineType)) {
+        if (EngineHelpers::isBcs(engine.first) || (engine.first == this->engineInstancedType)) {
             if (!createEngine(deviceCsrIndex++, engine)) {
                 return false;
             }

@@ -78,20 +78,43 @@ bool Device::genericSubDevicesAllowed() {
     return (numSubDevices > 0);
 }
 
-bool Device::engineInstancedSubDevicesAllowed() const {
-    return (DebugManager.flags.EngineInstancedSubDevices.get() &&
-            (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1));
+bool Device::engineInstancedSubDevicesAllowed() {
+    if ((DebugManager.flags.EngineInstancedSubDevices.get() != 1) || engineInstanced ||
+        (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled < 2)) {
+        return false;
+    }
+
+    UNRECOVERABLE_IF(deviceBitfield.count() != 1);
+    uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+
+    auto enginesMask = getRootDeviceEnvironment().deviceAffinityMask.getEnginesMask(subDeviceIndex);
+    auto ccsCount = getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+    numSubDevices = std::min(ccsCount, static_cast<uint32_t>(enginesMask.count()));
+
+    if (numSubDevices == 1) {
+        numSubDevices = 0;
+    }
+
+    return (numSubDevices > 0);
 }
 
 bool Device::createEngineInstancedSubDevices() {
     UNRECOVERABLE_IF(deviceBitfield.count() != 1);
     UNRECOVERABLE_IF(!subdevices.empty());
 
-    numSubDevices = getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-    subdevices.resize(numSubDevices, nullptr);
     uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
 
-    for (uint32_t i = 0; i < numSubDevices; i++) {
+    auto enginesMask = getRootDeviceEnvironment().deviceAffinityMask.getEnginesMask(subDeviceIndex);
+    auto ccsCount = getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+    subdevices.resize(ccsCount, nullptr);
+
+    for (uint32_t i = 0; i < ccsCount; i++) {
+        if (!enginesMask.test(i)) {
+            continue;
+        }
+
         auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + i);
         auto subDevice = createEngineInstancedSubDevice(subDeviceIndex, engineType);
         UNRECOVERABLE_IF(!subDevice);

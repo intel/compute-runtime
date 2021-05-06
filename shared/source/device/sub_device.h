@@ -27,13 +27,10 @@ class SubDevice : public Device {
   protected:
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const override;
     bool genericSubDevicesAllowed() override { return false; };
-    bool engineInstancedSubDevicesAllowed() const override;
     bool createEngines() override;
     bool createEnginesForEngineInstancedDevice();
 
     RootDevice &rootDevice;
     const uint32_t subDeviceIndex;
-    aub_stream::EngineType engineType = aub_stream::EngineType::NUM_ENGINES;
-    bool engineInstanced = false;
 };
 } // namespace NEO

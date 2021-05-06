@@ -108,13 +108,23 @@ void ExecutionEnvironment::parseAffinityMask() {
             auto hwInfo = rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
             auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
 
-            if (subEntries.size() == 2) {
+            if (subEntries.size() > 1) {
                 uint32_t subDeviceIndex = StringHelpers::toUint32t(subEntries[1]);
+
                 if (subDeviceIndex < subDevicesCount) {
-                    affinityMaskHelper[rootDeviceIndex].enableGenericSubDevice(subDeviceIndex);
+                    if (subEntries.size() == 2) {
+                        affinityMaskHelper[rootDeviceIndex].enableGenericSubDevice(subDeviceIndex); // Mask: X.Y
+                    } else {
+                        UNRECOVERABLE_IF(subEntries.size() != 3);
+                        uint32_t ccsIndex = StringHelpers::toUint32t(subEntries[2]);
+
+                        if (ccsIndex < hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled) {
+                            affinityMaskHelper[rootDeviceIndex].enableEngineInstancedSubDevice(subDeviceIndex, ccsIndex); // Mask: X.Y.Z
+                        }
+                    }
                 }
             } else {
-                affinityMaskHelper[rootDeviceIndex].enableAllGenericSubDevices(subDevicesCount);
+                affinityMaskHelper[rootDeviceIndex].enableAllGenericSubDevices(subDevicesCount); // Mask: X
             }
         }
     }

@@ -34,10 +34,11 @@ class AffinityMaskHelper {
     AffinityMaskHelper() : AffinityMaskHelper(false) {}
 
     void enableGenericSubDevice(uint32_t subDeviceIndex) {
-        subDevicesWithEnginesMasks.resize(subDeviceIndex + 1);
+        enableGenericSubDevice(subDeviceIndex, std::numeric_limits<uint32_t>::max());
+    }
 
-        genericSubDevicesMask.set(subDeviceIndex);
-        subDevicesWithEnginesMasks[subDeviceIndex] = std::numeric_limits<uint32_t>::max();
+    void enableEngineInstancedSubDevice(uint32_t subDeviceIndex, uint32_t engineIndex) {
+        enableGenericSubDevice(subDeviceIndex, (1u << engineIndex));
     }
 
     void enableAllGenericSubDevices(uint32_t subDeviceCount) {
@@ -50,11 +51,25 @@ class AffinityMaskHelper {
         return genericSubDevicesMask;
     }
 
+    DeviceBitfield getEnginesMask(uint32_t subDeviceIndex) const {
+        return subDevicesWithEnginesMasks[subDeviceIndex];
+    }
+
     bool isDeviceEnabled() const {
         return genericSubDevicesMask.any();
     }
 
   protected:
+    void enableGenericSubDevice(uint32_t subDeviceIndex, uint32_t enginesMask) {
+        if ((subDeviceIndex + 1) > subDevicesWithEnginesMasks.size()) {
+            subDevicesWithEnginesMasks.resize(subDeviceIndex + 1);
+            subDevicesWithEnginesMasks[subDeviceIndex] = 0;
+        }
+
+        genericSubDevicesMask.set(subDeviceIndex);
+        subDevicesWithEnginesMasks[subDeviceIndex] |= enginesMask;
+    }
+
     AffinityMaskContainer subDevicesWithEnginesMasks;
     DeviceBitfield genericSubDevicesMask = 0;
 };
