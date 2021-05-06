@@ -1107,11 +1107,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvent, bool isStartOfDispatch, bool isEndOfDispatch) {
-    if (!this->isEnginePrologueSent) {
-        auto lock = obtainUniqueOwnership();
-        programHardwareContext(getCS());
-    }
-
     if (isWaitOnEvent) {
         this->flushSemaphoreWait(eventAlloc, immediateGpuAddress, immediateData, args, isStartOfDispatch, isEndOfDispatch);
     } else {
@@ -1143,6 +1138,8 @@ void CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(GraphicsAllocation *even
 
     auto &commandStream = getCS(EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
     auto commandStreamStart = commandStream.getUsed();
+
+    programHardwareContext(commandStream);
 
     if (eventAlloc) {
         EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, immediateGpuAddress, immediateData, false, true);
@@ -1184,6 +1181,8 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl(GraphicsAllocation *ev
     auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl());
     auto commandStreamStart = commandStream.getUsed();
 
+    programHardwareContext(commandStream);
+
     if (eventAlloc) {
         MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(commandStream,
                                                                                             PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
@@ -1222,6 +1221,8 @@ void CommandStreamReceiverHw<GfxFamily>::flushSemaphoreWait(GraphicsAllocation *
     if (isStartOfDispatch && !args.dcFlushEnable) {
         cmdStreamStart = commandStream.getUsed();
     }
+
+    programHardwareContext(commandStream);
 
     NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream,
                                                                immediateGpuAddress,
@@ -1337,7 +1338,6 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogue(const Di
 }
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programEnginePrologue(LinearStream &csr) {
-    this->isEnginePrologueSent = true;
 }
 
 template <typename GfxFamily>
