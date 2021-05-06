@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,8 +23,17 @@ class SafetyGuardLinux {
 
         sigact.sa_sigaction = sigAction;
         sigact.sa_flags = SA_RESTART | SA_SIGINFO;
-        sigaction(SIGSEGV, &sigact, (struct sigaction *)NULL);
-        sigaction(SIGILL, &sigact, (struct sigaction *)NULL);
+        sigaction(SIGSEGV, &sigact, &previousSigSegvAction);
+        sigaction(SIGILL, &sigact, &previousSigIllvAction);
+    }
+
+    ~SafetyGuardLinux() {
+        if (previousSigSegvAction.sa_sigaction) {
+            sigaction(SIGSEGV, &previousSigSegvAction, NULL);
+        }
+        if (previousSigIllvAction.sa_sigaction) {
+            sigaction(SIGILL, &previousSigIllvAction, NULL);
+        }
     }
 
     static void sigAction(int sigNum, siginfo_t *info, void *ucontext) {
@@ -63,4 +72,6 @@ class SafetyGuardLinux {
 
     typedef void (*callbackFunction)();
     callbackFunction onSigSegv = nullptr;
+    struct sigaction previousSigSegvAction = {};
+    struct sigaction previousSigIllvAction = {};
 };
