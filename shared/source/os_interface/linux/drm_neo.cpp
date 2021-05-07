@@ -491,7 +491,7 @@ void Drm::printIoctlStatistics() {
     printf("\n                 --- Ioctls statistics ---\n");
     printf("        Request  Total time(ns)      Count   Avg time per ioctl\n");
     for (const auto &ioctlData : this->ioctlStatistics) {
-        printf("%15lu %15llu %10lu %20f\n", ioctlData.first, ioctlData.second.first, ioctlData.second.second, ioctlData.second.first / static_cast<double>(ioctlData.second.second));
+        printf("%15lu %15llu %10lu %20f\n", ioctlData.first, ioctlData.second.first, static_cast<unsigned long>(ioctlData.second.second), ioctlData.second.first / static_cast<double>(ioctlData.second.second));
     }
     printf("\n");
 }
