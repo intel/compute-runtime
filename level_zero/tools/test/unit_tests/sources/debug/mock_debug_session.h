@@ -23,8 +23,8 @@ class OsInterfaceWithDebugAttach : public NEO::OSInterface {
     bool debugAttachAvailable = true;
 };
 
-struct DebugSessionMock : public L0::DebugSession {
-    DebugSessionMock(const zet_debug_config_t &config, L0::Device *device) : DebugSession(config, device), config(config){};
+struct DebugSessionMock : public L0::RootDebugSession {
+    DebugSessionMock(const zet_debug_config_t &config, L0::Device *device) : RootDebugSession(config, device), config(config){};
     bool closeConnection() override { return true; }
     ze_result_t initialize() override {
         if (config.pid == 0) {

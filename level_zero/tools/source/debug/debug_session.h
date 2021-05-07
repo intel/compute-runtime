@@ -36,11 +36,20 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual ze_result_t writeRegisters(ze_device_thread_t thread, zet_debug_regset_type_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
 
     Device *getConnectedDevice() { return connectedDevice; }
-    virtual void startAsyncThread() = 0;
 
   protected:
     DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device){};
+    virtual void startAsyncThread() = 0;
+
     Device *connectedDevice = nullptr;
+};
+
+struct RootDebugSession : DebugSession {
+    virtual ~RootDebugSession() = default;
+    RootDebugSession() = delete;
+
+  protected:
+    RootDebugSession(const zet_debug_config_t &config, Device *device) : DebugSession(config, device){};
 };
 
 } // namespace L0
