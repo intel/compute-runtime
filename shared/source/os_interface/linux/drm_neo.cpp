@@ -521,11 +521,11 @@ uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) {
     return 0;
 }
 
-bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, int &sliceCount, int &subSliceCount, int &euCount, int &maxSliceCount) {
-    sliceCount = 0;
-    subSliceCount = 0;
-    euCount = 0;
-    maxSliceCount = queryTopologyInfo->max_slices;
+bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping) {
+    int sliceCount = 0;
+    int subSliceCount = 0;
+    int euCount = 0;
+    int maxSliceCount = queryTopologyInfo->max_slices;
     std::vector<int> sliceIndices;
     sliceIndices.reserve(maxSliceCount);
 
@@ -556,8 +556,15 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
 
     if (sliceIndices.size()) {
         maxSliceCount = sliceIndices[sliceIndices.size() - 1] + 1;
+        mapping.sliceIndices = std::move(sliceIndices);
     }
-    return (sliceCount && subSliceCount && euCount);
+
+    data.sliceCount = sliceCount;
+    data.subSliceCount = subSliceCount;
+    data.euCount = euCount;
+    data.maxSliceCount = maxSliceCount;
+
+    return (data.sliceCount && data.subSliceCount && data.euCount);
 }
 
 Drm::~Drm() {
@@ -580,6 +587,10 @@ ADAPTER_BDF Drm::getAdapterBDF() const {
     adapterBDF.Device = device;
 
     return adapterBDF;
+}
+
+const std::vector<int> &Drm::getSliceMappings(uint32_t deviceIndex) {
+    return topologyMap[deviceIndex].sliceIndices;
 }
 
 } // namespace NEO

@@ -67,6 +67,28 @@ TEST(DrmQueryTest, GivenDrmWhenQueryingTopologyInfoCorrectMaxValuesAreSet) {
     EXPECT_EQ(drm.StoredEUVal / drm.StoredSSVal, topologyData.maxEuCount);
 }
 
+TEST(DrmQueryTest, givenDrmWhenGettingSliceMappingsThenCorrectMappingReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
+    DrmMock drmMock{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    Drm::QueryTopologyData topologyData = {};
+
+    EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
+
+    auto device0SliceMapping = drmMock.getSliceMappings(0);
+    auto device1SliceMapping = drmMock.getSliceMappings(1);
+
+    ASSERT_EQ(static_cast<size_t>(topologyData.maxSliceCount), device0SliceMapping.size());
+    EXPECT_EQ(0u, device1SliceMapping.size());
+
+    for (int i = 0; i < topologyData.maxSliceCount; i++) {
+        EXPECT_EQ(i, device0SliceMapping[i]);
+    }
+}
+
 using HwConfigTopologyQuery = ::testing::Test;
 
 HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOnSubsliceIoctlQuery, MatchAny) {

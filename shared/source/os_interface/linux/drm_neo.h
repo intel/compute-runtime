@@ -190,9 +190,14 @@ class Drm {
     void setNewResourceBound(bool value) { this->newResourceBound = value; };
     bool getNewResourceBound() { return this->newResourceBound; };
 
+    const std::vector<int> &getSliceMappings(uint32_t deviceIndex);
+
   protected:
+    struct TopologyMapping {
+        std::vector<int> sliceIndices;
+    };
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
-    bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, int &sliceCount, int &subSliceCount, int &euCount, int &maxSliceCount);
+    bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping);
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
     bool sliceCountChangeSupported = false;
@@ -221,6 +226,8 @@ class Drm {
 
     std::array<uint64_t, EngineLimits::maxHandleCount> pagingFence;
     std::array<uint64_t, EngineLimits::maxHandleCount> fenceVal;
+
+    std::unordered_map<uint32_t, TopologyMapping> topologyMap;
 
     std::string getSysFsPciPath();
     std::unique_ptr<uint8_t[]> query(uint32_t queryId, uint32_t queryItemFlags, int32_t &length);

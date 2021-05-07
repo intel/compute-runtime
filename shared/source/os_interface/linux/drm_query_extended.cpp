@@ -23,7 +23,11 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyD
     topologyData.maxSliceCount = data->max_slices;
     topologyData.maxSubSliceCount = data->max_subslices;
     topologyData.maxEuCount = data->max_eus_per_subslice;
-    return translateTopologyInfo(data, topologyData.sliceCount, topologyData.subSliceCount, topologyData.euCount, topologyData.maxSliceCount);
+
+    TopologyMapping mapping;
+    auto result = translateTopologyInfo(data, topologyData, mapping);
+    this->topologyMap[0] = mapping;
+    return result;
 }
 
 bool Drm::isDebugAttachAvailable() {
