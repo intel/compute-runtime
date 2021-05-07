@@ -133,7 +133,7 @@ struct EventPool : _ze_event_pool_handle_t {
     bool isEventPoolUsedForTimestamp = false;
 
   protected:
-    NEO::MultiGraphicsAllocation *eventPoolAllocations = nullptr;
+    std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
 };
 
 struct EventPoolImp : public EventPool {
