@@ -931,6 +931,19 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
             std::cout << "processes.engines = " << process.engines << std::endl;
         }
     }
+    zes_device_state_t deviceState = {};
+    VALIDATECALL(zesDeviceGetState(device, &deviceState));
+    if (verbose) {
+        std::cout << "reset status: " << deviceState.reset << std::endl;
+        std::cout << "repair" << deviceState.repaired << std::endl;
+        if (deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED) {
+            std::cout << "state reset wedged = " << deviceState.reset << std::endl;
+        }
+        if (deviceState.reset & ZES_RESET_REASON_FLAG_REPAIR) {
+            std::cout << "state reset repair = " << deviceState.reset << std::endl;
+            std::cout << "repair state = " << deviceState.repaired << std::endl;
+        }
+    }
 }
 
 void testSysmanDiagnostics(ze_device_handle_t &device) {
