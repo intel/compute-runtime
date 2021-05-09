@@ -136,13 +136,6 @@ HWTEST_F(FenceAubCsrTest, givenCallToFenceHostSynchronizeWithAubModeCsrReturnsSu
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc;
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    L0::ContextImp *context = static_cast<ContextImp *>(Context::fromHandle(hContext));
-
     device = driverHandle->devices[0];
     int32_t tag;
     auto aubCsr = new MockCsrAub<FamilyType>(tag, *neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -154,8 +147,6 @@ HWTEST_F(FenceAubCsrTest, givenCallToFenceHostSynchronizeWithAubModeCsrReturnsSu
     ze_result_t result = fence->hostSynchronize(10);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     fence->destroy();
-
-    context->destroy();
 }
 
 } // namespace ult

@@ -70,32 +70,21 @@ struct EventPoolFailTests : public ::testing::Test {
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<DriverHandleImp>();
         driverHandle->initialize(std::move(devices));
+        prevMemoryManager = driverHandle->getMemoryManager();
+        currMemoryManager = new MemoryManagerEventPoolFailMock(*neoDevice->executionEnvironment);
+        driverHandle->setMemoryManager(currMemoryManager);
         device = driverHandle->devices[0];
 
         context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-
-        {
-            context->getDevices().insert(std::make_pair(device->toHandle(), device));
-            auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
-            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-        }
-
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-
-        prevMemoryManager = context->getMemoryManager();
-        currMemoryManager = new MemoryManagerEventPoolFailMock(*neoDevice->executionEnvironment);
-        context->setMemoryManager(currMemoryManager);
-
-        driverHandle->mainContext = context.get();
-
-        driverHandle->setMemoryManager(context->getMemoryManager());
-        driverHandle->setSvmAllocsManager(context->getSvmAllocsManager());
+        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        auto neoDevice = device->getNEODevice();
+        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
     void TearDown() override {
-        context->setMemoryManager(prevMemoryManager);
+        driverHandle->setMemoryManager(prevMemoryManager);
         delete currMemoryManager;
     }
     NEO::MemoryManager *prevMemoryManager = nullptr;
@@ -326,20 +315,18 @@ class EventSynchronizeTest : public Test<DeviceFixture> {
         eventDesc.signal = 0;
         eventDesc.wait = 0;
 
-        eventPool = L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc);
+        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
         ASSERT_NE(nullptr, eventPool);
-        event = L0::Event::create(eventPool, &eventDesc, device);
+        event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
         ASSERT_NE(nullptr, event);
     }
 
     void TearDown() override {
-        event->destroy();
-        eventPool->destroy();
         DeviceFixture::TearDown();
     }
 
-    L0::EventPool *eventPool = nullptr;
-    L0::Event *event = nullptr;
+    std::unique_ptr<L0::EventPool> eventPool = nullptr;
+    std::unique_ptr<L0::Event> event;
 };
 
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroAndStateInitialHostSynchronizeReturnsNotReady) {
@@ -381,16 +368,12 @@ HWTEST_F(EventAubCsrTest, givenCallToEventHostSynchronizeWithAubModeCsrReturnsSu
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(devices));
     device = driverHandle->devices[0];
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc;
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    L0::ContextImp *context = static_cast<ContextImp *>(Context::fromHandle(hContext));
-
     int32_t tag;
     auto aubCsr = new MockCsrAub<FamilyType>(tag, *neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     neoDevice->resetCommandStreamReceiver(aubCsr);
+
+    std::unique_ptr<L0::EventPool> eventPool = nullptr;
+    std::unique_ptr<L0::Event> event;
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -401,17 +384,13 @@ HWTEST_F(EventAubCsrTest, givenCallToEventHostSynchronizeWithAubModeCsrReturnsSu
     eventDesc.signal = 0;
     eventDesc.wait = 0;
 
-    L0::EventPool *eventPool = L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc);
+    eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
-    L0::Event *event = L0::Event::create(eventPool, &eventDesc, device);
+    event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event);
 
     ze_result_t result = event->hostSynchronize(10);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    event->destroy();
-    eventPool->destroy();
-    context->destroy();
 }
 
 struct EventCreateAllocationResidencyTest : public ::testing::Test {
@@ -449,20 +428,18 @@ class TimestampEventCreate : public Test<DeviceFixture> {
         eventDesc.signal = 0;
         eventDesc.wait = 0;
 
-        eventPool = L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc);
+        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
         ASSERT_NE(nullptr, eventPool);
-        event = L0::Event::create(eventPool, &eventDesc, device);
+        event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
         ASSERT_NE(nullptr, event);
     }
 
     void TearDown() override {
-        event->destroy();
-        eventPool->destroy();
         DeviceFixture::TearDown();
     }
 
-    L0::EventPool *eventPool = nullptr;
-    L0::Event *event = nullptr;
+    std::unique_ptr<L0::EventPool> eventPool;
+    std::unique_ptr<L0::Event> event;
 };
 
 TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventFlagSet) {
@@ -576,7 +553,7 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyRetur
         }
     };
 
-    auto mockEvent = std::make_unique<MockEventQuery>(eventPool, 1u, device);
+    auto mockEvent = std::make_unique<MockEventQuery>(eventPool.get(), 1u, device);
 
     ze_kernel_timestamp_result_t resultTimestamp = {};
 
@@ -606,11 +583,11 @@ TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithMultipleDevicesThenE
     result = zeDeviceGet(driverHandle.get(), &deviceCount, devices);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    L0::EventPool *eventPool = EventPool::create(driverHandle.get(),
-                                                 context,
-                                                 deviceCount,
-                                                 devices,
-                                                 &eventPoolDesc);
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(),
+                                                               context,
+                                                               deviceCount,
+                                                               devices,
+                                                               &eventPoolDesc));
     EXPECT_NE(nullptr, eventPool);
 
     auto allocation = &eventPool->getAllocation();
@@ -619,8 +596,6 @@ TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithMultipleDevicesThenE
     EXPECT_EQ(allocation->getGraphicsAllocations().size(), numRootDevices);
 
     delete[] devices;
-
-    eventPool->destroy();
 }
 
 TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithNoDevicesThenEventPoolCreateSucceedsAndAllDeviceAreUsed) {
@@ -680,16 +655,15 @@ struct EventPoolCreateNegativeTest : public ::testing::Test {
 
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
+        static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->isMockEventPoolCreateMemoryManager = true;
+
+        device = driverHandle->devices[0];
 
         ze_context_handle_t hContext;
         ze_context_desc_t desc;
         ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         context = static_cast<ContextImp *>(Context::fromHandle(hContext));
-
-        static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->isMockEventPoolCreateMemoryManager = true;
-
-        device = driverHandle->devices[0];
     }
     void TearDown() override {
         context->destroy();

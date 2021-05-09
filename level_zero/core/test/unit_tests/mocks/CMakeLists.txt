@@ -25,6 +25,8 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_recompile_built_ins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_driver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_driver.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_driver_handle.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_driver_handle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info_l0.cpp

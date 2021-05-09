@@ -53,20 +53,11 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
         }
     }
 
-    bool multiOsContextDriver = false;
     for (auto devicePair : context->getDevices()) {
         auto neoDevice = devicePair.second->getNEODevice();
-        multiOsContextDriver |= devicePair.second->isMultiDeviceCapable();
         context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(),
                                          neoDevice->getDeviceBitfield()});
-    }
-
-    if (this->mainContext == nullptr) {
-        this->mainContext = context;
-
-        context->setMemoryManager(context->getDevices().begin()->second->getNEODevice()->getMemoryManager());
-        context->setSvmAllocsManager(new NEO::SVMAllocsManager(context->getMemoryManager(), multiOsContextDriver));
     }
 
     return ZE_RESULT_SUCCESS;
@@ -81,11 +72,7 @@ void DriverHandleImp::setMemoryManager(NEO::MemoryManager *memoryManager) {
 }
 
 NEO::SVMAllocsManager *DriverHandleImp::getSvmAllocsManager() {
-    return this->mainContext->getSvmAllocsManager();
-}
-
-void DriverHandleImp::setSvmAllocsManager(NEO::SVMAllocsManager *svmManager) {
-    this->mainContext->setSvmAllocsManager(svmManager);
+    return this->svmAllocsManager;
 }
 
 ze_result_t DriverHandleImp::getApiVersion(ze_api_version_t *version) {
@@ -146,6 +133,10 @@ DriverHandleImp::~DriverHandleImp() {
     for (auto &device : this->devices) {
         delete device;
     }
+    if (this->svmAllocsManager) {
+        delete this->svmAllocsManager;
+        this->svmAllocsManager = nullptr;
+    }
 }
 
 ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
@@ -162,6 +153,9 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
         if (this->memoryManager == nullptr) {
             this->memoryManager = neoDevice->getMemoryManager();
+            if (this->memoryManager == nullptr) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
         }
 
         const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
@@ -193,6 +187,11 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
     if (this->devices.size() == 0) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    this->svmAllocsManager = new NEO::SVMAllocsManager(memoryManager, multiOsContextDriver);
+    if (this->svmAllocsManager == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
 
     this->numDevices = static_cast<uint32_t>(this->devices.size());
@@ -251,8 +250,8 @@ bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
                                                  NEO::SvmAllocationData **allocData) {
     // Make sure the host buffer does not overlap any existing allocation
     const char *baseAddress = reinterpret_cast<const char *>(buffer);
-    NEO::SvmAllocationData *beginAllocData = this->getSvmAllocsManager()->getSVMAlloc(baseAddress);
-    NEO::SvmAllocationData *endAllocData = this->getSvmAllocsManager()->getSVMAlloc(baseAddress + size - 1);
+    NEO::SvmAllocationData *beginAllocData = svmAllocsManager->getSVMAlloc(baseAddress);
+    NEO::SvmAllocationData *endAllocData = svmAllocsManager->getSVMAlloc(baseAddress + size - 1);
 
     if (allocData) {
         if (beginAllocData) {
@@ -276,8 +275,8 @@ std::vector<NEO::SvmAllocationData *> DriverHandleImp::findAllocationsWithinRang
     std::vector<NEO::SvmAllocationData *> allocDataArray;
     const char *baseAddress = reinterpret_cast<const char *>(buffer);
     // Check if the host buffer overlaps any existing allocation
-    NEO::SvmAllocationData *beginAllocData = this->getSvmAllocsManager()->getSVMAlloc(baseAddress);
-    NEO::SvmAllocationData *endAllocData = this->getSvmAllocsManager()->getSVMAlloc(baseAddress + size - 1);
+    NEO::SvmAllocationData *beginAllocData = svmAllocsManager->getSVMAlloc(baseAddress);
+    NEO::SvmAllocationData *endAllocData = svmAllocsManager->getSVMAlloc(baseAddress + size - 1);
 
     // Add the allocation that matches the beginning address
     if (beginAllocData) {

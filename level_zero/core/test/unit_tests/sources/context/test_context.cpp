@@ -17,6 +17,7 @@
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 #include "gtest/gtest.h"
 
@@ -158,9 +159,23 @@ struct ContextHostAllocTests : public ::testing::Test {
         driverHandle = std::make_unique<DriverHandleImp>();
         ze_result_t res = driverHandle->initialize(std::move(devices));
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        currSvmAllocsManager = new SVMAllocsManagerContextMock(driverHandle->memoryManager);
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
+
+        zeDevices.resize(numberOfDevicesInContext);
+        driverHandle->getDevice(&numberOfDevicesInContext, zeDevices.data());
+
+        for (uint32_t i = 0; i < numberOfDevicesInContext; i++) {
+            L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(L0::Device::fromHandle(zeDevices[i]));
+            currSvmAllocsManager->expectedRootDeviceIndexes.push_back(deviceImp->getRootDeviceIndex());
+        }
     }
 
     void TearDown() override {
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
+        delete currSvmAllocsManager;
     }
 
     DebugManagerStateRestore restorer;
@@ -174,9 +189,6 @@ struct ContextHostAllocTests : public ::testing::Test {
 
 TEST_F(ContextHostAllocTests,
        whenAllocatingHostMemoryOnlyIndexesOfDevicesWithinTheContextAreUsed) {
-    zeDevices.resize(numberOfDevicesInContext);
-    driverHandle->getDevice(&numberOfDevicesInContext, zeDevices.data());
-
     L0::ContextImp *context = nullptr;
     ze_context_handle_t hContext;
     ze_context_desc_t desc;
@@ -187,15 +199,6 @@ TEST_F(ContextHostAllocTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
-    prevSvmAllocsManager = context->getSvmAllocsManager();
-    currSvmAllocsManager = new SVMAllocsManagerContextMock(context->getMemoryManager());
-    context->setSvmAllocsManager(currSvmAllocsManager);
-
-    for (uint32_t i = 0; i < numberOfDevicesInContext; i++) {
-        L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(L0::Device::fromHandle(zeDevices[i]));
-        currSvmAllocsManager->expectedRootDeviceIndexes.push_back(deviceImp->getRootDeviceIndex());
-    }
-
     void *hostPtr = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
     size_t size = 1024;
@@ -205,9 +208,6 @@ TEST_F(ContextHostAllocTests,
 
     res = context->freeMem(hostPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    context->setSvmAllocsManager(prevSvmAllocsManager);
-    delete currSvmAllocsManager;
 
     context->destroy();
 }

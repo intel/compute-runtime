@@ -165,11 +165,10 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
     L0EnvVariables envVariables = {};
     envVariables.programDebugging = false;
 
-    auto driverHandle = DriverHandle::create(std::move(devices), envVariables, &returnValue);
+    auto driverHandle = whitebox_cast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
     EXPECT_NE(nullptr, driverHandle);
 
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
-    EXPECT_FALSE(driverHandleImp->enableProgramDebugging);
+    EXPECT_FALSE(driverHandle->enableProgramDebugging);
 
     delete driverHandle;
     L0::GlobalDriver = nullptr;
@@ -263,11 +262,10 @@ TEST(DriverTest, givenProgramDebuggingEnvVarNonZeroWhenCreatingDriverThenEnableP
     L0EnvVariables envVariables = {};
     envVariables.programDebugging = true;
 
-    auto driverHandle = DriverHandle::create(std::move(devices), envVariables, &returnValue);
+    auto driverHandle = whitebox_cast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
     EXPECT_NE(nullptr, driverHandle);
 
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
-    EXPECT_TRUE(driverHandleImp->enableProgramDebugging);
+    EXPECT_TRUE(driverHandle->enableProgramDebugging);
 
     delete driverHandle;
     L0::GlobalDriver = nullptr;
@@ -383,21 +381,13 @@ struct DriverHandleTest : public ::testing::Test {
 
         driverHandle = whitebox_cast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
         L0::GlobalDriverHandle = driverHandle;
-
-        ze_context_handle_t hContext;
-        ze_context_desc_t desc;
-        ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
     }
     void TearDown() override {
-        context->destroy();
         delete driverHandle;
         L0::GlobalDriver = nullptr;
         L0::GlobalDriverHandle = nullptr;
     }
-    L0::DriverHandle *driverHandle = nullptr;
-    L0::ContextImp *context = nullptr;
+    L0::DriverHandle *driverHandle;
 };
 
 TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenDriverHandleCountIsObtained) {
@@ -461,9 +451,11 @@ TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenGlobal
 }
 
 TEST_F(DriverHandleTest, givenInitializedDriverWhenGetDeviceIsCalledThenOneDeviceIsObtained) {
+    ze_result_t result;
     uint32_t count = 1;
+
     ze_device_handle_t device;
-    ze_result_t result = driverHandle->getDevice(&count, &device);
+    result = driverHandle->getDevice(&count, &device);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, &device);
 }
@@ -473,37 +465,40 @@ TEST_F(DriverHandleTest, givenValidDriverHandleWhenGetSvmAllocManagerIsCalledThe
     EXPECT_NE(nullptr, svmAllocsManager);
 }
 
-TEST_F(DriverHandleTest, whenZeDriverGetPropertiesIsCalledThenSuccessIsReturned) {
-    ze_driver_properties_t properties = {};
-    ze_result_t result = zeDriverGetProperties(driverHandle->toHandle(), &properties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+TEST(zeDriverHandleGetProperties, whenZeDriverGetPropertiesIsCalledThenGetPropertiesIsCalled) {
+    ze_result_t result;
+    Mock<DriverHandle> driverHandle;
+    ze_driver_properties_t properties;
+    ze_result_t expectedResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+
+    driverHandle.getPropertiesResult = expectedResult;
+    result = zeDriverGetProperties(driverHandle.toHandle(), &properties);
+    EXPECT_EQ(expectedResult, result);
+    EXPECT_EQ(1u, driverHandle.getPropertiesCalled);
 }
 
-TEST_F(DriverHandleTest, whenZeDriverGetApiIsCalledThenSuccessIsReturned) {
-    ze_api_version_t version = {};
-    ze_result_t result = zeDriverGetApiVersion(driverHandle->toHandle(), &version);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+TEST(zeDriverHandleGetApiVersion, whenZeDriverGetApiIsCalledThenGetApiVersionIsCalled) {
+    ze_result_t result;
+    Mock<DriverHandle> driverHandle;
+    ze_api_version_t version;
+    ze_result_t expectedResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+
+    driverHandle.getApiVersionResult = expectedResult;
+    result = zeDriverGetApiVersion(driverHandle.toHandle(), &version);
+    EXPECT_EQ(expectedResult, result);
+    EXPECT_EQ(1u, driverHandle.getApiVersionCalled);
 }
 
-TEST_F(DriverHandleTest, whenGettingApiVersionThenCorrectApiVersionIsReturned) {
-    ze_api_version_t version = {};
-    ze_result_t result = driverHandle->getApiVersion(&version);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ZE_API_VERSION_1_1, version);
-}
+TEST(zeDriverGetIpcProperties, whenZeDriverGetIpcPropertiesIsCalledThenGetIPCPropertiesIsCalled) {
+    ze_result_t result;
+    Mock<DriverHandle> driverHandle;
+    ze_driver_ipc_properties_t ipcProperties;
+    ze_result_t expectedResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 
-TEST_F(DriverHandleTest, whenZeDriverGetIpcPropertiesIsCalledThenSuccessIsReturned) {
-    ze_driver_ipc_properties_t ipcProperties = {};
-    ze_result_t result = zeDriverGetIpcProperties(driverHandle->toHandle(), &ipcProperties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    driverHandle.getIPCPropertiesResult = expectedResult;
+    result = zeDriverGetIpcProperties(driverHandle.toHandle(), &ipcProperties);
+    EXPECT_EQ(expectedResult, result);
+    EXPECT_EQ(1u, driverHandle.getIPCPropertiesCalled);
 }
-
-TEST_F(DriverHandleTest, whenGettingIpcPropertiesThenCorrectPropertiesAreReturned) {
-    ze_driver_ipc_properties_t ipcProperties = {};
-    ze_result_t result = driverHandle->getIPCProperties(&ipcProperties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ZE_IPC_PROPERTY_FLAG_MEMORY, ipcProperties.flags);
-}
-
 } // namespace ult
 } // namespace L0

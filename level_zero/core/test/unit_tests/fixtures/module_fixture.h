@@ -147,11 +147,11 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
         ModuleBuildLog *moduleBuildLog = nullptr;
 
-        module = new MockModule(device,
-                                moduleBuildLog,
-                                ModuleType::User,
-                                perHwThreadPrivateMemorySize,
-                                mockKernelImmData);
+        module = std::make_unique<MockModule>(device,
+                                              moduleBuildLog,
+                                              ModuleType::User,
+                                              perHwThreadPrivateMemorySize,
+                                              mockKernelImmData);
 
         module->type = isInternal ? ModuleType::Builtin : ModuleType::User;
         bool result = module->initialize(&moduleDesc, device->getNEODevice());
@@ -165,16 +165,13 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     }
 
     void TearDown() override {
-        if (module) {
-            module->destroy();
-        }
         DeviceFixture::TearDown();
     }
 
     const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
-    MockModule *module = nullptr;
+    std::unique_ptr<MockModule> module;
     MockImmutableMemoryManager *memoryManager;
 };
 
@@ -204,36 +201,27 @@ struct ModuleFixture : public DeviceFixture {
 
         ModuleBuildLog *moduleBuildLog = nullptr;
 
-        if (module) {
-            module->destroy();
-        }
-        module = Module::create(device, &moduleDesc, moduleBuildLog, type);
+        module.reset(Module::create(device, &moduleDesc, moduleBuildLog, type));
     }
 
     void createKernel() {
         ze_kernel_desc_t desc = {};
         desc.pKernelName = kernelName.c_str();
 
-        kernel = new WhiteBox<::L0::Kernel>();
-        kernel->module = module;
+        kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
+        kernel->module = module.get();
         kernel->initialize(&desc);
     }
 
     void TearDown() override {
-        if (kernel) {
-            kernel->destroy();
-        }
-        if (module) {
-            module->destroy();
-        }
         DeviceFixture::TearDown();
     }
 
     const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
-    L0::Module *module = nullptr;
-    WhiteBox<::L0::Kernel> *kernel = nullptr;
+    std::unique_ptr<L0::Module> module;
+    std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
 };
 
 struct MultiDeviceModuleFixture : public MultiDeviceFixture {
@@ -260,35 +248,29 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
         ModuleBuildLog *moduleBuildLog = nullptr;
 
         auto device = driverHandle->devices[rootDeviceIndex];
-        modules[rootDeviceIndex] = Module::create(device,
-                                                  &moduleDesc,
-                                                  moduleBuildLog, ModuleType::User);
+        modules[rootDeviceIndex].reset(Module::create(device,
+                                                      &moduleDesc,
+                                                      moduleBuildLog, ModuleType::User));
     }
 
     void createKernel(uint32_t rootDeviceIndex) {
         ze_kernel_desc_t desc = {};
         desc.pKernelName = kernelName.c_str();
 
-        kernel = new WhiteBox<::L0::Kernel>();
-        kernel->module = modules[rootDeviceIndex];
+        kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
+        kernel->module = modules[rootDeviceIndex].get();
         kernel->initialize(&desc);
     }
 
     void TearDown() override {
-        if (kernel) {
-            kernel->destroy();
-        }
-        for (auto &module : modules) {
-            module->destroy();
-        }
         MultiDeviceFixture::TearDown();
     }
 
     const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
-    std::vector<L0::Module *> modules;
-    WhiteBox<::L0::Kernel> *kernel = nullptr;
+    std::vector<std::unique_ptr<L0::Module>> modules;
+    std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
 };
 
 struct ImportHostPointerModuleFixture : public ModuleFixture {

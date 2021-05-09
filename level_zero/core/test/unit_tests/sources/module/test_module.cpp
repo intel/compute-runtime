@@ -60,7 +60,7 @@ HWTEST_F(ModuleTest, givenZeroCountWhenGettingKernelNamesThenCountIsFilled) {
     uint32_t count = 0;
     auto result = module->getKernelNames(&count, nullptr);
 
-    auto whiteboxModule = whitebox_cast(module);
+    auto whiteboxModule = whitebox_cast(module.get());
     EXPECT_EQ(whiteboxModule->kernelImmDatas.size(), count);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -576,7 +576,7 @@ TEST_F(ModulePropertyTest, givenCallToGetPropertiesWithUnresolvedSymbolsThenFlag
     NEO::Linker::RelocationInfo unresolvedRelocation;
     unresolvedRelocation.symbolName = "unresolved";
 
-    whitebox_cast(module)->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    whitebox_cast(module.get())->unresolvedExternalsInfo.push_back({unresolvedRelocation});
 
     ze_module_property_flags_t expectedFlags = 0;
     expectedFlags |= ZE_MODULE_PROPERTY_FLAG_IMPORTS;
@@ -690,7 +690,7 @@ class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Tes
     void createKernelAndAllocMemory(uint32_t rootDeviceIndex, void **ptr, ze_kernel_handle_t *kernelHandle) {
         ze_kernel_desc_t kernelDesc = {};
         kernelDesc.pKernelName = kernelName.c_str();
-        ze_result_t res = module->createKernel(&kernelDesc, kernelHandle);
+        ze_result_t res = module.get()->createKernel(&kernelDesc, kernelHandle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         ze_host_mem_alloc_desc_t hostDesc = {};
@@ -702,6 +702,7 @@ class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Tes
 HWTEST_F(DeviceModuleSetArgBufferTest,
          givenValidMemoryUsedinFirstCallToSetArgBufferThenNullptrSetOnTheSecondCallThenArgBufferisUpdatedInEachCallAndSuccessIsReturned) {
     uint32_t rootDeviceIndex = 0;
+    createModuleFromBinary();
 
     ze_kernel_handle_t kernelHandle;
     void *validBufferPtr = nullptr;
@@ -751,7 +752,7 @@ class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, publi
     void createKernelAndAllocMemory(uint32_t rootDeviceIndex, void **ptr, ze_kernel_handle_t *kernelHandle) {
         ze_kernel_desc_t kernelDesc = {};
         kernelDesc.pKernelName = kernelName.c_str();
-        ze_result_t res = modules[rootDeviceIndex]->createKernel(&kernelDesc, kernelHandle);
+        ze_result_t res = modules[rootDeviceIndex].get()->createKernel(&kernelDesc, kernelHandle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         ze_host_mem_alloc_desc_t hostDesc = {};
@@ -770,10 +771,10 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         void *ptr = nullptr;
         createKernelAndAllocMemory(rootDeviceIndex, &ptr, &kernelHandle);
 
-        L0::KernelImp *pKernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
-        pKernel->setArgBuffer(0, sizeof(ptr), &ptr);
+        L0::KernelImp *kernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
+        kernel->setArgBuffer(0, sizeof(ptr), &ptr);
 
-        for (auto alloc : pKernel->getResidencyContainer()) {
+        for (auto alloc : kernel->getResidencyContainer()) {
             if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
                 EXPECT_EQ(rootDeviceIndex, alloc->getRootDeviceIndex());
             }
