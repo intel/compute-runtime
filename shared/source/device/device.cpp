@@ -229,13 +229,23 @@ bool Device::createDeviceImpl() {
     return true;
 }
 
+bool Device::engineSupported(const EngineTypeUsage &engineTypeUsage) const {
+    if (engineInstanced) {
+        return (EngineHelpers::isBcs(engineTypeUsage.first) || (engineTypeUsage.first == this->engineInstancedType));
+    }
+
+    return true;
+}
+
 bool Device::createEngines() {
     auto &hwInfo = getHardwareInfo();
     auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
     this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
-    for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngines.size(); deviceCsrIndex++) {
-        if (!createEngine(deviceCsrIndex, gpgpuEngines[deviceCsrIndex])) {
+
+    uint32_t deviceCsrIndex = 0;
+    for (auto &engine : gpgpuEngines) {
+        if (engineSupported(engine) && !createEngine(deviceCsrIndex++, engine)) {
             return false;
         }
     }

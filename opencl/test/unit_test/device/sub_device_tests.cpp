@@ -533,7 +533,7 @@ TEST_F(EngineInstancedDeviceTests, givenEngineInstancedSubDeviceWhenEngineCreati
     subDevice->failOnCreateEngine = true;
     subDevice->engineInstancedType = gpgpuEngines[0].first;
 
-    EXPECT_FALSE(subDevice->createEnginesForEngineInstancedDevice());
+    EXPECT_FALSE(subDevice->createEngines());
 }
 
 TEST_F(EngineInstancedDeviceTests, givenAffinityMaskSetWhenCreatingDevicesThenFilterMaskedDevices) {

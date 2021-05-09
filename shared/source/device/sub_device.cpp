@@ -50,30 +50,4 @@ uint64_t SubDevice::getGlobalMemorySize(uint32_t deviceBitfield) const {
     return globalMemorySize / rootDevice.getNumAvailableDevices();
 }
 
-bool SubDevice::createEngines() {
-    if (engineInstanced) {
-        return createEnginesForEngineInstancedDevice();
-    }
-
-    return Device::createEngines();
-}
-
-bool SubDevice::createEnginesForEngineInstancedDevice() {
-    this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
-
-    auto &hwInfo = getHardwareInfo();
-    auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
-
-    uint32_t deviceCsrIndex = 0;
-
-    for (auto &engine : gpgpuEngines) {
-        if (EngineHelpers::isBcs(engine.first) || (engine.first == this->engineInstancedType)) {
-            if (!createEngine(deviceCsrIndex++, engine)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 } // namespace NEO

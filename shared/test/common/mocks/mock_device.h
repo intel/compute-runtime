@@ -28,9 +28,9 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
                                                   const DeviceBitfield deviceBitfield);
 
 struct MockSubDevice : public SubDevice {
+    using Device::createEngines;
     using Device::engineInstancedType;
     using Device::engines;
-    using SubDevice::createEnginesForEngineInstancedDevice;
     using SubDevice::engineInstanced;
     using SubDevice::getDeviceBitfield;
     using SubDevice::getGlobalMemorySize;
