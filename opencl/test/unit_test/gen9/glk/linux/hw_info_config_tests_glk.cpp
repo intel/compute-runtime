@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ struct HwInfoConfigTestLinuxGlk : HwInfoConfigTestLinux {
     }
 };
 
-GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfo) {
+GLKTEST_F(HwInfoConfigTestLinuxGlk, WhenConfiguringHwInfoThenInformationIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -104,7 +104,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfo) {
     EXPECT_EQ(200000, outKmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
 }
 
-GLKTEST_F(HwInfoConfigTestLinuxGlk, negative) {
+GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenInvalidInputWhenConfiguringHwInfoThenErrorIsReturned) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     drm->StoredRetValForDeviceID = -1;
@@ -128,7 +128,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, negative) {
     EXPECT_EQ(-1, ret);
 }
 
-GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoFailingEnabledPool) {
+GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenFailingEnabledPoolWhenConfiguringHwInfoThenZeroIsSet) {
     drm->StoredRetValForPooledEU = -1;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
@@ -139,7 +139,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoFailingEnabledPool) {
     EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
 
-GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoDisabledEnabledPool) {
+GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenDisabledEnabledPoolWhenConfiguringHwInfoThenZeroIsSet) {
     drm->StoredHasPooledEU = 0;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
@@ -150,7 +150,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoDisabledEnabledPool) {
     EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
 
-GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoFailingMinEuInPool) {
+GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenFailingMinEuInPoolWhenConfiguringHwInfoThenCorrectValueSet) {
     drm->StoredRetValForMinEUinPool = -1;
 
     drm->StoredSSVal = 3;
@@ -171,7 +171,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoFailingMinEuInPool) {
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
 
-GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoInvalidMinEuInPool) {
+GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenInvalidMinEuInPoolWhenConfiguringHwInfoThenCorrectValueSet) {
     drm->StoredMinEUinPool = 4;
 
     drm->StoredSSVal = 3;
@@ -192,7 +192,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoInvalidMinEuInPool) {
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
 
-GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoWaFlags) {
+GLKTEST_F(HwInfoConfigTestLinuxGlk, GivenWaFlagsWhenConfiguringHwInfoThenInformationIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     drm->StoredDeviceRevID = 0;
@@ -205,7 +205,7 @@ class GlkHwInfoTests : public ::testing::Test {
 };
 typedef ::testing::Types<GLK_1x3x6, GLK_1x2x6> glkTestTypes;
 TYPED_TEST_CASE(GlkHwInfoTests, glkTestTypes);
-TYPED_TEST(GlkHwInfoTests, gtSetupIsCorrect) {
+TYPED_TEST(GlkHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

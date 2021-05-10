@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ struct HwInfoConfigTestLinuxKbl : HwInfoConfigTestLinux {
     }
 };
 
-KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfo) {
+KBLTEST_F(HwInfoConfigTestLinuxKbl, WhenConfiguringHwInfoThenInformationIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -139,28 +139,28 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfo) {
     EXPECT_EQ(200000, outKmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
 }
 
-KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeUnknownDevId) {
+KBLTEST_F(HwInfoConfigTestLinuxKbl, GivenUnknownDevIdWhenConfiguringHwInfoThenErrorIsReturned) {
     drm->StoredDeviceID = 0;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 }
 
-KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeFailedIoctlDevId) {
+KBLTEST_F(HwInfoConfigTestLinuxKbl, GivenFailedIoctlDevIdWhenConfiguringHwInfoThenErrorIsReturned) {
     drm->StoredRetValForDeviceID = -2;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-2, ret);
 }
 
-KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeFailedIoctlDevRevId) {
+KBLTEST_F(HwInfoConfigTestLinuxKbl, GivenFailedIoctlDevRevIdWhenConfiguringHwInfoThenErrorIsReturned) {
     drm->StoredRetValForDeviceRevID = -3;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-3, ret);
 }
 
-KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeFailedIoctlEuCount) {
+KBLTEST_F(HwInfoConfigTestLinuxKbl, GivenFailedIoctlEuCountWhenConfiguringHwInfoThenErrorIsReturned) {
     drm->failRetTopology = true;
     drm->StoredRetValForEUVal = -4;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
@@ -168,7 +168,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeFailedIoctlEuCount) {
     EXPECT_EQ(-4, ret);
 }
 
-KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeFailedIoctlSsCount) {
+KBLTEST_F(HwInfoConfigTestLinuxKbl, GivenFailedIoctlSsCountWhenConfiguringHwInfoThenErrorIsReturned) {
     drm->failRetTopology = true;
     drm->StoredRetValForSSVal = -5;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
@@ -176,7 +176,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeFailedIoctlSsCount) {
     EXPECT_EQ(-5, ret);
 }
 
-KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfoWaFlags) {
+KBLTEST_F(HwInfoConfigTestLinuxKbl, GivenWaFlagsWhenConfiguringHwInfoThenInformationIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     drm->StoredDeviceRevID = 0;
@@ -197,7 +197,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfoWaFlags) {
     EXPECT_EQ(0u, outHwInfo.workaroundTable.waForcePcBbFullCfgRestore);
 }
 
-KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfoEdram) {
+KBLTEST_F(HwInfoConfigTestLinuxKbl, WhenConfiguringHwInfoThenEdramInformationIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
@@ -224,7 +224,7 @@ class KblHwInfoTests : public ::testing::Test {
 };
 typedef ::testing::Types<KBL_1x2x6, KBL_1x3x6, KBL_1x3x8, KBL_2x3x8, KBL_3x3x8> kblTestTypes;
 TYPED_TEST_CASE(KblHwInfoTests, kblTestTypes);
-TYPED_TEST(KblHwInfoTests, gtSetupIsCorrect) {
+TYPED_TEST(KblHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
