@@ -146,7 +146,7 @@ void ClDevice::initializeCaps() {
         if (supportsVme) {
             deviceExtensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
         }
-        if (hwInfo.capabilityTable.supportsImages) {
+        if (hwHelper.isMediaBlockIOSupported(hwInfo)) {
             deviceExtensions += "cl_intel_spirv_media_block_io ";
         }
         deviceExtensions += "cl_intel_spirv_subgroups ";
