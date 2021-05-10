@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,7 +7,6 @@
 if(TESTS_ADLS)
   set(IGDRCL_SRCS_tests_gen12lp_adls
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_adls.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_adls.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/excludes_adls.cpp
   )
