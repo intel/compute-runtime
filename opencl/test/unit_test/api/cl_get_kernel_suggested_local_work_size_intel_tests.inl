@@ -19,7 +19,7 @@ namespace ULT {
 
 TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenInvalidInputWhenCallingGetKernelSuggestedLocalWorkSizeThenErrorIsReturned) {
     size_t globalWorkOffset[3];
-    size_t globalWorkSize[3];
+    size_t globalWorkSize[3] = {1, 1, 1};
     size_t suggestedLocalWorkSize[3];
     cl_uint workDim = 1;
 
@@ -52,6 +52,14 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenInvalidInputWhenCallingGetKe
     retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, workDim,
                                                     globalWorkOffset, nullptr, suggestedLocalWorkSize);
     EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, retVal);
+
+    for (size_t i = 0; i < 3; ++i) {
+        globalWorkSize[i] = 0;
+        retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pMultiDeviceKernel, 3,
+                                                        globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+        EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, retVal);
+        globalWorkSize[i] = 1;
+    }
 }
 
 TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenVariousInputWhenGettingSuggestedLocalWorkSizeThenCorrectValuesAreReturned) {
@@ -94,6 +102,24 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenVariousInputWhenGettingSugge
     EXPECT_EQ(expectedLws.x, suggestedLocalWorkSize[0]);
     EXPECT_EQ(expectedLws.y, suggestedLocalWorkSize[1]);
     EXPECT_EQ(expectedLws.z, suggestedLocalWorkSize[2]);
+}
+
+TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenKernelWithReqdWorkGroupSizeWhenGettingSuggestedLocalWorkSizeThenRequiredWorkSizeIsReturned) {
+    size_t globalWorkOffset[] = {0, 0, 0};
+    size_t globalWorkSize[] = {128, 128, 128};
+    size_t suggestedLocalWorkSize[] = {0, 0, 0};
+    uint16_t regdLocalWorkSize[] = {32, 32, 32};
+
+    MockKernelWithInternals mockKernel(*pDevice);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] = regdLocalWorkSize[0];
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1] = regdLocalWorkSize[1];
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2] = regdLocalWorkSize[2];
+
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, mockKernel.mockMultiDeviceKernel, 3, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(regdLocalWorkSize[0], suggestedLocalWorkSize[0]);
+    EXPECT_EQ(regdLocalWorkSize[1], suggestedLocalWorkSize[1]);
+    EXPECT_EQ(regdLocalWorkSize[2], suggestedLocalWorkSize[2]);
 }
 
 TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenKernelWithExecutionEnvironmentPatchedWhenGettingSuggestedLocalWorkSizeThenCorrectValuesAreReturned) {

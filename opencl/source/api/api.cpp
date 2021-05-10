@@ -5796,7 +5796,10 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
         return retVal;
     }
 
-    if (globalWorkSize == nullptr) {
+    if (globalWorkSize == nullptr ||
+        globalWorkSize[0] == 0 ||
+        (workDim > 1 && globalWorkSize[1] == 0) ||
+        (workDim > 2 && globalWorkSize[2] == 0)) {
         retVal = CL_INVALID_GLOBAL_WORK_SIZE;
         return retVal;
     }

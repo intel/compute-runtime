@@ -1011,8 +1011,8 @@ void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *glob
     Vec3<size_t> elws{0, 0, 0};
     Vec3<size_t> gws{
         globalWorkSize[0],
-        (workDim > 1) ? globalWorkSize[1] : 0,
-        (workDim > 2) ? globalWorkSize[2] : 0};
+        (workDim > 1) ? globalWorkSize[1] : 1,
+        (workDim > 2) ? globalWorkSize[2] : 1};
     Vec3<size_t> offset{0, 0, 0};
     if (globalWorkOffset) {
         offset.x = globalWorkOffset[0];
@@ -1024,8 +1024,17 @@ void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *glob
         }
     }
 
-    const DispatchInfo dispatchInfo{&clDevice, this, workDim, gws, elws, offset};
-    auto suggestedLws = computeWorkgroupSize(dispatchInfo);
+    Vec3<size_t> suggestedLws{0, 0, 0};
+
+    if (kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] != 0) {
+        suggestedLws.x = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
+        suggestedLws.y = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
+        suggestedLws.z = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];
+    } else {
+        uint32_t dispatchWorkDim = std::max(1U, std::max(gws.getSimplifiedDim(), offset.getSimplifiedDim()));
+        const DispatchInfo dispatchInfo{&clDevice, this, dispatchWorkDim, gws, elws, offset};
+        suggestedLws = computeWorkgroupSize(dispatchInfo);
+    }
 
     localWorkSize[0] = suggestedLws.x;
     if (workDim > 1)
