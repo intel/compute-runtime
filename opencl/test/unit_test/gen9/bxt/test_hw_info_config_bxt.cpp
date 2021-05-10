@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-TEST(BxtHwInfoConfig, givenHwInfoErrorneousConfigString) {
+TEST(BxtHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     if (IGFX_BROXTON != productFamily) {
         return;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -180,7 +180,7 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, GivenFailingMinEuInPoolWhenConfiguringHwInfo
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
 
-BXTTEST_F(HwInfoConfigTestLinuxBxt, GivenInvalidMinEuInPoolWhenConfiguringHwInfoTheZeroIsReturned) {
+BXTTEST_F(HwInfoConfigTestLinuxBxt, GivenInvalidMinEuInPoolWhenConfiguringHwInfoThenZeroIsReturned) {
     drm->StoredMinEUinPool = 4;
 
     drm->StoredSSVal = 3;
