@@ -111,7 +111,15 @@ void ExecutionEnvironment::parseAffinityMask() {
             if (subEntries.size() > 1) {
                 uint32_t subDeviceIndex = StringHelpers::toUint32t(subEntries[1]);
 
-                if (subDeviceIndex < subDevicesCount) {
+                bool enableSecondLevelEngineInstanced = ((subDevicesCount == 1) && (hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1));
+
+                if (enableSecondLevelEngineInstanced) {
+                    UNRECOVERABLE_IF(subEntries.size() != 2);
+
+                    if (subDeviceIndex < hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled) {
+                        affinityMaskHelper[rootDeviceIndex].enableEngineInstancedSubDevice(0, subDeviceIndex); // Mask: X.Y
+                    }
+                } else if (subDeviceIndex < subDevicesCount) {
                     if (subEntries.size() == 2) {
                         affinityMaskHelper[rootDeviceIndex].enableGenericSubDevice(subDeviceIndex); // Mask: X.Y
                     } else {

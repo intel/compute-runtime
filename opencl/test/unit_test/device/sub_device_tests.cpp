@@ -665,6 +665,34 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceOnlyW
     EXPECT_TRUE(hasEngineInstancedEngines(rootDevice, engineType));
 }
 
+TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle2rdLevelDeviceOnlyWhenCreatingDevicesThenCreate1stLevelAsEngineInstanced) {
+    constexpr uint32_t genericDevicesCount = 1;
+    constexpr uint32_t ccsCount = 2;
+    constexpr uint32_t genericDeviceIndex = 0;
+    constexpr uint32_t engineInstancedEngineIndex = 1;
+
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.1, 0.9");
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+
+    auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + engineInstancedEngineIndex);
+
+    DeviceBitfield deviceBitfield = (1llu << genericDeviceIndex);
+
+    EXPECT_FALSE(rootDevice->engines[0].osContext->isRootDevice());
+    EXPECT_TRUE(rootDevice->engineInstanced);
+    EXPECT_TRUE(rootDevice->getNumAvailableDevices() == 1);
+    EXPECT_TRUE(engineType == rootDevice->engineInstancedType);
+    EXPECT_TRUE(deviceBitfield == rootDevice->getDeviceBitfield());
+    EXPECT_EQ(1u, rootDevice->getDeviceBitfield().count());
+
+    EXPECT_TRUE(hasEngineInstancedEngines(rootDevice, engineType));
+}
+
 TEST(SubDevicesTest, whenInitializeRootCsrThenDirectSubmissionIsNotInitialized) {
     auto device = std::make_unique<MockDevice>();
     device->initializeRootCommandStreamReceiver();
