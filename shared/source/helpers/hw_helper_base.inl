@@ -656,4 +656,7 @@ size_t HwHelperHw<GfxFamily>::getPreemptionAllocationAlignment() const {
     return 256 * MemoryConstants::kiloByte;
 }
 
+template <typename GfxFamily>
+void HwHelperHw<GfxFamily>::applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const {}
+
 } // namespace NEO

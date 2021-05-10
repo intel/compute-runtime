@@ -28,6 +28,7 @@ namespace NEO {
 class GmmHelper;
 class GraphicsAllocation;
 class TagAllocatorBase;
+class Gmm;
 struct AllocationData;
 struct AllocationProperties;
 struct EngineControl;
@@ -154,6 +155,7 @@ class HwHelper {
                                                                              DeviceBitfield deviceBitfield) const = 0;
     virtual size_t getTimestampPacketAllocatorAlignment() const = 0;
     virtual size_t getSingleTimestampPacketSize() const = 0;
+    virtual void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -383,6 +385,8 @@ class HwHelperHw : public HwHelper {
     size_t getTimestampPacketAllocatorAlignment() const override;
 
     size_t getSingleTimestampPacketSize() const override;
+
+    void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

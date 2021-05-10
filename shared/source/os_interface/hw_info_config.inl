@@ -41,12 +41,6 @@ template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {}
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::enableRenderCompression(HardwareInfo *hwInfo) {
-    hwInfo->capabilityTable.ftrRenderCompressedImages = hwInfo->featureTable.ftrE2ECompression;
-    hwInfo->capabilityTable.ftrRenderCompressedBuffers = hwInfo->featureTable.ftrE2ECompression;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::enableBlitterOperationsSupport(HardwareInfo *hwInfo) {
     hwInfo->capabilityTable.blitterOperationsSupported = HwHelper::get(hwInfo->platform.eRenderCoreFamily).obtainBlitterPreference(*hwInfo);
 

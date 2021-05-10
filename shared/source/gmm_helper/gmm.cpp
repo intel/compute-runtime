@@ -125,7 +125,8 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
 }
 
 void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {
-    bool allowRenderCompression = HwHelper::renderCompressedBuffersSupported(*clientContext->getHardwareInfo()) &&
+    auto hardwareInfo = clientContext->getHardwareInfo();
+    bool allowRenderCompression = HwHelper::renderCompressedBuffersSupported(*hardwareInfo) &&
                                   preferRenderCompression;
 
     if (allowRenderCompression) {
@@ -134,6 +135,7 @@ void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {
         resourceParams.Flags.Gpu.UnifiedAuxSurface = 1;
         isRenderCompressed = true;
     }
+    HwHelper::get(hardwareInfo->platform.eRenderCoreFamily).applyAdditionalCompressionSettings(*this, !isRenderCompressed);
 }
 
 void Gmm::queryImageParams(ImageInfo &imgInfo) {
