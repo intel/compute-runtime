@@ -19,7 +19,7 @@ ze_result_t FirmwareUtilImp::fwSupportedDiagTests(std::vector<std::string> &supp
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) {
+ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 } // namespace L0

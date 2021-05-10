@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <string>
@@ -36,7 +37,7 @@ struct DiagnosticsHandleContext {
     DiagnosticsHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~DiagnosticsHandleContext();
 
-    void init();
+    void init(std::vector<ze_device_handle_t> &deviceHandles);
 
     ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics);
     std::vector<std::string> supportedDiagTests = {};
@@ -44,7 +45,7 @@ struct DiagnosticsHandleContext {
     std::vector<Diagnostics *> handleList = {};
 
   private:
-    void createHandle(const std::string &DiagTests);
+    void createHandle(ze_device_handle_t deviceHandle, const std::string &DiagTests);
 };
 
 } // namespace L0

@@ -115,7 +115,7 @@ void SysmanDeviceImp::init() {
         pFirmwareHandleContext->init();
     }
     if (pDiagnosticsHandleContext) {
-        pDiagnosticsHandleContext->init();
+        pDiagnosticsHandleContext->init(deviceHandles);
     }
     if (pPerformanceHandleContext) {
         pPerformanceHandleContext->init(deviceHandles);

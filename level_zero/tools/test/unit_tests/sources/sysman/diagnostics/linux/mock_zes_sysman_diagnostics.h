@@ -15,6 +15,7 @@ namespace ult {
 
 constexpr uint32_t mockDiagHandleCount = 2;
 const std::string mockQuiescentGpuFile("quiesce_gpu");
+const std::string mockinvalidateLmemFile("invalidate_lmem_mmaps");
 const std::vector<std::string> mockSupportedDiagTypes = {"MOCKSUITE1", "MOCKSUITE2"};
 class DiagnosticsInterface : public FirmwareUtil {};
 
@@ -35,7 +36,7 @@ struct Mock<DiagnosticsInterface> : public FirmwareUtil {
         supportedDiagTests.push_back(mockSupportedDiagTypes[1]);
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t mockFwRunDiagTestsReturnSuccess(std::string &osDiagType, zes_diag_result_t *pResult) {
+    ze_result_t mockFwRunDiagTestsReturnSuccess(std::string &osDiagType, zes_diag_result_t *pResult, uint32_t subDeviceId) {
         *pResult = ZES_DIAG_RESULT_NO_ERRORS;
         return ZE_RESULT_SUCCESS;
     }
@@ -50,7 +51,7 @@ struct Mock<DiagnosticsInterface> : public FirmwareUtil {
     MOCK_METHOD(ze_result_t, fwFlashOprom, (void *pImage, uint32_t size), (override));
     MOCK_METHOD(ze_result_t, fwIfrApplied, (bool &ifrStatus), (override));
     MOCK_METHOD(ze_result_t, fwSupportedDiagTests, (std::vector<std::string> & supportedDiagTests), (override));
-    MOCK_METHOD(ze_result_t, fwRunDiagTests, (std::string & osDiagType, zes_diag_result_t *pResult), (override));
+    MOCK_METHOD(ze_result_t, fwRunDiagTests, (std::string & osDiagType, zes_diag_result_t *pResult, uint32_t subDeviceId), (override));
 };
 
 class DiagSysfsAccess : public SysfsAccess {};
@@ -59,6 +60,8 @@ struct Mock<DiagSysfsAccess> : public DiagSysfsAccess {
 
     ze_result_t mockwrite(const std::string file, const int val) {
         if (std::string::npos != file.find(mockQuiescentGpuFile)) {
+            return ZE_RESULT_SUCCESS;
+        } else if (std::string::npos != file.find(mockinvalidateLmemFile)) {
             return ZE_RESULT_SUCCESS;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;

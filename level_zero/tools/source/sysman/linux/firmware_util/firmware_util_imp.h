@@ -69,7 +69,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t fwFlashOprom(void *pImage, uint32_t size) override;
     ze_result_t fwIfrApplied(bool &ifrStatus) override;
     ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) override;
-    ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) override;
+    ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) override;
 
     template <class T>
     bool getSymbolAddr(const std::string name, T &proc);

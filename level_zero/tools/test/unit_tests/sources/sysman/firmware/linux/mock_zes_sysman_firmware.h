@@ -72,7 +72,7 @@ struct Mock<FirmwareInterface> : public FirmwareUtil {
     MOCK_METHOD(ze_result_t, fwFlashOprom, (void *pImage, uint32_t size), (override));
     MOCK_METHOD(ze_result_t, fwIfrApplied, (bool &ifrStatus), (override));
     MOCK_METHOD(ze_result_t, fwSupportedDiagTests, (std::vector<std::string> & supportedDiagTests), (override));
-    MOCK_METHOD(ze_result_t, fwRunDiagTests, (std::string & osDiagType, zes_diag_result_t *pResult), (override));
+    MOCK_METHOD(ze_result_t, fwRunDiagTests, (std::string & osDiagType, zes_diag_result_t *pResult, uint32_t subdeviceId), (override));
 };
 
 class PublicLinuxFirmwareImp : public L0::LinuxFirmwareImp {

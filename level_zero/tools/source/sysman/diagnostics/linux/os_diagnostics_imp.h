@@ -21,7 +21,7 @@ class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass
     ze_result_t osRunDiagTests(uint32_t start, uint32_t end, zes_diag_result_t *pResult) override;
     ze_result_t osRunDiagTestsinFW(zes_diag_result_t *pResult);
     LinuxDiagnosticsImp() = default;
-    LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string &diagTests);
+    LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string &diagTests, ze_bool_t onSubdevice, uint32_t subdeviceId);
     ~LinuxDiagnosticsImp() override = default;
     std::string osDiagType = "unknown";
 
@@ -31,6 +31,9 @@ class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass
 
   private:
     static const std::string quiescentGpuFile;
+    bool isSubdevice = false;
+    uint32_t subdeviceId = 0;
+    static const std::string invalidateLmemFile;
 };
 
 } // namespace L0

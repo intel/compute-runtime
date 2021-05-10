@@ -34,7 +34,17 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
             delete handle;
         }
         pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
-        pSysmanDeviceImp->pDiagnosticsHandleContext->init();
+        uint32_t subDeviceCount = 0;
+        std::vector<ze_device_handle_t> deviceHandles;
+        // We received a device handle. Check for subdevices in this device
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+        pSysmanDeviceImp->pDiagnosticsHandleContext->init(deviceHandles);
     }
     void TearDown() override {
         SysmanDeviceFixture::TearDown();
@@ -45,6 +55,23 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
         std::vector<zes_diag_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
+    }
+    void clear_and_reinit_handles(std::vector<ze_device_handle_t> &deviceHandles) {
+        for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
+            delete handle;
+        }
+        pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
+        pSysmanDeviceImp->pDiagnosticsHandleContext->supportedDiagTests.clear();
+        uint32_t subDeviceCount = 0;
+
+        // We received a device handle. Check for subdevices in this device
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
     }
 };
 
@@ -70,7 +97,17 @@ TEST_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDia
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, 0u);
 
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    uint32_t subDeviceCount = 0;
+    std::vector<ze_device_handle_t> deviceHandles;
+    // We received a device handle. Check for subdevices in this device
+    Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+    if (subDeviceCount == 0) {
+        deviceHandles.resize(1, device->toHandle());
+    } else {
+        deviceHandles.resize(subDeviceCount, nullptr);
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+    }
+    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0], deviceHandles[0]);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
     result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
 
@@ -91,49 +128,36 @@ TEST_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDia
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenFailedFirmwareInitializationWhenInitializingDiagnosticsContextThenexpectNoHandles) {
-    for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
+    std::vector<ze_device_handle_t> deviceHandles;
+    clear_and_reinit_handles(deviceHandles);
     ON_CALL(*pMockDiagInterface.get(), fwDeviceInit())
         .WillByDefault(::testing::Invoke(pMockDiagInterface.get(), &Mock<DiagnosticsInterface>::mockFwDeviceInitFail));
-
-    pSysmanDeviceImp->pDiagnosticsHandleContext->init();
+    pSysmanDeviceImp->pDiagnosticsHandleContext->init(deviceHandles);
 
     EXPECT_EQ(0u, pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.size());
 }
 
-TEST_F(ZesDiagnosticsFixture, GivenSupportedTestsWhenInitializingDiagnosticsContextThenexpectHandles) {
-    for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
+TEST_F(ZesDiagnosticsFixture, GivenSupportedTestsWhenInitializingDiagnosticsContextThenExpectHandles) {
+    std::vector<ze_device_handle_t> deviceHandles;
+    clear_and_reinit_handles(deviceHandles);
     pSysmanDeviceImp->pDiagnosticsHandleContext->supportedDiagTests.push_back(mockSupportedDiagTypes[0]);
-    ON_CALL(*pMockDiagInterface.get(), fwDeviceInit())
-        .WillByDefault(::testing::Invoke(pMockDiagInterface.get(), &Mock<DiagnosticsInterface>::mockFwDeviceInitFail));
-
-    pSysmanDeviceImp->pDiagnosticsHandleContext->init();
-
+    pSysmanDeviceImp->pDiagnosticsHandleContext->init(deviceHandles);
     EXPECT_EQ(1u, pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.size());
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenFirmwareInitializationFailureThenCreateHandleMustFail) {
-    for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
+    std::vector<ze_device_handle_t> deviceHandles;
+    clear_and_reinit_handles(deviceHandles);
     ON_CALL(*pMockDiagInterface.get(), fwDeviceInit())
         .WillByDefault(::testing::Invoke(pMockDiagInterface.get(), &Mock<DiagnosticsInterface>::mockFwDeviceInitFail));
-    pSysmanDeviceImp->pDiagnosticsHandleContext->init();
+    pSysmanDeviceImp->pDiagnosticsHandleContext->init(deviceHandles);
     EXPECT_EQ(0u, pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.size());
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsPropertiesThenCallSucceeds) {
-    for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::vector<ze_device_handle_t> deviceHandles;
+    clear_and_reinit_handles(deviceHandles);
+    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0], deviceHandles[0]);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
 
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
@@ -142,11 +166,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsP
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsTestThenCallSucceeds) {
-    for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::vector<ze_device_handle_t> deviceHandles;
+    clear_and_reinit_handles(deviceHandles);
+    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0], deviceHandles[0]);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
 
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
@@ -159,11 +181,9 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsT
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsTestThenCallSucceeds) {
-    for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::vector<ze_device_handle_t> deviceHandles;
+    clear_and_reinit_handles(deviceHandles);
+    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0], deviceHandles[0]);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
 
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();

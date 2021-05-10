@@ -32,7 +32,7 @@ class FirmwareUtil {
     virtual ze_result_t fwFlashOprom(void *pImage, uint32_t size) = 0;
     virtual ze_result_t fwIfrApplied(bool &ifrStatus) = 0;
     virtual ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) = 0;
-    virtual ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) = 0;
+    virtual ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult, uint32_t subDeviceId) = 0;
     virtual ~FirmwareUtil() = default;
 };
 } // namespace L0
