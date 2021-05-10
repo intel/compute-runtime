@@ -53,6 +53,7 @@ class MockDevice : public RootDevice {
     using Device::createSubDevices;
     using Device::deviceInfo;
     using Device::engineGroups;
+    using Device::engineInstanced;
     using Device::engineInstancedType;
     using Device::engines;
     using Device::executionEnvironment;

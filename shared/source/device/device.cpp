@@ -157,10 +157,41 @@ bool Device::createSubDevices() {
     return true;
 }
 
+void Device::setAsEngineInstanced() {
+    if (subdevices.size() > 0) {
+        return;
+    }
+
+    UNRECOVERABLE_IF(deviceBitfield.count() != 1);
+
+    uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+    auto enginesMask = getRootDeviceEnvironment().deviceAffinityMask.getEnginesMask(subDeviceIndex);
+
+    if (enginesMask.count() != 1) {
+        return;
+    }
+
+    auto ccsCount = getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+    for (uint32_t i = 0; i < ccsCount; i++) {
+        if (!enginesMask.test(i)) {
+            continue;
+        }
+
+        UNRECOVERABLE_IF(engineInstanced);
+        engineInstanced = true;
+        engineInstancedType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + i);
+    }
+
+    UNRECOVERABLE_IF(!engineInstanced);
+}
+
 bool Device::createDeviceImpl() {
     if (!createSubDevices()) {
         return false;
     }
+
+    setAsEngineInstanced();
 
     auto &hwInfo = getHardwareInfo();
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);

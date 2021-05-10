@@ -360,7 +360,8 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         return (numCcs == expectedNumCcs);
     }
 
-    bool hasEngineInstancedEngines(MockSubDevice *device, aub_stream::EngineType engineType) {
+    template <typename MockDeviceT>
+    bool hasEngineInstancedEngines(MockDeviceT *device, aub_stream::EngineType engineType) {
         bool ccsFound = false;
 
         for (auto &engine : device->engines) {
@@ -585,10 +586,11 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskSetWhenCreatingDevicesThenFi
     }
 }
 
-TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceWhenCreatingDevicesThenCreate2ndLevelAsGeneric) {
+TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceWhenCreatingDevicesThenCreate2ndLevelAsEngineInstanced) {
     constexpr uint32_t genericDevicesCount = 2;
     constexpr uint32_t ccsCount = 2;
-    constexpr uint32_t create2ndLevelAsGeneric[2] = {false, true};
+    constexpr uint32_t create2ndLevelAsEngineInstanced[2] = {false, true};
+    constexpr uint32_t engineInstanced2ndLevelEngineIndex = 1;
 
     DebugManager.flags.ZE_AFFINITY_MASK.set("0.0, 0.1.1");
 
@@ -605,15 +607,22 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceWhenC
 
         EXPECT_FALSE(subDevice->engines[0].osContext->isRootDevice());
 
-        EXPECT_FALSE(subDevice->engineInstanced);
-        EXPECT_EQ(aub_stream::EngineType::NUM_ENGINES, subDevice->engineInstancedType);
+        if (create2ndLevelAsEngineInstanced[i]) {
+            auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + engineInstanced2ndLevelEngineIndex);
+
+            DeviceBitfield deviceBitfield = (1llu << i);
+            EXPECT_TRUE(isEngineInstanced(subDevice, engineType, i, deviceBitfield));
+            EXPECT_TRUE(hasEngineInstancedEngines(subDevice, engineType));
+
+            EXPECT_EQ(1u, subDevice->getNumAvailableDevices());
+
+            continue;
+        }
 
         EXPECT_TRUE(hasAllEngines(subDevice));
 
-        if (create2ndLevelAsGeneric[i]) {
-            EXPECT_EQ(1u, subDevice->getNumAvailableDevices());
-            continue;
-        }
+        EXPECT_FALSE(subDevice->engineInstanced);
+        EXPECT_EQ(aub_stream::EngineType::NUM_ENGINES, subDevice->engineInstancedType);
 
         EXPECT_EQ(ccsCount, subDevice->getNumAvailableDevices());
 
@@ -626,6 +635,34 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceWhenC
             EXPECT_TRUE(hasEngineInstancedEngines(engineSubDevice, engineType));
         }
     }
+}
+
+TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceOnlyWhenCreatingDevicesThenCreate1stLevelAsEngineInstanced) {
+    constexpr uint32_t genericDevicesCount = 2;
+    constexpr uint32_t ccsCount = 2;
+    constexpr uint32_t genericDeviceIndex = 1;
+    constexpr uint32_t engineInstancedEngineIndex = 1;
+
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.1.1");
+
+    if (!createDevices(genericDevicesCount, ccsCount)) {
+        GTEST_SKIP();
+    }
+
+    EXPECT_FALSE(hasRootCsrOnly(rootDevice));
+
+    auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + engineInstancedEngineIndex);
+
+    DeviceBitfield deviceBitfield = (1llu << genericDeviceIndex);
+
+    EXPECT_FALSE(rootDevice->engines[0].osContext->isRootDevice());
+    EXPECT_TRUE(rootDevice->engineInstanced);
+    EXPECT_TRUE(rootDevice->getNumAvailableDevices() == 1);
+    EXPECT_TRUE(engineType == rootDevice->engineInstancedType);
+    EXPECT_TRUE(deviceBitfield == rootDevice->getDeviceBitfield());
+    EXPECT_EQ(1u, rootDevice->getDeviceBitfield().count());
+
+    EXPECT_TRUE(hasEngineInstancedEngines(rootDevice, engineType));
 }
 
 TEST(SubDevicesTest, whenInitializeRootCsrThenDirectSubmissionIsNotInitialized) {
