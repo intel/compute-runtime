@@ -92,10 +92,6 @@ bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
     }
 
-    if (device->getL0Debugger()) {
-        internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
-    }
-
     if (NEO::DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     }

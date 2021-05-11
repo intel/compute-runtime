@@ -362,7 +362,7 @@ HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKerne
 }
 
 using ModuleWithDebuggerL0Test = Test<L0DebuggerHwFixture>;
-TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenModuleIsCreatedThenDebugOptionsAreUsed) {
+TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenModuleIsCreatedThenDebugOptionsAreNotUsed) {
     NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -381,7 +381,7 @@ TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenModuleIsCreatedThenDeb
 
     EXPECT_TRUE(module->isDebugEnabled());
 
-    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, L0::BuildOptions::debugKernelEnable));
+    EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, L0::BuildOptions::debugKernelEnable));
     EXPECT_FALSE(CompilerOptions::contains(cip->buildOptions, NEO::CompilerOptions::generateDebugInfo));
     EXPECT_FALSE(CompilerOptions::contains(cip->buildOptions, L0::BuildOptions::optDisable));
 };
