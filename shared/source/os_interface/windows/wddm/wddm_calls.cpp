@@ -7,12 +7,11 @@
 
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
-#include <dxcore.h>
 #include <dxgi.h>
 
 namespace NEO {
-Wddm::DXCoreCreateAdapterFactoryFcn getDXCoreCreateAdapterFactory() {
-    return DXCoreCreateAdapterFactory;
+Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory() {
+    return CreateDXGIFactory;
 }
 
 Wddm::GetSystemInfoFcn getGetSystemInfo() {
