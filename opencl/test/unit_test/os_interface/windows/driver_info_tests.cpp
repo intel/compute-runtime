@@ -32,7 +32,7 @@ namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
 }
 
-extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
 CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump,
                                                        ExecutionEnvironment &executionEnvironment,

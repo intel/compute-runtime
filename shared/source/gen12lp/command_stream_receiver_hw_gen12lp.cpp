@@ -56,7 +56,7 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
 
 template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
-    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
+    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
 }
 
