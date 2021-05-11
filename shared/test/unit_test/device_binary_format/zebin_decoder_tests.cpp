@@ -1529,7 +1529,8 @@ kernels:
     std::string warnings;
     NEO::ZeInfoPayloadArguments args;
     uint32_t maxArgIndex = 0U;
-    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
+    int32_t maxSmpIndex = -1;
+    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
     EXPECT_EQ(2U, maxArgIndex);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
@@ -1572,7 +1573,8 @@ kernels:
     std::string warnings;
     NEO::ZeInfoPayloadArguments args;
     uint32_t maxArgIndex = 0U;
-    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
+    int32_t maxSmpIndex = -1;
+    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"something_new\" for payload argument in context of some_kernel\n", warnings.c_str());
@@ -1606,7 +1608,8 @@ kernels:
     std::string warnings;
     NEO::ZeInfoPayloadArguments args;
     uint32_t maxArgIndex = 0U;
-    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
+    int32_t maxSmpIndex = -1;
+    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read size from : [true] in context of : some_kernel\n", errors.c_str());
@@ -2699,6 +2702,57 @@ kernels:
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid binding table entry for non-pointer and non-image argument idx : 0.\n", decodeErrors.c_str());
 }
 
+TEST(PopulateKernelDescriptor, GivenValidArgSamplerThenGeneratesDsh) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      payload_arguments: 
+        - arg_type:        arg_bypointer
+          size:            8
+          addrspace:       sampler
+          addrmode:        stateful
+          arg_index:       0
+          sampler_index:   0
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, programInfo.kernelInfos.size());
+
+    const auto &kernelDescriptor = programInfo.kernelInfos[0]->kernelDescriptor;
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesSamplers);
+
+    const auto &samplerTable = kernelDescriptor.payloadMappings.samplerTable;
+    EXPECT_EQ(1U, samplerTable.numSamplers);
+    EXPECT_EQ(0U, samplerTable.borderColor);
+    EXPECT_EQ(64U, samplerTable.tableOffset);
+
+    const auto &args = kernelDescriptor.payloadMappings.explicitArgs;
+    ASSERT_EQ(1U, args.size());
+    EXPECT_EQ(64U, args[0].as<ArgDescSampler>().bindful);
+
+    const auto &heapInfo = programInfo.kernelInfos[0]->heapInfo;
+    ASSERT_EQ(128U, heapInfo.DynamicStateHeapSize);
+}
 TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsageIsNotPrivateThenFails) {
     {
         NEO::ConstStringRef zeinfo = R"===(

@@ -125,6 +125,7 @@ static constexpr ConstStringRef size("size");
 static constexpr ConstStringRef addrmode("addrmode");
 static constexpr ConstStringRef addrspace("addrspace");
 static constexpr ConstStringRef accessType("access_type");
+static constexpr ConstStringRef samplerIndex("sampler_index");
 namespace ArgType {
 static constexpr ConstStringRef localSize("local_size");
 static constexpr ConstStringRef groupCount("group_count");
@@ -351,10 +352,12 @@ using AddrmodeT = MemoryAddressingMode;
 using AddrspaceT = AddressSpace;
 using AccessTypeT = AccessType;
 using SlmAlignment = uint8_t;
+using SamplerIndexT = int32_t;
 
 namespace Defaults {
 static constexpr ArgIndexT argIndex = -1;
 static constexpr SlmAlignment slmArgAlignment = 16U;
+static constexpr SamplerIndexT samplerIndex = -1;
 } // namespace Defaults
 
 struct PayloadArgumentBaseT {
@@ -365,6 +368,7 @@ struct PayloadArgumentBaseT {
     AddrmodeT addrmode = MemoryAddressingModeUnknown;
     AddrspaceT addrspace = AddressSpaceUnknown;
     AccessTypeT accessType = AccessTypeUnknown;
+    SamplerIndexT samplerIndex = Defaults::samplerIndex;
 };
 
 } // namespace PayloadArgument

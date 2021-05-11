@@ -432,6 +432,7 @@ DecodeError readZeInfoPerThreadPayloadArguments(const NEO::Yaml::YamlParser &par
 DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                        ZeInfoPayloadArguments &ouPayloadArguments,
                                        uint32_t &outMaxPayloadArgumentIndex,
+                                       int32_t &outMaxSamplerIndex,
                                        ConstStringRef context,
                                        std::string &outErrReason, std::string &outWarning) {
     bool validPayload = true;
@@ -459,6 +460,9 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::accessType == key) {
                 auto accessTypeToken = parser.getValueToken(payloadArgumentMemberNd);
                 validPayload &= readEnumChecked(accessTypeToken, payloadArgMetadata.accessType, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::samplerIndex == key) {
+                validPayload &= parser.readValueChecked(payloadArgumentMemberNd, payloadArgMetadata.samplerIndex);
+                outMaxSamplerIndex = std::max<int32_t>(outMaxSamplerIndex, payloadArgMetadata.samplerIndex);
             } else {
                 outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
             }
@@ -642,7 +646,9 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(true);
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpaceSampler:
-            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(true);
+            static constexpr auto maxSamplerStateSize = 16U;
+            static constexpr auto maxIndirectSamplerStateSize = 64U;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(true).bindful = maxIndirectSamplerStateSize + maxSamplerStateSize * src.samplerIndex;
             break;
         }
 
@@ -827,9 +833,10 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     }
 
     uint32_t maxArgumentIndex = 0U;
+    int32_t maxSamplerIndex = -1;
     ZeInfoPayloadArguments payloadArguments;
     if (false == zeInfokernelSections.payloadArgumentsNd.empty()) {
-        auto payloadArgsErr = readZeInfoPayloadArguments(yamlParser, *zeInfokernelSections.payloadArgumentsNd[0], payloadArguments, maxArgumentIndex,
+        auto payloadArgsErr = readZeInfoPayloadArguments(yamlParser, *zeInfokernelSections.payloadArgumentsNd[0], payloadArguments, maxArgumentIndex, maxSamplerIndex,
                                                          kernelDescriptor.kernelMetadata.kernelName, outErrReason, outWarning);
         if (DecodeError::Success != payloadArgsErr) {
             return payloadArgsErr;
@@ -970,6 +977,24 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
         kernelDescriptor.payloadMappings.bindingTable.tableOffset = static_cast<SurfaceStateHeapOffset>(generatedBindingTablePos - generatedSshPos);
     }
 
+    auto generatedDshPos = kernelDescriptor.generatedHeaps.size();
+    uint32_t generatedDshSize = 0U;
+    if (maxSamplerIndex >= 0) {
+        static constexpr auto maxSamplerStateSize = 16U;
+        static constexpr auto maxIndirectSamplerStateSize = 64U;
+
+        kernelDescriptor.kernelAttributes.flags.usesSamplers = true;
+        auto &samplerTable = kernelDescriptor.payloadMappings.samplerTable;
+
+        samplerTable.borderColor = 0U;
+        samplerTable.tableOffset = maxIndirectSamplerStateSize;
+        samplerTable.numSamplers = maxSamplerIndex + 1;
+
+        generatedDshSize = maxIndirectSamplerStateSize + kernelDescriptor.payloadMappings.samplerTable.numSamplers * maxSamplerStateSize;
+        generatedDshSize = alignUp(generatedDshSize, MemoryConstants::cacheLineSize);
+        kernelDescriptor.generatedHeaps.resize(kernelDescriptor.generatedHeaps.size() + generatedDshSize);
+    }
+
     ZebinSections::SectionHeaderData *correspondingTextSegment = nullptr;
     auto sectionHeaderNamesData = elf.sectionHeaders[elf.elfFileHeader->shStrNdx].data;
     ConstStringRef sectionHeaderNamesString(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());
@@ -991,6 +1016,9 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     kernelInfo->heapInfo.KernelUnpaddedSize = static_cast<uint32_t>(correspondingTextSegment->data.size());
     kernelInfo->heapInfo.pSsh = kernelDescriptor.generatedHeaps.data() + generatedSshPos;
     kernelInfo->heapInfo.SurfaceStateHeapSize = generatedSshSize;
+    kernelInfo->heapInfo.pDsh = kernelDescriptor.generatedHeaps.data() + generatedDshPos;
+    kernelInfo->heapInfo.DynamicStateHeapSize = generatedDshSize;
+
     dst.kernelInfos.push_back(kernelInfo.release());
     return DecodeError::Success;
 }

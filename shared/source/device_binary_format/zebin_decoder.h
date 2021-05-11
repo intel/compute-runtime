@@ -75,6 +75,7 @@ using ZeInfoPayloadArguments = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Ke
 DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                        ZeInfoPayloadArguments &ouPayloadArguments,
                                        uint32_t &outMaxPayloadArgumentIndex,
+                                       int32_t &outMaxSamplerIndex,
                                        ConstStringRef context,
                                        std::string &outErrReason, std::string &outWarning);
 
