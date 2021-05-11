@@ -32,7 +32,7 @@
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_logger.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
-#include "opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.h"
+#include "opencl/test/unit_test/os_interface/windows/ult_dxcore_factory.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 
 #include "gtest/gtest.h"
@@ -141,8 +141,8 @@ TEST(WddmDiscoverDevices, givenMultipleRootDevicesExposedWhenCreateMultipleRootD
 }
 
 TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsVirtualRenderThenAdapterIsDiscovered) {
-    VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
-    descriptionBackup = L"Virtual Render";
+    VariableBackup<const char *> descriptionBackup(&UltDxCoreAdapter::description);
+    descriptionBackup = "Virtual Render";
     ExecutionEnvironment executionEnvironment;
 
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);

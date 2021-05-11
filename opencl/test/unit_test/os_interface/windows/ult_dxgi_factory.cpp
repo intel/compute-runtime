@@ -18,12 +18,6 @@ HRESULT WINAPI ULTCreateDXGIFactory(REFIID riid, void **ppFactory) {
     return S_OK;
 }
 
-void WINAPI ULTGetSystemInfo(SYSTEM_INFO *pSystemInfo) {
-    pSystemInfo->lpMaximumApplicationAddress = is32bit ? (LPVOID)MemoryConstants::max32BitAppAddress : (LPVOID)MemoryConstants::max64BitAppAddress;
-}
-
 const wchar_t *UltIDXGIAdapter1::description = L"Intel";
-
-extern uint32_t numRootDevicesToEnum = 1;
 
 } // namespace NEO
