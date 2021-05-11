@@ -74,6 +74,9 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device.get(),
                                                                                           *osContext.get());
 
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    EXPECT_TRUE(drm->isDirectSubmissionActive());
+
     EXPECT_TRUE(drmDirectSubmission.allocateResources());
 
     uint64_t gpuAddress = 0x1000;
