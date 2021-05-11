@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/tools/source/sysman/memory/linux/dg1/os_memory_imp.h"
-
 #include "shared/source/os_interface/linux/memory_info_impl.h"
+
+#include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 
 #include "sysman/linux/os_sysman_imp.h"
 

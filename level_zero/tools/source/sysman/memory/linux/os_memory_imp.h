@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "sysman/memory/os_memory.h"
 
@@ -26,6 +27,7 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
     ~LinuxMemoryImp() override = default;
 
   protected:
+    NEO::Drm *pDrm = nullptr;
     Device *pDevice = nullptr;
 
   private:

@@ -10,7 +10,7 @@
 
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
-#include "level_zero/tools/source/sysman/memory/linux/dg1/os_memory_imp.h"
+#include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
 
 #include "sysman/linux/os_sysman_imp.h"
