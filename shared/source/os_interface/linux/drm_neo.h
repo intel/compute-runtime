@@ -105,7 +105,7 @@ class Drm {
     int queryVmId(uint32_t drmContextId, uint32_t &vmId);
     void setLowPriorityContextParam(uint32_t drmContextId);
 
-    unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType);
+    unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice);
 
     void setGtType(GTTYPE eGtType) { this->eGtType = eGtType; }
     GTTYPE getGtType() const { return this->eGtType; }

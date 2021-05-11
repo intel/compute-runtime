@@ -68,5 +68,6 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool directSubmissionActive = false;
     std::once_flag contextInitializedFlag = {};
     bool contextInitialized = false;
+    bool engineInstancedDevice = false;
 };
 } // namespace NEO

@@ -70,7 +70,7 @@ void OsContextLinux::initializeContext() {
                 drm.setLowPriorityContextParam(drmContextId);
             }
 
-            this->engineFlag = drm.bindDrmContext(drmContextId, deviceIndex, engineType);
+            this->engineFlag = drm.bindDrmContext(drmContextId, deviceIndex, engineType, engineInstancedDevice);
             this->drmContextIds.push_back(drmContextId);
 
             if (drm.isPerContextVMRequired()) {
