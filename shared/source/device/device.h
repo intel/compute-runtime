@@ -49,6 +49,7 @@ class Device : public ReferenceTrackedObject<Device> {
     bool getHostTimer(uint64_t *hostTimestamp) const;
     const HardwareInfo &getHardwareInfo() const;
     const DeviceInfo &getDeviceInfo() const;
+    EngineControl *tryGetEngine(aub_stream::EngineType engineType, EngineUsage engineUsage);
     EngineControl &getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage);
     std::vector<std::vector<EngineControl>> &getEngineGroups() {
         return this->engineGroups;
