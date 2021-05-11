@@ -99,8 +99,8 @@ class Drm {
     ADAPTER_BDF getAdapterBDF() const;
     int createDrmVirtualMemory(uint32_t &drmVmId);
     void destroyDrmVirtualMemory(uint32_t drmVmId);
-    uint32_t createDrmContext(uint32_t drmVmId, bool isDirectSubmission);
-    void appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isDirectSubmission);
+    uint32_t createDrmContext(uint32_t drmVmId, bool isSpecialContextRequested);
+    void appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isSpecialContextRequested);
     void destroyDrmContext(uint32_t drmContextId);
     int queryVmId(uint32_t drmContextId, uint32_t &vmId);
     void setLowPriorityContextParam(uint32_t drmContextId);

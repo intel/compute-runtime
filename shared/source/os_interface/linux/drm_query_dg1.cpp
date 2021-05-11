@@ -80,7 +80,7 @@ bool Drm::isVmBindAvailable() {
     return this->bindAvailable;
 }
 
-void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isDirectSubmission) {
+void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isSpecialContextRequested) {
 }
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
