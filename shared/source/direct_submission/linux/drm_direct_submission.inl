@@ -31,6 +31,9 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
     if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
         this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
     }
+
+    auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
+    osContextLinux->getDrm().setDirectSubmissionActive(true);
 };
 
 template <typename GfxFamily, typename Dispatcher>
