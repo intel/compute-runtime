@@ -26,13 +26,12 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
-#include <queue>
-#include <unordered_map>
+#include <set>
 
 namespace L0 {
 
 ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t numEvents) {
-    std::vector<uint32_t> rootDeviceIndices;
+    std::set<uint32_t> rootDeviceIndices;
     uint32_t maxRootDeviceIndex = 0u;
 
     void *eventPoolPtr = nullptr;
@@ -63,7 +62,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
         }
 
         devices.push_back(eventDevice);
-        rootDeviceIndices.push_back(eventDevice->getNEODevice()->getRootDeviceIndex());
+        rootDeviceIndices.insert(eventDevice->getNEODevice()->getRootDeviceIndex());
         if (maxRootDeviceIndex < eventDevice->getNEODevice()->getRootDeviceIndex()) {
             maxRootDeviceIndex = eventDevice->getNEODevice()->getRootDeviceIndex();
         }
@@ -71,10 +70,11 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
 
     eventPoolAllocations = std::make_unique<NEO::MultiGraphicsAllocation>(maxRootDeviceIndex);
 
-    NEO::AllocationProperties allocationProperties{rootDeviceIndices.at(0), alignedSize, allocationType, systemMemoryBitfield};
+    NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), alignedSize, allocationType, systemMemoryBitfield};
     allocationProperties.alignment = eventAlignment;
 
-    eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices,
+    std::vector<uint32_t> rootDeviceIndicesVector = {rootDeviceIndices.begin(), rootDeviceIndices.end()};
+    eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector,
                                                                                                allocationProperties,
                                                                                                *eventPoolAllocations);
 

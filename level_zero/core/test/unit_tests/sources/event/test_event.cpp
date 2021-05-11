@@ -598,6 +598,40 @@ TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithMultipleDevicesThenE
     delete[] devices;
 }
 
+TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithMultipleDevicesThenDontDuplicateRootDeviceIndices) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 32;
+
+    uint32_t deviceCount = 1;
+    ze_device_handle_t rootDeviceHandle;
+
+    ze_result_t result = zeDeviceGet(driverHandle.get(), &deviceCount, &rootDeviceHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    deviceCount = 0;
+    result = zeDeviceGetSubDevices(rootDeviceHandle, &deviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(deviceCount >= 2);
+
+    auto subDeviceHandle = std::make_unique<ze_device_handle_t[]>(deviceCount);
+    result = zeDeviceGetSubDevices(rootDeviceHandle, &deviceCount, subDeviceHandle.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(),
+                                                               context,
+                                                               deviceCount,
+                                                               subDeviceHandle.get(),
+                                                               &eventPoolDesc));
+    EXPECT_NE(nullptr, eventPool);
+
+    auto allocation = &eventPool->getAllocation();
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_EQ(allocation->getGraphicsAllocations().size(), 1u);
+}
+
 TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithNoDevicesThenEventPoolCreateSucceedsAndAllDeviceAreUsed) {
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
