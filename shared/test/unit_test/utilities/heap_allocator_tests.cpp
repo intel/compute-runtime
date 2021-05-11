@@ -1363,3 +1363,13 @@ TEST(HeapAllocatorTest, givenUnalignedFreedChunkAvailableWhenAllocatingMemoryWit
     EXPECT_EQ(1u, heapAllocator.getFreedChunksBig().size());
     EXPECT_EQ(heapSize - 3 * ptrSize - MemoryConstants::pageSize, heapAllocator.getavailableSize());
 }
+
+TEST(HeapAllocatorTest, givenZeroAlignmentPassedWhenAllocatingMemoryWithCustomAlignmentThenUseDefaultAllocatorAlignment) {
+    const uint64_t heapBase = 0x111111llu;
+    const size_t heapSize = 1024u * 4096u;
+    HeapAllocatorUnderTest heapAllocator(heapBase, heapSize, allocationAlignment, 0);
+
+    size_t ptrSize = 1;
+    uint64_t ptr = heapAllocator.allocateWithCustomAlignment(ptrSize, 0u);
+    EXPECT_EQ(alignUp(heapBase, allocationAlignment), ptr);
+}

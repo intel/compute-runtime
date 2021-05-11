@@ -144,17 +144,25 @@ uint64_t getGpuAddress(HeapAssigner &heapAssigner, const HardwareInfo &hwInfo, G
         sizeAllocated = 0;
         break;
     default:
-        const bool prefer2MBAlignment = DebugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0 && sizeAllocated >= 2 * MemoryConstants::megaByte;
+        const size_t customAlignment = static_cast<size_t>(DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
+        const bool preferCustomAlignment = customAlignment > 0 && sizeAllocated >= customAlignment;
+        const bool prefer2MBAlignment = DebugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0 &&
+                                        sizeAllocated >= 2 * MemoryConstants::megaByte &&
+                                        (!preferCustomAlignment || customAlignment <= 2 * MemoryConstants::megaByte);
         const bool prefer57bitAddressing = gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !resource48Bit;
 
         auto heapIndex = HeapIndex::HEAP_STANDARD64KB;
+        size_t alignment = 0u;
         if (prefer2MBAlignment) {
             heapIndex = HeapIndex::HEAP_STANDARD2MB;
+        } else if (preferCustomAlignment) {
+            heapIndex = customAlignment > 2 * MemoryConstants::megaByte ? HeapIndex::HEAP_STANDARD2MB : HeapIndex::HEAP_STANDARD64KB;
+            alignment = customAlignment;
         } else if (prefer57bitAddressing) {
             heapIndex = HeapIndex::HEAP_EXTENDED;
         }
 
-        gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocate(heapIndex, sizeAllocated));
+        gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocateWithCustomAlignment(heapIndex, sizeAllocated, alignment));
         break;
     }
     return gpuAddress;

@@ -40,10 +40,14 @@ class HeapAllocator {
     }
 
     uint64_t allocate(size_t &sizeToAllocate) {
-        return allocateWithCustomAlignment(sizeToAllocate, this->allocationAlignment);
+        return allocateWithCustomAlignment(sizeToAllocate, 0u);
     }
 
     uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) {
+        if (alignment == 0) {
+            alignment = this->allocationAlignment;
+        }
+
         UNRECOVERABLE_IF(alignment % allocationAlignment != 0); // custom alignment have to be a multiple of allocator alignment
         sizeToAllocate = alignUp(sizeToAllocate, allocationAlignment);
 

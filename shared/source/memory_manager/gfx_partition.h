@@ -69,6 +69,10 @@ class GfxPartition {
         return getHeap(heapIndex).allocate(size);
     }
 
+    uint64_t heapAllocateWithCustomAlignment(HeapIndex heapIndex, size_t &size, size_t alignment) {
+        return getHeap(heapIndex).allocateWithCustomAlignment(size, alignment);
+    }
+
     MOCKABLE_VIRTUAL void heapFree(HeapIndex heapIndex, uint64_t ptr, size_t size) {
         getHeap(heapIndex).free(ptr, size);
     }
@@ -129,6 +133,7 @@ class GfxPartition {
         uint64_t getSize() const { return size; }
         uint64_t getLimit() const { return size ? base + size - 1 : 0; }
         uint64_t allocate(size_t &size) { return alloc->allocate(size); }
+        uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) { return alloc->allocateWithCustomAlignment(sizeToAllocate, alignment); }
         void free(uint64_t ptr, size_t size) { alloc->free(ptr, size); }
 
       protected:
