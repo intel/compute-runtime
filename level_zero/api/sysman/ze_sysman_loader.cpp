@@ -85,6 +85,7 @@ zesGetDriverProcAddrTable(
     }
 
     pDdiTable->pfnEventListen = zesDriverEventListen;
+    pDdiTable->pfnEventListenEx = zesDriverEventListenEx;
     return result;
 }
 
