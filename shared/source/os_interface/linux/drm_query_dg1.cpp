@@ -83,6 +83,10 @@ bool Drm::isVmBindAvailable() {
 void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isSpecialContextRequested) {
 }
 
+std::string Drm::ioctlToStringImpl(unsigned long request) {
+    return std::to_string(request);
+}
+
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     this->cacheInfo.reset(new CacheInfoImpl());
 }

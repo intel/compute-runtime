@@ -236,6 +236,8 @@ class Drm {
 
     std::unordered_map<unsigned long, std::pair<long long, uint64_t>> ioctlStatistics;
     void printIoctlStatistics();
+    std::string ioctlToString(unsigned long request);
+    std::string ioctlToStringImpl(unsigned long request);
 
 #pragma pack(1)
     struct PCIConfig {
