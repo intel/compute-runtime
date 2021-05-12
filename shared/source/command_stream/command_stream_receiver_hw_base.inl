@@ -1384,8 +1384,10 @@ std::unique_ptr<TagAllocatorBase> CommandStreamReceiverHw<GfxFamily>::createTime
 
     using TimestampPacketsT = TimestampPackets<TagSizeT>;
 
+    std::vector<uint32_t> rootDeviceIndices = {rootDeviceIndex};
+
     auto allocator = new TagAllocator<TimestampPacketsT>(
-        rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), getTimestampPacketAllocatorAlignment(),
+        rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getTimestampPacketAllocatorAlignment(),
         sizeof(TimestampPacketsT), doNotReleaseNodes, osContext->getDeviceBitfield());
 
     return std::unique_ptr<TagAllocatorBase>(allocator);

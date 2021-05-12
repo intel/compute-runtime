@@ -9,9 +9,9 @@
 
 namespace NEO {
 template <typename TagType>
-TagAllocator<TagType>::TagAllocator(uint32_t rootDeviceIndex, MemoryManager *memMngr, size_t tagCount, size_t tagAlignment,
+TagAllocator<TagType>::TagAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount, size_t tagAlignment,
                                     size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
-    : TagAllocatorBase(rootDeviceIndex, memMngr, tagCount, tagAlignment, tagSize, doNotReleaseNodes, deviceBitfield) {
+    : TagAllocatorBase(rootDeviceIndices, memMngr, tagCount, tagAlignment, tagSize, doNotReleaseNodes, deviceBitfield) {
 
     populateFreeTags();
 }
@@ -78,9 +78,27 @@ template <typename TagType>
 void TagAllocator<TagType>::populateFreeTags() {
     size_t allocationSizeRequired = tagCount * tagSize;
 
-    AllocationProperties allocationProperties{rootDeviceIndex, allocationSizeRequired, TagType::getAllocationType(), deviceBitfield};
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
-    gfxAllocations.push_back(graphicsAllocation);
+    void *baseCpuAddress = nullptr;
+    uint64_t baseGpuAddress = 0;
+
+    auto multiGraphicsAllocation = new MultiGraphicsAllocation(maxRootDeviceIndex);
+    AllocationProperties allocationProperties{rootDeviceIndices[0], allocationSizeRequired, TagType::getAllocationType(), deviceBitfield};
+
+    if (rootDeviceIndices.size() == 1) {
+        GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
+
+        baseCpuAddress = graphicsAllocation->getUnderlyingBuffer();
+        baseGpuAddress = graphicsAllocation->getGpuAddress();
+
+        multiGraphicsAllocation->addAllocation(graphicsAllocation);
+    } else {
+        allocationProperties.subDevicesBitfield = systemMemoryBitfield;
+
+        baseCpuAddress = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, *multiGraphicsAllocation);
+        baseGpuAddress = castToUint64(baseCpuAddress);
+    }
+
+    gfxAllocations.emplace_back(multiGraphicsAllocation);
 
     auto nodesMemory = std::make_unique<NodeType[]>(tagCount);
 
@@ -88,9 +106,9 @@ void TagAllocator<TagType>::populateFreeTags() {
         auto tagOffset = i * tagSize;
 
         nodesMemory[i].allocator = this;
-        nodesMemory[i].gfxAllocation = graphicsAllocation;
-        nodesMemory[i].tagForCpuAccess = reinterpret_cast<TagType *>(ptrOffset(graphicsAllocation->getUnderlyingBuffer(), tagOffset));
-        nodesMemory[i].gpuAddress = graphicsAllocation->getGpuAddress() + tagOffset;
+        nodesMemory[i].gfxAllocation = multiGraphicsAllocation->getDefaultGraphicsAllocation();
+        nodesMemory[i].tagForCpuAccess = reinterpret_cast<TagType *>(ptrOffset(baseCpuAddress, tagOffset));
+        nodesMemory[i].gpuAddress = baseGpuAddress + tagOffset;
         nodesMemory[i].setDoNotReleaseNodes(doNotReleaseNodes);
 
         freeTags.pushTailOne(nodesMemory[i]);

@@ -23,6 +23,7 @@
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 #include "test.h"
 
@@ -878,7 +879,7 @@ HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCount
 }
 
 template <typename TagType>
-struct FixedGpuAddressTagAllocator : TagAllocator<TagType> {
+struct FixedGpuAddressTagAllocator : MockTagAllocator<TagType> {
     using TagAllocator<TagType>::usedTags;
     using TagAllocator<TagType>::deferredTags;
 
@@ -887,8 +888,8 @@ struct FixedGpuAddressTagAllocator : TagAllocator<TagType> {
     };
 
     FixedGpuAddressTagAllocator(CommandStreamReceiver &csr, uint64_t gpuAddress)
-        : TagAllocator<TagType>(csr.getRootDeviceIndex(), csr.getMemoryManager(), csr.getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
-                                sizeof(TagType), false, csr.getOsContext().getDeviceBitfield()) {
+        : MockTagAllocator<TagType>(csr.getRootDeviceIndex(), csr.getMemoryManager(), csr.getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
+                                    sizeof(TagType), false, csr.getOsContext().getDeviceBitfield()) {
         auto tag = reinterpret_cast<MockTagNode *>(this->freeTags.peekHead());
         tag->setGpuAddress(gpuAddress);
     }

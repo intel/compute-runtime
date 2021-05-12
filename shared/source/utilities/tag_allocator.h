@@ -158,7 +158,7 @@ class TagAllocatorBase {
   protected:
     TagAllocatorBase() = delete;
 
-    TagAllocatorBase(uint32_t rootDeviceIndex, MemoryManager *memMngr, size_t tagCount,
+    TagAllocatorBase(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount,
                      size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes,
                      DeviceBitfield deviceBitfield);
 
@@ -170,9 +170,10 @@ class TagAllocatorBase {
 
     void cleanUpResources();
 
-    std::vector<GraphicsAllocation *> gfxAllocations;
+    std::vector<std::unique_ptr<MultiGraphicsAllocation>> gfxAllocations;
     const DeviceBitfield deviceBitfield;
-    const uint32_t rootDeviceIndex;
+    std::vector<uint32_t> rootDeviceIndices;
+    uint32_t maxRootDeviceIndex = 0;
     MemoryManager *memoryManager;
     size_t tagCount;
     size_t tagSize;
@@ -186,7 +187,7 @@ class TagAllocator : public TagAllocatorBase {
   public:
     using NodeType = TagNode<TagType>;
 
-    TagAllocator(uint32_t rootDeviceIndex, MemoryManager *memMngr, size_t tagCount,
+    TagAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount,
                  size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes,
                  DeviceBitfield deviceBitfield);
 

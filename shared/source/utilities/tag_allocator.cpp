@@ -9,16 +9,25 @@
 
 namespace NEO {
 
-TagAllocatorBase::TagAllocatorBase(uint32_t rootDeviceIndex, MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
-    : deviceBitfield(deviceBitfield), rootDeviceIndex(rootDeviceIndex), memoryManager(memMngr), tagCount(tagCount), tagSize(tagSize), doNotReleaseNodes(doNotReleaseNodes) {
+TagAllocatorBase::TagAllocatorBase(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
+    : deviceBitfield(deviceBitfield), rootDeviceIndices(rootDeviceIndices), memoryManager(memMngr), tagCount(tagCount), tagSize(tagSize), doNotReleaseNodes(doNotReleaseNodes) {
 
     this->tagSize = alignUp(tagSize, tagAlignment);
+
+    for (auto &index : rootDeviceIndices) {
+        if (index > maxRootDeviceIndex) {
+            maxRootDeviceIndex = index;
+        }
+    }
 }
 
 void TagAllocatorBase::cleanUpResources() {
-    for (auto gfxAllocation : gfxAllocations) {
-        memoryManager->freeGraphicsMemory(gfxAllocation);
+    for (auto &multiGfxAllocation : gfxAllocations) {
+        for (auto &allocation : multiGfxAllocation->getGraphicsAllocations()) {
+            memoryManager->freeGraphicsMemory(allocation);
+        }
     }
+
     gfxAllocations.clear();
 }
 
