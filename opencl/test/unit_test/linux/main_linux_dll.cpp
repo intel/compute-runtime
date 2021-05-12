@@ -171,7 +171,7 @@ TEST(DrmTest, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
     drm->destroyDrmContext(contextId);
 
     std::string output = ::testing::internal::GetCapturedStdout();
-    EXPECT_STREQ(output.c_str(), "IOCTL 1074291822 called\nIOCTL 1074291822 returns 0, errno 9\n");
+    EXPECT_STREQ(output.c_str(), "IOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY called\nIOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY returns 0, errno 9\n");
 }
 
 TEST(DrmTest, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {

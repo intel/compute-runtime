@@ -80,13 +80,13 @@ int Drm::ioctl(unsigned long request, void *arg) {
         auto printIoctl = DebugManager.flags.PrintIoctlEntries.get();
 
         if (printIoctl) {
-            printf("IOCTL %lu called\n", request);
+            printf("IOCTL %s called\n", this->ioctlToString(request).c_str());
         }
 
         ret = SysCalls::ioctl(getFileDescriptor(), request, arg);
 
         if (printIoctl) {
-            printf("IOCTL %lu returns %d, errno %d\n", request, ret, errno);
+            printf("IOCTL %s returns %d, errno %d\n", this->ioctlToString(request).c_str(), ret, errno);
         }
 
         if (measureTime) {
