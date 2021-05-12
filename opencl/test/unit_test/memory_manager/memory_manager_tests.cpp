@@ -2600,3 +2600,25 @@ TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivat
     EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(GraphicsAllocation::AllocationType::SCRATCH_SURFACE));
     EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(GraphicsAllocation::AllocationType::PRIVATE_SURFACE));
 }
+
+TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallbackToCopyOnCPU) {
+    constexpr uint32_t dataSize = 16;
+    uint8_t destData[dataSize] = {};
+    uint8_t srcData[dataSize] = {};
+    for (uint8_t i = 0u; i < dataSize; i++) {
+        srcData[i] = i;
+    }
+    MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
+    graphicsAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = false;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    EXPECT_EQ(BlitOperationResult::Unsupported, BlitHelperFunctions::blitMemoryToAllocation(*device, &graphicsAllocation, 0, srcData, {dataSize, 1, 1}));
+
+    auto result = MemoryTransferHelper::transferMemoryToAllocation(true, *device, &graphicsAllocation, 0u, srcData, dataSize);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(0, memcmp(destData, srcData, dataSize));
+}
