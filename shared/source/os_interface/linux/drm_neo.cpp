@@ -67,6 +67,7 @@ Drm::Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDe
 
 int Drm::ioctl(unsigned long request, void *arg) {
     int ret;
+    int returnedErrno;
     SYSTEM_ENTER();
     do {
         auto measureTime = DebugManager.flags.PrintIoctlTimes.get();
@@ -85,8 +86,10 @@ int Drm::ioctl(unsigned long request, void *arg) {
 
         ret = SysCalls::ioctl(getFileDescriptor(), request, arg);
 
+        returnedErrno = errno;
+
         if (printIoctl) {
-            printf("IOCTL %s returns %d, errno %d\n", this->ioctlToString(request).c_str(), ret, errno);
+            printf("IOCTL %s returns %d, errno %d\n", this->ioctlToString(request).c_str(), ret, returnedErrno);
         }
 
         if (measureTime) {
@@ -104,7 +107,7 @@ int Drm::ioctl(unsigned long request, void *arg) {
 
             this->ioctlStatistics[request] = ioctlData;
         }
-    } while (ret == -1 && (errno == EINTR || errno == EAGAIN || errno == EBUSY));
+    } while (ret == -1 && (returnedErrno == EINTR || returnedErrno == EAGAIN || returnedErrno == EBUSY));
     SYSTEM_LEAVE(request);
     return ret;
 }
