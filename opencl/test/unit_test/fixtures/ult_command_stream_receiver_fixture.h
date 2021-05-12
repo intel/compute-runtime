@@ -99,6 +99,14 @@ struct UltCommandStreamReceiverTest
             *pDevice);
     }
 
+    template <typename CommandStreamReceiverType>
+    void flushSmallTask(CommandStreamReceiverType &commandStreamReceiver,
+                        size_t startOffset = 0) {
+        return commandStreamReceiver.flushSmallTask(
+            commandStream,
+            startOffset);
+    }
+
     template <typename GfxFamily>
     void configureCSRHeapStatesToNonDirty() {
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<GfxFamily>();

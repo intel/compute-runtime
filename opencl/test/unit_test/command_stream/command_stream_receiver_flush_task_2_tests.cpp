@@ -465,6 +465,40 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenc
     EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(globalFenceAllocation));
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndCreatedThenItIsMadeResidentDuringFlushSmallTask) {
+    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
+
+    MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.setupContext(*pDevice->getDefaultEngine().osContext);
+
+    EXPECT_EQ(nullptr, csr.globalFenceAllocation);
+    EXPECT_TRUE(csr.createGlobalFenceAllocation());
+
+    EXPECT_FALSE(csr.isMadeResident(csr.globalFenceAllocation));
+    EXPECT_FALSE(csr.isMadeNonResident(csr.globalFenceAllocation));
+
+    flushSmallTask(csr);
+
+    EXPECT_TRUE(csr.isMadeResident(csr.globalFenceAllocation));
+    EXPECT_TRUE(csr.isMadeNonResident(csr.globalFenceAllocation));
+
+    ASSERT_NE(nullptr, csr.globalFenceAllocation);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::GLOBAL_FENCE, csr.globalFenceAllocation->getAllocationType());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredButNotCreatedThenItIsNotMadeResidentDuringFlushSmallTask) {
+    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
+
+    MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.setupContext(*pDevice->getDefaultEngine().osContext);
+
+    EXPECT_EQ(nullptr, csr.globalFenceAllocation);
+
+    flushSmallTask(csr);
+
+    ASSERT_EQ(nullptr, csr.globalFenceAllocation);
+}
+
 struct MockScratchController : public ScratchSpaceController {
     using ScratchSpaceController::privateScratchAllocation;
     using ScratchSpaceController::scratchAllocation;

@@ -1255,6 +1255,10 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
 
     alignToCacheLine(commandStreamTask);
 
+    if (globalFenceAllocation) {
+        makeResident(*globalFenceAllocation);
+    }
+
     BatchBuffer batchBuffer{commandStreamTask.getGraphicsAllocation(), commandStreamStartTask, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
                             commandStreamTask.getUsed(), &commandStreamTask, endingCmdPtr, false};
 
