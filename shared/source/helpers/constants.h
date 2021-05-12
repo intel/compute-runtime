@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2017-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,7 @@ constexpr size_t minBufferAlignment = 4;
 constexpr size_t cacheLineSize = 64;
 constexpr size_t pageSize = 4 * kiloByte;
 constexpr size_t pageSize64k = 64 * kiloByte;
+constexpr size_t pageSize2Mb = 2 * megaByte;
 constexpr size_t preferredAlignment = pageSize;  // alignment preferred for performance reasons, i.e. internal allocations
 constexpr size_t allocationAlignment = pageSize; // alignment required to gratify incoming pointer, i.e. passed host_ptr
 constexpr size_t slmWindowAlignment = 128 * kiloByte;
