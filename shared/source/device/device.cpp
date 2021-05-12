@@ -439,24 +439,18 @@ size_t Device::getIndexOfNonEmptyEngineGroup(EngineGroupType engineGroupType) co
     return result;
 }
 
-EngineControl *Device::tryGetEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {
+EngineControl &Device::getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {
     for (auto &engine : engines) {
         if (engine.osContext->getEngineType() == engineType &&
             engine.osContext->isLowPriority() == (engineUsage == EngineUsage::LowPriority) &&
             engine.osContext->isInternalEngine() == (engineUsage == EngineUsage::Internal)) {
-            return &engine;
+            return engine;
         }
     }
     if (DebugManager.flags.OverrideInvalidEngineWithDefault.get()) {
-        return &engines[0];
+        return engines[0];
     }
-    return nullptr;
-}
-
-EngineControl &Device::getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {
-    auto engine = tryGetEngine(engineType, engineUsage);
-    UNRECOVERABLE_IF(!engine);
-    return *engine;
+    UNRECOVERABLE_IF(true);
 }
 
 EngineControl &Device::getEngine(uint32_t index) {

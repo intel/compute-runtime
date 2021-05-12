@@ -18,7 +18,6 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
-#include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 
 #include "gtest/gtest.h"
 
@@ -35,10 +34,14 @@ void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
     auto engineType = pCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getEngineType();
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
-    pCommandStreamReceiver = AUBFixture::prepareComputeEngine(device, strfilename.str());
+    if (testMode == TestMode::AubTestsWithTbx) {
+        pCommandStreamReceiver = TbxCommandStreamReceiver::create(strfilename.str(), true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
+    } else {
+        pCommandStreamReceiver = AUBCommandStreamReceiver::create(strfilename.str(), true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
+    }
     ASSERT_NE(nullptr, pCommandStreamReceiver);
 
-    AUBFixture::prepareCopyEngines(device, strfilename.str());
+    device.resetCommandStreamReceiver(pCommandStreamReceiver);
 
     CommandStreamFixture::SetUp(pCmdQ);
 

@@ -30,30 +30,6 @@ namespace NEO {
 
 class AUBFixture : public CommandQueueHwFixture {
   public:
-    static CommandStreamReceiver *prepareComputeEngine(MockDevice &device, const std::string &filename) {
-        CommandStreamReceiver *pCommandStreamReceiver = nullptr;
-        if (testMode == TestMode::AubTestsWithTbx) {
-            pCommandStreamReceiver = TbxCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-        } else {
-            pCommandStreamReceiver = AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-        }
-        device.resetCommandStreamReceiver(pCommandStreamReceiver);
-        return pCommandStreamReceiver;
-    }
-    static void prepareCopyEngines(MockDevice &device, const std::string &filename) {
-        for (auto i = 0u; i < device.engines.size(); i++) {
-            if (EngineHelpers::isBcs(device.engines[i].getEngineType())) {
-                CommandStreamReceiver *pBcsCommandStreamReceiver = nullptr;
-                if (testMode == TestMode::AubTestsWithTbx) {
-                    pBcsCommandStreamReceiver = TbxCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-                } else {
-                    pBcsCommandStreamReceiver = AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-                }
-                device.resetCommandStreamReceiver(pBcsCommandStreamReceiver, i);
-            }
-        }
-    }
-
     void SetUp(const HardwareInfo *hardwareInfo) {
         const HardwareInfo &hwInfo = hardwareInfo ? *hardwareInfo : *defaultHwInfo;
 
@@ -69,12 +45,15 @@ class AUBFixture : public CommandQueueHwFixture {
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MockMemoryOperationsHandler>();
 
-        auto pDevice = MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex);
-        device = std::make_unique<MockClDevice>(pDevice);
+        device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
 
-        this->csr = prepareComputeEngine(*pDevice, strfilename.str());
+        if (testMode == TestMode::AubTestsWithTbx) {
+            this->csr = TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, device->getDeviceBitfield());
+        } else {
+            this->csr = AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, device->getDeviceBitfield());
+        }
 
-        prepareCopyEngines(*pDevice, strfilename.str());
+        device->resetCommandStreamReceiver(this->csr);
 
         CommandQueueHwFixture::SetUp(AUBFixture::device.get(), cl_command_queue_properties(0));
     }
