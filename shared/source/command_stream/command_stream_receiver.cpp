@@ -211,13 +211,13 @@ void CommandStreamReceiver::cleanupResources() {
     }
 
     if (tagsMultiAllocation) {
+        tagAllocation = nullptr;
+        tagAddress = nullptr;
         for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
             getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
         }
         delete tagsMultiAllocation;
         tagsMultiAllocation = nullptr;
-        tagAllocation = nullptr;
-        tagAddress = nullptr;
     }
 
     if (globalFenceAllocation) {
