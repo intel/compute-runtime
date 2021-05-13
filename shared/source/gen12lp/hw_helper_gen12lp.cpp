@@ -291,6 +291,11 @@ void HwHelperHw<TGLLPFamily>::setExtraAllocationData(AllocationData &allocationD
             allocationData.flags.useSystemMemory = true;
         }
     }
+    if (IGFX_DG1 == hwInfo.platform.eProductFamily) {
+        if (properties.allocationType == GraphicsAllocation::AllocationType::BUFFER) {
+            allocationData.storageInfo.isLockable = true;
+        }
+    }
 }
 
 template class HwHelperHw<Family>;

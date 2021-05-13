@@ -108,3 +108,13 @@ DG1TEST_F(HwHelperTestDg1, givenDg1WhenGettingLocalMemoryAccessModeThenReturnCpu
 
     EXPECT_EQ(LocalMemoryAccessMode::Default, hwHelper.getDefaultLocalMemoryAccessMode(*defaultHwInfo));
 }
+
+DG1TEST_F(HwHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledThenIsLockableIsSet) {
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    AllocationData allocData{};
+    allocData.flags.useSystemMemory = true;
+    AllocationProperties allocProperties(0, 1, GraphicsAllocation::AllocationType::BUFFER, {});
+    allocData.storageInfo.isLockable = false;
+    hwHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
+    EXPECT_TRUE(allocData.storageInfo.isLockable);
+}
