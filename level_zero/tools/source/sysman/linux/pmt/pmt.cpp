@@ -62,6 +62,14 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
         return result;
     }
 
+    // listOfTelemNodes vector could contain non "telem" entries which are not interested to us.
+    // Lets refactor listOfTelemNodes vector as below
+    for (auto iterator = listOfTelemNodes.begin(); iterator != listOfTelemNodes.end(); iterator++) {
+        if (iterator->compare(0, telem.size(), telem) != 0) {
+            listOfTelemNodes.erase(iterator--); // Remove entry if its suffix is not "telem"
+        }
+    }
+
     // Exmaple: For below directory
     // # /sys/class/intel_pmt$ ls
     // telem1  telem2  telem3
@@ -73,12 +81,13 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
+
         // Check if Telemetry node(say telem1) and rootPciPathOfGpuDevice share same PCI Root port
+        // Example: If
+        // rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
+        // realPathOfTelemNode = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
+        // Thus As realPathOfTelemNode consists of rootPciPathOfGpuDevice, hence both telemNode and GPU device share same PCI Root.
         if (realPathOfTelemNode.compare(0, rootPciPathOfGpuDevice.size(), rootPciPathOfGpuDevice) == 0) {
-            // Example: If
-            // rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
-            // realPathOfTelemNode = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
-            // Thus As realPathOfTelemNode consists of rootPciPathOfGpuDevice, hence both telemNode and GPU device share same PCI Root.
             auto indexString = telemNode.substr(telem.size(), telemNode.size());
             rootDeviceTelemNodeIndex = stoi(indexString); // if telemNode is telemN, then rootDeviceTelemNodeIndex = N
             return ZE_RESULT_SUCCESS;

@@ -92,11 +92,22 @@ struct Mock<PmtFsAccess> : public PmtFsAccess {
 
     ze_result_t listDirectorySuccess(const std::string directory, std::vector<std::string> &listOfTelemNodes) {
         if (directory.compare(baseTelemSysFS) == 0) {
-            listOfTelemNodes.push_back("telem1");
-            listOfTelemNodes.push_back("telem2");
+            listOfTelemNodes.push_back("crashlog2");
+            listOfTelemNodes.push_back("crashlog1");
             listOfTelemNodes.push_back("telem3");
+            listOfTelemNodes.push_back("telem2");
+            listOfTelemNodes.push_back("telem1");
             listOfTelemNodes.push_back("telem4");
             listOfTelemNodes.push_back("telem5");
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t listDirectoryNoTelemNode(const std::string directory, std::vector<std::string> &listOfTelemNodes) {
+        if (directory.compare(baseTelemSysFS) == 0) {
+            listOfTelemNodes.push_back("crashlog2");
+            listOfTelemNodes.push_back("crashlog1");
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;

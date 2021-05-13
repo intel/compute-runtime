@@ -74,6 +74,12 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenWhenenumerateRootTelemIndexThenCheckForErr
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt));
 }
 
+TEST_F(ZesPmtFixtureMultiDevice, GivenTelemDirectoryContainNowTelemEntryWhenenumerateRootTelemIndexThenCheckForError) {
+    ON_CALL(*pTestFsAccess.get(), listDirectory(_, _))
+        .WillByDefault(::testing::Invoke(pTestFsAccess.get(), &Mock<PmtFsAccess>::listDirectoryNoTelemNode));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt));
+}
+
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringGUIDRead) {
     EXPECT_CALL(*pTestFsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
