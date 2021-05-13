@@ -82,7 +82,7 @@ struct DeferredOsContextCreationTests : ::testing::Test {
 TEST_F(DeferredOsContextCreationTests, givenRegularEngineWhenCreatingOsContextThenOsContextIsInitializedDeferred) {
     DebugManagerStateRestore restore{};
 
-    expectImmediateContextCreation(engineTypeUsageRegular, false);
+    expectDeferredContextCreation(engineTypeUsageRegular, false);
 
     DebugManager.flags.DeferOsContextInitialization.set(1);
     expectDeferredContextCreation(engineTypeUsageRegular, false);
@@ -91,7 +91,7 @@ TEST_F(DeferredOsContextCreationTests, givenRegularEngineWhenCreatingOsContextTh
     expectImmediateContextCreation(engineTypeUsageRegular, false);
 }
 
-TEST_F(DeferredOsContextCreationTests, givenDefaultEngineWhenCreatingOsContextThenOsContextIsInitializedDeferred) {
+TEST_F(DeferredOsContextCreationTests, givenDefaultEngineWhenCreatingOsContextThenOsContextIsInitializedImmediately) {
     DebugManagerStateRestore restore{};
 
     expectImmediateContextCreation(engineTypeUsageRegular, true);
@@ -103,7 +103,7 @@ TEST_F(DeferredOsContextCreationTests, givenDefaultEngineWhenCreatingOsContextTh
     expectImmediateContextCreation(engineTypeUsageRegular, true);
 }
 
-TEST_F(DeferredOsContextCreationTests, givenRegularEngineWhenCreatingOsContextThenOsContextIsInitializedImmediately) {
+TEST_F(DeferredOsContextCreationTests, givenInternalEngineWhenCreatingOsContextThenOsContextIsInitializedImmediately) {
     DebugManagerStateRestore restore{};
 
     expectImmediateContextCreation(engineTypeUsageInternal, false);
