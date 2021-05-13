@@ -166,9 +166,6 @@ if(MSVC)
                         VS_DEBUGGER_COMMAND_ARGUMENTS "${L0_TESTS_FILTER_OPTION} --gtest_catch_exceptions=0 ${L0_TESTS_LISTENER_OPTION}"
                         VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
   )
-  set(RUN_ULT_CMD $<TARGET_FILE:${TARGET_NAME}>)
-else()
-  set(RUN_ULT_CMD $<TARGET_FILE:${TARGET_NAME}>)
 endif()
 
 add_dependencies(unit_tests ${TARGET_NAME})
