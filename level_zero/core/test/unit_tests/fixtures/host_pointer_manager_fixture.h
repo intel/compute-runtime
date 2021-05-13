@@ -38,11 +38,9 @@ struct HostPointerManagerFixure {
             neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-        DebugManager.flags.EnableHostPointerImport.set(1);
         hostDriverHandle = std::make_unique<L0::ult::DriverHandle>();
         hostDriverHandle->initialize(std::move(devices));
         device = hostDriverHandle->devices[0];
-        EXPECT_NE(nullptr, hostDriverHandle->hostPointerManager.get());
         openHostPointerManager = static_cast<L0::ult::HostPointerManager *>(hostDriverHandle->hostPointerManager.get());
 
         heapPointer = hostDriverHandle->getMemoryManager()->allocateSystemMemory(heapSize, MemoryConstants::pageSize);
@@ -59,8 +57,8 @@ struct HostPointerManagerFixure {
 
         hostDriverHandle->getMemoryManager()->freeSystemMemory(heapPointer);
     }
-    DebugManagerStateRestore debugRestore;
 
+    DebugManagerStateRestore debugRestore;
     std::unique_ptr<L0::ult::DriverHandle> hostDriverHandle;
 
     L0::ult::HostPointerManager *openHostPointerManager = nullptr;
@@ -72,6 +70,30 @@ struct HostPointerManagerFixure {
 
     void *heapPointer = nullptr;
     size_t heapSize = 4 * MemoryConstants::pageSize;
+};
+
+struct ForceDisabledHostPointerManagerFixure : public HostPointerManagerFixure {
+    void SetUp() {
+        DebugManager.flags.EnableHostPointerImport.set(0);
+
+        HostPointerManagerFixure::SetUp();
+    }
+
+    void TearDown() {
+        HostPointerManagerFixure::TearDown();
+    }
+};
+
+struct ForceEnabledHostPointerManagerFixure : public HostPointerManagerFixure {
+    void SetUp() {
+        DebugManager.flags.EnableHostPointerImport.set(1);
+
+        HostPointerManagerFixure::SetUp();
+    }
+
+    void TearDown() {
+        HostPointerManagerFixure::TearDown();
+    }
 };
 
 } // namespace ult

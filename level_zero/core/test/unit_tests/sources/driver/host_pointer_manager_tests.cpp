@@ -22,6 +22,8 @@ using HostPointerManagerTest = Test<HostPointerManagerFixure>;
 
 TEST_F(HostPointerManagerTest,
        givenMultipleGraphicsAllocationWhenCopyingHostPointerDataThenCopyOnlyExistingAllocations) {
+    EXPECT_NE(nullptr, hostDriverHandle->hostPointerManager.get());
+
     HostPointerData originData(4);
     auto gfxAllocation = openHostPointerManager->createHostPointerAllocation(device->getRootDeviceIndex(),
                                                                              heapPointer,
@@ -39,24 +41,9 @@ TEST_F(HostPointerManagerTest,
     hostDriverHandle->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
 }
 
-TEST_F(HostPointerManagerTest, givenNoHeapManagerThenReturnFeatureUnsupported) {
-    hostDriverHandle->hostPointerManager.reset(nullptr);
-
-    void *testPtr = heapPointer;
-    auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-
-    result = hostDriverHandle->getHostPointerBaseAddress(testPtr, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-
-    result = hostDriverHandle->releaseImportedPointer(testPtr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-
-    auto gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(testPtr, 1u, device->getRootDeviceIndex(), nullptr);
-    EXPECT_EQ(nullptr, gfxAllocation);
-}
-
 TEST_F(HostPointerManagerTest, givenHostPointerImportedWhenGettingExistingAllocationThenRetrieveProperGpuAddress) {
+    EXPECT_NE(nullptr, hostDriverHandle->hostPointerManager.get());
+
     void *testPtr = heapPointer;
 
     auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
@@ -87,6 +74,8 @@ TEST_F(HostPointerManagerTest, givenHostPointerImportedWhenGettingExistingAlloca
 }
 
 TEST_F(HostPointerManagerTest, givenPointerRegisteredWhenSvmAllocationExistsThenRetrieveSvmFirst) {
+    EXPECT_NE(nullptr, hostDriverHandle->hostPointerManager.get());
+
     void *testPtr = heapPointer;
 
     size_t usmSize = MemoryConstants::pageSize;
@@ -447,6 +436,49 @@ TEST_F(HostPointerManagerTest, givenMisalignedPointerRegisteredWhenGettingRelati
     size_t gpuVA = static_cast<size_t>(gfxAllocation->getGpuAddress());
     size_t gpuAddressOffset = gpuVA - alignDown(gpuVA, MemoryConstants::pageSize);
     EXPECT_EQ(mainOffset, gpuAddressOffset);
+
+    result = hostDriverHandle->releaseImportedPointer(testPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+using ForceDisabledHostPointerManagerTest = Test<ForceDisabledHostPointerManagerFixure>;
+
+TEST_F(ForceDisabledHostPointerManagerTest, givenHostPointerManagerForceDisabledThenReturnFeatureUnsupported) {
+    EXPECT_EQ(nullptr, hostDriverHandle->hostPointerManager.get());
+
+    void *testPtr = heapPointer;
+    auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+
+    void *basePtr = nullptr;
+    result = hostDriverHandle->getHostPointerBaseAddress(testPtr, &basePtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+
+    uintptr_t gpuAddress = 0;
+    auto gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(testPtr, 1u, device->getRootDeviceIndex(), &gpuAddress);
+    EXPECT_EQ(nullptr, gfxAllocation);
+
+    result = hostDriverHandle->releaseImportedPointer(testPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+using ForceEnabledHostPointerManagerTest = Test<ForceEnabledHostPointerManagerFixure>;
+
+TEST_F(ForceEnabledHostPointerManagerTest, givenHostPointerManagerForceEnabledThenReturnSuccess) {
+    EXPECT_NE(nullptr, hostDriverHandle->hostPointerManager.get());
+
+    void *testPtr = heapPointer;
+    auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *basePtr = nullptr;
+    result = hostDriverHandle->getHostPointerBaseAddress(testPtr, &basePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(testPtr, basePtr);
+
+    uintptr_t gpuAddress = 0;
+    auto gfxAllocation = hostDriverHandle->getDriverSystemMemoryAllocation(testPtr, 1u, device->getRootDeviceIndex(), &gpuAddress);
+    EXPECT_NE(nullptr, gfxAllocation);
 
     result = hostDriverHandle->releaseImportedPointer(testPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

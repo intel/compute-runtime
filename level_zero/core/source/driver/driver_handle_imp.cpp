@@ -200,7 +200,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
 
-    if (NEO::DebugManager.flags.EnableHostPointerImport.get() == 1) {
+    if (NEO::DebugManager.flags.EnableHostPointerImport.get() != 0) {
         createHostPointerManager();
     }
 
