@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -164,6 +164,11 @@ TEST_F(HostPointerManagerTest, WhenSizeIsZeroThenExpectInvalidArgument) {
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
+TEST_F(HostPointerManagerTest, WhenPointerIsNullThenExpectInvalidArgument) {
+    auto result = hostDriverHandle->importExternalPointer(nullptr, 0x10);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
 TEST_F(HostPointerManagerTest, givenNoPointerWhenImportAddressThenRegisterNewHostData) {
     void *testPtr = heapPointer;
     void *baseAddress;
@@ -193,7 +198,7 @@ TEST_F(HostPointerManagerTest, givenNoPointerWhenImportMisalignedAddressThenRegi
     testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + 0x10);
     size_t size = 0x10;
 
-    void *baseAddress;
+    void *baseAddress = nullptr;
 
     auto result = hostDriverHandle->getHostPointerBaseAddress(testPtr, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
@@ -206,10 +211,10 @@ TEST_F(HostPointerManagerTest, givenNoPointerWhenImportMisalignedAddressThenRegi
 
     result = hostDriverHandle->getHostPointerBaseAddress(testPtr, &baseAddress);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(heapPointer, baseAddress);
+    EXPECT_EQ(testPtr, baseAddress);
     auto hostPointerData = openHostPointerManager->hostPointerAllocations.get(testPtr);
     ASSERT_NE(nullptr, hostPointerData);
-    EXPECT_EQ(MemoryConstants::pageSize, hostPointerData->size);
+    EXPECT_EQ(size, hostPointerData->size);
 
     result = hostDriverHandle->releaseImportedPointer(testPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -307,28 +312,40 @@ TEST_F(HostPointerManagerTest, givenPointerUsesTwoPagesThenBothPagesAreAvailable
     testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + 0x10);
     size_t size = MemoryConstants::pageSize;
 
-    void *baseAddress;
+    void *baseAddress = nullptr;
 
     auto result = hostDriverHandle->importExternalPointer(testPtr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = hostDriverHandle->getHostPointerBaseAddress(testPtr, &baseAddress);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(heapPointer, baseAddress);
+    EXPECT_EQ(testPtr, baseAddress);
     auto hostPointerData = openHostPointerManager->hostPointerAllocations.get(testPtr);
     ASSERT_NE(nullptr, hostPointerData);
-    EXPECT_EQ(2 * MemoryConstants::pageSize, hostPointerData->size);
+    EXPECT_EQ(size, hostPointerData->size);
 
-    testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + MemoryConstants::pageSize);
+    void *testPtr2 = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + MemoryConstants::pageSize);
     size = 0x010;
 
-    result = hostDriverHandle->importExternalPointer(testPtr, size);
+    result = hostDriverHandle->importExternalPointer(testPtr2, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = hostDriverHandle->getHostPointerBaseAddress(testPtr, &baseAddress);
+    result = hostDriverHandle->getHostPointerBaseAddress(testPtr2, &baseAddress);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(heapPointer, baseAddress);
+    EXPECT_EQ(testPtr2, baseAddress);
+    auto hostPointerData2 = openHostPointerManager->hostPointerAllocations.get(testPtr2);
+    ASSERT_NE(nullptr, hostPointerData2);
+    EXPECT_EQ(size, hostPointerData2->size);
+
+    EXPECT_EQ(hostPointerData->hostPtrAllocations.getGraphicsAllocations().size(), hostPointerData2->hostPtrAllocations.getGraphicsAllocations().size());
+    for (uint32_t i = 0; i < hostPointerData->hostPtrAllocations.getGraphicsAllocations().size(); i++) {
+        auto hostPointerAllocation = hostPointerData->hostPtrAllocations.getGraphicsAllocation(i);
+        auto hostPointerAllocation2 = hostPointerData2->hostPtrAllocations.getGraphicsAllocation(i);
+        EXPECT_NE(hostPointerAllocation, hostPointerAllocation2);
+    }
 
     result = hostDriverHandle->releaseImportedPointer(testPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = hostDriverHandle->releaseImportedPointer(testPtr2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -408,6 +425,31 @@ TEST_F(HostPointerManagerTest, givenHostAllocationImportedWhenMakingResidentAddr
 
     result = context->evictMemory(device, testPtr, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(HostPointerManagerTest, givenMisalignedPointerRegisteredWhenGettingRelativeOffsetAddressThenRetrieveMisalignedPointerAsBaseAddress) {
+    size_t mainOffset = 0x10;
+    void *testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(heapPointer) + mainOffset);
+    size_t size = MemoryConstants::pageSize + 0x10;
+
+    auto result = hostDriverHandle->importExternalPointer(testPtr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    size_t relativeOffset = 0x20;
+    void *relativeAddress = ptrOffset(testPtr, relativeOffset);
+    void *baseAddress = nullptr;
+    result = hostDriverHandle->getHostPointerBaseAddress(relativeAddress, &baseAddress);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(testPtr, baseAddress);
+
+    auto gfxAllocation = hostDriverHandle->findHostPointerAllocation(testPtr, 0x10u, device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gfxAllocation);
+    size_t gpuVA = static_cast<size_t>(gfxAllocation->getGpuAddress());
+    size_t gpuAddressOffset = gpuVA - alignDown(gpuVA, MemoryConstants::pageSize);
+    EXPECT_EQ(mainOffset, gpuAddressOffset);
+
+    result = hostDriverHandle->releaseImportedPointer(testPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult

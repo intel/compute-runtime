@@ -1141,31 +1141,37 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
 
-    size_t pointerSize = MemoryConstants::pageSize;
-    size_t offset = 100;
-    void *offsetPointer = ptrOffset(heapPointer, offset);
+    size_t mainOffset = 100;
+    size_t importSize = 100;
+    void *importPointer = ptrOffset(heapPointer, mainOffset);
 
-    auto ret = hostDriverHandle->importExternalPointer(offsetPointer, offset);
+    auto ret = hostDriverHandle->importExternalPointer(importPointer, importSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto hostAllocation = hostDriverHandle->findHostPointerAllocation(heapPointer, pointerSize, device->getRootDeviceIndex());
+    auto hostAllocation = hostDriverHandle->findHostPointerAllocation(importPointer, importSize, device->getRootDeviceIndex());
     ASSERT_NE(nullptr, hostAllocation);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocation(device, heapPointer, pointerSize);
-    auto expectedAlignedAddress = static_cast<uintptr_t>(hostAllocation->getGpuAddress());
-    EXPECT_EQ(heapPointer, hostAllocation->getUnderlyingBuffer());
+    size_t allocOffset = 10;
+    size_t offsetSize = 20;
+    void *offsetPointer = ptrOffset(importPointer, allocOffset);
+
+    AlignedAllocationData outData = commandList->getAlignedAllocation(device, importPointer, importSize);
+    auto gpuBaseAddress = static_cast<size_t>(hostAllocation->getGpuAddress());
+    auto expectedAlignedAddress = alignDown(gpuBaseAddress, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
+    size_t expectedOffset = gpuBaseAddress - expectedAlignedAddress;
+    EXPECT_EQ(importPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
     EXPECT_EQ(hostAllocation, outData.alloc);
-    EXPECT_EQ(0u, outData.offset);
+    EXPECT_EQ(expectedOffset, outData.offset);
 
-    outData = commandList->getAlignedAllocation(device, offsetPointer, 2u);
-    expectedAlignedAddress = static_cast<uintptr_t>(hostAllocation->getGpuAddress());
-    EXPECT_EQ(heapPointer, hostAllocation->getUnderlyingBuffer());
+    outData = commandList->getAlignedAllocation(device, offsetPointer, offsetSize);
+    expectedOffset += allocOffset;
+    EXPECT_EQ(importPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
     EXPECT_EQ(hostAllocation, outData.alloc);
-    EXPECT_EQ(offset, outData.offset);
+    EXPECT_EQ(expectedOffset, outData.offset);
 
-    ret = hostDriverHandle->releaseImportedPointer(heapPointer);
+    ret = hostDriverHandle->releaseImportedPointer(importPointer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 

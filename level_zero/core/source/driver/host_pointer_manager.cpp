@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,39 +61,36 @@ HostPointerManager::~HostPointerManager() {
 }
 
 ze_result_t HostPointerManager::createHostPointerMultiAllocation(std::vector<Device *> &devices, void *ptr, size_t size) {
-    if (size == 0) {
+    if (size == 0 || ptr == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    void *basePtr = alignDown(ptr, MemoryConstants::pageSize);
     size_t endAddress = reinterpret_cast<size_t>(ptr) + size;
-    endAddress = alignUp(endAddress, MemoryConstants::pageSize);
-    size_t totalSize = endAddress - reinterpret_cast<size_t>(basePtr);
 
     std::unique_lock<NEO::SpinLock> lock(this->mtx);
-    auto baseAllocation = hostPointerAllocations.get(basePtr);
+    auto beginAllocation = hostPointerAllocations.get(ptr);
     auto endingAllocation = hostPointerAllocations.get(reinterpret_cast<void *>(endAddress - 1));
-    if (baseAllocation != nullptr && baseAllocation == endingAllocation) {
+    if (beginAllocation != nullptr && beginAllocation == endingAllocation) {
         return ZE_RESULT_SUCCESS;
     }
-    if (baseAllocation != nullptr) {
+    if (beginAllocation != nullptr) {
         if (endingAllocation != nullptr) {
             return ZE_RESULT_ERROR_OVERLAPPING_REGIONS;
         }
         return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
     }
     if (endingAllocation != nullptr) {
-        UNRECOVERABLE_IF(endingAllocation->basePtr == basePtr);
+        UNRECOVERABLE_IF(endingAllocation->basePtr == ptr);
         return ZE_RESULT_ERROR_INVALID_SIZE;
     }
 
     HostPointerData hostData(static_cast<uint32_t>(devices.size() - 1));
-    hostData.basePtr = basePtr;
-    hostData.size = totalSize;
+    hostData.basePtr = ptr;
+    hostData.size = size;
     for (auto device : devices) {
         NEO::GraphicsAllocation *gfxAlloc = createHostPointerAllocation(device->getRootDeviceIndex(),
-                                                                        basePtr,
-                                                                        totalSize,
+                                                                        ptr,
+                                                                        size,
                                                                         device->getNEODevice()->getDeviceBitfield());
         if (gfxAlloc == nullptr) {
             auto allocations = hostData.hostPtrAllocations.getGraphicsAllocations();
