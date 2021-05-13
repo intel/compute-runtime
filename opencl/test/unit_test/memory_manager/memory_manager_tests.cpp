@@ -2622,3 +2622,58 @@ TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallback
     EXPECT_TRUE(result);
     EXPECT_EQ(0, memcmp(destData, srcData, dataSize));
 }
+
+TEST(MemoryManagerTest, givenMemoryManagerWithLocalMemoryWhenCreatingMultiGraphicsAllocationInSystemMemoryThenForceSystemMemoryPlacement) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.initGmm();
+    MockMemoryManager memoryManager(true, true, executionEnvironment);
+
+    AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM_GPU, systemMemoryBitfield};
+
+    auto localMemoryAllocation = memoryManager.allocateGraphicsMemoryWithProperties(allocationProperties);
+
+    EXPECT_NE(nullptr, localMemoryAllocation);
+    EXPECT_TRUE(localMemoryAllocation->isAllocatedInLocalMemoryPool());
+
+    memoryManager.freeGraphicsMemory(localMemoryAllocation);
+
+    std::vector<uint32_t> rootDeviceIndices{};
+    rootDeviceIndices.push_back(mockRootDeviceIndex);
+
+    MultiGraphicsAllocation multiGraphicsAllocation(mockRootDeviceIndex);
+
+    auto ptr = memoryManager.createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, multiGraphicsAllocation);
+
+    EXPECT_NE(nullptr, ptr);
+    auto systemMemoryAllocation = multiGraphicsAllocation.getGraphicsAllocation(mockRootDeviceIndex);
+    EXPECT_NE(nullptr, systemMemoryAllocation);
+    EXPECT_FALSE(systemMemoryAllocation->isAllocatedInLocalMemoryPool());
+
+    memoryManager.freeGraphicsMemory(systemMemoryAllocation);
+}
+
+TEST(MemoryManagerTest, givenDuplicateRootDeviceIndicesWhenCreatingMultiGraphicsAllocationInSystemMemoryThenDontLeakMemory) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.initGmm();
+    MockMemoryManager memoryManager(true, true, executionEnvironment);
+
+    AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM_GPU, systemMemoryBitfield};
+
+    std::vector<uint32_t> rootDeviceIndices{};
+    rootDeviceIndices.push_back(mockRootDeviceIndex);
+    rootDeviceIndices.push_back(mockRootDeviceIndex);
+    rootDeviceIndices.push_back(mockRootDeviceIndex);
+
+    EXPECT_EQ(3u, rootDeviceIndices.size());
+
+    MultiGraphicsAllocation multiGraphicsAllocation(mockRootDeviceIndex);
+
+    auto ptr = memoryManager.createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, multiGraphicsAllocation);
+
+    EXPECT_NE(nullptr, ptr);
+    auto allocation = multiGraphicsAllocation.getGraphicsAllocation(mockRootDeviceIndex);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(mockRootDeviceIndex, allocation->getRootDeviceIndex());
+
+    memoryManager.freeGraphicsMemory(allocation);
+}

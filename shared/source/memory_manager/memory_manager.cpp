@@ -143,7 +143,11 @@ GraphicsAllocation *MemoryManager::createPaddedAllocation(GraphicsAllocation *in
 void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(std::vector<uint32_t> &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation) {
     void *ptr = nullptr;
 
+    properties.flags.forceSystemMemory = true;
     for (auto &rootDeviceIndex : rootDeviceIndices) {
+        if (multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)) {
+            continue;
+        }
         properties.rootDeviceIndex = rootDeviceIndex;
         properties.flags.isUSMHostAllocation = true;
 
@@ -432,6 +436,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     allocationData.flags.crossRootDeviceAccess = properties.flags.crossRootDeviceAccess;
     allocationData.flags.useSystemMemory |= properties.flags.crossRootDeviceAccess;
+    allocationData.flags.useSystemMemory |= properties.flags.forceSystemMemory;
 
     hwHelper.setExtraAllocationData(allocationData, properties, *hwInfo);
 
