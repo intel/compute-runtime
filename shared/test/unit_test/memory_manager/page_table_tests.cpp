@@ -8,10 +8,10 @@
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/page_table.h"
+#include "shared/source/memory_manager/page_table.inl"
+#include "shared/test/common/mocks/mock_physical_address_allocator.h"
 
-#include "opencl/source/memory_manager/page_table.h"
-#include "opencl/source/memory_manager/page_table.inl"
-#include "opencl/test/unit_test/mocks/mock_physical_address_allocator.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

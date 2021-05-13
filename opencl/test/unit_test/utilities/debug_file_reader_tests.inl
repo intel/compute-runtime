@@ -78,7 +78,7 @@ TEST(SettingsFileReader, WhenGettingSettingThenCorrectStringValueIsReturned) {
             EXPECT_TRUE(true);                                                    \
         }                                                                         \
     }
-#include "opencl/test/unit_test/helpers/test_debug_variables.inl"
+#include "shared/test/unit_test/helpers/test_debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 }
 

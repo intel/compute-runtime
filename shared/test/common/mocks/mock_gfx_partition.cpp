@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
+#include "shared/test/common/mocks/mock_gfx_partition.h"
 
 using namespace NEO;
 

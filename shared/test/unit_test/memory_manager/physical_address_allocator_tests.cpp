@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/memory_banks.h"
-
-#include "opencl/source/memory_manager/page_table.h"
-#include "opencl/test/unit_test/mocks/mock_physical_address_allocator.h"
+#include "shared/source/memory_manager/page_table.h"
+#include "shared/test/common/mocks/mock_physical_address_allocator.h"
 
 #include "gtest/gtest.h"
 

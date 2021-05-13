@@ -6,9 +6,9 @@
  */
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
-#include "opencl/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 

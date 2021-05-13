@@ -35,16 +35,10 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferred_deleter.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferred_deleter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_execution_environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_experimental_command_buffer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_partition.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_partition.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.h
@@ -68,7 +62,6 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_operations_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_physical_address_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_platform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_platform.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_program.h

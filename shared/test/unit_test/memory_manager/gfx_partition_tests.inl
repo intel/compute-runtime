@@ -10,8 +10,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/utilities/cpu_info.h"
-
-#include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
+#include "shared/test/common/mocks/mock_gfx_partition.h"
 
 #include "gtest/gtest.h"
 

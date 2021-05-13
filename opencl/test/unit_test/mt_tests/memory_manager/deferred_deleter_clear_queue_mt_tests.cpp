@@ -5,8 +5,8 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_deferrable_deletion.h"
-#include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
+#include "shared/test/common/mocks/mock_deferrable_deletion.h"
+#include "shared/test/common/mocks/mock_deferred_deleter.h"
 
 #include "gtest/gtest.h"
 

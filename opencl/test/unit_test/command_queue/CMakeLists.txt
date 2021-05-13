@@ -70,14 +70,12 @@ set(IGDRCL_SRCS_tests_command_queue
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_image_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_image_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/finish_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/flattened_id_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/flush_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/get_command_queue_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/get_size_required_buffer_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/get_size_required_image_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/get_size_required_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioq_task_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_id_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/local_work_size_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_dispatch_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/multiple_map_buffer_tests.cpp

@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
@@ -22,7 +23,6 @@
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 

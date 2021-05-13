@@ -27,6 +27,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_gfx_partition.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/memory_properties_helpers.h"
@@ -36,7 +37,6 @@
 #include "opencl/test/unit_test/mocks/linux/mock_drm_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"

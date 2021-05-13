@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_deferrable_deletion.h"
+#include "shared/test/common/mocks/mock_deferrable_deletion.h"
 
 namespace NEO {
 bool MockDeferrableDeletion::apply() {

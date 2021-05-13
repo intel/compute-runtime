@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -52,6 +52,9 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/unified_memory_manager_extra.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/page_table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/page_table.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/page_table.inl
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_MEMORY_MANAGER ${NEO_CORE_MEMORY_MANAGER})
