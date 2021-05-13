@@ -51,15 +51,18 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenNonHostMemoryAllocatoinTypeWhenA
 }
 
 TEST_F(MemoryManagerGetAlloctionDataTests, givenForceSystemMemoryFlagWhenAllocationDataIsQueriedThenUseSystemMemoryFlagsIsSet) {
-    AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, true, 10, GraphicsAllocation::AllocationType::BUFFER, false, mockDeviceBitfield);
-    properties.flags.forceSystemMemory = true;
-    MockMemoryManager mockMemoryManager;
-    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    auto firstAllocationIdx = static_cast<int>(GraphicsAllocation::AllocationType::UNKNOWN);
+    auto lastAllocationIdx = static_cast<int>(GraphicsAllocation::AllocationType::COUNT);
 
-    EXPECT_TRUE(allocData.flags.useSystemMemory);
-    EXPECT_EQ(10u, allocData.size);
-    EXPECT_EQ(nullptr, allocData.hostPtr);
+    for (int allocationIdx = firstAllocationIdx + 1; allocationIdx != lastAllocationIdx; allocationIdx++) {
+        AllocationData allocData;
+        AllocationProperties properties(mockRootDeviceIndex, true, 10, static_cast<GraphicsAllocation::AllocationType>(allocationIdx), false, mockDeviceBitfield);
+        properties.flags.forceSystemMemory = true;
+        MockMemoryManager mockMemoryManager;
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+
+        EXPECT_TRUE(allocData.flags.useSystemMemory);
+    }
 }
 
 TEST_F(MemoryManagerGetAlloctionDataTests, givenMultiRootDeviceIndexAllocationPropertiesWhenAllocationDataIsQueriedThenUseSystemMemoryFlagsIsSet) {

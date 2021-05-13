@@ -436,9 +436,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     allocationData.flags.crossRootDeviceAccess = properties.flags.crossRootDeviceAccess;
     allocationData.flags.useSystemMemory |= properties.flags.crossRootDeviceAccess;
-    allocationData.flags.useSystemMemory |= properties.flags.forceSystemMemory;
 
     hwHelper.setExtraAllocationData(allocationData, properties, *hwInfo);
+    allocationData.flags.useSystemMemory |= properties.flags.forceSystemMemory;
 
     return true;
 }
