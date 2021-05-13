@@ -247,14 +247,9 @@ int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsConte
 int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
     auto retVal = 0;
 
-    if (osContext->isDirectSubmissionActive()) {
+    if (this->drm->isVmBindAvailable()) {
         retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
     } else {
-        if (this->drm->isVmBindAvailable()) {
-            auto thisBo = this;
-            bindBOsWithinContext(&thisBo, 1u, osContext, vmHandleId);
-            bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
-        }
         StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
         retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
     }
