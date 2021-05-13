@@ -90,6 +90,7 @@ add_library(compute_runtime_mockable_extra
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_memory_manager.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
+            ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/mock_execution_environment_gmm_fixture.cpp
             ${NEO_SOURCE_DIR}/shared/source/debug_settings/debug_settings_manager.cpp
 )
 

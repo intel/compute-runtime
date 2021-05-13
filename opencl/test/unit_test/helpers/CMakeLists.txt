@@ -6,6 +6,7 @@
 
 set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config_ocl_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/base_object_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator.h

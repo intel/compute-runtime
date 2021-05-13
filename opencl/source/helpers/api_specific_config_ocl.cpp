@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,5 +18,8 @@ bool ApiSpecificConfig::getBindlessConfiguration() {
     } else {
         return false;
     }
+}
+ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
+    return ApiSpecificConfig::OCL;
 }
 } // namespace NEO

@@ -19,4 +19,7 @@ bool ApiSpecificConfig::getBindlessConfiguration() {
         return false;
     }
 }
+ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
+    return ApiSpecificConfig::OCL;
+}
 } // namespace NEO

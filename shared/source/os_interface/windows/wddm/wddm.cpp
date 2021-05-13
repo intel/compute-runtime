@@ -14,6 +14,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/interlocked_max.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
@@ -839,7 +840,11 @@ bool Wddm::createContext(OsContextWin &osContext) {
         CreateContext.pPrivateDriverData = &PrivateData;
     }
     CreateContext.NodeOrdinal = WddmEngineMapper::engineNodeMap(osContext.getEngineType());
-    CreateContext.ClientHint = D3DKMT_CLIENTHINT_OPENCL;
+    if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
+        CreateContext.ClientHint = D3DKMT_CLIENTHINT_ONEAPI_LEVEL0;
+    } else {
+        CreateContext.ClientHint = D3DKMT_CLIENTHINT_OPENCL;
+    }
     CreateContext.hDevice = device;
 
     status = getGdi()->createContext(&CreateContext);
