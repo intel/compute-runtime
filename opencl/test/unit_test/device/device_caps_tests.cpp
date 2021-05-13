@@ -569,7 +569,6 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReport
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     const HardwareInfo *hwInfo = defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
     {
         if (hwInfo->capabilityTable.supportsVme) {
             EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_spirv_device_side_avc_motion_estimation")));
@@ -581,7 +580,7 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReport
         } else {
             EXPECT_THAT(caps.deviceExtensions, testing::Not(std::string("cl_khr_3d_image_writes")));
         }
-        if (hwHelper.isMediaBlockIOSupported(*hwInfo)) {
+        if (hwInfo->capabilityTable.supportsMediaBlock) {
             EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_spirv_media_block_io")));
         } else {
             EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_media_block_io"))));
@@ -592,25 +591,21 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReport
     }
 }
 
-TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCapsAreCreatedThenDeviceReportsClIntelSpirvMediaBlockIoExtensions) {
+TEST_F(DeviceGetCapsTest, givenSupportMediaBlockWhenCapsAreCreatedThenDeviceReportsClIntelSpirvMediaBlockIoExtensions) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(21);
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = true;
+    hwInfo.capabilityTable.supportsMediaBlock = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     const auto &caps = device->getDeviceInfo();
-
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (hwHelper.isMediaBlockIOSupported(hwInfo)) {
-        EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_spirv_media_block_io")));
-    }
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_spirv_media_block_io")));
 }
 
-TEST_F(DeviceGetCapsTest, givenNotSupportImagesWhenCapsAreCreatedThenDeviceNotReportsClIntelSpirvMediaBlockIoExtensions) {
+TEST_F(DeviceGetCapsTest, givenNotMediaBlockWhenCapsAreCreatedThenDeviceNotReportsClIntelSpirvMediaBlockIoExtensions) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(21);
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = false;
+    hwInfo.capabilityTable.supportsMediaBlock = false;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     const auto &caps = device->getDeviceInfo();
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_media_block_io"))));
@@ -994,13 +989,6 @@ TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCreateExtentionsListThenDeviceRe
 
     EXPECT_THAT(extensions, testing::HasSubstr(std::string("cl_khr_image2d_from_buffer")));
     EXPECT_THAT(extensions, testing::HasSubstr(std::string("cl_khr_depth_images")));
-
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (hwHelper.isMediaBlockIOSupported(hwInfo)) {
-        EXPECT_THAT(extensions, testing::HasSubstr(std::string("cl_intel_media_block_io")));
-    } else {
-        EXPECT_THAT(extensions, testing::Not(testing::HasSubstr(std::string("cl_intel_media_block_io"))));
-    }
 }
 
 TEST_F(DeviceGetCapsTest, givenNotSupporteImagesWhenCreateExtentionsListThenDeviceNotReportsImagesExtensions) {
@@ -1013,7 +1001,6 @@ TEST_F(DeviceGetCapsTest, givenNotSupporteImagesWhenCreateExtentionsListThenDevi
 
     EXPECT_THAT(extensions, testing::Not(testing::HasSubstr(std::string("cl_khr_image2d_from_buffer"))));
     EXPECT_THAT(extensions, testing::Not(testing::HasSubstr(std::string("cl_khr_depth_images"))));
-    EXPECT_THAT(extensions, testing::Not(testing::HasSubstr(std::string("cl_intel_media_block_io"))));
 }
 
 TEST_F(DeviceGetCapsTest, givenDeviceWhenGettingHostUnifiedMemoryCapThenItDependsOnLocalMemory) {

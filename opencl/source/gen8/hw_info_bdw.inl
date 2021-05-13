@@ -83,7 +83,8 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     true,                                          // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     false,                                         // levelZeroSupported
-    true                                           // isIntegratedDevice
+    true,                                          // isIntegratedDevice
+    true                                           // supportsMediaBlock
 };
 
 WorkaroundTable BDW::workaroundTable = {};

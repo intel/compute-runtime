@@ -80,6 +80,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // hostPtrTrackingEnabled
     true,                                            // levelZeroSupported
     true,                                            // isIntegratedDevice
+    true                                             // supportsMediaBlock
 };
 
 WorkaroundTable ICLLP::workaroundTable = {};

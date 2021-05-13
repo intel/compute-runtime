@@ -83,7 +83,8 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     true,                                          // levelZeroSupported
-    true                                           // isIntegratedDevice
+    true,                                          // isIntegratedDevice
+    true                                           // supportsMediaBlock
 };
 
 WorkaroundTable SKL::workaroundTable = {};

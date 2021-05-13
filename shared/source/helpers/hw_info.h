@@ -64,6 +64,7 @@ struct RuntimeCapabilityTable {
     bool hostPtrTrackingEnabled;
     bool levelZeroSupported;
     bool isIntegratedDevice;
+    bool supportsMediaBlock;
 };
 
 struct HardwareCapabilities {

@@ -78,7 +78,8 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     false,                                         // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     false,                                         // levelZeroSupported
-    true                                           // isIntegratedDevice
+    true,                                          // isIntegratedDevice
+    true                                           // supportsMediaBlock
 };
 
 WorkaroundTable LKF::workaroundTable = {};

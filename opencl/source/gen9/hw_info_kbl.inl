@@ -75,7 +75,8 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     true,                                          // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     true,                                          // levelZeroSupported
-    true                                           // isIntegratedDevice
+    true,                                          // isIntegratedDevice
+    true                                           // supportsMediaBlock
 };
 
 WorkaroundTable KBL::workaroundTable = {};

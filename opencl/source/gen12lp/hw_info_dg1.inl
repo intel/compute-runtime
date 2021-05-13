@@ -84,7 +84,8 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     false,                                         // supportsIndependentForwardProgress
     false,                                         // hostPtrTrackingEnabled
     true,                                          // levelZeroSupported
-    false                                          // isIntegratedDevice
+    false,                                         // isIntegratedDevice
+    true                                           // supportsMediaBlock
 };
 
 WorkaroundTable DG1::workaroundTable = {};

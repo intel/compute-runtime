@@ -1013,19 +1013,6 @@ HWTEST_F(HwHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessMod
     EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, hwHelper.getLocalMemoryAccessMode(*defaultHwInfo));
 }
 
-HWTEST_F(HwHelperTest, WhenIsMediaBlockIOSupportedThenReturnCorrectResult) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    {
-        hwInfo.capabilityTable.supportsImages = true;
-        EXPECT_TRUE(helper.isMediaBlockIOSupported(hwInfo));
-    }
-    {
-        hwInfo.capabilityTable.supportsImages = false;
-        EXPECT_FALSE(helper.isMediaBlockIOSupported(hwInfo));
-    }
-}
-
 HWTEST2_F(HwHelperTest, givenDefaultHwHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned, IsAtMostGen11) {
     auto &helper = HwHelper::get(renderCoreFamily);
     MockGraphicsAllocation graphicsAllocation;

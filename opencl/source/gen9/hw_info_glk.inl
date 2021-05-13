@@ -75,7 +75,8 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     false,                                         // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     false,                                         // levelZeroSupported
-    true                                           // isIntegratedDevice
+    true,                                          // isIntegratedDevice
+    true                                           // supportsMediaBlock
 };
 
 WorkaroundTable GLK::workaroundTable = {};

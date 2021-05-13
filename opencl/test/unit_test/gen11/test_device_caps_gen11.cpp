@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,6 +63,10 @@ GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckBlitterOperationsSupportThenRetu
 
 GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingImageSupportThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsImages);
+}
+
+GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingMediaBlockSupportThenReturnTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsMediaBlock);
 }
 
 GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingCoherencySupportThenReturnFalse) {

@@ -80,7 +80,8 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // supportsIndependentForwardProgress
     false,                                           // hostPtrTrackingEnabled
     true,                                            // levelZeroSupported
-    true                                             // isIntegratedDevice
+    true,                                            // isIntegratedDevice
+    true                                             // supportsMediaBlock
 };
 
 WorkaroundTable TGLLP::workaroundTable = {};

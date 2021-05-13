@@ -288,7 +288,7 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
         } else {
             EXPECT_THAT(compilerExtensions, testing::Not(::testing::HasSubstr(std::string("cl_intel_spirv_device_side_avc_motion_estimation"))));
         }
-        if (hwInfo->capabilityTable.supportsImages) {
+        if (hwInfo->capabilityTable.supportsMediaBlock) {
             EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_intel_spirv_media_block_io")));
         } else {
             EXPECT_THAT(compilerExtensions, testing::Not(::testing::HasSubstr(std::string("cl_intel_spirv_media_block_io"))));
@@ -347,9 +347,9 @@ TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchi
     }
 }
 
-TEST_F(PlatformTest, givenSupporteImagesAndClVersion21WhenCreateExtentionsListThenDeviceReportsSpritvMediaBlockIoExtension) {
+TEST_F(PlatformTest, givenSupportedMediaBlockAndClVersion21WhenCreateExtentionsListThenDeviceReportsSpritvMediaBlockIoExtension) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = true;
+    hwInfo.capabilityTable.supportsMediaBlock = true;
     hwInfo.capabilityTable.clVersionSupport = 21;
     hwInfo.capabilityTable.supportsOcl21Features = true;
     std::string extensionsList = getExtensionsList(hwInfo);
@@ -360,9 +360,9 @@ TEST_F(PlatformTest, givenSupporteImagesAndClVersion21WhenCreateExtentionsListTh
     EXPECT_THAT(compilerExtensions, testing::HasSubstr(std::string("cl_intel_spirv_media_block_io")));
 }
 
-TEST_F(PlatformTest, givenNotSupporteImagesAndClVersion21WhenCreateExtentionsListThenDeviceNotReportsSpritvMediaBlockIoExtension) {
+TEST_F(PlatformTest, givenNotSupportedMediaBlockAndClVersion21WhenCreateExtentionsListThenDeviceNotReportsSpritvMediaBlockIoExtension) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = false;
+    hwInfo.capabilityTable.supportsMediaBlock = false;
     hwInfo.capabilityTable.clVersionSupport = 21;
     std::string extensionsList = getExtensionsList(hwInfo);
     OpenClCFeaturesContainer features;
@@ -370,6 +370,28 @@ TEST_F(PlatformTest, givenNotSupporteImagesAndClVersion21WhenCreateExtentionsLis
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_THAT(compilerExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_media_block_io"))));
+}
+
+TEST_F(PlatformTest, givenSupportedImagesWhenCreateExtentionsListThenDeviceNotReportsKhr3DImageWritesExtension) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.supportsImages = true;
+    std::string extensionsList = getExtensionsList(hwInfo);
+    OpenClCFeaturesContainer features;
+    getOpenclCFeaturesList(*defaultHwInfo, features);
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
+
+    EXPECT_THAT(compilerExtensions, testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
+}
+
+TEST_F(PlatformTest, givenNotSupportedImagesWhenCreateExtentionsListThenDeviceNotReportsKhr3DImageWritesExtension) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.supportsImages = false;
+    std::string extensionsList = getExtensionsList(hwInfo);
+    OpenClCFeaturesContainer features;
+    getOpenclCFeaturesList(*defaultHwInfo, features);
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
+
+    EXPECT_THAT(compilerExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_3d_image_writes"))));
 }
 
 TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledTwiceThenTheSamePlatformIsReturned) {

@@ -550,11 +550,6 @@ bool HwHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGroupType
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isMediaBlockIOSupported(const HardwareInfo &hwInfo) const {
-    return hwInfo.capabilityTable.supportsImages;
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isKmdMigrationSupported(const HardwareInfo &hwInfo) const {
     return false;
 }

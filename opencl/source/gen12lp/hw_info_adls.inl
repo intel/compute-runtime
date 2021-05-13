@@ -80,7 +80,8 @@ const RuntimeCapabilityTable ADLS::capabilityTable{
     false,                                          // supportsIndependentForwardProgress
     false,                                          // hostPtrTrackingEnabled
     true,                                           // levelZeroSupported
-    true                                            // isIntegratedDevice
+    true,                                           // isIntegratedDevice
+    true                                            // supportsMediaBlock
 };
 
 WorkaroundTable ADLS::workaroundTable = {};

@@ -55,7 +55,7 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
         if (hwInfo.capabilityTable.supportsVme) {
             allExtensionsList += "cl_intel_spirv_device_side_avc_motion_estimation ";
         }
-        if (hwInfo.capabilityTable.supportsImages) {
+        if (hwInfo.capabilityTable.supportsMediaBlock) {
             allExtensionsList += "cl_intel_spirv_media_block_io ";
         }
         allExtensionsList += "cl_intel_spirv_subgroups ";
