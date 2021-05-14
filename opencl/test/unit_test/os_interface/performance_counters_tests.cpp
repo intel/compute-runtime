@@ -611,7 +611,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, WhenGettingHwPerfCounterAllocation
     std::unique_ptr<Event> event(new Event(queue.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation();
+    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
 
     void *memoryStorage = allocation->getUnderlyingBuffer();
@@ -637,7 +637,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, WhenCreatingEventThenHwPerfCounter
     HwPerfCounter *perfCounter = static_cast<TagNode<HwPerfCounter> *>(event->getHwPerfCounterNode())->tagForCpuAccess;
     ASSERT_NE(nullptr, perfCounter);
 
-    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation();
+    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
 
     void *memoryStorage = allocation->getUnderlyingBuffer();

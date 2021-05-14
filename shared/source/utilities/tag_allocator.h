@@ -32,7 +32,7 @@ class TagNodeBase : public NonCopyableOrMovableClass {
   public:
     virtual ~TagNodeBase() = default;
 
-    GraphicsAllocation *getBaseGraphicsAllocation() const { return gfxAllocation; }
+    MultiGraphicsAllocation *getBaseGraphicsAllocation() const;
 
     uint64_t getGpuAddress() const { return gpuAddress; }
 
@@ -92,7 +92,7 @@ class TagNodeBase : public NonCopyableOrMovableClass {
 
     TagAllocatorBase *allocator = nullptr;
 
-    GraphicsAllocation *gfxAllocation = nullptr;
+    MultiGraphicsAllocation *gfxAllocation = nullptr;
     uint64_t gpuAddress = 0;
     std::atomic<uint32_t> refCount{0};
     std::atomic<uint32_t> implicitCpuDependenciesCount{0};

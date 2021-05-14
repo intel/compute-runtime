@@ -92,6 +92,10 @@ bool CommandStreamReceiver::submitBatchBuffer(BatchBuffer &batchBuffer, Residenc
     return ret;
 }
 
+void CommandStreamReceiver::makeResident(MultiGraphicsAllocation &gfxAllocation) {
+    makeResident(*gfxAllocation.getGraphicsAllocation(rootDeviceIndex));
+}
+
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     auto submissionTaskCount = this->taskCount + 1;
     if (gfxAllocation.isResidencyTaskCountBelow(submissionTaskCount, osContext->getContextId())) {

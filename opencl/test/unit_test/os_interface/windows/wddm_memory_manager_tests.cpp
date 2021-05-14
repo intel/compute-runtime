@@ -1933,7 +1933,7 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
 
     auto tagAllocator = csr->getEventPerfCountAllocator(100);
     auto allocation = tagAllocator->getTag()->getBaseGraphicsAllocation();
-    allocation->updateTaskCount(1, csr->getOsContext().getContextId());
+    allocation->getDefaultGraphicsAllocation()->updateTaskCount(1, csr->getOsContext().getContextId());
     csr.reset();
     EXPECT_NO_THROW(executionEnvironment.memoryManager.reset());
 }

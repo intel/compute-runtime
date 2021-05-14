@@ -42,6 +42,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::isBlitterDirectSubmissionEnabled;
     using BaseClass::isDirectSubmissionEnabled;
     using BaseClass::isPerDssBackedBufferSent;
+    using BaseClass::makeResident;
     using BaseClass::perDssBackedBuffer;
     using BaseClass::programEnginePrologue;
     using BaseClass::programPerDssBackedBuffer;

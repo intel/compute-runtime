@@ -31,6 +31,10 @@ void TagAllocatorBase::cleanUpResources() {
     gfxAllocations.clear();
 }
 
+MultiGraphicsAllocation *TagNodeBase::getBaseGraphicsAllocation() const {
+    return gfxAllocation;
+}
+
 void TagNodeBase::returnTag() {
     allocator->returnTag(this);
 }

@@ -106,7 +106,7 @@ void TagAllocator<TagType>::populateFreeTags() {
         auto tagOffset = i * tagSize;
 
         nodesMemory[i].allocator = this;
-        nodesMemory[i].gfxAllocation = multiGraphicsAllocation->getDefaultGraphicsAllocation();
+        nodesMemory[i].gfxAllocation = multiGraphicsAllocation;
         nodesMemory[i].tagForCpuAccess = reinterpret_cast<TagType *>(ptrOffset(baseCpuAddress, tagOffset));
         nodesMemory[i].gpuAddress = baseGpuAddress + tagOffset;
         nodesMemory[i].setDoNotReleaseNodes(doNotReleaseNodes);

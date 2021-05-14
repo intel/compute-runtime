@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/test/unit_test/fixtures/memory_allocator_fixture.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -519,6 +520,46 @@ TEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenPopulatingTagsThenCreateMul
             EXPECT_EQ(nullptr, multiGraphicsAllocation->getGraphicsAllocation(i));
         }
     }
+}
+
+HWTEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenCallingMakeResidentThenUseCorrectRootDeviceIndex) {
+    constexpr uint32_t maxRootDeviceIndex = 1;
+
+    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(maxRootDeviceIndex + 1);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+    }
+
+    auto testMemoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(testMemoryManager);
+
+    const std::vector<uint32_t> indicesVector = {0, 1};
+
+    MockTagAllocator<TimestampPackets<uint32_t>> timestampPacketAllocator(indicesVector, testMemoryManager, 1, 1, sizeof(TimestampPackets<uint32_t>), false, mockDeviceBitfield);
+
+    EXPECT_EQ(1u, timestampPacketAllocator.getGraphicsAllocationsCount());
+
+    auto multiGraphicsAllocation = timestampPacketAllocator.gfxAllocations[0].get();
+
+    auto rootCsr0 = std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(static_cast<UltCommandStreamReceiver<FamilyType> *>(createCommandStream(*executionEnvironment, 0, 1)));
+    auto osContext0 = testMemoryManager->createAndRegisterOsContext(rootCsr0.get(), {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, 1, PreemptionMode::Disabled, true);
+    rootCsr0->setupContext(*osContext0);
+
+    auto rootCsr1 = std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(static_cast<UltCommandStreamReceiver<FamilyType> *>(createCommandStream(*executionEnvironment, 1, 1)));
+    auto osContext1 = testMemoryManager->createAndRegisterOsContext(rootCsr1.get(), {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, 1, PreemptionMode::Disabled, true);
+    rootCsr1->setupContext(*osContext1);
+
+    rootCsr0->storeMakeResidentAllocations = true;
+    rootCsr1->storeMakeResidentAllocations = true;
+
+    rootCsr0->makeResident(*multiGraphicsAllocation);
+    EXPECT_TRUE(rootCsr0->isMadeResident(multiGraphicsAllocation->getGraphicsAllocation(0)));
+    EXPECT_FALSE(rootCsr0->isMadeResident(multiGraphicsAllocation->getGraphicsAllocation(1)));
+
+    rootCsr1->makeResident(*multiGraphicsAllocation);
+    EXPECT_FALSE(rootCsr1->isMadeResident(multiGraphicsAllocation->getGraphicsAllocation(0)));
+    EXPECT_TRUE(rootCsr1->isMadeResident(multiGraphicsAllocation->getGraphicsAllocation(1)));
 }
 
 TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrReturnInitialValue) {
