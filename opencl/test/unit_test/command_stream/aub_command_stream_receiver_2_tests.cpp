@@ -263,6 +263,76 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefault
     aubCsr->flush(batchBuffer, allocationsForResidency);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhenGettingParametersForWriteThenLockResourceIsNotCalled) {
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    auto mockMemoryManager = new MockMemoryManager();
+
+    auto memoryManagerBackup = aubExecutionEnvironment->executionEnvironment->memoryManager.release();
+    aubExecutionEnvironment->executionEnvironment->memoryManager.reset(mockMemoryManager);
+
+    EXPECT_EQ(0u, mockMemoryManager->lockResourceCalled);
+
+    constexpr uint64_t initGpuAddress = 1234;
+    constexpr size_t initSize = 10;
+    MockGraphicsAllocation allocation(nullptr, initGpuAddress, initSize);
+    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    allocation.overrideMemoryPool(MemoryPool::LocalMemory);
+
+    aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, initSize, initSize, false, false, false, {});
+    mockGmm.resourceParams.Flags.Info.NotLockable = true;
+    allocation.setDefaultGmm(&mockGmm);
+
+    uint64_t gpuAddress{};
+    void *cpuAddress{};
+    size_t size{};
+
+    aubCsr->getParametersForWriteMemory(allocation, gpuAddress, cpuAddress, size);
+
+    EXPECT_EQ(nullptr, cpuAddress);
+    EXPECT_EQ(initGpuAddress, gpuAddress);
+    EXPECT_EQ(initSize, size);
+
+    EXPECT_EQ(0u, mockMemoryManager->lockResourceCalled);
+    aubExecutionEnvironment->executionEnvironment->memoryManager.reset(memoryManagerBackup);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGettingParametersForWriteThenLockResourceIsCalled) {
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    auto mockMemoryManager = new MockMemoryManager();
+
+    auto memoryManagerBackup = aubExecutionEnvironment->executionEnvironment->memoryManager.release();
+    aubExecutionEnvironment->executionEnvironment->memoryManager.reset(mockMemoryManager);
+
+    EXPECT_EQ(0u, mockMemoryManager->lockResourceCalled);
+
+    constexpr uint64_t initGpuAddress = 1234;
+    constexpr size_t initSize = 10;
+    MockGraphicsAllocation allocation(nullptr, initGpuAddress, initSize);
+    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    allocation.overrideMemoryPool(MemoryPool::LocalMemory);
+
+    aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, initSize, initSize, false, false, false, {});
+    mockGmm.resourceParams.Flags.Info.NotLockable = false;
+    allocation.setDefaultGmm(&mockGmm);
+
+    uint64_t gpuAddress{};
+    void *cpuAddress{};
+    size_t size{};
+
+    aubCsr->getParametersForWriteMemory(allocation, gpuAddress, cpuAddress, size);
+
+    EXPECT_EQ(nullptr, cpuAddress);
+    EXPECT_EQ(initGpuAddress, gpuAddress);
+    EXPECT_EQ(initSize, size);
+
+    EXPECT_EQ(1u, mockMemoryManager->lockResourceCalled);
+    aubExecutionEnvironment->executionEnvironment->memoryManager.reset(memoryManagerBackup);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeThenExpectFlattenBatchBufferIsCalled) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);

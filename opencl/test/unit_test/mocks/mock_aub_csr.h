@@ -57,6 +57,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     using AUBCommandStreamReceiverHw<GfxFamily>::taskCount;
     using AUBCommandStreamReceiverHw<GfxFamily>::latestSentTaskCount;
     using AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionTaskCount;
+    using AUBCommandStreamReceiverHw<GfxFamily>::getParametersForWriteMemory;
     using AUBCommandStreamReceiverHw<GfxFamily>::writeMemory;
     using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;
 
