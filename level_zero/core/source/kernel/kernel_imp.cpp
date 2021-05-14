@@ -588,23 +588,26 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
 }
 
 ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void *argVal) {
-    const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescImage>();
-    auto isMediaBlockImage = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].getExtendedTypeInfo().isMediaBlockImage;
     if (argVal == nullptr) {
         residencyContainer[argIndex] = nullptr;
         return ZE_RESULT_SUCCESS;
     }
 
+    const auto &hwInfo = module->getDevice()->getNEODevice()->getHardwareInfo();
+    auto isMediaBlockImage = (hwInfo.capabilityTable.supportsMediaBlock &&
+                              kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].getExtendedTypeInfo().isMediaBlockImage);
+    const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescImage>();
     const auto image = Image::fromHandle(*static_cast<const ze_image_handle_t *>(argVal));
+
     if (kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode == NEO::KernelDescriptor::Bindless) {
         image->copySurfaceStateToSSH(patchBindlessSurfaceState(image->getAllocation(), arg.bindless), 0u, isMediaBlockImage);
     } else {
         image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful, isMediaBlockImage);
     }
+
     residencyContainer[argIndex] = image->getAllocation();
 
     auto imageInfo = image->getImageInfo();
-
     auto clChannelType = getClChannelDataType(image->getImageDesc().format);
     auto clChannelOrder = getClChannelOrder(image->getImageDesc().format);
     NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.imgWidth, imageInfo.imgDesc.imageWidth);

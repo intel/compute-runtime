@@ -1602,6 +1602,51 @@ HWTEST2_F(SetKernelArg, givenImageAndBindfulKernelWhenSetArgImageThenCopySurface
     EXPECT_EQ(imageHW->passedSurfaceStateOffset, imageArg.bindful);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct MyMockImageMediaBlock : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
+    void copySurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset, bool isMediaBlockArg) override {
+        isMediaBlockPassedValue = isMediaBlockArg;
+    }
+    bool isMediaBlockPassedValue = false;
+};
+
+HWTEST2_F(SetKernelArg, givenSupportsMediaBlockAndIsMediaBlockImageWhenSetArgImageIsCalledThenIsMediaBlockArgIsPassedCorrectly, ImageSupport) {
+    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    createKernel();
+    auto argIndex = 3u;
+    auto &arg = const_cast<NEO::ArgDescriptor &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex]);
+    auto imageHW = std::make_unique<MyMockImageMediaBlock<gfxCoreFamily>>();
+    ze_image_desc_t desc = {};
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto handle = imageHW->toHandle();
+
+    {
+        hwInfo->capabilityTable.supportsMediaBlock = true;
+        arg.getExtendedTypeInfo().isMediaBlockImage = true;
+        kernel->setArgImage(argIndex, sizeof(imageHW.get()), &handle);
+        EXPECT_TRUE(imageHW->isMediaBlockPassedValue);
+    }
+    {
+        hwInfo->capabilityTable.supportsMediaBlock = false;
+        arg.getExtendedTypeInfo().isMediaBlockImage = true;
+        kernel->setArgImage(argIndex, sizeof(imageHW.get()), &handle);
+        EXPECT_FALSE(imageHW->isMediaBlockPassedValue);
+    }
+    {
+        hwInfo->capabilityTable.supportsMediaBlock = true;
+        arg.getExtendedTypeInfo().isMediaBlockImage = false;
+        kernel->setArgImage(argIndex, sizeof(imageHW.get()), &handle);
+        EXPECT_FALSE(imageHW->isMediaBlockPassedValue);
+    }
+    {
+        hwInfo->capabilityTable.supportsMediaBlock = false;
+        arg.getExtendedTypeInfo().isMediaBlockImage = false;
+        kernel->setArgImage(argIndex, sizeof(imageHW.get()), &handle);
+        EXPECT_FALSE(imageHW->isMediaBlockPassedValue);
+    }
+}
+
 using ImportHostPointerSetKernelArg = Test<ImportHostPointerModuleFixture>;
 HWTEST_F(ImportHostPointerSetKernelArg, givenHostPointerImportedWhenSettingKernelArgThenUseHostPointerAllocation) {
     createKernel();
