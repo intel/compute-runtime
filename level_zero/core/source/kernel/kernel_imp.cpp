@@ -114,15 +114,6 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
         {neoDevice->getRootDeviceIndex(), kernelIsaSize, allocType, neoDevice->getDeviceBitfield()});
     UNRECOVERABLE_IF(allocation == nullptr);
 
-    auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-    if (kernelInfo->heapInfo.pKernelHeap != nullptr && internalKernel == false) {
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
-                                                              *neoDevice, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
-                                                              static_cast<size_t>(kernelIsaSize));
-    }
-
     isaGraphicsAllocation.reset(allocation);
 
     if (neoDevice->getDebugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
@@ -130,6 +121,15 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
         if (device->getL0Debugger()) {
             device->getL0Debugger()->registerElf(kernelInfo->kernelDescriptor.external.debugData.get(), allocation);
         }
+    }
+
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (kernelInfo->heapInfo.pKernelHeap != nullptr && internalKernel == false) {
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
+                                                              *neoDevice, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
+                                                              static_cast<size_t>(kernelIsaSize));
     }
 
     this->crossThreadDataSize = this->kernelDescriptor->kernelAttributes.crossThreadDataSize;
