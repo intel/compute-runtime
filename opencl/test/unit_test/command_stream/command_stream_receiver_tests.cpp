@@ -667,15 +667,6 @@ TEST_F(CommandStreamReceiverTest, whenGettingEventPerfCountAllocatorThenSameTagA
     EXPECT_EQ(allocator2, allocator);
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAskingForTimestampPacketAlignmentThenReturnFourCachelines) {
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(nullptr, csr.timestampPacketAllocator.get());
-
-    constexpr auto expectedAlignment = MemoryConstants::cacheLineSize * 4;
-
-    EXPECT_EQ(expectedAlignment, csr.getTimestampPacketAllocatorAlignment());
-}
-
 HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenAddAubCommentIsCalledThenCallAddAubCommentOnCsr) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.addAubComment("message");

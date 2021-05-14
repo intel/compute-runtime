@@ -406,27 +406,17 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenUseCorr
 }
 
 HWTEST_F(TimestampPacketTests, givenTagAlignmentWhenCreatingAllocatorThenGpuAddressIsAligned) {
-    class MyCsr : public CommandStreamReceiverHw<FamilyType> {
-      public:
-        using CommandStreamReceiverHw<FamilyType>::CommandStreamReceiverHw;
-        size_t getTimestampPacketAllocatorAlignment() const override {
-            return alignment;
-        }
+    auto csr = executionEnvironment->memoryManager->getRegisteredEngines()[0].commandStreamReceiver;
 
-        size_t alignment = 4096;
-    };
-    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext;
+    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
 
-    MyCsr csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
-    csr.setupContext(osContext);
-
-    auto allocator = csr.getTimestampPacketAllocator();
+    auto allocator = csr->getTimestampPacketAllocator();
 
     auto tag1 = allocator->getTag();
     auto tag2 = allocator->getTag();
 
-    EXPECT_TRUE(isAligned(tag1->getGpuAddress(), csr.alignment));
-    EXPECT_TRUE(isAligned(tag2->getGpuAddress(), csr.alignment));
+    EXPECT_TRUE(isAligned(tag1->getGpuAddress(), hwHelper.getTimestampPacketAllocatorAlignment()));
+    EXPECT_TRUE(isAligned(tag2->getGpuAddress(), hwHelper.getTimestampPacketAllocatorAlignment()));
 }
 
 HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAllocatorThenDisableReusingAndLimitPoolSize) {

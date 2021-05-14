@@ -73,6 +73,14 @@ TEST_F(HwHelperTest, WhenGettingHelperThenValidHelperReturned) {
     EXPECT_NE(nullptr, &helper);
 }
 
+HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTimestampPacketAlignmentThenReturnFourCachelines) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    constexpr auto expectedAlignment = MemoryConstants::cacheLineSize * 4;
+
+    EXPECT_EQ(expectedAlignment, helper.getTimestampPacketAllocatorAlignment());
+}
+
 HWTEST_F(HwHelperTest, SetRenderSurfaceStateForBufferIsCalledThenSetL1CachePolicyIsCalled) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;

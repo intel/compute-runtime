@@ -14,9 +14,11 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "aub_mem_dump.h"
 #include "pipe_control_args.h"
@@ -458,6 +460,37 @@ inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const Hardwa
 template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::additionalKernelExecInfoSupported(const HardwareInfo &hwInfo) const {
     return false;
+}
+
+template <typename GfxFamily>
+std::unique_ptr<TagAllocatorBase> HwHelperHw<GfxFamily>::createTimestampPacketAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memoryManager,
+                                                                                        size_t initialTagCount, CommandStreamReceiverType csrType, DeviceBitfield deviceBitfield) const {
+    bool doNotReleaseNodes = (csrType > CommandStreamReceiverType::CSR_HW) ||
+                             DebugManager.flags.DisableTimestampPacketOptimizations.get();
+
+    auto tagAlignment = getTimestampPacketAllocatorAlignment();
+
+    if (DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
+        if (DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
+            using TimestampPackets32T = TimestampPackets<uint32_t>;
+            return std::make_unique<TagAllocator<TimestampPackets32T>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, sizeof(TimestampPackets32T), doNotReleaseNodes, deviceBitfield);
+        } else if (DebugManager.flags.OverrideTimestampPacketSize.get() == 8) {
+            using TimestampPackets64T = TimestampPackets<uint64_t>;
+            return std::make_unique<TagAllocator<TimestampPackets64T>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, sizeof(TimestampPackets64T), doNotReleaseNodes, deviceBitfield);
+        } else {
+            UNRECOVERABLE_IF(true);
+        }
+    }
+
+    using TimestampPacketType = typename GfxFamily::TimestampPacketType;
+    using TimestampPacketsT = TimestampPackets<TimestampPacketType>;
+
+    return std::make_unique<TagAllocator<TimestampPacketsT>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, sizeof(TimestampPacketsT), doNotReleaseNodes, deviceBitfield);
+}
+
+template <typename GfxFamily>
+size_t HwHelperHw<GfxFamily>::getTimestampPacketAllocatorAlignment() const {
+    return MemoryConstants::cacheLineSize * 4;
 }
 
 template <typename GfxFamily>

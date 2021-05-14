@@ -12,6 +12,7 @@
 #include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/options.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "aub_mem_dump.h"
@@ -26,6 +27,7 @@
 namespace NEO {
 class GmmHelper;
 class GraphicsAllocation;
+class TagAllocatorBase;
 struct AllocationData;
 struct AllocationProperties;
 struct EngineControl;
@@ -147,6 +149,10 @@ class HwHelper {
     virtual uint32_t getPlanarYuvMaxHeight() const = 0;
     virtual bool isBlitterForImagesSupported(const HardwareInfo &hwInfo) const = 0;
     virtual size_t getPreemptionAllocationAlignment() const = 0;
+    virtual std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memoryManager,
+                                                                             size_t initialTagCount, CommandStreamReceiverType csrType,
+                                                                             DeviceBitfield deviceBitfield) const = 0;
+    virtual size_t getTimestampPacketAllocatorAlignment() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -369,6 +375,11 @@ class HwHelperHw : public HwHelper {
     bool isBlitterForImagesSupported(const HardwareInfo &hwInfo) const override;
 
     size_t getPreemptionAllocationAlignment() const override;
+
+    std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memoryManager,
+                                                                     size_t initialTagCount, CommandStreamReceiverType csrType,
+                                                                     DeviceBitfield deviceBitfield) const override;
+    size_t getTimestampPacketAllocatorAlignment() const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

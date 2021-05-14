@@ -160,11 +160,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool checkPlatformSupportsNewResourceImplicitFlush() const;
     bool checkPlatformSupportsGpuIdleImplicitFlush() const;
 
-    MOCKABLE_VIRTUAL size_t getTimestampPacketAllocatorAlignment() const;
-
-    template <typename SizeT>
-    std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator();
-
     HeapDirtyState dshState;
     HeapDirtyState iohState;
     HeapDirtyState sshState;

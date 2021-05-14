@@ -1376,44 +1376,14 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPerDssBackedBuffer(const
 }
 
 template <typename GfxFamily>
-template <typename TagSizeT>
-std::unique_ptr<TagAllocatorBase> CommandStreamReceiverHw<GfxFamily>::createTimestampPacketAllocator() {
-    // dont release nodes in aub/tbx mode, to avoid removing semaphores optimization or reusing returned tags
-    bool doNotReleaseNodes = (getType() > CommandStreamReceiverType::CSR_HW) ||
-                             DebugManager.flags.DisableTimestampPacketOptimizations.get();
-
-    using TimestampPacketsT = TimestampPackets<TagSizeT>;
-
-    std::vector<uint32_t> rootDeviceIndices = {rootDeviceIndex};
-
-    auto allocator = new TagAllocator<TimestampPacketsT>(
-        rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getTimestampPacketAllocatorAlignment(),
-        sizeof(TimestampPacketsT), doNotReleaseNodes, osContext->getDeviceBitfield());
-
-    return std::unique_ptr<TagAllocatorBase>(allocator);
-}
-
-template <typename GfxFamily>
 TagAllocatorBase *CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocator() {
     if (timestampPacketAllocator.get() == nullptr) {
-        if (DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
-            if (DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
-                timestampPacketAllocator = createTimestampPacketAllocator<uint32_t>();
-            } else if (DebugManager.flags.OverrideTimestampPacketSize.get() == 8) {
-                timestampPacketAllocator = createTimestampPacketAllocator<uint64_t>();
-            } else {
-                UNRECOVERABLE_IF(true);
-            }
-        } else {
-            timestampPacketAllocator = createTimestampPacketAllocator<typename GfxFamily::TimestampPacketType>();
-        }
+        auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+        const std::vector<uint32_t> rootDeviceIndices = {rootDeviceIndex};
+
+        timestampPacketAllocator = hwHelper.createTimestampPacketAllocator(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getType(), osContext->getDeviceBitfield());
     }
     return timestampPacketAllocator.get();
-}
-
-template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocatorAlignment() const {
-    return MemoryConstants::cacheLineSize * 4;
 }
 
 } // namespace NEO
