@@ -320,7 +320,7 @@ TYPED_TEST(BaseObjectTests, WhenObjectIsCreatedThenNumWaitersIsZero) {
     object->release();
 }
 
-TYPED_TEST(BaseObjectTests, WhenConvertingToInternalObjectThnRefApiCountIsSetToZero) {
+TYPED_TEST(BaseObjectTests, WhenConvertingToInternalObjectThenRefApiCountIsSetToZero) {
     class ObjectForTest : public NEO::MemObj {
       public:
         ObjectForTest() : MemObj(nullptr, 0, {}, 0, 0, 0u, nullptr, nullptr, 0, false, false, false) {

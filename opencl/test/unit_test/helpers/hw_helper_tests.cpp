@@ -81,7 +81,7 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTimestampPacketAlignmentThenRet
     EXPECT_EQ(expectedAlignment, helper.getTimestampPacketAllocatorAlignment());
 }
 
-HWTEST_F(HwHelperTest, SetRenderSurfaceStateForBufferIsCalledThenSetL1CachePolicyIsCalled) {
+HWTEST_F(HwHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIsSet) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     class mockHwHelperHw : public HwHelperHw<FamilyType> {
@@ -703,7 +703,7 @@ TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSettingWhenP
     EXPECT_TRUE(HwHelper::cacheFlushAfterWalkerSupported(device->getHardwareInfo()));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenCallGetGlobalTimeStampBitsReturnsCorrectValue) {
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGettingGlobalTimeStampBitsThenCorrectValueIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(helper.getGlobalTimeStampBits(), 36U);
 }
@@ -737,7 +737,7 @@ TEST_F(HwHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGetEnab
     EXPECT_TRUE(helper.getEnableLocalMemory(hardwareInfo));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenVariousCachesRequestProperMOCSIndexesAreBeingReturned) {
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenVariousCachesRequestThenCorrectMocsIndexesAreReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     auto gmmHelper = this->pDevice->getGmmHelper();
     auto expectedMocsForL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;

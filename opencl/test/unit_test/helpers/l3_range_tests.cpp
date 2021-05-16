@@ -50,7 +50,7 @@ TEST(L3Range, whenTooBigSizeThenMaskCalculationIsAborted) {
     EXPECT_THROW(L3Range::getMaskFromSize(l3RangeMax * 2), std::exception);
 }
 
-TEST(L3Range, returnsProperSizeInBytesFromMask) {
+TEST(L3Range, WhenGettingMaskFromSizeThenCorrectSizeIsReturned) {
     L3Range range;
 
     range.setMask(L3Range::getMaskFromSize(l3RangeMinimumAlignment));

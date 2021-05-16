@@ -138,7 +138,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWhenSemaphoreAndAtomicAreProgrammedTh
     verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), &mockNode);
 }
 
-HWTEST_F(TimestampPacketTests, givenDebugModeWhereAtomicsAreNotEmittedWhenCommandIsParsedThereIsNoAtomicOperation) {
+HWTEST_F(TimestampPacketTests, givenDebugModeWhereAtomicsAreNotEmittedWhenCommandIsParsedThenNoAtomicOperation) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisableAtomicForPostSyncs.set(true);
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -452,7 +452,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabl
     EXPECT_EQ(sizeWithEnabled, extendedSize);
 }
 
-HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimatingStreamSizeDontDontAddAdditionalSize) {
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimatingStreamSizeThenDontAddAdditionalSize) {
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel}));
     auto mockCmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
     mockCmdQHw->setOoqEnabled();
@@ -553,7 +553,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
     EXPECT_EQ(sizeWithEnabled, extendedSize);
 }
 
-HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhenComputeCsrDepsThanDoNotAddthemToCsrDeps) {
+HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhenComputingCsrDependenciesThenDoNotAddThem) {
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
 
     Event eventWithoutTimestampContainer1(mockCmdQ, 0, 0, 0);
