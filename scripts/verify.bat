@@ -1,4 +1,4 @@
-REM Copyright (C) 2017-2020 Intel Corporation
+REM Copyright (C) 2020-2021 Intel Corporation
 REM
 REM SPDX-License-Identifier: MIT
 REM
