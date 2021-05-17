@@ -236,6 +236,18 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenOpenSyscallFailWhenDoingPMTInitThenPMTmapO
     }
 }
 
+TEST_F(ZesPmtFixtureMultiDevice, GivenNoPMTHandleInmapOfSubDeviceIdToPmtObjectWhenCallingreleasePmtObjectThenMapWouldGetEmpty) {
+    auto mapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
+    for (const auto &deviceHandle : deviceHandles) {
+        ze_device_properties_t deviceProperties = {};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, nullptr);
+    }
+    pLinuxSysmanImp->releasePmtObject();
+    EXPECT_TRUE(pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.empty());
+    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = mapOriginal;
+}
+
 class ZesPmtFixtureNoSubDevice : public SysmanDeviceFixture {
   protected:
     std::vector<ze_device_handle_t> deviceHandles;
