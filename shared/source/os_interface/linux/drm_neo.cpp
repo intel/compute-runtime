@@ -639,7 +639,8 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
     int sliceCount = 0;
     int subSliceCount = 0;
     int euCount = 0;
-    int maxSliceCount = queryTopologyInfo->max_slices;
+    int maxSliceCount = 0;
+    int maxSubSliceCountPerSlice = 0;
     std::vector<int> sliceIndices;
     sliceIndices.reserve(maxSliceCount);
 
@@ -650,6 +651,10 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
         }
         sliceIndices.push_back(x);
         sliceCount++;
+
+        std::vector<int> subSliceIndices;
+        subSliceIndices.reserve(queryTopologyInfo->max_subslices);
+
         for (int y = 0; y < queryTopologyInfo->max_subslices; y++) {
             size_t yOffset = (queryTopologyInfo->subslice_offset + x * queryTopologyInfo->subslice_stride + y / 8);
             bool isSubSliceEnabled = (queryTopologyInfo->data[yOffset] >> (y % 8)) & 1;
@@ -657,6 +662,8 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
                 continue;
             }
             subSliceCount++;
+            subSliceIndices.push_back(y);
+
             for (int z = 0; z < queryTopologyInfo->max_eus_per_subslice; z++) {
                 size_t zOffset = (queryTopologyInfo->eu_offset + (x * queryTopologyInfo->max_subslices + y) * queryTopologyInfo->eu_stride + z / 8);
                 bool isEUEnabled = (queryTopologyInfo->data[zOffset] >> (z % 8)) & 1;
@@ -665,6 +672,10 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
                 }
                 euCount++;
             }
+        }
+
+        if (subSliceIndices.size()) {
+            maxSubSliceCountPerSlice = std::max(maxSubSliceCountPerSlice, subSliceIndices[subSliceIndices.size() - 1] + 1);
         }
     }
 
@@ -677,6 +688,7 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
     data.subSliceCount = subSliceCount;
     data.euCount = euCount;
     data.maxSliceCount = maxSliceCount;
+    data.maxSubSliceCount = maxSubSliceCountPerSlice;
 
     return (data.sliceCount && data.subSliceCount && data.euCount);
 }

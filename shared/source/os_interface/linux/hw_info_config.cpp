@@ -124,7 +124,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     gtSystemInfo->ThreadCount = this->threadsPerEu * gtSystemInfo->EUCount;
 
     gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSliceCount * topologyData.maxSliceCount), gtSystemInfo->MaxSubSlicesSupported);
-    gtSystemInfo->MaxSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSliceCount), gtSystemInfo->MaxSlicesSupported);
+    gtSystemInfo->MaxSlicesSupported = topologyData.maxSliceCount;
 
     uint64_t gttSizeQuery = 0;
     featureTable->ftrSVM = true;

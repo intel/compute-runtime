@@ -555,7 +555,7 @@ TEST(HwInfoConfigLinuxTest, whenAdjustPlatformForProductFamilyCalledThenDoNothin
 
 using HwConfigLinux = ::testing::Test;
 
-HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwInfoThenMaxSlicesSupportedSetInGtSystemInfo, MatchAny) {
+HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwInfoThenMaxSlicesSupportedSetToAvailableCountInGtSystemInfo, MatchAny) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
@@ -581,7 +581,7 @@ HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwI
     EXPECT_EQ(static_cast<uint32_t>(drm->StoredSSVal * 2), outHwInfo.gtSystemInfo.MaxSubSlicesSupported);
     EXPECT_EQ(static_cast<uint32_t>(drm->StoredSSVal * 2), outHwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
     EXPECT_EQ(16u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
-    EXPECT_EQ(static_cast<uint32_t>(drm->StoredSVal * 4), outHwInfo.gtSystemInfo.MaxSlicesSupported);
+    EXPECT_EQ(static_cast<uint32_t>(drm->StoredSVal), outHwInfo.gtSystemInfo.MaxSlicesSupported);
 
     drm->StoredSVal = 3;
     drm->StoredSSVal = 12;

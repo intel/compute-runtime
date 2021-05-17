@@ -668,3 +668,26 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxSubSlicesSupported, hwInfo->gtSystemInfo.MaxSubSlicesSupported);
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxEuPerSubSlice, hwInfo->gtSystemInfo.MaxEuPerSubSlice);
 }
+
+TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopologyInfoThenCorrectMaxSubSliceCountIsSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.disableSomeTopology = true;
+
+    Drm::QueryTopologyData topologyData = {};
+    drm.StoredSVal = 2;
+    drm.StoredSSVal = 6;
+    drm.StoredEUVal = 16;
+
+    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
+
+    EXPECT_EQ(1, topologyData.sliceCount);
+    EXPECT_EQ(1, topologyData.subSliceCount);
+    EXPECT_EQ(1, topologyData.euCount);
+
+    EXPECT_EQ(drm.StoredSVal, topologyData.maxSliceCount);
+    EXPECT_EQ(2, topologyData.maxSubSliceCount);
+}
