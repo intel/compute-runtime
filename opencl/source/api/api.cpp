@@ -4324,12 +4324,13 @@ cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
     return program;
 }
 
-#define RETURN_FUNC_PTR_IF_EXIST(name)                                   \
-    {                                                                    \
-        if (!strcmp(funcName, #name)) {                                  \
-            TRACING_EXIT(clGetExtensionFunctionAddress, (void **)&name); \
-            return ((void *)(name));                                     \
-        }                                                                \
+#define RETURN_FUNC_PTR_IF_EXIST(name)                                  \
+    {                                                                   \
+        if (!strcmp(funcName, #name)) {                                 \
+            void *ret = ((void *)(name));                               \
+            TRACING_EXIT(clGetExtensionFunctionAddress, (void **)&ret); \
+            return ret;                                                 \
+        }                                                               \
     }
 void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     TRACING_ENTER(clGetExtensionFunctionAddress, &funcName);
