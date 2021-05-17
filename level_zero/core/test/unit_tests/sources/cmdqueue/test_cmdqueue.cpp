@@ -38,6 +38,7 @@ using CommandQueueCreate = Test<DeviceFixture>;
 
 TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
     auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
@@ -130,6 +131,7 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueWithInvalidProductFamilyThenF
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     L0::CommandQueue *commandQueue = CommandQueue::create(PRODUCT_FAMILY::IGFX_MAX_PRODUCT,
                                                           device,
                                                           csr.get(),
@@ -323,6 +325,7 @@ struct CommandQueueProgramSBATest : public ::testing::Test {
 HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialized, CommandQueueSBASupport) {
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
     commandQueue->initialize(false, false);
 
@@ -372,6 +375,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
     commandQueue->initialize(false, false);
 
@@ -404,6 +408,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     baseAllocation.setGpuBaseAddress(0x123000);
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
     commandQueue->initialize(false, false);
 
@@ -442,6 +447,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     baseAllocation.setGpuBaseAddress(0x123000);
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
     commandQueue->initialize(false, false);
 
@@ -469,6 +475,7 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingNonCopyBlitComm
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           csr.get(),
@@ -1430,6 +1437,7 @@ struct CommandQueueCreateNegativeTest : public ::testing::Test {
 TEST_F(CommandQueueCreateNegativeTest, whenDeviceAllocationFailsDuringCommandQueueCreateThenAppropriateValueIsReturned) {
     const ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     memoryManager->forceFailureInPrimaryAllocation = true;
 
     ze_result_t returnValue;
@@ -1491,6 +1499,7 @@ struct CommandQueueInitTests : public ::testing::Test {
 TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocateForAllSubDevices) {
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, returnValue);

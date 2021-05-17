@@ -129,7 +129,6 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     bool isCopyOnly = hwHelper.isCopyOnlyEngineType(static_cast<NEO::EngineGroupType>(engineGroupIndex));
 
     *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, desc, isCopyOnly, false, returnValue);
-    csr->getOsContext().ensureContextInitialized();
 
     return returnValue;
 }

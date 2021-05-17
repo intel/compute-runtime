@@ -588,6 +588,48 @@ TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCom
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+struct CommandListCreateWithDeferredOsContextInitialization : ContextCommandListCreate {
+    void SetUp() override {
+        DebugManager.flags.DeferOsContextInitialization.set(1);
+        ContextCommandListCreate::SetUp();
+    }
+
+    void TearDown() override {
+        ContextCommandListCreate::TearDown();
+    }
+
+    DebugManagerStateRestore restore;
+};
+TEST_F(ContextCommandListCreate, givenDeferredEngineCreationWhenImmediateCommandListIsCreatedThenEngineIsInitialized) {
+    uint32_t groupsCount{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getCommandQueueGroupProperties(&groupsCount, nullptr));
+    auto groups = std::vector<ze_command_queue_group_properties_t>(groupsCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getCommandQueueGroupProperties(&groupsCount, groups.data()));
+
+    for (uint32_t groupIndex = 0u; groupIndex < groupsCount; groupIndex++) {
+        const auto &group = groups[groupIndex];
+        for (uint32_t queueIndex = 0; queueIndex < group.numQueues; queueIndex++) {
+            CommandStreamReceiver *expectedCsr{};
+            EXPECT_EQ(ZE_RESULT_SUCCESS, device->getCsrForOrdinalAndIndex(&expectedCsr, groupIndex, queueIndex));
+
+            ze_command_queue_desc_t desc = {};
+            desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+            desc.ordinal = groupIndex;
+            desc.index = queueIndex;
+            ze_command_list_handle_t cmdListHandle;
+            ze_result_t result = context->createCommandListImmediate(device, &desc, &cmdListHandle);
+            L0::CommandList *cmdList = L0::CommandList::fromHandle(cmdListHandle);
+
+            EXPECT_EQ(device, cmdList->device);
+            EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, cmdList->cmdListType);
+            EXPECT_NE(nullptr, cmdList);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+            EXPECT_TRUE(expectedCsr->getOsContext().isInitialized());
+            EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->destroy());
+        }
+    }
+}
+
 TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCommandListWithASyncModeThenSuccessIsReturned) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
