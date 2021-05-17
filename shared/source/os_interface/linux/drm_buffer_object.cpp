@@ -217,13 +217,16 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
     std::cout << logger.str() << std::endl;
 }
 
-int bindBOsWithinContext(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId) {
+int bindBOsWithinContext(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, bool allContexts) {
     auto retVal = 0;
 
     for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
         if (osContext->getDeviceBitfield().test(drmIterator)) {
             for (size_t i = 0; i < numberOfBos; i++) {
                 retVal |= boToPin[i]->bind(osContext, drmIterator);
+                if (!allContexts) {
+                    return retVal;
+                }
             }
         }
     }
@@ -235,7 +238,7 @@ int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsConte
     auto retVal = 0;
 
     if (this->drm->isVmBindAvailable()) {
-        retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
+        retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId, true);
     } else {
         StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
         retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
@@ -248,7 +251,7 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
     auto retVal = 0;
 
     if (this->drm->isVmBindAvailable()) {
-        retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
+        retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId, false);
     } else {
         StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
         retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
