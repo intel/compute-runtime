@@ -53,11 +53,15 @@ struct DeferredOsContextCreationTests : ::testing::Test {
         DeviceFactory::prepareDeviceEnvironments(*device->getExecutionEnvironment());
     }
 
-    void expectContextCreation(EngineTypeUsage engineTypeUsage, bool defaultEngine, bool expectedImmediate) {
+    std::unique_ptr<OsContext> createOsContext(EngineTypeUsage engineTypeUsage, bool defaultEngine) {
         OSInterface *osInterface = device->getRootDeviceEnvironment().osInterface.get();
         std::unique_ptr<OsContext> osContext{OsContext::create(osInterface, 0, 0, engineTypeUsage, PreemptionMode::Disabled, false)};
         EXPECT_FALSE(osContext->isInitialized());
+        return osContext;
+    }
 
+    void expectContextCreation(EngineTypeUsage engineTypeUsage, bool defaultEngine, bool expectedImmediate) {
+        auto osContext = createOsContext(engineTypeUsage, defaultEngine);
         const bool immediate = osContext->isImmediateContextInitializationEnabled(defaultEngine);
         EXPECT_EQ(expectedImmediate, immediate);
         if (immediate) {
@@ -140,4 +144,19 @@ TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipl
     osContext.ensureContextInitialized();
     EXPECT_TRUE(osContext.isInitialized());
     EXPECT_EQ(1u, osContext.initializeContextCalled);
+}
+
+TEST_F(DeferredOsContextCreationTests, givenPrintOsContextInitializationsIsSetWhenOsContextItIsInitializedThenInfoIsLoggedToStdout) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DeferOsContextInitialization.set(1);
+    DebugManager.flags.PrintOsContextInitializations.set(1);
+    testing::internal::CaptureStdout();
+
+    auto osContext = createOsContext(engineTypeUsageRegular, false);
+    EXPECT_EQ(std::string{}, testing::internal::GetCapturedStdout());
+
+    testing::internal::CaptureStdout();
+    osContext->ensureContextInitialized();
+    std::string expectedMessage = "OsContext initialization: contextId=0 usage=Regular type=RCS isRootDevice=0\n";
+    EXPECT_EQ(expectedMessage, testing::internal::GetCapturedStdout());
 }
