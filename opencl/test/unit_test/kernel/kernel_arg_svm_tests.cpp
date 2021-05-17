@@ -351,7 +351,7 @@ struct SetArgHandlerSetArgBuffer {
 using SetArgHandlers = ::testing::Types<SetArgHandlerSetArgSvm, SetArgHandlerSetArgSvmAlloc, SetArgHandlerSetArgBuffer>;
 
 TYPED_TEST_CASE(KernelArgSvmTestTyped, SetArgHandlers);
-HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsNeededTheSetArgSetsIt) {
+HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsNeededThenSetArgSetsIt) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     constexpr size_t rendSurfSize = sizeof(RENDER_SURFACE_STATE);
 

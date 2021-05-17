@@ -121,7 +121,7 @@ HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage2dArrayT
     EXPECT_FALSE(secondSurfaceState->getSurfaceArray());
 }
 
-HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage3dhenTransformAllRegisteredImages) {
+HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage3dThenTransformAllRegisteredImages) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     pKernelInfo->argAt(1).getExtendedTypeInfo().isTransformable = false;
@@ -145,7 +145,7 @@ HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage3dhenTra
     EXPECT_FALSE(secondSurfaceState->getSurfaceArray());
 }
 
-HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage3dhenTransformOnlyRegisteredImages) {
+HWTEST_F(ImageTransformerTest, givenImageTransformerWhenTransformToImage3dThenTransformOnlyRegisteredImages) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     pKernelInfo->argAt(1).getExtendedTypeInfo().isTransformable = false;
