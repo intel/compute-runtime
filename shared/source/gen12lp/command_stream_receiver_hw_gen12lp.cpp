@@ -194,5 +194,4 @@ const Family::L3_CONTROL Family::cmdInitL3ControlWithPostSync = Family::L3_CONTR
 const Family::XY_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_COPY_BLT::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
 const Family::XY_FAST_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_FAST_COLOR_BLT::sInit();
-const Family::SAMPLER_BORDER_COLOR_STATE Family::cmdInitBorderColor = Family::SAMPLER_BORDER_COLOR_STATE::sInit();
 } // namespace NEO

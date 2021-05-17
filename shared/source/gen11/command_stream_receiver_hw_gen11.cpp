@@ -189,5 +189,4 @@ const Family::MI_USER_INTERRUPT Family::cmdInitUserInterrupt = Family::MI_USER_I
 const Family::XY_SRC_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_SRC_COPY_BLT::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
 const Family::XY_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_COLOR_BLT::sInit();
-const Family::SAMPLER_BORDER_COLOR_STATE Family::cmdInitBorderColor = Family::SAMPLER_BORDER_COLOR_STATE::sInit();
 } // namespace NEO

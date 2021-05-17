@@ -90,7 +90,6 @@ struct TGLLPFamily : public GEN12LP {
     static const XY_COPY_BLT cmdInitXyCopyBlt;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
     static const XY_FAST_COLOR_BLT cmdInitXyColorBlt;
-    static const SAMPLER_BORDER_COLOR_STATE cmdInitBorderColor;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_GEN8_CORE;

@@ -571,19 +571,6 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapWithNewSizeThenMaxAv
     }
 }
 
-TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapWithNewSizeThenBorderColorOffsetIsSetToMaxUint) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
-
-    auto &indirectHeapInitial = cmdQ.getIndirectHeap(this->GetParam(), 10);
-    indirectHeapInitial.setBorderColor(nullptr, 0);
-    EXPECT_NE(indirectHeapInitial.getBorderColorOffset(), std::numeric_limits<uint32_t>::max());
-    size_t requiredSize = indirectHeapInitial.getMaxAvailableSpace() + 42;
-
-    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), requiredSize);
-    EXPECT_EQ(indirectHeap.getBorderColorOffset(), std::numeric_limits<uint32_t>::max());
-}
-
 TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenSizeIsAlignedToCacheLine) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props);
@@ -718,27 +705,6 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapAllocatedWhenIndir
 
     EXPECT_EQ(nullptr, indirectHeap.getCpuBase());
     EXPECT_EQ(0u, indirectHeap.getMaxAvailableSpace());
-}
-
-TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapAllocatedWhenIndirectHeapIsReleasedThenBorderColorOffsetResetWasCalled) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    MockCommandQueue cmdQ(context.get(), pClDevice, props);
-
-    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
-
-    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
-    auto heapSize = indirectHeap.getMaxAvailableSpace();
-
-    EXPECT_NE(0u, heapSize);
-
-    auto graphicsAllocation = indirectHeap.getGraphicsAllocation();
-    EXPECT_NE(nullptr, graphicsAllocation);
-
-    auto &csr = pDevice->getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
-    csr.indirectHeap[this->GetParam()]->setBorderColor(nullptr, 0);
-    EXPECT_NE(csr.indirectHeap[this->GetParam()]->getBorderColorOffset(), std::numeric_limits<uint32_t>::max());
-    cmdQ.releaseIndirectHeap(this->GetParam());
-    EXPECT_EQ(csr.indirectHeap[this->GetParam()]->getBorderColorOffset(), std::numeric_limits<uint32_t>::max());
 }
 
 TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocatedWhenIndirectHeapIsReleasedThenIndirectHeapAllocationStaysNull) {

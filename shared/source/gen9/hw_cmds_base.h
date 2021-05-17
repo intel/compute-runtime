@@ -86,7 +86,6 @@ struct SKLFamily : public GEN9 {
     static const XY_SRC_COPY_BLT cmdInitXyCopyBlt;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
     static const XY_COLOR_BLT cmdInitXyColorBlt;
-    static const SAMPLER_BORDER_COLOR_STATE cmdInitBorderColor;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_GEN8_CORE;
