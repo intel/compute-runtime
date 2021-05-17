@@ -499,7 +499,7 @@ TEST_F(OfflineCompilerTests, WhenParsingBinToCharArrayThenCorrectResult) {
 
     delete pOfflineCompiler;
 }
-TEST_F(OfflineCompilerTests, GivenCppFileWhenBuildingTheBuildSucceeds) {
+TEST_F(OfflineCompilerTests, GivenCppFileWhenBuildingThenBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -716,7 +716,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugS
     EXPECT_NE(std::string::npos, found);
 }
 
-TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationDisableddWhenDeviceNameIsSetToBDW) {
+TEST(OfflineCompilerTest, GivenBdwThenStatelessToStatefullOptimizationIsDisabled) {
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
     mockOfflineCompiler.deviceName = "bdw";
@@ -728,7 +728,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationDisableddWhenDevi
     EXPECT_EQ(std::string::npos, found);
 }
 
-TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDeviceNameIsSetToSKL) {
+TEST(OfflineCompilerTest, GivenSklThenStatelessToStatefullOptimizationIsEnabled) {
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
     mockOfflineCompiler.deviceName = "skl";
@@ -740,7 +740,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDevice
     EXPECT_NE(std::string::npos, found);
 }
 
-TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationDisabledWhenDeviceNameIsSetToSKLAndDebugSettingsAreDisabled) {
+TEST(OfflineCompilerTest, GivenSklAndDisabledViaDebugThenStatelessToStatefullOptimizationDisabled) {
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
     mockOfflineCompiler.deviceName = "skl";
@@ -1583,7 +1583,7 @@ TEST(OclocCompile, givenNoDeviceAndInternalOptionsOptionWhenCompilingToSpirvThen
     EXPECT_EQ(0, retVal);
     EXPECT_THAT(ocloc.internalOptions.c_str(), testing::HasSubstr("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes -cl-ext=+custom_param"));
 }
-TEST(OclocCompile, givenPackedDeviceBinaryFormatWhenGeneratingElfBinaryItIsReturnedAsItIs) {
+TEST(OclocCompile, givenPackedDeviceBinaryFormatWhenGeneratingElfBinaryThenItIsReturnedAsItIs) {
     MockOfflineCompiler ocloc;
     ZebinTestData::ValidEmptyProgram zebin;
 
