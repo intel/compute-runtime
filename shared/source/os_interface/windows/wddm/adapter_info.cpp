@@ -145,7 +145,7 @@ bool DxCoreAdapterFactory::getAdapterDesc(uint32_t ordinal, AdapterDesc &outAdap
 
     DXCoreHardwareID hwId = {};
     adapter->GetProperty(DXCoreAdapterProperty::HardwareID, sizeof(hwId), &hwId);
-    DEBUG_BREAK_IF(S_OK == hr);
+    DEBUG_BREAK_IF(S_OK != hr);
     outAdapter.deviceId = hwId.deviceID;
 
     LUID luid = {};
