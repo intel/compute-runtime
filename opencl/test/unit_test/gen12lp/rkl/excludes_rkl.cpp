@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,8 @@ HWCMDTEST_EXCLUDE_FAMILY(ProfilingWithPerfCountersTests, GivenCommandQueueWithPr
 
 HWCMDTEST_EXCLUDE_FAMILY(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet, IGFX_ROCKETLAKE);
 } // namespace NEO
+
+HWCMDTEST_EXCLUDE_FAMILY(DeviceFactoryTest, givenInvalidHwConfigStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenThrowsException, IGFX_ROCKETLAKE);
 
 HWCMDTEST_EXCLUDE_FAMILY(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenTimeStampAddressIsProgrammedCorrectly, IGFX_ROCKETLAKE);
 

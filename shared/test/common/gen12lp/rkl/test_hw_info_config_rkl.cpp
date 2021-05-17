@@ -76,5 +76,3 @@ RKLTEST_F(RklHwInfo, givenRklWhenCheckL0ThenReturnTrue) {
     const HardwareInfo &hardwareInfo = RKL::hwInfo;
     EXPECT_TRUE(hardwareInfo.capabilityTable.levelZeroSupported);
 }
-
-HWCMDTEST_EXCLUDE_FAMILY(DeviceFactoryTest, givenValidHwConfigStringPrepareDeviceEnvironmentsForProductFamilyOverrideReturnsTrue, IGFX_ROCKETLAKE);
