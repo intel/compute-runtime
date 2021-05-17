@@ -318,8 +318,6 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     if (!status) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
 
-        topologyData.sliceCount = hwInfo->gtSystemInfo.SliceCount;
-
         ret = getEuTotal(topologyData.euCount);
         if (ret != 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
@@ -331,19 +329,11 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
             return ret;
         }
-
-        topologyData.maxEuCount = topologyData.euCount / topologyData.subSliceCount;
-        topologyData.maxSliceCount = topologyData.sliceCount;
-        topologyData.maxSubSliceCount = topologyData.subSliceCount / topologyData.sliceCount;
     }
 
     hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
     hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
-
-    hwInfo->gtSystemInfo.MaxEuPerSubSlice = topologyData.maxEuCount;
-    hwInfo->gtSystemInfo.MaxSubSlicesSupported = topologyData.maxSubSliceCount * topologyData.maxSliceCount;
-    hwInfo->gtSystemInfo.MaxSlicesSupported = topologyData.maxSliceCount;
 
     status = querySystemInfo();
     if (!status) {

@@ -113,9 +113,9 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
             return ret;
         }
 
-        topologyData.maxEuCount = topologyData.euCount / topologyData.subSliceCount;
+        topologyData.maxEuCount = topologyData.subSliceCount > 0 ? topologyData.euCount / topologyData.subSliceCount : 0;
         topologyData.maxSliceCount = topologyData.sliceCount;
-        topologyData.maxSubSliceCount = topologyData.subSliceCount / topologyData.sliceCount;
+        topologyData.maxSubSliceCount = topologyData.sliceCount > 0 ? topologyData.subSliceCount / topologyData.sliceCount : 0;
     }
 
     gtSystemInfo->SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
