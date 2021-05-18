@@ -32,7 +32,7 @@ class CommandListFixture : public DeviceFixture {
         eventDesc.signal = 0;
 
         eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-        event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
+        event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     }
 
     void TearDown() override {

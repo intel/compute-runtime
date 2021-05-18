@@ -978,6 +978,11 @@ class MockEvent : public ::L0::Event {
         return ZE_RESULT_SUCCESS;
     };
 
+    uint32_t getPacketsInUse() override { return 1; }
+    void resetPackets() override{};
+    void setPacketsInUse(uint32_t value) override{};
+    uint64_t getPacketAddress(L0::Device *) override { return 0; }
+
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
 };
 
@@ -1636,8 +1641,8 @@ HWTEST_F(CommandListCreate, givenSyncCmdQueueAndCopyOnlyImmediateCommandListWhen
     ze_event_desc_t eventDesc = {};
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
-    auto event2 = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    auto event2 = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     ze_event_handle_t events[] = {event->toHandle(), event2->toHandle()};
 
     auto used = commandContainer.getCommandStream()->getUsed();
@@ -1665,7 +1670,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCo
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     auto baseAddr = event->getGpuAddress(device);
     auto contextOffset = NEO::TimestampPackets<uint32_t>::getContextStartOffset();
@@ -1701,7 +1706,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCop
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     commandList->appendEventForProfilingCopyCommand(event->toHandle(), false);
 
