@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/os_library_win.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <memory>
@@ -222,4 +223,10 @@ bool DxgiAdapterFactory::createSnapshotOfAvailableAdapters() {
     return true;
 }
 
+void WddmAdapterFactory::loadDxCore(DxCoreAdapterFactory::CreateAdapterFactoryFcn &outDxCoreCreateAdapterFactoryF) {
+    dxCoreLibrary.reset(OsLibrary::load("dxcore.dll"));
+    if (dxCoreLibrary && dxCoreLibrary->isLoaded()) {
+        outDxCoreCreateAdapterFactoryF = reinterpret_cast<DxCoreAdapterFactory::CreateAdapterFactoryFcn>(dxCoreLibrary->getProcAddress("DXCoreCreateAdapterFactory"));
+    }
+}
 } // namespace NEO

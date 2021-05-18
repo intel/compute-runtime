@@ -16,7 +16,7 @@ Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory() {
 }
 
 Wddm::DXCoreCreateAdapterFactoryFcn getDXCoreCreateAdapterFactory() {
-    return DXCoreCreateAdapterFactory;
+    return nullptr;
 }
 
 Wddm::GetSystemInfoFcn getGetSystemInfo() {

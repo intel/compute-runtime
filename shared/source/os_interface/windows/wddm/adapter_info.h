@@ -22,6 +22,7 @@ typedef unsigned int D3DKMT_HANDLE;
 namespace NEO {
 
 class Gdi;
+class OsLibrary;
 
 std::wstring queryAdapterDriverStorePath(const Gdi &gdi, D3DKMT_HANDLE adapter);
 
@@ -115,6 +116,9 @@ class WddmAdapterFactory : public AdapterFactory {
   public:
     WddmAdapterFactory(AdapterFactory::CreateAdapterFactoryFcn dxCoreCreateAdapterFactoryF,
                        AdapterFactory::CreateAdapterFactoryFcn dxgiCreateAdapterFactoryF) {
+        if (nullptr == dxCoreCreateAdapterFactoryF) {
+            loadDxCore(dxCoreCreateAdapterFactoryF);
+        }
         underlyingFactory = std::make_unique<DxCoreAdapterFactory>(dxCoreCreateAdapterFactoryF);
         if (false == underlyingFactory->isSupported()) {
             underlyingFactory = std::make_unique<DxgiAdapterFactory>(dxgiCreateAdapterFactoryF);
@@ -141,6 +145,8 @@ class WddmAdapterFactory : public AdapterFactory {
 
   protected:
     std::unique_ptr<AdapterFactory> underlyingFactory;
-};
+    std::unique_ptr<OsLibrary> dxCoreLibrary;
 
+    void loadDxCore(DxCoreAdapterFactory::CreateAdapterFactoryFcn &outDxCoreCreateAdapterFactoryF);
+};
 } // namespace NEO
