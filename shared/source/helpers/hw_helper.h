@@ -153,6 +153,7 @@ class HwHelper {
                                                                              size_t initialTagCount, CommandStreamReceiverType csrType,
                                                                              DeviceBitfield deviceBitfield) const = 0;
     virtual size_t getTimestampPacketAllocatorAlignment() const = 0;
+    virtual size_t getSingleTimestampPacketSize() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -380,6 +381,8 @@ class HwHelperHw : public HwHelper {
                                                                      size_t initialTagCount, CommandStreamReceiverType csrType,
                                                                      DeviceBitfield deviceBitfield) const override;
     size_t getTimestampPacketAllocatorAlignment() const override;
+
+    size_t getSingleTimestampPacketSize() const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

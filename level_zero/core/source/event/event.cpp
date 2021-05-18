@@ -24,22 +24,21 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/source/event/event_impl.inl"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include <set>
 
-namespace L0 {
+//
+#include "level_zero/core/source/event/event_impl.inl"
 
-ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t numEvents) {
+namespace L0 {
+template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *);
+template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, Device *);
+
+ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices) {
     std::set<uint32_t> rootDeviceIndices;
     uint32_t maxRootDeviceIndex = 0u;
-
-    void *eventPoolPtr = nullptr;
-
-    size_t alignedSize = alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k);
-    NEO::GraphicsAllocation::AllocationType allocationType = isEventPoolUsedForTimestamp ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
-                                                                                         : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
 
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driver);
     bool useDevicesFromApi = true;
@@ -59,7 +58,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
         }
 
         if (!eventDevice) {
-            continue;
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
         devices.push_back(eventDevice);
@@ -69,15 +68,24 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
         }
     }
 
+    auto &hwHelper = devices[0]->getHwHelper();
+
+    eventAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
+    eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * hwHelper.getSingleTimestampPacketSize(), eventAlignment));
+
+    size_t alignedSize = alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k);
+    NEO::GraphicsAllocation::AllocationType allocationType = isEventPoolUsedForTimestamp ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
+                                                                                         : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+
     eventPoolAllocations = std::make_unique<NEO::MultiGraphicsAllocation>(maxRootDeviceIndex);
 
     NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), alignedSize, allocationType, systemMemoryBitfield};
     allocationProperties.alignment = eventAlignment;
 
     std::vector<uint32_t> rootDeviceIndicesVector = {rootDeviceIndices.begin(), rootDeviceIndices.end()};
-    eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector,
-                                                                                               allocationProperties,
-                                                                                               *eventPoolAllocations);
+    auto eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector,
+                                                                                                    allocationProperties,
+                                                                                                    *eventPoolAllocations);
 
     if (!eventPoolPtr) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -86,10 +94,12 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
 }
 
 EventPoolImp::~EventPoolImp() {
-    auto graphicsAllocations = eventPoolAllocations->getGraphicsAllocations();
-    auto memoryManager = devices[0]->getDriverHandle()->getMemoryManager();
-    for (auto gpuAllocation : graphicsAllocations) {
-        memoryManager->freeGraphicsMemory(gpuAllocation);
+    if (eventPoolAllocations) {
+        auto graphicsAllocations = eventPoolAllocations->getGraphicsAllocations();
+        auto memoryManager = devices[0]->getDriverHandle()->getMemoryManager();
+        for (auto gpuAllocation : graphicsAllocations) {
+            memoryManager->freeGraphicsMemory(gpuAllocation);
+        }
     }
 }
 
@@ -111,7 +121,10 @@ ze_result_t EventPoolImp::createEvent(const ze_event_desc_t *desc, ze_event_hand
     if (desc->index > (getNumEvents() - 1)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    *phEvent = Event::create<uint32_t>(this, desc, this->getDevice());
+
+    auto &l0HwHelper = L0HwHelper::get(getDevice()->getHwInfo().platform.eRenderCoreFamily);
+
+    *phEvent = l0HwHelper.createEvent(this, desc, getDevice());
 
     return ZE_RESULT_SUCCESS;
 }
@@ -121,21 +134,18 @@ ze_result_t Event::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t numDevices,
-                             ze_device_handle_t *phDevices,
-                             const ze_event_pool_desc_t *desc) {
-    auto eventPool = new (std::nothrow) EventPoolImp(driver, numDevices, phDevices, desc->count, desc->flags);
+EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc) {
+    auto eventPool = std::make_unique<EventPoolImp>(desc);
     if (!eventPool) {
         DEBUG_BREAK_IF(true);
         return nullptr;
     }
 
-    ze_result_t result = eventPool->initialize(driver, context, numDevices, phDevices, desc->count);
+    ze_result_t result = eventPool->initialize(driver, context, numDevices, phDevices);
     if (result) {
-        delete eventPool;
         return nullptr;
     }
-    return eventPool;
+    return eventPool.release();
 }
 
 } // namespace L0

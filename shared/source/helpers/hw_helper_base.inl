@@ -494,6 +494,21 @@ size_t HwHelperHw<GfxFamily>::getTimestampPacketAllocatorAlignment() const {
 }
 
 template <typename GfxFamily>
+size_t HwHelperHw<GfxFamily>::getSingleTimestampPacketSize() const {
+    if (DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
+        if (DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
+            return TimestampPackets<uint32_t>::getSinglePacketSize();
+        } else if (DebugManager.flags.OverrideTimestampPacketSize.get() == 8) {
+            return TimestampPackets<uint64_t>::getSinglePacketSize();
+        } else {
+            UNRECOVERABLE_IF(true);
+        }
+    }
+
+    return TimestampPackets<typename GfxFamily::TimestampPacketType>::getSinglePacketSize();
+}
+
+template <typename GfxFamily>
 LocalMemoryAccessMode HwHelperHw<GfxFamily>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
     switch (static_cast<LocalMemoryAccessMode>(DebugManager.flags.ForceLocalMemoryAccessMode.get())) {
     case LocalMemoryAccessMode::Default:

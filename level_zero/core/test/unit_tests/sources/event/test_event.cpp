@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
@@ -214,7 +215,7 @@ TEST_F(EventPoolCreate, givenCloseIpcHandleCalledReturnsNotSupported) {
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST_F(EventPoolCreate, GivenAtLeastOneValidDeviceHandleWhenCreatingEventPoolThenEventPoolCreated) {
+TEST_F(EventPoolCreate, GivenNullptrDeviceAndNumberOfDevicesWhenCreatingEventPoolThenReturnError) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
         nullptr,
@@ -223,6 +224,18 @@ TEST_F(EventPoolCreate, GivenAtLeastOneValidDeviceHandleWhenCreatingEventPoolThe
 
     ze_device_handle_t devices[] = {nullptr, device->toHandle()};
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 2, devices, &eventPoolDesc));
+    ASSERT_EQ(nullptr, eventPool);
+}
+
+TEST_F(EventPoolCreate, GivenNullptrDeviceWithoutNumberOfDevicesWhenCreatingEventPoolThenEventPoolCreated) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        1};
+
+    ze_device_handle_t devices[] = {nullptr, device->toHandle()};
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, devices, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
 }
 
@@ -751,13 +764,10 @@ TEST_F(EventPoolCreateNegativeTest, whenInitializingEventPoolButMemoryManagerFai
     result = zeDeviceGet(driverHandle.get(), &deviceCount, devices);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto eventPool = new L0::EventPoolImp(driverHandle.get(), numRootDevices,
-                                          devices, eventPoolDesc.count,
-                                          eventPoolDesc.flags);
+    auto eventPool = new L0::EventPoolImp(&eventPoolDesc);
     EXPECT_NE(nullptr, eventPool);
 
-    result = eventPool->initialize(driverHandle.get(), context, numRootDevices, devices,
-                                   eventPoolDesc.count);
+    result = eventPool->initialize(driverHandle.get(), context, numRootDevices, devices);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
 
     delete eventPool;
@@ -845,6 +855,111 @@ TEST_F(EventTests, givenTwoEventsCreatedThenTheyHaveDifferentAddresses) {
 
     event0->destroy();
     event1->destroy();
+}
+
+struct EventSizeTests : public DeviceFixture, public testing::Test {
+    void SetUp() override {
+        DeviceFixture::SetUp();
+        hDevice = device->toHandle();
+    }
+
+    void TearDown() override {
+        DeviceFixture::TearDown();
+    }
+
+    void createEvents() {
+        ze_event_handle_t hEvent0 = 0;
+        ze_event_handle_t hEvent1 = 0;
+        ze_event_desc_t eventDesc0 = {};
+        ze_event_desc_t eventDesc1 = {};
+
+        eventDesc0.index = 0;
+        eventDesc1.index = 1;
+
+        auto result = eventPool->createEvent(&eventDesc0, &hEvent0);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        result = eventPool->createEvent(&eventDesc1, &hEvent1);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        eventObj0.reset(L0::Event::fromHandle(hEvent0));
+        eventObj1.reset(L0::Event::fromHandle(hEvent1));
+    }
+
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        4};
+
+    DebugManagerStateRestore restore;
+    ze_device_handle_t hDevice = 0;
+    std::unique_ptr<EventPoolImp> eventPool;
+    std::unique_ptr<L0::Event> eventObj0;
+    std::unique_ptr<L0::Event> eventObj1;
+};
+
+HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
+    eventPool.reset(static_cast<EventPoolImp *>(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc)));
+
+    auto &hwHelper = device->getHwHelper();
+
+    auto expectedAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
+    auto singlePacketSize = TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize();
+    auto expectedSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * singlePacketSize, expectedAlignment));
+
+    EXPECT_EQ(expectedSize, eventPool->getEventSize());
+
+    createEvents();
+
+    auto hostPtrDiff = ptrDiff(eventObj1->getHostAddress(), eventObj0->getHostAddress());
+    EXPECT_EQ(expectedSize, hostPtrDiff);
+}
+
+HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
+
+    auto &hwHelper = device->getHwHelper();
+    auto expectedAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
+
+    {
+        DebugManager.flags.OverrideTimestampPacketSize.set(4);
+
+        eventPool.reset(static_cast<EventPoolImp *>(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc)));
+
+        auto singlePacketSize = TimestampPackets<uint32_t>::getSinglePacketSize();
+
+        auto expectedSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * singlePacketSize, expectedAlignment));
+
+        EXPECT_EQ(expectedSize, eventPool->getEventSize());
+
+        createEvents();
+
+        auto hostPtrDiff = ptrDiff(eventObj1->getHostAddress(), eventObj0->getHostAddress());
+        EXPECT_EQ(expectedSize, hostPtrDiff);
+    }
+
+    {
+        DebugManager.flags.OverrideTimestampPacketSize.set(8);
+
+        eventPool.reset(static_cast<EventPoolImp *>(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc)));
+
+        auto singlePacketSize = TimestampPackets<uint64_t>::getSinglePacketSize();
+
+        auto expectedSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * singlePacketSize, expectedAlignment));
+
+        EXPECT_EQ(expectedSize, eventPool->getEventSize());
+
+        createEvents();
+
+        auto hostPtrDiff = ptrDiff(eventObj1->getHostAddress(), eventObj0->getHostAddress());
+        EXPECT_EQ(expectedSize, hostPtrDiff);
+    }
+
+    {
+        DebugManager.flags.OverrideTimestampPacketSize.set(12);
+        EXPECT_ANY_THROW(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc));
+        EXPECT_ANY_THROW(createEvents());
+    }
 }
 
 } // namespace ult

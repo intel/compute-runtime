@@ -145,16 +145,13 @@ struct EventPool : _ze_event_pool_handle_t {
 };
 
 struct EventPoolImp : public EventPool {
-    EventPoolImp(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t numEvents, ze_event_pool_flags_t flags) : numEvents(numEvents) {
-        if (flags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
+    EventPoolImp(const ze_event_pool_desc_t *desc) : numEvents(desc->count) {
+        if (desc->flags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
             isEventPoolUsedForTimestamp = true;
         }
     }
 
-    ze_result_t initialize(DriverHandle *driver, Context *context,
-                           uint32_t numDevices,
-                           ze_device_handle_t *phDevices,
-                           uint32_t numEvents);
+    ze_result_t initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices);
 
     ~EventPoolImp();
 
@@ -175,10 +172,8 @@ struct EventPoolImp : public EventPool {
     size_t numEvents;
 
   protected:
-    const uint32_t eventAlignment = 4 * MemoryConstants::cacheLineSize;
-    const uint32_t eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets *
-                                                                 NEO::TimestampPackets<uint32_t>::getSinglePacketSize(),
-                                                             eventAlignment));
+    uint32_t eventAlignment = 0;
+    uint32_t eventSize = 0;
 };
 
 } // namespace L0
