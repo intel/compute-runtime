@@ -13,6 +13,7 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -34,7 +35,6 @@
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "pipe_control_args.h"
-#include "stream_properties.h"
 
 #include <limits>
 #include <thread>

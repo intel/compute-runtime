@@ -43,7 +43,7 @@ TEST_F(CommandEncodeStatesTest, givenCommandConatinerCreatedWithMaxNumAggregateI
     delete cmdContainer;
 }
 
-HWTEST_F(CommandEncodeStatesTest, givenenDispatchInterfaceWhenDispatchKernelThenWalkerCommandProgrammed) {
+HWTEST_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenDispatchKernelThenWalkerCommandProgrammed) {
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     bool requiresUncachedMocs = false;
@@ -629,13 +629,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotCha
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    if (MemorySynchronizationCommands<FamilyType>::isPipeControlPriorToPipelineSelectWArequired(pDevice->getHardwareInfo())) {
-        auto itorPC = findAll<PIPE_CONTROL *>(commands.begin(), commands.end());
-        EXPECT_EQ(2u, itorPC.size());
-    } else {
-        auto itorPC = find<PIPE_CONTROL *>(commands.begin(), commands.end());
-        ASSERT_EQ(itorPC, commands.end());
-    }
+    auto itorPC = find<PIPE_CONTROL *>(commands.begin(), commands.end());
+    ASSERT_EQ(itorPC, commands.end());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotChangedAndUncachedMocsRequestedThenSBAIsProgrammedAndMocsAreSet) {

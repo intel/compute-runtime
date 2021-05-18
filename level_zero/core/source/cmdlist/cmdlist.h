@@ -9,14 +9,13 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/command_stream/stream_properties.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
-
-#include "stream_properties.h"
 
 #include <vector>
 

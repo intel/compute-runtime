@@ -101,7 +101,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
             kernel->getKernelDescriptor().kernelMetadata.kernelName.c_str());
     }
 
-    updateStreamProperties(*kernel);
+    updateStreamProperties(*kernel, false);
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,
                                                  reinterpret_cast<const void *>(pThreadGroupDimensions),

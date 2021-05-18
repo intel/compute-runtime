@@ -284,3 +284,17 @@ HWTEST_F(CommandEncodeStatesTest, givenAnUnalignedDstPtrThenCorrectAlignedPtrAnd
     EXPECT_TRUE((ptr & (NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment() - 1)) == 0x0u);
     EXPECT_NE(0u, offset);
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, whenAdjustPipelineSelectIsCalledThenNothingHappens) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    auto initialUsed = cmdContainer->getCommandStream()->getUsed();
+    NEO::EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer, descriptor);
+    EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
+}
+
+HWTEST2_F(CommandEncodeStatesTest, whenAdjustStateComputeModeIsCalledThenNothingHappens, IsAtMostGen11) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    auto initialUsed = cmdContainer->getCommandStream()->getUsed();
+    NEO::EncodeStates<FamilyType>::adjustStateComputeMode(*cmdContainer->getCommandStream(), 0, nullptr, false, false, false, false);
+    EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
+}

@@ -18,10 +18,11 @@
 
 namespace NEO {
 
-class GmmHelper;
-struct HardwareInfo;
-class IndirectHeap;
 class BindlessHeapsHelper;
+class GmmHelper;
+class IndirectHeap;
+struct HardwareInfo;
+struct StateComputeModeProperties;
 
 template <typename GfxFamily>
 struct EncodeDispatchKernel {
@@ -267,9 +268,7 @@ struct EncodeSurfaceState {
 
 template <typename GfxFamily>
 struct EncodeComputeMode {
-    using STATE_COMPUTE_MODE = typename GfxFamily::STATE_COMPUTE_MODE;
-    static void adjustComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
-                                  bool isMultiOsContextCapable, bool useGlobalAtomics, bool areMultipleSubDevicesInContext);
+    static void adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties);
 
     static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
 };

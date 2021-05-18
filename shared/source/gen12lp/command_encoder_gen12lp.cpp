@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/gen12lp/reg_configs.h"
 #include "shared/source/helpers/preamble.h"
@@ -35,11 +36,25 @@ size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
 }
 
 template <>
-void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
-                                                  bool isMultiOsContextCapable, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
-    STATE_COMPUTE_MODE *stateComputeMode = static_cast<STATE_COMPUTE_MODE *>(stateComputeModePtr);
+void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties) {
+    using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
+    using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
+
+    STATE_COMPUTE_MODE stateComputeMode = (stateComputeModePtr) ? *(static_cast<STATE_COMPUTE_MODE *>(stateComputeModePtr))
+                                                                : Family::cmdInitStateComputeMode;
+    auto maskBits = stateComputeMode.getMaskBits();
+
+    if (properties.isCoherencyRequired.isDirty) {
+        FORCE_NON_COHERENT coherencyValue = !properties.isCoherencyRequired.value ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT
+                                                                                  : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED;
+        stateComputeMode.setForceNonCoherent(coherencyValue);
+        maskBits |= Family::stateComputeModeForceNonCoherentMask;
+    }
+
+    stateComputeMode.setMaskBits(maskBits);
+
     auto buffer = csr.getSpace(sizeof(STATE_COMPUTE_MODE));
-    *reinterpret_cast<STATE_COMPUTE_MODE *>(buffer) = *stateComputeMode;
+    *reinterpret_cast<STATE_COMPUTE_MODE *>(buffer) = stateComputeMode;
 }
 
 template <>
@@ -96,4 +111,5 @@ template struct EncodeMiFlushDW<Family>;
 template struct EncodeWA<Family>;
 template struct EncodeMemoryPrefetch<Family>;
 template struct EncodeMiArbCheck<Family>;
+template struct EncodeComputeMode<Family>;
 } // namespace NEO

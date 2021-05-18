@@ -20,6 +20,7 @@ if(TESTS_GEN12LP)
                  ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_command_encoder_gen12lp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_math_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_gen12lp.cpp

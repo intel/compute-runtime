@@ -7,11 +7,12 @@
 
 #pragma once
 
+#include "shared/source/command_stream/stream_properties.h"
+
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 
 #include "igfxfmid.h"
-#include "stream_properties.h"
 
 namespace NEO {
 enum class ImageType;
@@ -219,7 +220,7 @@ struct CommandListCoreFamily : CommandListImp {
                                                               bool isCooperative);
     ze_result_t appendLaunchKernelSplit(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions, ze_event_handle_t hEvent);
     ze_result_t prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions);
-    void updateStreamProperties(Kernel &kernel);
+    void updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable);
     void clearCommandsToPatch();
 
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,

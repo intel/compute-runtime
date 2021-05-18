@@ -68,11 +68,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         idd.setKernelStartPointerHigh(0u);
     }
 
-    EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), true);
-    EncodeStates<Family>::adjustStateComputeMode(*container.getCommandStream(), container.lastSentNumGrfRequired, nullptr, false, false,
-                                                 kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, device->getNumAvailableDevices() > 1);
-    EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), false);
-
     auto numThreadsPerThreadGroup = dispatchInterface->getNumThreadsPerThreadGroup();
     idd.setNumberOfThreadsInGpgpuThreadGroup(numThreadsPerThreadGroup);
 
@@ -342,6 +337,14 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
     totalSize += sizeof(MI_BATCH_BUFFER_END);
 
     return totalSize;
+}
+
+template <typename Family>
+void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties) {
+}
+
+template <typename Family>
+void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
 }
 
 template <typename Family>

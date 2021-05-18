@@ -13,15 +13,9 @@ namespace NEO {
 template <typename Family>
 void EncodeStates<Family>::adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
                                                   bool isMultiOsContextCapable, bool requiresCoherency, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
-    using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
-    using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
-    STATE_COMPUTE_MODE stateComputeMode = (stateComputeModePtr != nullptr) ? *(static_cast<STATE_COMPUTE_MODE *>(stateComputeModePtr)) : Family::cmdInitStateComputeMode;
-    FORCE_NON_COHERENT coherencyValue = !requiresCoherency ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED;
-    stateComputeMode.setForceNonCoherent(coherencyValue);
-
-    stateComputeMode.setMaskBits(stateComputeMode.getMaskBits() | Family::stateComputeModeForceNonCoherentMask);
-
-    EncodeComputeMode<Family>::adjustComputeMode(csr, numGrfRequired, &stateComputeMode, isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext);
+    StreamProperties properties{};
+    properties.setStateComputeModeProperties(requiresCoherency, numGrfRequired, isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext);
+    EncodeComputeMode<Family>::adjustComputeMode(csr, stateComputeModePtr, properties.stateComputeMode);
 }
 
 template <typename Family>

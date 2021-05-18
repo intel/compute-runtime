@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
@@ -18,7 +19,6 @@
 
 #include "test.h"
 
-#include "stream_properties.h"
 #include <gtest/gtest.h>
 
 #include <algorithm>

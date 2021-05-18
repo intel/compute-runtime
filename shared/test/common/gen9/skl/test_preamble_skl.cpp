@@ -6,14 +6,13 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/preamble/preamble_fixture.h"
-
-#include "stream_properties.h"
 
 using namespace NEO;
 
