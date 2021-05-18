@@ -987,10 +987,16 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePath
     DebugManagerStateRestore stateRestore;
 
     DebugManager.flags.CreateMultipleSubDevices.set(1);
-    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile");
+    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", mockRootDeviceIndex);
     EXPECT_EQ(std::string::npos, fullName.find("tx"));
 
     DebugManager.flags.CreateMultipleSubDevices.set(2);
-    fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile");
+    fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", mockRootDeviceIndex);
     EXPECT_NE(std::string::npos, fullName.find("2tx"));
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedWithRootDeviceIndex) {
+    uint32_t rootDeviceIndex = 123u;
+    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", rootDeviceIndex);
+    EXPECT_NE(std::string::npos, fullName.find("_123_aubfile.aub"));
 }
