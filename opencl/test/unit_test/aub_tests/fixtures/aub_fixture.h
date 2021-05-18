@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
@@ -18,7 +19,6 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "aub_mem_dump.h"

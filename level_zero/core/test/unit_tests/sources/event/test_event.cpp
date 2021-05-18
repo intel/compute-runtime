@@ -5,10 +5,11 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
+
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
-#include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
 #include "test.h"
 
 #include "level_zero/core/source/context/context_imp.h"
