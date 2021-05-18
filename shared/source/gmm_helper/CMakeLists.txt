@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -28,6 +28,10 @@ set(NEO_CORE_GMM_HELPER_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_memory_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_memory_base.cpp
 )
+
+if(NOT ${DRIVER_MODEL} STREQUAL "drm")
+  list(APPEND NEO_CORE_GMM_HELPER ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_configure_device_address_space_${DRIVER_MODEL}.cpp)
+endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_GMM_HELPER ${NEO_CORE_GMM_HELPER})
 set_property(GLOBAL PROPERTY NEO_CORE_GMM_HELPER_WINDOWS ${NEO_CORE_GMM_HELPER_WINDOWS})

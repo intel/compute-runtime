@@ -128,6 +128,7 @@ if(WIN32)
                                  NEO_CORE_GMM_HELPER_WINDOWS
                                  NEO_CORE_DIRECT_SUBMISSION_WINDOWS
                                  NEO_CORE_OS_INTERFACE_WINDOWS
+                                 NEO_CORE_OS_INTERFACE_WDDM
                                  NEO_CORE_PAGE_FAULT_MANAGER_WINDOWS
                                  NEO_CORE_SKU_INFO_WINDOWS
                                  NEO_CORE_SRCS_HELPERS_WINDOWS
