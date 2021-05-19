@@ -517,8 +517,17 @@ uint64_t Device::getGlobalMemorySize(uint32_t deviceBitfield) const {
                                 ? getMemoryManager()->getLocalMemorySize(this->getRootDeviceIndex(), deviceBitfield)
                                 : getMemoryManager()->getSystemSharedMemory(this->getRootDeviceIndex());
     globalMemorySize = std::min(globalMemorySize, getMemoryManager()->getMaxApplicationAddress() + 1);
-    globalMemorySize = static_cast<uint64_t>(static_cast<double>(globalMemorySize) * 0.8);
+    double percentOfGlobalMemoryAvailable = getPercentOfGlobalMemoryAvailable();
+    globalMemorySize = static_cast<uint64_t>(static_cast<double>(globalMemorySize) * percentOfGlobalMemoryAvailable);
+
     return globalMemorySize;
+}
+
+double Device::getPercentOfGlobalMemoryAvailable() const {
+    if (DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get() != -1) {
+        return 0.01 * static_cast<double>(DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get());
+    }
+    return 0.8;
 }
 
 NEO::SourceLevelDebugger *Device::getSourceLevelDebugger() {

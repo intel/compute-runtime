@@ -137,6 +137,7 @@ class Device : public ReferenceTrackedObject<Device> {
     MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
     MOCKABLE_VIRTUAL SubDevice *createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_stream::EngineType engineType);
     virtual uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
+    double getPercentOfGlobalMemoryAvailable() const;
     virtual void createBindlessHeapsHelper() {}
     bool createSubDevices();
     bool createGenericSubDevices();
