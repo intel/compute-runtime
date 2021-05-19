@@ -8,6 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/linux/pci_path.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform.h"
@@ -27,7 +28,7 @@ ClDevice *VADevice::getRootDeviceFromVaDisplay(Platform *pPlatform, VADisplay va
 
     UNRECOVERABLE_IF(deviceFd < 0);
 
-    auto devicePath = OSInterface::OSInterfaceImpl::getPciPath(deviceFd);
+    auto devicePath = NEO::getPciPath(deviceFd);
 
     if (devicePath == std::nullopt) {
         return nullptr;

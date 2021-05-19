@@ -19,6 +19,7 @@
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/linux/pci_path.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_environment.h"
@@ -399,7 +400,7 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionE
             std::string path = std::string(pathPrefix) + std::to_string(i + startNum);
             int fileDescriptor = SysCalls::open(path.c_str(), O_RDWR);
 
-            auto pciPath = OSInterface::OSInterfaceImpl::getPciPath(fileDescriptor);
+            auto pciPath = NEO::getPciPath(fileDescriptor);
 
             appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.value_or("00:02.0").c_str());
             if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {

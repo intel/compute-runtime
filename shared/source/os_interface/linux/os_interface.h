@@ -27,8 +27,6 @@ class OSInterface::OSInterfaceImpl {
 
     bool isDebugAttachAvailable() const;
 
-    static std::optional<std::string> getPciPath(int deviceFd);
-
   protected:
     std::unique_ptr<Drm> drm;
 };
