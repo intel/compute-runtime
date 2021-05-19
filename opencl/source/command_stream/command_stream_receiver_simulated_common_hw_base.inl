@@ -58,7 +58,7 @@ bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForWriteMem
     if (size == 0)
         return false;
 
-    if (cpuAddress == nullptr && !gmm->resourceParams.Flags.Info.NotLockable) {
+    if (cpuAddress == nullptr && graphicsAllocation.isAllocationLockable()) {
         cpuAddress = this->getMemoryManager()->lockResource(&graphicsAllocation);
     }
     return true;

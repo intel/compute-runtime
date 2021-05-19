@@ -7,6 +7,7 @@
 
 #include "graphics_allocation.h"
 
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
@@ -69,6 +70,14 @@ uint32_t GraphicsAllocation::getUsedPageSize() const {
     default:
         return MemoryConstants::pageSize;
     }
+}
+
+bool GraphicsAllocation::isAllocationLockable() const {
+    auto gmm = getDefaultGmm();
+    if (!gmm) {
+        return true;
+    }
+    return 0 == gmm->resourceParams.Flags.Info.NotLockable;
 }
 
 constexpr uint32_t GraphicsAllocation::objectNotUsed;

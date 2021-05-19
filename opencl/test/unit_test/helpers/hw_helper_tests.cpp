@@ -27,6 +27,7 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include "pipe_control_args.h"
 
@@ -985,6 +986,10 @@ HWTEST_F(HwHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequiredFo
     graphicsAllocation.setAllocationType(GraphicsAllocation::AllocationType::SVM_GPU);
     EXPECT_FALSE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+
+    MockGmm mockGmm(pDevice->getGmmClientContext(), nullptr, 100, 100, false, false, false, {});
+    mockGmm.resourceParams.Flags.Info.NotLockable = true;
+    graphicsAllocation.setDefaultGmm(&mockGmm);
 
     EXPECT_TRUE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
 

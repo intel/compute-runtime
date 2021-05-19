@@ -276,6 +276,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint32_t getUsedPageSize() const;
 
     bool isAllocatedInLocalMemoryPool() const { return (this->memoryPool == MemoryPool::LocalMemory); }
+    bool isAllocationLockable() const;
 
     const AubInfo &getAubInfo() const { return aubInfo; }
 
