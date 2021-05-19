@@ -1100,7 +1100,9 @@ int main(int argc, char *argv[]) {
             break;
         case 'i': {
             std::string filePathFirmware;
-            filePathFirmware = optarg;
+            if (optarg != nullptr) {
+                filePathFirmware = optarg;
+            }
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
                 testSysmanFirmware(device, filePathFirmware);
             });
