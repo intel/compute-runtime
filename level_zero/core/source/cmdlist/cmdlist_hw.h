@@ -18,10 +18,16 @@ enum class ImageType;
 }
 
 namespace L0 {
+#pragma pack(1)
 struct EventData {
     uint64_t address;
     uint64_t packetsInUse;
+    uint64_t timestampSizeInDw;
 };
+#pragma pack()
+
+static_assert(sizeof(EventData) == (3 * sizeof(uint64_t)),
+              "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 struct AlignedAllocationData {
     uintptr_t alignedAllocationPtr = 0u;

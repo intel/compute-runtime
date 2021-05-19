@@ -18,11 +18,14 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl_timestamps.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device_for_spirv.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
 namespace ult {
@@ -978,6 +981,10 @@ class MockEvent : public ::L0::Event {
         return ZE_RESULT_SUCCESS;
     };
 
+    size_t getTimestampSizeInDw() const override {
+        return 1;
+    }
+
     uint32_t getPacketsInUse() override { return 1; }
     void resetPackets() override{};
     void setPacketsInUse(uint32_t value) override{};
@@ -1386,6 +1393,101 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    context->freeMem(alloc);
+}
+
+HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAllEventData, TestPlatforms) {
+    class MockQueryKernelTimestampsKernel : public L0::KernelImp {
+      public:
+        MockQueryKernelTimestampsKernel(L0::Module *module) : KernelImp(module) {
+            mockKernelImmutableData.kernelDescriptor = &mockKernelDescriptor;
+            this->kernelImmData = &mockKernelImmutableData;
+        }
+
+        ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) override {
+            if (argIndex == 0) {
+                index0Allocation = allocation;
+            }
+
+            return ZE_RESULT_SUCCESS;
+        }
+
+        void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
+            return;
+        }
+        void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
+            return;
+        }
+        std::unique_ptr<Kernel> clone() const override { return nullptr; }
+
+        NEO::GraphicsAllocation *index0Allocation = nullptr;
+        KernelDescriptor mockKernelDescriptor = {};
+        WhiteBox<::L0::KernelImmutableData> mockKernelImmutableData = {};
+    };
+
+    struct MockBuiltinFunctionsForQueryKernelTimestamps : BuiltinFunctionsLibImpl {
+        MockBuiltinFunctionsForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
+            tmpModule = std::make_unique<MockModule>(device, nullptr, ModuleType::Builtin);
+            tmpMockKernel = std::make_unique<MockQueryKernelTimestampsKernel>(static_cast<L0::ModuleImp *>(tmpModule.get()));
+        }
+        MockQueryKernelTimestampsKernel *getFunction(Builtin func) override {
+            return tmpMockKernel.get();
+        }
+
+        std::unique_ptr<MockModule> tmpModule;
+        std::unique_ptr<MockQueryKernelTimestampsKernel> tmpMockKernel;
+    };
+    class MockDeviceHandle : public L0::DeviceImp {
+      public:
+        MockDeviceHandle() {
+        }
+        void initialize(L0::Device *device) {
+            neoDevice = device->getNEODevice();
+            neoDevice->incRefInternal();
+            execEnvironment = device->getExecEnvironment();
+            driverHandle = device->getDriverHandle();
+            tmpMockBultinLib = std::make_unique<MockBuiltinFunctionsForQueryKernelTimestamps>(this, nullptr);
+        }
+        MockBuiltinFunctionsForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
+            return tmpMockBultinLib.get();
+        }
+        std::unique_ptr<MockBuiltinFunctionsForQueryKernelTimestamps> tmpMockBultinLib;
+    };
+
+    MockDeviceHandle mockDevice;
+    mockDevice.initialize(device);
+
+    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+
+    commandList.initialize(&mockDevice, NEO::EngineGroupType::RenderCompute);
+
+    MockEvent event;
+    ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *alloc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(mockDevice.toHandle(), &mockDevice));
+    auto result = context->allocDeviceMem(&mockDevice, &deviceDesc, 128, 1, &alloc);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto index0Allocation = mockDevice.tmpMockBultinLib->tmpMockKernel->index0Allocation;
+    EXPECT_NE(nullptr, index0Allocation);
+
+    EventData *eventData = reinterpret_cast<EventData *>(index0Allocation->getUnderlyingBuffer());
+
+    EXPECT_EQ(eventData[0].address, event.getGpuAddress(&mockDevice));
+    EXPECT_EQ(eventData[0].packetsInUse, event.getPacketsInUse());
+    EXPECT_EQ(eventData[0].timestampSizeInDw, event.getTimestampSizeInDw());
+
+    EXPECT_EQ(eventData[1].address, event.getGpuAddress(&mockDevice));
+    EXPECT_EQ(eventData[1].packetsInUse, event.getPacketsInUse());
+    EXPECT_EQ(eventData[1].timestampSizeInDw, event.getTimestampSizeInDw());
 
     context->freeMem(alloc);
 }

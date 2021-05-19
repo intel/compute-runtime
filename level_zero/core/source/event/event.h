@@ -58,6 +58,7 @@ struct Event : _ze_event_handle_t {
     void *getHostAddress() { return hostAddress; }
     virtual void setPacketsInUse(uint32_t value) = 0;
     uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
+    virtual size_t getTimestampSizeInDw() const = 0;
     void *hostAddress = nullptr;
     uint32_t kernelCount = 1u;
     ze_event_scope_flags_t signalScope = 0u;
@@ -104,6 +105,7 @@ struct EventImp : public Event {
     uint64_t getPacketAddress(Device *device) override;
     uint32_t getPacketsInUse() override;
     void setPacketsInUse(uint32_t value) override;
+    size_t getTimestampSizeInDw() const override { return (sizeof(TagSizeT) / 4); };
 
     std::unique_ptr<NEO::TimestampPackets<TagSizeT>[]> kernelTimestampsData;
 

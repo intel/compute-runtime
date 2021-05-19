@@ -1728,6 +1728,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
         timestampsData[i].address = event->getGpuAddress(this->device);
         timestampsData[i].packetsInUse = event->getPacketsInUse();
+        timestampsData[i].timestampSizeInDw = event->getTimestampSizeInDw();
     }
 
     size_t alignedSize = alignUp<size_t>(sizeof(EventData) * numEvents, MemoryConstants::pageSize64k);

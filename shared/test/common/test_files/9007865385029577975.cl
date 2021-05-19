@@ -219,43 +219,7 @@ __kernel void CopyBufferRectBytes3d(
  
 }
 
-__kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* dst, uint useOnlyGlobalTimestamps) {
-    uint gid = get_global_id(0);
-    uint currentOffset = gid * 4;
-    dst[currentOffset] = 0;
-    dst[currentOffset + 1] = 0;
-    dst[currentOffset + 2] = 0;
-    dst[currentOffset + 3] = 0;
-
-    uint eventOffsetData = 2*gid;
-    ulong srcPtr = srcEvents[eventOffsetData];
-    __global uint *src = (__global uint *) srcPtr;
-    ulong packetUsed = srcEvents[eventOffsetData + 1];
-
-    uint contextStart = src[0];
-    uint globalStart = src[1];
-    uint contextEnd = src[2];
-    uint globalEnd = src[3];
-
-    if(packetUsed > 1) {
-      uint timestampsOffsets = 4;
-        for(uint i = 1; i < packetUsed; i++) {
-            timestampsOffsets *= i;
-            if(contextStart > src[timestampsOffsets]) {
-              contextStart = src[timestampsOffsets];
-            }
-            if(globalStart > src[timestampsOffsets + 1]) {
-              globalStart = src[timestampsOffsets + 1];
-            }
-            if(contextEnd < src[timestampsOffsets + 2]) {
-              contextEnd = src[timestampsOffsets + 2];
-            }
-            if(globalEnd < src[timestampsOffsets + 3]) {
-              globalEnd = src[timestampsOffsets + 3];
-        }
-      }
-    }
-
+void SetDstData(__global ulong* dst, uint currentOffset, ulong contextStart, ulong globalStart, ulong contextEnd, ulong globalEnd, uint useOnlyGlobalTimestamps) {
     dst[currentOffset] = globalStart;
     dst[currentOffset + 1] = globalEnd;
     if (useOnlyGlobalTimestamps != 0) {
@@ -265,7 +229,59 @@ __kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* d
         dst[currentOffset + 2] = contextStart;
         dst[currentOffset + 3] = contextEnd;
     }
+}
 
+ulong GetTimestampValue(ulong srcPtr, ulong timestampSizeInDw, uint index) {
+    if(timestampSizeInDw == 1) {
+        __global uint *src = (__global uint *) srcPtr;
+        return src[index];
+    } else if(timestampSizeInDw == 2) {
+        __global ulong *src = (__global ulong *) srcPtr;
+        return src[index];
+    }
+
+    return 0;
+}
+
+__kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* dst, uint useOnlyGlobalTimestamps) {
+    uint gid = get_global_id(0);
+    uint currentOffset = gid * 4;
+    dst[currentOffset] = 0;
+    dst[currentOffset + 1] = 0;
+    dst[currentOffset + 2] = 0;
+    dst[currentOffset + 3] = 0;
+
+    uint eventOffsetData = 3 * gid;
+
+    ulong srcPtr = srcEvents[eventOffsetData];
+    ulong packetUsed = srcEvents[eventOffsetData + 1];
+    ulong timestampSizeInDw = srcEvents[eventOffsetData + 2];
+
+    ulong contextStart = GetTimestampValue(srcPtr, timestampSizeInDw, 0);
+    ulong globalStart = GetTimestampValue(srcPtr, timestampSizeInDw, 1);
+    ulong contextEnd = GetTimestampValue(srcPtr, timestampSizeInDw, 2);
+    ulong globalEnd = GetTimestampValue(srcPtr, timestampSizeInDw, 3);
+
+    if(packetUsed > 1) {
+        uint timestampsOffsets = 4;
+        for(uint i = 1; i < packetUsed; i++) {
+            timestampsOffsets *= i;
+            if(contextStart > GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets)) {
+              contextStart = GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets);
+            }
+            if(globalStart > GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 1)) {
+              globalStart = GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 1);
+            }
+            if(contextEnd < GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 2)) {
+              contextEnd = GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 2);
+            }
+            if(globalEnd < GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 3)) {
+              globalEnd = GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 3);
+        }
+      }
+    }
+
+    SetDstData(dst, currentOffset, contextStart, globalStart, contextEnd, globalEnd, useOnlyGlobalTimestamps);
 }
 
 __kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __global ulong* dst, __global ulong *offsets, uint useOnlyGlobalTimestamps) {
@@ -276,43 +292,35 @@ __kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __glob
     dst[currentOffset + 2] = 0;
     dst[currentOffset + 3] = 0;
 
-    uint eventOffsetData = 2*gid;
-    ulong srcPtr = srcEvents[eventOffsetData];
-    __global uint *src = (__global uint *) srcPtr;
-    ulong packetUsed = srcEvents[eventOffsetData + 1];
+    uint eventOffsetData = 3 * gid;
 
-    uint contextStart = src[0];
-    uint globalStart = src[1];
-    uint contextEnd = src[2];
-    uint globalEnd = src[3];
+    ulong srcPtr = srcEvents[eventOffsetData];
+    ulong packetUsed = srcEvents[eventOffsetData + 1];
+    ulong timestampSizeInDw = srcEvents[eventOffsetData + 2];
+
+    ulong contextStart = GetTimestampValue(srcPtr, timestampSizeInDw, 0);
+    ulong globalStart = GetTimestampValue(srcPtr, timestampSizeInDw, 1);
+    ulong contextEnd = GetTimestampValue(srcPtr, timestampSizeInDw, 2);
+    ulong globalEnd = GetTimestampValue(srcPtr, timestampSizeInDw, 3);
 
     if(packetUsed > 1) {
-      uint timestampsOffsets = 4;
+        uint timestampsOffsets = 4;
         for(uint i = 1; i < packetUsed; i++) {
             timestampsOffsets *= i;
-            if(contextStart > src[timestampsOffsets]) {
-              contextStart = src[timestampsOffsets];
+            if(contextStart > GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets)) {
+              contextStart = GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets);
             }
-            if(globalStart > src[timestampsOffsets + 1]) {
-              globalStart = src[timestampsOffsets + 1];
+            if(globalStart > GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 1)) {
+              globalStart = GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 1);
             }
-            if(contextEnd < src[timestampsOffsets + 2]) {
-              contextEnd = src[timestampsOffsets + 2];
+            if(contextEnd < GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 2)) {
+              contextEnd = GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 2);
             }
-            if(globalEnd < src[timestampsOffsets + 3]) {
-              globalEnd = src[timestampsOffsets + 3];
+            if(globalEnd < GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 3)) {
+              globalEnd = GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets + 3);
         }
       }
     }
 
-    dst[currentOffset] = globalStart;
-    dst[currentOffset + 1] = globalEnd;
-    if (useOnlyGlobalTimestamps != 0) {
-        dst[currentOffset + 2] = globalStart;
-        dst[currentOffset + 3] = globalEnd;
-    } else {
-        dst[currentOffset + 2] = contextStart;
-        dst[currentOffset + 3] = contextEnd;
-    }
-
+    SetDstData(dst, currentOffset, contextStart, globalStart, contextEnd, globalEnd, useOnlyGlobalTimestamps);
 }
