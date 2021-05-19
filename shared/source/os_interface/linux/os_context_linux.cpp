@@ -59,14 +59,7 @@ void OsContextLinux::initializeContext() {
                 drm.setContextDebugFlag(drmContextId);
             }
 
-            auto lowPriorityDirectSubmissionBcs = this->isDirectSubmissionActive() && EngineHelpers::isBcs(engineType);
-
-            if (DebugManager.flags.DirectSubmissionLowPriorityBlitter.get() != -1) {
-                lowPriorityDirectSubmissionBcs = DebugManager.flags.DirectSubmissionLowPriorityBlitter.get();
-            }
-
-            if ((drm.isPreemptionSupported() && isLowPriority()) ||
-                lowPriorityDirectSubmissionBcs) {
+            if (drm.isPreemptionSupported() && isLowPriority()) {
                 drm.setLowPriorityContextParam(drmContextId);
             }
 
