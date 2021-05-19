@@ -25,7 +25,6 @@ std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device)
 
     counter->clientData.Windows.Adapter = reinterpret_cast<void *>(static_cast<UINT_PTR>(osInterface->getAdapterHandle()));
     counter->clientData.Windows.Device = reinterpret_cast<void *>(static_cast<UINT_PTR>(osInterface->getDeviceHandle()));
-    counter->clientData.Windows.Device = reinterpret_cast<void *>(static_cast<UINT_PTR>(osInterface->getDeviceHandle()));
     counter->clientData.Windows.Escape = osInterface->getEscapeHandle();
     counter->clientData.Windows.KmdInstrumentationEnabled = device->getHardwareInfo().capabilityTable.instrumentationEnabled;
     counter->contextData.ClientData = &counter->clientData;

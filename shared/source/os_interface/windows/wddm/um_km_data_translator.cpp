@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 
+#include "shared/source/helpers/string.h"
+
 namespace NEO {
 
 size_t UmKmDataTranslator::getSizeForAdapterInfoInternalRepresentation() {

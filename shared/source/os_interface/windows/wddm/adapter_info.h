@@ -31,6 +31,8 @@ bool isAllowedDeviceId(uint32_t deviceId);
 
 class AdapterFactory {
   public:
+    using CreateAdapterFactoryFcn = HRESULT(WINAPI *)(REFIID riid, void **ppFactory);
+
     struct AdapterDesc {
         enum class Type {
             Unknown,
@@ -54,8 +56,7 @@ class AdapterFactory {
 
 class DxCoreAdapterFactory : public AdapterFactory {
   public:
-    using DXCoreCreateAdapterFactoryFcn = HRESULT(WINAPI *)(REFIID riid, void **ppFactory);
-    DxCoreAdapterFactory(DXCoreCreateAdapterFactoryFcn createAdapterFactoryFcn);
+    DxCoreAdapterFactory(AdapterFactory::CreateAdapterFactoryFcn createAdapterFactoryFcn);
 
     ~DxCoreAdapterFactory() override;
 
@@ -72,15 +73,14 @@ class DxCoreAdapterFactory : public AdapterFactory {
   protected:
     void destroyCurrentSnapshot();
 
-    DXCoreCreateAdapterFactoryFcn createAdapterFactoryFcn = nullptr;
+    AdapterFactory::CreateAdapterFactoryFcn createAdapterFactoryFcn = nullptr;
     IDXCoreAdapterFactory *adapterFactory = nullptr;
     IDXCoreAdapterList *adaptersInSnapshot = nullptr;
 };
 
 class DxgiAdapterFactory : public AdapterFactory {
   public:
-    using CreateDXGIFactoryFcn = HRESULT(WINAPI *)(REFIID riid, void **ppFactory);
-    DxgiAdapterFactory(CreateDXGIFactoryFcn createAdapterFactoryFcn);
+    DxgiAdapterFactory(AdapterFactory::CreateAdapterFactoryFcn createAdapterFactoryFcn);
 
     ~DxgiAdapterFactory() override {
         destroyCurrentSnapshot();
@@ -106,15 +106,15 @@ class DxgiAdapterFactory : public AdapterFactory {
         adaptersInSnapshot.clear();
     }
 
-    CreateDXGIFactoryFcn createAdapterFactoryFcn = nullptr;
+    AdapterFactory::CreateAdapterFactoryFcn createAdapterFactoryFcn = nullptr;
     IDXGIFactory1 *adapterFactory = nullptr;
     std::vector<AdapterDesc> adaptersInSnapshot;
 };
 
 class WddmAdapterFactory : public AdapterFactory {
   public:
-    WddmAdapterFactory(DxCoreAdapterFactory::DXCoreCreateAdapterFactoryFcn dxCoreCreateAdapterFactoryF,
-                       DxgiAdapterFactory::CreateDXGIFactoryFcn dxgiCreateAdapterFactoryF) {
+    WddmAdapterFactory(AdapterFactory::CreateAdapterFactoryFcn dxCoreCreateAdapterFactoryF,
+                       AdapterFactory::CreateAdapterFactoryFcn dxgiCreateAdapterFactoryF) {
         underlyingFactory = std::make_unique<DxCoreAdapterFactory>(dxCoreCreateAdapterFactoryF);
         if (false == underlyingFactory->isSupported()) {
             underlyingFactory = std::make_unique<DxgiAdapterFactory>(dxgiCreateAdapterFactoryF);

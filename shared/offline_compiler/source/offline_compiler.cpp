@@ -20,7 +20,6 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_library.h"
 
-#include "opencl/source/helpers/validators.h"
 #include "opencl/source/os_interface/os_inc_base.h"
 #include "opencl/source/platform/extensions.h"
 
@@ -50,6 +49,16 @@
 #endif
 
 namespace NEO {
+
+template <typename T = void>
+bool areNotNullptr() {
+    return true;
+}
+
+template <typename T, typename... RT>
+bool areNotNullptr(T t, RT... rt) {
+    return (t != nullptr) && areNotNullptr<RT...>(rt...);
+}
 
 CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 

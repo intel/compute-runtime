@@ -33,6 +33,7 @@ class OSInterface {
     static bool are64kbPagesEnabled();
     static bool newResourceImplicitFlush;
     static bool gpuIdleImplicitFlush;
+    static bool requiresSupportForWddmTrimNotification;
     uint32_t getDeviceHandle() const;
     void setGmmInputArgs(void *args);
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);

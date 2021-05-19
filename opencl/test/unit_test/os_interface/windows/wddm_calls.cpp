@@ -20,6 +20,7 @@ BOOL WINAPI ULTVirtualFree(LPVOID ptr, SIZE_T size, DWORD flags) {
 LPVOID WINAPI ULTVirtualAlloc(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type) {
     return reinterpret_cast<LPVOID>(virtualAllocAddress);
 }
+
 Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory() {
     return ULTCreateDXGIFactory;
 }

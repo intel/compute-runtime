@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class WddmResidentAllocationsContainer;
 class WddmMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
     WddmMemoryOperationsHandler(Wddm *wddm);
-    ~WddmMemoryOperationsHandler() override = default;
+    ~WddmMemoryOperationsHandler() override;
 
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;

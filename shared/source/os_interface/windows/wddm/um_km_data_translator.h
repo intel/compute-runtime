@@ -71,9 +71,9 @@ struct UmKmDataTempStorageBase {
     size_t requestedSize = 0U;
 };
 
-template <typename SrcT, size_t OverestimateMul = 2>
-struct UmKmDataTempStorage : UmKmDataTempStorageBase<sizeof(SrcT) * OverestimateMul> {
-    using UmKmDataTempStorageBase::UmKmDataTempStorageBase;
+template <typename SrcT, size_t OverestimateMul = 2, typename BaseT = UmKmDataTempStorageBase<sizeof(SrcT) * OverestimateMul>>
+struct UmKmDataTempStorage : BaseT {
+    using BaseT::BaseT;
 };
 
 std::unique_ptr<UmKmDataTranslator> createUmKmDataTranslator(const Gdi &gdi, D3DKMT_HANDLE adapter);

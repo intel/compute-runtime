@@ -49,6 +49,8 @@ DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, OSInterface *osInterf
 DriverInfoWindows::DriverInfoWindows(std::string &&fullPath) : path(DriverInfoWindows::trimRegistryKey(fullPath)),
                                                                registryReader(createRegistryReaderFunc(path)) {}
 
+DriverInfoWindows::~DriverInfoWindows() = default;
+
 std::string DriverInfoWindows::trimRegistryKey(std::string path) {
     std::string prefix("\\REGISTRY\\MACHINE\\");
     auto pos = prefix.find(prefix);
@@ -75,6 +77,11 @@ bool DriverInfoWindows::isCompatibleDriverStore() const {
 
     auto driverStorePath = registryReader.get()->getSetting("DriverStorePathForComputeRuntime", currentLibraryPath);
     return currentLibraryPath.find(driverStorePath.c_str()) == 0u;
+}
+
+bool isCompatibleDriverStore(std::string &&deviceRegistryPath) {
+    DriverInfoWindows driverInfo(std::move(deviceRegistryPath));
+    return driverInfo.isCompatibleDriverStore();
 }
 
 decltype(DriverInfoWindows::createRegistryReaderFunc) DriverInfoWindows::createRegistryReaderFunc = [](const std::string &registryPath) -> std::unique_ptr<SettingsReader> {

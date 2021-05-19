@@ -20,6 +20,7 @@ class SettingsReader;
 class DriverInfoWindows : public DriverInfo {
   public:
     DriverInfoWindows(std::string &&path);
+    ~DriverInfoWindows();
     std::string getDeviceName(std::string defaultName) override;
     std::string getVersion(std::string defaultVersion) override;
     bool isCompatibleDriverStore() const;

@@ -6,14 +6,16 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/os_inc.h"
-#include "shared/source/os_interface/windows/os_library_win.h"
 #include "shared/source/os_interface/windows/thk_wrapper.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include <d3d9types.h>
 
 #include <d3dkmthk.h>
 
+#include <memory>
 #include <string>
 
 namespace NEO {
@@ -23,7 +25,6 @@ class Gdi {
     Gdi();
     ~Gdi(){};
 
-    ThkWrapper<IN OUT D3DKMT_OPENADAPTERFROMHDC *> openAdapterFromHdc{};
     ThkWrapper<IN OUT D3DKMT_OPENADAPTERFROMLUID *> openAdapterFromLuid{};
     ThkWrapper<IN OUT D3DKMT_CREATEALLOCATION *> createAllocation_{};
     ThkWrapper<IN OUT D3DKMT_CREATEALLOCATION *> createAllocation2{};
@@ -40,9 +41,6 @@ class Gdi {
     ThkWrapper<IN OUT D3DKMT_OPENRESOURCEFROMNTHANDLE *> openResourceFromNtHandle{};
     ThkWrapper<IN OUT D3DKMT_QUERYRESOURCEINFO *> queryResourceInfo{};
     ThkWrapper<IN OUT D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *> queryResourceInfoFromNtHandle{};
-    ThkWrapper<IN OUT D3DKMT_LOCK *> lock{};
-    ThkWrapper<IN CONST D3DKMT_UNLOCK *> unlock{};
-    ThkWrapper<IN OUT D3DKMT_RENDER *> render{};
     ThkWrapper<IN OUT D3DKMT_CREATESYNCHRONIZATIONOBJECT *> createSynchronizationObject{};
     ThkWrapper<IN OUT D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *> createSynchronizationObject2{};
     ThkWrapper<IN CONST D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *> destroySynchronizationObject{};
@@ -84,6 +82,6 @@ class Gdi {
   protected:
     MOCKABLE_VIRTUAL bool getAllProcAddresses();
     bool initialized = false;
-    NEO::Windows::OsLibrary gdiDll;
+    std::unique_ptr<NEO::OsLibrary> gdiDll;
 };
 } // namespace NEO

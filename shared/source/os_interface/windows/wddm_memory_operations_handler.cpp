@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 
+#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
@@ -17,6 +18,8 @@ namespace NEO {
 WddmMemoryOperationsHandler::WddmMemoryOperationsHandler(Wddm *wddm) : wddm(wddm) {
     residentAllocations = std::make_unique<WddmResidentAllocationsContainer>(wddm);
 }
+
+WddmMemoryOperationsHandler::~WddmMemoryOperationsHandler() = default;
 
 MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     uint32_t totalHandlesCount = 0;

@@ -45,7 +45,7 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnviron
     notifyAubCaptureImpl = DeviceCallbacks<GfxFamily>::notifyAubCapture;
     this->wddm = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getWddm();
 
-    PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(peekHwInfo());
+    PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(this->peekHwInfo());
 
     commandBufferHeader = new COMMAND_BUFFER_HEADER;
     *commandBufferHeader = CommandBufferHeader;
@@ -76,11 +76,11 @@ bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Resid
     batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->osContext->getContextId());
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Wddm CSR processing residency set: %zu\n", allocationsForResidency.size());
     this->processResidency(allocationsForResidency, 0u);
-    if (directSubmission.get()) {
-        return directSubmission->dispatchCommandBuffer(batchBuffer, *(flushStamp.get()));
+    if (this->directSubmission.get()) {
+        return this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
     }
-    if (blitterDirectSubmission.get()) {
-        return blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(flushStamp.get()));
+    if (this->blitterDirectSubmission.get()) {
+        return this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
     }
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader);
@@ -104,26 +104,26 @@ bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Resid
         this->kmDafLockAllocations(allocationsForResidency);
     }
 
-    auto osContextWin = static_cast<OsContextWin *>(osContext);
+    auto osContextWin = static_cast<OsContextWin *>(this->osContext);
     WddmSubmitArguments submitArgs = {};
     submitArgs.contextHandle = osContextWin->getWddmContextHandle();
     submitArgs.hwQueueHandle = osContextWin->getHwQueue().handle;
     submitArgs.monitorFence = &osContextWin->getResidencyController().getMonitoredFence();
     auto status = wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader, submitArgs);
 
-    flushStamp->setStamp(submitArgs.monitorFence->lastSubmittedFence);
+    this->flushStamp->setStamp(submitArgs.monitorFence->lastSubmittedFence);
     return status;
 }
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-    bool success = static_cast<OsContextWin *>(osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency);
+    bool success = static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency);
     DEBUG_BREAK_IF(!success);
 }
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::processEviction() {
-    static_cast<OsContextWin *>(osContext)->getResidencyController().makeNonResidentEvictionAllocations(this->getEvictionAllocations());
+    static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeNonResidentEvictionAllocations(this->getEvictionAllocations());
     this->getEvictionAllocations().clear();
 }
 
@@ -134,7 +134,7 @@ WddmMemoryManager *WddmCommandStreamReceiver<GfxFamily>::getMemoryManager() cons
 
 template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait) {
-    return wddm->waitFromCpu(flushStampToWait, static_cast<OsContextWin *>(osContext)->getResidencyController().getMonitoredFence());
+    return wddm->waitFromCpu(flushStampToWait, static_cast<OsContextWin *>(this->osContext)->getResidencyController().getMonitoredFence());
 }
 
 template <typename GfxFamily>
@@ -142,7 +142,7 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
     GMM_TRANSLATIONTABLE_CALLBACKS ttCallbacks = {};
     ttCallbacks.pfWriteL3Adr = TTCallbacks<GfxFamily>::writeL3Address;
 
-    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
+    auto rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
 
     GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(rootDeviceEnvironment->getGmmClientContext(), TT_TYPE::AUXTT, &ttCallbacks);
     gmmPageTableMngr->setCsrHandle(this);

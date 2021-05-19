@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/windows/windows_wrapper.h"
+
 #include <cstdint>
 
 namespace NEO {

@@ -107,7 +107,6 @@ class MockGdi : public Gdi {
         waitForSynchronizationObjectFromCpu = reinterpret_cast<PFND3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU>(waitFromCpuMock);
         queryResourceInfo = reinterpret_cast<PFND3DKMT_QUERYRESOURCEINFO>(queryResourceInfoMock);
         openResource = reinterpret_cast<PFND3DKMT_OPENRESOURCE>(openResourceMock);
-        openAdapterFromHdc = reinterpret_cast<PFND3DKMT_OPENADAPTERFROMHDC>(MockGdi::openAdapterFromHdcMock);
         return true;
     }
 
@@ -164,17 +163,6 @@ class MockGdi : public Gdi {
     static D3DKMT_OPENRESOURCE &getOpenResourceArgOut() {
         static D3DKMT_OPENRESOURCE openResource;
         return openResource;
-    }
-    static NTSTATUS __stdcall openAdapterFromHdcMock(D3DKMT_OPENADAPTERFROMHDC *openAdapterFromHdcStruct) {
-        if (!openAdapterFromHdcStruct) {
-            return STATUS_INVALID_PARAMETER;
-        }
-        if (openAdapterFromHdcStruct->hDc == 0) {
-            return STATUS_INVALID_PARAMETER;
-        }
-        openAdapterFromHdcStruct->AdapterLuid = MockGdi::adapterLuidToReturn;
-        openAdapterFromHdcStruct->hAdapter = MockGdi::adapterHandleForHdc;
-        return STATUS_SUCCESS;
     }
 };
 

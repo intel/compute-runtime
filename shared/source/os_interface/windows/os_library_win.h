@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/os_library.h"
 
 #define UMDF_USING_NTSTATUS
-#include "shared/source/os_interface/windows/windows_wrapper.h"
+#include <Windows.h>
 
 namespace NEO {
 namespace Windows {

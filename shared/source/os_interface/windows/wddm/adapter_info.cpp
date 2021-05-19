@@ -65,12 +65,12 @@ bool isAllowedDeviceId(uint32_t deviceId) {
     return (static_cast<uint32_t>(reqDeviceId) == deviceId);
 }
 
-DxCoreAdapterFactory::DxCoreAdapterFactory(DXCoreCreateAdapterFactoryFcn createAdapterFactoryFcn) : createAdapterFactoryFcn(createAdapterFactoryFcn) {
+DxCoreAdapterFactory::DxCoreAdapterFactory(AdapterFactory::CreateAdapterFactoryFcn createAdapterFactoryFcn) : createAdapterFactoryFcn(createAdapterFactoryFcn) {
     if (nullptr == createAdapterFactoryFcn) {
         return;
     }
 
-    HRESULT hr = createAdapterFactoryFcn(__uuidof(IDXCoreAdapterFactory), (void **)(&adapterFactory));
+    HRESULT hr = createAdapterFactoryFcn(__uuidof(adapterFactory), (void **)(&adapterFactory));
     if (hr != S_OK) {
         adapterFactory = nullptr;
     }
@@ -93,7 +93,7 @@ bool DxCoreAdapterFactory::createSnapshotOfAvailableAdapters() {
     destroyCurrentSnapshot();
 
     GUID attributes[]{DXCORE_ADAPTER_ATTRIBUTE_D3D12_CORE_COMPUTE};
-    HRESULT hr = adapterFactory->CreateAdapterList(1, attributes, __uuidof(IDXCoreAdapterList), (void **)(&adaptersInSnapshot));
+    HRESULT hr = adapterFactory->CreateAdapterList(1, attributes, __uuidof(adaptersInSnapshot), (void **)(&adaptersInSnapshot));
     if ((hr != S_OK) || (adaptersInSnapshot == nullptr)) {
         DEBUG_BREAK_IF(true);
         destroyCurrentSnapshot();
@@ -117,7 +117,7 @@ bool DxCoreAdapterFactory::getAdapterDesc(uint32_t ordinal, AdapterDesc &outAdap
     }
 
     IDXCoreAdapter *adapter = nullptr;
-    HRESULT hr = adaptersInSnapshot->GetAdapter(ordinal, __uuidof(IDXCoreAdapter), (void **)&adapter);
+    HRESULT hr = adaptersInSnapshot->GetAdapter(ordinal, __uuidof(adapter), (void **)&adapter);
     if ((hr != S_OK) || (adapter == nullptr)) {
         return false;
     }
@@ -144,7 +144,7 @@ bool DxCoreAdapterFactory::getAdapterDesc(uint32_t ordinal, AdapterDesc &outAdap
     outAdapter.driverDescription = driverDescription.data();
 
     DXCoreHardwareID hwId = {};
-    adapter->GetProperty(DXCoreAdapterProperty::HardwareID, sizeof(hwId), &hwId);
+    hr = adapter->GetProperty(DXCoreAdapterProperty::HardwareID, sizeof(hwId), &hwId);
     DEBUG_BREAK_IF(S_OK != hr);
     outAdapter.deviceId = hwId.deviceID;
 
@@ -167,12 +167,12 @@ void DxCoreAdapterFactory::destroyCurrentSnapshot() {
     }
 }
 
-DxgiAdapterFactory::DxgiAdapterFactory(CreateDXGIFactoryFcn createAdapterFactoryFcn) : createAdapterFactoryFcn(createAdapterFactoryFcn) {
+DxgiAdapterFactory::DxgiAdapterFactory(AdapterFactory::CreateAdapterFactoryFcn createAdapterFactoryFcn) : createAdapterFactoryFcn(createAdapterFactoryFcn) {
     if (nullptr == createAdapterFactoryFcn) {
         return;
     }
 
-    HRESULT hr = createAdapterFactoryFcn(__uuidof(IDXGIFactory), (void **)(&adapterFactory));
+    HRESULT hr = createAdapterFactoryFcn(__uuidof(adapterFactory), (void **)(&adapterFactory));
     if (hr != S_OK) {
         adapterFactory = nullptr;
     }
