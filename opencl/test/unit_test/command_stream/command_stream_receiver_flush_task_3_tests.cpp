@@ -2332,9 +2332,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhen
     auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
     ASSERT_NE(nullptr, mockCsr.getWorkPartitionAllocation());
 
-    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-    mockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
+    mockCsr.storeMakeResidentAllocations = true;
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     mockCsr.flushTask(commandStream,
@@ -2346,10 +2345,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhen
                       dispatchFlags,
                       *device);
 
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     bool found = false;
-    for (auto allocation : cmdBuffer->surfaces) {
-        if (allocation == mockCsr.getWorkPartitionAllocation()) {
+    for (auto allocation : mockCsr.makeResidentAllocations) {
+        if (allocation.first == mockCsr.getWorkPartitionAllocation()) {
             found = true;
             break;
         }

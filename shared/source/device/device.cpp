@@ -216,6 +216,7 @@ bool Device::createDeviceImpl() {
         if (!commandStreamReceiver->initDirectSubmission(*this, *osContext)) {
             return false;
         }
+        commandStreamReceiver->postInitFlagsSetup();
     }
 
     uint32_t defaultEngineIndexWithinMemoryManager = 0;

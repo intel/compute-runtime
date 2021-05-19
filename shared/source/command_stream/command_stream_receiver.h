@@ -253,6 +253,8 @@ class CommandStreamReceiver {
 
     virtual GraphicsAllocation *getClearColorAllocation() = 0;
 
+    virtual void postInitFlagsSetup() = 0;
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

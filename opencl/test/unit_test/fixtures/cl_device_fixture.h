@@ -25,6 +25,7 @@ struct ClDeviceFixture {
     volatile uint32_t *pTagMemory = nullptr;
     HardwareInfo hardwareInfo = {};
     PLATFORM platformHelper = {};
+    OsContext *osContext = nullptr;
     const uint32_t rootDeviceIndex = 0u;
 };
 } // namespace NEO

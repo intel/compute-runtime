@@ -500,6 +500,9 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenGshAddres
 
 HWTEST_F(CommandStreamReceiverHwTest, givenDefaultPlatformCapabilityWhenNoDebugKeysSetThenExpectDefaultPlatformSettings) {
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver->setupContext(*osContext);
+    commandStreamReceiver->postInitFlagsSetup();
+
     if (commandStreamReceiver->checkPlatformSupportsNewResourceImplicitFlush()) {
         EXPECT_TRUE(commandStreamReceiver->useNewResourceImplicitFlush);
     } else {
@@ -509,6 +512,9 @@ HWTEST_F(CommandStreamReceiverHwTest, givenDefaultPlatformCapabilityWhenNoDebugK
 
 HWTEST_F(CommandStreamReceiverHwTest, givenDefaultGpuIdleImplicitFlushWhenNoDebugKeysSetThenExpectDefaultPlatformSettings) {
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver->setupContext(*osContext);
+    commandStreamReceiver->postInitFlagsSetup();
+
     if (commandStreamReceiver->checkPlatformSupportsGpuIdleImplicitFlush()) {
         EXPECT_TRUE(commandStreamReceiver->useGpuIdleImplicitFlush);
     } else {
@@ -521,6 +527,8 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenForceDisableNewResourceImplicitFlushTh
     DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
 
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver->setupContext(*osContext);
+    commandStreamReceiver->postInitFlagsSetup();
     EXPECT_FALSE(commandStreamReceiver->useNewResourceImplicitFlush);
 }
 
@@ -529,6 +537,8 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenForceEnableNewResourceImplicitFlushThe
     DebugManager.flags.PerformImplicitFlushForNewResource.set(1);
 
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver->setupContext(*osContext);
+    commandStreamReceiver->postInitFlagsSetup();
     EXPECT_TRUE(commandStreamReceiver->useNewResourceImplicitFlush);
 }
 
@@ -537,6 +547,8 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenForceDisableGpuIdleImplicitFlushThenEx
     DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
 
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver->setupContext(*osContext);
+    commandStreamReceiver->postInitFlagsSetup();
     EXPECT_FALSE(commandStreamReceiver->useGpuIdleImplicitFlush);
 }
 
@@ -545,6 +557,8 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenForceEnableGpuIdleImplicitFlushThenExp
     DebugManager.flags.PerformImplicitFlushForIdleGpu.set(1);
 
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver->setupContext(*osContext);
+    commandStreamReceiver->postInitFlagsSetup();
     EXPECT_TRUE(commandStreamReceiver->useGpuIdleImplicitFlush);
 }
 

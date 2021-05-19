@@ -59,17 +59,6 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
         timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
     }
     createScratchSpaceController();
-
-    useNewResourceImplicitFlush = checkPlatformSupportsNewResourceImplicitFlush();
-    int32_t overrideNewResourceImplicitFlush = DebugManager.flags.PerformImplicitFlushForNewResource.get();
-    if (overrideNewResourceImplicitFlush != -1) {
-        useNewResourceImplicitFlush = overrideNewResourceImplicitFlush == 0 ? false : true;
-    }
-    useGpuIdleImplicitFlush = checkPlatformSupportsGpuIdleImplicitFlush();
-    int32_t overrideGpuIdleImplicitFlush = DebugManager.flags.PerformImplicitFlushForIdleGpu.get();
-    if (overrideGpuIdleImplicitFlush != -1) {
-        useGpuIdleImplicitFlush = overrideGpuIdleImplicitFlush == 0 ? false : true;
-    }
 }
 
 template <typename GfxFamily>
@@ -1384,6 +1373,20 @@ TagAllocatorBase *CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocato
         timestampPacketAllocator = hwHelper.createTimestampPacketAllocator(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getType(), osContext->getDeviceBitfield());
     }
     return timestampPacketAllocator.get();
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::postInitFlagsSetup() {
+    useNewResourceImplicitFlush = checkPlatformSupportsNewResourceImplicitFlush();
+    int32_t overrideNewResourceImplicitFlush = DebugManager.flags.PerformImplicitFlushForNewResource.get();
+    if (overrideNewResourceImplicitFlush != -1) {
+        useNewResourceImplicitFlush = overrideNewResourceImplicitFlush == 0 ? false : true;
+    }
+    useGpuIdleImplicitFlush = checkPlatformSupportsGpuIdleImplicitFlush();
+    int32_t overrideGpuIdleImplicitFlush = DebugManager.flags.PerformImplicitFlushForIdleGpu.get();
+    if (overrideGpuIdleImplicitFlush != -1) {
+        useGpuIdleImplicitFlush = overrideGpuIdleImplicitFlush == 0 ? false : true;
+    }
 }
 
 } // namespace NEO

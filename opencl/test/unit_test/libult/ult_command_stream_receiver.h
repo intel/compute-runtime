@@ -44,6 +44,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::isPerDssBackedBufferSent;
     using BaseClass::makeResident;
     using BaseClass::perDssBackedBuffer;
+    using BaseClass::postInitFlagsSetup;
     using BaseClass::programEnginePrologue;
     using BaseClass::programPerDssBackedBuffer;
     using BaseClass::programPreamble;

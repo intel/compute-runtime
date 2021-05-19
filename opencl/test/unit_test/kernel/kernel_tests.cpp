@@ -522,6 +522,8 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return createPreemptionAllocationReturn;
     }
 
+    void postInitFlagsSetup() override {}
+
     std::map<const void *, size_t> residency;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
     bool passResidencyCallToBaseClass = true;
