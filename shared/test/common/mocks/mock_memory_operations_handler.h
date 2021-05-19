@@ -33,4 +33,24 @@ class MockMemoryOperationsHandlerTests : public MemoryOperationsHandler {
                 (Device * device, GraphicsAllocation &gfxAllocation), (override));
 };
 
+class MockMemoryOperations : public MemoryOperationsHandler {
+  public:
+    MockMemoryOperations() {}
+
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
+        makeResidentCalledCount++;
+        return MemoryOperationsStatus::SUCCESS;
+    }
+    MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override {
+        evictCalledCount++;
+        return MemoryOperationsStatus::SUCCESS;
+    }
+    MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override {
+        return MemoryOperationsStatus::SUCCESS;
+    }
+
+    int makeResidentCalledCount = 0;
+    int evictCalledCount = 0;
+};
+
 } // namespace NEO

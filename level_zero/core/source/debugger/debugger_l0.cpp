@@ -13,6 +13,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include <cstring>
@@ -62,9 +63,14 @@ void DebuggerL0::initialize() {
         DebugAreaHeader debugArea = {};
         debugArea.size = sizeof(DebugAreaHeader);
         debugArea.pgsize = 1;
-        debugArea.isShared = 0;
+        debugArea.isShared = moduleDebugArea->storageInfo.getNumBanks() == 1;
         debugArea.scratchBegin = sizeof(DebugAreaHeader);
         debugArea.scratchEnd = MemoryConstants::pageSize64k - sizeof(DebugAreaHeader);
+
+        NEO::MemoryOperationsHandler *memoryOperationsIface = device->getRootDeviceEnvironment().memoryOperationsInterface.get();
+        if (memoryOperationsIface) {
+            memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1));
+        }
 
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *moduleDebugArea),
                                                               *device, moduleDebugArea, 0, &debugArea,

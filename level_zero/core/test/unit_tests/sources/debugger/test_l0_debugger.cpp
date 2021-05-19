@@ -731,8 +731,11 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreate
     VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
         &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
 
+    memoryOperationsHandler->makeResidentCalledCount = 0;
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
     auto debugArea = debugger->getModuleDebugArea();
+
+    EXPECT_EQ(1, memoryOperationsHandler->makeResidentCalledCount);
 
     auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {neoDevice->getRootDeviceIndex(), 4096, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()});
@@ -741,7 +744,8 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreate
 
     DebugAreaHeader *header = reinterpret_cast<DebugAreaHeader *>(debugArea->getUnderlyingBuffer());
     EXPECT_EQ(1u, header->pgsize);
-    EXPECT_EQ(0u, header->isShared);
+    uint64_t isShared = debugArea->storageInfo.getNumBanks() == 1 ? 1 : 0;
+    EXPECT_EQ(isShared, header->isShared);
 
     EXPECT_STREQ("dbgarea", header->magic);
     EXPECT_EQ(sizeof(DebugAreaHeader), header->size);

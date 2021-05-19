@@ -28,6 +28,7 @@ DrmMemoryOperationsHandlerBind::~DrmMemoryOperationsHandlerBind() = default;
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     auto &engines = device->getEngines();
     for (const auto &engine : engines) {
+        engine.osContext->ensureContextInitialized();
         this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false);
     }
     return MemoryOperationsStatus::SUCCESS;
