@@ -18,10 +18,11 @@ struct EnqueueProperties {
         EnqueueWithoutSubmission,
         DependencyResolveOnGpu,
         GpuKernel,
+        ProfilingOnly
     };
 
     EnqueueProperties() = delete;
-    EnqueueProperties(bool blitEnqueue, bool hasKernels, bool isCacheFlushCmd, bool flushDependenciesOnly,
+    EnqueueProperties(bool blitEnqueue, bool hasKernels, bool isCacheFlushCmd, bool flushDependenciesOnly, bool isMarkerWithEvent,
                       const BlitPropertiesContainer *blitPropertiesContainer) {
         if (blitEnqueue) {
             operation = Operation::Blit;
@@ -45,12 +46,17 @@ struct EnqueueProperties {
             return;
         }
 
+        if (isMarkerWithEvent) {
+            operation = Operation::ProfilingOnly;
+            return;
+        }
+
         operation = Operation::EnqueueWithoutSubmission;
     }
 
     bool isFlushWithoutKernelRequired() const {
         return (operation == Operation::Blit) || (operation == Operation::ExplicitCacheFlush) ||
-               (operation == Operation::DependencyResolveOnGpu);
+               (operation == Operation::DependencyResolveOnGpu) || (operation == EnqueueProperties::Operation::ProfilingOnly);
     }
 
     const BlitPropertiesContainer *blitPropertiesContainer = nullptr;

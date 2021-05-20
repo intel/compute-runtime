@@ -1905,8 +1905,24 @@ HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndNoOutputEventWhenEnqueueingM
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
 
     cmdQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
+
     EXPECT_EQ(0u, cmdQ->timestampPacketContainer->peekNodes().size());
     EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
+}
+
+HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndEventWhenEnqueueingMarkerWithProfilingEnabledThenObtainNewNode) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+    cmdQ->setProfilingEnabled();
+
+    cl_event event;
+    cmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
+
+    EXPECT_EQ(1u, cmdQ->timestampPacketContainer->peekNodes().size());
+
+    clReleaseEvent(event);
 }
 
 HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenRequestPipeControlOnCsrFlush) {

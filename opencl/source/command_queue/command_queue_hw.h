@@ -408,6 +408,14 @@ class CommandQueueHw : public CommandQueue {
                                       size_t numSurfaces,
                                       LinearStream *commandStream,
                                       CsrDependencies &csrDeps);
+    void processDispatchForMarker(CommandQueue &commandQueue,
+                                  LinearStream *commandStream,
+                                  EventsRequest &eventsRequest,
+                                  CsrDependencies &csrDeps);
+    void processDispatchForMarkerWithTimestampPacket(CommandQueue &commandQueue,
+                                                     LinearStream *commandStream,
+                                                     EventsRequest &eventsRequest,
+                                                     CsrDependencies &csrDeps);
     BlitProperties processDispatchForBlitEnqueue(const MultiDispatchInfo &multiDispatchInfo,
                                                  TimestampPacketDependencies &timestampPacketDependencies,
                                                  const EventsRequest &eventsRequest,

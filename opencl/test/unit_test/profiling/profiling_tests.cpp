@@ -381,9 +381,37 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueBlockedWithProfilin
     pCmdQ->isQueueBlocked();
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProflingWhenMarkerIsDispatchedThenPipeControlIsPresentInCS) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+
+    cl_event event;
+
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueMarkerWithWaitList(
+        0,
+        nullptr,
+        &event);
+
+    parseCommands<FamilyType>(*pCmdQ);
+
+    // Check PIPE_CONTROLs
+    auto itorFirstPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorFirstPC);
+    auto pFirstPC = genCmdCast<PIPE_CONTROL *>(*itorFirstPC);
+    ASSERT_NE(nullptr, pFirstPC);
+
+    auto itorSecondPC = find<PIPE_CONTROL *>(itorFirstPC, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorSecondPC);
+    auto pSecondPC = genCmdCast<PIPE_CONTROL *>(*itorSecondPC);
+    ASSERT_NE(nullptr, pSecondPC);
+
+    EXPECT_TRUE(static_cast<MockEvent<Event> *>(event)->calcProfilingData());
+
+    clReleaseEvent(event);
+}
+
 HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPath) {
     cl_event event;
-    pCmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
+    pCmdQ->enqueueBarrierWithWaitList(0, nullptr, &event);
     auto eventObj = static_cast<Event *>(event);
     EXPECT_TRUE(eventObj->isCPUProfilingPath() == CL_TRUE);
     pCmdQ->finish();
@@ -404,6 +432,26 @@ HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPat
     EXPECT_LT(queued, submit);
     EXPECT_LT(submit, start);
     EXPECT_LT(start, end);
+    eventObj->release();
+}
+
+HWTEST_F(ProfilingTests, givenMarkerEnqueueWhenNonBlockedEnqueueThenSetGpuPath) {
+    cl_event event;
+    pCmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
+    auto eventObj = static_cast<Event *>(event);
+    EXPECT_TRUE(eventObj->isCPUProfilingPath() == CL_FALSE);
+    pCmdQ->finish();
+
+    uint64_t queued, submit;
+    cl_int retVal;
+
+    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(uint64_t), &queued, 0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submit, 0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_LT(0u, queued);
+    EXPECT_LT(queued, submit);
     eventObj->release();
 }
 

@@ -182,7 +182,7 @@ void CommandQueueHw<Family>::setupEvent(EventBuilder &eventBuilder, cl_event *ou
             getDevice().getOSTime()->getCpuGpuTime(&queueTimeStamp);
             eventObj->setQueueTimeStamp(&queueTimeStamp);
 
-            if (isCommandWithoutKernel(cmdType)) {
+            if (isCommandWithoutKernel(cmdType) && cmdType != CL_COMMAND_MARKER) {
                 eventObj->setCPUProfilingPath(true);
                 eventObj->setQueueTimeStamp();
             }

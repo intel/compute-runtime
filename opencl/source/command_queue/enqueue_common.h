@@ -151,7 +151,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                const cl_event *eventWaitList,
                                                cl_event *event) {
     if (multiDispatchInfo.empty() && !isCommandWithoutKernel(commandType)) {
-        enqueueHandler<CL_COMMAND_MARKER>(surfacesForResidency, numSurfaceForResidency, blocking, multiDispatchInfo,
+        enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, blocking, multiDispatchInfo,
                                           numEventsInWaitList, eventWaitList, event);
         if (event) {
             castToObjectOrAbort<Event>(*event)->setCmdType(commandType);
@@ -170,6 +170,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     EventBuilder eventBuilder;
     setupEvent(eventBuilder, event, commandType);
+
+    bool isMarkerWithProfiling = (CL_COMMAND_MARKER == commandType) && (eventBuilder.getEvent() && eventBuilder.getEvent()->isProfilingEnabled());
 
     std::unique_ptr<KernelOperation> blockedCommandsData;
     std::unique_ptr<PrintfHandler> printfHandler;
@@ -208,7 +210,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
 
         size_t nodesCount = 0u;
-        if (isCacheFlushCommand(commandType)) {
+        if (isCacheFlushCommand(commandType) || isMarkerWithProfiling) {
             nodesCount = 1;
         } else if (!multiDispatchInfo.empty()) {
             nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
@@ -266,18 +268,24 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 }
             }
         }
+
         if (flushDependenciesForNonKernelCommand) {
             TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(
                 commandStream,
                 csrDeps,
                 getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices());
         }
+
+        if (isMarkerWithProfiling) {
+            processDispatchForMarkerWithTimestampPacket(*this, &commandStream, eventsRequest, csrDeps);
+        }
+    } else if (isMarkerWithProfiling) {
+        processDispatchForMarker(*this, &commandStream, eventsRequest, csrDeps);
     }
 
     CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
-
     const EnqueueProperties enqueueProperties(false, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
-                                              flushDependenciesForNonKernelCommand, &blitPropertiesContainer);
+                                              flushDependenciesForNonKernelCommand, isMarkerWithProfiling, &blitPropertiesContainer);
 
     if (!blockQueue) {
         if (parentKernel) {
@@ -565,6 +573,42 @@ void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
     }
 
     submitCacheFlush(surfaces, numSurfaces, commandStream, postSyncAddress);
+}
+
+template <typename GfxFamily>
+void CommandQueueHw<GfxFamily>::processDispatchForMarker(CommandQueue &commandQueue,
+                                                         LinearStream *commandStream,
+                                                         EventsRequest &eventsRequest,
+                                                         CsrDependencies &csrDeps) {
+    auto event = castToObjectOrAbort<Event>(*eventsRequest.outEvent);
+
+    TagNodeBase *hwTimeStamps = nullptr;
+    TagNodeBase *hwPerfCounter = nullptr;
+
+    hwTimeStamps = event->getHwTimeStampNode();
+
+    HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+    HardwareInterface<GfxFamily>::dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+}
+
+template <typename GfxFamily>
+void CommandQueueHw<GfxFamily>::processDispatchForMarkerWithTimestampPacket(CommandQueue &commandQueue,
+                                                                            LinearStream *commandStream,
+                                                                            EventsRequest &eventsRequest,
+                                                                            CsrDependencies &csrDeps) {
+    auto currentTimestampPacketNode = commandQueue.getTimestampPacketContainer()->peekNodes().at(0);
+
+    auto timestampContextStartGpuAddress = TimestampPacketHelper::getContextStartGpuAddress(*currentTimestampPacketNode);
+    auto timestampGlobalStartAddress = TimestampPacketHelper::getGlobalStartGpuAddress(*currentTimestampPacketNode);
+
+    EncodeStoreMMIO<GfxFamily>::encode(*commandStream, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timestampContextStartGpuAddress);
+    EncodeStoreMMIO<GfxFamily>::encode(*commandStream, REG_GLOBAL_TIMESTAMP_LDW, timestampGlobalStartAddress);
+
+    auto timestampContextEndGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*currentTimestampPacketNode);
+    auto timestampGlobalEndAddress = TimestampPacketHelper::getGlobalEndGpuAddress(*currentTimestampPacketNode);
+
+    EncodeStoreMMIO<GfxFamily>::encode(*commandStream, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timestampContextEndGpuAddress);
+    EncodeStoreMMIO<GfxFamily>::encode(*commandStream, REG_GLOBAL_TIMESTAMP_LDW, timestampGlobalEndAddress);
 }
 
 template <typename GfxFamily>
@@ -992,6 +1036,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
 
         getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
         eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
+        eventBuilder.getEvent()->setStartTimeStamp();
     }
 
     if (flushGpgpuCsr) {
@@ -1144,7 +1189,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
 
     CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
 
-    const EnqueueProperties enqueueProperties(true, false, false, false, &blitPropertiesContainer);
+    const EnqueueProperties enqueueProperties(true, false, false, false, false, &blitPropertiesContainer);
 
     if (!blockQueue) {
         completionStamp = enqueueCommandWithoutKernel(nullptr, 0, gpgpuCommandStream, gpgpuCommandStreamStart, blocking, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, taskLevel, csrDeps);
