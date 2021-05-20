@@ -1834,7 +1834,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenWaitForCompletionWithTimeoutI
     MockCsrWithFailingFlush<FamilyType> mockCsr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, 8, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     mockCsr.setupContext(osContext);
-    mockCsr.latestSentTaskCount = 0;
+    mockCsr.latestSentTaskCount = 1;
     auto cmdBuffer = std::make_unique<CommandBuffer>(*pDevice);
     mockCsr.submissionAggregator->recordCommandBuffer(cmdBuffer.release());
     EXPECT_FALSE(mockCsr.waitForCompletionWithTimeout(false, 0, 1));

@@ -1087,10 +1087,12 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
-    if (this->osContext->getEngineType() == aub_stream::ENGINE_BCS) {
-        this->flushMiFlushDW();
-    } else {
-        this->flushPipeControl();
+    if (this->osContext != nullptr) {
+        if (this->osContext->getEngineType() == aub_stream::ENGINE_BCS) {
+            this->flushMiFlushDW();
+        } else {
+            this->flushPipeControl();
+        }
     }
 }
 
@@ -1153,13 +1155,17 @@ void CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
     MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(commandStream,
                                                                                         PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
                                                                                         getTagAllocation()->getGpuAddress(),
-                                                                                        taskCount,
+                                                                                        taskCount + 1,
                                                                                         peekHwInfo(),
                                                                                         args);
 
     makeResident(*tagAllocation);
 
     this->flushSmallTask(commandStream, commandStreamStart);
+
+    this->latestFlushedTaskCount = taskCount + 1;
+    this->latestSentTaskCount = taskCount + 1;
+    taskCount++;
 }
 
 template <typename GfxFamily>

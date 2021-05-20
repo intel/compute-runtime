@@ -123,6 +123,20 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEmptyQueueWhenFinishingThenTa
     EXPECT_EQ(0u, mockCmdQueue.latestTaskCountWaited);
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTaskCountToWaitBiggerThanLatestSentTaskCountWhenWaitForCompletionThenFlushPipeControl) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    csr.waitForCompletionWithTimeout(false, 0, 1u);
+
+    auto &commandStreamTask = csr.getCS();
+    parseCommands<FamilyType>(commandStreamTask, 0);
+
+    auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itorPC);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonDcFlushWithInitialTaskCountZeroWhenFinishingThenTaskCountIncremented) {
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);

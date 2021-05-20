@@ -459,6 +459,7 @@ HWTEST_F(EnqueueThreading, WhenFinishingThenKernelHasOwnership) {
     pCmdQ->taskLevel = 1;
     auto csr = (CommandStreamReceiverMock<FamilyType> *)&this->pCmdQ->getGpgpuCommandStreamReceiver();
     csr->expectedToFreeCount = 0u;
+    csr->latestSentTaskCount = 1;
 
     pCmdQ->finish();
 }
