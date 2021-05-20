@@ -423,6 +423,10 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
             setSpecialWorkgroupSize(workGroupSize);
         } else if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
             WorkSizeInfo wsInfo(dispatchInfo);
+            if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers && !wsInfo.imgUsed && hwHelper.preferSmallWorkgroupSizeForKernel(kernel->getKernelInfo().heapInfo.KernelUnpaddedSize)) {
+                wsInfo.maxWorkGroupSize = wsInfo.simdSize * 2;
+            }
+
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dispatchInfo.getDim());
         } else {
