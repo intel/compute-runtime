@@ -58,6 +58,11 @@ struct Event : _ze_event_handle_t {
     void *getHostAddress() { return hostAddress; }
     virtual void setPacketsInUse(uint32_t value) = 0;
     uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
+
+    virtual size_t getContextStartOffset() const = 0;
+    virtual size_t getContextEndOffset() const = 0;
+    virtual size_t getGlobalStartOffset() const = 0;
+    virtual size_t getGlobalEndOffset() const = 0;
     virtual size_t getTimestampSizeInDw() const = 0;
     void *hostAddress = nullptr;
     uint32_t kernelCount = 1u;
@@ -106,6 +111,10 @@ struct EventImp : public Event {
     uint32_t getPacketsInUse() override;
     void setPacketsInUse(uint32_t value) override;
     size_t getTimestampSizeInDw() const override { return (sizeof(TagSizeT) / 4); };
+    size_t getContextStartOffset() const override { return NEO::TimestampPackets<TagSizeT>::getContextStartOffset(); }
+    size_t getContextEndOffset() const override { return NEO::TimestampPackets<TagSizeT>::getContextEndOffset(); }
+    size_t getGlobalStartOffset() const override { return NEO::TimestampPackets<TagSizeT>::getGlobalStartOffset(); }
+    size_t getGlobalEndOffset() const override { return NEO::TimestampPackets<TagSizeT>::getGlobalEndOffset(); }
 
     std::unique_ptr<NEO::TimestampPackets<TagSizeT>[]> kernelTimestampsData;
 

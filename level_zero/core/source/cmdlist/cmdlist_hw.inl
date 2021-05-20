@@ -1620,16 +1620,21 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(ze_event_h
     auto event = Event::fromHandle(hEvent);
 
     auto baseAddr = event->getGpuAddress(this->device);
-    auto contextOffset = beforeWalker ? NEO::TimestampPackets<uint32_t>::getContextStartOffset() : NEO::TimestampPackets<uint32_t>::getContextEndOffset();
-    auto globalOffset = beforeWalker ? NEO::TimestampPackets<uint32_t>::getGlobalStartOffset() : NEO::TimestampPackets<uint32_t>::getGlobalEndOffset();
+    auto contextOffset = beforeWalker ? event->getContextStartOffset() : event->getContextEndOffset();
+    auto globalOffset = beforeWalker ? event->getGlobalStartOffset() : event->getGlobalEndOffset();
+
+    uint64_t globalAddress = ptrOffset(baseAddr, globalOffset);
+    uint64_t contextAddress = ptrOffset(baseAddr, contextOffset);
 
     if (maskLsb) {
-        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, REG_GLOBAL_TIMESTAMP_LDW, mask, ptrOffset(baseAddr, globalOffset));
-        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, mask, ptrOffset(baseAddr, contextOffset));
+        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, REG_GLOBAL_TIMESTAMP_LDW, mask, globalAddress);
+        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, mask, contextAddress);
     } else {
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, ptrOffset(baseAddr, globalOffset));
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, ptrOffset(baseAddr, contextOffset));
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, globalAddress);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextAddress);
     }
+
+    adjustWriteKernelTimestamp(globalAddress, contextAddress, maskLsb, mask);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1912,5 +1917,8 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
         device->getL0Debugger()->captureStateBaseAddress(commandContainer, sbaAddresses);
     }
 }
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask) {}
 
 } // namespace L0

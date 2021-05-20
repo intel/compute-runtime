@@ -985,6 +985,11 @@ class MockEvent : public ::L0::Event {
         return 1;
     }
 
+    size_t getContextStartOffset() const override { return 0; }
+    size_t getContextEndOffset() const override { return 4; }
+    size_t getGlobalStartOffset() const override { return 8; }
+    size_t getGlobalEndOffset() const override { return 12; }
+
     uint32_t getPacketsInUse() override { return 1; }
     void resetPackets() override{};
     void setPacketsInUse(uint32_t value) override{};

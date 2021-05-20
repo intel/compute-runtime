@@ -912,8 +912,15 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
 
     createEvents();
 
-    EXPECT_EQ(sizeof(typename FamilyType::TimestampPacketType) / 4, eventObj0->getTimestampSizeInDw());
-    EXPECT_EQ(sizeof(typename FamilyType::TimestampPacketType) / 4, eventObj1->getTimestampSizeInDw());
+    constexpr size_t timestampPacketTypeSize = sizeof(typename FamilyType::TimestampPacketType);
+
+    EXPECT_EQ(timestampPacketTypeSize / 4, eventObj0->getTimestampSizeInDw());
+    EXPECT_EQ(timestampPacketTypeSize / 4, eventObj1->getTimestampSizeInDw());
+
+    EXPECT_EQ(0u, eventObj0->getContextStartOffset());
+    EXPECT_EQ(timestampPacketTypeSize, eventObj0->getGlobalStartOffset());
+    EXPECT_EQ(timestampPacketTypeSize * 2, eventObj0->getContextEndOffset());
+    EXPECT_EQ(timestampPacketTypeSize * 3, eventObj0->getGlobalEndOffset());
 
     auto hostPtrDiff = ptrDiff(eventObj1->getHostAddress(), eventObj0->getHostAddress());
     EXPECT_EQ(expectedSize, hostPtrDiff);
