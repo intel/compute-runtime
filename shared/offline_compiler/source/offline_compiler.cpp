@@ -1019,7 +1019,7 @@ void OfflineCompiler::writeOutAllFiles() {
         }
     }
 
-    if (irBinary) {
+    if (irBinary && !inputFileSpirV) {
         std::string irOutputFileName = generateFilePathForIr(fileBase) + generateOptsSuffix();
 
         argHelper->saveOutput(irOutputFileName, irBinary, irBinarySize);

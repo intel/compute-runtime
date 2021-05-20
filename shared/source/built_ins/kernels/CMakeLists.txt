@@ -58,11 +58,8 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options mod
   # get name of the file w/o extension
   get_filename_component(BASENAME ${builtin} NAME_WE)
 
-  set(OUTPUTPATH_BASE "${OUTPUTDIR}/${mode}_${BASENAME}_${family_name_with_type}")
-  set(OUTPUT_FILES
-      ${OUTPUTPATH_BASE}.spv
-      ${OUTPUTPATH_BASE}.bin
-      ${OUTPUTPATH_BASE}.gen
+  set(OUTPUT_FILE_SPV
+      ${OUTPUTDIR}/${mode}_${BASENAME}_${family_name_with_type}.spv
   )
 
   if(NOT DEFINED cloc_cmd_prefix)
@@ -79,8 +76,8 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options mod
   list(APPEND __cloc__options__ "-cl-kernel-arg-info")
   set(INTERNAL_OPTIONS "${${mode}_OPTIONS}")
   add_custom_command(
-                     OUTPUT ${OUTPUT_FILES}
-                     COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__cloc__options__}, >"
+                     OUTPUT ${OUTPUT_FILE_SPV}
+                     COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -spv_only -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__cloc__options__}, >"
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      DEPENDS ${builtin} ocloc copy_compiler_files
   )
@@ -88,12 +85,23 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options mod
     set(OUTPUT_FILE_CPP
         ${OUTPUTDIR}/${mode}_${BASENAME}_${family_name_with_type}_${REVISION_ID}.cpp
     )
+    set(BINARY_OUTPUT "${OUTPUTDIR}/${mode}_${BASENAME}_${REVISION_ID}_${family_name_with_type}")
+    set(OUTPUT_FILES_BINARIES
+        ${BINARY_OUTPUT}.gen
+        ${BINARY_OUTPUT}.bin
+    )
     list(APPEND BUILTINS_COMMANDS "${OUTPUT_FILE_CPP}")
     add_custom_command(
-                       OUTPUT ${OUTPUT_FILE_CPP}
-                       COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${OUTPUTPATH_BASE}.gen --output ${OUTPUT_FILE_CPP} --array ${mode}_${BASENAME} --platform ${family_name_with_type} --revision_id ${REVISION_ID}
+                       OUTPUT ${OUTPUT_FILES_BINARIES}
+                       COMMAND ${cloc_cmd_prefix} -q -file ${OUTPUT_FILE_SPV} -spirv_input -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${REVISION_ID} -out_dir ${OUTPUTDIR} -revision_id ${REVISION_ID} ${INTERNAL_OPTIONS} -options "$<JOIN:${__cloc__options__}, >"
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                       DEPENDS ${OUTPUTPATH_BASE}.gen $<TARGET_FILE:cpp_generate_tool>
+                       DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files
+    )
+    add_custom_command(
+                       OUTPUT ${OUTPUT_FILE_CPP}
+                       COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${BINARY_OUTPUT}.gen --output ${OUTPUT_FILE_CPP} --array ${mode}_${BASENAME} --platform ${family_name_with_type} --revision_id ${REVISION_ID}
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                       DEPENDS ${OUTPUT_FILES_BINARIES} $<TARGET_FILE:cpp_generate_tool>
     )
   endforeach()
   set(BUILTINS_COMMANDS ${BUILTINS_COMMANDS} PARENT_SCOPE)

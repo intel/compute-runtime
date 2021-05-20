@@ -1595,4 +1595,27 @@ TEST(OclocCompile, givenPackedDeviceBinaryFormatWhenGeneratingElfBinaryThenItIsR
     ASSERT_EQ(true, ocloc.generateElfBinary());
     EXPECT_EQ(0, memcmp(zebin.storage.data(), ocloc.elfBinary.data(), zebin.storage.size()));
 }
+
+TEST(OclocCompile, givenSpirvInputThenDontGenerateSpirvFile) {
+    MockOfflineCompiler ocloc;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/binary_with_zeroes",
+        "-out_dir",
+        "offline_compiler_test",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-spirv_input"};
+
+    int retVal = ocloc.initialize(argv.size(), argv);
+    ASSERT_EQ(0, retVal);
+    retVal = ocloc.build();
+    EXPECT_EQ(0, retVal);
+    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "gen"));
+    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "bin"));
+    EXPECT_FALSE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "spv"));
+}
 } // namespace NEO
