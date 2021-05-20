@@ -11,5 +11,6 @@
 
 using namespace NEO;
 
+void Gmm::applyAppResource(StorageInfo &storageInfo) {}
 void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {}
 void Gmm::applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo) { this->useSystemMemoryPool = systemMemoryPool; }

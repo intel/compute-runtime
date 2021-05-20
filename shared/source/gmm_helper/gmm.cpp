@@ -50,6 +50,7 @@ Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t aligned
 
     applyAuxFlagsForBuffer(preferRenderCompressed);
     applyMemoryFlags(systemMemoryPool, storageInfo);
+    applyAppResource(storageInfo);
 
     gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, &resourceParams));
 }
@@ -64,6 +65,8 @@ Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, Storage
     this->resourceParams = {};
     setupImageResourceParams(inputOutputImgInfo);
     applyMemoryFlags(!inputOutputImgInfo.useLocalMemory, storageInfo);
+    applyAppResource(storageInfo);
+
     this->gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, &this->resourceParams));
     UNRECOVERABLE_IF(this->gmmResourceInfo == nullptr);
 

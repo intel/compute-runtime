@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -17,3 +17,4 @@ if(UNIX)
                  ${NEO_CORE_OS_INTERFACE_TESTS_LINUX}
   )
 endif()
+add_subdirectories()
