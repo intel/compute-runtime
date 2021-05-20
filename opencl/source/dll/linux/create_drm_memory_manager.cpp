@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {

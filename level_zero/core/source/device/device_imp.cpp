@@ -686,7 +686,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
     if (device->getSourceLevelDebugger()) {
         auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
         device->getSourceLevelDebugger()
-            ->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
+            ->notifyNewDevice(osInterface ? osInterface->getDriverModel()->getDeviceHandle() : 0);
     }
 
     if (static_cast<DriverHandleImp *>(driverHandle)->enableSysman && !isSubDevice) {

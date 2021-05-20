@@ -30,8 +30,8 @@ GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInf
     inArgs.pWaTable = &gmmWaTable;
     inArgs.Platform = hwInfo->platform;
 
-    if (osInterface) {
-        osInterface->setGmmInputArgs(&inArgs);
+    if (osInterface && osInterface->getDriverModel()) {
+        osInterface->getDriverModel()->setGmmInputArgs(&inArgs);
     }
 
     auto ret = GmmInterface::initialize(&inArgs, &outArgs);

@@ -7,8 +7,8 @@
 
 #pragma once
 #include "shared/source/os_interface/linux/device_time_drm.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
+#include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
 class MockDeviceTimeDrm : public DeviceTimeDrm {
@@ -30,7 +30,7 @@ class MockOSTimeLinux : public OSTimeLinux {
         this->getTimeFunc = func;
     }
     void updateDrm(Drm *drm) {
-        osInterface->get()->setDrm(drm);
+        osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
         static_cast<MockDeviceTimeDrm *>(this->deviceTime.get())->pDrm = drm;
         static_cast<MockDeviceTimeDrm *>(this->deviceTime.get())->timestampTypeDetect();
     }

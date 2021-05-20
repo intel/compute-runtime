@@ -14,7 +14,6 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
@@ -230,7 +229,7 @@ TEST(WddmResidencyController, givenWddmResidencyControllerWhenRegisterCallbackTh
     EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);
     EXPECT_EQ(reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(WddmResidencyController::trimCallback), gdi->getRegisterTrimNotificationArg().Callback);
     EXPECT_EQ(reinterpret_cast<void *>(&residencyController), gdi->getRegisterTrimNotificationArg().Context);
-    EXPECT_EQ(wddm->getDevice(), gdi->getRegisterTrimNotificationArg().hDevice);
+    EXPECT_EQ(wddm->getDeviceHandle(), gdi->getRegisterTrimNotificationArg().hDevice);
 }
 
 TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerWhenCallingWasAllocationUsedSinceLastTrimThenReturnCorrectValues) {
@@ -787,7 +786,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenLastFenceIsGreaterThanMonitoredW
     EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
 
-    EXPECT_EQ(wddm->getDevice(), gdi->getWaitFromCpuArg().hDevice);
+    EXPECT_EQ(wddm->getDeviceHandle(), gdi->getWaitFromCpuArg().hDevice);
 }
 
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetThenOnlyDoneFragmentsAreEvicted) {

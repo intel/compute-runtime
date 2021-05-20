@@ -8,7 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "test.h"
 
@@ -45,8 +45,8 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
     void SetUp() override {
         DeviceFixture::SetUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-        auto osInterface = device->getOsInterface().get();
-        osInterface->setDrm(new SysmanMockDrm(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+        auto &osInterface = device->getOsInterface();
+        osInterface.setDriverModel(std::make_unique<SysmanMockDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
         setenv("ZES_ENABLE_SYSMAN", "1", 1);
         device->setSysmanHandle(L0::SysmanDeviceHandleContext::init(device->toHandle()));
         pSysmanDevice = device->getSysmanHandle();
@@ -72,8 +72,8 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         device = driverHandle->devices[0];
         neoDevice = device->getNEODevice();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-        auto osInterface = device->getOsInterface().get();
-        osInterface->setDrm(new SysmanMockDrm(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+        auto &osInterface = device->getOsInterface();
+        osInterface.setDriverModel(std::make_unique<SysmanMockDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
         setenv("ZES_ENABLE_SYSMAN", "1", 1);
         device->setSysmanHandle(L0::SysmanDeviceHandleContext::init(device->toHandle()));
         pSysmanDevice = device->getSysmanHandle();

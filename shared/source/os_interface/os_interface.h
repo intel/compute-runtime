@@ -6,6 +6,9 @@
  */
 
 #pragma once
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -13,32 +16,65 @@
 namespace NEO {
 class ExecutionEnvironment;
 class HwDeviceId;
+class MemoryManager;
+enum class DriverModelType { WDDM,
+                             DRM };
 
-class OSInterface {
-
+class DriverModel : public NonCopyableClass {
   public:
-    class OSInterfaceImpl;
-    OSInterface();
-    virtual ~OSInterface();
-    OSInterface(const OSInterface &) = delete;
-    OSInterface &operator=(const OSInterface &) = delete;
+    DriverModel(DriverModelType driverModelType)
+        : driverModelType(driverModelType) {
+    }
 
-    OSInterfaceImpl *get() const {
-        return osInterfaceImpl;
+    template <typename DerivedType>
+    DerivedType *as() {
+        UNRECOVERABLE_IF(DerivedType::driverModelType != this->driverModelType);
+        return static_cast<DerivedType *>(this);
+    }
+
+    template <typename DerivedType>
+    DerivedType *as() const {
+        UNRECOVERABLE_IF(DerivedType::driverModelType != this->driverModelType);
+        return static_cast<const DerivedType *>(this);
+    }
+
+    virtual void setGmmInputArgs(void *args) = 0;
+
+    virtual uint32_t getDeviceHandle() const = 0;
+
+    DriverModelType getDriverModelType() const {
+        return driverModelType;
+    }
+
+    virtual ~DriverModel() = default;
+
+  protected:
+    DriverModelType driverModelType;
+};
+
+class OSInterface : public NonCopyableClass {
+  public:
+    virtual ~OSInterface() = default;
+    DriverModel *getDriverModel() const {
+        return driverModel.get();
+    };
+
+    void setDriverModel(std::unique_ptr<DriverModel> driverModel) {
+        this->driverModel = std::move(driverModel);
     };
 
     MOCKABLE_VIRTUAL bool isDebugAttachAvailable() const;
     static bool osEnabled64kbPages;
     static bool osEnableLocalMemory;
-    static bool are64kbPagesEnabled();
+    static bool are64kbPagesEnabled() {
+        return osEnabled64kbPages;
+    }
     static bool newResourceImplicitFlush;
     static bool gpuIdleImplicitFlush;
     static bool requiresSupportForWddmTrimNotification;
-    uint32_t getDeviceHandle() const;
-    void setGmmInputArgs(void *args);
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
 
   protected:
-    OSInterfaceImpl *osInterfaceImpl = nullptr;
+    std::unique_ptr<DriverModel> driverModel = nullptr;
 };
 } // namespace NEO

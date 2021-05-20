@@ -14,15 +14,15 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
 
 OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
                              EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice) {
     if (osInterface) {
-        return new OsContextLinux(*osInterface->get()->getDrm(), contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
+        return new OsContextLinux(*osInterface->getDriverModel()->as<Drm>(), contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
     }
     return new OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
 }

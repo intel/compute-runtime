@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
+#include "shared/source/os_interface/windows/wddm/wddm.h"
+
 namespace L0 {
 
 ze_result_t WddmSysmanImp::init() {
@@ -14,7 +16,10 @@ ze_result_t WddmSysmanImp::init() {
     UNRECOVERABLE_IF(nullptr == pDevice);
 
     NEO::OSInterface &OsInterface = pDevice->getOsInterface();
-    pWddm = OsInterface.get()->getWddm();
+    auto driverModel = OsInterface.getDriverModel();
+    if (driverModel) {
+        pWddm = driverModel->as<NEO::Wddm>();
+    }
     pKmdSysManager = KmdSysManager::create(pWddm);
     UNRECOVERABLE_IF(nullptr == pKmdSysManager);
 

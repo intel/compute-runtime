@@ -8,7 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 
@@ -31,7 +31,7 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
     MockExecutionEnvironment executionEnvironment;
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
 
     DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
@@ -51,7 +51,7 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
     DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
     auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
@@ -69,7 +69,7 @@ HWTEST_F(DrmCommandStreamMMTest, givenExecutionEnvironmentWithMoreThanOneRootDev
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         auto drm = new DrmMockCustom();
-        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(drm);
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
     }
 

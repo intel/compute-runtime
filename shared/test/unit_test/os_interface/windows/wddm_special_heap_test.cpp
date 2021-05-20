@@ -8,7 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
@@ -32,7 +32,7 @@ class WddmMemManagerFixture {
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
         DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
-        auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->getWddm());
+        auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
         wddm->callBaseMapGpuVa = false;
         memManager = std::unique_ptr<FrontWindowMemManagerMock>(new FrontWindowMemManagerMock(*executionEnvironment));
     }

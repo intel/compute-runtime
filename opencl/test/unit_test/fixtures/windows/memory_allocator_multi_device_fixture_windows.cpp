@@ -7,8 +7,8 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
@@ -26,7 +26,7 @@ void MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(ExecutionEnvironment
     osEnvironment->gdi.reset(gdi);
     for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
         gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[i]->getGmmClientContext(), nullptr, 0, 0, false);
-        auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[i]->osInterface->get()->getWddm());
+        auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[i]->osInterface->getDriverModel()->as<Wddm>());
         wddm->hwDeviceId = std::make_unique<HwDeviceId>(ADAPTER_HANDLE, LUID{}, osEnvironment, std::make_unique<UmKmDataTranslator>());
         wddm->callBaseMapGpuVa = false;
 

@@ -62,8 +62,8 @@ class ZesPciFixture : public ::testing::Test {
         device = driverHandle->devices[0];
 
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-        auto osInterface = device->getOsInterface().get();
-        osInterface->setDrm(new SysmanMockDrm(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+        auto &osInterface = device->getOsInterface();
+        osInterface.setDriverModel(std::make_unique<SysmanMockDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
         setenv("ZES_ENABLE_SYSMAN", "1", 1);
         device->setSysmanHandle(L0::SysmanDeviceHandleContext::init(device->toHandle()));
         pSysmanDevice = device->getSysmanHandle();

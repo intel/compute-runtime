@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -54,10 +55,12 @@ struct DeviceDescriptor { // NOLINT(clang-analyzer-optin.performance.Padding)
 
 extern const DeviceDescriptor deviceDescriptorTable[];
 
-class Drm {
+class Drm : public DriverModel {
     friend DeviceFactory;
 
   public:
+    static constexpr DriverModelType driverModelType = DriverModelType::DRM;
+
     enum class ResourceClass : uint32_t {
         Elf,
         Isa,
@@ -82,6 +85,9 @@ class Drm {
     virtual int ioctl(unsigned long request, void *arg);
 
     int getDeviceID(int &devId);
+    unsigned int getDeviceHandle() const override {
+        return 0;
+    }
     int getDeviceRevID(int &revId);
     int getExecSoftPin(int &execSoftPin);
     int enableTurboBoost();
@@ -156,6 +162,8 @@ class Drm {
     MOCKABLE_VIRTUAL uint32_t registerIsaCookie(uint32_t isaHandle);
 
     MOCKABLE_VIRTUAL bool isDebugAttachAvailable();
+
+    void setGmmInputArgs(void *args) override;
 
     SystemInfo *getSystemInfo() const {
         return systemInfo.get();

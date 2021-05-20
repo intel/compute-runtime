@@ -29,7 +29,7 @@ struct DrmDirectSubmissionTest : public DrmMemoryManagerBasic {
                                                                                 true,
                                                                                 executionEnvironment);
         device.reset(MockDevice::create<MockDevice>(&executionEnvironment, 0u));
-        osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm(),
+        osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(),
                                                      0u, device->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup,
                                                      false);
         osContext->ensureContextInitialized();
@@ -74,7 +74,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device.get(),
                                                                                           *osContext.get());
 
-    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
     EXPECT_TRUE(drm->isDirectSubmissionActive());
 
     EXPECT_TRUE(drmDirectSubmission.allocateResources());
@@ -154,7 +154,7 @@ HWTEST_F(DrmDirectSubmissionTest, whenCheckForDirectSubmissionSupportThenProperV
     auto directSubmissionSupported = osContext->isDirectSubmissionSupported(device->getHardwareInfo());
 
     auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-    EXPECT_EQ(directSubmissionSupported, hwHelper.isDirectSubmissionSupported() && executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm()->isVmBindAvailable());
+    EXPECT_EQ(directSubmissionSupported, hwHelper.isDirectSubmissionSupported() && executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>()->isVmBindAvailable());
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenDispatchCommandBufferThenTlbIsFlushed) {
@@ -198,7 +198,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundhWhenDispatchCommandBuffe
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
     drm->setNewResourceBound(true);
 
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
@@ -230,7 +230,7 @@ HWTEST_F(DrmDirectSubmissionTest, givennoNewResourceBoundhWhenDispatchCommandBuf
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
     drm->setNewResourceBound(false);
 
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
@@ -261,7 +261,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlusZeroAnd
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
     drm->setNewResourceBound(true);
 
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);
@@ -283,7 +283,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenBlitterDispatcherWhenHandleNewResourceThe
     using MI_FLUSH = typename FamilyType::MI_FLUSH_DW;
     using Dispatcher = BlitterDispatcher<FamilyType>;
 
-    auto osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm(),
+    auto osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(),
                                                       0u, device->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup,
                                                       false);
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
@@ -292,7 +292,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenBlitterDispatcherWhenHandleNewResourceThe
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
     drm->setNewResourceBound(true);
 
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), 0u);

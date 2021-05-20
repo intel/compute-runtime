@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util.h"

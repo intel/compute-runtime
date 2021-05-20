@@ -10,9 +10,9 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/platform/platform.h"
@@ -32,7 +32,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
         auto &osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface;
         osInterface = std::make_unique<OSInterface>();
-        osInterface->get()->setWddm(wddm);
+        osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
 
         wddm->featureTable->ftrWddmHwQueues = true;
         wddmMockInterface = new WddmMockInterface23(*wddm);

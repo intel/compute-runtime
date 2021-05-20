@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -26,7 +26,7 @@ struct clCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiver
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
         auto osInterface = new OSInterface();
-        osInterface->get()->setDrm(drm);
+        osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(osInterface);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);
         executionEnvironment->memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));

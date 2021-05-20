@@ -12,6 +12,8 @@
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
@@ -42,8 +44,10 @@ struct OsHandleStorage;
 
 enum class HeapIndex : uint32_t;
 
-class Wddm {
+class Wddm : public DriverModel {
   public:
+    static constexpr DriverModelType driverModelType = DriverModelType::WDDM;
+
     typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);
     typedef HRESULT(WINAPI *DXCoreCreateAdapterFactoryFcn)(REFIID riid, void **ppFactory);
     typedef void(WINAPI *GetSystemInfoFcn)(SYSTEM_INFO *pSystemInfo);
@@ -121,7 +125,7 @@ class Wddm {
         return hwDeviceId.get();
     }
     D3DKMT_HANDLE getAdapter() const { return hwDeviceId->getAdapter(); }
-    D3DKMT_HANDLE getDevice() const { return device; }
+    D3DKMT_HANDLE getDeviceHandle() const override { return device; }
     D3DKMT_HANDLE getPagingQueue() const { return pagingQueue; }
     D3DKMT_HANDLE getPagingQueueSyncObject() const { return pagingQueueSyncObject; }
     Gdi *getGdi() const { return hwDeviceId->getGdi(); }
@@ -156,7 +160,7 @@ class Wddm {
     }
     MOCKABLE_VIRTUAL void waitOnPagingFenceFromCpu();
 
-    void setGmmInputArg(void *args);
+    void setGmmInputArgs(void *args) override;
 
     WddmVersion getWddmVersion();
     static CreateDXGIFactoryFcn createDxgiFactory;
@@ -170,7 +174,7 @@ class Wddm {
 
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return rootDeviceEnvironment; }
 
-    const uint32_t getTimestampFrequency() const { return timestampFrequency; }
+    uint32_t getTimestampFrequency() const { return timestampFrequency; }
 
     PhysicalDevicePciBusInfo getPciBusInfo() const;
 

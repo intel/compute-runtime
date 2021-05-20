@@ -7,13 +7,15 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/kernel/debug_data.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/test/unit_test/mocks/linux/mock_drm_allocation.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
 
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
+
+#include <memory>
 
 using namespace NEO;
 
@@ -32,7 +34,7 @@ struct L0DebuggerLinuxFixture {
         auto osInterface = new OSInterface();
         drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(static_cast<Drm *>(drmMock));
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
 
@@ -83,7 +85,7 @@ TEST(L0DebuggerLinux, givenVmBindAndPerContextVmEnabledInDrmWhenInitializingDebu
     drmMock->setPerContextVMRequired(true);
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(static_cast<Drm *>(drmMock));
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
 
     auto result = WhiteBox<::L0::DebuggerL0>::initDebuggingInOs(osInterface);
     EXPECT_TRUE(result);
@@ -104,7 +106,7 @@ TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsT
     drmMock->setPerContextVMRequired(true);
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(static_cast<Drm *>(drmMock));
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
 
     auto result = WhiteBox<::L0::DebuggerL0>::initDebuggingInOs(osInterface);
     EXPECT_FALSE(result);
@@ -125,7 +127,7 @@ TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsTh
     drmMock->setPerContextVMRequired(false);
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(static_cast<Drm *>(drmMock));
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
 
     auto result = WhiteBox<::L0::DebuggerL0>::initDebuggingInOs(osInterface);
     EXPECT_FALSE(result);

@@ -7,7 +7,8 @@
 
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/utilities/api_intercept.h"
 
 #include "opencl/source/api/api.h"
@@ -27,7 +28,7 @@ ClDevice *pickDeviceWithAdapterLuid(Platform *platform, LUID adapterLuid) {
     ClDevice *deviceToReturn = nullptr;
     for (auto i = 0u; i < platform->getNumDevices(); i++) {
         auto device = platform->getClDevice(i);
-        if (device->getRootDeviceEnvironment().osInterface->get()->getWddm()->verifyAdapterLuid(adapterLuid)) {
+        if (device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Wddm>()->verifyAdapterLuid(adapterLuid)) {
             deviceToReturn = device;
             break;
         }

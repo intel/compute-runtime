@@ -13,7 +13,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpu_info.h"
 
 #include "hw_cmds.h"
@@ -69,7 +69,7 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
 
 int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
     int ret = 0;
-    Drm *drm = osIface->get()->getDrm();
+    Drm *drm = osIface->getDriverModel()->as<Drm>();
 
     *outHwInfo = *inHwInfo;
     auto platform = &outHwInfo->platform;

@@ -28,7 +28,6 @@
 
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {
@@ -43,7 +42,7 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnviron
     : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield) {
 
     notifyAubCaptureImpl = DeviceCallbacks<GfxFamily>::notifyAubCapture;
-    this->wddm = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getWddm();
+    this->wddm = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Wddm>();
 
     PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(this->peekHwInfo());
 

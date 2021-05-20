@@ -8,7 +8,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
 
@@ -18,7 +18,7 @@ int HwInfoConfigHw<IGFX_GEMINILAKE>::configureHardwareCustom(HardwareInfo *hwInf
         return 0;
     }
 
-    Drm *drm = osIface->get()->getDrm();
+    Drm *drm = osIface->getDriverModel()->as<Drm>();
     FeatureTable *featureTable = &hwInfo->featureTable;
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
 

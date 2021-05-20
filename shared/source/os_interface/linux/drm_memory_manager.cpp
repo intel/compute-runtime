@@ -22,7 +22,7 @@
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "drm/i915_drm.h"
 
@@ -952,7 +952,7 @@ size_t DrmMemoryManager::getUserptrAlignment() {
 }
 
 Drm &DrmMemoryManager::getDrm(uint32_t rootDeviceIndex) const {
-    return *this->executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm();
+    return *this->executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>();
 }
 
 uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {

@@ -17,8 +17,8 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
@@ -485,7 +485,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, CheckDrmFree) {
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GIVENCSRWHENgetDMTHENNotNull) {
     Drm *pDrm = nullptr;
     if (csr->getOSInterface()) {
-        pDrm = csr->getOSInterface()->get()->getDrm();
+        pDrm = csr->getOSInterface()->getDriverModel()->as<Drm>();
     }
     ASSERT_NE(nullptr, pDrm);
 }
@@ -1601,7 +1601,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreate
     executionEnvironment.rootDeviceEnvironments[1]->setHwInfo(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[1]->initGmm();
     executionEnvironment.rootDeviceEnvironments[1]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[1]->osInterface->get()->setDrm(new DrmMockCustom());
+    executionEnvironment.rootDeviceEnvironments[1]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom()));
     auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, 1, gemCloseWorkerMode::gemCloseWorkerActive);
     auto pageTableManager = csr->createPageTableManager();
     EXPECT_EQ(executionEnvironment.rootDeviceEnvironments[1]->pageTableManager.get(), pageTableManager);

@@ -9,9 +9,9 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -216,8 +216,8 @@ TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoThenReturnDriver
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->get()->setWddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
-    EXPECT_NE(nullptr, osInterface->get()->getWddm());
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(Wddm::createWddm(nullptr, rootDeviceEnvironment)));
+    EXPECT_NE(nullptr, osInterface->getDriverModel()->as<Wddm>());
 
     std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr, osInterface.get()));
 
@@ -266,8 +266,8 @@ TEST_F(DriverInfoWindowsTest, givenDriverInfoWindowsWhenGetImageSupportIsCalledT
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->get()->setWddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
-    EXPECT_NE(nullptr, osInterface->get()->getWddm());
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(Wddm::createWddm(nullptr, rootDeviceEnvironment)));
+    EXPECT_NE(nullptr, osInterface->getDriverModel()->as<Wddm>());
 
     std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr, osInterface.get()));
 

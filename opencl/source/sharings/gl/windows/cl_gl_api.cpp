@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/utilities/api_intercept.h"
 
@@ -359,7 +359,7 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
         ClDevice *deviceToReturn = nullptr;
         for (auto i = 0u; i < platform->getNumDevices(); i++) {
             auto device = platform->getClDevice(i);
-            if (device->getRootDeviceEnvironment().osInterface->get()->getWddm()->verifyAdapterLuid(glSharing->getAdapterLuid(reinterpret_cast<GLContext>(static_cast<uintptr_t>(GLHGLRCHandle))))) {
+            if (device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Wddm>()->verifyAdapterLuid(glSharing->getAdapterLuid(reinterpret_cast<GLContext>(static_cast<uintptr_t>(GLHGLRCHandle))))) {
                 deviceToReturn = device;
                 break;
             }

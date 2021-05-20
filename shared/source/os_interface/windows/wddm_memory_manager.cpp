@@ -25,7 +25,6 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
@@ -723,7 +722,7 @@ bool WddmMemoryManager::createGpuAllocationsWithRetry(WddmAllocation *allocation
 }
 
 Wddm &WddmMemoryManager::getWddm(uint32_t rootDeviceIndex) const {
-    return *this->executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getWddm();
+    return *this->executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Wddm>();
 }
 
 void *WddmMemoryManager::reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) {

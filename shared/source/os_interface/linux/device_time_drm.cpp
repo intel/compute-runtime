@@ -8,7 +8,7 @@
 #include "shared/source/os_interface/linux/device_time_drm.h"
 
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "drm/i915_drm.h"
 
@@ -18,7 +18,7 @@ namespace NEO {
 
 DeviceTimeDrm::DeviceTimeDrm(OSInterface *osInterface) {
     if (osInterface) {
-        pDrm = osInterface->get()->getDrm();
+        pDrm = osInterface->getDriverModel()->as<Drm>();
     }
     timestampTypeDetect();
 }

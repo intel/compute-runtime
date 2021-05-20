@@ -26,7 +26,6 @@
 #include "shared/source/os_interface/windows/kmdaf_listener.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/adapter_info.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
@@ -60,7 +59,8 @@ Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
 Wddm::VirtualAllocFcn Wddm::virtualAllocFnc = getVirtualAlloc();
 Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
 
-Wddm::Wddm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
+Wddm::Wddm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
+    : DriverModel(DriverModelType::WDDM), hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     UNRECOVERABLE_IF(!hwDeviceId);
     featureTable.reset(new FeatureTable());
     workaroundTable.reset(new WorkaroundTable());
@@ -83,7 +83,7 @@ Wddm::~Wddm() {
 bool Wddm::init() {
     if (!rootDeviceEnvironment.osInterface) {
         rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
-        rootDeviceEnvironment.osInterface->get()->setWddm(this);
+        rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(this));
     }
     if (!queryAdapterInfo()) {
         return false;
@@ -257,11 +257,11 @@ bool validDriverStorePath(OsEnvironmentWin &osEnvironment, D3DKMT_HANDLE adapter
 
     if (status != STATUS_SUCCESS) {
         DEBUG_BREAK_IF("queryAdapterInfo failed");
-        return nullptr;
+        return false;
     }
 
-    DriverInfoWindows driverInfo(adapterInfo.DeviceRegistryPath, PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue));
-    return driverInfo.isCompatibleDriverStore();
+    std::string deviceRegistryPath = adapterInfo.DeviceRegistryPath;
+    return isCompatibleDriverStore(std::move(deviceRegistryPath));
 }
 
 std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid) {
@@ -632,7 +632,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
         status = getGdi()->createAllocation2(&CreateAllocation);
 
         if (status != STATUS_SUCCESS) {
-            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, __FUNCTION__ "status: %d", status);
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", __FUNCTION__, status);
             DEBUG_BREAK_IF(status != STATUS_GRAPHICS_NO_VIDEO_MEMORY);
             break;
         }
@@ -646,7 +646,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
 
             if (!success) {
                 osHandles.fragmentStorageData[allocationIndex].freeTheFragment = true;
-                PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, __FUNCTION__ "mapGpuVirtualAddress: %d", success);
+                PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s mapGpuVirtualAddress: %d", __FUNCTION__, success);
                 DEBUG_BREAK_IF(true);
                 return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
             }
@@ -888,8 +888,7 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
 
 void Wddm::getDeviceState() {
 #ifdef _DEBUG
-    D3DKMT_GETDEVICESTATE GetDevState;
-    memset(&GetDevState, 0, sizeof(GetDevState));
+    D3DKMT_GETDEVICESTATE GetDevState = {};
     NTSTATUS status = STATUS_SUCCESS;
 
     GetDevState.hDevice = device;
@@ -1137,7 +1136,7 @@ void Wddm::waitOnPagingFenceFromCpu() {
     perfLogResidencyWaitPagingeFenceLog(residencyLogger.get(), *getPagingFenceAddress());
 }
 
-void Wddm::setGmmInputArg(void *args) {
+void Wddm::setGmmInputArgs(void *args) {
     auto gmmInArgs = reinterpret_cast<GMM_INIT_IN_ARGS *>(args);
 
     gmmInArgs->stAdapterBDF = this->adapterBDF;

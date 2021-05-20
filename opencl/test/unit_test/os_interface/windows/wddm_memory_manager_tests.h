@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
@@ -178,7 +178,7 @@ class MockWddmMemoryManagerTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 2);
         wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[1].get());
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setWddm(wddm);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     }
 

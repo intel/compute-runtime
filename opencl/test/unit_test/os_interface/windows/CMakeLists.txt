@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -40,6 +40,7 @@ set(IGDRCL_SRCS_tests_os_interface_windows
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_handler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_registry_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_sys_calls.h
 )
 if(WIN32)
   file(GLOB IGDRCL_SRC_tests_wddm_interface "${CMAKE_CURRENT_SOURCE_DIR}/wddm2[0-9]_tests\.cpp")

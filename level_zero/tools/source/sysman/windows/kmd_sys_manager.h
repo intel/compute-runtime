@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/tools/source/sysman/windows/kmd_sys.h"

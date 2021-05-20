@@ -5,7 +5,8 @@
  *
  */
 
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/metrics/metric_query_imp.h"
@@ -26,15 +27,15 @@ const char *MetricsLibrary::getFilename() { return METRICS_LIBRARY_NAME; }
 
 bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &contextData) {
 
-    auto osInterface = device.getOsInterface().get();
+    auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
     auto &osData = contextData.ClientData->Windows;
 
     // Copy escape data (adapter/device/escape function).
     osData.KmdInstrumentationEnabled = true;
-    osData.Device = reinterpret_cast<void *>(static_cast<UINT_PTR>(osInterface->getDeviceHandle()));
-    osData.Escape = osInterface->getEscapeHandle();
+    osData.Device = reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getDeviceHandle()));
+    osData.Escape = wddm->getEscapeHandle();
     osData.Adapter =
-        reinterpret_cast<void *>(static_cast<UINT_PTR>(osInterface->getAdapterHandle()));
+        reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getAdapter()));
 
     return osData.Device && osData.Escape && osData.Adapter;
 }

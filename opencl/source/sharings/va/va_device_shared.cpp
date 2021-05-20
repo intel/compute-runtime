@@ -7,8 +7,8 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/linux/pci_path.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform.h"
@@ -38,7 +38,7 @@ ClDevice *VADevice::getRootDeviceFromVaDisplay(Platform *pPlatform, VADisplay va
         auto device = pPlatform->getClDevice(i);
         NEO::Device *neoDevice = &device->getDevice();
 
-        auto *drm = neoDevice->getRootDeviceEnvironment().osInterface->get()->getDrm();
+        auto *drm = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>();
         auto pciPath = drm->getPciPath();
         if (devicePath == pciPath) {
             return device;

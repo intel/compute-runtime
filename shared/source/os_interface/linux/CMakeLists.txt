@@ -47,8 +47,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_linux.h

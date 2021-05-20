@@ -395,7 +395,9 @@ void WddmResidencyController::makeNonResidentEvictionAllocations(const Residency
 }
 
 bool WddmResidencyController::isInitialized() const {
-    if (!DebugManager.flags.DoNotRegisterTrimCallback.get()) {
+    bool requiresTrimCallbacks = OSInterface::requiresSupportForWddmTrimNotification;
+    requiresTrimCallbacks = requiresTrimCallbacks && (false == DebugManager.flags.DoNotRegisterTrimCallback.get());
+    if (requiresTrimCallbacks) {
         return trimCallbackHandle != nullptr;
     }
     return true;

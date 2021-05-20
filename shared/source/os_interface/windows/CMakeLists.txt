@@ -36,8 +36,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_memory_win.cpp

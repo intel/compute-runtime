@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
 
@@ -21,8 +21,8 @@ const char *MetricEnumeration::getMetricsDiscoveryFilename() { return "libmd.so.
 bool MetricEnumeration::getAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor) {
 
     auto &device = metricContext.getDevice();
-    auto osInterface = device.getOsInterface().get();
-    auto drm = osInterface->getDrm();
+    auto &osInterface = device.getOsInterface();
+    auto drm = osInterface.getDriverModel()->as<NEO::Drm>();
     auto drmFile = drm->getFileDescriptor();
     struct stat drmStat = {};
 

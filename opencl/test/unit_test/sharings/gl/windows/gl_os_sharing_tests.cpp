@@ -9,7 +9,6 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 
@@ -19,6 +18,7 @@
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/os_interface/windows/mock_sys_calls.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 
 #include "gtest/gtest.h"
@@ -26,30 +26,22 @@
 
 using namespace NEO;
 
-struct MockOSInterfaceImpl : OSInterface::OSInterfaceImpl {
-    HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,
-                       LPCSTR lpName) override {
-        if (eventNum++ == failEventNum) {
+struct MockOSInterface : OSInterface {
+    static HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName, void *data) {
+        MockOSInterface *self = reinterpret_cast<MockOSInterface *>(data);
+        if (self->eventNum++ == self->failEventNum) {
             return INVALID_HANDLE;
         }
-        return OSInterface::OSInterfaceImpl::createEvent(lpEventAttributes, bManualReset, bInitialState, lpName);
+        return handleValue;
     }
-    BOOL closeHandle(HANDLE hObject) override {
-        ++closedEventsCount;
-        return OSInterface::OSInterfaceImpl::closeHandle(hObject);
+    static BOOL closeHandle(HANDLE hObject, void *data) {
+        MockOSInterface *self = reinterpret_cast<MockOSInterface *>(data);
+        ++self->closedEventsCount;
+        return (reinterpret_cast<HANDLE>(dummyHandle) == hObject) ? TRUE : FALSE;
     }
     int eventNum = 1;
     int failEventNum = 0;
     int closedEventsCount = 0;
-};
-
-struct MockOSInterface : OSInterface {
-    MockOSInterface() {
-        if (osInterfaceImpl != nullptr) {
-            delete osInterfaceImpl;
-        }
-        osInterfaceImpl = new MockOSInterfaceImpl();
-    }
 };
 
 TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenBackupContextIsCreated) {
@@ -89,7 +81,7 @@ struct GlArbSyncEventOsTest : public ::testing::Test {
         wddm = new WddmMock(*rootDeviceEnvironment);
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         osInterface = rootDeviceEnvironment->osInterface.get();
-        osInterface->get()->setWddm(wddm);
+        osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         gdi = new MockGdi();
         wddm->resetGdi(gdi);
     }
@@ -216,22 +208,22 @@ TEST_F(GlArbSyncEventOsTest, GivenNewGlSyncInfoWhenCreateEventFailsThenSetupArbS
     rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
 
     MockOSInterface mockOsInterface;
-    MockOSInterfaceImpl *mockOsInterfaceImpl = static_cast<MockOSInterfaceImpl *>(mockOsInterface.get());
+    auto createEventMock = changeSysCallMock(mockCreateEventClb, mockCreateEventClbData, MockOSInterface::createEvent, &mockOsInterface);
 
     auto wddm = new WddmMock(*rootDeviceEnvironment);
     auto gdi = new MockGdi();
     wddm->resetGdi(gdi);
     wddm->init();
 
-    mockOsInterface.get()->setWddm(wddm);
+    mockOsInterface.setDriverModel(std::unique_ptr<DriverModel>(wddm));
 
-    mockOsInterfaceImpl->failEventNum = mockOsInterfaceImpl->eventNum;
+    mockOsInterface.failEventNum = mockOsInterface.eventNum;
     int failuresCount = 0;
     auto ret = setupArbSyncObject(sharing, mockOsInterface, syncInfo);
     while (false == ret) {
         ++failuresCount;
-        mockOsInterfaceImpl->eventNum = 1;
-        ++mockOsInterfaceImpl->failEventNum;
+        mockOsInterface.eventNum = 1;
+        ++mockOsInterface.failEventNum;
         ret = setupArbSyncObject(sharing, mockOsInterface, syncInfo);
     }
     EXPECT_EQ(2, failuresCount);
@@ -254,12 +246,12 @@ TEST_F(GlArbSyncEventOsTest, GivenInvalidGlSyncInfoWhenCleanupArbSyncObjectIsCal
     wddm->init();
 
     MockOSInterface mockOsInterface;
-    MockOSInterfaceImpl *mockOsInterfaceImpl = static_cast<MockOSInterfaceImpl *>(mockOsInterface.get());
-    mockOsInterface.get()->setWddm(wddm);
+    auto closeHandleMock = changeSysCallMock(mockCloseHandleClb, mockCloseHandleClbData, MockOSInterface::closeHandle, &mockOsInterface);
+    mockOsInterface.setDriverModel(std::unique_ptr<DriverModel>(wddm));
 
     gdi->destroySynchronizationObject = DestroySyncObjectMock::destroySynchObject;
     cleanupArbSyncObject(mockOsInterface, nullptr);
-    EXPECT_EQ(0, mockOsInterfaceImpl->closedEventsCount);
+    EXPECT_EQ(0, mockOsInterface.closedEventsCount);
 }
 
 TEST_F(GlArbSyncEventOsTest, GivenValidGlSyncInfoWhenCleanupArbSyncObjectIsCalledThenProperCountOfDestructorsOfSyncAndEventsIsNotInvoked) {
@@ -285,8 +277,8 @@ TEST_F(GlArbSyncEventOsTest, GivenValidGlSyncInfoWhenCleanupArbSyncObjectIsCalle
     wddm->init();
 
     MockOSInterface mockOsInterface;
-    MockOSInterfaceImpl *mockOsInterfaceImpl = static_cast<MockOSInterfaceImpl *>(mockOsInterface.get());
-    mockOsInterface.get()->setWddm(wddm);
+    auto closeHandleMock = changeSysCallMock(mockCloseHandleClb, mockCloseHandleClbData, MockOSInterface::closeHandle, &mockOsInterface);
+    mockOsInterface.setDriverModel(std::unique_ptr<DriverModel>(wddm));
 
     CreateDestroySyncObjectMock::reset();
     gdi->destroySynchronizationObject = CreateDestroySyncObjectMock::destroySynchObject;
@@ -298,7 +290,7 @@ TEST_F(GlArbSyncEventOsTest, GivenValidGlSyncInfoWhenCleanupArbSyncObjectIsCalle
     syncInfo.submissionSynchronizationObject = 0x13cU;
 
     cleanupArbSyncObject(mockOsInterface, &syncInfo);
-    EXPECT_EQ(2, mockOsInterfaceImpl->closedEventsCount);
+    EXPECT_EQ(2, mockOsInterface.closedEventsCount);
     EXPECT_EQ(3, CreateDestroySyncObjectMock::getDestroyCounter());
 }
 

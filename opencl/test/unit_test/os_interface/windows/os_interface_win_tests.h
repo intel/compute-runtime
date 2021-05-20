@@ -9,7 +9,7 @@
 
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "gtest/gtest.h"

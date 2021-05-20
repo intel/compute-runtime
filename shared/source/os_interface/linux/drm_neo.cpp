@@ -16,9 +16,10 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/linux/drm_gem_close_worker.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/os_inc.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/linux/pci_path.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/system_info.h"
@@ -62,7 +63,9 @@ constexpr const char *getIoctlParamString(int param) {
 
 } // namespace IoctlHelper
 
-Drm::Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
+Drm::Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
+    : DriverModel(DriverModelType::DRM),
+      hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     pagingFence.fill(0u);
     fenceVal.fill(0u);
 }
@@ -730,6 +733,13 @@ ADAPTER_BDF Drm::getAdapterBDF() const {
     adapterBDF.Device = device;
 
     return adapterBDF;
+}
+
+void Drm::setGmmInputArgs(void *args) {
+    auto gmmInArgs = reinterpret_cast<GMM_INIT_IN_ARGS *>(args);
+    auto adapterBDF = this->getAdapterBDF();
+    gmmInArgs->FileDescriptor = adapterBDF.Data;
+    gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;
 }
 
 const std::vector<int> &Drm::getSliceMappings(uint32_t deviceIndex) {

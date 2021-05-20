@@ -8,7 +8,7 @@
 #include "opencl/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
@@ -105,7 +105,7 @@ void HwInfoConfigTestLinux::SetUp() {
 
     osInterface = new OSInterface();
     drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    osInterface->get()->setDrm(static_cast<Drm *>(drm));
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
     drm->StoredDeviceID = pInHwInfo.platform.usDeviceID;
     drm->StoredDeviceRevID = 0;
@@ -564,7 +564,7 @@ HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwI
     drm->setGtType(GTTYPE_GT1);
 
     auto osInterface = std::make_unique<OSInterface>();
-    osInterface->get()->setDrm(static_cast<Drm *>(drm));
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
     auto hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     HardwareInfo outHwInfo;

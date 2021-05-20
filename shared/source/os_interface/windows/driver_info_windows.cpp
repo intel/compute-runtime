@@ -7,8 +7,8 @@
 
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
@@ -39,10 +39,7 @@ DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, const OSInterface *os
         return nullptr;
     }
 
-    auto osInterfaceImpl = osInterface->get();
-    UNRECOVERABLE_IF(osInterfaceImpl == nullptr);
-
-    auto wddm = osInterfaceImpl->getWddm();
+    auto wddm = osInterface->getDriverModel()->as<Wddm>();
     UNRECOVERABLE_IF(wddm == nullptr);
 
     return new DriverInfoWindows(wddm->getDeviceRegistryPath(), wddm->getPciBusInfo());

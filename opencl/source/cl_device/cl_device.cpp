@@ -57,7 +57,7 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
     }
     if (getSharedDeviceInfo().debuggerActive && getSourceLevelDebugger()) {
         auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
-        getSourceLevelDebugger()->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
+        getSourceLevelDebugger()->notifyNewDevice(osInterface ? osInterface->getDriverModel()->getDeviceHandle() : 0);
     }
 }
 

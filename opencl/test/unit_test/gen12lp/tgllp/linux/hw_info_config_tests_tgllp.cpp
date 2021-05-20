@@ -7,7 +7,6 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
@@ -22,7 +21,7 @@ struct HwInfoConfigTestLinuxTgllp : HwInfoConfigTestLinux {
         HwInfoConfigTestLinux::SetUp();
 
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-        osInterface->get()->setDrm(drm);
+        osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
         drm->StoredDeviceID = 0xFF20;
         drm->setGtType(GTTYPE_GT1);

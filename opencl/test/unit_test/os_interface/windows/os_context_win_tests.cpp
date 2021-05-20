@@ -26,25 +26,25 @@ struct OsContextWinTest : public WddmTestWithMockGdiDll {
 };
 
 TEST_F(OsContextWinTest, givenWddm20WhenCreatingOsContextThenOsContextIsInitialized) {
-    osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false);
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, 1, engineTypeUsage, preemptionMode, false);
     EXPECT_NO_THROW(osContext->ensureContextInitialized());
 }
 
 TEST_F(OsContextWinTest, givenWddm20WhenCreatingWddmContextFailThenOsContextCreationFails) {
     wddm->device = INVALID_HANDLE;
-    osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false);
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, 1, engineTypeUsage, preemptionMode, false);
     EXPECT_ANY_THROW(osContext->ensureContextInitialized());
 }
 
 TEST_F(OsContextWinTest, givenWddm20WhenCreatingWddmMonitorFenceFailThenOsContextCreationFails) {
     *getCreateSynchronizationObject2FailCallFcn() = true;
-    osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false);
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, 1, engineTypeUsage, preemptionMode, false);
     EXPECT_ANY_THROW(osContext->ensureContextInitialized());
 }
 
 TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackFailThenOsContextCreationFails) {
     *getRegisterTrimNotificationFailCallFcn() = true;
-    osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false);
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, 1, engineTypeUsage, preemptionMode, false);
     EXPECT_ANY_THROW(osContext->ensureContextInitialized());
 }
 
@@ -53,6 +53,6 @@ TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackIsDisabledThenOsCont
     DebugManager.flags.DoNotRegisterTrimCallback.set(true);
     *getRegisterTrimNotificationFailCallFcn() = true;
 
-    osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engineTypeUsage, preemptionMode, false);
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, 1, engineTypeUsage, preemptionMode, false);
     EXPECT_NO_THROW(osContext->ensureContextInitialized());
 }

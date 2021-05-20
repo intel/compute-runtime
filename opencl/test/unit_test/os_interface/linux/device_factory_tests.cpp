@@ -8,7 +8,6 @@
 #include "opencl/test/unit_test/os_interface/linux/device_factory_tests.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
@@ -65,7 +64,7 @@ TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAl
     EXPECT_TRUE(success);
     EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[0]->osInterface);
     EXPECT_NE(nullptr, pDrm);
-    EXPECT_EQ(pDrm, executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+    EXPECT_EQ(pDrm, executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
 }
 
 TEST_F(DeviceFactoryLinuxTest, whenDrmIsNotCretedThenPrepareDeviceEnvironmentsFails) {

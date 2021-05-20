@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/core/source/device/device.h"

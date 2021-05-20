@@ -11,12 +11,12 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
@@ -694,7 +694,7 @@ TEST_F(Wddm20Tests, WhenMakingNonResidentThenEvictIsCalled) {
 
     EXPECT_EQ(1u, gdi->getEvictArg().NumAllocations);
     EXPECT_EQ(&handle, gdi->getEvictArg().AllocationList);
-    EXPECT_EQ(wddm->getDevice(), gdi->getEvictArg().hDevice);
+    EXPECT_EQ(wddm->getDeviceHandle(), gdi->getEvictArg().hDevice);
     EXPECT_EQ(0u, gdi->getEvictArg().NumBytesToTrim);
 }
 
@@ -719,7 +719,7 @@ TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedTo
 
     wddm->destroyAllocation(&allocation, osContext.get());
 
-    EXPECT_EQ(wddm->getDevice(), gdi->getDestroyArg().hDevice);
+    EXPECT_EQ(wddm->getDeviceHandle(), gdi->getDestroyArg().hDevice);
     EXPECT_EQ(1u, gdi->getDestroyArg().AllocationCount);
     EXPECT_NE(nullptr, gdi->getDestroyArg().phAllocationList);
 }
@@ -765,7 +765,7 @@ TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     EXPECT_TRUE(status);
 
     EXPECT_NE(nullptr, gdi->getWaitFromCpuArg().FenceValueArray);
-    EXPECT_EQ((D3DKMT_HANDLE)wddm->getDevice(), gdi->getWaitFromCpuArg().hDevice);
+    EXPECT_EQ((D3DKMT_HANDLE)wddm->getDeviceHandle(), gdi->getWaitFromCpuArg().hDevice);
     EXPECT_EQ(1u, gdi->getWaitFromCpuArg().ObjectCount);
     EXPECT_NE(nullptr, gdi->getWaitFromCpuArg().ObjectHandleArray);
 }
@@ -1255,7 +1255,7 @@ TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoSucceedsThenDeviceCallbacksAr
     auto gmmMemory = static_cast<MockGmmMemory *>(wddm->getGmmMemory());
 
     expectedDeviceCb.Adapter.KmtHandle = wddm->getAdapter();
-    expectedDeviceCb.hDevice.KmtHandle = wddm->getDevice();
+    expectedDeviceCb.hDevice.KmtHandle = wddm->getDeviceHandle();
     expectedDeviceCb.hCsr = nullptr;
     expectedDeviceCb.PagingQueue = wddm->getPagingQueue();
     expectedDeviceCb.PagingFence = wddm->getPagingQueueSyncObject();

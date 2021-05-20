@@ -8,7 +8,7 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -391,7 +391,7 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectB
     DrmMockNonFailing *drm = new DrmMockNonFailing(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_TRUE(drm->isPerContextVMRequired());
 
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
 
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));

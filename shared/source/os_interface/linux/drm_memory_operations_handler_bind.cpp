@@ -15,7 +15,7 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
 

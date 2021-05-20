@@ -11,10 +11,10 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
@@ -40,14 +40,14 @@ struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
         executionEnvironment->osEnvironment.reset(osEnvironment);
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironemnt));
         rootDeviceEnvironemnt->osInterface = std::make_unique<OSInterface>();
-        rootDeviceEnvironemnt->osInterface->get()->setWddm(wddm);
+        rootDeviceEnvironemnt->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         rootDeviceEnvironemnt->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = rootDeviceEnvironemnt->osInterface.get();
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
         auto hwInfo = rootDeviceEnvironemnt->getHardwareInfo();
         auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-        osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1u, engine, preemptionMode,
+        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, 1u, engine, preemptionMode,
                                                    false);
         osContext->ensureContextInitialized();
         mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(wddm->temporaryResources.get());
@@ -71,7 +71,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnv
         wddmMockInterface = new WddmMockInterface20(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
-        rootDeviceEnvironment->osInterface->get()->setWddm(wddm);
+        rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = rootDeviceEnvironment->osInterface.get();
     }
@@ -84,7 +84,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnv
 
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-        osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engine, preemptionMode,
+        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, 1, engine, preemptionMode,
                                                    false);
         osContext->ensureContextInitialized();
     }
@@ -108,7 +108,7 @@ struct WddmInstrumentationGmmFixture {
         gmmMem = new ::testing::NiceMock<GmockGmmMemory>(rootDeviceEnvironment->getGmmClientContext());
         wddm->gmmMemory.reset(gmmMem);
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
-        rootDeviceEnvironment->osInterface->get()->setWddm(wddm);
+        rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     }
     void TearDown() {
     }

@@ -11,8 +11,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/ult_hw_config.inl"
@@ -545,7 +545,7 @@ TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCr
     auto drm = new DrmMockSuccess(fakeFd, *executionEnvironment.rootDeviceEnvironments[0]);
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment);
     EXPECT_NE(nullptr, drmMemoryManager.get());
     executionEnvironment.memoryManager = std::move(drmMemoryManager);

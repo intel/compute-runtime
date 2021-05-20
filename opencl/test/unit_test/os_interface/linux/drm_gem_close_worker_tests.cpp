@@ -12,7 +12,7 @@
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
@@ -68,7 +68,7 @@ class DrmGemCloseWorkerFixture {
         this->drmMock = new DrmMockForWorker;
 
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drmMock);
+        executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drmMock, 0u);
 
         this->mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,

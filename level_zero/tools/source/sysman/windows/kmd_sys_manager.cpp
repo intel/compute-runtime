@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -136,7 +136,7 @@ bool KmdSysManager::escape(uint32_t escapeOp, uint64_t pDataIn, uint32_t dataInS
         escapeCommand.Flags.Reserved = 0;
         escapeCommand.hAdapter = (D3DKMT_HANDLE)0;
         escapeCommand.hContext = (D3DKMT_HANDLE)0;
-        escapeCommand.hDevice = (D3DKMT_HANDLE)pWddmAccess->getDevice();
+        escapeCommand.hDevice = (D3DKMT_HANDLE)pWddmAccess->getDeviceHandle();
         escapeCommand.pPrivateDriverData = &pcEscape;
         escapeCommand.PrivateDriverDataSize = sizeof(pcEscape);
         escapeCommand.Type = D3DKMT_ESCAPE_DRIVERPRIVATE;

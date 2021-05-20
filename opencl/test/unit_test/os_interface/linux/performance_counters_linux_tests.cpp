@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/source/os_interface/linux/performance_counters_linux.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
@@ -36,5 +36,5 @@ TEST_F(PerformanceCountersLinuxTest, WhenCreatingPerformanceCountersThenDrmFileD
     auto performanceCountersLinux = static_cast<PerformanceCountersLinux *>(performanceCounters.get());
 
     EXPECT_EQ(LinuxAdapterType::DrmFileDescriptor, performanceCountersLinux->adapter.Type);
-    EXPECT_EQ(osInterface->get()->getDrm()->getFileDescriptor(), performanceCountersLinux->adapter.DrmFileDescriptor);
+    EXPECT_EQ(osInterface->getDriverModel()->as<NEO::Drm>()->getFileDescriptor(), performanceCountersLinux->adapter.DrmFileDescriptor);
 }

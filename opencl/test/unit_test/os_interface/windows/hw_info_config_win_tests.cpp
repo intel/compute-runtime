@@ -9,7 +9,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 

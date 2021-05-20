@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/constants.h"
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
@@ -37,7 +37,7 @@ TEST(osInterfaceTests, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     EXPECT_NE(0, memcmp(&adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
     EXPECT_STRNE(expectedRegistryPath, gmmInputArgs.DeviceRegistryPath);
 
-    rootDeviceEnvironment.osInterface->setGmmInputArgs(&gmmInputArgs);
+    rootDeviceEnvironment.osInterface->getDriverModel()->setGmmInputArgs(&gmmInputArgs);
 
     EXPECT_EQ(0, memcmp(&adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, gmmInputArgs.ClientType);

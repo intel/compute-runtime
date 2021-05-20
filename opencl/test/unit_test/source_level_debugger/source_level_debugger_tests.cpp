@@ -519,7 +519,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         unique_ptr<MockClDevice> pClDevice(new MockClDevice{device.get()});
         EXPECT_TRUE(interceptor.newDeviceCalled);
-        uint32_t deviceHandleExpected = device->getGpgpuCommandStreamReceiver().getOSInterface() != nullptr ? device->getGpgpuCommandStreamReceiver().getOSInterface()->getDeviceHandle() : 0;
+        uint32_t deviceHandleExpected = device->getGpgpuCommandStreamReceiver().getOSInterface() != nullptr ? device->getGpgpuCommandStreamReceiver().getOSInterface()->getDriverModel()->getDeviceHandle() : 0;
         EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandleExpected)), interceptor.newDeviceArgIn.dh);
         pClDevice.reset();
         device.release();
@@ -548,7 +548,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         ASSERT_NE(nullptr, device->getGpgpuCommandStreamReceiver().getOSInterface());
 
         EXPECT_TRUE(interceptor.newDeviceCalled);
-        uint32_t deviceHandleExpected = device->getGpgpuCommandStreamReceiver().getOSInterface()->getDeviceHandle();
+        uint32_t deviceHandleExpected = device->getGpgpuCommandStreamReceiver().getOSInterface()->getDriverModel()->getDeviceHandle();
         EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandleExpected)), interceptor.newDeviceArgIn.dh);
         device.release();
     }

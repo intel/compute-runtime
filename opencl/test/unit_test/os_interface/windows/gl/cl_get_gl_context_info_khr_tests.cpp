@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -145,7 +145,7 @@ TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfAdapterLuidFai
 
     auto device = nonDefaultPlatform->getClDevice(0);
 
-    static_cast<WddmMock *>(device->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyAdapterLuidReturnValue = false;
+    static_cast<WddmMock *>(device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Wddm>())->verifyAdapterLuidReturnValue = false;
     size_t retSize = 0;
     cl_device_id retDevice = 0;
 
@@ -172,8 +172,8 @@ TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfAdapterLuidFai
     auto device1 = nonDefaultPlatform->getClDevice(0);
     cl_device_id expectedDevice = device1;
 
-    static_cast<WddmMock *>(device0->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyAdapterLuidReturnValue = false;
-    static_cast<WddmMock *>(device1->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyAdapterLuidReturnValue = true;
+    static_cast<WddmMock *>(device0->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Wddm>())->verifyAdapterLuidReturnValue = false;
+    static_cast<WddmMock *>(device1->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Wddm>())->verifyAdapterLuidReturnValue = true;
     size_t retSize = 0;
     cl_device_id retDevice = 0;
 

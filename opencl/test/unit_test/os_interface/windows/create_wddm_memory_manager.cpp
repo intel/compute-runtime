@@ -8,7 +8,6 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 

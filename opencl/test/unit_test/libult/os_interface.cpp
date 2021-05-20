@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,5 @@
 namespace NEO {
 
 bool OSInterface::osEnableLocalMemory = true;
-
-void OSInterface::setGmmInputArgs(void *args) {}
 
 } // namespace NEO

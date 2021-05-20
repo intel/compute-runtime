@@ -8,7 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
@@ -38,7 +38,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto mock = new MockDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(executionEnvironment);
@@ -108,7 +108,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto mock = new MockDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(executionEnvironment);

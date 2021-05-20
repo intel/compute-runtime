@@ -8,7 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 
@@ -27,7 +27,7 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInDevicePoolIs
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]);
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
     TestedDrmMemoryManager memoryManager(executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
@@ -45,7 +45,7 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenLockResourceIsCalledOn
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]);
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
     TestedDrmMemoryManager memoryManager(executionEnvironment);
     DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
@@ -60,7 +60,7 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenFreeGraphicsMemoryIsCa
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]);
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
     TestedDrmMemoryManager memoryManager(executionEnvironment);
 

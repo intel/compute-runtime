@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
@@ -35,8 +35,8 @@ class MetricQueryPoolLinuxTest : public MetricContextFixture,
     void SetUp() override {
         MetricContextFixture::SetUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-        auto osInterface = device->getOsInterface().get();
-        osInterface->setDrm(new DrmMock(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+        auto &osInterface = device->getOsInterface();
+        osInterface.setDriverModel(std::make_unique<DrmMock>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
     }
 
     void TearDown() override {
@@ -59,9 +59,9 @@ TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenGetContextDataIsCalled
 
     EXPECT_EQ(mockMetricsLibrary->metricsLibraryGetContextData(*device, contextData), true);
 
-    auto osInterface = device->getOsInterface().get();
+    auto &osInterface = device->getOsInterface();
 
-    EXPECT_EQ(contextData.ClientData->Linux.Adapter->DrmFileDescriptor, osInterface->getDrm()->getFileDescriptor());
+    EXPECT_EQ(contextData.ClientData->Linux.Adapter->DrmFileDescriptor, osInterface.getDriverModel()->as<Drm>()->getFileDescriptor());
     EXPECT_EQ(contextData.ClientData->Linux.Adapter->Type, LinuxAdapterType::DrmFileDescriptor);
 }
 
@@ -71,8 +71,8 @@ class MetricEnumerationTestLinux : public MetricContextFixture,
     void SetUp() override {
         MetricContextFixture::SetUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-        auto osInterface = device->getOsInterface().get();
-        osInterface->setDrm(new DrmMock(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
+        auto &osInterface = device->getOsInterface();
+        osInterface.setDriverModel(std::make_unique<DrmMock>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
     }
 
     void TearDown() override {

@@ -17,6 +17,8 @@ namespace NEO {
 
 class SettingsReader;
 
+bool isCompatibleDriverStore(std::string &&deviceRegistryPath);
+
 class DriverInfoWindows : public DriverInfo {
   public:
     DriverInfoWindows(const std::string &path, const PhysicalDevicePciBusInfo &pciBusInfo);

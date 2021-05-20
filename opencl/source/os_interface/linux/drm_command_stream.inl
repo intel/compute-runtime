@@ -22,7 +22,7 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 
@@ -40,7 +40,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
 
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
 
-    this->drm = rootDeviceEnvironment->osInterface->get()->getDrm();
+    this->drm = rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>();
     residency.reserve(512);
     execObjectsStorage.reserve(512);
 

@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/os_interface/linux/os_interface.h"
-
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
@@ -14,6 +12,7 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include <sys/stat.h>
 #include <system_error>
@@ -26,37 +25,11 @@ bool OSInterface::newResourceImplicitFlush = true;
 bool OSInterface::gpuIdleImplicitFlush = true;
 bool OSInterface::requiresSupportForWddmTrimNotification = false;
 
-OSInterface::OSInterfaceImpl::OSInterfaceImpl() = default;
-OSInterface::OSInterfaceImpl::~OSInterfaceImpl() = default;
-void OSInterface::OSInterfaceImpl::setDrm(Drm *drm) {
-    this->drm.reset(drm);
-}
-
-bool OSInterface::OSInterfaceImpl::isDebugAttachAvailable() const {
-    if (drm) {
-        return drm->isDebugAttachAvailable();
+bool OSInterface::isDebugAttachAvailable() const {
+    if (driverModel) {
+        return driverModel->as<Drm>()->isDebugAttachAvailable();
     }
     return false;
-}
-
-OSInterface::OSInterface() {
-    osInterfaceImpl = new OSInterfaceImpl();
-}
-
-OSInterface::~OSInterface() {
-    delete osInterfaceImpl;
-}
-
-bool OSInterface::are64kbPagesEnabled() {
-    return osEnabled64kbPages;
-}
-
-uint32_t OSInterface::getDeviceHandle() const {
-    return 0;
-}
-
-bool OSInterface::isDebugAttachAvailable() const {
-    return osInterfaceImpl->isDebugAttachAvailable();
 }
 
 bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) {
@@ -66,7 +39,7 @@ bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDevi
     }
 
     osInterface.reset(new OSInterface());
-    osInterface->get()->setDrm(drm);
+    osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     auto hardwareInfo = getMutableHardwareInfo();
     HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
     if (hwConfig->configureHwInfo(hardwareInfo, hardwareInfo, osInterface.get())) {

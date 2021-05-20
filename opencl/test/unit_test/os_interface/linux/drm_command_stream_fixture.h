@@ -9,7 +9,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
@@ -34,7 +34,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         mock = new ::testing::NiceMock<DrmMockImpl>(mockFd);
 
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
+        executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
@@ -106,7 +106,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
 
         mock = new T();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(mock);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex);
 
         csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment, rootDeviceIndex, 1);

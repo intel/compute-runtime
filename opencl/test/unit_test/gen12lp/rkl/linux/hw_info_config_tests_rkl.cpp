@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
@@ -18,7 +18,7 @@ struct HwInfoConfigTestLinuxRkl : HwInfoConfigTestLinux {
         HwInfoConfigTestLinux::SetUp();
 
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-        osInterface->get()->setDrm(drm);
+        osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
         drm->StoredDeviceID = 0x4C8A;
         drm->setGtType(GTTYPE_GT1);

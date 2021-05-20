@@ -5,7 +5,8 @@
  *
  */
 
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
 
@@ -24,8 +25,8 @@ const char *MetricEnumeration::getMetricsDiscoveryFilename() { return METRICS_DI
 bool MetricEnumeration::getAdapterId(uint32_t &major, uint32_t &minor) {
 
     auto &device = metricContext.getDevice();
-    auto osInterface = device.getOsInterface().get();
-    auto luid = osInterface->getWddm()->getAdapterLuid();
+    auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
+    auto luid = wddm->getAdapterLuid();
 
     major = luid.HighPart;
     minor = luid.LowPart;

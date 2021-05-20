@@ -19,7 +19,7 @@ using namespace NEO;
 bool WddmInterface::createMonitoredFence(MonitoredFence &monitorFence) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_CREATESYNCHRONIZATIONOBJECT2 CreateSynchronizationObject = {0};
-    CreateSynchronizationObject.hDevice = wddm.getDevice();
+    CreateSynchronizationObject.hDevice = wddm.getDeviceHandle();
     CreateSynchronizationObject.Info.Type = D3DDDI_MONITORED_FENCE;
     CreateSynchronizationObject.Info.MonitoredFence.InitialFenceValue = 0;
 

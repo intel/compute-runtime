@@ -23,7 +23,7 @@ ze_result_t LinuxSysmanImp::init() {
     pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
     UNRECOVERABLE_IF(nullptr == pDevice);
     NEO::OSInterface &OsInterface = pDevice->getOsInterface();
-    pDrm = OsInterface.get()->getDrm();
+    pDrm = OsInterface.getDriverModel()->as<NEO::Drm>();
     int myDeviceFd = pDrm->getFileDescriptor();
     std::string myDeviceName;
     ze_result_t result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), myDeviceFd, myDeviceName);

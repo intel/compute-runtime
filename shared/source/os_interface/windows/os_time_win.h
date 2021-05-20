@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 

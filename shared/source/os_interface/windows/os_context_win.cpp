@@ -7,7 +7,7 @@
 
 #include "shared/source/os_interface/windows/os_context_win.h"
 
-#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 
@@ -16,7 +16,7 @@ namespace NEO {
 OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
                              EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice) {
     if (osInterface) {
-        return new OsContextWin(*osInterface->get()->getWddm(), contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
+        return new OsContextWin(*osInterface->getDriverModel()->as<Wddm>(), contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
     }
     return new OsContext(contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
 }

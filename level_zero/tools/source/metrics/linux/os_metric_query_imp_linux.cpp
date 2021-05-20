@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/metrics/metric_query_imp.h"
@@ -19,8 +19,8 @@ const char *MetricsLibrary::getFilename() { return "libigdml.so.1"; }
 
 bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &contextData) {
 
-    auto osInterface = device.getOsInterface().get();
-    auto drm = osInterface->getDrm();
+    auto &osInterface = device.getOsInterface();
+    auto drm = osInterface.getDriverModel()->as<NEO::Drm>();
     auto drmFileDescriptor = drm->getFileDescriptor();
     auto &osData = contextData.ClientData->Linux;
 

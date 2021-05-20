@@ -244,7 +244,7 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory_base.cpp
                    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
-                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_interface.cpp
+                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_interface_win.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
