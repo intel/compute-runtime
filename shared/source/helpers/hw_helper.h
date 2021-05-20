@@ -71,6 +71,7 @@ class HwHelper {
     virtual bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool hvAlign4Required() const = 0;
+    virtual bool preferSmallWorkgroupSizeForKernel(const size_t size) const = 0;
     virtual bool isBufferSizeSuitableForRenderCompression(const size_t size) const = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual FrontEndType getFrontEndType(const HardwareInfo &hwInfo) const = 0;
@@ -387,6 +388,8 @@ class HwHelperHw : public HwHelper {
     size_t getSingleTimestampPacketSize() const override;
 
     void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const override;
+
+    bool preferSmallWorkgroupSizeForKernel(const size_t size) const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

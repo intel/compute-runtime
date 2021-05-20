@@ -1276,6 +1276,12 @@ TEST_F(HwHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
     EXPECT_EQ(0u, hwHelper.getNumCacheRegions(*defaultHwInfo));
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, whenCheckingForSmallKernelPreferenceThenFalseIsReturned) {
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(0u));
+    EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(20000u));
+}
+
 TEST_F(HwHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
     auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
 
