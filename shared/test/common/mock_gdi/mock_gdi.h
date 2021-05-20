@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/os_interface/windows/device_time_wddm.h"
 #include "shared/source/os_interface/windows/os_time_win.h"
 
 #include "umKmInc/sharedata.h"

@@ -6,17 +6,14 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/windows/device_time_wddm.h"
 #include "shared/source/os_interface/windows/os_time_win.h"
 
 namespace NEO {
 class MockOSTimeWin : public OSTimeWin {
   public:
-    MockOSTimeWin(Wddm *inWddm) {
-        wddm = inWddm;
+    MockOSTimeWin(Wddm *wddm) {
+        this->deviceTime = std::make_unique<DeviceTimeWddm>(wddm);
     }
-
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
-        return OSTimeWin::getDynamicDeviceTimerResolution(hwInfo);
-    };
 };
 } // namespace NEO

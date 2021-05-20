@@ -527,22 +527,30 @@ TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledThenSuccessIsReturnedAndValuesS
     EXPECT_NE(0u, deviceTs);
 }
 
-class FalseCpuGpuTime : public NEO::OSTime {
+class FalseCpuGpuDeviceTime : public NEO::DeviceTime {
   public:
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override {
+    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         return false;
-    }
-    bool getCpuTime(uint64_t *timeStamp) override {
-        return true;
-    };
-    double getHostTimerResolution() const override {
-        return 0;
     }
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
         return NEO::OSTime::getDeviceTimerResolution(hwInfo);
     }
     uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
         return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
+    }
+};
+
+class FalseCpuGpuTime : public NEO::OSTime {
+  public:
+    FalseCpuGpuTime() {
+        this->deviceTime = std::make_unique<FalseCpuGpuDeviceTime>();
+    }
+
+    bool getCpuTime(uint64_t *timeStamp) override {
+        return true;
+    };
+    double getHostTimerResolution() const override {
+        return 0;
     }
     uint64_t getCpuRawTimestamp() override {
         return 0;
@@ -630,22 +638,29 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecond
     EXPECT_EQ(deviceProps.timerResolution, timerClock);
 }
 
-class FalseCpuTime : public NEO::OSTime {
+class FalseCpuDeviceTime : public NEO::DeviceTime {
   public:
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override {
+    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, NEO::OSTime *) override {
         return true;
-    }
-    bool getCpuTime(uint64_t *timeStamp) override {
-        return false;
-    };
-    double getHostTimerResolution() const override {
-        return 0;
     }
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
         return NEO::OSTime::getDeviceTimerResolution(hwInfo);
     }
     uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
         return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
+    }
+};
+
+class FalseCpuTime : public NEO::OSTime {
+  public:
+    FalseCpuTime() {
+        this->deviceTime = std::make_unique<FalseCpuDeviceTime>();
+    }
+    bool getCpuTime(uint64_t *timeStamp) override {
+        return false;
+    };
+    double getHostTimerResolution() const override {
+        return 0;
     }
     uint64_t getCpuRawTimestamp() override {
         return 0;

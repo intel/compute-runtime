@@ -74,13 +74,13 @@ TEST_F(DrmTimeTest, WhenGettingGpuTimeThenSuceeds) {
     uint64_t time = 0;
     auto pDrm = new DrmMockTime();
     osTime->updateDrm(pDrm);
-    auto error = osTime->getGpuTime32(&time);
+    auto error = osTime->getDeviceTime()->getGpuTime32(&time);
     EXPECT_TRUE(error);
     EXPECT_NE(0ULL, time);
-    error = osTime->getGpuTime36(&time);
+    error = osTime->getDeviceTime()->getGpuTime36(&time);
     EXPECT_TRUE(error);
     EXPECT_NE(0ULL, time);
-    error = osTime->getGpuTimeSplitted(&time);
+    error = osTime->getDeviceTime()->getGpuTimeSplitted(&time);
     EXPECT_TRUE(error);
     EXPECT_NE(0ULL, time);
 }
@@ -89,11 +89,11 @@ TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingGpuTimeThenFails) {
     uint64_t time = 0;
     auto pDrm = new DrmMockFail();
     osTime->updateDrm(pDrm);
-    auto error = osTime->getGpuTime32(&time);
+    auto error = osTime->getDeviceTime()->getGpuTime32(&time);
     EXPECT_FALSE(error);
-    error = osTime->getGpuTime36(&time);
+    error = osTime->getDeviceTime()->getGpuTime36(&time);
     EXPECT_FALSE(error);
-    error = osTime->getGpuTimeSplitted(&time);
+    error = osTime->getDeviceTime()->getGpuTimeSplitted(&time);
     EXPECT_FALSE(error);
 }
 
@@ -159,15 +159,15 @@ TEST_F(DrmTimeTest, WhenGettingTimeThenTimeIsCorrect) {
     osTime->updateDrm(drm);
 
     {
-        auto p = osTime->getGpuTime;
-        EXPECT_EQ(p, &OSTimeLinux::getGpuTime36);
+        auto p = osTime->getDeviceTime()->getGpuTime;
+        EXPECT_EQ(p, &DeviceTimeDrm::getGpuTime36);
     }
 
     {
         drm->ioctl_res = -1;
-        osTime->timestampTypeDetect();
-        auto p = osTime->getGpuTime;
-        EXPECT_EQ(p, &OSTimeLinux::getGpuTime32);
+        osTime->getDeviceTime()->timestampTypeDetect();
+        auto p = osTime->getDeviceTime()->getGpuTime;
+        EXPECT_EQ(p, &DeviceTimeDrm::getGpuTime32);
     }
 
     DrmMockCustom::IoctlResExt ioctlToPass = {1, 0};
@@ -175,9 +175,9 @@ TEST_F(DrmTimeTest, WhenGettingTimeThenTimeIsCorrect) {
         drm->reset();
         drm->ioctl_res = -1;
         drm->ioctl_res_ext = &ioctlToPass; // 2nd ioctl is successful
-        osTime->timestampTypeDetect();
-        auto p = osTime->getGpuTime;
-        EXPECT_EQ(p, &OSTimeLinux::getGpuTimeSplitted);
+        osTime->getDeviceTime()->timestampTypeDetect();
+        auto p = osTime->getDeviceTime()->getGpuTime;
+        EXPECT_EQ(p, &DeviceTimeDrm::getGpuTimeSplitted);
         drm->ioctl_res_ext = &drm->NONE;
     }
 }

@@ -6,13 +6,23 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/device_time_drm.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
 
 namespace NEO {
+class MockDeviceTimeDrm : public DeviceTimeDrm {
+  public:
+    using DeviceTimeDrm::pDrm;
+    MockDeviceTimeDrm() : DeviceTimeDrm(nullptr) {
+    }
+};
+
 class MockOSTimeLinux : public OSTimeLinux {
   public:
-    MockOSTimeLinux(OSInterface *osInterface) : OSTimeLinux(osInterface){};
+    MockOSTimeLinux(OSInterface *osInterface)
+        : OSTimeLinux(osInterface, std::make_unique<MockDeviceTimeDrm>()) {
+    }
     void setResolutionFunc(resolutionFunc_t func) {
         this->resolutionFunc = func;
     }
@@ -21,11 +31,15 @@ class MockOSTimeLinux : public OSTimeLinux {
     }
     void updateDrm(Drm *drm) {
         osInterface->get()->setDrm(drm);
-        pDrm = drm;
-        timestampTypeDetect();
+        static_cast<MockDeviceTimeDrm *>(this->deviceTime.get())->pDrm = drm;
+        static_cast<MockDeviceTimeDrm *>(this->deviceTime.get())->timestampTypeDetect();
     }
     static std::unique_ptr<MockOSTimeLinux> create(OSInterface *osInterface) {
         return std::unique_ptr<MockOSTimeLinux>(new MockOSTimeLinux(osInterface));
+    }
+
+    MockDeviceTimeDrm *getDeviceTime() {
+        return static_cast<MockDeviceTimeDrm *>(this->deviceTime.get());
     }
 };
 } // namespace NEO

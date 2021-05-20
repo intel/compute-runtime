@@ -418,12 +418,7 @@ struct MockTagNode : public TagNode<TagType> {
     }
 };
 
-class MyOSTime : public OSTime {
-  public:
-    static int instanceNum;
-    MyOSTime() {
-        instanceNum++;
-    }
+class MyOSDeviceTime : public DeviceTime {
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
         EXPECT_FALSE(true);
         return 1.0;
@@ -432,10 +427,20 @@ class MyOSTime : public OSTime {
         EXPECT_FALSE(true);
         return 0;
     }
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override {
+    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *) override {
         EXPECT_FALSE(true);
         return false;
     }
+};
+
+class MyOSTime : public OSTime {
+  public:
+    static int instanceNum;
+    MyOSTime() {
+        instanceNum++;
+        this->deviceTime = std::make_unique<MyOSDeviceTime>();
+    }
+
     bool getCpuTime(uint64_t *timeStamp) override {
         EXPECT_FALSE(true);
         return false;
