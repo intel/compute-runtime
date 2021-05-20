@@ -1101,7 +1101,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     cl_int retVal = CL_SUCCESS;
     auto buffer1 = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     auto buffer2 = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+    void *hostPtr = reinterpret_cast<void *>(0x4000);
     auto graphicsAllocation = buffer1->getGraphicsAllocation(pDevice->getRootDeviceIndex());
 
     size_t srcOrigin[] = {1, 2, 0};
