@@ -70,7 +70,7 @@ TEST(ImageStaticFunctionDescriptorTest, givenZeImageDescWhenConvertDescriptorThe
     EXPECT_EQ(desc.numSamples, 0u);
 }
 
-using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using ImageSupport = IsAtLeastProduct<IGFX_SKYLAKE>;
 using ImageCreate = Test<DeviceFixture>;
 
 HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreatedCorrectly, ImageSupport) {
