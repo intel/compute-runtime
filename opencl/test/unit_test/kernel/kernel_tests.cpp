@@ -3191,6 +3191,23 @@ TEST(KernelCreateTest, whenInitFailedThenReturnNull) {
     EXPECT_EQ(nullptr, ret);
 }
 
+TEST(MultiDeviceKernelCreateTest, whenInitFailedThenReturnNullAndPropagateErrorCode) {
+    MockContext context;
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 0;
+
+    KernelInfoContainer kernelInfos;
+    kernelInfos.push_back(pKernelInfo.get());
+
+    MockProgram program(&context, false, context.getDevices());
+
+    int32_t retVal = CL_SUCCESS;
+    auto pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(&program, kernelInfos, &retVal);
+
+    EXPECT_EQ(nullptr, pMultiDeviceKernel);
+    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+}
+
 TEST(ArgTypeTraits, GivenDefaultInitializedArgTypeMetadataThenAddressSpaceIsGlobal) {
     ArgTypeTraits metadata;
     EXPECT_EQ(NEO::KernelArgMetadata::AddrGlobal, metadata.addressQualifier);

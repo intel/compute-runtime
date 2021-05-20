@@ -38,6 +38,9 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
                 continue;
             }
             kernels[rootDeviceIndex] = Kernel::create<kernel_t, program_t>(program, *kernelInfos[rootDeviceIndex], *pDevice, errcodeRet);
+            if (!kernels[rootDeviceIndex]) {
+                return nullptr;
+            }
         }
         auto pMultiDeviceKernel = new multi_device_kernel_t(std::move(kernels), kernelInfos);
 
