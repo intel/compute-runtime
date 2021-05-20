@@ -207,7 +207,7 @@ bool Wddm::destroyPagingQueue() {
     if (pagingQueue) {
         DestroyPagingQueue.hPagingQueue = pagingQueue;
 
-        NTSTATUS status = getGdi()->destroyPagingQueue(&DestroyPagingQueue);
+        [[maybe_unused]] NTSTATUS status = getGdi()->destroyPagingQueue(&DestroyPagingQueue);
         DEBUG_BREAK_IF(status != STATUS_SUCCESS);
         pagingQueue = 0;
     }
@@ -602,8 +602,8 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
         auto osHandle = static_cast<OsHandleWin *>(osHandles.fragmentStorageData[i].osHandleStorage);
         if (osHandle->handle == (D3DKMT_HANDLE) nullptr && osHandles.fragmentStorageData[i].fragmentSize) {
             AllocationInfo[allocationCount].pPrivateDriverData = osHandle->gmm->gmmResourceInfo->peekHandle();
-            auto pSysMem = osHandles.fragmentStorageData[i].cpuPtr;
-            auto PSysMemFromGmm = osHandle->gmm->gmmResourceInfo->getSystemMemPointer();
+            [[maybe_unused]] auto pSysMem = osHandles.fragmentStorageData[i].cpuPtr;
+            [[maybe_unused]] auto PSysMemFromGmm = osHandle->gmm->gmmResourceInfo->getSystemMemPointer();
             DEBUG_BREAK_IF(PSysMemFromGmm != pSysMem);
             AllocationInfo[allocationCount].pSystemMem = osHandles.fragmentStorageData[i].cpuPtr;
             AllocationInfo[allocationCount].PrivateDriverDataSize = static_cast<unsigned int>(osHandle->gmm->gmmResourceInfo->peekHandleSize());
@@ -1044,7 +1044,7 @@ void Wddm::unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, V
 
 void Wddm::releaseReservedAddress(void *reservedAddress) {
     if (reservedAddress) {
-        auto status = virtualFree(reservedAddress, 0, MEM_RELEASE);
+        [[maybe_unused]] auto status = virtualFree(reservedAddress, 0, MEM_RELEASE);
         DEBUG_BREAK_IF(!status);
     }
 }
@@ -1065,7 +1065,7 @@ bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
             }
         } while (1);
         for (auto &it : invalidAddrVector) {
-            auto status = virtualFree(it, 0, MEM_RELEASE);
+            [[maybe_unused]] auto status = virtualFree(it, 0, MEM_RELEASE);
             DEBUG_BREAK_IF(!status);
         }
         if (reservedMem == nullptr) {

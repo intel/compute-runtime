@@ -133,7 +133,7 @@ void WddmInterface23::destroyHwQueue(D3DKMT_HANDLE hwQueue) {
         D3DKMT_DESTROYHWQUEUE destroyHwQueue = {};
         destroyHwQueue.hHwQueue = hwQueue;
 
-        auto status = wddm.getGdi()->destroyHwQueue(&destroyHwQueue);
+        [[maybe_unused]] auto status = wddm.getGdi()->destroyHwQueue(&destroyHwQueue);
         DEBUG_BREAK_IF(status != STATUS_SUCCESS);
     }
 }

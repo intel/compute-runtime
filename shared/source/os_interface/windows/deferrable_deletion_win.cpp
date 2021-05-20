@@ -27,7 +27,7 @@ DeferrableDeletionImpl::DeferrableDeletionImpl(Wddm *wddm, const D3DKMT_HANDLE *
     }
 }
 bool DeferrableDeletionImpl::apply() {
-    bool destroyStatus = wddm->destroyAllocations(handles, allocationCount, resourceHandle);
+    [[maybe_unused]] bool destroyStatus = wddm->destroyAllocations(handles, allocationCount, resourceHandle);
     DEBUG_BREAK_IF(!destroyStatus);
     return true;
 }

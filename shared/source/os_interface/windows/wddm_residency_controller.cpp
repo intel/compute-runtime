@@ -147,7 +147,7 @@ void WddmResidencyController::compactTrimCandidateList() {
 
     DEBUG_BREAK_IF(!(trimCandidateList[size - 1] != nullptr));
 
-    uint32_t previousCount = trimCandidatesCount;
+    [[maybe_unused]] uint32_t previousCount = trimCandidatesCount;
     DEBUG_BREAK_IF(trimCandidatesCount > trimCandidateList.size());
 
     while (freePosition < trimCandidatesCount && trimCandidateList[freePosition] != nullptr)
