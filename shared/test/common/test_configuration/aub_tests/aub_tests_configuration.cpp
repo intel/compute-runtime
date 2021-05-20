@@ -12,5 +12,6 @@ namespace NEO {
 unsigned int ultIterationMaxTime = 180;
 bool useMockGmm = false;
 const char *executionDirectorySuffix = "_aub";
+const char *executionName = "AUB";
 TestMode testMode = defaultTestMode;
 } // namespace NEO

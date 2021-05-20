@@ -46,6 +46,7 @@ const char *fSeparator = "/";
 namespace NEO {
 extern const char *hardwarePrefix[];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
+extern const char *executionName;
 
 extern const unsigned int ultIterationMaxTime;
 extern bool useMockGmm;
@@ -216,6 +217,14 @@ int main(int argc, char **argv) {
         return -1;
     }
 #endif
+
+    {
+        std::string envVar = std::string("NEO_") + executionName + "_DISABLE_TEST_ALARM";
+        char *envValue = getenv(envVar.c_str());
+        if (envValue != nullptr) {
+            enable_alarm = false;
+        }
+    }
 
     ::testing::InitGoogleMock(&argc, argv);
     HardwareInfo hwInfoForTests = DEFAULT_TEST_PLATFORM::hwInfo;

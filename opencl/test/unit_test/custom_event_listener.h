@@ -16,6 +16,9 @@
 #include <vector>
 
 std::string lastTest("");
+namespace NEO {
+extern const char *executionName;
+}
 
 class CCustomEventListener : public ::testing::TestEventListener {
   public:
@@ -106,26 +109,28 @@ class CCustomEventListener : public ::testing::TestEventListener {
         if (unitTest.Failed()) {
             ultStatus = "FAILED";
         }
+        auto executionNameLen = strlen(NEO::executionName);
 
         if (hardwarePrefix != "---") {
-            paddingS = std::string(hardwarePrefix.length(), ' ');
-            paddingE = std::string(hardwarePrefix.length(), '=');
+            paddingS = std::string(hardwarePrefix.length() + executionNameLen, ' ');
+            paddingE = std::string(hardwarePrefix.length() + executionNameLen, '=');
 
             fprintf(
                 stdout,
                 "\n"
-                "%s=====================\n"
-                "==  %s ULTs %s   ==\n"
-                "%s=====================\n",
-                paddingE.c_str(), hardwarePrefix.c_str(), ultStatus.c_str(), paddingE.c_str());
+                "%s==================\n"
+                "==  %s %ss %s   ==\n"
+                "%s==================\n",
+                paddingE.c_str(), hardwarePrefix.c_str(), NEO::executionName, ultStatus.c_str(), paddingE.c_str());
         } else {
+            paddingE = std::string(executionNameLen, '=');
             fprintf(
                 stdout,
                 "\n"
-                "=====================\n"
-                "==   ULTs %s   ==\n"
-                "=====================\n",
-                ultStatus.c_str());
+                "%s==================\n"
+                "==   %ss %s   ==\n"
+                "%s==================\n",
+                paddingE.c_str(), NEO::executionName, ultStatus.c_str(), paddingE.c_str());
         }
 
         fprintf(
@@ -136,7 +141,7 @@ class CCustomEventListener : public ::testing::TestEventListener {
             "Tests failed:   %d\n"
             "Tests disabled: %d\n"
             " Time elapsed:  %d ms\n"
-            "%s=====================\n",
+            "%s==================\n",
             testsRun,
             testsPassed,
             testsSkipped,
