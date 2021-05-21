@@ -155,3 +155,10 @@ TEST(MemObjHelper, givenParentMemObjAndHostPtrFlagsWhenValidatingMemoryPropertie
         EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, 0, imageWithAccessFlagsUnrestricted.get(), context));
     }
 }
+
+TEST(MemObjHelper, givenContextWithMultipleRootDevicesWhenIsSuitableForRenderCompressionIsCalledThenFalseIsReturned) {
+    MockDefaultContext context;
+
+    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context.pRootDevice0->getDevice());
+    EXPECT_FALSE(MemObjHelper::isSuitableForRenderCompression(true, memoryProperties, context, true));
+}

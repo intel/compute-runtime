@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/mem_obj_helper_common.inl"
 
 #include "memory_properties_flags.h"
@@ -12,6 +13,9 @@
 namespace NEO {
 
 bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, Context &context, bool preferCompression) {
+    if (context.getRootDeviceIndices().size() > 1u) {
+        return false;
+    }
     return renderCompressed && preferCompression;
 }
 
