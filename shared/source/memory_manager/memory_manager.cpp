@@ -619,7 +619,10 @@ bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocatio
     if (!graphicsAllocation->getUnderlyingBuffer()) {
         return false;
     }
-    memcpy_s(ptrOffset(graphicsAllocation->getUnderlyingBuffer(), destinationOffset), (graphicsAllocation->getUnderlyingBufferSize() - destinationOffset), memoryToCopy, sizeToCopy);
+    for (auto i = 0u; i < graphicsAllocation->storageInfo.getNumBanks(); ++i) {
+        memcpy_s(ptrOffset(static_cast<uint8_t *>(graphicsAllocation->getUnderlyingBuffer()) + i * graphicsAllocation->getUnderlyingBufferSize(), destinationOffset),
+                 (graphicsAllocation->getUnderlyingBufferSize() - destinationOffset), memoryToCopy, sizeToCopy);
+    }
     return true;
 }
 

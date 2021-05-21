@@ -274,6 +274,20 @@ TEST_F(TwoSubDevicesDebuggerEnabledTest, givenDebuggingEnabledWhenSubDevicesAreC
     EXPECT_EQ(deviceL0->getDebugSurface(), subDevice0->getDebugSurface());
 }
 
+TEST_F(TwoSubDevicesDebuggerEnabledTest, givenDebuggingEnabledWhenSubDevicesAreCreatedThenDebugSurfaceIsProperlyInitialized) {
+    NEO::MockCompilerEnableGuard mock(true);
+
+    auto debugSurface = deviceL0->getDebugSurface();
+
+    EXPECT_NE(nullptr, debugSurface);
+
+    auto &stateSaveAreaHeader = SipKernel::getSipKernel(*deviceL0->getNEODevice()).getStateSaveAreaHeader();
+    for (auto i = 0u; i < debugSurface->storageInfo.getNumBanks(); ++i) {
+        EXPECT_EQ(0, memcmp(static_cast<uint8_t *>(debugSurface->getUnderlyingBuffer()) + i * debugSurface->getUnderlyingBufferSize(),
+                            stateSaveAreaHeader.data(), stateSaveAreaHeader.size()));
+    }
+}
+
 TEST(Debugger, GivenLegacyDebuggerAndProgramDebuggingEnabledWhenInitializingDriverThenAbortIsCalledAfterPrintingError) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.PrintDebugMessages.set(1);

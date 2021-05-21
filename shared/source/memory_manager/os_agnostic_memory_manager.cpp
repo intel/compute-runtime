@@ -68,6 +68,11 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
         counter++;
         return memoryAllocation;
     }
+
+    if (allocationData.type == GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
+        sizeAligned *= allocationData.storageInfo.getNumBanks();
+    }
+
     auto ptr = allocateSystemMemory(sizeAligned, allocationData.alignment ? alignUp(allocationData.alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
     if (ptr != nullptr) {
         memoryAllocation = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.size,
@@ -85,6 +90,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
             memoryAllocation->setReservedAddressRange(gpuPtr, reserveSize);
             gpuPtr = alignUp(gpuPtr, allocationData.alignment);
             memoryAllocation->setCpuPtrAndGpuAddress(ptr, reinterpret_cast<uint64_t>(gpuPtr));
+        }
+
+        if (allocationData.type == GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
+            memoryAllocation->storageInfo = allocationData.storageInfo;
         }
     }
     counter++;
