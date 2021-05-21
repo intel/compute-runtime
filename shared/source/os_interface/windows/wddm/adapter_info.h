@@ -144,8 +144,8 @@ class WddmAdapterFactory : public AdapterFactory {
     }
 
   protected:
-    std::unique_ptr<AdapterFactory> underlyingFactory;
     std::unique_ptr<OsLibrary> dxCoreLibrary;
+    std::unique_ptr<AdapterFactory> underlyingFactory;
 
     void loadDxCore(DxCoreAdapterFactory::CreateAdapterFactoryFcn &outDxCoreCreateAdapterFactoryF);
 };
