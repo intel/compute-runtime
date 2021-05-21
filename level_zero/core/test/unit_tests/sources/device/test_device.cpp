@@ -404,7 +404,22 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     EXPECT_NE(deviceProperties.maxMemAllocSize, devicePropertiesBefore.maxMemAllocSize);
 }
 
-TEST_F(DeviceTest, WhenGettingDevicePropertieThenSubslicesPerSubsliceIsBasedOnMaxSubslicesSupported) {
+TEST_F(DeviceTest, WhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnSubslicesSupported) {
+    ze_device_properties_t deviceProperties;
+    deviceProperties.type = ZE_DEVICE_TYPE_GPU;
+
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSubSlicesSupported = 48;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSlicesSupported = 3;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = 8;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = 1;
+    device->getProperties(&deviceProperties);
+
+    EXPECT_EQ(8u, deviceProperties.numSubslicesPerSlice);
+}
+
+TEST_F(DeviceTest, GivenDebugApiUsedSetWhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnMaxSubslicesSupported) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DebugApiUsed.set(1);
     ze_device_properties_t deviceProperties;
     deviceProperties.type = ZE_DEVICE_TYPE_GPU;
 
