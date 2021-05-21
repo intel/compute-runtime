@@ -16,7 +16,7 @@ macro(macro_for_each_gen)
       if(EXISTS ${SRC_FILE})
         list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
       endif()
-      set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/unit_test/libult/${BRANCH}${GEN_TYPE_LOWER}.cpp)
+      set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/common/libult/${BRANCH}${GEN_TYPE_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
         list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
       endif()
@@ -49,23 +49,6 @@ apply_macro_for_each_gen("TESTED")
 
 set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
-    ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/debug_helpers.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.h
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_tbx_sockets.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/debug_manager.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/source_level_debugger_ult.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/source_level_debugger_library.cpp
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/source_level_debugger_library.h
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_aub_command_stream_receiver.h
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_command_stream_receiver.h
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
@@ -73,6 +56,23 @@ set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_tbx_sockets.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_ult.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.h
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/debug_helpers.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
+    ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.h
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/debug_manager.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_aub_command_stream_receiver.h
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_command_stream_receiver.h
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
 )
 
 get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE)
@@ -166,7 +166,7 @@ target_include_directories(igdrcl_libult PRIVATE
 
 target_include_directories(igdrcl_libult_env PRIVATE
                            $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
-                           ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}
 )
 
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_ENABLE_TESTED_HW ${IGDRCL_SRCS_ENABLE_TESTED_HW})

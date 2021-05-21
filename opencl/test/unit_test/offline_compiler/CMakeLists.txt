@@ -43,7 +43,7 @@ else()
   )
 endif()
 
-get_property(IGDRCL_SRCS_tests_compiler_mocks GLOBAL PROPERTY IGDRCL_SRCS_tests_compiler_mocks)
+get_property(NEO_CORE_tests_compiler_mocks GLOBAL PROPERTY NEO_CORE_tests_compiler_mocks)
 
 set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
@@ -61,11 +61,13 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/device_binary_format/zebin_tests.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${IGDRCL_SRCS_cloc}
     ${IGDRCL_SRCS_offline_compiler_mock}
-    ${IGDRCL_SRCS_tests_compiler_mocks}
+    ${NEO_CORE_tests_compiler_mocks}
     ${CLOC_LIB_SRCS_LIB}
     ${CLOC_LIB_SRCS_UTILITIES}
 )

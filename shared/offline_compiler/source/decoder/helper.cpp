@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,8 @@
 #include "helper.h"
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_library.h"
-
-#include "opencl/source/os_interface/os_inc_base.h"
 
 #include "igfxfmid.h"
 

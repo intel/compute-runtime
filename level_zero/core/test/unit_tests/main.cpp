@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/unit_test/base_ult_config_listener.h"
 
@@ -19,7 +20,6 @@
 #include "opencl/source/utilities/logger.h"
 #include "opencl/test/unit_test/custom_event_listener.h"
 #include "opencl/test/unit_test/global_environment.h"
-#include "opencl/test/unit_test/mocks/mock_gmm_client_context.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 

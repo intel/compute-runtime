@@ -7,10 +7,10 @@
 
 #pragma once
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 
-#include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"

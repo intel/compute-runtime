@@ -8,10 +8,9 @@
 #pragma once
 
 #include "shared/offline_compiler/source/offline_compiler.h"
+#include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/helpers/test_files.h"
-
-#include "opencl/source/os_interface/os_inc_base.h"
-#include "opencl/test/unit_test/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 
 #include "gtest/gtest.h"
 

@@ -14,8 +14,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
-
-#include "opencl/test/unit_test/mocks/mock_experimental_command_buffer.h"
+#include "shared/test/common/mocks/mock_experimental_command_buffer.h"
 
 #include <map>
 #include <memory>

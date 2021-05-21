@@ -6,9 +6,8 @@
  */
 
 #pragma once
+#include "shared/test/common/mocks/mock_cif.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
-
-#include "opencl/test/unit_test/mocks/mock_cif.h"
 
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"

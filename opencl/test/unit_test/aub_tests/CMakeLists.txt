@@ -9,11 +9,11 @@ project(igdrcl_aub_tests)
 set(OPENCL_AUB_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
-     ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
+     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
      ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
      ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
-     ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
      ${NEO_SOURCE_DIR}/shared/test/common/test_configuration/aub_tests/aub_tests_configuration.cpp
+     ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
      $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
      $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
      $<TARGET_OBJECTS:igdrcl_libult>

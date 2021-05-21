@@ -15,7 +15,7 @@ set(L0_FIXTURES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/module_fixture.h
 )
 
-add_library(${TARGET_NAME} OBJECT ${L0_FIXTURES_SOURCES} ${IGDRCL_SRCS_tests_compiler_mocks})
+add_library(${TARGET_NAME} OBJECT ${L0_FIXTURES_SOURCES} ${NEO_CORE_tests_compiler_mocks})
 
 target_include_directories(${TARGET_NAME} PRIVATE
                            $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>

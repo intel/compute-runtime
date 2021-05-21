@@ -4,17 +4,36 @@
 # SPDX-License-Identifier: MIT
 #
 
+set(NEO_CORE_tests_compiler_mocks
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_cif.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_cif.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
+)
+
+set_property(GLOBAL PROPERTY NEO_CORE_tests_compiler_mocks ${NEO_CORE_tests_compiler_mocks})
+
 set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_bindless_heaps_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_interface_spirv.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_interface_spirv.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_direct_submission_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_direct_submission_diagnostic_collector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_dispatch_kernel_encoder_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_dispatch_kernel_encoder_interface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_experimental_command_buffer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_debugger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h
@@ -31,6 +50,8 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferred_deleter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferred_deleter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_physical_address_allocator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.h
 )

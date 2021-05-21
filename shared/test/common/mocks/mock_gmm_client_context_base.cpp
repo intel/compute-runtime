@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_gmm_client_context.h"
+#include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 
 namespace NEO {
 

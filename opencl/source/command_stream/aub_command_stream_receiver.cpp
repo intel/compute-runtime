@@ -14,8 +14,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-
-#include "opencl/source/os_interface/os_inc_base.h"
+#include "shared/source/os_interface/os_inc_base.h"
 
 #include <algorithm>
 #include <cstring>

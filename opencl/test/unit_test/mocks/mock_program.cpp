@@ -13,6 +13,7 @@
 #include "shared/source/program/program_info_from_patchtokens.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/context/context.h"
@@ -20,7 +21,6 @@
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/helpers/ult_limits.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_compilers.h"
 
 namespace NEO {
 ClDeviceVector toClDeviceVector(ClDevice &clDevice) {

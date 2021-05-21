@@ -4,15 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(IGDRCL_SRCS_tests_compiler_mocks
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.h
-)
-
-set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_compiler_mocks ${IGDRCL_SRCS_tests_compiler_mocks})
-
 set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_allocation_properties.h
@@ -21,13 +12,12 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_file_stream.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_subcapture_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_block_kernel_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_buffer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_device.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_execution_environment.h
@@ -38,24 +28,19 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_execution_environment.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_experimental_command_buffer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_ptr_manager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_internal_allocation_storage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_image.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_internal_allocation_storage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_io_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_lrca_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
@@ -63,20 +48,21 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_platform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_platform.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_program.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_program.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_program.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sampler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sharing_factory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_source_level_debugger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_submissions_aggregator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_svm_manager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.h
     ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr_impl.cpp
-    ${IGDRCL_SRCS_tests_compiler_mocks}
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_experimental_command_buffer.h
+    ${NEO_CORE_tests_compiler_mocks}
 )
 
 if(WIN32)
