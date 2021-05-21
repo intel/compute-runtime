@@ -2459,6 +2459,60 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelCreateIsCalledWithN
     EXPECT_EQ(prevCreateCount, KernelCreateCallbackCount);
 }
 
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelDoesNotHaveDebugDataThenPassNullPtrToOnKernelCreate) {
+    static void *debugDataPtr = nullptr;
+    static size_t debugDataSize = 0;
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
+        paramsOut->inst_kernel_binary = const_cast<uint8_t *>(paramsIn->orig_kernel_binary);
+        paramsOut->inst_kernel_size = paramsIn->orig_kernel_size;
+        paramsOut->kernel_id = paramsIn->igc_hash_id;
+        debugDataPtr = const_cast<void *>(paramsIn->debug_data);
+        debugDataSize = paramsIn->debug_data_size;
+    };
+    gtpinCallbacks.onKernelSubmit = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {};
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    MockKernelWithInternals mockKernel(*pDevice);
+    mockKernel.kernelInfo.kernelDescriptor.external.debugData.reset();
+    mockKernel.kernelInfo.createKernelAllocation(pDevice->getDevice(), false);
+    gtpinNotifyKernelCreate(static_cast<cl_kernel>(mockKernel.mockKernel->getMultiDeviceKernel()));
+    EXPECT_EQ(debugDataPtr, nullptr);
+    EXPECT_EQ(debugDataSize, 0u);
+    pDevice->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.kernelAllocation);
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelHasDebugDataThenCorrectDebugDataIsSet) {
+    static void *debugDataPtr = nullptr;
+    static size_t debugDataSize = 0;
+    void *dummyDebugData = reinterpret_cast<void *>(0x123456);
+    size_t dummyDebugDataSize = 0x2245;
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
+        paramsOut->inst_kernel_binary = const_cast<uint8_t *>(paramsIn->orig_kernel_binary);
+        paramsOut->inst_kernel_size = paramsIn->orig_kernel_size;
+        paramsOut->kernel_id = paramsIn->igc_hash_id;
+        debugDataPtr = const_cast<void *>(paramsIn->debug_data);
+        debugDataSize = paramsIn->debug_data_size;
+    };
+    gtpinCallbacks.onKernelSubmit = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {};
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    MockKernelWithInternals mockKernel(*pDevice);
+    mockKernel.kernelInfo.kernelDescriptor.external.debugData.reset(new DebugData());
+    mockKernel.kernelInfo.kernelDescriptor.external.debugData->vIsa = reinterpret_cast<char *>(dummyDebugData);
+    mockKernel.kernelInfo.kernelDescriptor.external.debugData->vIsaSize = static_cast<uint32_t>(dummyDebugDataSize);
+    mockKernel.kernelInfo.createKernelAllocation(pDevice->getDevice(), false);
+    gtpinNotifyKernelCreate(static_cast<cl_kernel>(mockKernel.mockKernel->getMultiDeviceKernel()));
+    EXPECT_EQ(debugDataPtr, dummyDebugData);
+    EXPECT_EQ(debugDataSize, dummyDebugDataSize);
+    pDevice->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.kernelAllocation);
+}
+
 HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushedTaskCountIsNotified) {
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(pContext, pDevice, nullptr);
 
