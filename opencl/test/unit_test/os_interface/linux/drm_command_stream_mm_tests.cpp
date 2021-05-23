@@ -23,7 +23,7 @@ using namespace NEO;
 class DrmCommandStreamMMTest : public ::testing::Test {
 };
 
-HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
+HWTEST_F(DrmCommandStreamMMTest, GivenForcePinThenMemoryManagerCreatesPinBb) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableForcePin.set(true);
 
