@@ -5,13 +5,12 @@
  *
  */
 
-#include "shared/source/os_interface/hw_info_config.h"
-
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpu_info.h"
@@ -21,8 +20,6 @@
 #include <cstring>
 
 namespace NEO {
-
-HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT] = {};
 
 uint32_t bitExact(uint32_t value, uint32_t highBit, uint32_t lowBit) {
     uint32_t bitVal = static_cast<uint32_t>((value >> lowBit) & maxNBitValue(highBit - lowBit + 1));
@@ -67,7 +64,7 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
     return 0;
 }
 
-int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
+int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
     int ret = 0;
     Drm *drm = osIface->getDriverModel()->as<Drm>();
 

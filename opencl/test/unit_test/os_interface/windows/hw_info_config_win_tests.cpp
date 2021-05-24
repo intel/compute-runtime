@@ -90,14 +90,14 @@ void HwInfoConfigTestWindows::TearDown() {
 }
 
 TEST_F(HwInfoConfigTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenReturnSuccess) {
-    int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface.get());
+    int ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
     EXPECT_EQ(0, ret);
 }
 
 TEST_F(HwInfoConfigTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenSetFtrSvmCorrectly) {
     auto ftrSvm = outHwInfo.featureTable.ftrSVM;
 
-    int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface.get());
+    int ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
     ASSERT_EQ(0, ret);
 
     EXPECT_EQ(outHwInfo.capabilityTable.ftrSvm, ftrSvm);
@@ -107,12 +107,12 @@ TEST_F(HwInfoConfigTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabl
     int ret;
 
     outHwInfo.capabilityTable.instrumentationEnabled = false;
-    ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface.get());
+    ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
     ASSERT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.instrumentationEnabled);
 
     outHwInfo.capabilityTable.instrumentationEnabled = true;
-    ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface.get());
+    ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
     ASSERT_EQ(0, ret);
     EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled);
 }
@@ -126,11 +126,11 @@ HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoTh
     hwHelper.setCapabilityCoherencyFlag(&outHwInfo, initialCoherencyStatus);
 
     initialHwInfo.featureTable.ftrL3IACoherency = false;
-    hwInfoConfig->configureHwInfo(&initialHwInfo, &outHwInfo, osInterface.get());
+    hwInfoConfig->configureHwInfoWddm(&initialHwInfo, &outHwInfo, osInterface.get());
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 
     initialHwInfo.featureTable.ftrL3IACoherency = true;
-    hwInfoConfig->configureHwInfo(&initialHwInfo, &outHwInfo, osInterface.get());
+    hwInfoConfig->configureHwInfoWddm(&initialHwInfo, &outHwInfo, osInterface.get());
     EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 

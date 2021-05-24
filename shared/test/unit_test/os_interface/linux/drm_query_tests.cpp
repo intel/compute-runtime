@@ -113,7 +113,7 @@ HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOn
     hwInfo.gtSystemInfo.MaxEuPerSubSlice = 6;
 
     auto hwConfig = HwInfoConfigHw<productFamily>::get();
-    int ret = hwConfig->configureHwInfo(&hwInfo, &outHwInfo, osInterface.get());
+    int ret = hwConfig->configureHwInfoDrm(&hwInfo, &outHwInfo, osInterface.get());
     EXPECT_NE(-1, ret);
 
     EXPECT_EQ(6u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);

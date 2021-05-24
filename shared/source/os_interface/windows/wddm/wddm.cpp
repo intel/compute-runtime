@@ -107,7 +107,7 @@ bool Wddm::init() {
     HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
 
     hwConfig->adjustPlatformForProductFamily(hardwareInfo.get());
-    if (hwConfig->configureHwInfo(hardwareInfo.get(), hardwareInfo.get(), nullptr)) {
+    if (hwConfig->configureHwInfoWddm(hardwareInfo.get(), hardwareInfo.get(), nullptr)) {
         return false;
     }
 
@@ -298,7 +298,7 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
     return std::make_unique<HwDeviceIdWddm>(OpenAdapterData.hAdapter, adapterLuid, &osEnvironment, std::move(umKmDataTranslator));
 }
 
-std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionEnvironment &executionEnvironment) {
+std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevicesWddm(ExecutionEnvironment &executionEnvironment) {
 
     auto osEnvironment = new OsEnvironmentWin();
     auto gdi = osEnvironment->gdi.get();

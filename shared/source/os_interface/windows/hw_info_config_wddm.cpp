@@ -5,21 +5,18 @@
  *
  */
 
-#include "shared/source/os_interface/hw_info_config.h"
-
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "hw_cmds.h"
 
 namespace NEO {
 
-HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT] = {};
-
-int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
+int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
     HwHelper &hwHelper = HwHelper::get(outHwInfo->platform.eRenderCoreFamily);
 
     outHwInfo->capabilityTable.ftrSvm = outHwInfo->featureTable.ftrSVM;

@@ -42,7 +42,7 @@ bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDevi
     osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     auto hardwareInfo = getMutableHardwareInfo();
     HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-    if (hwConfig->configureHwInfo(hardwareInfo, hardwareInfo, osInterface.get())) {
+    if (hwConfig->configureHwInfoDrm(hardwareInfo, hardwareInfo, osInterface.get())) {
         return false;
     }
     memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);
