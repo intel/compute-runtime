@@ -1869,9 +1869,10 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
 
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
     auto &neoDevice = *device->getNEODevice();
+    auto threadArbitrationPolicy = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily).getDefaultThreadArbitrationPolicy();
     finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, isMultiOsContextCapable,
                                                     kernelAttributes.flags.useGlobalAtomics,
-                                                    (neoDevice.getNumAvailableDevices() > 1));
+                                                    (neoDevice.getNumAvailableDevices() > 1), threadArbitrationPolicy);
     if (finalStreamState.stateComputeMode.isDirty()) {
         NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(neoDevice, *commandContainer.getCommandStream(), true);
         NEO::EncodeComputeMode<GfxFamily>::adjustComputeMode(*commandContainer.getCommandStream(), nullptr, finalStreamState.stateComputeMode);

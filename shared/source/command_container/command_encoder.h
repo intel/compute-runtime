@@ -100,7 +100,9 @@ struct EncodeStates {
                                      const void *fnDynamicStateHeap,
                                      BindlessHeapsHelper *bindlessHeapHelper);
 
-    static void adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable, bool requiresCoherency, bool useGlobalAtomics, bool areMultipleSubDevicesInContext);
+    static void adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
+                                       bool isMultiOsContextCapable, bool requiresCoherency, bool useGlobalAtomics,
+                                       bool areMultipleSubDevicesInContext, uint32_t threadArbitrationPolicy);
 
     static size_t getAdjustStateComputeModeSize();
 };

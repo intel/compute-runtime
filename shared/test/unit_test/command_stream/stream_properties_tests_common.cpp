@@ -44,7 +44,7 @@ TEST(StreamPropertiesTests, whenPropertyValueIsChangedThenProperStateIsSet) {
 TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet) {
     StreamProperties properties;
     for (auto requiresCoherency : ::testing::Bool()) {
-        properties.stateComputeMode.setProperties(requiresCoherency, 0u, false, false, false);
+        properties.stateComputeMode.setProperties(requiresCoherency, 0u, false, false, false, 0u);
         EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
     }
 }

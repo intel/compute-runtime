@@ -72,7 +72,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool isComputeModeNeeded() const;
     bool isPipelineSelectAlreadyProgrammed() const;
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags);
-    void adjustThreadArbitionPolicy(void *const stateComputeMode);
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
     const HardwareInfo &peekHwInfo() const;

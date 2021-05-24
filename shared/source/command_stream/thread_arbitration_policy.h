@@ -9,13 +9,14 @@
 
 #include <stdint.h>
 namespace NEO {
-
 namespace ThreadArbitrationPolicy {
-enum {
+
+enum : uint32_t {
     AgeBased = 0x0u,
     RoundRobin = 0x1u,
     RoundRobinAfterDependency = 0x2u,
-    NotPresent = 0xffffffffu
+    NotPresent = 0xffffu
 };
+
 } // namespace ThreadArbitrationPolicy
 } // namespace NEO

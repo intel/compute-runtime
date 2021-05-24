@@ -12,9 +12,11 @@
 namespace NEO {
 template <typename Family>
 void EncodeStates<Family>::adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
-                                                  bool isMultiOsContextCapable, bool requiresCoherency, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
+                                                  bool isMultiOsContextCapable, bool requiresCoherency, bool useGlobalAtomics,
+                                                  bool areMultipleSubDevicesInContext, uint32_t threadArbitrationPolicy) {
     StreamProperties properties{};
-    properties.stateComputeMode.setProperties(requiresCoherency, numGrfRequired, isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext);
+    properties.stateComputeMode.setProperties(requiresCoherency, numGrfRequired, isMultiOsContextCapable, useGlobalAtomics,
+                                              areMultipleSubDevicesInContext, threadArbitrationPolicy);
     EncodeComputeMode<Family>::adjustComputeMode(csr, stateComputeModePtr, properties.stateComputeMode);
 }
 
