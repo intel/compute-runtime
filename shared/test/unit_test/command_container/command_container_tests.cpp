@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
@@ -138,6 +139,29 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
 
     EXPECT_EQ(cmdContainer.getInstructionHeapBaseAddress(),
               pDevice->getMemoryManager()->getInternalHeapBaseAddress(0, !hwHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo())));
+}
+
+TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdContainerIsInitializedThenInstructionBaseAddressIsSetToInternalHeap) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    const size_t numDevices = 1;
+    executionEnvironment->prepareRootDeviceEnvironments(numDevices);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->featureTable.ftrLocalMemory = true;
+
+    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+
+    auto instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(0, false);
+
+    CommandContainer cmdContainer;
+    auto status = cmdContainer.initialize(device.get());
+    EXPECT_EQ(ErrorCode::SUCCESS, status);
+
+    EXPECT_EQ(instructionHeapBaseAddress, cmdContainer.getInstructionHeapBaseAddress());
 }
 
 TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateGfxMemoryFailsThenErrorIsReturned) {

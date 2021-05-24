@@ -92,11 +92,9 @@ ErrorCode CommandContainer::initialize(Device *device) {
         }
     }
 
-    auto &hwHelper = HwHelper::get(getDevice()->getHardwareInfo().platform.eRenderCoreFamily);
-
     indirectObjectHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), allocationIndirectHeaps[IndirectHeap::Type::INDIRECT_OBJECT]->isAllocatedInLocalMemoryPool());
 
-    instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), !hwHelper.useSystemMemoryPlacementForISA(getDevice()->getHardwareInfo()));
+    instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), device->getMemoryManager()->isLocalMemoryUsedForIsa(device->getRootDeviceIndex()));
 
     iddBlock = nullptr;
     nextIddInBlock = this->getNumIddPerBlock();

@@ -399,7 +399,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
         auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStreamCSR.getSpace(sizeof(STATE_BASE_ADDRESS)));
         STATE_BASE_ADDRESS cmd;
-        auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, !hwHelper.useSystemMemoryPlacementForISA(peekHwInfo()));
+        auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
             &cmd,
             &dsh,

@@ -209,6 +209,7 @@ class MemoryManager {
     virtual void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex){};
 
     virtual void disableGemCloseWorkerForNewResidencyModel(){};
+    bool isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex);
 
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
@@ -261,6 +262,8 @@ class MemoryManager {
     std::unique_ptr<PageFaultManager> pageFaultManager;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     HeapAssigner heapAssigner;
+    std::once_flag checkIsaPlacementOnce;
+    bool isaInLocalMemory = false;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

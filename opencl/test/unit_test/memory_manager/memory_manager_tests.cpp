@@ -1270,6 +1270,49 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreating
     memoryManager.freeGraphicsMemory(moduleDebugArea);
 }
 
+TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocatingGraphicsMemoryForIsaInSystemMemoryThenBaseAddressIsEqualToInternalHeapBaseAddress) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->featureTable.ftrLocalMemory = true;
+
+    MockMemoryManager memoryManager(false, true, *executionEnvironment);
+
+    AllocationData allocationData;
+    allocationData.type = GraphicsAllocation::AllocationType::KERNEL_ISA;
+    allocationData.flags.useSystemMemory = 1;
+    allocationData.size = 4096;
+
+    auto allocation = memoryManager.allocateGraphicsMemory(allocationData);
+    ASSERT_NE(nullptr, allocation);
+
+    auto instructionHeapBaseAddress = memoryManager.getInternalHeapBaseAddress(0, false);
+
+    EXPECT_EQ(instructionHeapBaseAddress, GmmHelper::decanonize(allocation->getGpuBaseAddress()));
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenForcedSystemMemoryForIsaAndEnabledLocalMemoryWhenAllocatingGraphicsMemoryThenBaseAddressIsEqualToInternalHeapBaseAddress) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->featureTable.ftrLocalMemory = true;
+
+    MockMemoryManager memoryManager(false, true, *executionEnvironment);
+
+    size_t kernelIsaSize = 4096;
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({0, kernelIsaSize, GraphicsAllocation::AllocationType::KERNEL_ISA, 1});
+    ASSERT_NE(nullptr, allocation);
+
+    auto instructionHeapBaseAddress = memoryManager.getInternalHeapBaseAddress(0, false);
+
+    EXPECT_EQ(instructionHeapBaseAddress, GmmHelper::decanonize(allocation->getGpuBaseAddress()));
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
 class MemoryManagerWithAsyncDeleterTest : public ::testing::Test {
   public:
     MemoryManagerWithAsyncDeleterTest() : memoryManager(false, false){};
