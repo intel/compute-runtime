@@ -21,7 +21,8 @@ namespace NEO {
 
 struct GEN12LP {
 #include "shared/source/generated/gen12lp/hw_cmds_generated_gen12lp.inl"
-    static constexpr uint32_t stateComputeModeForceNonCoherentMask = (((1 << 0) | (1 << 1)) << 3);
+
+    static constexpr uint32_t stateComputeModeForceNonCoherentMask = (0b11u << 3);
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
