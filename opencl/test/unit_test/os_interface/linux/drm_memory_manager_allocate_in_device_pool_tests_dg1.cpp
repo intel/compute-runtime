@@ -1089,7 +1089,6 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCustomAlignmentWhenAllocatingAlloca
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
         EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD64KB));
-        EXPECT_FALSE(isAligned(allocation->getGpuAddress(), 32 * MemoryConstants::megaByte));
         memoryManager->freeGraphicsMemory(allocation);
     }
 
@@ -1101,7 +1100,6 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCustomAlignmentWhenAllocatingAlloca
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
         EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD2MB));
-        EXPECT_FALSE(isAligned(allocation->getGpuAddress(), 32 * MemoryConstants::megaByte));
         memoryManager->freeGraphicsMemory(allocation);
     }
 }
