@@ -40,7 +40,7 @@ typedef ::testing::Types<
 
 TYPED_TEST_CASE(VABaseObjectTests, BaseObjectTypes);
 
-TYPED_TEST(VABaseObjectTests, commonRuntimeExpectsDispatchTableAtFirstPointerInObject) {
+TYPED_TEST(VABaseObjectTests, GivenCommonRuntimeThenDispatchTableAtFirstPointerInObject) {
     TypeParam objectDrv;
 
     // Automatic downcasting to _cl_type *.
