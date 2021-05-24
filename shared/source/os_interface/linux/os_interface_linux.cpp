@@ -33,7 +33,7 @@ bool OSInterface::isDebugAttachAvailable() const {
 }
 
 bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) {
-    Drm *drm = Drm::create(std::move(hwDeviceId), *this);
+    Drm *drm = Drm::create(std::unique_ptr<HwDeviceIdDrm>(hwDeviceId.release()->as<HwDeviceIdDrm>()), *this);
     if (!drm) {
         return false;
     }

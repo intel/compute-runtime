@@ -191,7 +191,7 @@ class Drm : public DriverModel {
 
     static bool isi915Version(int fd);
 
-    static Drm *create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
+    static Drm *create(std::unique_ptr<HwDeviceIdDrm> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     static void overrideBindSupport(bool &useVmBind);
     std::string getPciPath() {
         return hwDeviceId->getPciPath();
@@ -224,14 +224,14 @@ class Drm : public DriverModel {
     bool contextDebugSupported = false;
     bool newResourceBound = false;
     std::once_flag checkBindOnce;
-    std::unique_ptr<HwDeviceId> hwDeviceId;
+    std::unique_ptr<HwDeviceIdDrm> hwDeviceId;
     int deviceId = 0;
     int revisionId = 0;
     GTTYPE eGtType = GTTYPE_UNDEFINED;
     RootDeviceEnvironment &rootDeviceEnvironment;
     uint64_t uuid = 0;
 
-    Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
+    Drm(std::unique_ptr<HwDeviceIdDrm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
     std::unique_ptr<SystemInfo> systemInfo;
     std::unique_ptr<CacheInfo> cacheInfo;
     std::unique_ptr<EngineInfo> engineInfo;

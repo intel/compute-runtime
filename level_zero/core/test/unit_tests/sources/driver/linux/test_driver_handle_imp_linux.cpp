@@ -25,7 +25,7 @@ const uint32_t numSubDevices = 2u;
 constexpr int mockFd = 0;
 class TestDriverMockDrm : public Drm {
   public:
-    TestDriverMockDrm(std::string &bdf, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd, bdf.c_str()), rootDeviceEnvironment) {}
+    TestDriverMockDrm(std::string &bdf, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, bdf.c_str()), rootDeviceEnvironment) {}
 };
 
 class DriverLinuxFixture : public ::testing::Test {

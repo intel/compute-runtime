@@ -17,15 +17,18 @@ struct HardwareInfo;
 class OSInterface;
 
 struct PhysicalDevicePciBusInfo {
+    PhysicalDevicePciBusInfo() = default;
+
     PhysicalDevicePciBusInfo(uint32_t domain, uint32_t bus, uint32_t device, uint32_t function)
         : pciDomain(domain), pciBus(bus), pciDevice(device), pciFunction(function) {}
 
-    uint32_t pciDomain;
-    uint32_t pciBus;
-    uint32_t pciDevice;
-    uint32_t pciFunction;
+    static constexpr uint32_t InvalidValue = std::numeric_limits<uint32_t>::max();
+    static constexpr PhysicalDevicePciBusInfo invalid() { return {}; }
 
-    static const uint32_t InvalidValue = std::numeric_limits<uint32_t>::max();
+    uint32_t pciDomain = InvalidValue;
+    uint32_t pciBus = InvalidValue;
+    uint32_t pciDevice = InvalidValue;
+    uint32_t pciFunction = InvalidValue;
 };
 
 class DriverInfo {

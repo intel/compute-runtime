@@ -26,7 +26,7 @@ namespace ult {
 constexpr int mockFd = 0;
 class SysmanMockDrm : public Drm {
   public:
-    SysmanMockDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd, ""), rootDeviceEnvironment) {}
+    SysmanMockDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 };
 
 class PublicLinuxSysmanImp : public L0::LinuxSysmanImp {

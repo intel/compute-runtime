@@ -22,6 +22,6 @@ TEST(wddmCreateTests, givenInputVersionWhenCreatingThenCreateRequestedObject) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::move(hwDeviceIds[0]), rootDeviceEnvironment));
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::unique_ptr<HwDeviceIdWddm>(hwDeviceIds[0].release()->as<HwDeviceIdWddm>()), rootDeviceEnvironment));
     EXPECT_NE(nullptr, wddm);
 }

@@ -35,7 +35,7 @@ class MemoryNeoDrm : public Drm {
   public:
     using Drm::memoryInfo;
     const int mockFd = 33;
-    MemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd, ""), rootDeviceEnvironment) {}
+    MemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 };
 
 template <>

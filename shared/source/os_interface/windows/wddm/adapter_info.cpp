@@ -9,8 +9,8 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
-#include "shared/source/os_interface/windows/os_library_win.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <memory>

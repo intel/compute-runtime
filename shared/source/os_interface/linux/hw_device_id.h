@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,19 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include <string>
 namespace NEO {
 
-class HwDeviceId : NonCopyableClass {
+class HwDeviceIdDrm : public HwDeviceId {
   public:
-    HwDeviceId(int fileDescriptorIn, const char *pciPathIn) : fileDescriptor(fileDescriptorIn), pciPath(pciPathIn) {}
-    ~HwDeviceId();
+    static constexpr DriverModelType driverModelType = DriverModelType::DRM;
+
+    HwDeviceIdDrm(int fileDescriptorIn, const char *pciPathIn)
+        : HwDeviceId(DriverModelType::DRM),
+          fileDescriptor(fileDescriptorIn), pciPath(pciPathIn) {}
+    ~HwDeviceIdDrm() override;
     int getFileDescriptor() const { return fileDescriptor; }
     const char *getPciPath() const { return pciPath.c_str(); }
 

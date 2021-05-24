@@ -48,7 +48,7 @@ class DrmMock : public Drm {
     using Drm::translateTopologyInfo;
     using Drm::virtualMemoryIds;
 
-    DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(fd, ""), rootDeviceEnvironment) {
+    DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, ""), rootDeviceEnvironment) {
         sliceCountChangeSupported = true;
 
         if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
@@ -88,11 +88,11 @@ class DrmMock : public Drm {
     }
 
     void setFileDescriptor(int fd) {
-        hwDeviceId = std::make_unique<HwDeviceId>(fd, "");
+        hwDeviceId = std::make_unique<HwDeviceIdDrm>(fd, "");
     }
 
     void setPciPath(const char *pciPath) {
-        hwDeviceId = std::make_unique<HwDeviceId>(getFileDescriptor(), pciPath);
+        hwDeviceId = std::make_unique<HwDeviceIdDrm>(getFileDescriptor(), pciPath);
     }
 
     void setDeviceID(int deviceId) { this->deviceId = deviceId; }

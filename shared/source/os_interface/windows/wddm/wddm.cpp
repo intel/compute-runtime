@@ -59,7 +59,7 @@ Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
 Wddm::VirtualAllocFcn Wddm::virtualAllocFnc = getVirtualAlloc();
 Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
 
-Wddm::Wddm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
+Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
     : DriverModel(DriverModelType::WDDM), hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     UNRECOVERABLE_IF(!hwDeviceId);
     featureTable.reset(new FeatureTable());
@@ -264,7 +264,7 @@ bool validDriverStorePath(OsEnvironmentWin &osEnvironment, D3DKMT_HANDLE adapter
     return isCompatibleDriverStore(std::move(deviceRegistryPath));
 }
 
-std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid) {
+std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid) {
     D3DKMT_OPENADAPTERFROMLUID OpenAdapterData = {{0}};
     OpenAdapterData.AdapterLuid = adapterLuid;
     auto status = osEnvironment.gdi->openAdapterFromLuid(&OpenAdapterData);
@@ -295,7 +295,7 @@ std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &os
         return nullptr;
     }
 
-    return std::make_unique<HwDeviceId>(OpenAdapterData.hAdapter, adapterLuid, &osEnvironment, std::move(umKmDataTranslator));
+    return std::make_unique<HwDeviceIdWddm>(OpenAdapterData.hAdapter, adapterLuid, &osEnvironment, std::move(umKmDataTranslator));
 }
 
 std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionEnvironment &executionEnvironment) {
@@ -347,7 +347,7 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionE
 
             auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterDesc.luid);
             if (hwDeviceId) {
-                hwDeviceIds.push_back(std::move(hwDeviceId));
+                hwDeviceIds.push_back(std::unique_ptr<HwDeviceId>(hwDeviceId.release()));
             }
 
             if (hwDeviceIds.size() == numRootDevices) {
@@ -600,7 +600,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
         }
 
         auto osHandle = static_cast<OsHandleWin *>(osHandles.fragmentStorageData[i].osHandleStorage);
-        if (osHandle->handle == (D3DKMT_HANDLE) nullptr && osHandles.fragmentStorageData[i].fragmentSize) {
+        if ((osHandle->handle == (D3DKMT_HANDLE)0) && (osHandles.fragmentStorageData[i].fragmentSize)) {
             AllocationInfo[allocationCount].pPrivateDriverData = osHandle->gmm->gmmResourceInfo->peekHandle();
             [[maybe_unused]] auto pSysMem = osHandles.fragmentStorageData[i].cpuPtr;
             [[maybe_unused]] auto PSysMemFromGmm = osHandle->gmm->gmmResourceInfo->getSystemMemPointer();

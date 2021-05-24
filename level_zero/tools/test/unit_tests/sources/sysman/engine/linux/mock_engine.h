@@ -34,7 +34,7 @@ class EngineNeoDrm : public Drm {
   public:
     using Drm::getEngineInfo;
     const int mockFd = 0;
-    EngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd, ""), rootDeviceEnvironment) {}
+    EngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 };
 template <>
 struct Mock<EngineNeoDrm> : public EngineNeoDrm {

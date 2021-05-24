@@ -63,7 +63,7 @@ constexpr const char *getIoctlParamString(int param) {
 
 } // namespace IoctlHelper
 
-Drm::Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
+Drm::Drm(std::unique_ptr<HwDeviceIdDrm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
     : DriverModel(DriverModelType::DRM),
       hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     pagingFence.fill(0u);
@@ -375,7 +375,7 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo &sysInfo) {
 void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int fileDescriptor, const char *pciPath) {
     if (fileDescriptor >= 0) {
         if (Drm::isi915Version(fileDescriptor)) {
-            hwDeviceIds.push_back(std::make_unique<HwDeviceId>(fileDescriptor, pciPath));
+            hwDeviceIds.push_back(std::make_unique<HwDeviceIdDrm>(fileDescriptor, pciPath));
         } else {
             SysCalls::close(fileDescriptor);
         }

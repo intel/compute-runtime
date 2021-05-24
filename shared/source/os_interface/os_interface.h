@@ -15,16 +15,44 @@
 
 namespace NEO {
 class ExecutionEnvironment;
-class HwDeviceId;
 class MemoryManager;
 enum class DriverModelType { WDDM,
                              DRM };
+
+class HwDeviceId : public NonCopyableClass {
+  public:
+    HwDeviceId(DriverModelType driverModel) : driverModelType(driverModel) {
+    }
+
+    virtual ~HwDeviceId() = default;
+
+    DriverModelType getDriverModelType() const {
+        return driverModelType;
+    }
+
+    template <typename DerivedType>
+    DerivedType *as() {
+        UNRECOVERABLE_IF(DerivedType::driverModelType != this->driverModelType);
+        return static_cast<DerivedType *>(this);
+    }
+
+    template <typename DerivedType>
+    DerivedType *as() const {
+        UNRECOVERABLE_IF(DerivedType::driverModelType != this->driverModelType);
+        return static_cast<const DerivedType *>(this);
+    }
+
+  protected:
+    DriverModelType driverModelType;
+};
 
 class DriverModel : public NonCopyableClass {
   public:
     DriverModel(DriverModelType driverModelType)
         : driverModelType(driverModelType) {
     }
+
+    virtual ~DriverModel() = default;
 
     template <typename DerivedType>
     DerivedType *as() {
@@ -45,8 +73,6 @@ class DriverModel : public NonCopyableClass {
     DriverModelType getDriverModelType() const {
         return driverModelType;
     }
-
-    virtual ~DriverModel() = default;
 
   protected:
     DriverModelType driverModelType;

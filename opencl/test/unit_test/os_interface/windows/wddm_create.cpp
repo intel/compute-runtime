@@ -8,7 +8,7 @@
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 
 namespace NEO {
-Wddm *Wddm::createWddm(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
+Wddm *Wddm::createWddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
     return new WddmMock(rootDeviceEnvironment);
 }
 } // namespace NEO

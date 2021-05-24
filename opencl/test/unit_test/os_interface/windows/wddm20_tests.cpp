@@ -45,7 +45,7 @@ namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
 }
 extern uint32_t numRootDevicesToEnum;
-std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid);
+std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid);
 } // namespace NEO
 
 using namespace NEO;
@@ -100,7 +100,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMapp
 
 TEST(WddmDiscoverDevices, WhenNoHwDeviceIdIsProvidedToWddmThenWddmIsNotCreated) {
     struct MockWddm : public Wddm {
-        MockWddm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceIdIn), rootDeviceEnvironment) {}
+        MockWddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceIdIn), rootDeviceEnvironment) {}
     };
 
     MockExecutionEnvironment executionEnvironment;
@@ -1114,7 +1114,8 @@ TEST(WddmGfxPartitionTests, WhenInitializingGfxPartitionThen64KBHeapsAreUsed) {
     struct MockWddm : public Wddm {
         using Wddm::gfxPartition;
 
-        MockWddm(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(OSInterface::discoverDevices(rootDeviceEnvironment.executionEnvironment)[0]), rootDeviceEnvironment) {}
+        MockWddm(RootDeviceEnvironment &rootDeviceEnvironment)
+            : Wddm(std::unique_ptr<HwDeviceIdWddm>(OSInterface::discoverDevices(rootDeviceEnvironment.executionEnvironment)[0].release()->as<HwDeviceIdWddm>()), rootDeviceEnvironment) {}
     };
 
     MockExecutionEnvironment executionEnvironment;
@@ -1357,7 +1358,7 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenAdapterIsClosed) {
 
     D3DKMT_HANDLE adapter = 0x1234;
     {
-        HwDeviceId hwDeviceId{adapter, {}, osEnv.get(), std::make_unique<UmKmDataTranslator>()};
+        HwDeviceIdWddm hwDeviceId{adapter, {}, osEnv.get(), std::make_unique<UmKmDataTranslator>()};
     }
     EXPECT_EQ(1u, GdiWithMockedCloseFunc::closeAdapterCalled);
     EXPECT_EQ(adapter, GdiWithMockedCloseFunc::closeAdapterCalledArgPassed);

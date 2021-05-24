@@ -440,7 +440,7 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenFileDescriptorIsClosed) {
     SysCalls::closeFuncCalled = 0;
     int fileDescriptor = 0x1234;
     {
-        HwDeviceId hwDeviceId(fileDescriptor, "");
+        HwDeviceIdDrm hwDeviceId(fileDescriptor, "");
     }
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
     EXPECT_EQ(fileDescriptor, SysCalls::closeFuncArgPassed);

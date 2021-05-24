@@ -23,7 +23,9 @@ bool OSInterface::isDebugAttachAvailable() const {
 }
 
 bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) {
-    auto wddm(Wddm::createWddm(std::move(hwDeviceId), *this));
+    UNRECOVERABLE_IF(hwDeviceId->getDriverModelType() != DriverModelType::WDDM);
+    auto hwDeviceIdWddm = std::unique_ptr<HwDeviceIdWddm>(reinterpret_cast<HwDeviceIdWddm *>(hwDeviceId.release()));
+    auto wddm(Wddm::createWddm(std::move(hwDeviceIdWddm), *this));
     if (!wddm->init()) {
         return false;
     }

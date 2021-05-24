@@ -56,7 +56,7 @@ class Wddm : public DriverModel {
 
     virtual ~Wddm();
 
-    static Wddm *createWddm(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
+    static Wddm *createWddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     bool init();
 
     MOCKABLE_VIRTUAL bool evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
@@ -121,7 +121,7 @@ class Wddm : public DriverModel {
 
     uint64_t getMaxApplicationAddress() const;
 
-    HwDeviceId *getHwDeviceId() const {
+    HwDeviceIdWddm *getHwDeviceId() const {
         return hwDeviceId.get();
     }
     D3DKMT_HANDLE getAdapter() const { return hwDeviceId->getAdapter(); }
@@ -179,7 +179,7 @@ class Wddm : public DriverModel {
     PhysicalDevicePciBusInfo getPciBusInfo() const;
 
   protected:
-    std::unique_ptr<HwDeviceId> hwDeviceId;
+    std::unique_ptr<HwDeviceIdWddm> hwDeviceId;
     D3DKMT_HANDLE device = 0;
     D3DKMT_HANDLE pagingQueue = 0;
     D3DKMT_HANDLE pagingQueueSyncObject = 0;
@@ -207,7 +207,7 @@ class Wddm : public DriverModel {
     std::unique_ptr<GmmMemory> gmmMemory;
     uintptr_t minAddress = 0;
 
-    Wddm(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
+    Wddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
     bool createDevice(PreemptionMode preemptionMode);
     bool createPagingQueue();
