@@ -1064,7 +1064,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     osHandle handle = 1;
     auto size = 4096u;
     AllocationProperties properties(mockRootDeviceIndex, false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
-    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false);
+    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     EXPECT_NE(nullptr, sharedAllocation);
     EXPECT_FALSE(sharedAllocation->isCoherent());
     EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());
@@ -1083,7 +1083,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     EXPECT_EQ(properties.subDevicesBitfield, mockDeviceBitfield);
     EXPECT_EQ(properties.rootDeviceIndex, 0u);
 
-    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false);
+    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     EXPECT_NE(nullptr, sharedAllocation);
     EXPECT_EQ(0u, sharedAllocation->getRootDeviceIndex());
     EXPECT_FALSE(sharedAllocation->isCoherent());
@@ -1100,7 +1100,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     osHandle handle = 1;
     auto size = 4096u;
     AllocationProperties properties(mockRootDeviceIndex, false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
-    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, true);
+    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, true, false);
     EXPECT_NE(nullptr, sharedAllocation);
     EXPECT_TRUE(sharedAllocation->is32BitAllocation());
     EXPECT_FALSE(sharedAllocation->isCoherent());

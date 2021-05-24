@@ -69,7 +69,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     OsAgnosticMemoryManager(bool aubUsage, ExecutionEnvironment &executionEnvironment);
     void initialize(bool aubUsage);
     ~OsAgnosticMemoryManager() override;
-    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override;
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override { return nullptr; }
 
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;

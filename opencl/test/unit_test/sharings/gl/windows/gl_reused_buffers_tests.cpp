@@ -40,7 +40,7 @@ struct GlReusedBufferTests : public ::testing::Test {
 
 class FailingMemoryManager : public MockMemoryManager {
   public:
-    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
         return nullptr;
     }
 };

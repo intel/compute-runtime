@@ -203,7 +203,7 @@ void run_client(int commSocket) {
     ze_command_list_handle_t cmdListCopy;
     initializeProcess(context, device, cmdQueue, cmdList, cmdQueueCopy, cmdListCopy, false);
 
-    void *zeBuffer;
+    void *zeBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
 

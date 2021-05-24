@@ -46,11 +46,11 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
       public:
         using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
         bool failAlloc = false;
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
             if (failAlloc) {
                 return nullptr;
             }
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness);
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation);
             alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;
@@ -60,7 +60,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
                 return nullptr;
             }
             AllocationProperties properties(rootDeviceIndex, true, 0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, false, 0);
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(toOsHandle(handle), properties, false);
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(toOsHandle(handle), properties, false, false);
             alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;

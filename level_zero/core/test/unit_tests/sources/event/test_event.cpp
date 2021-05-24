@@ -31,7 +31,7 @@ class MemoryManagerEventPoolFailMock : public NEO::MemoryManager {
     void *createMultiGraphicsAllocationInSystemMemoryPool(std::vector<uint32_t> &rootDeviceIndices, AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
         return nullptr;
     };
-    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override { return nullptr; }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
     void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override { return nullptr; };
@@ -190,29 +190,100 @@ TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
     eventPool->destroy();
 }
 
-TEST_F(EventPoolCreate, givenGetIpcHandleCalledReturnsNotSupported) {
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+using EventPoolIPCHandleTests = Test<DeviceFixture>;
 
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-    ASSERT_NE(nullptr, eventPool);
+TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNumberOfEventsAreReturnedInHandle) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        numEvents};
 
-    ze_ipc_event_pool_handle_t ipcHandle;
-    ze_result_t result = eventPool->getIpcHandle(&ipcHandle);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    auto deviceHandle = device->toHandle();
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc);
+    EXPECT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    int handle = -1;
+    memcpy_s(&handle, sizeof(int), ipcHandle.data, sizeof(int));
+    EXPECT_NE(handle, -1);
+
+    uint32_t expectedNumEvents = 0;
+    memcpy_s(&expectedNumEvents, sizeof(expectedNumEvents), ipcHandle.data + sizeof(int), sizeof(expectedNumEvents));
+    EXPECT_EQ(numEvents, expectedNumEvents);
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(EventPoolCreate, givenCloseIpcHandleCalledReturnsNotSupported) {
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolThenEventPoolIsCreated) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        numEvents};
 
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
-    ASSERT_NE(nullptr, eventPool);
+    auto deviceHandle = device->toHandle();
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc);
+    EXPECT_NE(nullptr, eventPool);
 
-    ze_result_t result = eventPool->closeIpcHandle();
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    ze_event_pool_handle_t ipcEventPoolHandle = {};
+    res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    L0::EventPool *ipcEventPool = L0::EventPool::fromHandle(ipcEventPoolHandle);
+    res = ipcEventPool->closeIpcHandle();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+}
+
+using EventPoolOpenIPCHandleFailTests = Test<DeviceFixture>;
+
+TEST_F(EventPoolOpenIPCHandleFailTests, givenFailureToAllocateMemoryWhenOpeningIpcHandleForEventPoolThenInvalidArgumentIsReturned) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc);
+    EXPECT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    {
+        NEO::MemoryManager *prevMemoryManager = nullptr;
+        NEO::MemoryManager *currMemoryManager = nullptr;
+
+        prevMemoryManager = driverHandle->getMemoryManager();
+        currMemoryManager = new FailMemoryManager(*neoDevice->executionEnvironment);
+        driverHandle->setMemoryManager(currMemoryManager);
+
+        ze_event_pool_handle_t ipcEventPoolHandle = {};
+        res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
+        EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+
+        driverHandle->setMemoryManager(prevMemoryManager);
+        delete currMemoryManager;
+    }
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
 TEST_F(EventPoolCreate, GivenNullptrDeviceAndNumberOfDevicesWhenCreatingEventPoolThenReturnError) {

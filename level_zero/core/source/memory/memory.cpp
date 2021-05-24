@@ -26,6 +26,7 @@ void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_
     NEO::GraphicsAllocation *alloc =
         this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandle,
                                                                            unifiedMemoryProperties,
+                                                                           false,
                                                                            false);
     if (alloc == nullptr) {
         return nullptr;

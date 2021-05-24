@@ -394,6 +394,74 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t EventPoolImp::closeIpcHandle() {
+    return this->destroy();
+}
+
+ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
+    // L0 uses a vector of ZE_MAX_IPC_HANDLE_SIZE bytes to send the IPC handle, i.e.
+    // char data[ZE_MAX_IPC_HANDLE_SIZE];
+    // First four bytes (which is of size sizeof(int)) of it contain the file descriptor
+    // associated with the dma-buf,
+    // Rest is payload to communicate extra info to the other processes.
+    // For the event pool, this contains the number of events the pool has.
+
+    uint64_t handle = this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager());
+
+    memcpy_s(pIpcHandle->data, sizeof(int), &handle, sizeof(int));
+
+    memcpy_s(pIpcHandle->data + sizeof(int), sizeof(this->numEvents), &this->numEvents, sizeof(this->numEvents));
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ContextImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
+                                               ze_event_pool_handle_t *phEventPool) {
+
+    uint64_t handle = 0u;
+    memcpy_s(&handle, sizeof(handle), hIpc.data, sizeof(handle));
+
+    uint32_t numEvents = 0;
+    memcpy_s(&numEvents, sizeof(numEvents), hIpc.data + sizeof(int), sizeof(int));
+
+    Device *device = this->devices.begin()->second;
+    auto neoDevice = device->getNEODevice();
+    NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
+    const uint32_t eventAlignment = 4 * MemoryConstants::cacheLineSize;
+    uint32_t eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets *
+                                                           NEO::TimestampPackets<uint32_t>::getSinglePacketSize(),
+                                                       eventAlignment));
+
+    size_t alignedSize = alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k);
+    NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
+                                                      alignedSize,
+                                                      NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+                                                      systemMemoryBitfield};
+
+    unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
+    NEO::GraphicsAllocation *alloc =
+        this->getDriverHandle()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandle,
+                                                                                              unifiedMemoryProperties,
+                                                                                              false,
+                                                                                              true);
+
+    if (alloc == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    ze_event_pool_desc_t desc = {};
+    auto eventPool = new EventPoolImp(&desc);
+    eventPool->context = this;
+    eventPool->eventPoolAllocations = std::make_unique<NEO::MultiGraphicsAllocation>(0u);
+    eventPool->eventPoolAllocations->addAllocation(alloc);
+    eventPool->eventPoolPtr = reinterpret_cast<void *>(alloc->getUnderlyingBuffer());
+    eventPool->devices.push_back(device);
+
+    *phEventPool = eventPool;
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t ContextImp::getMemAllocProperties(const void *ptr,
                                               ze_memory_allocation_properties_t *pMemAllocProperties,
                                               ze_device_handle_t *phDevice) {
@@ -524,12 +592,6 @@ ze_result_t ContextImp::getVirtualMemAccessAttribute(const void *ptr,
                                                      ze_memory_access_attribute_t *access,
                                                      size_t *outSize) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t ContextImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
-                                               ze_event_pool_handle_t *phEventPool) {
-    DEBUG_BREAK_IF(nullptr == this->driverHandle);
-    return this->driverHandle->openEventPoolIpcHandle(hIpc, phEventPool);
 }
 
 ze_result_t ContextImp::createEventPool(const ze_event_pool_desc_t *desc,

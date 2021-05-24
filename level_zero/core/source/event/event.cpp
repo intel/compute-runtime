@@ -37,6 +37,8 @@ template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, De
 template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, Device *);
 
 ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices) {
+    this->context = static_cast<ContextImp *>(context);
+
     std::set<uint32_t> rootDeviceIndices;
     uint32_t maxRootDeviceIndex = 0u;
 
@@ -101,14 +103,6 @@ EventPoolImp::~EventPoolImp() {
             memoryManager->freeGraphicsMemory(gpuAllocation);
         }
     }
-}
-
-ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t EventPoolImp::closeIpcHandle() {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t EventPoolImp::destroy() {

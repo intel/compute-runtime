@@ -10,6 +10,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
@@ -153,7 +154,6 @@ struct EventPool : _ze_event_pool_handle_t {
 
     bool isEventPoolUsedForTimestamp = false;
 
-  protected:
     std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
 };
 
@@ -181,7 +181,9 @@ struct EventPoolImp : public EventPool {
 
     Device *getDevice() override { return devices[0]; }
 
+    void *eventPoolPtr = nullptr;
     std::vector<Device *> devices;
+    ContextImp *context = nullptr;
     size_t numEvents;
 
   protected:

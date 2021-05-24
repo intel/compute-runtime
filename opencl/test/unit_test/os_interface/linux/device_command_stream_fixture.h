@@ -201,6 +201,8 @@ class DrmMockCustom : public Drm {
 
     int errnoValue = 0;
 
+    bool returnIoctlExtraErrorValue = false;
+
     int ioctl(unsigned long request, void *arg) override {
         auto ext = ioctl_res_ext.load();
 
@@ -311,7 +313,10 @@ class DrmMockCustom : public Drm {
         } break;
 
         default:
-            ioctlExtra(request, arg);
+            int res = ioctlExtra(request, arg);
+            if (returnIoctlExtraErrorValue) {
+                return res;
+            }
         }
 
         if (ext->no != -1 && ext->no == ioctl_cnt.total.load()) {

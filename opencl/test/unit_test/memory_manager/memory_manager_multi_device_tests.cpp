@@ -44,12 +44,12 @@ TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGr
             EXPECT_EQ(rootDeviceIndex, gfxAllocation->getRootDeviceIndex());
             memoryManager->freeGraphicsMemory(gfxAllocation);
 
-            gfxAllocation = memoryManager->createGraphicsAllocationFromSharedHandle((osHandle)0u, properties, false);
+            gfxAllocation = memoryManager->createGraphicsAllocationFromSharedHandle((osHandle)0u, properties, false, false);
             ASSERT_NE(gfxAllocation, nullptr);
             EXPECT_EQ(rootDeviceIndex, gfxAllocation->getRootDeviceIndex());
             memoryManager->freeGraphicsMemory(gfxAllocation);
 
-            gfxAllocation = memoryManager->createGraphicsAllocationFromSharedHandle((osHandle)0u, properties, true);
+            gfxAllocation = memoryManager->createGraphicsAllocationFromSharedHandle((osHandle)0u, properties, true, false);
             ASSERT_NE(gfxAllocation, nullptr);
             EXPECT_EQ(rootDeviceIndex, gfxAllocation->getRootDeviceIndex());
             memoryManager->freeGraphicsMemory(gfxAllocation);

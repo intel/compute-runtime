@@ -27,8 +27,8 @@ class GlSharingTextureTests : public ::testing::Test {
     class TempMM : public MockMemoryManager {
       public:
         using MockMemoryManager::MockMemoryManager;
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness);
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation);
             if (useForcedGmm) {
                 alloc->setDefaultGmm(forceGmm.get());
             }
@@ -114,7 +114,7 @@ TEST_F(GlSharingTextureTests, givenMockGlWhen1dGlTextureIsCreatedThenMemObjectHa
 
 class FailingMemoryManager : public MockMemoryManager {
   public:
-    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
         return nullptr;
     }
 };

@@ -1174,7 +1174,7 @@ TEST_F(MemoryGetIpcHandleTest,
 class MemoryManagerIpcMock : public NEO::MemoryManager {
   public:
     MemoryManagerIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MemoryManager(executionEnvironment) {}
-    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override { return nullptr; }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
     void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override { return nullptr; };
@@ -1207,7 +1207,7 @@ class MemoryManagerIpcMock : public NEO::MemoryManager {
 class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
   public:
     MemoryManagerOpenIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerIpcMock(executionEnvironment) {}
-    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
         auto alloc = new NEO::MockGraphicsAllocation(0,
                                                      NEO::GraphicsAllocation::AllocationType::BUFFER,
                                                      reinterpret_cast<void *>(0x1234),

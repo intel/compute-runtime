@@ -88,7 +88,7 @@ class MemoryManager {
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr);
 
     virtual bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool) { return true; }
-    virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) = 0;
+    virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) = 0;
     virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation){};
     virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) = 0;
 

@@ -582,7 +582,11 @@ BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle)
     return bo;
 }
 
-GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) {
+GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
+    if (isHostIpcAllocation) {
+        return createUSMHostAllocationFromSharedHandle(handle, properties);
+    }
+
     std::unique_lock<std::mutex> lock(mtx);
 
     drm_prime_handle openFd = {0, 0, 0};
@@ -765,28 +769,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
     } else {
         return allocateGraphicsMemoryWithProperties(properties, ptr);
     }
-}
-
-DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties) {
-    std::unique_lock<std::mutex> lock(mtx);
-
-    drm_prime_handle openFd = {0, 0, 0};
-    openFd.fd = handle;
-
-    auto ret = this->getDrm(properties.rootDeviceIndex).ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
-
-    if (ret != 0) {
-        int err = this->getDrm(properties.rootDeviceIndex).getErrno();
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-        DEBUG_BREAK_IF(ret != 0);
-        return nullptr;
-    }
-
-    auto bo = new BufferObject(&getDrm(properties.rootDeviceIndex), openFd.handle, properties.size, maxOsContextCount);
-    bo->setAddress(properties.gpuAddress);
-
-    return new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->gpuAddress), bo->size,
-                             handle, MemoryPool::SystemCpuInaccessible);
 }
 
 uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {

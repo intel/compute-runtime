@@ -168,7 +168,7 @@ struct UnifiedSharingCreateAllocationTests : UnifiedSharingTestsWithMemoryManage
             this->handle = toOsHandle(handle);
             return nullptr;
         }
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
             this->createFromSharedHandleCalled = true;
             this->handle = handle;
             this->properties = std::make_unique<AllocationProperties>(properties);

@@ -333,6 +333,85 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
 }
 
+using DrmMemoryManagerUsmSharedHandleTest = DrmMemoryManagerLocalMemoryTest;
+
+TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledWithTagBufferAllocationTypeThenGraphicsAllocationIsReturned) {
+    osHandle handle = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, GraphicsAllocation::AllocationType::TAG_BUFFER, false, {});
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, true);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_EQ(this->mock->inputFd, (int)handle);
+
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_EQ(bo->peekHandle(), (int)this->mock->outputHandle);
+    EXPECT_EQ(1u, bo->getRefCount());
+    EXPECT_EQ(size, bo->peekSize());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledWithBufferHostMemoryAllocationTypeThenGraphicsAllocationIsReturned) {
+    osHandle handle = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, {});
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, true);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_EQ(this->mock->inputFd, (int)handle);
+    EXPECT_EQ(this->mock->setTilingHandle, 0u);
+
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_EQ(bo->peekHandle(), (int)this->mock->outputHandle);
+    EXPECT_EQ(1u, bo->getRefCount());
+    EXPECT_EQ(size, bo->peekSize());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMemoryInfoWhenCreateMultiGraphicsAllocationAndImportFailsThenNullptrIsReturned) {
+    uint32_t rootDevicesNumber = 1u;
+    uint32_t rootDeviceIndex = 0u;
+    MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
+    std::vector<uint32_t> rootDeviceIndices;
+    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
+
+    executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+    auto mock = new DrmMockDg1(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+
+    drm_i915_memory_region_info regionInfo[2] = {};
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+
+    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->ioctlCallsCount = 0;
+    mock->fdToHandleRetVal = -1;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+
+    rootDeviceIndices.push_back(rootDeviceIndex);
+
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
+
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, true, size, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, {});
+
+    auto ptr = memoryManager->createUSMHostAllocationFromSharedHandle(1, properties);
+
+    EXPECT_EQ(ptr, nullptr);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndNoMemoryInfoWhenCreateMultiGraphicsAllocationThenOldPathIsUsed) {
     uint32_t rootDevicesNumber = 3u;
     MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
@@ -361,6 +440,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndNoMemo
     auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
 
     EXPECT_NE(ptr, nullptr);
+
     EXPECT_EQ(static_cast<DrmAllocation *>(multiGraphics.getDefaultGraphicsAllocation())->getMmapPtr(), nullptr);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
         EXPECT_NE(multiGraphics.getGraphicsAllocation(i), nullptr);

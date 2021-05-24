@@ -301,11 +301,6 @@ std::vector<NEO::SvmAllocationData *> DriverHandleImp::findAllocationsWithinRang
     return allocDataArray;
 }
 
-ze_result_t DriverHandleImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
-                                                    ze_event_pool_handle_t *phEventPool) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 void DriverHandleImp::createHostPointerManager() {
     hostPointerManager = std::make_unique<HostPointerManager>(getMemoryManager());
 }
