@@ -242,7 +242,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     uint32_t packetsToReset = 1;
 
     if (event->isTimestampEvent) {
-        baseAddr += NEO::TimestampPackets<uint32_t>::getContextEndOffset();
+        baseAddr += event->getContextEndOffset();
         packetsToReset = EventPacketsCount::eventPackets;
         event->resetPackets();
     }
@@ -263,7 +263,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
                 Event::STATE_CLEARED,
                 commandContainer.getDevice()->getHardwareInfo(),
                 args);
-            baseAddr += NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
+            baseAddr += event->getSinglePacketSize();
         }
     }
     return ZE_RESULT_SUCCESS;
@@ -1525,7 +1525,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     uint64_t baseAddr = event->getGpuAddress(this->device);
     size_t eventSignalOffset = 0;
     if (event->isTimestampEvent) {
-        eventSignalOffset = NEO::TimestampPackets<uint32_t>::getContextEndOffset();
+        eventSignalOffset = event->getContextEndOffset();
     }
 
     if (isCopyOnly()) {
@@ -1575,7 +1575,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         uint32_t packetsToWait = event->getPacketsInUse();
 
         if (event->isTimestampEvent) {
-            gpuAddr += NEO::TimestampPackets<uint32_t>::getContextEndOffset();
+            gpuAddr += event->getContextEndOffset();
         }
         for (uint32_t i = 0u; i < packetsToWait; i++) {
             NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
@@ -1583,7 +1583,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
                                                                        eventStateClear,
                                                                        COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
 
-            gpuAddr += NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
+            gpuAddr += event->getSinglePacketSize();
         }
     }
 

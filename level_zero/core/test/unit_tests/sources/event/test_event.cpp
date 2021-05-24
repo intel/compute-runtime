@@ -499,14 +499,14 @@ TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsSetThenCorrectO
     event->setPacketsInUse(4u);
     EXPECT_EQ(4u, event->getPacketsInUse());
 
-    gpuAddr += (4u * NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+    gpuAddr += (4u * event->getSinglePacketSize());
 
     event->kernelCount = 2;
     event->setPacketsInUse(2u);
     EXPECT_EQ(6u, event->getPacketsInUse());
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
 
-    gpuAddr += (2u * NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+    gpuAddr += (2u * event->getSinglePacketSize());
     event->kernelCount = 3;
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
     EXPECT_EQ(7u, event->getPacketsInUse());
@@ -921,6 +921,8 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     EXPECT_EQ(timestampPacketTypeSize, eventObj0->getGlobalStartOffset());
     EXPECT_EQ(timestampPacketTypeSize * 2, eventObj0->getContextEndOffset());
     EXPECT_EQ(timestampPacketTypeSize * 3, eventObj0->getGlobalEndOffset());
+
+    EXPECT_EQ(timestampPacketTypeSize * 4, eventObj0->getSinglePacketSize());
 
     auto hostPtrDiff = ptrDiff(eventObj1->getHostAddress(), eventObj0->getHostAddress());
     EXPECT_EQ(expectedSize, hostPtrDiff);

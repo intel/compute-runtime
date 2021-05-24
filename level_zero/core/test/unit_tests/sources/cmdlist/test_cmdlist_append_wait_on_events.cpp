@@ -156,7 +156,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnTimestampEventWithThre
     auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
-    auto gpuAddress = event->getGpuAddress(device) + NEO::TimestampPackets<uint32_t>::getContextEndOffset();
+    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -178,7 +178,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnTimestampEventWithThre
         EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, cmd->getWaitMode());
 
         semaphoreWaitsFound++;
-        gpuAddress += NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
+        gpuAddress += event->getSinglePacketSize();
     }
     ASSERT_EQ(3u, semaphoreWaitsFound);
 }
@@ -209,7 +209,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnTimestampEventWithThre
     auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
-    auto gpuAddress = event->getGpuAddress(device) + NEO::TimestampPackets<uint32_t>::getContextEndOffset();
+    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -231,7 +231,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnTimestampEventWithThre
         EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, cmd->getWaitMode());
 
         semaphoreWaitsFound++;
-        gpuAddress += NEO::TimestampPackets<uint32_t>::getSinglePacketSize();
+        gpuAddress += event->getSinglePacketSize();
     }
     ASSERT_EQ(9u, semaphoreWaitsFound);
 }
