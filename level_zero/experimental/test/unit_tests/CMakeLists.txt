@@ -46,9 +46,9 @@ target_sources(
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/main.cpp
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/test_mode.h
-               ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/ult_configuration.cpp
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
                ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
+               ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
 )
 
 target_sources(

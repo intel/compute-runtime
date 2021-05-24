@@ -47,8 +47,8 @@ add_dependencies(unit_tests copy_test_files_per_product)
 set(IGDRCL_SRCS_tests_local
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/libult/os_interface.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
     ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
 )
 

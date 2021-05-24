@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "opencl/test/unit_test/aub_tests/aub_tests_configuration.h"
+#include "shared/test/common/test_configuration/aub_tests/aub_tests_configuration.h"
 
 template <typename GfxFamily>
 AubTestsConfig GetAubTestsConfig() {

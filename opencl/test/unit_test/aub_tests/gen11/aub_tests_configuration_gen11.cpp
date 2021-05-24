@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/aub_tests/aub_tests_configuration.inl"
+#include "shared/test/common/test_configuration/aub_tests/aub_tests_configuration.inl"
 
 #include "hw_cmds.h"
 
