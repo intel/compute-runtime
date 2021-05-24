@@ -321,7 +321,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectComple
     EXPECT_EQ(value, wddmDirectSubmission.completionRingBuffers[wddmDirectSubmission.currentRingBuffer]);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenCreatingDestroyingSubmitterNotifiesResidencyLogger) {
+HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenCreatingDestroyingThenSubmitterNotifiesResidencyLogger) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
@@ -385,7 +385,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenAllocatingResour
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenHandleResidencySubmitterNotifiesResidencyLogger) {
+HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenHandleResidencyThenSubmitterNotifiesResidencyLogger) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
@@ -414,7 +414,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenHandleResidencyS
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenSubmitToGpuSubmitterNotifiesResidencyLogger) {
+HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenSubmitToGpuThenSubmitterNotifiesResidencyLogger) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
