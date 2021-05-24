@@ -614,7 +614,7 @@ TEST_F(KernelPrivateSurfaceTest, WhenPrivateSurfaceAllocationFailsThenOutOfResou
 }
 
 TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateSurfaceIs32BitAllocation) {
-    if (is64bit) {
+    if constexpr (is64bit) {
         pDevice->getMemoryManager()->setForce32BitAllocations(true);
 
         auto pKernelInfo = std::make_unique<MockKernelInfo>();

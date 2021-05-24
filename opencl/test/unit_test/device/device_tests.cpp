@@ -126,7 +126,7 @@ TEST_F(DeviceTest, WhenDeviceIsCreatedThenOsTimeIsNotNull) {
 TEST_F(DeviceTest, GivenDebugVariableForcing32BitAllocationsWhenDeviceIsCreatedThenMemoryManagerHasForce32BitFlagSet) {
     DebugManager.flags.Force32bitAddressing.set(true);
     auto pDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    if (is64bit) {
+    if constexpr (is64bit) {
         EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddressess);
         EXPECT_TRUE(pDevice->getMemoryManager()->peekForce32BitAllocations());
     } else {

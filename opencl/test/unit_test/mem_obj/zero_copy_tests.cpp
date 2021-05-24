@@ -192,7 +192,7 @@ TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhen
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    if (is64bit) {
+    if constexpr (is64bit) {
         EXPECT_TRUE(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation());
     }
     alignedFree(host_ptr);

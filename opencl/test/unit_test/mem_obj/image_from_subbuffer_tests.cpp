@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ TEST_F(ImageFromSubBufferTest, GivenSubBufferWithOffsetGreaterThan4gbWhenCreatin
     uint64_t offsetExpected = 0;
     cl_buffer_region region = {0, size / 2};
 
-    if (is64bit) {
+    if constexpr (is64bit) {
         offsetExpected = 8 * GB;
         region = {static_cast<size_t>(offsetExpected), size / 2};
     }

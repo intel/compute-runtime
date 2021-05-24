@@ -628,7 +628,7 @@ TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndRequireSpecificBitness
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, true);
     ASSERT_NE(nullptr, gpuAllocation);
-    if (is64bit) {
+    if constexpr (is64bit) {
         EXPECT_TRUE(gpuAllocation->is32BitAllocation());
 
         uint64_t base = memoryManager->getExternalHeapBaseAddress(gpuAllocation->getRootDeviceIndex(), gpuAllocation->isAllocatedInLocalMemoryPool());
@@ -652,7 +652,7 @@ TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndNotRequiredSpecificBit
     ASSERT_NE(nullptr, gpuAllocation);
 
     EXPECT_FALSE(gpuAllocation->is32BitAllocation());
-    if (is64bit) {
+    if constexpr (is64bit) {
         uint64_t base = 0;
         EXPECT_EQ(base, gpuAllocation->getGpuBaseAddress());
     }

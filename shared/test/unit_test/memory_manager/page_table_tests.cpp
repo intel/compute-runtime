@@ -20,8 +20,6 @@
 
 using namespace NEO;
 
-static const bool is64Bit = (sizeof(void *) == 8);
-
 template <class T, uint32_t level, uint32_t bits = 9>
 class MockPageTable : public PageTable<T, level, bits> {
   public:
@@ -105,7 +103,7 @@ class GGTTPageTable : public PDPE {
 class PageTableFixture {
   protected:
     const size_t pageSize = 1 << 12;
-    const uintptr_t refAddr = uintptr_t(1) << (is64Bit ? 46 : 31);
+    const uintptr_t refAddr = uintptr_t(1) << (is64bit ? 46 : 31);
     MockPhysicalAddressAllocator allocator;
     uint64_t startAddress = 0x1000;
 
@@ -176,11 +174,11 @@ TEST_F(PageTableTests48, WhenAssigningWalkerThenWalkIsExecutedCorrectly) {
 }
 
 TEST_F(PageTableTests48, givenReservedPhysicalAddressWhenPageWalkIsCalledThenPageTablesAreFilledWithProperAddresses) {
-    if (is64Bit) {
+    if constexpr (is64bit) {
         std::unique_ptr<MockPML4> pageTable(std::make_unique<MockPML4>(&allocator));
 
-        int shiftPML4 = is64Bit ? (9 + 9 + 9 + 12) : 0;
-        int shiftPDP = is64Bit ? (9 + 9 + 12) : 0;
+        int shiftPML4 = (9 + 9 + 9 + 12);
+        int shiftPDP = (9 + 9 + 12);
 
         uintptr_t gpuVa = (uintptr_t(0x1) << (shiftPML4)) | (uintptr_t(0x1) << (shiftPDP)) | (uintptr_t(0x1) << (9 + 12)) | 0x100;
 
@@ -208,11 +206,11 @@ TEST_F(PageTableTests48, givenReservedPhysicalAddressWhenPageWalkIsCalledThenPag
 }
 
 TEST_F(PageTableTests48, givenBigGpuAddressWhenPageWalkIsCalledThenPageTablesAreFilledWithProperAddresses) {
-    if (is64Bit) {
+    if constexpr (is64bit) {
         std::unique_ptr<MockPML4> pageTable(std::make_unique<MockPML4>(&allocator));
 
-        int shiftPML4 = is64Bit ? (47) : 0;
-        int shiftPDP = is64Bit ? (9 + 9 + 12) : 0;
+        int shiftPML4 = 47;
+        int shiftPDP = (9 + 9 + 12);
 
         uintptr_t gpuVa = (uintptr_t(0x1) << (shiftPML4)) | (uintptr_t(0x1) << (shiftPDP)) | (uintptr_t(0x1) << (9 + 12)) | 0x100;
 

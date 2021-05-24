@@ -8,17 +8,12 @@
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "shared/source/device/device.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
 #include "test.h"
 
 using namespace NEO;
-
-bool TestChecks::is64Bit() {
-    return ::is64bit;
-}
 
 bool TestChecks::supportsBlitter(const HardwareInfo *pHardwareInfo) {
     auto engines = HwHelper::get(::renderCoreFamily).getGpgpuEngineInstances(*pHardwareInfo);

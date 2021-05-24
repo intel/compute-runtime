@@ -377,7 +377,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     itorCmd = find<MEDIA_VFE_STATE *>(itorfirstBBEnd, cmdList.end());
     itorCmdForStateBase = find<STATE_BASE_ADDRESS *>(itorWalker, cmdList.end());
     ASSERT_NE(itorWalker, itorCmd);
-    if (is64bit) {
+    if constexpr (is64bit) {
         ASSERT_NE(itorCmdForStateBase, itorCmd);
     } else {
         //no SBA not dirty
@@ -421,9 +421,9 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     ASSERT_NE(finalItorToSBA, cmdList.end());
     auto *finalSba2 = (STATE_BASE_ADDRESS *)*finalItorToSBA;
     auto GSBaddress = finalSba2->getGeneralStateBaseAddress();
-    if (is32bit) {
+    if constexpr (is32bit) {
         EXPECT_EQ(0u, GSBaddress);
-    } else if (is64bit) {
+    } else {
         EXPECT_EQ(graphicsAllocation2->getGpuAddress(), GSBaddress + ScratchSpaceConstants::scratchSpaceOffsetFor64Bit);
     }
 
@@ -475,7 +475,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
     typedef typename PARSE::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
-    if (is64bit) {
+    if constexpr (is64bit) {
         CommandStreamReceiver *csr = &pDevice->getGpgpuCommandStreamReceiver();
         auto memoryManager = csr->getMemoryManager();
         memoryManager->setForce32BitAllocations(true);

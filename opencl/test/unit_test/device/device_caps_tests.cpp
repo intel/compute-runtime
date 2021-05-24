@@ -435,7 +435,7 @@ TEST_F(DeviceGetCapsTest, givenForce32bitAddressingWhenCapsAreCreatedThenDeviceR
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         const auto &sharedCaps = device->getSharedDeviceInfo();
-        if (is64bit) {
+        if constexpr (is64bit) {
             EXPECT_TRUE(sharedCaps.force32BitAddressess);
         } else {
             EXPECT_FALSE(sharedCaps.force32BitAddressess);

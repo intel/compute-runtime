@@ -2166,7 +2166,7 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCrea
     auto internalOptions = program.getInitInternalOptions();
     std::string s1 = internalOptions;
     size_t pos = s1.find(NEO::CompilerOptions::arch32bit.data());
-    if (is64bit) {
+    if constexpr (is64bit) {
         EXPECT_NE(pos, std::string::npos);
     } else {
         EXPECT_EQ(pos, std::string::npos);

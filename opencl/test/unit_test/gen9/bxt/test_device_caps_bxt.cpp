@@ -20,7 +20,7 @@ BXTTEST_F(BxtDeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResoluti
 BXTTEST_F(BxtDeviceCaps, givenBxtDeviceWhenAskedFor32BitSupportThenCorrectValuesAreReturned) {
     const auto &sharedCaps = pDevice->getDeviceInfo();
     auto memoryManager = pDevice->getMemoryManager();
-    if (is64bit) {
+    if constexpr (is64bit) {
         EXPECT_TRUE(memoryManager->peekForce32BitAllocations());
         EXPECT_TRUE(sharedCaps.force32BitAddressess);
     } else {

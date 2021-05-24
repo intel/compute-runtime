@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
+
 #include "gtest/gtest.h"
 
 #include <memory>
@@ -15,7 +17,6 @@ class Device;
 struct HardwareInfo;
 
 namespace TestChecks {
-bool is64Bit();
 bool supportsBlitter(const HardwareInfo *pHardwareInfo);
 bool supportsImages(const HardwareInfo &hardwareInfo);
 bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
@@ -26,14 +27,14 @@ bool supportsSvm(const Device *pDevice);
 
 } // namespace NEO
 
-#define REQUIRE_32BIT_OR_SKIP()               \
-    if (NEO::TestChecks::is64Bit() == true) { \
-        GTEST_SKIP();                         \
+#define REQUIRE_32BIT_OR_SKIP()        \
+    if constexpr (::is64bit == true) { \
+        GTEST_SKIP();                  \
     }
 
-#define REQUIRE_64BIT_OR_SKIP()                \
-    if (NEO::TestChecks::is64Bit() == false) { \
-        GTEST_SKIP();                          \
+#define REQUIRE_64BIT_OR_SKIP()         \
+    if constexpr (::is64bit == false) { \
+        GTEST_SKIP();                   \
     }
 
 #define REQUIRE_SVM_OR_SKIP(param)                      \

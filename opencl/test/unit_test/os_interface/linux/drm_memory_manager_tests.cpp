@@ -796,7 +796,7 @@ TEST(DrmMemoryManagerTest2, givenDrmMemoryManagerWhengetSystemSharedMemoryIsCall
 
 TEST_F(DrmMemoryManagerTest, GivenBitnessWhenGettingMaxApplicationAddressThenCorrectValueIsReturned) {
     uint64_t maxAddr = memoryManager->getMaxApplicationAddress();
-    if (is64bit) {
+    if constexpr (is64bit) {
         EXPECT_EQ(maxAddr, MemoryConstants::max64BitAppAddress);
     } else {
         EXPECT_EQ(maxAddr, MemoryConstants::max32BitAppAddress);

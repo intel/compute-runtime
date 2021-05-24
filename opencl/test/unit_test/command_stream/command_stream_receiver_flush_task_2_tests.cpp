@@ -702,7 +702,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     if (sharedDeviceInfo.force32BitAddressess) {
         EXPECT_EQ(pDevice->getMemoryManager()->getExternalHeapBaseAddress(graphicsAllocationScratch->getRootDeviceIndex(), false), GSHaddress);
     } else {
-        if (is64bit) {
+        if constexpr (is64bit) {
             EXPECT_EQ(graphicsAddress - ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, GSHaddress);
         } else {
             EXPECT_EQ(0u, GSHaddress);
@@ -813,7 +813,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNdRangeKer
     if (sharedDeviceInfo.force32BitAddressess) {
         EXPECT_EQ(pDevice->getMemoryManager()->getExternalHeapBaseAddress(graphicsAllocationScratch->getRootDeviceIndex(), false), GSHaddress);
     } else {
-        if (is64bit) {
+        if constexpr (is64bit) {
             EXPECT_EQ(graphicsAddress - ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, GSHaddress);
         } else {
             EXPECT_EQ(0u, GSHaddress);
@@ -883,7 +883,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeSto
     std::unique_ptr<GraphicsAllocation> allocationReusable = commandStreamReceiver->getInternalAllocationStorage()->obtainReusableAllocation(4096, GraphicsAllocation::AllocationType::LINEAR_STREAM);
 
     if (allocationReusable.get() != nullptr) {
-        if (is64bit) {
+        if constexpr (is64bit) {
             EXPECT_NE(scratchAllocation, allocationReusable.get());
         }
         pDevice->getMemoryManager()->freeGraphicsMemory(allocationReusable.release());
@@ -891,7 +891,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeSto
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeStore32bitWhenFlushingTaskThenScratchAllocationStoredOnTemporaryAllocationList) {
-    if (is64bit) {
+    if constexpr (is64bit) {
         DebugManagerStateRestore dbgRestorer;
         DebugManager.flags.Force32bitAddressing.set(true);
 

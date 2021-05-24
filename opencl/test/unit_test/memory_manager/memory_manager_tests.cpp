@@ -568,7 +568,7 @@ HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCr
 
 TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitAllocationsIsMade) {
     DebugManagerStateRestore dbgRestorer;
-    if (is64bit) {
+    if constexpr (is64bit) {
         DebugManager.flags.Force32bitAddressing.set(true);
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
