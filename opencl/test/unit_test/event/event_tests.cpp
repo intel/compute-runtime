@@ -959,7 +959,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenSubmitCommandEventNotReadyAndEventWitho
     EXPECT_EQ(pDevice->getUltCommandStreamReceiver<FamilyType>().recursiveLockCounter, 1u);
 }
 
-HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushesPreviousTasksBeforeMappingOrUnmapping) {
+HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyWhenMappingOrUnmappingThenFlushPreviousTasksBeforeMappingOrUnmapping) {
     struct MockNonZeroCopyBuff : UnalignedBuffer {
         MockNonZeroCopyBuff(int32_t &executionStamp)
             : executionStamp(executionStamp), dataTransferedStamp(-1) {
