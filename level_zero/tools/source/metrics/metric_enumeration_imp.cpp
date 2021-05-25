@@ -27,8 +27,9 @@ MetricEnumeration::~MetricEnumeration() {
 
 ze_result_t MetricEnumeration::metricGroupGet(uint32_t &count,
                                               zet_metric_group_handle_t *phMetricGroups) {
-    if (initialize() != ZE_RESULT_SUCCESS) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t result = initialize();
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
 
     if (count == 0) {
@@ -36,11 +37,6 @@ ze_result_t MetricEnumeration::metricGroupGet(uint32_t &count,
         return ZE_RESULT_SUCCESS;
     } else if (count > metricGroups.size()) {
         count = static_cast<uint32_t>(metricGroups.size());
-    }
-
-    // User is expected to allocate space.
-    if (phMetricGroups == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     for (uint32_t i = 0; i < count; i++) {
@@ -61,9 +57,13 @@ bool MetricEnumeration::isInitialized() {
 
 ze_result_t MetricEnumeration::initialize() {
     if (initializationState == ZE_RESULT_ERROR_UNINITIALIZED) {
-        if (hMetricsDiscovery &&
-            openMetricsDiscovery() == ZE_RESULT_SUCCESS &&
-            cacheMetricInformation() == ZE_RESULT_SUCCESS) {
+        if (!this->metricContext.getMetricCollectionEnabled()) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+                                  "metrics collection is disabled on the root device\n");
+            initializationState = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        } else if (hMetricsDiscovery &&
+                   openMetricsDiscovery() == ZE_RESULT_SUCCESS &&
+                   cacheMetricInformation() == ZE_RESULT_SUCCESS) {
             initializationState = ZE_RESULT_SUCCESS;
         } else {
             initializationState = ZE_RESULT_ERROR_UNKNOWN;
