@@ -126,6 +126,22 @@ GEN12LPTEST_F(gen12LpImageTests, givenRenderCompressionThenSurfaceStateParamsAre
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }
 
+GEN12LPTEST_F(gen12LpImageTests, givenNoCompressionWhenProgramingImageSurfaceStateThenCompressionIsDisabled) {
+    MockContext context;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    surfaceState.setMemoryCompressionEnable(true);
+    surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
+    imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->isRenderCompressed = false;
+    imageHw->setImageArg(&surfaceState, false, 0, 0, false);
+
+    EXPECT_FALSE(surfaceState.getMemoryCompressionEnable());
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+}
+
 GEN12LPTEST_F(gen12LpImageTests, givenMediaCompressionThenSurfaceStateParamsAreSetForMediaCompression) {
     MockContext context;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;

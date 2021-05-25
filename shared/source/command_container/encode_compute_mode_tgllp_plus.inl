@@ -47,4 +47,9 @@ bool EncodeSetMMIO<Family>::isRemapApplicable(uint32_t offset) {
            (0x4400 <= offset && offset <= 0x441f);
 }
 
+template <typename Family>
+void EncodeSurfaceState<Family>::disableCompressionFlags(R_SURFACE_STATE *surfaceState) {
+    surfaceState->setAuxiliarySurfaceMode(Family::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+    surfaceState->setMemoryCompressionEnable(false);
+}
 } // namespace NEO
