@@ -18,7 +18,7 @@ using namespace NEO;
 
 typedef AUBParentKernelFixture GEN11AUBParentKernelFixture;
 
-GEN11TEST_F(GEN11AUBParentKernelFixture, EnqueueParentKernel) {
+GEN11TEST_F(GEN11AUBParentKernelFixture, WhenEnqueuingParentKernelThenExpectationsMet) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pClDevice);
 
     ASSERT_NE(nullptr, pKernel);

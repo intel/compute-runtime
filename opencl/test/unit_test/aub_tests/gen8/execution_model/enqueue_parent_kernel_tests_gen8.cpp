@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ using namespace NEO;
 
 typedef AUBParentKernelFixture GEN8AUBParentKernelFixture;
 
-GEN8TEST_F(GEN8AUBParentKernelFixture, EnqueueParentKernel) {
+GEN8TEST_F(GEN8AUBParentKernelFixture, WhenEnqueuingParentKernelThenExpectationsMet) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pClDevice);
 
     ASSERT_NE(nullptr, pKernel);
