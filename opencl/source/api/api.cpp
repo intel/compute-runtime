@@ -438,17 +438,12 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
         }
 
         DEBUG_BREAK_IF(numDevices <= 0);
-        StackVec<cl_device_id, 2> supportedDevs;
-        supportedDevs.resize(numDevices);
+        cl_device_id device = nullptr;
 
-        retVal = clGetDeviceIDs(pPlatform, deviceType, numDevices, supportedDevs.begin(), nullptr);
+        retVal = clGetDeviceIDs(pPlatform, deviceType, 1, &device, nullptr);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
 
-        if (!DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
-            numDevices = 1u;
-        }
-
-        ClDeviceVector deviceVector(supportedDevs.begin(), numDevices);
+        ClDeviceVector deviceVector(&device, 1);
         pContext = Context::create<Context>(properties, deviceVector, funcNotify, userData, retVal);
     } while (false);
 
