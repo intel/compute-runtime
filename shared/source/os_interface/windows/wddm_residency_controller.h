@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,10 @@
 
 #include <atomic>
 #include <mutex>
+
+struct _D3DKMT_TRIMNOTIFICATION;
+typedef _D3DKMT_TRIMNOTIFICATION D3DKMT_TRIMNOTIFICATION;
+struct D3DDDI_TRIMRESIDENCYSET_FLAGS;
 
 namespace NEO {
 
@@ -50,7 +54,7 @@ class WddmResidencyController {
 
     void registerCallback();
 
-    void trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint64_t bytes);
+    void trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes);
     bool trimResidencyToBudget(uint64_t bytes);
 
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }

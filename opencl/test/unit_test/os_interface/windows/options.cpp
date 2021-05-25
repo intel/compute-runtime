@@ -18,6 +18,7 @@ namespace Os {
 const char *frontEndDllName = "";
 const char *igcDllName = "";
 const char *gdiDllName = "gdi32_mock.dll";
+const char *dxcoreDllName = "";
 const char *testDllName = "test_dynamic_lib.dll";
 const char *metricsLibraryDllName = "";
 } // namespace Os

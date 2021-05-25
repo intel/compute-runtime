@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(KMDAF_HEADERS_DIR)
+if(KMDAF_HEADERS_DIR AND WIN32)
   set(KMDAF_FILE_SUFFIX "")
 else()
   set(KMDAF_FILE_SUFFIX "_stub")
@@ -15,6 +15,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_additional_context_flags.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_allocation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_engine_mapper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/d3dkmthk_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.cpp
@@ -53,8 +54,16 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
     ${CMAKE_CURRENT_SOURCE_DIR}/thk_wrapper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_with_fallback.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxcore.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxcore.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxgi.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxgi.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_defs.h

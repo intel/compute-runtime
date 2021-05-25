@@ -135,7 +135,7 @@ class Drm : public DriverModel {
     void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo &sysInfo);
     void setupCacheInfo(const HardwareInfo &hwInfo);
 
-    PhysicalDevicePciBusInfo getPciBusInfo() const;
+    PhysicalDevicePciBusInfo getPciBusInfo() const override;
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
     void checkNonPersistentContextsSupport();

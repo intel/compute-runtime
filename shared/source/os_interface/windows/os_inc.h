@@ -14,4 +14,5 @@
 namespace Os {
 // OS GDI name
 extern const char *gdiDllName;
+extern const char *dxcoreDllName;
 }; // namespace Os

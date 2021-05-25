@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -23,6 +24,13 @@
 
 #include <memory>
 #include <mutex>
+
+struct _D3DKMT_TRIMNOTIFICATION;
+typedef struct _D3DKMT_TRIMNOTIFICATION D3DKMT_TRIMNOTIFICATION;
+typedef VOID(APIENTRY *PFND3DKMT_TRIMNOTIFICATIONCALLBACK)(_Inout_ D3DKMT_TRIMNOTIFICATION *);
+
+struct _SYSTEM_INFO;
+typedef struct _SYSTEM_INFO SYSTEM_INFO;
 
 namespace NEO {
 class Gdi;
@@ -176,7 +184,7 @@ class Wddm : public DriverModel {
 
     uint32_t getTimestampFrequency() const { return timestampFrequency; }
 
-    PhysicalDevicePciBusInfo getPciBusInfo() const;
+    PhysicalDevicePciBusInfo getPciBusInfo() const override;
 
   protected:
     std::unique_ptr<HwDeviceIdWddm> hwDeviceId;

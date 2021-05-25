@@ -13,6 +13,7 @@ namespace Os {
 const char *frontEndDllName = FCL_LIBRARY_NAME;
 const char *igcDllName = IGC_LIBRARY_NAME;
 const char *gdiDllName = "gdi32.dll";
+const char *dxcoreDllName = "dxcore.dll";
 
 // Os specific Metrics Library name
 #if _WIN64

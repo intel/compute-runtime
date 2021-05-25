@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/driver_info.h"
 
 #include <cstdint>
 #include <memory>
@@ -74,6 +75,8 @@ class DriverModel : public NonCopyableClass {
     DriverModelType getDriverModelType() const {
         return driverModelType;
     }
+
+    virtual PhysicalDevicePciBusInfo getPciBusInfo() const = 0;
 
   protected:
     DriverModelType driverModelType;

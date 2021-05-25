@@ -26,6 +26,7 @@
 #include "shared/source/os_interface/windows/kmdaf_listener.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
+#include "shared/source/os_interface/windows/wddm/adapter_factory.h"
 #include "shared/source/os_interface/windows/wddm/adapter_info.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
@@ -308,9 +309,9 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevicesWddm(Execut
         return {};
     }
 
-    WddmAdapterFactory adapterFactory{Wddm::dXCoreCreateAdapterFactory, Wddm::createDxgiFactory};
+    auto adapterFactory = AdapterFactory::create(Wddm::dXCoreCreateAdapterFactory, Wddm::createDxgiFactory);
 
-    if (false == adapterFactory.isSupported()) {
+    if (false == adapterFactory->isSupported()) {
         return {};
     }
 
@@ -321,14 +322,14 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevicesWddm(Execut
 
     std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
     do {
-        if (false == adapterFactory.createSnapshotOfAvailableAdapters()) {
+        if (false == adapterFactory->createSnapshotOfAvailableAdapters()) {
             return hwDeviceIds;
         }
 
-        auto adapterCount = adapterFactory.getNumAdaptersInSnapshot();
+        auto adapterCount = adapterFactory->getNumAdaptersInSnapshot();
         for (uint32_t i = 0; i < adapterCount; ++i) {
             AdapterFactory::AdapterDesc adapterDesc;
-            if (false == adapterFactory.getAdapterDesc(i, adapterDesc)) {
+            if (false == adapterFactory->getAdapterDesc(i, adapterDesc)) {
                 DEBUG_BREAK_IF(true);
                 continue;
             }
@@ -1001,22 +1002,6 @@ LUID Wddm::getAdapterLuid() const {
     return hwDeviceId->getAdapterLuid();
 }
 
-VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) {
-    if (DebugManager.flags.DoNotRegisterTrimCallback.get()) {
-        return nullptr;
-    }
-    D3DKMT_REGISTERTRIMNOTIFICATION registerTrimNotification;
-    registerTrimNotification.Callback = callback;
-    registerTrimNotification.AdapterLuid = hwDeviceId->getAdapterLuid();
-    registerTrimNotification.Context = &residencyController;
-    registerTrimNotification.hDevice = device;
-
-    NTSTATUS status = getGdi()->registerTrimNotification(&registerTrimNotification);
-    if (status == STATUS_SUCCESS) {
-        return registerTrimNotification.Handle;
-    }
-    return nullptr;
-}
 bool Wddm::isShutdownInProgress() {
     auto handle = GetModuleHandleA("ntdll.dll");
 
@@ -1026,19 +1011,6 @@ bool Wddm::isShutdownInProgress() {
 
     auto RtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
     return RtlDllShutdownInProgress();
-}
-
-void Wddm::unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, VOID *trimCallbackHandle) {
-    DEBUG_BREAK_IF(callback == nullptr);
-    if (trimCallbackHandle == nullptr || isShutdownInProgress()) {
-        return;
-    }
-    D3DKMT_UNREGISTERTRIMNOTIFICATION unregisterTrimNotification;
-    unregisterTrimNotification.Callback = callback;
-    unregisterTrimNotification.Handle = trimCallbackHandle;
-
-    NTSTATUS status = getGdi()->unregisterTrimNotification(&unregisterTrimNotification);
-    DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 }
 
 void Wddm::releaseReservedAddress(void *reservedAddress) {
@@ -1184,7 +1156,7 @@ PhysicalDevicePciBusInfo Wddm::getPciBusInfo() const {
         return PhysicalDevicePciBusInfo(0, adapterAddress.BusNumber, adapterAddress.DeviceNumber, adapterAddress.FunctionNumber);
     }
 
-    return PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+    return PhysicalDevicePciBusInfo::invalid();
 }
 
 } // namespace NEO

@@ -17,10 +17,7 @@ namespace NEO {
 DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, const OSInterface *osInterface) {
     PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
     if (osInterface) {
-        auto drm = osInterface->getDriverModel()->as<Drm>();
-        UNRECOVERABLE_IF(drm == nullptr);
-
-        pciBusInfo = drm->getPciBusInfo();
+        pciBusInfo = osInterface->getDriverModel()->getPciBusInfo();
     }
     if (hwInfo) {
         auto imageSupport = hwInfo->capabilityTable.supportsImages;

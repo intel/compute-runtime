@@ -7,6 +7,9 @@
 
 #include "shared/test/unit_test/os_interface/windows/adapter_info_tests.h"
 
+#include "shared/source/os_interface/windows/wddm/adapter_factory.h"
+#include "shared/source/os_interface/windows/wddm/adapter_factory_dxcore.h"
+#include "shared/source/os_interface/windows/wddm/adapter_factory_dxgi.h"
 #include "shared/source/os_interface/windows/wddm/adapter_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
@@ -118,40 +121,6 @@ TEST(DxgiAdapterFactory, whenSupportedThenGiveAccessToUnderlyingAdapterDesc) {
     bool retreivedAdapterDesc = adapterFactory.getAdapterDesc(0, adapterDesc);
     EXPECT_TRUE(retreivedAdapterDesc);
     EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::Unknown, adapterDesc.type);
-    EXPECT_EQ(0x1234U, adapterDesc.deviceId);
-    EXPECT_EQ(0x1234U, adapterDesc.luid.HighPart);
-    EXPECT_EQ(0U, adapterDesc.luid.LowPart);
-    EXPECT_STREQ("Intel", adapterDesc.driverDescription.c_str());
-}
-
-TEST(WddmAdapterFactory, whenCouldNotCreateAdapterFactoryThenReturnsUnsupported) {
-    {
-        NEO::WddmAdapterFactory adapterFactory{nullptr, nullptr};
-        EXPECT_FALSE(adapterFactory.isSupported());
-    }
-
-    {
-        NEO::WddmAdapterFactory adapterFactory{failCreateTopLevelInterface, failCreateTopLevelInterface};
-        EXPECT_FALSE(adapterFactory.isSupported());
-    }
-}
-
-TEST(WddmAdapterFactory, whenDxCoreAdapterFactoryNotAvailableThenFallbacksToDxgiAdapterFactory) {
-    NEO::WddmAdapterFactory adapterFactory{failCreateTopLevelInterface, &createTopLevelInterface<NEO::UltIDXGIFactory1>};
-    EXPECT_TRUE(adapterFactory.isSupported());
-}
-
-TEST(WddmAdapterFactory, whenSupportedThenGiveAccessToUnderlyingAdapterDesc) {
-    NEO::WddmAdapterFactory adapterFactory{&createTopLevelInterface<NEO::UltDXCoreAdapterFactory>, &createTopLevelInterface<NEO::UltIDXGIFactory1>};
-
-    bool createdSnapshot = adapterFactory.createSnapshotOfAvailableAdapters();
-    EXPECT_TRUE(createdSnapshot);
-    EXPECT_EQ(1U, adapterFactory.getNumAdaptersInSnapshot());
-
-    NEO::AdapterFactory::AdapterDesc adapterDesc;
-    bool retreivedAdapterDesc = adapterFactory.getAdapterDesc(0, adapterDesc);
-    EXPECT_TRUE(retreivedAdapterDesc);
-    EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::Hardware, adapterDesc.type);
     EXPECT_EQ(0x1234U, adapterDesc.deviceId);
     EXPECT_EQ(0x1234U, adapterDesc.luid.HighPart);
     EXPECT_EQ(0U, adapterDesc.luid.LowPart);
