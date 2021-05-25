@@ -49,7 +49,7 @@ GEN9TEST_F(PreambleTestGen9, givenKernelDebuggingActiveAndDisabledPreemptionWhen
     SourceLevelDebuggerPreambleTest<FamilyType>::givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreInlcudedTest();
 }
 
-GEN9TEST_F(PreambleTestGen9, givenGen9IsL3Programing) {
+GEN9TEST_F(PreambleTestGen9, givenGen9ThenL3IsProgrammed) {
     bool l3ConfigDifference;
     bool isL3Programmable;
 

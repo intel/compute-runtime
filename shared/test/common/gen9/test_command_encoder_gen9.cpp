@@ -18,7 +18,7 @@ using namespace NEO;
 
 using CommandEncoderTest = Test<DeviceFixture>;
 
-GEN9TEST_F(CommandEncoderTest, appendsASetMMIO) {
+GEN9TEST_F(CommandEncoderTest, WhenProgrammingThenLoadRegisterImmIsUsed) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice);
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
@@ -31,7 +31,7 @@ GEN9TEST_F(CommandEncoderTest, appendsASetMMIO) {
     ASSERT_NE(itorLRI, commands.end());
 }
 
-GEN9TEST_F(CommandEncoderTest, givenNoSLMSetCorrectMMIO) {
+GEN9TEST_F(CommandEncoderTest, givenNoSlmThenCorrectMmioIsSet) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice);
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
@@ -48,7 +48,7 @@ GEN9TEST_F(CommandEncoderTest, givenNoSLMSetCorrectMMIO) {
     EXPECT_EQ(cmd->getDataDword(), expectedData);
 }
 
-GEN9TEST_F(CommandEncoderTest, givenSLMSetCorrectMMIO) {
+GEN9TEST_F(CommandEncoderTest, givenSlmThenCorrectMmioIsSet) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice);
     EncodeL3State<FamilyType>::encode(cmdContainer, true);

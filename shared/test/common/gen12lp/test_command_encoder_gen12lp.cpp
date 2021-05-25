@@ -20,7 +20,7 @@ using namespace NEO;
 
 using CommandEncoderTest = Test<DeviceFixture>;
 
-GEN12LPTEST_F(CommandEncoderTest, givenAdjustStateComputeModeStateComputeModeShowsNonCoherencySet) {
+GEN12LPTEST_F(CommandEncoderTest, givenAdjustStateComputeModeThenStateComputeModeShowsNonCoherencySet) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
