@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,10 +31,9 @@ static const char *blockAdvancedMotionEstimateBidirectionalCheckIntelSrc = {
 };
 
 static const std::tuple<const char *, const char *> mediaBuiltIns[] = {
-    std::make_tuple("block_motion_estimate_intel", blockMotionEstimateIntelSrc),
-    std::make_tuple("block_advanced_motion_estimate_check_intel", blockAdvancedMotionEstimateCheckIntelSrc),
-    std::make_tuple("block_advanced_motion_estimate_bidirectional_check_intel", blockAdvancedMotionEstimateBidirectionalCheckIntelSrc),
-};
+    {"block_motion_estimate_intel", blockMotionEstimateIntelSrc},
+    {"block_advanced_motion_estimate_check_intel", blockAdvancedMotionEstimateCheckIntelSrc},
+    {"block_advanced_motion_estimate_bidirectional_check_intel", blockAdvancedMotionEstimateBidirectionalCheckIntelSrc}};
 
 // Unlike other built-ins media kernels are not stored in BuiltIns object.
 // Pointer to program with built in kernels is returned to the user through API
