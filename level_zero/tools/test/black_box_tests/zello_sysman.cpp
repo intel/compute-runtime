@@ -97,6 +97,7 @@ void usage() {
                  "\n  -i,   --firmware <image>      selectively run device firmware test <image> is the firmware binary needed to flash"
                  "\n  -F,   --fabricport            selectively run fabricport black box test"
                  "\n  -d,   --diagnostics           selectively run diagnostics black box test"
+                 "\n  -P,   --performance           selectively run performance-factor black box test"
                  "\n  -h,   --help                  display help message"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
@@ -193,6 +194,50 @@ void testSysmanPower(ze_device_handle_t &device) {
             }
             VALIDATECALL(zesPowerSetLimits(handle, &sustainedGetDefault, &burstGetDefault, nullptr));
         }
+    }
+}
+
+std::string getEngineFlagType(zes_engine_type_flags_t engineFlag) {
+    static const std::map<zes_engine_type_flags_t, std::string> mgetEngineType{
+        {ZES_ENGINE_TYPE_FLAG_OTHER, "ZES_ENGINE_TYPE_FLAG_OTHER"},
+        {ZES_ENGINE_TYPE_FLAG_COMPUTE, "ZES_ENGINE_TYPE_FLAG_COMPUTE"},
+        {ZES_ENGINE_TYPE_FLAG_3D, "ZES_ENGINE_TYPE_FLAG_3D"},
+        {ZES_ENGINE_TYPE_FLAG_MEDIA, "ZES_ENGINE_TYPE_FLAG_MEDIA"},
+        {ZES_ENGINE_TYPE_FLAG_DMA, "ZES_ENGINE_TYPE_FLAG_DMA"},
+        {ZES_ENGINE_TYPE_FLAG_RENDER, "ZES_ENGINE_TYPE_FLAG_RENDER"}};
+    auto i = mgetEngineType.find(engineFlag);
+    if (i == mgetEngineType.end())
+        return "NOT SUPPORTED MODE Engine avalialbe";
+    else
+        return mgetEngineType.at(engineFlag);
+}
+
+void testSysmanPerformance(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  Performance-factor tests ---- " << std::endl;
+    uint32_t count = 0;
+    VALIDATECALL(zesDeviceEnumPerformanceFactorDomains(device, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Performance factor domains" << std::endl;
+        return;
+    }
+    std::vector<zes_perf_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumPerformanceFactorDomains(device, &count, handles.data()));
+
+    for (const auto &handle : handles) {
+        zes_perf_properties_t properties;
+        VALIDATECALL(zesPerformanceFactorGetProperties(handle, &properties));
+        if (verbose) {
+            std::cout << "properties.onSubdevice = " << properties.onSubdevice << std::endl;
+            std::cout << "properties.subdeviceId = " << properties.subdeviceId << std::endl;
+            std::cout << "properties.engines = " << getEngineFlagType(properties.engines) << std::endl;
+        }
+        double originalFactor = 0;
+        VALIDATECALL(zesPerformanceFactorGetConfig(handle, &originalFactor));
+        if (verbose) {
+            std::cout << "current Performance Factor = " << originalFactor << std::endl;
+        }
+        std::cout << std::endl;
     }
 }
 
@@ -1039,10 +1084,11 @@ int main(int argc, char *argv[]) {
         {"fabricport", no_argument, nullptr, 'F'},
         {"firmware", optional_argument, nullptr, 'i'},
         {"diagnostics", no_argument, nullptr, 'd'},
+        {"performance", no_argument, nullptr, 'P'},
         {0, 0, 0, 0},
     };
     bool force = false;
-    while ((opt = getopt_long(argc, argv, "hdpfsectogmrFEi:", long_opts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hdpPfsectogmrFEi:", long_opts, nullptr)) != -1) {
         switch (opt) {
         case 'h':
             usage();
@@ -1051,6 +1097,11 @@ int main(int argc, char *argv[]) {
         case 'p':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
                 testSysmanPci(device);
+            });
+            break;
+        case 'P':
+            std::for_each(devices.begin(), devices.end(), [&](auto device) {
+                testSysmanPerformance(device);
             });
             break;
         case 'f':
