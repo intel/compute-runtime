@@ -12,7 +12,7 @@
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {
-std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
+std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment, DriverModelType driverModel) {
     return std::make_unique<WddmMemoryManager>(executionEnvironment);
 }
 } // namespace NEO

@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
-std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
+std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment, DriverModelType driverModel) {
     return std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerActive,
                                               DebugManager.flags.EnableForcePin.get(),
                                               true,

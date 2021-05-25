@@ -16,7 +16,8 @@
 namespace NEO {
 class ExecutionEnvironment;
 class MemoryManager;
-enum class DriverModelType { WDDM,
+enum class DriverModelType { UNKNOWN,
+                             WDDM,
                              DRM };
 
 class HwDeviceId : public NonCopyableClass {

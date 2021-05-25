@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
+std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment, DriverModelType driverModel) {
     if (ultHwConfig.forceOsAgnosticMemoryManager) {
         return std::make_unique<OsAgnosticMemoryManager>(executionEnvironment);
     }
