@@ -27,6 +27,7 @@ struct L0DebuggerFixture {
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
         memoryOperationsHandler = new NEO::MockMemoryOperations();
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
+        executionEnvironment->setDebuggingEnabled();
 
         hwInfo = *NEO::defaultHwInfo.get();
         hwInfo.featureTable.ftrLocalMemory = true;
