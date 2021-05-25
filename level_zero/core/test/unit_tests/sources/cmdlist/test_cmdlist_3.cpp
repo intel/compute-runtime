@@ -1511,5 +1511,18 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
     commandList->cmdQImmediate = nullptr;
 }
 
+HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPointerWhenFindIsCalledThenRegisterHappens, Platforms) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceHostPointerImport.set(1);
+    void *testPtr = heapPointer;
+
+    auto gfxAllocation = hostDriverHandle->findHostPointerAllocation(testPtr, 0x10u, device->getRootDeviceIndex());
+    EXPECT_NE(nullptr, gfxAllocation);
+    EXPECT_EQ(testPtr, gfxAllocation->getUnderlyingBuffer());
+
+    auto result = hostDriverHandle->releaseImportedPointer(testPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 } // namespace ult
 } // namespace L0

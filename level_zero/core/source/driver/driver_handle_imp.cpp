@@ -354,6 +354,11 @@ NEO::GraphicsAllocation *DriverHandleImp::findHostPointerAllocation(void *ptr, s
             }
             return nullptr;
         }
+
+        if (NEO::DebugManager.flags.ForceHostPointerImport.get() == 1) {
+            importExternalPointer(ptr, size);
+            return hostPointerManager->getHostPointerAllocation(ptr)->hostPtrAllocations.getGraphicsAllocation(rootDeviceIndex);
+        }
         return nullptr;
     }
 
