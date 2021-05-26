@@ -94,6 +94,21 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
+    if (NEO::DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
+        using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
+
+        size_t estimatedSizeRequired =
+            NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl() + sizeof(MI_BATCH_BUFFER_END);
+        if (commandContainer.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
+            auto bbEnd = commandContainer.getCommandStream()->template getSpaceForCmd<MI_BATCH_BUFFER_END>();
+            *bbEnd = GfxFamily::cmdInitBatchBufferEnd;
+            commandContainer.allocateNextCommandBuffer();
+        }
+
+        NEO::PipeControlArgs args = {};
+        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+    }
+
     const auto kernel = Kernel::fromHandle(hKernel);
     UNRECOVERABLE_IF(kernel == nullptr);
     const auto functionImmutableData = kernel->getImmutableData();

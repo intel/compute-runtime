@@ -487,6 +487,80 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
     EXPECT_TRUE(cmd->getDcFlushEnable());
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyThenAdditionalPCIsAdded, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    Mock<::L0::Kernel> kernel;
+    ze_result_t result;
+    std::unique_ptr<L0::CommandList> commandListBase(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto usedSpaceBefore = commandListBase->commandContainer.getCommandStream()->getUsed();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    result = commandListBase->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandListBase->commandContainer.getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdListBase;
+    EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdListBase, ptrOffset(commandListBase->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    auto itorPC = findAll<PIPE_CONTROL *>(cmdListBase.begin(), cmdListBase.end());
+
+    size_t numberOfPCsBase = itorPC.size();
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForcePipeControlPriorToWalker.set(1);
+
+    std::unique_ptr<L0::CommandList> commandListWithDebugKey(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    usedSpaceBefore = commandListWithDebugKey->commandContainer.getCommandStream()->getUsed();
+
+    result = commandListWithDebugKey->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    usedSpaceAfter = commandListWithDebugKey->commandContainer.getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdListBaseWithDebugKey;
+    EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdListBaseWithDebugKey, ptrOffset(commandListWithDebugKey->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    itorPC = findAll<PIPE_CONTROL *>(cmdListBaseWithDebugKey.begin(), cmdListBaseWithDebugKey.end());
+
+    size_t numberOfPCsWithDebugKey = itorPC.size();
+
+    EXPECT_EQ(numberOfPCsWithDebugKey, numberOfPCsBase + 1);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAndNoSpaceThenNewBatchBufferAllocationIsUsed, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForcePipeControlPriorToWalker.set(1);
+
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    Mock<::L0::Kernel> kernel;
+    ze_result_t result;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto firstBatchBufferAllocation = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
+
+    auto useSize = commandList->commandContainer.getCommandStream()->getAvailableSpace();
+    useSize -= sizeof(PIPE_CONTROL);
+    commandList->commandContainer.getCommandStream()->getSpace(useSize);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto secondBatchBufferAllocation = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
+
+    EXPECT_NE(firstBatchBufferAllocation, secondBatchBufferAllocation);
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelThenKernelIsExecutedOnImmediateCmdQ, SklPlusMatcher) {
     createKernel();
 
