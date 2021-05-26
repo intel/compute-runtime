@@ -55,11 +55,6 @@ bool HwHelperHw<Family>::obtainBlitterPreference(const HardwareInfo &hwInfo) con
     return false;
 }
 
-template <typename Family>
-FrontEndType HwHelperHw<Family>::getFrontEndType(const HardwareInfo &hwInfo) const {
-    return FrontEndType::Video;
-}
-
 template <typename GfxFamily>
 const HwHelper::EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     return {

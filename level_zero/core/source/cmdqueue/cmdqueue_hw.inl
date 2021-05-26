@@ -330,7 +330,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
         if (!isCopyOnlyCommandQueue) {
             auto &requiredStreamState = commandList->getRequiredStreamState();
-            auto programVfe = streamProperties.setCooperativeKernelProperties(requiredStreamState.getCooperativeKernelProperties(), hwInfo);
+            streamProperties.frontEndState.setProperties(requiredStreamState.frontEndState);
+            auto programVfe = streamProperties.frontEndState.isDirty();
             if (frontEndStateDirty) {
                 programVfe = true;
                 frontEndStateDirty = false;
@@ -339,7 +340,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                 programFrontEnd(scratchSpaceController->getScratchPatchAddress(), scratchSpaceController->getPerThreadScratchSpaceSize(), child);
             }
             auto &finalStreamState = commandList->getFinalStreamState();
-            streamProperties.setCooperativeKernelProperties(finalStreamState.getCooperativeKernelProperties(), hwInfo);
+            streamProperties.frontEndState.setProperties(finalStreamState.frontEndState);
         }
 
         patchCommands(*commandList, scratchSpaceController->getScratchPatchAddress());
@@ -462,13 +463,13 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
 
     auto streamPropertiesCopy = streamProperties;
     auto singleFrontEndCmdSize = estimateFrontEndCmdSize();
-    auto &hwInfo = device->getHwInfo();
     size_t estimatedSize = 0;
 
     for (size_t i = 0; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         auto &requiredStreamState = commandList->getRequiredStreamState();
-        auto isVfeRequired = streamPropertiesCopy.setCooperativeKernelProperties(requiredStreamState.getCooperativeKernelProperties(), hwInfo);
+        streamPropertiesCopy.frontEndState.setProperties(requiredStreamState.frontEndState);
+        auto isVfeRequired = streamPropertiesCopy.frontEndState.isDirty();
         if (isFrontEndStateDirty) {
             isVfeRequired = true;
             isFrontEndStateDirty = false;
@@ -477,7 +478,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
             estimatedSize += singleFrontEndCmdSize;
         }
         auto &finalStreamState = commandList->getFinalStreamState();
-        streamPropertiesCopy.setCooperativeKernelProperties(finalStreamState.getCooperativeKernelProperties(), hwInfo);
+        streamPropertiesCopy.frontEndState.setProperties(finalStreamState.frontEndState);
     }
 
     return estimatedSize;

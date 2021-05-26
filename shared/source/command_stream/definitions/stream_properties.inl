@@ -12,11 +12,18 @@ namespace NEO {
 struct StateComputeModeProperties {
     StreamProperty isCoherencyRequired{};
 
+    void setProperties(bool requiresCoherency, uint32_t numGrfRequired, bool isMultiOsContextCapable,
+                       bool useGlobalAtomics, bool areMultipleSubDevicesInContext);
+    void setProperties(const StateComputeModeProperties &properties);
     bool isDirty();
     void clearIsDirty();
 };
 
 struct FrontEndProperties {
+    void setProperties(bool isCooperativeKernel, const HardwareInfo &hwInfo);
+    void setProperties(const FrontEndProperties &properties);
+    bool isDirty();
+    void clearIsDirty();
 };
 
 } // namespace NEO

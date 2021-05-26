@@ -14,7 +14,7 @@ template <typename Family>
 void EncodeStates<Family>::adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
                                                   bool isMultiOsContextCapable, bool requiresCoherency, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
     StreamProperties properties{};
-    properties.setStateComputeModeProperties(requiresCoherency, numGrfRequired, isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext);
+    properties.stateComputeMode.setProperties(requiresCoherency, numGrfRequired, isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext);
     EncodeComputeMode<Family>::adjustComputeMode(csr, stateComputeModePtr, properties.stateComputeMode);
 }
 

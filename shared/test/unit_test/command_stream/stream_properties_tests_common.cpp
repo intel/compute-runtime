@@ -44,32 +44,90 @@ TEST(StreamPropertiesTests, whenPropertyValueIsChangedThenProperStateIsSet) {
 TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet) {
     StreamProperties properties;
     for (auto requiresCoherency : ::testing::Bool()) {
-        properties.setStateComputeModeProperties(requiresCoherency, 0u, false, false, false);
+        properties.stateComputeMode.setProperties(requiresCoherency, 0u, false, false, false);
         EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
     }
 }
 
-TEST(StreamPropertiesTests, givenVariousStatesOfThePropertiesWhenIsStateComputeModeDirtyIsQueriedThenCorrectValueIsReturned) {
-    struct MockStateComputeModeProperties : StateComputeModeProperties {
-        using StateComputeModeProperties::clearIsDirty;
+template <typename PropertiesT>
+using getAllPropertiesFunctionPtr = std::vector<StreamProperty *> (*)(PropertiesT &properties);
+
+template <typename PropertiesT, getAllPropertiesFunctionPtr<PropertiesT> getAllProperties>
+void verifyIsDirty() {
+    struct MockPropertiesT : PropertiesT {
+        using PropertiesT::clearIsDirty;
     };
-    MockStateComputeModeProperties properties;
+    MockPropertiesT properties;
+    auto allProperties = getAllProperties(properties);
 
     EXPECT_FALSE(properties.isDirty());
-    for (auto pProperty : getAllStateComputeModeProperties(properties)) {
+    for (auto pProperty : allProperties) {
         pProperty->isDirty = true;
         EXPECT_TRUE(properties.isDirty());
         pProperty->isDirty = false;
         EXPECT_FALSE(properties.isDirty());
     }
-    for (auto pProperty : getAllStateComputeModeProperties(properties)) {
+    for (auto pProperty : allProperties) {
         pProperty->isDirty = true;
     }
-    EXPECT_TRUE(properties.isDirty());
+
+    EXPECT_EQ(!allProperties.empty(), properties.isDirty());
 
     properties.clearIsDirty();
-    for (auto pProperty : getAllStateComputeModeProperties(properties)) {
+    for (auto pProperty : allProperties) {
         EXPECT_FALSE(pProperty->isDirty);
     }
     EXPECT_FALSE(properties.isDirty());
+}
+
+TEST(StreamPropertiesTests, givenVariousStatesOfStateComputeModePropertiesWhenIsDirtyIsQueriedThenCorrectValueIsReturned) {
+    verifyIsDirty<StateComputeModeProperties, &getAllStateComputeModeProperties>();
+}
+
+TEST(StreamPropertiesTests, givenVariousStatesOfFrontEndPropertiesWhenIsDirtyIsQueriedThenCorrectValueIsReturned) {
+    verifyIsDirty<FrontEndProperties, getAllFrontEndProperties>();
+}
+
+template <typename PropertiesT, getAllPropertiesFunctionPtr<PropertiesT> getAllProperties>
+void verifySettingPropertiesFromOtherStruct() {
+    PropertiesT propertiesDestination;
+    PropertiesT propertiesSource;
+
+    auto allPropertiesDestination = getAllProperties(propertiesDestination);
+    auto allPropertiesSource = getAllProperties(propertiesSource);
+
+    int valueToSet = 1;
+    for (auto pProperty : allPropertiesSource) {
+        pProperty->value = valueToSet;
+        valueToSet++;
+    }
+    EXPECT_FALSE(propertiesSource.isDirty());
+
+    propertiesDestination.setProperties(propertiesSource);
+    EXPECT_EQ(!allPropertiesDestination.empty(), propertiesDestination.isDirty());
+
+    int expectedValue = 1;
+    for (auto pProperty : allPropertiesDestination) {
+        EXPECT_EQ(expectedValue, pProperty->value);
+        EXPECT_TRUE(pProperty->isDirty);
+        expectedValue++;
+    }
+
+    propertiesDestination.setProperties(propertiesSource);
+    EXPECT_FALSE(propertiesDestination.isDirty());
+
+    expectedValue = 1;
+    for (auto pProperty : allPropertiesDestination) {
+        EXPECT_EQ(expectedValue, pProperty->value);
+        EXPECT_FALSE(pProperty->isDirty);
+        expectedValue++;
+    }
+}
+
+TEST(StreamPropertiesTests, givenOtherStateComputeModePropertiesStructWhenSetPropertiesIsCalledThenCorrectValuesAreSet) {
+    verifySettingPropertiesFromOtherStruct<StateComputeModeProperties, &getAllStateComputeModeProperties>();
+}
+
+TEST(StreamPropertiesTests, givenOtherFrontEndPropertiesStructWhenSetPropertiesIsCalledThenCorrectValuesAreSet) {
+    verifySettingPropertiesFromOtherStruct<FrontEndProperties, getAllFrontEndProperties>();
 }

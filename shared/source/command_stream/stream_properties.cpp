@@ -9,20 +9,18 @@
 
 using namespace NEO;
 
-bool StreamProperties::setCooperativeKernelProperties(int32_t cooperativeKernelProperties, const HardwareInfo &hwInfo) {
-    return false;
-}
-
-int32_t StreamProperties::getCooperativeKernelProperties() const {
-    return -1;
-}
-
-void StreamProperties::setStateComputeModeProperties(bool requiresCoherency, uint32_t numGrfRequired, bool isMultiOsContextCapable,
-                                                     bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
-    stateComputeMode.clearIsDirty();
+void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t numGrfRequired, bool isMultiOsContextCapable,
+                                               bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
+    clearIsDirty();
 
     int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
-    stateComputeMode.isCoherencyRequired.set(isCoherencyRequired);
+    this->isCoherencyRequired.set(isCoherencyRequired);
+}
+
+void StateComputeModeProperties::setProperties(const StateComputeModeProperties &properties) {
+    clearIsDirty();
+
+    isCoherencyRequired.set(properties.isCoherencyRequired.value);
 }
 
 bool StateComputeModeProperties::isDirty() {
@@ -31,4 +29,17 @@ bool StateComputeModeProperties::isDirty() {
 
 void StateComputeModeProperties::clearIsDirty() {
     isCoherencyRequired.isDirty = false;
+}
+
+void FrontEndProperties::setProperties(bool isCooperativeKernel, const HardwareInfo &hwInfo) {
+}
+
+void FrontEndProperties::setProperties(const FrontEndProperties &properties) {
+}
+
+bool FrontEndProperties::isDirty() {
+    return false;
+}
+
+void FrontEndProperties::clearIsDirty() {
 }

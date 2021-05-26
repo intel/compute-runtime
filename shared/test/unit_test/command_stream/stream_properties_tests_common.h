@@ -11,9 +11,11 @@
 
 namespace NEO {
 
+struct FrontEndProperties;
 struct StateComputeModeProperties;
 struct StreamProperty;
 
 std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeProperties &properties);
+std::vector<StreamProperty *> getAllFrontEndProperties(FrontEndProperties &properties);
 
 } // namespace NEO

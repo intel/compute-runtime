@@ -16,4 +16,8 @@ std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeP
     return allProperties;
 }
 
+std::vector<StreamProperty *> getAllFrontEndProperties(FrontEndProperties &properties) {
+    return {};
+}
+
 } // namespace NEO
