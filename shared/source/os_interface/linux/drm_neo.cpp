@@ -738,7 +738,9 @@ ADAPTER_BDF Drm::getAdapterBDF() const {
 void Drm::setGmmInputArgs(void *args) {
     auto gmmInArgs = reinterpret_cast<GMM_INIT_IN_ARGS *>(args);
     auto adapterBDF = this->getAdapterBDF();
+#if defined(__linux__)
     gmmInArgs->FileDescriptor = adapterBDF.Data;
+#endif
     gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;
 }
 
