@@ -104,7 +104,7 @@ uint64_t HwHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double f
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_t size) const {
+inline bool HwHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const {
     return false;
 }
 

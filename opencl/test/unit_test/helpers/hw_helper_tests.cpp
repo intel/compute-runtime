@@ -1278,8 +1278,8 @@ TEST_F(HwHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, whenCheckingForSmallKernelPreferenceThenFalseIsReturned) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(0u));
-    EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(20000u));
+    EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(0u, this->pClDevice->getHardwareInfo()));
+    EXPECT_FALSE(hwHelper.preferSmallWorkgroupSizeForKernel(20000u, this->pClDevice->getHardwareInfo()));
 }
 
 TEST_F(HwHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
