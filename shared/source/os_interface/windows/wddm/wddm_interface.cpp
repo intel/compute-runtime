@@ -105,7 +105,7 @@ bool WddmInterface23::createHwQueue(OsContextWin &osContext) {
 
     createHwQueue.hHwContext = osContext.getWddmContextHandle();
     if (osContext.getPreemptionMode() >= PreemptionMode::MidBatch) {
-        createHwQueue.Flags.DisableGpuTimeout = wddm.readEnablePreemptionRegKey();
+        createHwQueue.Flags.DisableGpuTimeout = wddm.getEnablePreemptionRegValue();
     }
 
     auto status = wddm.getGdi()->createHwQueue(&createHwQueue);

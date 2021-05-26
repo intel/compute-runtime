@@ -7,9 +7,7 @@
 
 #pragma once
 
-#include "shared/source/os_interface/windows/windows_wrapper.h"
-
-#include <d3dkmthk.h>
+#include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 
 #include <cstdint>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,21 @@
 #include "shared/source/os_interface/windows/sys_calls.h"
 
 namespace NEO {
+
+unsigned int getPid() {
+    return GetCurrentProcessId();
+}
+
+bool isShutdownInProgress() {
+    auto handle = GetModuleHandleA("ntdll.dll");
+
+    if (!handle) {
+        return true;
+    }
+
+    auto RtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
+    return RtlDllShutdownInProgress();
+}
 
 namespace SysCalls {
 

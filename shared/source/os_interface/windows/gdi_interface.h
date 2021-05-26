@@ -7,13 +7,9 @@
 
 #pragma once
 #include "shared/source/os_interface/os_library.h"
+#include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/os_inc.h"
 #include "shared/source/os_interface/windows/thk_wrapper.h"
-#include "shared/source/os_interface/windows/windows_wrapper.h"
-
-#include <d3d9types.h>
-
-#include <d3dkmthk.h>
 
 #include <memory>
 #include <string>

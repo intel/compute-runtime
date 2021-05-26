@@ -52,6 +52,10 @@ struct OsHandleStorage;
 
 enum class HeapIndex : uint32_t;
 
+unsigned int readEnablePreemptionRegKey();
+unsigned int getPid();
+bool isShutdownInProgress();
+
 class Wddm : public DriverModel {
   public:
     static constexpr DriverModelType driverModelType = DriverModelType::WDDM;
@@ -146,8 +150,6 @@ class Wddm : public DriverModel {
         return static_cast<uint32_t>(hwContextId);
     }
 
-    std::unique_ptr<SettingsReader> registryReader;
-
     uintptr_t getWddmMinAddress() const {
         return this->minAddress;
     }
@@ -155,7 +157,7 @@ class Wddm : public DriverModel {
         return wddmInterface.get();
     }
 
-    unsigned int readEnablePreemptionRegKey();
+    unsigned int getEnablePreemptionRegValue();
     MOCKABLE_VIRTUAL uint64_t *getPagingFenceAddress() {
         return pagingFenceAddress;
     }
@@ -209,6 +211,7 @@ class Wddm : public DriverModel {
     bool instrumentationEnabled = false;
     std::string deviceRegistryPath;
     RootDeviceEnvironment &rootDeviceEnvironment;
+    unsigned int enablePreemptionRegValue = 1;
 
     unsigned long hwContextId = 0;
     uintptr_t maximumApplicationAddress = 0;

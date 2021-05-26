@@ -5,6 +5,7 @@
  *
  */
 
+#define INITGUID
 #include "shared/source/os_interface/windows/wddm/adapter_factory_dxcore.h"
 
 #include "shared/source/helpers/debug_helpers.h"

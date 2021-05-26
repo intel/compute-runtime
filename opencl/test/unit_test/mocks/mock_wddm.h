@@ -34,6 +34,7 @@ class WddmMock : public Wddm {
     using Wddm::dedicatedVideoMemory;
     using Wddm::device;
     using Wddm::deviceRegistryPath;
+    using Wddm::enablePreemptionRegValue;
     using Wddm::featureTable;
     using Wddm::getSystemInfo;
     using Wddm::gmmMemory;

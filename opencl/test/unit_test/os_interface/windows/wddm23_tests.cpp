@@ -37,7 +37,6 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         wddm->featureTable->ftrWddmHwQueues = true;
         wddmMockInterface = new WddmMockInterface23(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
-        wddm->registryReader.reset(new RegistryReaderMock());
     }
 
     void init() {

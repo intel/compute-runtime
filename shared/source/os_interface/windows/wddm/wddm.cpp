@@ -20,8 +20,8 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/os_interface/windows/debug_registry_reader.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
+#include "shared/source/os_interface/windows/dxcore_wrapper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/kmdaf_listener.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
@@ -40,12 +40,6 @@
 
 #include "gmm_client_context.h"
 #include "gmm_memory.h"
-
-// clang-format off
-#include <initguid.h>
-#include <dxcore.h>
-#include <dxgi.h>
-// clang-format on
 
 namespace NEO {
 extern Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory();
@@ -69,7 +63,7 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceIdIn, RootDeviceEnvironment &
     gfxPlatform.reset(new PLATFORM);
     memset(gtSystemInfo.get(), 0, sizeof(*gtSystemInfo));
     memset(gfxPlatform.get(), 0, sizeof(*gfxPlatform));
-    this->registryReader.reset(new RegistryReader(false, "System\\CurrentControlSet\\Control\\GraphicsDrivers\\Scheduler"));
+    this->enablePreemptionRegValue = NEO::readEnablePreemptionRegKey();
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     temporaryResources = std::make_unique<WddmResidentAllocationsContainer>(this);
 }
@@ -222,7 +216,7 @@ bool Wddm::createDevice(PreemptionMode preemptionMode) {
         CreateDevice.hAdapter = getAdapter();
         CreateDevice.Flags.LegacyMode = FALSE;
         if (preemptionMode >= PreemptionMode::MidBatch) {
-            CreateDevice.Flags.DisableGpuTimeout = readEnablePreemptionRegKey();
+            CreateDevice.Flags.DisableGpuTimeout = getEnablePreemptionRegValue();
         }
 
         status = getGdi()->createDevice(&CreateDevice);
@@ -663,6 +657,9 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
 }
 
 bool Wddm::destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
+    if ((0U == allocationCount) && (0U == resourceHandle)) {
+        return true;
+    }
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_DESTROYALLOCATION2 DestroyAllocation = {0};
     DEBUG_BREAK_IF(!(allocationCount <= 1 || resourceHandle == 0));
@@ -700,14 +697,14 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     std::unique_ptr<char[]> allocPrivateData(new char[QueryResourceInfo.TotalPrivateDriverDataSize]);
     std::unique_ptr<char[]> resPrivateData(new char[QueryResourceInfo.ResourcePrivateDriverDataSize]);
     std::unique_ptr<char[]> resPrivateRuntimeData(new char[QueryResourceInfo.PrivateRuntimeDataSize]);
-    std::unique_ptr<D3DDDI_OPENALLOCATIONINFO[]> allocationInfo(new D3DDDI_OPENALLOCATIONINFO[QueryResourceInfo.NumAllocations]);
+    std::unique_ptr<D3DDDI_OPENALLOCATIONINFO2[]> allocationInfo(new D3DDDI_OPENALLOCATIONINFO2[QueryResourceInfo.NumAllocations]);
 
     D3DKMT_OPENRESOURCE OpenResource = {0};
 
     OpenResource.hDevice = device;
     OpenResource.hGlobalShare = handle;
     OpenResource.NumAllocations = QueryResourceInfo.NumAllocations;
-    OpenResource.pOpenAllocationInfo = allocationInfo.get();
+    OpenResource.pOpenAllocationInfo2 = allocationInfo.get();
     OpenResource.pTotalPrivateDriverDataBuffer = allocPrivateData.get();
     OpenResource.TotalPrivateDriverDataBufferSize = QueryResourceInfo.TotalPrivateDriverDataSize;
     OpenResource.pResourcePrivateDriverData = resPrivateData.get();
@@ -815,7 +812,7 @@ bool Wddm::createContext(OsContextWin &osContext) {
 
     PrivateData.IsProtectedProcess = FALSE;
     PrivateData.IsDwm = FALSE;
-    PrivateData.ProcessID = GetCurrentProcessId();
+    PrivateData.ProcessID = NEO::getPid();
     PrivateData.GpuVAContext = TRUE;
     PrivateData.pHwContextId = &hwContextId;
     PrivateData.IsMediaUsage = false;
@@ -828,7 +825,7 @@ bool Wddm::createContext(OsContextWin &osContext) {
     CreateContext.Flags.HwQueueSupported = wddmInterface->hwQueuesSupported();
 
     if (osContext.getPreemptionMode() >= PreemptionMode::MidBatch) {
-        CreateContext.Flags.DisableGpuTimeout = readEnablePreemptionRegKey();
+        CreateContext.Flags.DisableGpuTimeout = getEnablePreemptionRegValue();
     }
 
     UmKmDataTempStorage<CREATECONTEXT_PVTDATA> internalRepresentation;
@@ -903,8 +900,8 @@ void Wddm::getDeviceState() {
 #endif
 }
 
-unsigned int Wddm::readEnablePreemptionRegKey() {
-    return static_cast<unsigned int>(registryReader->getSetting("EnablePreemption", 1));
+unsigned int Wddm::getEnablePreemptionRegValue() {
+    return enablePreemptionRegValue;
 }
 
 bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
@@ -1003,14 +1000,7 @@ LUID Wddm::getAdapterLuid() const {
 }
 
 bool Wddm::isShutdownInProgress() {
-    auto handle = GetModuleHandleA("ntdll.dll");
-
-    if (!handle) {
-        return true;
-    }
-
-    auto RtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
-    return RtlDllShutdownInProgress();
+    return NEO::isShutdownInProgress();
 }
 
 void Wddm::releaseReservedAddress(void *reservedAddress) {

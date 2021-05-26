@@ -36,9 +36,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
-        auto regReader = new RegistryReaderMock();
-        wddm->registryReader.reset(regReader);
-        regReader->forceRetValue = forceReturnPreemptionRegKeyValue;
+        wddm->enablePreemptionRegValue = forceReturnPreemptionRegKeyValue;
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
         wddm->init();
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();

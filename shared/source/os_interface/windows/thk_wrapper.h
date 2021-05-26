@@ -7,10 +7,9 @@
 
 #pragma once
 #include "shared/source/helpers/options.h"
+#include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/api_intercept.h"
-
-#include <d3dkmthk.h>
 
 namespace NEO {
 // Default template for GetID( ) for Thk function, causing compilation error !!

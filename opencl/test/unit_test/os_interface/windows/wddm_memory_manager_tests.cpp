@@ -559,7 +559,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, whenAllocationCreatedFromSharedHandleIsDestroyedThenNullAllocationHandleAndZeroAllocationCountArePassedTodestroyAllocation) {
+TEST_F(WddmMemoryManagerSimpleTest, whenAllocationCreatedFromSharedHandleIsDestroyedThenDestroyAllocationFromGdiIsNotInvoked) {
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, false));
 
@@ -579,9 +579,10 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAllocationCreatedFromSharedHandleIsDestr
     memoryManager->freeGraphicsMemory(allocation);
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryImplCalled);
 
+    gdi->getDestroyArg().AllocationCount = 7;
     auto destroyArg = gdi->getDestroyArg();
-    EXPECT_EQ(nullptr, destroyArg.phAllocationList);
-    EXPECT_EQ(0, destroyArg.AllocationCount);
+    EXPECT_EQ(7, destroyArg.AllocationCount);
+    gdi->getDestroyArg().AllocationCount = 0;
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
