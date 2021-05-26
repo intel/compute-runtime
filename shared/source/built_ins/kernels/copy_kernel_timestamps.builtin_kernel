@@ -52,7 +52,7 @@ __kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* d
     if(packetUsed > 1) {
         uint timestampsOffsets = 4;
         for(uint i = 1; i < packetUsed; i++) {
-            timestampsOffsets *= i;
+            timestampsOffsets += i;
             if(contextStart > GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets)) {
               contextStart = GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets);
             }
@@ -93,7 +93,7 @@ __kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __glob
     if(packetUsed > 1) {
         uint timestampsOffsets = 4;
         for(uint i = 1; i < packetUsed; i++) {
-            timestampsOffsets *= i;
+            timestampsOffsets += i;
             if(contextStart > GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets)) {
               contextStart = GetTimestampValue(srcPtr, timestampSizeInDw, timestampsOffsets);
             }
