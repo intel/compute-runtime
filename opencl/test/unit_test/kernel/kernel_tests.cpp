@@ -3212,3 +3212,23 @@ TEST(ArgTypeTraits, GivenDefaultInitializedArgTypeMetadataThenAddressSpaceIsGlob
     ArgTypeTraits metadata;
     EXPECT_EQ(NEO::KernelArgMetadata::AddrGlobal, metadata.addressQualifier);
 }
+TEST_F(KernelTests, givenKernelWithSimdGreaterThan1WhenKernelCreatedThenMaxWorgGroupSizeEqualDeviceProperty) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(pProgram, *pKernelInfo, *pClDevice));
+
+    auto kernelMaxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize;
+    EXPECT_EQ(pKernel->getMaxKernelWorkGroupSize(), kernelMaxWorkGroupSize);
+}
+
+TEST_F(KernelTests, givenKernelWithSimdEqual1WhenKernelCreatedThenMaxWorgGroupSizeExualMaxHwThreadsPerWG) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(pProgram, *pKernelInfo, *pClDevice));
+
+    auto deviceMaxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize;
+    auto maxThreadsPerWG = HwHelper::get(pKernel->getHardwareInfo().platform.eRenderCoreFamily).getMaxThreadsForWorkgroup(pKernel->getHardwareInfo(), static_cast<uint32_t>(pClDevice->getDevice().getDeviceInfo().maxNumEUsPerSubSlice));
+
+    EXPECT_LT(pKernel->getMaxKernelWorkGroupSize(), deviceMaxWorkGroupSize);
+    EXPECT_EQ(pKernel->getMaxKernelWorkGroupSize(), maxThreadsPerWG);
+}

@@ -108,6 +108,7 @@ class MockKernel : public Kernel {
     using Kernel::enqueuedLocalWorkSizeZ;
     using Kernel::executionType;
     using Kernel::getDevice;
+    using Kernel::getHardwareInfo;
     using Kernel::globalWorkOffsetX;
     using Kernel::globalWorkOffsetY;
     using Kernel::globalWorkOffsetZ;
