@@ -16,7 +16,7 @@ using namespace NEO;
 
 using EncodeMathMMIOTest = testing::Test;
 
-HWTEST_F(EncodeMathMMIOTest, encodeAluAddHasCorrectOpcodesOperands) {
+HWTEST_F(EncodeMathMMIOTest, WhenEncodingAluThenCorrectOpcodesOperandsAdded) {
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
 
     MI_MATH_ALU_INST_INLINE aluParam[5];
@@ -57,7 +57,7 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluAddHasCorrectOpcodesOperands) {
     EXPECT_EQ(aluParam[4].DW0.Value, 0u);
 }
 
-HWTEST_F(EncodeMathMMIOTest, encodeAluSubStoreCarryHasCorrectOpcodesOperands) {
+HWTEST_F(EncodeMathMMIOTest, WhenEncodingAluSubStoreCarryThenCorrectOpcodesOperandsAdded) {
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
 
     MI_MATH_ALU_INST_INLINE aluParam[5];
@@ -142,7 +142,7 @@ HWTEST_F(EncodeMathMMIOTest, givenAluRegistersWhenEncodeAluAndIsCalledThenAluPar
 
 using CommandEncoderMathTest = Test<DeviceFixture>;
 
-HWTEST_F(CommandEncoderMathTest, commandReserve) {
+HWTEST_F(CommandEncoderMathTest, WhenReservingCommandThenBitfieldSetCorrectly) {
     using MI_MATH = typename FamilyType::MI_MATH;
     GenCmdList commands;
     CommandContainer cmdContainer;
@@ -217,7 +217,7 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
     EXPECT_EQ(cmdMem->getMemoryAddress(), dstAddress);
 }
 
-HWTEST_F(CommandEncoderMathTest, setGroupSizeIndirect) {
+HWTEST_F(CommandEncoderMathTest, WhenSettingGroupSizeIndirectThenCommandsAreCorrect) {
     using MI_MATH = typename FamilyType::MI_MATH;
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
@@ -243,7 +243,7 @@ HWTEST_F(CommandEncoderMathTest, setGroupSizeIndirect) {
     ASSERT_NE(itor, commands.end());
 }
 
-HWTEST_F(CommandEncoderMathTest, setGroupCountIndirect) {
+HWTEST_F(CommandEncoderMathTest, WhenSettingGroupCountIndirectThenCommandsAreCorrect) {
     using MI_MATH = typename FamilyType::MI_MATH;
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;

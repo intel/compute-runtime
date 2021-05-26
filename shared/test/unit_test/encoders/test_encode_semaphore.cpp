@@ -14,7 +14,7 @@ using namespace NEO;
 
 using CommandEncodeSemaphore = Test<CommandEncodeStatesFixture>;
 
-HWTEST_F(CommandEncodeSemaphore, programMiSemaphoreWait) {
+HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     MI_SEMAPHORE_WAIT miSemaphore;
 
