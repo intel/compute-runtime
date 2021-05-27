@@ -437,11 +437,6 @@ inline uint32_t HwHelperHw<GfxFamily>::getMinimalSIMDSize() {
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
-    return HwHelper::getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerSubSlice);
-}
-
-template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const {
     return false;
 }

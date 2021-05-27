@@ -116,6 +116,11 @@ uint32_t HwHelperHw<GfxFamily>::getPlanarYuvMaxHeight() const {
 }
 
 template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
+    return HwHelper::getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerSubSlice);
+}
+
+template <typename GfxFamily>
 aub_stream::MMIOList HwHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const {
     return {};
 }
