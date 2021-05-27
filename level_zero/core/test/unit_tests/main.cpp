@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -22,6 +24,7 @@
 #include "opencl/test/unit_test/global_environment.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/compiler_interface/l0_reg_path.h"
 
 #include "gmock/gmock.h"
 #include "igfxfmid.h"
@@ -59,6 +62,10 @@ int32_t revId = -1;
 
 namespace NEO {
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
+extern bool useMockGmm;
+extern TestMode testMode;
+extern const char *executionDirectorySuffix;
+
 namespace MockSipData {
 extern std::unique_ptr<MockSipKernel> mockSipKernel;
 }
@@ -135,6 +142,7 @@ void applyWorkarounds() {
 
 int main(int argc, char **argv) {
     bool useDefaultListener = false;
+    bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
     applyWorkarounds();
 
     testing::InitGoogleMock(&argc, argv);
@@ -183,6 +191,16 @@ int main(int argc, char **argv) {
         }
         if (!strcmp("--disable_default_listener", argv[i])) {
             useDefaultListener = false;
+        } else if (!strcmp("--tbx", argv[i])) {
+            if (testMode == TestMode::AubTests) {
+                testMode = TestMode::AubTestsWithTbx;
+            }
+            initialHardwareTag = 0;
+        } else if (!strcmp("--read-config", argv[i]) && (testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx)) {
+            if (DebugManager.registryReadAvailable()) {
+                DebugManager.setReaderImpl(NEO::SettingsReader::create(L0::registryPath));
+                DebugManager.injectSettingsFromReader();
+            }
         } else if (!strcmp("--enable_default_listener", argv[i])) {
             useDefaultListener = true;
         }
@@ -228,6 +246,7 @@ int main(int argc, char **argv) {
     testFilesNoRev = testBinaryFilesNoRev;
 
     std::string executionDirectory(hardwarePrefix[productFamily]);
+    executionDirectory += NEO::executionDirectorySuffix; //_aub for aub_tests, empty otherwise
     executionDirectory += "/";
     executionDirectory += std::to_string(revId);
 
@@ -243,19 +262,25 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    NEO::GmmHelper::createGmmContextWrapperFunc =
-        NEO::GmmClientContextBase::create<NEO::MockGmmClientContext>;
+    if (useMockGmm) {
+        NEO::GmmHelper::createGmmContextWrapperFunc = NEO::GmmClientContextBase::create<MockGmmClientContext>;
+    } else {
+        NEO::GmmInterface::initialize(nullptr, nullptr);
+    }
 
     uint64_t hwInfoConfig = NEO::defaultHardwareInfoConfigTable[productFamily];
     NEO::setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
 
     // set Gt and FeatureTable to initial state
-    NEO::hardwareInfoSetup[productFamily](&hwInfoForTests, false, hwInfoConfig);
+    NEO::hardwareInfoSetup[productFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
 
     NEO::defaultHwInfo = std::make_unique<NEO::HardwareInfo>();
     *NEO::defaultHwInfo = hwInfoForTests;
 
     NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());
+    if (testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx) {
+        MockSipData::useMockSip = false;
+    }
 
     environment = reinterpret_cast<TestEnvironment *>(::testing::AddGlobalTestEnvironment(new TestEnvironment));
 
