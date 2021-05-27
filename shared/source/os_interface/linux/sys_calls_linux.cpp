@@ -60,5 +60,10 @@ int poll(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) {
 int fstat(int fd, struct stat *buf) {
     return ::fstat(fd, buf);
 }
+
+ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
+    return ::pread(fd, buf, count, offset);
+}
+
 } // namespace SysCalls
 } // namespace NEO

@@ -21,5 +21,6 @@ int access(const char *pathname, int mode);
 int readlink(const char *path, char *buf, size_t bufsize);
 int poll(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout);
 int fstat(int fd, struct stat *buf);
+ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 } // namespace SysCalls
 } // namespace NEO
