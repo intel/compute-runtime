@@ -57,6 +57,13 @@ if(NOT "${BRANCH_TYPE}" STREQUAL "")
 endif()
 message(STATUS "branch dir list: ${BRANCH_DIR_LIST}")
 
+if(WIN32)
+  set(DRIVER_MODEL wddm)
+else()
+  set(DRIVER_MODEL drm)
+endif()
+message(STATUS "Driver model : ${DRIVER_MODEL}")
+
 if(TR_DEPRECATED)
   add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
 endif()

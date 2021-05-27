@@ -1027,4 +1027,12 @@ void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
         }
     }
 }
+
+std::unique_ptr<MemoryManager> DrmMemoryManager::create(ExecutionEnvironment &executionEnvironment) {
+    return std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerActive,
+                                              DebugManager.flags.EnableForcePin.get(),
+                                              true,
+                                              executionEnvironment);
+}
+
 } // namespace NEO

@@ -58,6 +58,7 @@ target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
                            ${NEO__IGC_INCLUDE_DIR}
                            ${THIRD_PARTY_DIR}
                            ${NEO__GMM_INCLUDE_DIR}
+                           ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/create_command_stream_receiver_${DRIVER_MODEL}
 )
 
 target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC

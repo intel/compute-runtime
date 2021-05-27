@@ -188,6 +188,8 @@ class Wddm : public DriverModel {
 
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
 
+    static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
+
   protected:
     std::unique_ptr<HwDeviceIdWddm> hwDeviceId;
     D3DKMT_HANDLE device = 0;

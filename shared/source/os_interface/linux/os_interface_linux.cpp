@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/os_interface/linux/os_interface_linux.h"
+
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
@@ -32,20 +34,24 @@ bool OSInterface::isDebugAttachAvailable() const {
     return false;
 }
 
-bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) {
-    Drm *drm = Drm::create(std::unique_ptr<HwDeviceIdDrm>(hwDeviceId.release()->as<HwDeviceIdDrm>()), *this);
+bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex,
+                        RootDeviceEnvironment *rootDeviceEnv,
+                        std::unique_ptr<OSInterface> &dstOsInterface, std::unique_ptr<MemoryOperationsHandler> &dstMemoryOpsHandler) {
+    auto hwDeviceIdDrm = std::unique_ptr<HwDeviceIdDrm>(reinterpret_cast<HwDeviceIdDrm *>(hwDeviceId.release()));
+
+    Drm *drm = Drm::create(std::move(hwDeviceIdDrm), *rootDeviceEnv);
     if (!drm) {
         return false;
     }
 
-    osInterface.reset(new OSInterface());
-    osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    auto hardwareInfo = getMutableHardwareInfo();
+    dstOsInterface.reset(new OSInterface());
+    dstOsInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    auto hardwareInfo = rootDeviceEnv->getMutableHardwareInfo();
     HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-    if (hwConfig->configureHwInfoDrm(hardwareInfo, hardwareInfo, osInterface.get())) {
+    if (hwConfig->configureHwInfoDrm(hardwareInfo, hardwareInfo, dstOsInterface.get())) {
         return false;
     }
-    memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);
+    dstMemoryOpsHandler = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);
     return true;
 }
 

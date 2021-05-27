@@ -73,6 +73,8 @@ class DrmMemoryManager : public MemoryManager {
 
     void disableGemCloseWorkerForNewResidencyModel() override;
 
+    static std::unique_ptr<MemoryManager> create(ExecutionEnvironment &executionEnvironment);
+
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
     void eraseSharedBufferObject(BufferObject *bo);

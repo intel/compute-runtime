@@ -206,6 +206,8 @@ class Drm : public DriverModel {
 
     const std::vector<int> &getSliceMappings(uint32_t deviceIndex);
 
+    static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
+
   protected:
     struct TopologyMapping {
         std::vector<int> sliceIndices;

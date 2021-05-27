@@ -11,6 +11,12 @@
 namespace NEO {
 
 template <typename GfxFamily>
+CommandStreamReceiver *createDeviceCommandStreamReceiver(bool withAubDump,
+                                                         ExecutionEnvironment &executionEnvironment,
+                                                         uint32_t rootDeviceIndex,
+                                                         const DeviceBitfield deviceBitfield);
+
+template <typename GfxFamily>
 class DeviceCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     typedef CommandStreamReceiverHw<GfxFamily> BaseClass;
 
@@ -25,6 +31,9 @@ class DeviceCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     static CommandStreamReceiver *create(bool withAubDump,
                                          ExecutionEnvironment &executionEnvironment,
                                          uint32_t rootDeviceIndex,
-                                         const DeviceBitfield deviceBitfield);
+                                         const DeviceBitfield deviceBitfield) {
+        return createDeviceCommandStreamReceiver<GfxFamily>(withAubDump, executionEnvironment,
+                                                            rootDeviceIndex, deviceBitfield);
+    }
 };
 } // namespace NEO

@@ -11,8 +11,6 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/cache_info_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_drm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_drm.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/discover_devices_wddm_stub.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/discover_devices_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.cpp
@@ -51,6 +49,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_linux.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_linux.h

@@ -20,6 +20,7 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
     cl_hw_helper
     command_queue
     command_stream_receiver_simulated_common_hw
+    create_device_command_stream_receiver
     experimental_command_buffer
     gpgpu_walker
     hardware_commands_helper

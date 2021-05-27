@@ -293,7 +293,7 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
     return std::make_unique<HwDeviceIdWddm>(OpenAdapterData.hAdapter, adapterLuid, &osEnvironment, std::move(umKmDataTranslator));
 }
 
-std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevicesWddm(ExecutionEnvironment &executionEnvironment) {
+std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironment &executionEnvironment) {
 
     auto osEnvironment = new OsEnvironmentWin();
     auto gdi = osEnvironment->gdi.get();

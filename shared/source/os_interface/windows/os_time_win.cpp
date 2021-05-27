@@ -24,7 +24,7 @@ bool OSTimeWin::getCpuTime(uint64_t *timeStamp) {
     return true;
 };
 
-std::unique_ptr<OSTime> OSTime::create(OSInterface *osInterface) {
+std::unique_ptr<OSTime> OSTimeWin::create(OSInterface *osInterface) {
     return std::unique_ptr<OSTime>(new OSTimeWin(osInterface));
 }
 

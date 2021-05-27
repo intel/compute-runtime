@@ -4,7 +4,15 @@
 # SPDX-License-Identifier: MIT
 #
 
+set(NEO_CORE_GLOBAL_FACTORIES
+    ${CMAKE_CURRENT_SOURCE_DIR}/create_os_context_${DRIVER_MODEL}.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/create_os_time_${DRIVER_MODEL}.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/discover_devices_${DRIVER_MODEL}.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/init_os_interface_${DRIVER_MODEL}.cpp
+)
+
 set(NEO_CORE_OS_INTERFACE
+    ${NEO_CORE_GLOBAL_FACTORIES}
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_memory_operations_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_memory_operations_handler.h

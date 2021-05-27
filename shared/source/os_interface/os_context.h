@@ -24,7 +24,7 @@ struct HardwareInfo;
 
 class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
-    OsContext() = delete;
+    OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
     static OsContext *create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
                              EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
 
@@ -54,7 +54,6 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
                                              bool &startInContext);
 
   protected:
-    OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
     virtual void initializeContext() {}
 
     const uint32_t contextId;

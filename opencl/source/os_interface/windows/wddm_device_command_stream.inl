@@ -160,4 +160,19 @@ void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContain
     }
 }
 
+template <typename GfxFamily>
+CommandStreamReceiver *createWddmDeviceCommandStreamReceiver(bool withAubDump,
+                                                             ExecutionEnvironment &executionEnvironment,
+                                                             uint32_t rootDeviceIndex,
+                                                             const DeviceBitfield deviceBitfield) {
+    if (withAubDump) {
+        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>("aubfile",
+                                                                                          executionEnvironment,
+                                                                                          rootDeviceIndex,
+                                                                                          deviceBitfield);
+    } else {
+        return new WddmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield);
+    }
+}
+
 } // namespace NEO

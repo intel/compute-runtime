@@ -34,6 +34,8 @@ class OsContextWin : public OsContext {
     void setHwQueue(HardwareQueue hardwareQueue) { this->hardwareQueue = hardwareQueue; }
     Wddm *getWddm() const { return &wddm; }
     MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
+    static OsContext *create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
+                             EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
 
   protected:
     void initializeContext() override;

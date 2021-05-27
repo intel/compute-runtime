@@ -24,8 +24,6 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/discover_devices_drm_stub.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/discover_devices_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/environment_variables.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.h
@@ -33,6 +31,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_drm_stub.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/init_wddm_os_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener${KMDAF_FILE_SUFFIX}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.cpp
@@ -41,6 +40,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_memory_win.cpp

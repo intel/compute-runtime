@@ -231,6 +231,7 @@ if(BUILD_WITH_L0)
                  PRIVATE
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_command_stream.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_deferred_deleter.cpp
+                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_memory_manager_${DRIVER_MODEL}.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_tbx_sockets.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/get_devices.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/source_level_debugger_dll.cpp
@@ -250,7 +251,6 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/options_windows.cpp
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/os_interface.cpp
-                   ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/create_wddm_memory_manager.cpp
     )
     target_link_libraries(${TARGET_NAME_L0}
                           dxgi
@@ -267,7 +267,6 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/devices.inl
                    ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/allocator_helper.cpp
-                   ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/create_drm_memory_manager.cpp
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/options_linux.cpp
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/os_interface.cpp
     )

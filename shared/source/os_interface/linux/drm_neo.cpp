@@ -382,7 +382,7 @@ void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int
     }
 }
 
-std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevicesDrm(ExecutionEnvironment &executionEnvironment) {
+std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironment &executionEnvironment) {
     std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
     executionEnvironment.osEnvironment = std::make_unique<OsEnvironment>();
     std::string devicePrefix = std::string(Os::pciDevicesDirectory) + "/pci-0000:";

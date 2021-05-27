@@ -54,8 +54,8 @@ uint64_t OSTimeLinux::getCpuRawTimestamp() {
     return timesInNsec / ticksInNsec;
 }
 
-std::unique_ptr<OSTime> OSTime::create(OSInterface *osInterface) {
-    return std::unique_ptr<OSTime>(new OSTimeLinux(osInterface, std::make_unique<DeviceTimeDrm>(osInterface)));
+std::unique_ptr<OSTime> OSTimeLinux::create(OSInterface *osInterface, std::unique_ptr<DeviceTime> deviceTime) {
+    return std::unique_ptr<OSTime>(new OSTimeLinux(osInterface, std::move(deviceTime)));
 }
 
 } // namespace NEO

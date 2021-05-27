@@ -103,8 +103,6 @@ class OSInterface : public NonCopyableClass {
     static bool gpuIdleImplicitFlush;
     static bool requiresSupportForWddmTrimNotification;
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
-    static std::vector<std::unique_ptr<HwDeviceId>> discoverDevicesWddm(ExecutionEnvironment &executionEnvironment);
-    static std::vector<std::unique_ptr<HwDeviceId>> discoverDevicesDrm(ExecutionEnvironment &executionEnvironment);
 
   protected:
     std::unique_ptr<DriverModel> driverModel = nullptr;

@@ -5,13 +5,13 @@
  *
  */
 
-#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
 
 std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionEnvironment &executionEnvironment) {
-    return OSInterface::discoverDevicesDrm(executionEnvironment);
+    return Drm::discoverDevices(executionEnvironment);
 }
 
 } // namespace NEO

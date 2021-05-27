@@ -27,6 +27,8 @@ class OsContextLinux : public OsContext {
     bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const override;
     Drm &getDrm() const;
     void waitForPagingFence();
+    static OsContext *create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
+                             EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice);
 
   protected:
     void initializeContext() override;

@@ -23,6 +23,8 @@ class OSTimeWin : public OSTime {
     double getHostTimerResolution() const override;
     uint64_t getCpuRawTimestamp() override;
 
+    static std::unique_ptr<OSTime> create(OSInterface *osInterface);
+
   protected:
     LARGE_INTEGER frequency;
     OSTimeWin() = default;

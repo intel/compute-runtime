@@ -20,6 +20,8 @@ class OSTimeLinux : public OSTime {
     double getHostTimerResolution() const override;
     uint64_t getCpuRawTimestamp() override;
 
+    static std::unique_ptr<OSTime> create(OSInterface *osInterface, std::unique_ptr<DeviceTime> deviceTime);
+
   protected:
     typedef int (*resolutionFunc_t)(clockid_t, struct timespec *);
     typedef int (*getTimeFunc_t)(clockid_t, struct timespec *);

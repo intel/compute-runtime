@@ -13,8 +13,8 @@
 
 namespace NEO {
 
-OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice) {
+OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
+                                EngineTypeUsage typeUsage, PreemptionMode preemptionMode, bool rootDevice) {
     if (osInterface) {
         return new OsContextWin(*osInterface->getDriverModel()->as<Wddm>(), contextId, deviceBitfield, typeUsage, preemptionMode, rootDevice);
     }

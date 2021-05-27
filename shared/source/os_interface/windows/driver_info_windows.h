@@ -8,13 +8,14 @@
 #pragma once
 
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/source/utilities/debug_settings_reader.h"
 
 #include <functional>
 #include <memory>
 #include <string>
 
 namespace NEO {
+
+class SettingsReader;
 
 bool isCompatibleDriverStore(std::string &&deviceRegistryPath);
 
