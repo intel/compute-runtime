@@ -215,8 +215,12 @@ void CommandStreamReceiver::cleanupResources() {
     }
 
     if (tagsMultiAllocation) {
+        //Null tag address to prevent waiting for tag update when freeing it
         tagAllocation = nullptr;
         tagAddress = nullptr;
+        DEBUG_BREAK_IF(tagAllocation != nullptr);
+        DEBUG_BREAK_IF(tagAddress != nullptr);
+
         for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
             getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
         }
