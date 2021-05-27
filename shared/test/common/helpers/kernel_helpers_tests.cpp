@@ -8,6 +8,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/kernel_helpers.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "test.h"
 
@@ -34,6 +35,13 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenNoBarriersOrSlmUsedWhenCalculatingMa
     auto workGroupSize = lws[0] * lws[1] * lws[2];
     auto expected = threadCount / Math::divideAndRoundUp(workGroupSize, simd);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
+}
+
+TEST_F(KernelHelperMaxWorkGroupsTests, GivenDebugFlagSetWhenGetMaxWorkGroupCountCalledThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.OverrideMaxWorkGroupCount.set(123);
+
+    EXPECT_EQ(123u, getMaxWorkGroupCount());
 }
 
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToBarriersCount) {
