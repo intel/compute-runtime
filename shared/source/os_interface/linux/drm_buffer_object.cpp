@@ -10,6 +10,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
 #include "shared/source/os_interface/os_context.h"
@@ -152,6 +153,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     }
 
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
+
     if (ret == 0) {
         return 0;
     }
@@ -214,7 +216,7 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
            << ", flags: " << std::hex << execObjectsStorage[i].flags << std::dec
            << ", size: " << this->peekSize() << " }\n";
 
-    std::cout << logger.str() << std::endl;
+    printf("%s\n", logger.str().c_str());
 }
 
 int bindBOsWithinContext(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, bool allContexts) {

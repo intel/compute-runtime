@@ -130,7 +130,15 @@ void DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<Grap
             for (const auto &engine : engines) {
                 if (this->rootDeviceIndex == engine.commandStreamReceiver->getRootDeviceIndex() &&
                     engine.osContext->getDeviceBitfield().test(subdeviceIndex)) {
-                    evict &= allocation->isResidencyTaskCountBelow(*engine.commandStreamReceiver->getTagAddress(), engine.osContext->getContextId());
+                    if (allocation->isAlwaysResident(engine.osContext->getContextId())) {
+                        evict = false;
+                        break;
+                    }
+                    if (allocation->isUsedByOsContext(engine.osContext->getContextId()) &&
+                        allocation->getTaskCount(engine.osContext->getContextId()) > *engine.commandStreamReceiver->getTagAddress()) {
+                        evict = false;
+                        break;
+                    }
                 }
             }
             if (evict) {
