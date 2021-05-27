@@ -13,6 +13,7 @@
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/alignment_selector.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -263,6 +264,7 @@ class MemoryManager {
     std::unique_ptr<PageFaultManager> pageFaultManager;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     HeapAssigner heapAssigner;
+    AlignmentSelector alignmentSelector = {};
     std::once_flag checkIsaPlacementOnce;
     bool isaInLocalMemory = false;
 };

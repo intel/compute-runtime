@@ -913,7 +913,24 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenSupportedTypeWhenAllocatingInDevice
     }
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryTest, given2MbAlignmentAllowedWhenAllocatingAllocationLessThen2MbThenUse64kbHeap) {
+struct DrmMemoryManagerLocalMemoryAlignmentTest : DrmMemoryManagerLocalMemoryTest {
+    std::unique_ptr<TestedDrmMemoryManager> createMemoryManager() {
+        return std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
+    }
+
+    bool isAllocationWithinHeap(MemoryManager &memoryManager, const GraphicsAllocation &allocation, HeapIndex heap) {
+        const auto allocationStart = allocation.getGpuAddress();
+        const auto allocationEnd = allocationStart + allocation.getUnderlyingBufferSize();
+        const auto heapStart = GmmHelper::canonize(memoryManager.getGfxPartition(rootDeviceIndex)->getHeapBase(heap));
+        const auto heapEnd = GmmHelper::canonize(memoryManager.getGfxPartition(rootDeviceIndex)->getHeapLimit(heap));
+        return heapStart <= allocationStart && allocationEnd <= heapEnd;
+    }
+
+    const uint32_t rootDeviceIndex = 0u;
+    DebugManagerStateRestore restore{};
+};
+
+TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, given2MbAlignmentAllowedWhenAllocatingAllocationLessThen2MbThenUse64kbHeap) {
     AllocationData allocationData;
     allocationData.allFlags = 0;
     allocationData.size = MemoryConstants::pageSize;
@@ -925,31 +942,34 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, given2MbAlignmentAllowedWhenAllocatingAl
 
     {
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD64KB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD64KB));
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD64KB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD64KB));
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD64KB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD64KB));
         memoryManager->freeGraphicsMemory(allocation);
     }
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryTest, given2MbAlignmentAllowedWhenAllocatingAllocationBiggerThan2MbThenUse2MbHeap) {
+TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, given2MbAlignmentAllowedWhenAllocatingAllocationBiggerThan2MbThenUse2MbHeap) {
     AllocationData allocationData;
     allocationData.allFlags = 0;
     allocationData.size = 2 * MemoryConstants::megaByte;
@@ -961,31 +981,35 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, given2MbAlignmentAllowedWhenAllocatingAl
 
     {
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD2MB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD2MB));
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD64KB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD64KB));
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD2MB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD2MB));
+        EXPECT_TRUE(isAligned(allocation->getGpuAddress(), MemoryConstants::pageSize2Mb));
         memoryManager->freeGraphicsMemory(allocation);
     }
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenExtendedHeapPreferredAnd2MbAlignmentAllowedWhenAllocatingAllocationBiggerThenPrefer2MbHeap) {
+TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenExtendedHeapPreferredAnd2MbAlignmentAllowedWhenAllocatingAllocationBiggerThenUseExtendedHeap) {
     if (memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED) == 0) {
         GTEST_SKIP();
     }
@@ -1001,31 +1025,36 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenExtendedHeapPreferredAnd2MbAlignmen
 
     {
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD2MB));
+        EXPECT_TRUE(isAligned(allocation->getGpuAddress(), MemoryConstants::pageSize2Mb));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_EXTENDED));
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_EXTENDED));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_EXTENDED));
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD2MB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_EXTENDED));
+        EXPECT_TRUE(isAligned(allocation->getGpuAddress(), MemoryConstants::pageSize2Mb));
         memoryManager->freeGraphicsMemory(allocation);
     }
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenCustomAlignmentWhenAllocatingAllocationBiggerThanTheAlignmentThenAlignProperly) {
+TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocatingAllocationBiggerThanTheAlignmentThenAlignProperly) {
     AllocationData allocationData;
     allocationData.allFlags = 0;
     allocationData.flags.allocateMemory = true;
@@ -1038,10 +1067,11 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCustomAlignmentWhenAllocatingAlloca
         // size==2MB, use 2MB heap
         DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::megaByte);
         allocationData.size = 2 * MemoryConstants::megaByte;
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD2MB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD2MB));
         EXPECT_TRUE(isAligned(allocation->getGpuAddress(), 2 * MemoryConstants::megaByte));
         memoryManager->freeGraphicsMemory(allocation);
     }
@@ -1050,10 +1080,11 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCustomAlignmentWhenAllocatingAlloca
         // size > 2MB, use 2MB heap
         DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(16 * MemoryConstants::megaByte);
         allocationData.size = 16 * MemoryConstants::megaByte;
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD2MB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD2MB));
         EXPECT_TRUE(isAligned(allocation->getGpuAddress(), 16 * MemoryConstants::megaByte));
         memoryManager->freeGraphicsMemory(allocation);
     }
@@ -1062,16 +1093,17 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCustomAlignmentWhenAllocatingAlloca
         // size < 2MB, use 64KB heap
         DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(8 * MemoryConstants::pageSize64k);
         allocationData.size = 8 * MemoryConstants::pageSize64k;
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD64KB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD64KB));
         EXPECT_TRUE(isAligned(allocation->getGpuAddress(), 8 * MemoryConstants::pageSize64k));
         memoryManager->freeGraphicsMemory(allocation);
     }
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenCustomAlignmentWhenAllocatingAllocationLessThanTheAlignmentThenIgnoreCustomAlignment) {
+TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocatingAllocationLessThanTheAlignmentThenIgnoreCustomAlignment) {
     AllocationData allocationData;
     allocationData.allFlags = 0;
     allocationData.size = 3 * MemoryConstants::megaByte;
@@ -1085,10 +1117,11 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCustomAlignmentWhenAllocatingAlloca
         // Too small allocation, fallback to 64KB heap
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
         DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(32 * MemoryConstants::megaByte);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD64KB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD64KB));
         memoryManager->freeGraphicsMemory(allocation);
     }
 
@@ -1096,10 +1129,11 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCustomAlignmentWhenAllocatingAlloca
         // Too small allocation, fallback to 2MB heap
         DebugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
         DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(32 * MemoryConstants::megaByte);
+        auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
-        EXPECT_TRUE(isAllocationWithinHeap(*allocation, HeapIndex::HEAP_STANDARD2MB));
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::HEAP_STANDARD2MB));
         memoryManager->freeGraphicsMemory(allocation);
     }
 }
@@ -1131,6 +1165,10 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenOversizedAllocationWhenGraphicsAllo
         heap = HeapIndex::HEAP_EXTENDED;
     }
     auto largerSize = 6 * MemoryConstants::megaByte;
+
+    auto gpuAddress0 = memoryManager->getGfxPartition(0)->heapAllocateWithCustomAlignment(heap, largerSize, MemoryConstants::pageSize2Mb);
+    EXPECT_NE(0u, gpuAddress0);
+    EXPECT_EQ(6 * MemoryConstants::megaByte, largerSize);
     auto gpuAddress1 = memoryManager->getGfxPartition(0)->heapAllocate(heap, largerSize);
     EXPECT_NE(0u, gpuAddress1);
     EXPECT_EQ(6 * MemoryConstants::megaByte, largerSize);

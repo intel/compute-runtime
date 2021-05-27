@@ -2218,3 +2218,51 @@ TEST(WddmMemoryManager, givenLocalPointerPassedToIsCpuCopyRequiredThenFalseIsRet
     EXPECT_FALSE(wddmMemoryManager.isCpuCopyRequired(&backup));
     EXPECT_FALSE(wddmMemoryManager.isCpuCopyRequired(&backup));
 }
+
+TEST_F(WddmMemoryManagerSimpleTest, whenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
+    std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
+        {MemoryConstants::pageSize2Mb, false, 0.1f, HeapIndex::TOTAL_HEAPS},
+        {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+    };
+
+    MockWddmMemoryManager memoryManager(true, true, *executionEnvironment);
+    EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, given2MbPagesDisabledWhenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+
+    std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
+        {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+    };
+
+    MockWddmMemoryManager memoryManager(true, true, *executionEnvironment);
+    EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentWhenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
+    DebugManagerStateRestore restore{};
+
+    {
+        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(MemoryConstants::megaByte);
+        std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
+            {MemoryConstants::pageSize2Mb, false, 0.1f, HeapIndex::TOTAL_HEAPS},
+            {MemoryConstants::megaByte, false, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+            {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+        };
+        MockWddmMemoryManager memoryManager(true, true, *executionEnvironment);
+        EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
+    }
+
+    {
+        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::pageSize2Mb);
+        std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
+            {2 * MemoryConstants::pageSize2Mb, false, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+            {MemoryConstants::pageSize2Mb, false, 0.1f, HeapIndex::TOTAL_HEAPS},
+            {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+        };
+        MockWddmMemoryManager memoryManager(true, true, *executionEnvironment);
+        EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
+    }
+}

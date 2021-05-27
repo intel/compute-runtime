@@ -18,6 +18,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass = WddmMemoryManager;
 
   public:
+    using BaseClass::alignmentSelector;
     using BaseClass::allocateGraphicsMemoryForNonSvmHostPtr;
     using BaseClass::allocateGraphicsMemoryWithGpuVa;
     using BaseClass::allocateGraphicsMemoryWithProperties;

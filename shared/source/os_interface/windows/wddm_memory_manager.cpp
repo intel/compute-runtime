@@ -48,6 +48,16 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
         getWddm(rootDeviceIndex).initGfxPartition(*getGfxPartition(rootDeviceIndex), rootDeviceIndex, gfxPartitions.size(), heapAssigner.apiAllowExternalHeapForSshAndDsh);
     }
 
+    alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage);
+    if (DebugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0) {
+        constexpr static float maxWastage2Mb = 0.1f;
+        alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize2Mb, false, maxWastage2Mb);
+    }
+    const size_t customAlignment = static_cast<size_t>(DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
+    if (customAlignment > 0) {
+        alignmentSelector.addCandidateAlignment(customAlignment, false, AlignmentSelector::anyWastage);
+    }
+
     initialized = true;
 }
 

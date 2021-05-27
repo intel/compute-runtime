@@ -4442,4 +4442,53 @@ TEST_F(DrmMemoryManagerTest, givenAllocateGraphicsMemoryWithPropertiesCalledWith
     EXPECT_NE(nullptr, debugSurface);
     memoryManager->freeGraphicsMemory(debugSurface);
 }
+
+TEST_F(DrmMemoryManagerTest, whenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
+    std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
+        {MemoryConstants::pageSize2Mb, false, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB},
+        {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD64KB},
+    };
+
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
+}
+
+TEST_F(DrmMemoryManagerTest, given2MbPagesDisabledWhenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+
+    std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
+        {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD64KB},
+    };
+
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
+}
+
+TEST_F(DrmMemoryManagerTest, givenCustomAlignmentWhenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
+    DebugManagerStateRestore restore{};
+
+    {
+        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(MemoryConstants::megaByte);
+        std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
+            {MemoryConstants::pageSize2Mb, false, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB},
+            {MemoryConstants::megaByte, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD64KB},
+            {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD64KB},
+        };
+        TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+        EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
+    }
+
+    {
+        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::pageSize2Mb);
+        std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
+            {2 * MemoryConstants::pageSize2Mb, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB},
+            {MemoryConstants::pageSize2Mb, false, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB},
+            {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD64KB},
+        };
+        TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+        EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
+    }
+}
+
 } // namespace NEO

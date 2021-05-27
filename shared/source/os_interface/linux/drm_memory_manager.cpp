@@ -38,6 +38,17 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                    ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
+
+    alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD64KB);
+    if (DebugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0) {
+        alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize2Mb, false, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB);
+    }
+    const size_t customAlignment = static_cast<size_t>(DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
+    if (customAlignment > 0) {
+        const auto heapIndex = customAlignment >= MemoryConstants::pageSize2Mb ? HeapIndex::HEAP_STANDARD2MB : HeapIndex::HEAP_STANDARD64KB;
+        alignmentSelector.addCandidateAlignment(customAlignment, true, AlignmentSelector::anyWastage, heapIndex);
+    }
+
     initialize(mode);
 }
 
