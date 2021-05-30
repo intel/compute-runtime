@@ -62,6 +62,13 @@ set(RUNTIME_SRCS_DLL_WINDOWS
     ${NEO_SOURCE_DIR}/opencl/source/os_interface/windows/platform_teardown_win.cpp
 )
 
+if(NOT DISABLE_WDDM_LINUX)
+  list(APPEND RUNTIME_SRCS_DLL_LINUX
+       ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+       ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+  )
+endif()
+
 target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_DLL_BASE})
 if(WIN32)
   if(DEFINED NEO_DLL_RC_FILE)

@@ -41,7 +41,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
                              ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
   )
 
-  if(WIN32 OR WDDM_LINUX)
+  if(WIN32 OR NOT DISABLE_WDDM_LINUX)
     target_include_directories(${LIB_NAME} PUBLIC ${WDK_INCLUDE_PATHS})
   endif()
 
@@ -73,9 +73,11 @@ set(CORE_SOURCES ${CORE_SRCS_GENX_ALL_BASE})
 
 add_subdirectories()
 
-if(WIN32)
+if(WIN32 OR NOT DISABLE_WDDM_LINUX)
   list(APPEND CORE_SOURCES ${CORE_SRCS_GENX_ALL_WINDOWS})
-else()
+endif()
+
+if(NOT WIN32)
   list(APPEND CORE_SOURCES ${CORE_SRCS_GENX_ALL_LINUX})
 endif()
 
@@ -141,6 +143,14 @@ else()
                                  NEO_CORE_PAGE_FAULT_MANAGER_LINUX
                                  NEO_CORE_UTILITIES_LINUX
   )
+  if(NOT DISABLE_WDDM_LINUX)
+    append_sources_from_properties(CORE_SOURCES
+                                   NEO_CORE_SRCS_HELPERS_WINDOWS
+                                   NEO_CORE_GMM_HELPER_WINDOWS
+                                   NEO_CORE_OS_INTERFACE_WDDM
+                                   NEO_CORE_SKU_INFO_WINDOWS
+    )
+  endif()
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_TYPE}/core_sources.cmake)

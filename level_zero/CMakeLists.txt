@@ -427,7 +427,7 @@ if(BUILD_WITH_L0)
                                ${KHRONOS_HEADERS_DIR}
     )
 
-    if(WIN32 OR WDDM_LINUX)
+    if(WIN32 OR NOT DISABLE_WDDM_LINUX)
       target_include_directories(${LIB_NAME} PUBLIC ${WDK_INCLUDE_PATHS})
     endif()
 

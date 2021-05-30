@@ -57,10 +57,15 @@ if(NOT "${BRANCH_TYPE}" STREQUAL "")
 endif()
 message(STATUS "branch dir list: ${BRANCH_DIR_LIST}")
 
+set(DISABLE_WDDM_LINUX TRUE)
 if(WIN32)
   set(DRIVER_MODEL wddm)
 else()
-  set(DRIVER_MODEL drm)
+  if(DISABLE_WDDM_LINUX)
+    set(DRIVER_MODEL drm)
+  else()
+    set(DRIVER_MODEL drm_or_wddm)
+  endif()
 endif()
 message(STATUS "Driver model : ${DRIVER_MODEL}")
 
@@ -114,9 +119,12 @@ add_definitions(
                 -DCL_USE_DEPRECATED_OPENCL_2_2_APIS
 )
 
-if(WIN32)
+if(WIN32 OR NOT DISABLE_WDDM_LINUX)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -DWDDM_VERSION_NUMBER=23 -DNOMINMAX)
   add_definitions(-DLEGACY_D3DAPI_VERSION=20)
+  if(NOT WIN32)
+    add_definitions(-DWDDM_LINUX=1 -DLHDM=1 -DDXGKDDI_INTERFACE_VERSION_WDDM2_0=1)
+  endif()
 endif()
 
 set(CMAKE_C_FLAGS_RELEASEINTERNAL "${CMAKE_C_FLAGS_RELEASE}")
@@ -368,6 +376,10 @@ if(WIN32)
        "${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/shared"
        "${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/km"
   )
+  message(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
+elseif(NOT DISABLE_WDDM_LINUX)
+  add_compile_options(-DCONST_FROM_WDK_10_0_18328_0=CONST)
+  set(WDK_INCLUDE_PATHS "")
 
   message(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
 endif()

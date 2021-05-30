@@ -37,7 +37,6 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_operations_handler_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_query_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_drm.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_wddm_stub.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux_inc.cpp
@@ -69,6 +68,17 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/system_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/system_info_impl.h
 )
+
+if(DISABLE_WDDM_LINUX)
+  list(APPEND NEO_CORE_OS_INTERFACE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_wddm_stub.cpp
+  )
+else()
+  list(APPEND NEO_CORE_OS_INTERFACE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/sys_calls_win.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/compatible_driver_store.cpp
+  )
+endif()
 
 if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX

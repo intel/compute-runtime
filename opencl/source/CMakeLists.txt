@@ -66,7 +66,7 @@ target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC
                            ${NEO__IGC_COMPILE_DEFINITIONS}
 )
 
-if(WIN32 OR WDDM_LINUX)
+if(WIN32 OR NOT DISABLE_WDDM_LINUX)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC ${WDK_INCLUDE_PATHS})
 endif()
 

@@ -98,6 +98,13 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h
 )
 
+if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
+  list(APPEND NEO_CORE_OS_INTERFACE_WDDM
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_dxcore.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback_stub.cpp
+  )
+endif()
+
 add_subdirectories()
 
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE_WINDOWS ${NEO_CORE_OS_INTERFACE_WINDOWS})

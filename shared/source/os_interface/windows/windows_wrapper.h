@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#if _WIN32
 #include <windows.h>
 #pragma warning(push)
 #pragma warning(disable : 4005)
@@ -30,3 +31,8 @@ LSTATUS APIENTRY RegQueryValueExA(
     LPDWORD lpType,
     LPBYTE lpData,
     LPDWORD lpcbData);
+#else
+#include <cstdint>
+#include <x86intrin.h>
+#define C_ASSERT(e) static_assert(e, #e)
+#endif
