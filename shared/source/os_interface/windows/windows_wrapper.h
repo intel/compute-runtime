@@ -33,6 +33,8 @@ LSTATUS APIENTRY RegQueryValueExA(
     LPDWORD lpcbData);
 #else
 #include <cstdint>
+#include <winadapter.h>
 #include <x86intrin.h>
-#define C_ASSERT(e) static_assert(e, #e)
 #endif
+
+#define NULL_HANDLE 0U

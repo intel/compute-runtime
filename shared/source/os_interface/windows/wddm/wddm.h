@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
+#include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
@@ -24,10 +25,6 @@
 
 #include <memory>
 #include <mutex>
-
-struct _D3DKMT_TRIMNOTIFICATION;
-typedef struct _D3DKMT_TRIMNOTIFICATION D3DKMT_TRIMNOTIFICATION;
-typedef VOID(APIENTRY *PFND3DKMT_TRIMNOTIFICATIONCALLBACK)(_Inout_ D3DKMT_TRIMNOTIFICATION *);
 
 struct _SYSTEM_INFO;
 typedef struct _SYSTEM_INFO SYSTEM_INFO;

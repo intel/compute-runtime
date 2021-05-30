@@ -14,6 +14,8 @@ namespace Os {
 const char *frontEndDllName = FCL_LIBRARY_NAME;
 const char *igcDllName = IGC_LIBRARY_NAME;
 const char *libvaDllName = "libva.so.2";
+const char *gdiDllName = "/usr/lib/wsl/lib/libdxcore.so";
+const char *dxcoreDllName = "/usr/lib/wsl/lib/libdxcore.so";
 
 const char *sysFsPciPathPrefix = "/sys/bus/pci/devices/0000:";
 const char *pciDevicesDirectory = "/dev/dri/by-path";

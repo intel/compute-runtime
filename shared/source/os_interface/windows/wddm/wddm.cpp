@@ -505,8 +505,8 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     CreateAllocation.PrivateDriverDataSize = 0;
     CreateAllocation.Flags.Reserved = 0;
     CreateAllocation.NumAllocations = 1;
-    CreateAllocation.pPrivateRuntimeData = NULL;
-    CreateAllocation.pPrivateDriverData = NULL;
+    CreateAllocation.pPrivateRuntimeData = nullptr;
+    CreateAllocation.pPrivateDriverData = nullptr;
     CreateAllocation.Flags.NonSecure = FALSE;
     CreateAllocation.Flags.CreateShared = outSharedHandle ? TRUE : FALSE;
     CreateAllocation.Flags.RestrictSharedAccess = FALSE;
@@ -542,7 +542,7 @@ bool Wddm::setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocati
 
     setAllocationPriority.hDevice = device;
     setAllocationPriority.AllocationCount = allocationCount;
-    setAllocationPriority.hResource = NULL;
+    setAllocationPriority.hResource = NULL_HANDLE;
     setAllocationPriority.phAllocationList = handles;
     setAllocationPriority.pPriorities = priorities.data();
 
@@ -564,8 +564,8 @@ bool Wddm::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     AllocationInfo.Flags.Primary = 0;
 
     CreateAllocation.NumAllocations = 1;
-    CreateAllocation.pPrivateRuntimeData = NULL;
-    CreateAllocation.pPrivateDriverData = NULL;
+    CreateAllocation.pPrivateRuntimeData = nullptr;
+    CreateAllocation.pPrivateDriverData = nullptr;
     CreateAllocation.Flags.CreateResource = FALSE;
     CreateAllocation.pAllocationInfo2 = &AllocationInfo;
     CreateAllocation.hDevice = device;
@@ -614,8 +614,8 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
     CreateAllocation.PrivateDriverDataSize = 0;
     CreateAllocation.Flags.Reserved = 0;
     CreateAllocation.NumAllocations = allocationCount;
-    CreateAllocation.pPrivateRuntimeData = NULL;
-    CreateAllocation.pPrivateDriverData = NULL;
+    CreateAllocation.pPrivateRuntimeData = nullptr;
+    CreateAllocation.pPrivateDriverData = nullptr;
     CreateAllocation.Flags.NonSecure = FALSE;
     CreateAllocation.Flags.CreateShared = FALSE;
     CreateAllocation.Flags.RestrictSharedAccess = FALSE;
@@ -927,7 +927,7 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
         waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
         waitFromCpu.FenceValueArray = &lastFenceValue;
         waitFromCpu.hDevice = device;
-        waitFromCpu.hAsyncEvent = NULL;
+        waitFromCpu.hAsyncEvent = NULL_HANDLE;
 
         status = getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu);
         DEBUG_BREAK_IF(status != STATUS_SUCCESS);
