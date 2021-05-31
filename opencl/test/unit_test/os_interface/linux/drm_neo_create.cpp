@@ -40,6 +40,8 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> hwDeviceId, RootDeviceEnvironmen
 
     const HardwareInfo *hwInfo = rootDeviceEnvironment.getHardwareInfo();
 
+    drm->queryAdapterBDF();
+
     drm->queryMemoryInfo();
 
     if (drm->isVmBindAvailable() && rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {

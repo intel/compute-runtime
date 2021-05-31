@@ -75,3 +75,4 @@ getMonitorFenceCpuFenceAddress
 getCreateSynchronizationObject2FailCall
 getRegisterTrimNotificationFailCall
 getLastPriority
+setAdapterBDF

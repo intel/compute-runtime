@@ -80,3 +80,4 @@ VOID *getMonitorFenceCpuFenceAddress();
 bool *getCreateSynchronizationObject2FailCall();
 bool *getRegisterTrimNotificationFailCall();
 uint32_t getLastPriority();
+void setAdapterBDF(ADAPTER_BDF &adapterBDF);

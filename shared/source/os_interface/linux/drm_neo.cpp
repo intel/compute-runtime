@@ -702,15 +702,12 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
 PhysicalDevicePciBusInfo Drm::getPciBusInfo() const {
     PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
 
-    UNRECOVERABLE_IF(hwDeviceId == nullptr);
-
-    const int pciBusInfoTokensNum = 3;
-    pciBusInfo.pciDomain = 0;
-
-    if (std::sscanf(hwDeviceId->getPciPath(), "%02x:%02x.%01x", &(pciBusInfo.pciBus), &(pciBusInfo.pciDevice), &(pciBusInfo.pciFunction)) != pciBusInfoTokensNum) {
-        pciBusInfo.pciDomain = pciBusInfo.pciBus = pciBusInfo.pciDevice = pciBusInfo.pciFunction = PhysicalDevicePciBusInfo::InvalidValue;
+    if (adapterBDF.Data != std::numeric_limits<uint32_t>::max()) {
+        pciBusInfo.pciDomain = 0;
+        pciBusInfo.pciBus = adapterBDF.Bus;
+        pciBusInfo.pciDevice = adapterBDF.Device;
+        pciBusInfo.pciFunction = adapterBDF.Function;
     }
-
     return pciBusInfo;
 }
 
@@ -719,21 +716,18 @@ Drm::~Drm() {
     this->printIoctlStatistics();
 }
 
-ADAPTER_BDF Drm::getAdapterBDF() const {
-
-    ADAPTER_BDF adapterBDF{};
+int Drm::queryAdapterBDF() {
     constexpr int pciBusInfoTokensNum = 3;
-
     uint32_t bus, device, function;
 
     if (std::sscanf(hwDeviceId->getPciPath(), "%02x:%02x.%01x", &bus, &device, &function) != pciBusInfoTokensNum) {
-        return {};
+        adapterBDF.Data = std::numeric_limits<uint32_t>::max();
+        return 1;
     }
     adapterBDF.Bus = bus;
     adapterBDF.Function = function;
     adapterBDF.Device = device;
-
-    return adapterBDF;
+    return 0;
 }
 
 void Drm::setGmmInputArgs(void *args) {

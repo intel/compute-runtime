@@ -16,6 +16,7 @@ uint32_t gMapGpuVaFailConfigCount = 0;
 uint32_t gMapGpuVaFailConfigMax = 0;
 uint64_t gGpuAddressSpace = 0ull;
 uint32_t gLastPriority = 0ull;
+ADAPTER_BDF gAdapterBDF{};
 
 #ifdef __cplusplus // If used by C++ code,
 extern "C" { // we need to export the C interface
@@ -313,6 +314,8 @@ NTSTATUS __stdcall D3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *quer
         adapterInfo->GfxPartition.Heap32[2].Limit = gAdapterInfo.GfxPartition.Heap32[2].Limit;
         adapterInfo->GfxPartition.Heap32[3].Base = gAdapterInfo.GfxPartition.Heap32[3].Base;
         adapterInfo->GfxPartition.Heap32[3].Limit = gAdapterInfo.GfxPartition.Heap32[3].Limit;
+
+        adapterInfo->stAdapterBDF.Data = gAdapterBDF.Data;
         return STATUS_SUCCESS;
     }
     return STATUS_INVALID_PARAMETER;
@@ -554,4 +557,8 @@ bool *getRegisterTrimNotificationFailCall() {
 
 uint32_t getLastPriority() {
     return gLastPriority;
+}
+
+void setAdapterBDF(ADAPTER_BDF &adapterBDF) {
+    gAdapterBDF = adapterBDF;
 }

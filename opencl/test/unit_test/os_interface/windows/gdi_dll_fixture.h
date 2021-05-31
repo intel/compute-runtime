@@ -51,6 +51,8 @@ struct GdiDllFixture {
             reinterpret_cast<decltype(&getRegisterTrimNotificationFailCall)>(mockGdiDll->getProcAddress("getRegisterTrimNotificationFailCall"));
         getLastPriorityFcn =
             reinterpret_cast<decltype(&getLastPriority)>(mockGdiDll->getProcAddress("getLastPriority"));
+        setAdapterBDFFcn =
+            reinterpret_cast<decltype(&setAdapterBDF)>(mockGdiDll->getProcAddress("setAdapterBDF"));
         setMockLastDestroyedResHandleFcn((D3DKMT_HANDLE)0);
         *getDestroySynchronizationObjectDataFcn() = {};
         *getCreateSynchronizationObject2FailCallFcn() = false;
@@ -89,4 +91,5 @@ struct GdiDllFixture {
     decltype(&getCreateSynchronizationObject2FailCall) getCreateSynchronizationObject2FailCallFcn = nullptr;
     decltype(&getRegisterTrimNotificationFailCall) getRegisterTrimNotificationFailCallFcn = nullptr;
     decltype(&getLastPriority) getLastPriorityFcn = nullptr;
+    decltype(&setAdapterBDF) setAdapterBDFFcn = nullptr;
 };

@@ -123,6 +123,9 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> hwDeviceId, RootDeviceEnvironmen
             printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
         }
     }
+
+    drmObject->queryAdapterBDF();
+
     return drmObject.release();
 }
 

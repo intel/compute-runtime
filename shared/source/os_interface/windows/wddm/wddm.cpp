@@ -1077,22 +1077,10 @@ void Wddm::createPagingFenceLogger() {
 }
 
 PhysicalDevicePciBusInfo Wddm::getPciBusInfo() const {
-    D3DKMT_ADAPTERADDRESS adapterAddress;
-    D3DKMT_QUERYADAPTERINFO queryAdapterInfo;
-
-    queryAdapterInfo.hAdapter = getAdapter();
-    queryAdapterInfo.Type = KMTQAITYPE_ADAPTERADDRESS;
-    queryAdapterInfo.pPrivateDriverData = &adapterAddress;
-    queryAdapterInfo.PrivateDriverDataSize = sizeof(adapterAddress);
-
-    auto gdi = getGdi();
-    UNRECOVERABLE_IF(gdi == nullptr);
-
-    if (gdi->queryAdapterInfo(&queryAdapterInfo) == STATUS_SUCCESS) {
-        return PhysicalDevicePciBusInfo(0, adapterAddress.BusNumber, adapterAddress.DeviceNumber, adapterAddress.FunctionNumber);
+    if (adapterBDF.Data == std::numeric_limits<uint32_t>::max()) {
+        return PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
     }
-
-    return PhysicalDevicePciBusInfo::invalid();
+    return PhysicalDevicePciBusInfo(0, adapterBDF.Bus, adapterBDF.Device, adapterBDF.Function);
 }
 
 } // namespace NEO

@@ -26,6 +26,7 @@ TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenFileDescriptorIsSetWi
 
     auto drm = new DrmMock(fakeFd, *rootDeviceEnvironment);
     drm->setPciPath("01:23.4");
+    EXPECT_EQ(0, drm->queryAdapterBDF());
 
     osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 

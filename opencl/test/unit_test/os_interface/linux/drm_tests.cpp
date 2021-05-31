@@ -45,19 +45,50 @@ TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned
 
     {
         drm.setPciPath("ab:cd.e");
+        EXPECT_EQ(0, drm.queryAdapterBDF());
         auto adapterBdf = drm.getAdapterBDF();
         EXPECT_EQ(0xabu, adapterBdf.Bus);
         EXPECT_EQ(0xcdu, adapterBdf.Device);
         EXPECT_EQ(0xeu, adapterBdf.Function);
+
+        auto pciInfo = drm.getPciBusInfo();
+        EXPECT_EQ(0x0u, pciInfo.pciDomain);
+        EXPECT_EQ(0xabu, pciInfo.pciBus);
+        EXPECT_EQ(0xcdu, pciInfo.pciDevice);
+        EXPECT_EQ(0xeu, pciInfo.pciFunction);
     }
 
     {
         drm.setPciPath("01:23.4");
+        EXPECT_EQ(0, drm.queryAdapterBDF());
         auto adapterBdf = drm.getAdapterBDF();
         EXPECT_EQ(0x1u, adapterBdf.Bus);
         EXPECT_EQ(0x23u, adapterBdf.Device);
         EXPECT_EQ(0x4u, adapterBdf.Function);
+
+        auto pciInfo = drm.getPciBusInfo();
+        EXPECT_EQ(0x0u, pciInfo.pciDomain);
+        EXPECT_EQ(0x1u, pciInfo.pciBus);
+        EXPECT_EQ(0x23u, pciInfo.pciDevice);
+        EXPECT_EQ(0x4u, pciInfo.pciFunction);
     }
+}
+
+TEST(DrmTest, GivenInvalidPciPathWhenGettingAdapterBdfThenInvalidPciInfoIsReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("invalidPci");
+    EXPECT_EQ(1, drm.queryAdapterBDF());
+    auto adapterBdf = drm.getAdapterBDF();
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), adapterBdf.Data);
+
+    auto pciInfo = drm.getPciBusInfo();
+    EXPECT_EQ(PhysicalDevicePciBusInfo::InvalidValue, pciInfo.pciDomain);
+    EXPECT_EQ(PhysicalDevicePciBusInfo::InvalidValue, pciInfo.pciBus);
+    EXPECT_EQ(PhysicalDevicePciBusInfo::InvalidValue, pciInfo.pciDevice);
+    EXPECT_EQ(PhysicalDevicePciBusInfo::InvalidValue, pciInfo.pciFunction);
 }
 
 TEST(DrmTest, GivenInvalidPciPathWhenFrequencyIsQueriedThenReturnError) {
