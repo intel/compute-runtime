@@ -1852,13 +1852,13 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), device->getHwInfo());
+        requiredStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), false, device->getHwInfo());
         finalStreamState = requiredStreamState;
         containsAnyKernel = true;
     }
 
     auto &hwInfo = device->getHwInfo();
-    finalStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), hwInfo);
+    finalStreamState.frontEndState.setProperties(kernel.usesSyncBuffer(), false, hwInfo);
     if (finalStreamState.frontEndState.isDirty()) {
         auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
         auto pVfeState = new VFE_STATE_TYPE;

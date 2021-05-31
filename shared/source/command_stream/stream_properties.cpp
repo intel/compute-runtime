@@ -31,7 +31,7 @@ void StateComputeModeProperties::clearIsDirty() {
     isCoherencyRequired.isDirty = false;
 }
 
-void FrontEndProperties::setProperties(bool isCooperativeKernel, const HardwareInfo &hwInfo) {
+void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableOverdispatch, const HardwareInfo &hwInfo) {
 }
 
 void FrontEndProperties::setProperties(const FrontEndProperties &properties) {

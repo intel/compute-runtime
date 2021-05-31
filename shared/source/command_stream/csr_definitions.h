@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/csr_deps.h"
+#include "shared/source/command_stream/csr_properties_flags.h"
 #include "shared/source/command_stream/memory_compression_state.h"
 #include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
@@ -16,8 +17,6 @@
 #include "shared/source/kernel/grf_config.h"
 
 #include "opencl/source/kernel/kernel_execution_type.h"
-
-#include "csr_properties_flags.h"
 
 #include <limits>
 

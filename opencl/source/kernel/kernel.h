@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/csr_properties_flags.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -26,8 +27,6 @@
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
-
-#include "csr_properties_flags.h"
 
 #include <vector>
 

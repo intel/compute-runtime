@@ -20,7 +20,7 @@ struct StateComputeModeProperties {
 };
 
 struct FrontEndProperties {
-    void setProperties(bool isCooperativeKernel, const HardwareInfo &hwInfo);
+    void setProperties(bool isCooperativeKernel, bool disableOverdispatch, const HardwareInfo &hwInfo);
     void setProperties(const FrontEndProperties &properties);
     bool isDirty();
     void clearIsDirty();

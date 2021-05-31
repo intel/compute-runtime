@@ -7,8 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/csr_definitions.h"
-
-#include "csr_properties_flags.h"
+#include "shared/source/command_stream/csr_properties_flags.h"
 
 using namespace NEO;
 

@@ -913,7 +913,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         auto engineGroupType = hwHelper.getEngineGroupType(getOsContext().getEngineType(), hwInfo);
         auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
         StreamProperties streamProperties{};
-        streamProperties.frontEndState.setProperties(lastKernelExecutionType == KernelExecutionType::Concurrent, hwInfo);
+        streamProperties.frontEndState.setProperties(lastKernelExecutionType == KernelExecutionType::Concurrent,
+                                                     dispatchFlags.additionalKernelExecInfo == AdditionalKernelExecInfo::DisableOverdispatch,
+                                                     hwInfo);
         PreambleHelper<GfxFamily>::programVfeState(
             pVfeState, hwInfo, requiredScratchSize, getScratchPatchAddress(),
             maxFrontEndThreads, lastAdditionalKernelExecInfo, streamProperties);
