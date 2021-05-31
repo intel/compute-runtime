@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -17,7 +18,6 @@
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.inl"
-#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"

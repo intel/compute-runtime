@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
+#include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 

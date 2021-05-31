@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -16,7 +17,6 @@
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "opencl/source/command_stream/tbx_command_stream_receiver.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"

@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_context.h"
@@ -17,7 +18,6 @@
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/command_stream/tbx_command_stream_receiver.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 
 #include "gtest/gtest.h"

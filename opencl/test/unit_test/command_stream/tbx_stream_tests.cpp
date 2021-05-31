@@ -5,10 +5,9 @@
  *
  */
 
+#include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/test/common/mocks/mock_tbx_sockets.h"
 #include "shared/test/common/mocks/mock_tbx_stream.h"
-
-#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 
 #include "gtest/gtest.h"
 

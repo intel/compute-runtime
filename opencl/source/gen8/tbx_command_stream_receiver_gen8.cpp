@@ -5,12 +5,12 @@
  *
  */
 
+#include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "shared/source/command_stream/tbx_command_stream_receiver_hw.inl"
 #include "shared/source/gen8/hw_cmds.h"
 #include "shared/source/helpers/array_count.h"
 
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.inl"
-#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
-#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.inl"
 
 namespace NEO {
 

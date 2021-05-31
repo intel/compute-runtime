@@ -20,11 +20,6 @@ set(RUNTIME_SRCS_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/command_stream_receiver_simulated_hw.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_hw.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_hw.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_stream.cpp
 )
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_COMMAND_STREAM})
