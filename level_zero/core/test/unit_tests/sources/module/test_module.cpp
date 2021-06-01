@@ -139,6 +139,89 @@ HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, 
     context->freeMem(devicePtr);
 }
 
+HWTEST_F(ModuleTest, givenStatefulBufferWhenOffsetIsPatchedThenAllocBaseAddressIsSet) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = kernelName.c_str();
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
+
+    void *devicePtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    res = context->allocDeviceMem(device->toHandle(),
+                                  &deviceDesc,
+                                  16384u,
+                                  0u,
+                                  &devicePtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAlloc);
+
+    uint32_t argIndex = 0u;
+    uint32_t offset = 0x1234;
+    const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>().bufferOffset = 0;
+    const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>().bindful = 0x80;
+    kernelImp->setBufferSurfaceState(argIndex, ptrOffset(devicePtr, offset), gpuAlloc);
+
+    auto argInfo = kernelImp->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+    auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
+    auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+    EXPECT_EQ(devicePtr, reinterpret_cast<void *>(surfaceStateAddress->getSurfaceBaseAddress()));
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+
+    context->freeMem(devicePtr);
+}
+
+HWTEST_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenPassedPtrIsSetAsBaseAddress) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = kernelName.c_str();
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
+
+    void *devicePtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    res = context->allocDeviceMem(device->toHandle(),
+                                  &deviceDesc,
+                                  16384u,
+                                  0u,
+                                  &devicePtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAlloc);
+
+    uint32_t argIndex = 0u;
+    uint32_t offset = 0x1234;
+    const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>().bufferOffset = undefined<NEO::CrossThreadDataOffset>;
+    const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>().bindful = 0x80;
+
+    kernelImp->setBufferSurfaceState(argIndex, ptrOffset(devicePtr, offset), gpuAlloc);
+
+    auto argInfo = kernelImp->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+    auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
+    auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+    EXPECT_EQ(ptrOffset(devicePtr, offset), reinterpret_cast<void *>(surfaceStateAddress->getSurfaceBaseAddress()));
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+
+    context->freeMem(devicePtr);
+}
+
 using ModuleUncachedBufferTest = Test<ModuleFixture>;
 
 struct KernelImpUncachedTest : public KernelImp {

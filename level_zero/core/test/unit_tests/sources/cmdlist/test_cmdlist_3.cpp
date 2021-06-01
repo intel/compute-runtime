@@ -221,7 +221,7 @@ HWTEST2_F(CommandListCreate,
     EXPECT_EQ(expectedGpuAddress, outData.alignedAllocationPtr);
     EXPECT_EQ(expectedOffset, outData.offset);
 
-    size_t offset = 0x20u;
+    size_t offset = 0x21u;
     void *offsetMemory = ptrOffset(startMemory, offset);
     expectedOffset = ptrDiff(offsetMemory, baseAddress);
     EXPECT_EQ(outData.offset + offset, expectedOffset);
@@ -231,7 +231,7 @@ HWTEST2_F(CommandListCreate,
     EXPECT_EQ(firstAlloc, outData.alloc);
     EXPECT_EQ(startMemory, outData.alloc->getUnderlyingBuffer());
     EXPECT_EQ(expectedGpuAddress, outData.alignedAllocationPtr);
-    EXPECT_EQ(expectedOffset, outData.offset);
+    EXPECT_EQ((expectedOffset & (EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment() - 1)), outData.offset);
 
     commandList->removeHostPtrAllocations();
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);

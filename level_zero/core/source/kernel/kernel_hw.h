@@ -29,14 +29,13 @@ struct KernelHw : public KernelImp {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
-        uint64_t baseAddress = castToUint64(address);
+        uint64_t baseAddress = alloc->getGpuAddressToPatch();
         auto sshAlignmentMask = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignmentMask();
 
         // Remove misalligned bytes, accounted for in in bufferOffset patch token
         baseAddress &= sshAlignmentMask;
 
         auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
-        size_t sizeTillEndOfSurface = alloc->getUnderlyingBufferSize() - offset;
         auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         bool offsetWasPatched = NEO::patchNonPointer(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
                                                      argInfo.bufferOffset, static_cast<uint32_t>(offset));
@@ -54,8 +53,7 @@ struct KernelHw : public KernelImp {
         }
         uint64_t bufferAddressForSsh = baseAddress;
         auto alignment = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment();
-        size_t bufferSizeForSsh = ptrDiff(alloc->getGpuAddress(), bufferAddressForSsh);
-        bufferSizeForSsh += sizeTillEndOfSurface; // take address alignment offset into account
+        size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
         bufferSizeForSsh = alignUp(bufferSizeForSsh, alignment);
 
         bool l3Enabled = true;

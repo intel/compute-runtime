@@ -320,7 +320,7 @@ void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_
                                               bool cpuCoherent, bool forceNonAuxMode, bool isReadOnly, uint32_t numAvailableDevices,
                                               GraphicsAllocation *allocation, GmmHelper *gmmHelper, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
     auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(dst);
-    UNRECOVERABLE_IF(!isAligned<getSurfaceBaseAddressMinimumAlignment()>(size));
+    UNRECOVERABLE_IF(!isAligned<getSurfaceBaseAddressAlignment()>(size));
 
     SURFACE_STATE_BUFFER_LENGTH Length = {0};
     Length.Length = static_cast<uint32_t>(size - 1);
