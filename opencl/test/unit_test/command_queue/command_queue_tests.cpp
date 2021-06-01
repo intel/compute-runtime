@@ -1645,20 +1645,3 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
     EXPECT_TRUE(osContext.isInitialized());
 }
-
-HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedBcsOsContextWhenCreatingQueueThenInitializeOsContext) {
-    DebugManagerStateRestore restore{};
-    DebugManager.flags.DeferOsContextInitialization.set(1);
-
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1, 1>>();
-    MockContext context{};
-    cl_command_queue_properties properties[5] = {};
-
-    OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular).osContext;
-    EXPECT_FALSE(osContext.isInitialized());
-
-    fillProperties(properties, 2, 0);
-    MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
-    ASSERT_EQ(&osContext, queue.bcsEngine->osContext);
-    EXPECT_TRUE(osContext.isInitialized());
-}

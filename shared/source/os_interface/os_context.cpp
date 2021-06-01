@@ -35,6 +35,10 @@ bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) co
         return true;
     }
 
+    if (engineType == aub_stream::EngineType::ENGINE_BCS) {
+        return true;
+    }
+
     return false;
 }
 

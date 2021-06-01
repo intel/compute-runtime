@@ -81,6 +81,7 @@ struct DeferredOsContextCreationTests : ::testing::Test {
     std::unique_ptr<MockDevice> device;
     static inline const EngineTypeUsage engineTypeUsageRegular{aub_stream::ENGINE_RCS, EngineUsage::Regular};
     static inline const EngineTypeUsage engineTypeUsageInternal{aub_stream::ENGINE_RCS, EngineUsage::Internal};
+    static inline const EngineTypeUsage engineTypeUsageBlitter{aub_stream::ENGINE_BCS, EngineUsage::Regular};
 };
 
 TEST_F(DeferredOsContextCreationTests, givenRegularEngineWhenCreatingOsContextThenOsContextIsInitializedDeferred) {
@@ -117,6 +118,18 @@ TEST_F(DeferredOsContextCreationTests, givenInternalEngineWhenCreatingOsContextT
 
     DebugManager.flags.DeferOsContextInitialization.set(0);
     expectImmediateContextCreation(engineTypeUsageInternal, false);
+}
+
+TEST_F(DeferredOsContextCreationTests, givenBlitterEngineWhenCreatingOsContextThenOsContextIsInitializedImmediately) {
+    DebugManagerStateRestore restore{};
+
+    expectImmediateContextCreation(engineTypeUsageBlitter, false);
+
+    DebugManager.flags.DeferOsContextInitialization.set(1);
+    expectImmediateContextCreation(engineTypeUsageBlitter, false);
+
+    DebugManager.flags.DeferOsContextInitialization.set(0);
+    expectImmediateContextCreation(engineTypeUsageBlitter, false);
 }
 
 TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipleTimesWhenOsContextIsCreatedThenInitializeOnlyOnce) {
