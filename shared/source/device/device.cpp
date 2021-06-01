@@ -194,6 +194,8 @@ bool Device::createDeviceImpl() {
     setAsEngineInstanced();
 
     auto &hwInfo = getHardwareInfo();
+    UNRECOVERABLE_IF(0 == hwInfo.gtSystemInfo.DualSubSliceCount);
+
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
