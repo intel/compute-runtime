@@ -20,9 +20,10 @@ namespace L0 {
 namespace ult {
 
 using CommandListAppendSignalEvent = Test<CommandListFixture>;
-HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventThenPipeControlIsGenerated) {
+HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenMiStoreImmIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
     auto result = commandList->appendSignalEvent(event->toHandle());
@@ -35,22 +36,8 @@ HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventThenPipeControlIs
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
-    // Find a PC w/ a WriteImmediateData and CS stall
-    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(0u, itorPC.size());
-    bool postSyncFound = false;
-    for (auto it : itorPC) {
-        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
-        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
-            auto gpuAddress = event->getGpuAddress(device);
-            EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
-            EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
-            postSyncFound = true;
-        }
-    }
-    ASSERT_TRUE(postSyncFound);
+    auto itor = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itor.size());
 }
 
 HWTEST_F(CommandListAppendSignalEvent, givenCmdlistWhenAppendingSignalEventThenEventPoolGraphicsAllocationIsAddedToResidencyContainer) {
@@ -64,37 +51,6 @@ HWTEST_F(CommandListAppendSignalEvent, givenCmdlistWhenAppendingSignalEventThenE
             std::find(std::begin(residencyContainer), std::end(residencyContainer), alloc);
         EXPECT_NE(itor, std::end(residencyContainer));
     }
-}
-
-HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagNoneWhenAppendingSignalEventThenPipeControlHasNoDcFlush) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
-    auto result = commandList->appendSignalEvent(event->toHandle());
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
-    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
-                                                      usedSpaceAfter));
-
-    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(0u, itorPC.size());
-    bool postSyncFound = false;
-    for (auto it : itorPC) {
-        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
-        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
-            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_FALSE(cmd->getDcFlushEnable());
-            postSyncFound = true;
-        }
-    }
-    ASSERT_TRUE(postSyncFound);
 }
 
 HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendingSignalEventThenPipeControlHasNoDcFlush) {

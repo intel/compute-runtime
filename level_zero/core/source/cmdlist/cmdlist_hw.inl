@@ -1450,7 +1450,26 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(ze_event_
     if (event->isEventTimestampFlagSet()) {
         appendEventForProfiling(hEvent, false);
     } else {
-        CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hEvent);
+        using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
+        using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        auto event = Event::fromHandle(hEvent);
+
+        commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+        uint64_t baseAddr = event->getGpuAddress(this->device);
+
+        if (isCopyOnly()) {
+            NEO::MiFlushArgs args;
+            args.commandWithPostSync = true;
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), baseAddr, Event::STATE_SIGNALED, args);
+        } else {
+            NEO::PipeControlArgs args;
+            args.dcFlushEnable = (!event->signalScope) ? false : true;
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+                *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                baseAddr, Event::STATE_SIGNALED,
+                commandContainer.getDevice()->getHardwareInfo(),
+                args);
+        }
     }
 }
 
@@ -1560,6 +1579,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto event = Event::fromHandle(hEvent);
+    bool applyScope = false;
 
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
     uint64_t baseAddr = event->getGpuAddress(this->device);
@@ -1574,12 +1594,23 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED, args);
     } else {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = (!event->signalScope) ? false : true;
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-            *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-            ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED,
-            commandContainer.getDevice()->getHardwareInfo(),
-            args);
+        applyScope = (!event->signalScope) ? false : true;
+        args.dcFlushEnable = applyScope;
+        if (applyScope || event->isEventTimestampFlagSet()) {
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+                *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED,
+                commandContainer.getDevice()->getHardwareInfo(),
+                args);
+        } else {
+            using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+            MI_STORE_DATA_IMM storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
+            storeDataImmediate.setStoreQword(false);
+            storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD);
+            storeDataImmediate.setDataDword0(Event::STATE_SIGNALED);
+            auto buffer = commandContainer.getCommandStream()->template getSpaceForCmd<MI_STORE_DATA_IMM>();
+            *buffer = storeDataImmediate;
+        }
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -1752,7 +1783,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     }
 
     if (hSignalEvent) {
-        CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent);
+        CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(hSignalEvent);
     }
 
     auto allocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(uint64_t));
