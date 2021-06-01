@@ -22,6 +22,7 @@ TEST(IcllpHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectT
     EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 

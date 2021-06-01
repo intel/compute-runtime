@@ -936,6 +936,7 @@ TEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestFor
     EXPECT_EQ(dbgPlatform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
     EXPECT_EQ(dbgSystemInfo.SliceCount, igcSysInfo->GetSliceCount());
     EXPECT_EQ(dbgSystemInfo.SubSliceCount, igcSysInfo->GetSubSliceCount());
+    EXPECT_EQ(dbgSystemInfo.DualSubSliceCount, igcSysInfo->GetSubSliceCount());
     EXPECT_EQ(dbgSystemInfo.EUCount, igcSysInfo->GetEUCount());
     EXPECT_EQ(dbgSystemInfo.ThreadCount, igcSysInfo->GetThreadCount());
 }

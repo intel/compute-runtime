@@ -56,6 +56,7 @@ TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 1u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 1u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 1u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 1u);
 
     success = parseHwInfoConfigString("7x1x1", hwInfoConfig);
@@ -64,6 +65,7 @@ TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 7u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 7u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 7u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 7u);
 
     success = parseHwInfoConfigString("1x7x1", hwInfoConfig);
@@ -72,6 +74,7 @@ TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 1u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 7u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 7u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 7u);
 
     success = parseHwInfoConfigString("1x1x7", hwInfoConfig);
@@ -80,6 +83,7 @@ TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 1u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 1u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 1u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 7u);
 
     success = parseHwInfoConfigString("2x4x16", hwInfoConfig);
@@ -88,6 +92,7 @@ TEST_F(HwInfoConfigTest, WhenParsingHwInfoConfigThenCorrectValuesAreReturned) {
     setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 2u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 8u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.DualSubSliceCount, 8u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 128u);
 }
 

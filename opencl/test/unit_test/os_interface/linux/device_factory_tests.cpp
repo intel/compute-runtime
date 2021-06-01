@@ -25,6 +25,7 @@ TEST_F(DeviceFactoryLinuxTest, WhenPreparingDeviceEnvironmentsThenInitializedCor
     EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
     EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 16);
     EXPECT_EQ((int)hwInfo->gtSystemInfo.SubSliceCount, 8);
+    EXPECT_EQ((int)hwInfo->gtSystemInfo.DualSubSliceCount, 8);
 
     //temporararily return GT2.
     EXPECT_EQ(1u, hwInfo->featureTable.ftrGT2);
@@ -46,6 +47,7 @@ TEST_F(DeviceFactoryLinuxTest, givenSomeDisabledSSAndEUWhenPrepareDeviceEnvironm
     EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
     EXPECT_EQ((int)hwInfo->gtSystemInfo.SliceCount, 1);
     EXPECT_EQ((int)hwInfo->gtSystemInfo.SubSliceCount, 2);
+    EXPECT_EQ((int)hwInfo->gtSystemInfo.DualSubSliceCount, 2);
     EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 12);
 }
 

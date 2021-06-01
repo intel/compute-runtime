@@ -1414,6 +1414,7 @@ TEST(OfflineCompilerTest, whenDeviceIsSpecifiedThenDefaultConfigFromTheDeviceIsU
 
     EXPECT_EQ(actualHwInfo.gtSystemInfo.SliceCount, expectedHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(actualHwInfo.gtSystemInfo.SubSliceCount, expectedHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(actualHwInfo.gtSystemInfo.DualSubSliceCount, expectedHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(actualHwInfo.gtSystemInfo.EUCount, expectedHwInfo.gtSystemInfo.EUCount);
 }
 

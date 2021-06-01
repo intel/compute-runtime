@@ -117,6 +117,7 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
 
     gtSystemInfo->SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
     gtSystemInfo->SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
+    gtSystemInfo->DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     gtSystemInfo->EUCount = static_cast<uint32_t>(topologyData.euCount);
     gtSystemInfo->ThreadCount = this->threadsPerEu * gtSystemInfo->EUCount;
 

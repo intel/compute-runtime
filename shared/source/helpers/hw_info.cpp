@@ -70,6 +70,7 @@ void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfo
 
     hwInfoIn.gtSystemInfo.SliceCount = sliceCount;
     hwInfoIn.gtSystemInfo.SubSliceCount = subSlicePerSliceCount * sliceCount;
+    hwInfoIn.gtSystemInfo.DualSubSliceCount = subSlicePerSliceCount * sliceCount;
     hwInfoIn.gtSystemInfo.EUCount = euPerSubSliceCount * subSlicePerSliceCount * sliceCount;
 }
 
