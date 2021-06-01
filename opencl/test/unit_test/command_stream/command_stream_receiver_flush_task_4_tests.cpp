@@ -1,0 +1,404 @@
+/*
+ * Copyright (C) 2018-2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
+
+#include "opencl/source/event/user_event.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
+#include "test.h"
+
+using namespace NEO;
+
+using MultiRootDeviceCommandStreamReceiverBufferTests = MultiRootDeviceFixture;
+
+HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToEnqueueWithSubmissionThenCsIsWaitingForEventsFromPreviousDevices) {
+    REQUIRE_SVM_OR_SKIP(device1);
+    REQUIRE_SVM_OR_SKIP(device2);
+
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    cl_int retVal = 0;
+    size_t offset = 0;
+    size_t size = 1;
+
+    auto pCmdQ1 = context.get()->getSpecialQueue(1u);
+    auto pCmdQ2 = context.get()->getSpecialQueue(2u);
+
+    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context.get()->getDevices(), &retVal));
+    program->build(program->getDevices(), nullptr, false);
+    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *context.get()->getDevice(0), &retVal));
+
+    size_t svmSize = 4096;
+    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
+    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
+
+    Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
+    Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
+    Event event3(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 4, 20);
+    Event event4(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
+    Event event5(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 2, 7);
+    UserEvent userEvent1(&pCmdQ1->getContext());
+    UserEvent userEvent2(&pCmdQ2->getContext());
+
+    userEvent1.setStatus(CL_COMPLETE);
+    userEvent2.setStatus(CL_COMPLETE);
+
+    cl_event eventWaitList[] =
+        {
+            &event1,
+            &event2,
+            &event3,
+            &event4,
+            &event5,
+            &userEvent1,
+            &userEvent2,
+        };
+    cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+
+    {
+        kernel->setSvmKernelExecInfo(&svmAlloc);
+
+        retVal = pCmdQ1->enqueueKernel(
+            kernel.get(),
+            1,
+            &offset,
+            &size,
+            &size,
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(2u, semaphores.size());
+
+        auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
+        EXPECT_EQ(4u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
+
+        auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
+        EXPECT_EQ(7u, semaphoreCmd1->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd1->getSemaphoreGraphicsAddress());
+    }
+
+    {
+        kernel->setSvmKernelExecInfo(&svmAlloc);
+
+        retVal = pCmdQ2->enqueueKernel(
+            kernel.get(),
+            1,
+            &offset,
+            &size,
+            &size,
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ2->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(2u, semaphores.size());
+
+        auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
+        EXPECT_EQ(15u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
+
+        auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
+        EXPECT_EQ(20u, semaphoreCmd1->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd1->getSemaphoreGraphicsAddress());
+    }
+    alignedFree(svmPtr);
+}
+
+using CommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
+using MultiRootDeviceCommandStreamReceiverTests = CommandStreamReceiverFlushTaskTests;
+
+HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToEnqueueWithoutSubmissionThenCsIsWaitingForEventsFromPreviousDevices) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto deviceFactory = std::make_unique<UltClDeviceFactory>(4, 0);
+    auto device1 = deviceFactory->rootDevices[1];
+    auto device2 = deviceFactory->rootDevices[2];
+    auto device3 = deviceFactory->rootDevices[3];
+
+    auto mockCsr1 = new MockCommandStreamReceiver(*device1->executionEnvironment, device1->getRootDeviceIndex(), device1->getDeviceBitfield());
+    auto mockCsr2 = new MockCommandStreamReceiver(*device2->executionEnvironment, device2->getRootDeviceIndex(), device2->getDeviceBitfield());
+    auto mockCsr3 = new MockCommandStreamReceiver(*device3->executionEnvironment, device3->getRootDeviceIndex(), device3->getDeviceBitfield());
+
+    device1->resetCommandStreamReceiver(mockCsr1);
+    device2->resetCommandStreamReceiver(mockCsr2);
+    device3->resetCommandStreamReceiver(mockCsr3);
+
+    cl_device_id devices[] = {device1, device2, device3};
+
+    auto context = std::make_unique<MockContext>(ClDeviceVector(devices, 3), false);
+
+    auto pCmdQ1 = context.get()->getSpecialQueue(1u);
+    auto pCmdQ2 = context.get()->getSpecialQueue(2u);
+    auto pCmdQ3 = context.get()->getSpecialQueue(3u);
+
+    Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
+    Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
+    Event event3(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 4, 20);
+    Event event4(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
+    Event event5(pCmdQ3, CL_COMMAND_NDRANGE_KERNEL, 7, 21);
+    Event event6(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 2, 7);
+    UserEvent userEvent1(&pCmdQ1->getContext());
+    UserEvent userEvent2(&pCmdQ2->getContext());
+
+    userEvent1.setStatus(CL_COMPLETE);
+    userEvent2.setStatus(CL_COMPLETE);
+
+    cl_event eventWaitList[] =
+        {
+            &event1,
+            &event2,
+            &event3,
+            &event4,
+            &event5,
+            &event6,
+            &userEvent1,
+            &userEvent2,
+        };
+    cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+
+    {
+        pCmdQ1->enqueueMarkerWithWaitList(
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(3u, semaphores.size());
+
+        auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
+        EXPECT_EQ(4u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
+
+        auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
+        EXPECT_EQ(21u, semaphoreCmd1->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ3->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd1->getSemaphoreGraphicsAddress());
+
+        auto semaphoreCmd2 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[2]));
+        EXPECT_EQ(7u, semaphoreCmd2->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd2->getSemaphoreGraphicsAddress());
+    }
+
+    {
+        pCmdQ2->enqueueMarkerWithWaitList(
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ2->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(3u, semaphores.size());
+
+        auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
+        EXPECT_EQ(15u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
+
+        auto semaphoreCmd1 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]));
+        EXPECT_EQ(20u, semaphoreCmd1->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd1->getSemaphoreGraphicsAddress());
+
+        auto semaphoreCmd2 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[2]));
+        EXPECT_EQ(21u, semaphoreCmd2->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ3->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd2->getSemaphoreGraphicsAddress());
+    }
+
+    {
+        cl_event eventWaitList[] =
+            {
+                &event1,
+                &event2,
+                &event5,
+                &userEvent1,
+            };
+        cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+
+        pCmdQ3->enqueueMarkerWithWaitList(
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ3->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(1u, semaphores.size());
+
+        auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
+        EXPECT_EQ(15u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getCommandStreamReceiver(false).getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
+    }
+}
+
+HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToMarkerThenMiSemaphoreWaitCommandSizeIsIncluded) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
+    auto device1 = deviceFactory->rootDevices[1];
+    auto device2 = deviceFactory->rootDevices[2];
+
+    auto mockCsr1 = new MockCommandStreamReceiver(*device1->executionEnvironment, device1->getRootDeviceIndex(), device1->getDeviceBitfield());
+    auto mockCsr2 = new MockCommandStreamReceiver(*device2->executionEnvironment, device2->getRootDeviceIndex(), device2->getDeviceBitfield());
+
+    device1->resetCommandStreamReceiver(mockCsr1);
+    device2->resetCommandStreamReceiver(mockCsr2);
+
+    cl_device_id devices[] = {device1, device2};
+
+    auto context = std::make_unique<MockContext>(ClDeviceVector(devices, 2), false);
+
+    auto pCmdQ1 = context.get()->getSpecialQueue(1u);
+    auto pCmdQ2 = context.get()->getSpecialQueue(2u);
+
+    MockKernelWithInternals mockKernel(ClDeviceVector(devices, 2));
+    DispatchInfo dispatchInfo;
+    MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
+    dispatchInfo.setKernel(mockKernel.mockKernel);
+    multiDispatchInfo.push(dispatchInfo);
+
+    Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
+    Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
+    Event event3(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 1, 6);
+    Event event4(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 4, 20);
+    Event event5(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 3, 4);
+    Event event6(pCmdQ2, CL_COMMAND_NDRANGE_KERNEL, 2, 7);
+    UserEvent userEvent1(&pCmdQ1->getContext());
+    UserEvent userEvent2(&pCmdQ2->getContext());
+
+    userEvent1.setStatus(CL_COMPLETE);
+    userEvent2.setStatus(CL_COMPLETE);
+
+    {
+        cl_event eventWaitList[] =
+            {
+                &event1,
+                &event2,
+                &event3,
+                &event4,
+                &userEvent1,
+                &userEvent2,
+            };
+        cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+
+        pCmdQ1->enqueueMarkerWithWaitList(
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, nullptr);
+        CsrDependencies csrDeps;
+        eventsRequest.fillCsrDependenciesForTaskCountContainer(csrDeps, pCmdQ1->getCommandStreamReceiver(false));
+
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(0u, semaphores.size());
+        EXPECT_EQ(0u, TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<FamilyType>(csrDeps));
+    }
+
+    {
+        cl_event eventWaitList[] =
+            {
+                &event1,
+                &event2,
+                &event3,
+                &event4,
+                &event5,
+                &event6,
+                &userEvent1,
+            };
+        cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+
+        pCmdQ2->enqueueMarkerWithWaitList(
+            numEventsInWaitList,
+            eventWaitList,
+            nullptr);
+
+        EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, nullptr);
+        CsrDependencies csrDeps;
+        eventsRequest.fillCsrDependenciesForTaskCountContainer(csrDeps, pCmdQ2->getCommandStreamReceiver(false));
+
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ2->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(3u, semaphores.size());
+        EXPECT_EQ(3u * sizeof(MI_SEMAPHORE_WAIT), TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<FamilyType>(csrDeps));
+    }
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhenFlushingTaskThenWorkPartitionAllocationIsMadeResident) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableStaticPartitioning.set(1);
+    DebugManager.flags.ForcePreemptionMode.set(PreemptionMode::Disabled);
+    UltDeviceFactory deviceFactory{1, 2};
+    MockDevice *device = deviceFactory.rootDevices[0];
+    auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
+    ASSERT_NE(nullptr, mockCsr.getWorkPartitionAllocation());
+
+    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr.storeMakeResidentAllocations = true;
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    mockCsr.flushTask(commandStream,
+                      0,
+                      dsh,
+                      ioh,
+                      ssh,
+                      taskLevel,
+                      dispatchFlags,
+                      *device);
+
+    bool found = false;
+    for (auto allocation : mockCsr.makeResidentAllocations) {
+        if (allocation.first == mockCsr.getWorkPartitionAllocation()) {
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
+namespace CpuIntrinsicsTests {
+extern volatile uint32_t *pauseAddress;
+extern uint32_t pauseValue;
+} // namespace CpuIntrinsicsTests
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountToWaitWhenTagValueSwitchesThenWaitFunctionReturnsTrue) {
+    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    uint32_t taskCountToWait = 2u;
+
+    *mockCsr->tagAddress = 1u;
+
+    CpuIntrinsicsTests::pauseAddress = mockCsr->tagAddress;
+    CpuIntrinsicsTests::pauseValue = taskCountToWait;
+
+    bool ret = mockCsr->waitForCompletionWithTimeout(false, 1, taskCountToWait);
+    EXPECT_TRUE(ret);
+}
