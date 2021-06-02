@@ -479,7 +479,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHo
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(1u, allocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ((executionEnvironment.rootDeviceEnvironments[0u]->getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled || is32bit), allocation->fragmentsStorage.fragmentCount);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);

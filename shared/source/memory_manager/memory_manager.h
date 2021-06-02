@@ -214,6 +214,9 @@ class MemoryManager {
     LocalMemoryUsageBankSelector *getLocalMemoryUsageBankSelector(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex);
 
     bool isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL bool isNonSvmBuffer(const void *hostPtr, GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
+        return !force32bitAllocations && hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    }
 
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);

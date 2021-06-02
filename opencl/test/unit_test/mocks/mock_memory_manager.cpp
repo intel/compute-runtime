@@ -133,6 +133,11 @@ GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(uint32_t root
     return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMemory);
 }
 
+GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
+    allocateGraphicsMemoryForNonSvmHostPtrCalled = true;
+    return OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+}
+
 GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) {
     allocate32BitGraphicsMemoryImplCalled = true;
     if (failAllocate32Bit) {

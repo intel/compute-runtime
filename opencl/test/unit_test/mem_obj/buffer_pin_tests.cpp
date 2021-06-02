@@ -42,6 +42,14 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
         }
         return OsAgnosticMemoryManager::allocateGraphicsMemoryWithHostPtr(properties);
     }
+    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &properties) override {
+        EXPECT_NE(0u, HPExpectedSize);
+        if (HPExpectedSize == properties.size) {
+            EXPECT_TRUE(properties.flags.forcePin);
+            HPAllocCount++;
+        }
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(properties);
+    }
 
     size_t expectedSize = 0;
     uint32_t allocCount = 0;

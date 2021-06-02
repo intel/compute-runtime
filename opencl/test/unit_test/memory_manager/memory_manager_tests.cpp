@@ -1418,10 +1418,11 @@ TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCre
     galloc = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
     EXPECT_NE(nullptr, galloc);
     EXPECT_NE(nullptr, galloc->getUnderlyingBuffer());
-    EXPECT_EQ(0u, (uintptr_t)galloc->getUnderlyingBuffer() % MemoryConstants::pageSize64k);
+    size_t size = (executionEnvironment.rootDeviceEnvironments[0u]->getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled) ? MemoryConstants::pageSize64k : MemoryConstants::pageSize;
+    EXPECT_EQ(0u, (uintptr_t)galloc->getUnderlyingBuffer() % size);
 
     EXPECT_NE(0u, galloc->getGpuAddress());
-    EXPECT_EQ(0u, (uintptr_t)galloc->getGpuAddress() % MemoryConstants::pageSize64k);
+    EXPECT_EQ(0u, (uintptr_t)galloc->getGpuAddress() % size);
     memoryManager.freeGraphicsMemory(galloc);
 }
 
@@ -1697,6 +1698,49 @@ TEST(MemoryManager, givenBufferAndLimitedGPUWhenAllocatingGraphicsMemoryThenAllo
     EXPECT_TRUE(memoryManager.allocate32BitGraphicsMemoryImplCalled);
     memoryManager.freeGraphicsMemory(bufferAllocation);
 }
+
+TEST(MemoryManager, givenBufferHostMemoryAndHostPtrTrackingDisabledWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForNonSvmHostPtrIsCalled) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    HardwareInfo hwInfoLocal = *defaultHwInfo;
+    hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = false;
+    executionEnvironment->rootDeviceEnvironments[0u]->setHwInfo(&hwInfoLocal);
+
+    MockMemoryManager memoryManager(false, true, *executionEnvironment);
+    char bufferData[4096]{};
+    AllocationData allocationData{};
+    allocationData.hostPtr = bufferData;
+    allocationData.size = 4096u;
+    allocationData.type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+
+    auto bufferAllocation = memoryManager.allocateGraphicsMemory(allocationData);
+    EXPECT_NE(nullptr, bufferAllocation);
+    EXPECT_FALSE(memoryManager.allocateForImageCalled);
+    if (!is32bit) {
+        EXPECT_TRUE(memoryManager.allocateGraphicsMemoryForNonSvmHostPtrCalled);
+    }
+    memoryManager.freeGraphicsMemory(bufferAllocation);
+}
+
+TEST(MemoryManager, givenBufferHostMemoryAndHostPtrTrackingDisabledAndForce32bitAllocationsWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForNonSvmHostPtrIsNotCalled) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    HardwareInfo hwInfoLocal = *defaultHwInfo;
+    hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = false;
+    executionEnvironment->rootDeviceEnvironments[0u]->setHwInfo(&hwInfoLocal);
+
+    MockMemoryManager memoryManager(false, true, *executionEnvironment);
+    memoryManager.setForce32BitAllocations(true);
+    char bufferData[4096]{};
+    AllocationData allocationData{};
+    allocationData.hostPtr = bufferData;
+    allocationData.size = 4096u;
+    allocationData.type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+
+    auto bufferAllocation = memoryManager.allocateGraphicsMemory(allocationData);
+    EXPECT_NE(nullptr, bufferAllocation);
+    EXPECT_FALSE(memoryManager.allocateGraphicsMemoryForNonSvmHostPtrCalled);
+    memoryManager.freeGraphicsMemory(bufferAllocation);
+}
+
 TEST(MemoryManager, givenShareableWhenAllocatingGraphicsMemoryThenAllocateShareableIsCalled) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
@@ -2696,6 +2740,24 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingModeThenNonSv
     EXPECT_EQ(true, result);
     result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, 0u);
     EXPECT_EQ(false, result);
+}
+
+HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingModeThenNonSvmBufferIsNotSet) {
+    HardwareInfo hwInfoLocal = *defaultHwInfo;
+    hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = true;
+    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->setHwInfo(&hwInfoLocal);
+    int buffer = 0;
+    EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, 0u));
+    EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, 0u));
+}
+
+HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingDisabledAnd64bitsThenNonSvmBufferIsSetForBufferHostMemory) {
+    HardwareInfo hwInfoLocal = *defaultHwInfo;
+    hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = false;
+    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->setHwInfo(&hwInfoLocal);
+    int buffer = 0;
+    EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, 0u));
+    EXPECT_EQ(!is32bit, memoryManager->isNonSvmBuffer(&buffer, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, 0u));
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNonSvmHostPtrUsageDependsOnFullRangeSvm) {

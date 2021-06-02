@@ -31,7 +31,6 @@ class MemoryManagerCreate : public T {
 
 class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
   public:
-    using MemoryManager::allocateGraphicsMemoryForNonSvmHostPtr;
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
     using MemoryManager::allocateGraphicsMemoryWithAlignment;
     using MemoryManager::allocateGraphicsMemoryWithProperties;
@@ -42,6 +41,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::getAllocationData;
     using MemoryManager::gfxPartitions;
     using MemoryManager::internalLocalMemoryUsageBankSelector;
+    using MemoryManager::isNonSvmBuffer;
     using MemoryManager::multiContextResourceDestructor;
     using MemoryManager::overrideAllocationData;
     using MemoryManager::pageFaultManager;
@@ -134,6 +134,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     GraphicsAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override;
+    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
 
     bool isLimitedGPU(uint32_t rootDeviceIndex) override {
         return limitedGPU;
@@ -161,6 +162,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool preferRenderCompressedFlagPassed = false;
     bool allocateForImageCalled = false;
     bool allocate32BitGraphicsMemoryImplCalled = false;
+    bool allocateGraphicsMemoryForNonSvmHostPtrCalled = false;
     bool allocateForShareableCalled = false;
     bool failReserveAddress = false;
     bool failAllocateSystemMemory = false;
@@ -234,6 +236,7 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override {
         return nullptr;
     }
+
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
         return nullptr;
     }
