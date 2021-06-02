@@ -142,6 +142,12 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
 
+    if (relaxedSizeAllowed &&
+        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
     auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
     auto deviceBitfields = this->driverHandle->deviceBitfields;
@@ -187,6 +193,12 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
 
     if (relaxedSizeAllowed == false &&
         (size > this->devices.begin()->second->getNEODevice()->getHardwareCapabilities().maxMemAllocSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+
+    if (relaxedSizeAllowed &&
+        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize)) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
