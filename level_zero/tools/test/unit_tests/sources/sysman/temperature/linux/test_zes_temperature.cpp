@@ -11,7 +11,7 @@
 namespace L0 {
 namespace ult {
 std::string rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
-constexpr uint32_t handleComponentCountForSubDevices = 10u;
+constexpr uint32_t handleComponentCountForSubDevices = 6u;
 constexpr uint32_t handleComponentCountForNoSubDevices = 2u;
 constexpr uint32_t invalidMaxTemperature = 125;
 constexpr uint32_t invalidMinTemperature = 10;

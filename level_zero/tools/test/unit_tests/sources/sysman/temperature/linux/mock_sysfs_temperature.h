@@ -24,9 +24,7 @@ constexpr uint16_t memory0MaxTempIndex = 0;
 constexpr uint16_t memory1MaxTempIndex = 8;
 constexpr uint16_t memory2MaxTempIndex = 300;
 constexpr uint16_t memory3MaxTempIndex = 308;
-constexpr uint8_t subDeviceMinTempIndex = 12;
 constexpr uint8_t subDeviceMaxTempIndex = 16;
-constexpr uint8_t gtMinTempIndex = 20;
 constexpr uint8_t gtMaxTempIndex = 24;
 
 constexpr uint8_t tempArrForNoSubDevices[19] = {0x12, 0x23, 0x43, 0xde, 0xa3, 0xce, 0x23, 0x11, 0x45, 0x32, 0x67, 0x47, 0xac, 0x21, 0x03, 0x90, 0, 0, 0};

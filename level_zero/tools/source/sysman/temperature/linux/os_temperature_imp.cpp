@@ -90,10 +90,6 @@ ze_result_t LinuxTemperatureImp::getGlobalMaxTemperature(double *pTemperature) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t LinuxTemperatureImp::getGlobalMinTemperature(double *pTemperature) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 ze_result_t LinuxTemperatureImp::getGpuMaxTemperatureNoSubDevice(double *pTemperature) {
     uint32_t computeTemperature = 0;
     std::string key("COMPUTE_TEMPERATURES");
@@ -112,10 +108,6 @@ ze_result_t LinuxTemperatureImp::getGpuMaxTemperature(double *pTemperature) {
     if (!isSubdevice) {
         return getGpuMaxTemperatureNoSubDevice(pTemperature);
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t LinuxTemperatureImp::getGpuMinTemperature(double *pTemperature) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -144,18 +136,6 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
             return result;
         }
         break;
-    case ZES_TEMP_SENSORS_GLOBAL_MIN:
-        result = getGlobalMinTemperature(pTemperature);
-        if (result != ZE_RESULT_SUCCESS) {
-            return result;
-        }
-        break;
-    case ZES_TEMP_SENSORS_GPU_MIN:
-        result = getGpuMinTemperature(pTemperature);
-        if (result != ZE_RESULT_SUCCESS) {
-            return result;
-        }
-        break;
     default:
         *pTemperature = 0;
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -167,12 +147,10 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
 
 bool LinuxTemperatureImp::isTempModuleSupported() {
     if (!isSubdevice) {
-        if ((type == ZES_TEMP_SENSORS_MEMORY) || (type == ZES_TEMP_SENSORS_GLOBAL_MIN) ||
-            (type == ZES_TEMP_SENSORS_GPU_MIN)) {
+        if (type == ZES_TEMP_SENSORS_MEMORY) {
             return false;
         }
     }
-
     return (pPmt != nullptr);
 }
 

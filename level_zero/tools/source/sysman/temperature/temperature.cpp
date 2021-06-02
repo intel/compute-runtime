@@ -29,9 +29,7 @@ void TemperatureHandleContext::createHandle(const ze_device_handle_t &deviceHand
 void TemperatureHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
     for (const auto &deviceHandle : deviceHandles) {
         createHandle(deviceHandle, ZES_TEMP_SENSORS_GLOBAL);
-        createHandle(deviceHandle, ZES_TEMP_SENSORS_GLOBAL_MIN);
         createHandle(deviceHandle, ZES_TEMP_SENSORS_GPU);
-        createHandle(deviceHandle, ZES_TEMP_SENSORS_GPU_MIN);
         createHandle(deviceHandle, ZES_TEMP_SENSORS_MEMORY);
     }
 }
