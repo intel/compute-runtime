@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/source/debugger/debugger_l0.h"
 #include <level_zero/zet_api.h>
 
 struct _zet_debug_session_handle_t {};
@@ -50,6 +51,9 @@ struct RootDebugSession : DebugSession {
 
   protected:
     RootDebugSession(const zet_debug_config_t &config, Device *device) : DebugSession(config, device){};
+
+    virtual bool readModuleDebugArea() = 0;
+    DebugAreaHeader debugArea;
 };
 
 } // namespace L0

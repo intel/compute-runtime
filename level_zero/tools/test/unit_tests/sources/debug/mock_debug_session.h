@@ -61,6 +61,10 @@ struct DebugSessionMock : public L0::RootDebugSession {
         asyncThreadStarted = true;
     }
 
+    bool readModuleDebugArea() override {
+        return true;
+    }
+
     zet_debug_config_t config;
     bool asyncThreadStarted = false;
 };
