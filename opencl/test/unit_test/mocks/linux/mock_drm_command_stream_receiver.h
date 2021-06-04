@@ -18,11 +18,15 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::createPreemptionAllocation;
+    using CommandStreamReceiver::flushStamp;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::makeResident;
+    using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
     using DrmCommandStreamReceiver<GfxFamily>::residency;
+    using DrmCommandStreamReceiver<GfxFamily>::useContextForUserFenceWait;
+    using DrmCommandStreamReceiver<GfxFamily>::useUserFenceWait;
     using CommandStreamReceiverHw<GfxFamily>::directSubmission;
     using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
@@ -72,6 +76,26 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
             return CommandStreamReceiver::createPreemptionAllocation();
         } else {
             return ultHwConfig.csrCreatePreemptionReturnValue;
+        }
+    }
+
+    struct WaitUserFenceResult {
+        uint32_t called = 0u;
+        uint32_t waitValue = 0u;
+        int returnValue = 0;
+        bool callParent = true;
+    };
+
+    WaitUserFenceResult waitUserFenceResult;
+
+    int waitUserFence(uint32_t waitValue) override {
+        waitUserFenceResult.called++;
+        waitUserFenceResult.waitValue = waitValue;
+
+        if (waitUserFenceResult.callParent) {
+            return DrmCommandStreamReceiver<GfxFamily>::waitUserFence(waitValue);
+        } else {
+            return waitUserFenceResult.returnValue;
         }
     }
 };

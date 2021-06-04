@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,15 @@ template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
     this->processResidency(allocationsForResidency, 0u);
     this->exec(batchBuffer, 0u, static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0]);
+}
+
+template <typename GfxFamily>
+int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue) {
+    uint32_t ctxId = 0u;
+    if (useContextForUserFenceWait) {
+        ctxId = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0];
+    }
+    return this->drm->waitUserFence(ctxId, getTagAllocation()->getGpuAddress(), waitValue, Drm::ValueWidth::U32);
 }
 
 } // namespace NEO

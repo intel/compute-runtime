@@ -52,6 +52,12 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get());
     }
+    if (DebugManager.flags.EnableUserFenceForCompletionWait.get() == 1) {
+        useUserFenceWait = true;
+    }
+    if (DebugManager.flags.EnableUserFenceUseCtxId.get() == 1) {
+        useContextForUserFenceWait = true;
+    }
 }
 
 template <typename GfxFamily>
@@ -93,7 +99,11 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
         return this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
     }
 
-    this->flushStamp->setStamp(bb->peekHandle());
+    if (useUserFenceWait) {
+        this->flushStamp->setStamp(taskCount + 1);
+    } else {
+        this->flushStamp->setStamp(bb->peekHandle());
+    }
     this->flushInternal(batchBuffer, allocationsForResidency);
 
     if (this->gemCloseWorkerOperationMode == gemCloseWorkerMode::gemCloseWorkerActive) {
@@ -193,11 +203,13 @@ GmmPageTableMngr *DrmCommandStreamReceiver<GfxFamily>::createPageTableManager() 
 
 template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp) {
-    drm_i915_gem_wait wait = {};
-    wait.bo_handle = static_cast<uint32_t>(flushStamp);
-    wait.timeout_ns = -1;
+    auto waitValue = static_cast<uint32_t>(flushStamp);
+    if (useUserFenceWait) {
+        waitUserFence(waitValue);
+    } else {
+        this->drm->waitHandle(waitValue);
+    }
 
-    drm->ioctl(DRM_IOCTL_I915_GEM_WAIT, &wait);
     return true;
 }
 

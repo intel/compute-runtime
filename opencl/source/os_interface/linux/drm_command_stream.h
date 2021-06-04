@@ -24,6 +24,8 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
   protected:
     typedef DeviceCommandStreamReceiver<GfxFamily> BaseClass;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAddress;
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAllocation;
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::taskCount;
     using BaseClass::getScratchPatchAddress;
     using BaseClass::makeNonResident;
     using BaseClass::makeResident;
@@ -61,10 +63,14 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
   protected:
     MOCKABLE_VIRTUAL void flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
     MOCKABLE_VIRTUAL void exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId);
+    MOCKABLE_VIRTUAL int waitUserFence(uint32_t waitValue);
 
     std::vector<BufferObject *> residency;
     std::vector<drm_i915_gem_exec_object2> execObjectsStorage;
     Drm *drm;
     gemCloseWorkerMode gemCloseWorkerOperationMode;
+
+    bool useUserFenceWait = false;
+    bool useContextForUserFenceWait = false;
 };
 } // namespace NEO

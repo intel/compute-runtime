@@ -743,4 +743,12 @@ const std::vector<int> &Drm::getSliceMappings(uint32_t deviceIndex) {
     return topologyMap[deviceIndex].sliceIndices;
 }
 
+int Drm::waitHandle(uint32_t waitHandle) {
+    drm_i915_gem_wait wait = {};
+    wait.bo_handle = waitHandle;
+    wait.timeout_ns = -1;
+
+    return ioctl(DRM_IOCTL_I915_GEM_WAIT, &wait);
+}
+
 } // namespace NEO

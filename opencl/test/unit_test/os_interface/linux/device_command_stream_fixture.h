@@ -350,4 +350,24 @@ class DrmMockCustom : public Drm {
     int getErrno() override {
         return errnoValue;
     }
+
+    struct WaitUserFenceCall {
+        uint64_t address = 0u;
+        uint64_t value = 0u;
+        uint32_t ctxId = 0u;
+        ValueWidth dataWidth = ValueWidth::U8;
+
+        uint32_t called = 0u;
+    };
+
+    WaitUserFenceCall waitUserFenceCall{};
+
+    int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth) override {
+        waitUserFenceCall.called++;
+        waitUserFenceCall.ctxId = ctxId;
+        waitUserFenceCall.address = address;
+        waitUserFenceCall.dataWidth = dataWidth;
+        waitUserFenceCall.value = value;
+        return Drm::waitUserFence(ctxId, address, value, dataWidth);
+    }
 };

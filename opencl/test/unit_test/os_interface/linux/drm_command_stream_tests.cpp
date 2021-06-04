@@ -1663,3 +1663,82 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpd
 
     EXPECT_TRUE(result);
 }
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagSetWhenDrmCsrFlushedThenExpectTaskCountPlusOneStoredAsFlushStamp) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+
+    TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
+        new TestedDrmCommandStreamReceiver<FamilyType>(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                       *this->executionEnvironment,
+                                                       1);
+    EXPECT_TRUE(testedCsr->useUserFenceWait);
+    device->resetCommandStreamReceiver(testedCsr);
+
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{testedCsr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    testedCsr->taskCount = 10u;
+    testedCsr->flush(batchBuffer, testedCsr->getResidencyAllocations());
+
+    EXPECT_EQ(11u, testedCsr->flushStamp->peekStamp());
+
+    mm->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagSetWhenDrmCsrThenExpectUseDrmWaitUserFenceCallWithZeroContext) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+
+    TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
+        new TestedDrmCommandStreamReceiver<FamilyType>(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                       *this->executionEnvironment,
+                                                       1);
+    EXPECT_TRUE(testedCsr->useUserFenceWait);
+    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
+    device->resetCommandStreamReceiver(testedCsr);
+
+    FlushStamp handleToWait = 123;
+    testedCsr->waitForFlushStamp(handleToWait);
+
+    EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
+    EXPECT_EQ(123u, testedCsr->waitUserFenceResult.waitValue);
+    EXPECT_EQ(0u, mock->waitUserFenceCall.ctxId);
+    EXPECT_EQ(1u, mock->waitUserFenceCall.called);
+    EXPECT_EQ(Drm::ValueWidth::U32, mock->waitUserFenceCall.dataWidth);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceAndUseCtxFlagsSetWhenDrmCsrThenExpectUseDrmWaitUserFenceCallWithNonZeroContext) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    DebugManager.flags.EnableUserFenceUseCtxId.set(1);
+
+    TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
+        new TestedDrmCommandStreamReceiver<FamilyType>(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                       *this->executionEnvironment,
+                                                       1);
+    EXPECT_TRUE(testedCsr->useUserFenceWait);
+    EXPECT_TRUE(testedCsr->useContextForUserFenceWait);
+    device->resetCommandStreamReceiver(testedCsr);
+
+    auto osContextLinux = static_cast<const OsContextLinux *>(device->getDefaultEngine().osContext);
+    std::vector<uint32_t> &drmCtxIds = const_cast<std::vector<uint32_t> &>(osContextLinux->getDrmContextIds());
+    size_t drmCtxSize = drmCtxIds.size();
+    for (uint32_t i = 0; i < drmCtxSize; i++) {
+        drmCtxIds[i] = 5u + i;
+    }
+
+    FlushStamp handleToWait = 123;
+    testedCsr->waitForFlushStamp(handleToWait);
+
+    EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
+    EXPECT_EQ(123u, testedCsr->waitUserFenceResult.waitValue);
+    EXPECT_NE(0u, mock->waitUserFenceCall.ctxId);
+    EXPECT_EQ(1u, mock->waitUserFenceCall.called);
+    EXPECT_EQ(Drm::ValueWidth::U32, mock->waitUserFenceCall.dataWidth);
+}
