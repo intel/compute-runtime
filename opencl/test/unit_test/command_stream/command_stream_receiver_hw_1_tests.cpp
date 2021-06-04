@@ -894,8 +894,8 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
             expectedWidth = bltLeftover;
             expectedHeight = 1;
         }
-        EXPECT_EQ(expectedWidth, bltCmd->getTransferWidth());
-        EXPECT_EQ(expectedHeight, bltCmd->getTransferHeight());
+        EXPECT_EQ(expectedWidth, bltCmd->getDestinationX2CoordinateRight());
+        EXPECT_EQ(expectedHeight, bltCmd->getDestinationY2CoordinateBottom());
         EXPECT_EQ(expectedWidth, bltCmd->getDestinationPitch());
         EXPECT_EQ(expectedWidth, bltCmd->getSourcePitch());
 
@@ -1207,8 +1207,8 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
             offset = 0;
         }
 
-        EXPECT_EQ(expectedWidth, bltCmd->getTransferWidth());
-        EXPECT_EQ(expectedHeight, bltCmd->getTransferHeight());
+        EXPECT_EQ(expectedWidth, bltCmd->getDestinationX2CoordinateRight());
+        EXPECT_EQ(expectedHeight, bltCmd->getDestinationY2CoordinateBottom());
         EXPECT_EQ(expectedWidth, bltCmd->getDestinationPitch());
         EXPECT_EQ(expectedWidth, bltCmd->getSourcePitch());
 
@@ -1295,8 +1295,8 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
             offset = 0;
         }
 
-        EXPECT_EQ(expectedWidth, bltCmd->getTransferWidth());
-        EXPECT_EQ(expectedHeight, bltCmd->getTransferHeight());
+        EXPECT_EQ(expectedWidth, bltCmd->getDestinationX2CoordinateRight());
+        EXPECT_EQ(expectedHeight, bltCmd->getDestinationY2CoordinateBottom());
         EXPECT_EQ(expectedWidth, bltCmd->getDestinationPitch());
         EXPECT_EQ(expectedWidth, bltCmd->getSourcePitch());
 

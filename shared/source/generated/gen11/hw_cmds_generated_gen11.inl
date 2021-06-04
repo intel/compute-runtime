@@ -4360,18 +4360,18 @@ typedef struct tagXY_SRC_COPY_BLT {
     inline uint32_t getDestinationY1CoordinateTop(void) const {
         return TheStructure.Common.DestinationY1Coordinate_Top;
     }
-    inline void setTransferWidth(const uint32_t value) {
+    inline void setDestinationX2CoordinateRight(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationX2Coordinate_Right = value;
     }
-    inline uint32_t getTransferWidth(void) const {
+    inline uint32_t getDestinationX2CoordinateRight(void) const {
         return TheStructure.Common.DestinationX2Coordinate_Right;
     }
-    inline void setTransferHeight(const uint32_t value) {
+    inline void setDestinationY2CoordinateBottom(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff0000);
         TheStructure.Common.DestinationY2Coordinate_Bottom = value;
     }
-    inline uint32_t getTransferHeight(void) const {
+    inline uint32_t getDestinationY2CoordinateBottom(void) const {
         return TheStructure.Common.DestinationY2Coordinate_Bottom;
     }
     inline void setDestinationBaseAddress(const uint64_t value) {
@@ -4553,18 +4553,18 @@ typedef struct tagXY_COLOR_BLT {
     inline uint32_t getDestinationY1CoordinateTop(void) const {
         return TheStructure.Common.DestinationY1Coordinate_Top;
     }
-    inline void setTransferWidth(const uint32_t value) {
+    inline void setDestinationX2CoordinateRight(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.DestinationX2Coordinate_Right = value;
     }
-    inline uint32_t getTransferWidth(void) const {
+    inline uint32_t getDestinationX2CoordinateRight(void) const {
         return TheStructure.Common.DestinationX2Coordinate_Right;
     }
-    inline void setTransferHeight(const uint32_t value) {
+    inline void setDestinationY2CoordinateBottom(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff0000);
         TheStructure.Common.DestinationY2Coordinate_Bottom = value;
     }
-    inline uint32_t getTransferHeight(void) const {
+    inline uint32_t getDestinationY2CoordinateBottom(void) const {
         return TheStructure.Common.DestinationY2Coordinate_Bottom;
     }
     inline void setDestinationBaseAddress(const uint64_t value) {

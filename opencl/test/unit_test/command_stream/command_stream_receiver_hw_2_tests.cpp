@@ -1227,8 +1227,8 @@ HWTEST_F(BcsTests, givenAuxTranslationRequestWhenBlitCalledThenProgramCommandCor
         for (auto &cmd : hwParser.cmdList) {
             if (auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {
                 xyCopyBltCmdFound++;
-                EXPECT_EQ(static_cast<uint32_t>(allocationSize), bltCmd->getTransferWidth());
-                EXPECT_EQ(1u, bltCmd->getTransferHeight());
+                EXPECT_EQ(static_cast<uint32_t>(allocationSize), bltCmd->getDestinationX2CoordinateRight());
+                EXPECT_EQ(1u, bltCmd->getDestinationY2CoordinateBottom());
 
                 EXPECT_EQ(allocationGpuAddress, bltCmd->getDestinationBaseAddress());
                 EXPECT_EQ(allocationGpuAddress, bltCmd->getSourceBaseAddress());

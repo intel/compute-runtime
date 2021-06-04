@@ -218,7 +218,7 @@ HWTEST_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWhe
     EXPECT_NE(cmdList.end(), itor);
     {
         auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
-        EXPECT_EQ(cmd->getTransferHeight(), 1u);
+        EXPECT_EQ(cmd->getDestinationY2CoordinateBottom(), 1u);
     }
 }
 
@@ -239,7 +239,7 @@ HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBli
     EXPECT_NE(cmdList.end(), itor);
     {
         auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
-        EXPECT_EQ(cmd->getTransferHeight(), 2u);
+        EXPECT_EQ(cmd->getDestinationY2CoordinateBottom(), 2u);
         EXPECT_EQ(cmd->getDestinationPitch(), BlitterConstants::maxBlitWidth);
     }
 }
@@ -261,7 +261,7 @@ HWTEST_F(BlitTests, givenMemorySizeIsLessThanTwicenMaxWidthWhenFillPatternWithBl
     EXPECT_NE(cmdList.end(), itor);
     {
         auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
-        EXPECT_EQ(cmd->getTransferHeight(), 1u);
+        EXPECT_EQ(cmd->getDestinationY2CoordinateBottom(), 1u);
     }
 }
 
