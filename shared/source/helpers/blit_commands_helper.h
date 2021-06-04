@@ -98,7 +98,6 @@ using BlitMemoryToAllocationFunc = std::function<BlitOperationResult(const Devic
                                                                      const void *hostPtr,
                                                                      Vec3<size_t> size)>;
 extern BlitMemoryToAllocationFunc blitMemoryToAllocation;
-extern BlitMemoryToAllocationFunc blitAllocationToMemory;
 } // namespace BlitHelperFunctions
 
 struct BlitHelper {
@@ -106,8 +105,6 @@ struct BlitHelper {
                                                       Vec3<size_t> size);
     static BlitOperationResult blitMemoryToAllocationBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                                            Vec3<size_t> size, DeviceBitfield memoryBanks);
-    static BlitOperationResult blitAllocationToMemory(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
-                                                      Vec3<size_t> size);
 };
 
 template <typename GfxFamily>
