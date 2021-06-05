@@ -71,6 +71,7 @@ struct Event : _ze_event_handle_t {
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
     bool isTimestampEvent = false;
+    bool allocOnDevice = false;
     bool updateTaskCountEnabled = false;
 
     uint64_t globalStartTS;
@@ -153,6 +154,7 @@ struct EventPool : _ze_event_pool_handle_t {
     virtual uint32_t getEventSize() = 0;
 
     bool isEventPoolUsedForTimestamp = false;
+    bool allocOnDevice = false;
 
     std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
 };
@@ -161,6 +163,9 @@ struct EventPoolImp : public EventPool {
     EventPoolImp(const ze_event_pool_desc_t *desc) : numEvents(desc->count) {
         if (desc->flags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
             isEventPoolUsedForTimestamp = true;
+        }
+        if (!(desc->flags & ZE_EVENT_POOL_FLAG_HOST_VISIBLE)) {
+            allocOnDevice = true;
         }
     }
 

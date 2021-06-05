@@ -18,6 +18,10 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->kernelTimestampsData = std::make_unique<NEO::TimestampPackets<TagSizeT>[]>(EventPacketsCount::maxKernelSplit);
     }
 
+    if (eventPool->allocOnDevice) {
+        event->allocOnDevice = true;
+    }
+
     auto alloc = eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
 
     uint64_t baseHostAddr = reinterpret_cast<uint64_t>(alloc->getUnderlyingBuffer());
