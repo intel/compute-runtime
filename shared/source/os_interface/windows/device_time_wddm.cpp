@@ -26,7 +26,7 @@ bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo) {
         GTDIGetGpuCpuTimestampsIn in = {GTDI_FNC_GET_GPU_CPU_TIMESTAMPS};
         uint32_t outSize = sizeof(GTDIGetGpuCpuTimestampsOut);
 
-        escapeInfo.m_Header.EscapeCode = GFX_ESCAPE_IGPA_INSTRUMENTATION_CONTROL;
+        escapeInfo.m_Header.EscapeCode = static_cast<decltype(escapeInfo.m_Header.EscapeCode)>(GFX_ESCAPE_IGPA_INSTRUMENTATION_CONTROL);
         escapeInfo.m_Header.Size = outSize;
         escapeInfo.m_Data.m_In = in;
 

@@ -27,8 +27,13 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "os_inc.h"
 
 #include <string>
+
+namespace Os {
+extern const char *dxcoreDllName;
+}
 
 namespace NEO {
 void __attribute__((destructor)) platformsDestructor();
@@ -693,6 +698,7 @@ int main(int argc, char **argv) {
 
     initializeTestedDevice();
 
+    Os::dxcoreDllName = "";
     auto retVal = RUN_ALL_TESTS();
 
     return retVal;

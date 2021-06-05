@@ -72,6 +72,12 @@ else()
                  ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
   )
+  if(NOT DISABLE_WDDM_LINUX)
+    target_sources(igdrcl_aub_tests PRIVATE
+                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+    )
+  endif()
 endif()
 
 copy_gmm_dll_for(igdrcl_aub_tests)

@@ -17,11 +17,6 @@
 namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
-inline std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> DirectSubmissionHw<GfxFamily, Dispatcher>::create(Device &device, OsContext &osContext) {
-    return std::make_unique<DrmDirectSubmission<GfxFamily, Dispatcher>>(device, osContext);
-}
-
-template <typename GfxFamily, typename Dispatcher>
 DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
                                                                 OsContext &osContext)
     : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext) {

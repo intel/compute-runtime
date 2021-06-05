@@ -26,6 +26,7 @@
 #include "shared/source/os_interface/windows/kmdaf_listener.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
+#include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/adapter_factory.h"
 #include "shared/source/os_interface/windows/wddm/adapter_info.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
@@ -132,13 +133,13 @@ bool Wddm::init() {
 
 bool Wddm::queryAdapterInfo() {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    ADAPTER_INFO adapterInfo = {0};
+    ADAPTER_INFO_KMD adapterInfo = {0};
     D3DKMT_QUERYADAPTERINFO QueryAdapterInfo = {0};
     QueryAdapterInfo.hAdapter = getAdapter();
     QueryAdapterInfo.Type = KMTQAITYPE_UMDRIVERPRIVATE;
 
     if (hwDeviceId->getUmKmDataTranslator()->enabled()) {
-        UmKmDataTempStorage<ADAPTER_INFO, 1> internalRepresentation(hwDeviceId->getUmKmDataTranslator()->getSizeForAdapterInfoInternalRepresentation());
+        UmKmDataTempStorage<ADAPTER_INFO_KMD, 1> internalRepresentation(hwDeviceId->getUmKmDataTranslator()->getSizeForAdapterInfoInternalRepresentation());
         QueryAdapterInfo.pPrivateDriverData = internalRepresentation.data();
         QueryAdapterInfo.PrivateDriverDataSize = static_cast<uint32_t>(internalRepresentation.size());
 
@@ -151,7 +152,7 @@ bool Wddm::queryAdapterInfo() {
         }
     } else {
         QueryAdapterInfo.pPrivateDriverData = &adapterInfo;
-        QueryAdapterInfo.PrivateDriverDataSize = sizeof(ADAPTER_INFO);
+        QueryAdapterInfo.PrivateDriverDataSize = sizeof(ADAPTER_INFO_KMD);
 
         status = getGdi()->queryAdapterInfo(&QueryAdapterInfo);
         DEBUG_BREAK_IF(status != STATUS_SUCCESS);
@@ -242,11 +243,11 @@ bool Wddm::destroyDevice() {
 
 bool validDriverStorePath(OsEnvironmentWin &osEnvironment, D3DKMT_HANDLE adapter) {
     D3DKMT_QUERYADAPTERINFO QueryAdapterInfo = {0};
-    ADAPTER_INFO adapterInfo = {0};
+    ADAPTER_INFO_KMD adapterInfo = {0};
     QueryAdapterInfo.hAdapter = adapter;
     QueryAdapterInfo.Type = KMTQAITYPE_UMDRIVERPRIVATE;
     QueryAdapterInfo.pPrivateDriverData = &adapterInfo;
-    QueryAdapterInfo.PrivateDriverDataSize = sizeof(ADAPTER_INFO);
+    QueryAdapterInfo.PrivateDriverDataSize = sizeof(ADAPTER_INFO_KMD);
 
     auto status = osEnvironment.gdi->queryAdapterInfo(&QueryAdapterInfo);
 

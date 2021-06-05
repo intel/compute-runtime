@@ -35,6 +35,12 @@ if(NEO__LIBVA_FOUND)
   target_sources(igdrcl_${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/va_tests.cpp)
 endif()
 
+if(NOT DISABLE_WDDM_LINUX)
+  target_sources(igdrcl_${target_name} PRIVATE ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+                 ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+  )
+endif()
+
 target_link_libraries(igdrcl_${target_name} ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE} igdrcl_mocks ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE} ${IGDRCL_EXTRA_LIBS} gmock-gtest)
 
 set_property(TARGET igdrcl_${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})

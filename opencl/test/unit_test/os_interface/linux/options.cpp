@@ -24,6 +24,8 @@ const char *gmmDllName = "libmock_gmm.so";
 const char *gmmInitFuncName = "initMockGmm";
 const char *gmmDestroyFuncName = "destroyMockGmm";
 const char *metricsLibraryDllName = "";
+const char *gdiDllName = "";
+const char *dxcoreDllName = "";
 #endif
 const char *sysFsPciPathPrefix = "./test_files/linux/devices/";
 const char *pciDevicesDirectory = "./test_files/linux/by-path";

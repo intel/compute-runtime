@@ -21,6 +21,8 @@
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 
+#include "create_direct_submission_hw.inl"
+
 #include <cstring>
 
 namespace NEO {

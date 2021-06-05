@@ -78,6 +78,12 @@ if(NOT SKIP_UNIT_TESTS)
                    ${NEO_SOURCE_DIR}/shared/test/common/mocks/linux/mock_drm_memory_manager.cpp
                    ${NEO_SOURCE_DIR}/shared/test/common/mocks/linux/mock_drm_memory_manager.h
     )
+    if(NOT DISABLE_WDDM_LINUX)
+      target_sources(${TARGET_NAME} PRIVATE
+                     ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+                     ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+      )
+    endif()
   else()
     target_sources(${TARGET_NAME} PRIVATE
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp

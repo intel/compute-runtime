@@ -7,9 +7,9 @@
 
 #pragma once
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/os_interface/windows/windows_wrapper.h"
+#include "shared/source/os_interface/windows/gfx_escape_wrapper.h"
 
-#include "gfxEscape.h"
+#define GFX_ESCAPE_IGPA_INSTRUMENTATION_CONTROL 12
 
 namespace NEO {
 class Wddm;

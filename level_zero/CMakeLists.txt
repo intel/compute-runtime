@@ -270,6 +270,13 @@ if(BUILD_WITH_L0)
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/options_linux.cpp
                    ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/os_interface.cpp
     )
+    if(NOT DISABLE_WDDM_LINUX)
+      target_sources(${TARGET_NAME_L0}
+                     PRIVATE
+                     ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+                     ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+      )
+    endif()
   endif()
 
   if(DEFINED AUB_STREAM_PROJECT_NAME)

@@ -22,11 +22,6 @@ namespace NEO {
 DECLARE_COMMAND_BUFFER(CommandBufferHeader, UMD_OCL, FALSE, FALSE, PERFTAG_OCL);
 
 template <typename GfxFamily, typename Dispatcher>
-inline std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> DirectSubmissionHw<GfxFamily, Dispatcher>::create(Device &device, OsContext &osContext) {
-    return std::make_unique<WddmDirectSubmission<GfxFamily, Dispatcher>>(device, osContext);
-}
-
-template <typename GfxFamily, typename Dispatcher>
 WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(Device &device,
                                                                   OsContext &osContext)
     : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext) {

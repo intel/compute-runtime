@@ -15,7 +15,7 @@ size_t UmKmDataTranslator::getSizeForAdapterInfoInternalRepresentation() {
     return sizeof(ADAPTER_INFO);
 }
 
-bool UmKmDataTranslator::translateAdapterInfoFromInternalRepresentation(ADAPTER_INFO &dst, const void *src, size_t srcSize) {
+bool UmKmDataTranslator::translateAdapterInfoFromInternalRepresentation(ADAPTER_INFO_KMD &dst, const void *src, size_t srcSize) {
     return (0 == memcpy_s(&dst, sizeof(ADAPTER_INFO), src, srcSize));
 }
 

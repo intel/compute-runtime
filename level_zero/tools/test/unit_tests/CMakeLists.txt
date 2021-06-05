@@ -57,6 +57,12 @@ if(UNIX)
                  ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
   )
+  if(NOT DISABLE_WDDM_LINUX)
+    target_sources(${TARGET_NAME} PRIVATE
+                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+    )
+  endif()
 else()
   target_sources(${TARGET_NAME} PRIVATE
                  ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp

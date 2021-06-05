@@ -63,6 +63,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sharedata_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
     ${CMAKE_CURRENT_SOURCE_DIR}/thk_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_info.cpp
@@ -82,7 +83,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_memory_manager_allocate_in_device_pool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/um_km_data_translator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/um_km_data_translator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/create_um_km_data_translator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/create_um_km_data_translator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_allocation.h

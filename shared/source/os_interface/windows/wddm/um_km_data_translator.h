@@ -8,9 +8,8 @@
 #pragma once
 
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
+#include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/utilities/stackvec.h"
-
-#include "umKmInc/sharedata.h"
 
 #include <memory>
 
@@ -26,7 +25,7 @@ class UmKmDataTranslator {
     virtual ~UmKmDataTranslator() = default;
 
     virtual size_t getSizeForAdapterInfoInternalRepresentation();
-    virtual bool translateAdapterInfoFromInternalRepresentation(ADAPTER_INFO &dst, const void *src, size_t srcSize);
+    virtual bool translateAdapterInfoFromInternalRepresentation(ADAPTER_INFO_KMD &dst, const void *src, size_t srcSize);
 
     virtual size_t getSizeForCreateContextDataInternalRepresentation();
     virtual bool translateCreateContextDataToInternalRepresentation(void *dst, size_t dstSize, const CREATECONTEXT_PVTDATA &src);
@@ -57,8 +56,10 @@ struct UmKmDataTempStorageBase {
     }
 
     void resize(size_t dynSize) {
+        auto oldSize = storage.size() * sizeof(uint64_t);
         storage.resize((dynSize + sizeof(uint64_t) - 1) / sizeof(uint64_t));
         requestedSize = dynSize;
+        memset(reinterpret_cast<char *>(data()) + oldSize, 0, storage.size() * sizeof(uint64_t) - oldSize);
     }
 
     size_t size() const {

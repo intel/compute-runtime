@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #pragma once
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/os_interface/windows/windows_defs.h"
-
 struct COMMAND_BUFFER_HEADER_REC;
+typedef struct COMMAND_BUFFER_HEADER_REC COMMAND_BUFFER_HEADER;
 
 namespace NEO {
 
@@ -37,6 +37,6 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     OsContextWin *osContextWin;
     Wddm *wddm;
     MonitoredFence ringFence;
-    std::unique_ptr<COMMAND_BUFFER_HEADER_REC> commandBufferHeader;
+    std::unique_ptr<COMMAND_BUFFER_HEADER> commandBufferHeader;
 };
 } // namespace NEO
