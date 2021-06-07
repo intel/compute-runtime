@@ -1288,6 +1288,24 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenProgrammingBlitterThen
     EXPECT_EQ(0ull, bbStart->getBatchBufferStartAddressGraphicsaddress472());
 }
 
+HWTEST_F(BcsTests, givenImage1DWhenAdjustBlitPropertiesForImageIsCalledThenValuesAreSetCorrectly) {
+    cl_image_desc imgDesc = Image1dDefaults::imageDesc;
+    imgDesc.image_width = 10u;
+    imgDesc.image_height = 0u;
+    imgDesc.image_depth = 0u;
+    std::unique_ptr<Image> image(Image1dHelper<>::create(context.get(), &imgDesc));
+    Vec3<size_t> size{0, 0, 0};
+    size_t bytesPerPixel = 0u;
+    size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel);
+
+    EXPECT_EQ(imgDesc.image_width, size.x);
+    EXPECT_EQ(1u, size.y);
+    EXPECT_EQ(1u, size.z);
+    EXPECT_EQ(expectedBytesPerPixel, bytesPerPixel);
+}
+
 HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;

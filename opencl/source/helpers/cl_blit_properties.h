@@ -131,7 +131,7 @@ struct ClBlitProperties {
 
         if (BlitterConstants::BlitDirection::HostPtrToImage == blitDirection ||
             BlitterConstants::BlitDirection::ImageToHostPtr == blitDirection) {
-            adjustBlitPropertiesForImage(blitProperties, builtinOpParams);
+            setBlitPropertiesForImage(blitProperties, builtinOpParams);
         }
 
         return blitProperties;
@@ -159,21 +159,23 @@ struct ClBlitProperties {
         }
     }
 
-    static void adjustBlitPropertiesForImage(BlitProperties &blitProperties, const BuiltinOpParams &builtinOpParams) {
+    static void adjustBlitPropertiesForImage(MemObj *memObj, Vec3<size_t> &size, size_t &bytesPerPixel) {
+        auto image = castToObject<Image>(memObj);
+        auto image_width = image->getImageDesc().image_width;
+        auto image_height = image->getImageDesc().image_height;
+        auto image_depth = image->getImageDesc().image_depth;
 
+        size.x = image_width;
+        size.y = image_height ? image_height : 1;
+        size.z = image_depth ? image_depth : 1;
+        bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    }
+
+    static void setBlitPropertiesForImage(BlitProperties &blitProperties, const BuiltinOpParams &builtinOpParams) {
         if (blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr) {
-            auto srcImage = castToObject<Image>(builtinOpParams.srcMemObj);
-            blitProperties.bytesPerPixel = srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-            blitProperties.srcSize.x = srcImage->getImageDesc().image_width;
-            blitProperties.srcSize.y = srcImage->getImageDesc().image_height;
-            blitProperties.srcSize.z = srcImage->getImageDesc().image_depth;
-
+            adjustBlitPropertiesForImage(builtinOpParams.srcMemObj, blitProperties.srcSize, blitProperties.bytesPerPixel);
         } else {
-            auto dstImage = castToObject<Image>(builtinOpParams.dstMemObj);
-            blitProperties.bytesPerPixel = dstImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-            blitProperties.dstSize.x = dstImage->getImageDesc().image_width;
-            blitProperties.dstSize.y = dstImage->getImageDesc().image_height;
-            blitProperties.dstSize.z = dstImage->getImageDesc().image_depth;
+            adjustBlitPropertiesForImage(builtinOpParams.dstMemObj, blitProperties.dstSize, blitProperties.bytesPerPixel);
         }
 
         blitProperties.srcRowPitch = builtinOpParams.dstRowPitch ? builtinOpParams.dstRowPitch : blitProperties.srcSize.x * blitProperties.bytesPerPixel;
