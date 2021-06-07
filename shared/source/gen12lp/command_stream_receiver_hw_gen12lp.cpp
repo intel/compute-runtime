@@ -110,8 +110,8 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitPropertie
     auto tileType = GMM_NOT_TILED;
     auto srcAllocation = blitProperties.srcAllocation;
     auto dstAllocation = blitProperties.dstAllocation;
-    auto srcQPitch = blitProperties.srcSize.y;
-    auto dstQPitch = blitProperties.dstSize.y;
+    auto srcQPitch = static_cast<uint32_t>(blitProperties.srcSize.y);
+    auto dstQPitch = static_cast<uint32_t>(blitProperties.dstSize.y);
     auto srcRowPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
     auto dstRowPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
     uint32_t mipTailLod = 0;

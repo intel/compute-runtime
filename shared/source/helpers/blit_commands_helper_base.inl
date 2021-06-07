@@ -314,7 +314,7 @@ bool BlitCommandsHelper<GfxFamily>::useOneBlitCopyCommand(Vec3<size_t> copySize,
 }
 
 template <typename GfxFamily>
-uint32_t BlitCommandsHelper<GfxFamily>::getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, uint32_t srcSize, uint32_t dstSize) {
+uint32_t BlitCommandsHelper<GfxFamily>::getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize) {
     uint32_t bytesPerPixel = BlitterConstants::maxBytesPerPixel;
     while (bytesPerPixel > 1) {
         if (copySize % bytesPerPixel == 0 && srcSize % bytesPerPixel == 0 && dstSize % bytesPerPixel == 0) {

@@ -329,9 +329,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     auto image = Image::fromHandle(hDstImage);
     auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
 
-    Vec3<uint32_t> imgSize = {static_cast<uint32_t>(image->getImageDesc().width),
-                              static_cast<uint32_t>(image->getImageDesc().height),
-                              static_cast<uint32_t>(image->getImageDesc().depth)};
+    Vec3<size_t> imgSize = {image->getImageDesc().width,
+                            image->getImageDesc().height,
+                            image->getImageDesc().depth};
 
     ze_image_region_t tmpRegion;
     if (pDstRegion == nullptr) {
@@ -346,9 +346,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
         tmpRegion = {0,
                      0,
                      0,
-                     imgSize.x,
-                     imgSize.y,
-                     imgSize.z};
+                     static_cast<uint32_t>(imgSize.x),
+                     static_cast<uint32_t>(imgSize.y),
+                     static_cast<uint32_t>(imgSize.z)};
         pDstRegion = &tmpRegion;
     }
 
@@ -445,9 +445,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     auto image = Image::fromHandle(hSrcImage);
     auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
 
-    Vec3<uint32_t> imgSize = {static_cast<uint32_t>(image->getImageDesc().width),
-                              static_cast<uint32_t>(image->getImageDesc().height),
-                              static_cast<uint32_t>(image->getImageDesc().depth)};
+    Vec3<size_t> imgSize = {image->getImageDesc().width,
+                            image->getImageDesc().height,
+                            image->getImageDesc().depth};
 
     ze_image_region_t tmpRegion;
     if (pSrcRegion == nullptr) {
@@ -462,9 +462,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
         tmpRegion = {0,
                      0,
                      0,
-                     imgSize.x,
-                     imgSize.y,
-                     imgSize.z};
+                     static_cast<uint32_t>(imgSize.x),
+                     static_cast<uint32_t>(imgSize.y),
+                     static_cast<uint32_t>(imgSize.z)};
         pSrcRegion = &tmpRegion;
     }
 
@@ -614,13 +614,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     if (isCopyOnly()) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
 
-        Vec3<uint32_t> srcImgSize = {static_cast<uint32_t>(srcImage->getImageInfo().imgDesc.imageWidth),
-                                     static_cast<uint32_t>(srcImage->getImageInfo().imgDesc.imageHeight),
-                                     static_cast<uint32_t>(srcImage->getImageInfo().imgDesc.imageDepth)};
+        Vec3<size_t> srcImgSize = {srcImage->getImageInfo().imgDesc.imageWidth,
+                                   srcImage->getImageInfo().imgDesc.imageHeight,
+                                   srcImage->getImageInfo().imgDesc.imageDepth};
 
-        Vec3<uint32_t> dstImgSize = {static_cast<uint32_t>(dstImage->getImageInfo().imgDesc.imageWidth),
-                                     static_cast<uint32_t>(dstImage->getImageInfo().imgDesc.imageHeight),
-                                     static_cast<uint32_t>(dstImage->getImageInfo().imgDesc.imageDepth)};
+        Vec3<size_t> dstImgSize = {dstImage->getImageInfo().imgDesc.imageWidth,
+                                   dstImage->getImageInfo().imgDesc.imageHeight,
+                                   dstImage->getImageInfo().imgDesc.imageDepth};
 
         auto srcRowPitch = srcRegion.width * bytesPerPixel;
         auto srcSlicePitch =
@@ -779,7 +779,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO
                                                                              ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                                                              size_t srcRowPitch, size_t srcSlicePitch,
                                                                              size_t dstRowPitch, size_t dstSlicePitch,
-                                                                             Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent,
+                                                                             Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent,
                                                                              uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
@@ -825,7 +825,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
                                                                       size_t srcRowPitch, size_t srcSlicePitch,
                                                                       size_t dstRowPitch, size_t dstSlicePitch,
                                                                       size_t bytesPerPixel, Vec3<size_t> copySize,
-                                                                      Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent) {
+                                                                      Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
@@ -1022,12 +1022,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     dstSize += dstAllocationStruct.offset;
     srcSize += srcAllocationStruct.offset;
 
-    Vec3<uint32_t> srcSize3 = {srcPitch ? srcPitch : srcRegion->width + srcRegion->originX,
-                               srcSlicePitch ? srcSlicePitch / srcPitch : srcRegion->height + srcRegion->originY,
-                               srcRegion->depth + srcRegion->originZ};
-    Vec3<uint32_t> dstSize3 = {dstPitch ? dstPitch : dstRegion->width + dstRegion->originX,
-                               dstSlicePitch ? dstSlicePitch / dstPitch : dstRegion->height + dstRegion->originY,
-                               dstRegion->depth + dstRegion->originZ};
+    Vec3<size_t> srcSize3 = {srcPitch ? srcPitch : srcRegion->width + srcRegion->originX,
+                             srcSlicePitch ? srcSlicePitch / srcPitch : srcRegion->height + srcRegion->originY,
+                             srcRegion->depth + srcRegion->originZ};
+    Vec3<size_t> dstSize3 = {dstPitch ? dstPitch : dstRegion->width + dstRegion->originX,
+                             dstSlicePitch ? dstSlicePitch / dstPitch : dstRegion->height + dstRegion->originY,
+                             dstRegion->depth + dstRegion->originZ};
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (srcRegion->depth > 1) {

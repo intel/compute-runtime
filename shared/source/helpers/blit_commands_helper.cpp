@@ -60,7 +60,10 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
             gpuRowPitch,                   // dstRowPitch
             gpuSlicePitch,                 // dstSlicePitch
             hostRowPitch,                  // srcRowPitch
-            hostSlicePitch};               // srcSlicePitch
+            hostSlicePitch,                // srcSlicePitch
+            copySize,                      // dstSize
+            copySize                       // srcSize
+        };
 
     } else {
         return {
@@ -79,7 +82,10 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
             hostRowPitch,                  // dstRowPitch
             hostSlicePitch,                // dstSlicePitch
             gpuRowPitch,                   // srcRowPitch
-            gpuSlicePitch};                // srcSlicePitch
+            gpuSlicePitch,                 // srcSlicePitch
+            copySize,                      // dstSize
+            copySize                       // srcSize
+        };
     };
 }
 

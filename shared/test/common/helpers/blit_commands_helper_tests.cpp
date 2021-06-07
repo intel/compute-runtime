@@ -376,13 +376,13 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
     Vec3<size_t> srcOffsets = {0, 0, 0};
 
     Vec3<size_t> copySize = {0x100, 0x40, 0x1};
-    Vec3<uint32_t> srcSize = {0x100, 0x40, 0x1};
-    Vec3<uint32_t> dstSize = {0x100, 0x40, 0x1};
+    Vec3<size_t> srcSize = {0x100, 0x40, 0x1};
+    Vec3<size_t> dstSize = {0x100, 0x40, 0x1};
 
-    uint32_t srcRowPitch = srcSize.x;
-    uint32_t srcSlicePitch = srcSize.y;
-    uint32_t dstRowPitch = dstSize.x;
-    uint32_t dstSlicePitch = dstSize.y;
+    size_t srcRowPitch = srcSize.x;
+    size_t srcSlicePitch = srcSize.y;
+    size_t dstRowPitch = dstSize.x;
+    size_t dstSlicePitch = dstSize.y;
 
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(&dstAlloc, &srcAlloc,
                                                                                 dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,

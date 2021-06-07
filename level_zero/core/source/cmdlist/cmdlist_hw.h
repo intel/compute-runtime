@@ -180,7 +180,7 @@ struct CommandListCoreFamily : CommandListImp {
                                                             ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                                             size_t srcRowPitch, size_t srcSlicePitch,
                                                             size_t dstRowPitch, size_t dstSlicePitch,
-                                                            Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent,
+                                                            Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent,
                                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
@@ -210,7 +210,7 @@ struct CommandListCoreFamily : CommandListImp {
                                                      size_t srcRowPitch, size_t srcSlicePitch,
                                                      size_t dstRowPitch, size_t dstSlicePitch,
                                                      size_t bytesPerPixel, Vec3<size_t> copySize,
-                                                     Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent);
+                                                     Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                                               const ze_group_count_t *pThreadGroupDimensions,

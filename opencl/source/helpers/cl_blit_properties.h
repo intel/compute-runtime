@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,30 +161,19 @@ struct ClBlitProperties {
 
     static void adjustBlitPropertiesForImage(BlitProperties &blitProperties, const BuiltinOpParams &builtinOpParams) {
 
-        Image *srcImage = nullptr;
-        Image *dstImage = nullptr;
-
-        blitProperties.srcSize = {static_cast<uint32_t>(builtinOpParams.size.x),
-                                  static_cast<uint32_t>(builtinOpParams.size.y),
-                                  static_cast<uint32_t>(builtinOpParams.size.z)};
-
-        blitProperties.dstSize = {static_cast<uint32_t>(builtinOpParams.size.x),
-                                  static_cast<uint32_t>(builtinOpParams.size.y),
-                                  static_cast<uint32_t>(builtinOpParams.size.z)};
-
         if (blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr) {
-            srcImage = castToObject<Image>(builtinOpParams.srcMemObj);
+            auto srcImage = castToObject<Image>(builtinOpParams.srcMemObj);
             blitProperties.bytesPerPixel = srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-            blitProperties.srcSize.x = static_cast<uint32_t>(srcImage->getImageDesc().image_width);
-            blitProperties.srcSize.y = static_cast<uint32_t>(srcImage->getImageDesc().image_height);
-            blitProperties.srcSize.z = static_cast<uint32_t>(srcImage->getImageDesc().image_depth);
+            blitProperties.srcSize.x = srcImage->getImageDesc().image_width;
+            blitProperties.srcSize.y = srcImage->getImageDesc().image_height;
+            blitProperties.srcSize.z = srcImage->getImageDesc().image_depth;
 
         } else {
-            dstImage = castToObject<Image>(builtinOpParams.dstMemObj);
+            auto dstImage = castToObject<Image>(builtinOpParams.dstMemObj);
             blitProperties.bytesPerPixel = dstImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-            blitProperties.dstSize.x = static_cast<uint32_t>(dstImage->getImageDesc().image_width);
-            blitProperties.dstSize.y = static_cast<uint32_t>(dstImage->getImageDesc().image_height);
-            blitProperties.dstSize.z = static_cast<uint32_t>(dstImage->getImageDesc().image_depth);
+            blitProperties.dstSize.x = dstImage->getImageDesc().image_width;
+            blitProperties.dstSize.y = dstImage->getImageDesc().image_height;
+            blitProperties.dstSize.z = dstImage->getImageDesc().image_depth;
         }
 
         blitProperties.srcRowPitch = builtinOpParams.dstRowPitch ? builtinOpParams.dstRowPitch : blitProperties.srcSize.x * blitProperties.bytesPerPixel;

@@ -65,7 +65,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                            ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                            size_t srcRowPitch, size_t srcSlicePitch,
                                            size_t dstRowPitch, size_t dstSlicePitch,
-                                           Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent,
+                                           Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
         appendMemoryCopyBlitRegionCalledTimes++;
         return ZE_RESULT_SUCCESS;
@@ -104,7 +104,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                     size_t srcRowPitch, size_t srcSlicePitch,
                                     size_t dstRowPitch, size_t dstSlicePitch,
                                     size_t bytesPerPixel, Vec3<size_t> copySize,
-                                    Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent) override {
+                                    Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent) override {
         appendCopyImageBlitCalledTimes++;
         appendImageRegionCopySize = copySize;
         appendImageRegionSrcOrigin = srcOffsets;
@@ -207,7 +207,7 @@ class MockAppendMemoryCopy : public MockCommandListHw<gfxCoreFamily> {
                                            ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                            size_t srcRowPitch, size_t srcSlicePitch,
                                            size_t dstRowPitch, size_t dstSlicePitch,
-                                           Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent,
+                                           Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
         srcBlitCopyRegionOffset = srcOffset;
         dstBlitCopyRegionOffset = dstOffset;
@@ -845,8 +845,8 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
     Vec3<size_t> copySize = {0x100, 0x10, 1};
     ze_copy_region_t srcRegion = {offsetX, offsetY, 0, static_cast<uint32_t>(copySize.x), static_cast<uint32_t>(copySize.y), static_cast<uint32_t>(copySize.z)};
     ze_copy_region_t dstRegion = srcRegion;
-    Vec3<uint32_t> srcSize = {0x1000, 0x100, 1};
-    Vec3<uint32_t> dstSize = {0x100, 0x100, 1};
+    Vec3<size_t> srcSize = {0x1000, 0x100, 1};
+    Vec3<size_t> dstSize = {0x100, 0x100, 1};
     NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages);
@@ -878,8 +878,8 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
     Vec3<size_t> copySize = {0x100, 0x10, 1};
     ze_copy_region_t srcRegion = {offsetX, offsetY, 0, static_cast<uint32_t>(copySize.x), static_cast<uint32_t>(copySize.y), static_cast<uint32_t>(copySize.z)};
     ze_copy_region_t dstRegion = srcRegion;
-    Vec3<uint32_t> srcSize = {0x1000, 0x100, 1};
-    Vec3<uint32_t> dstSize = {0x100, 0x100, 1};
+    Vec3<size_t> srcSize = {0x1000, 0x100, 1};
+    Vec3<size_t> dstSize = {0x100, 0x100, 1};
     NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages);
@@ -910,8 +910,8 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionGreaterThanMaxBli
     Vec3<size_t> copySize = {BlitterConstants::maxBlitWidth + 0x100, 0x10, 1};
     ze_copy_region_t srcRegion = {offsetX, offsetY, 0, static_cast<uint32_t>(copySize.x), static_cast<uint32_t>(copySize.y), static_cast<uint32_t>(copySize.z)};
     ze_copy_region_t dstRegion = srcRegion;
-    Vec3<uint32_t> srcSize = {2 * BlitterConstants::maxBlitWidth, 2 * BlitterConstants::maxBlitHeight, 1};
-    Vec3<uint32_t> dstSize = srcSize;
+    Vec3<size_t> srcSize = {2 * BlitterConstants::maxBlitWidth, 2 * BlitterConstants::maxBlitHeight, 1};
+    Vec3<size_t> dstSize = srcSize;
     NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages);
@@ -947,14 +947,14 @@ class MockCommandListForRegionSize : public WhiteBox<::L0::CommandListCoreFamily
                                            ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                            size_t srcRowPitch, size_t srcSlicePitch,
                                            size_t dstRowPitch, size_t dstSlicePitch,
-                                           Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent,
+                                           Vec3<size_t> srcSize, Vec3<size_t> dstSize, ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
         this->srcSize = srcSize;
         this->dstSize = dstSize;
         return ZE_RESULT_SUCCESS;
     }
-    Vec3<uint32_t> srcSize = {0, 0, 0};
-    Vec3<uint32_t> dstSize = {0, 0, 0};
+    Vec3<size_t> srcSize = {0, 0, 0};
+    Vec3<size_t> dstSize = {0, 0, 0};
 };
 HWTEST2_F(CommandListCreate, givenZeroAsPitchAndSlicePitchWhenMemoryCopyRegionCalledThenSizesEqualOffsetPlusCopySize, Platforms) {
     MockCommandListForRegionSize<gfxCoreFamily> cmdList;
