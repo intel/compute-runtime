@@ -44,8 +44,6 @@ if(NOT SKIP_UNIT_TESTS)
 
   add_executable(${TARGET_NAME}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/base_ult_config_listener.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/base_ult_config_listener.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
@@ -61,11 +59,10 @@ if(NOT SKIP_UNIT_TESTS)
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.cpp
                  ${NEO_SOURCE_DIR}/shared/source/helpers/allow_deferred_deleter.cpp
                  ${NEO_SOURCE_DIR}/shared/test/common/helpers/api_specific_config_shared_tests.cpp
-                 ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_leak_listener.cpp
-                 ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_management.cpp
                  ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
                  $<TARGET_OBJECTS:mock_gmm>
+                 $<TARGET_OBJECTS:igdrcl_libult_common>
   )
 
   if(UNIX)

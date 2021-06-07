@@ -19,6 +19,7 @@ list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
      $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
      $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
      $<TARGET_OBJECTS:igdrcl_libult>
+     $<TARGET_OBJECTS:igdrcl_libult_common>
      $<TARGET_OBJECTS:igdrcl_libult_cs>
      $<TARGET_OBJECTS:igdrcl_libult_env>
 )

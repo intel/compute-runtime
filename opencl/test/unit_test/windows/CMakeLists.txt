@@ -8,6 +8,7 @@ if(WIN32)
   project(igdrcl_windows_dll_tests)
 
   set(NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS
+      $<TARGET_OBJECTS:igdrcl_libult_common>
       $<TARGET_OBJECTS:igdrcl_libult>
       $<TARGET_OBJECTS:igdrcl_libult_env>
       $<TARGET_OBJECTS:mock_gmm>

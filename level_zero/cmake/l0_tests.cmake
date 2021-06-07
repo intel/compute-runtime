@@ -4,42 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-##
-## L0 tests settings
-##
-
-# These need to be added to a project to enable platform support in ULTs
-if(TESTS_GEN8)
-  set(COMPUTE_RUNTIME_ULT_GEN8
-      ${NEO_SHARED_TEST_DIRECTORY}/common/libult/gen8.cpp
-      ${NEO_SHARED_TEST_DIRECTORY}/common/gen8/cmd_parse_gen8.cpp
-  )
-endif()
-
-if(TESTS_GEN9)
-  set(COMPUTE_RUNTIME_ULT_GEN9
-      ${NEO_SHARED_TEST_DIRECTORY}/common/libult/gen9.cpp
-      ${NEO_SHARED_TEST_DIRECTORY}/common/gen9/cmd_parse_gen9.cpp
-  )
-endif()
-
-if(TESTS_GEN11)
-  set(COMPUTE_RUNTIME_ULT_GEN11
-      ${NEO_SHARED_TEST_DIRECTORY}/common/libult/gen11.cpp
-      ${NEO_SHARED_TEST_DIRECTORY}/common/gen11/cmd_parse_gen11.cpp
-  )
-endif()
-
-if(TESTS_GEN12LP)
-  set(COMPUTE_RUNTIME_ULT_GEN12LP
-      ${NEO_SHARED_TEST_DIRECTORY}/common/libult/gen12lp.cpp
-      ${NEO_SHARED_TEST_DIRECTORY}/common/gen12lp/cmd_parse_gen12lp.cpp
-  )
-  include_directories(${NEO_SHARED_TEST_DIRECTORY}/common/gen12lp/cmd_parse${BRANCH_DIR_SUFFIX}/)
-endif()
-
-## ULT related settings
-
 #Extract compute runtime COMPILE_DEFINITIONS
 get_property(COMPUTE_RUNTIME_MOCKABLE_DEFINITIONS
              TARGET ${NEO_MOCKABLE_LIB_NAME}
@@ -66,12 +30,7 @@ add_library(compute_runtime_mockable_extra
             EXCLUDE_FROM_ALL
             ${CMAKE_CURRENT_LIST_DIR}/l0_tests.cmake
             ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
-            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
-            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
-            ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_tbx_sockets.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
-            ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.cpp
-            ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_ult.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks${BRANCH_SUFIX_DIR}/mock_gmm_client_context.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_cif.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_command_stream_receiver.cpp

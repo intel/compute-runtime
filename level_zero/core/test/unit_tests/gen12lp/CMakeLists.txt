@@ -6,7 +6,6 @@
 
 if(TESTS_GEN12LP)
   target_sources(${TARGET_NAME} PRIVATE
-                 ${COMPUTE_RUNTIME_ULT_GEN12LP}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/enable_l0_mocks_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cache_flush.cpp

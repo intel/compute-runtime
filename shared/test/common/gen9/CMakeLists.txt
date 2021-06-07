@@ -23,7 +23,6 @@ if(TESTS_GEN9)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_math_gen9.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen9.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_gen9.cpp
-                 ${COMPUTE_RUNTIME_ULT_GEN9}
   )
 
 endif()

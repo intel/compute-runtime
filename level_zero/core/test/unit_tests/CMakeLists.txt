@@ -22,11 +22,6 @@ ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 
 add_executable(${TARGET_NAME}
                ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
-               ${NEO_SOURCE_DIR}/shared/test/unit_test/base_ult_config_listener.cpp
-               ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_management.h
-               ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_management.cpp
-               ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_leak_listener.h
-               ${NEO_SOURCE_DIR}/shared/test/common/helpers/memory_leak_listener.cpp
                ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.cpp
                ${NEO_SOURCE_DIR}/shared/test/common/mocks/ult_device_factory.h
                ${L0_CORE_ENABLERS}
@@ -51,6 +46,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/io_functions.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
                $<TARGET_OBJECTS:${L0_MOCKABLE_LIB_NAME}>
+               $<TARGET_OBJECTS:igdrcl_libult_common>
 )
 
 if(UNIX)

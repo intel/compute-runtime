@@ -6,64 +6,17 @@
 
 macro(macro_for_each_gen)
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
-    foreach(BRANCH ${BRANCH_DIR_LIST})
-      if(EXISTS ${NEO_SOURCE_DIR}/opencl/source${BRANCH_DIR}${GEN_TYPE_LOWER}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp)
-        list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
-             ${NEO_SOURCE_DIR}/opencl/source${BRANCH_DIR}${GEN_TYPE_LOWER}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp
-        )
-      endif()
-      set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/common/${BRANCH}${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp)
-      if(EXISTS ${SRC_FILE})
-        list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
-      endif()
-      set(SRC_FILE ${NEO_SHARED_TEST_DIRECTORY}/common/libult/${BRANCH}${GEN_TYPE_LOWER}.cpp)
-      if(EXISTS ${SRC_FILE})
-        list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
-      endif()
-
-      string(REGEX REPLACE "/$" "" _BRANCH_FILENAME_SUFFIX "${BRANCH_DIR}")
-      string(REGEX REPLACE "^/" "_" _BRANCH_FILENAME_SUFFIX "${_BRANCH_FILENAME_SUFFIX}")
-      foreach(SRC_IT "enable_hw_info_config_" "enable_" "enable_family_full_core_")
-        set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${GEN_TYPE_LOWER}${BRANCH_DIR}${SRC_IT}${GEN_TYPE_LOWER}${_BRANCH_FILENAME_SUFFIX}.cpp)
-        if(EXISTS ${SRC_FILE})
-          list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
-        endif()
-        set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH_DIR}${GEN_TYPE_LOWER}/${SRC_IT}${GEN_TYPE_LOWER}.cpp)
-        if(EXISTS ${SRC_FILE})
-          list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
-        endif()
-        set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH_DIR}${GEN_TYPE_LOWER}/${SRC_IT}${GEN_TYPE_LOWER}.cpp)
-        if(EXISTS ${SRC_FILE})
-          list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
-        endif()
-      endforeach()
-    endforeach()
+    if(EXISTS ${NEO_SOURCE_DIR}/opencl/source${BRANCH_DIR}${GEN_TYPE_LOWER}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp)
+      list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
+           ${NEO_SOURCE_DIR}/opencl/source${BRANCH_DIR}${GEN_TYPE_LOWER}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp
+      )
+    endif()
   endforeach()
-  if(EXISTS "${NEO_SHARED_TEST_DIRECTORY}/common/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
-    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${NEO_SHARED_TEST_DIRECTORY}/common/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
-    include_directories(${NEO_SHARED_TEST_DIRECTORY}/common/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/)
-  endif()
 endmacro()
 
 apply_macro_for_each_gen("TESTED")
 
 set(IGDRCL_SRCS_LIB_ULT
-    ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_tbx_sockets.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_ult.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/base_ult_config_listener.h
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/debug_helpers.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
     ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.cpp
@@ -73,12 +26,7 @@ set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_aub_command_stream_receiver.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_command_stream_receiver.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
-)
-
-get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE)
-
-list(APPEND IGDRCL_SRCS_LIB_ULT
-     ${NEO_SHARED_TESTS_CMD_PARSE}
+    ${NEO_SOURCE_DIR}/shared/source/helpers/allow_deferred_deleter.cpp
 )
 
 set(IGDRCL_SRCS_LIB_ULT_WINDOWS
@@ -89,9 +37,6 @@ add_library(igdrcl_libult OBJECT EXCLUDE_FROM_ALL
             ${IGDRCL_SRCS_LIB_ULT}
             ${IGDRCL_SRCS_ENABLE_TESTED_HW}
 )
-if(UNIX)
-  target_sources(igdrcl_libult PRIVATE ${IGDRCL_SRCS_ENABLE_TESTED_HW_LINUX})
-endif()
 
 set(IGDRCL_SRCS_LIB_ULT_CS
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
@@ -99,9 +44,6 @@ set(IGDRCL_SRCS_LIB_ULT_CS
 )
 add_library(igdrcl_libult_cs OBJECT EXCLUDE_FROM_ALL
             ${IGDRCL_SRCS_LIB_ULT_CS}
-)
-target_include_directories(igdrcl_libult PRIVATE
-                           $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 set(IGDRCL_SRCS_LIB_ULT_ENV
@@ -159,10 +101,6 @@ if(WIN32)
 else()
   target_sources(igdrcl_libult_env PRIVATE ${IGDRCL_SRCS_LIB_ULT_ENV_LINUX})
 endif()
-
-target_include_directories(igdrcl_libult PRIVATE
-                           ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
-)
 
 target_include_directories(igdrcl_libult_env PRIVATE
                            $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
