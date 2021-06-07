@@ -63,8 +63,8 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenenumerateRootTelemIn
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenenumerateRootTelemIndexThenCheckForErrorIfgetRealPathFails) {
     EXPECT_CALL(*pTestFsAccess.get(), getRealPath(_, _))
-        .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt));
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt));
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenWhenenumerateRootTelemIndexThenCheckForErrorIfgetRealPathSuccessButNoTelemetryNodeAndGPUDeviceShareRootPciPort) {
@@ -80,12 +80,28 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenTelemDirectoryContainNowTelemEntryWhenenum
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt));
 }
 
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringWhileValidatingTelemNode) {
+    EXPECT_CALL(*pTestFsAccess.get(), getRealPath(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
+    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+}
+
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringGUIDRead) {
     EXPECT_CALL(*pTestFsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get()), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
+}
+
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorIfGUIDReadValueIsNotSupported) {
+    EXPECT_CALL(*pTestFsAccess.get(), read(_, Matcher<std::string &>(_)))
+        .WillOnce(::testing::DoAll(::testing::SetArgReferee<1>(""), Return(ZE_RESULT_SUCCESS)));
+    PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringSizeRead) {
@@ -93,7 +109,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesTh
         .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get()), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringbaseOffsetRead) {
@@ -102,7 +118,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesTh
         .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
     PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt);
     auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get()), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenSomeKeyWhenCallingreadValueWithUint64TypeThenCheckForErrorBranches) {
@@ -170,7 +186,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTInitSu
     pPmt->mmapFunction = mmapMock;
     pPmt->munmapFunction = munmapMock;
     pPmt->closeFunction = closeMock;
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitAndOpenSysCallFailsThenPMTInitFails) {
@@ -179,7 +195,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitAndOpenSysCal
     pPmt->mmapFunction = mmapMock;
     pPmt->munmapFunction = munmapMock;
     pPmt->closeFunction = closeMock;
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get()), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitAndmmapSysCallFailsThenPMTInitFails) {
@@ -188,7 +204,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitAndmmapSysCal
     pPmt->mmapFunction = mmapMockReturnFailure;
     pPmt->munmapFunction = munmapMockDoNothing;
     pPmt->closeFunction = closeMock;
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get()), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitAndcloseSysCallFailsThenPMTInitFails) {
@@ -197,7 +213,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitAndcloseSysCa
     pPmt->mmapFunction = mmapMock;
     pPmt->munmapFunction = munmapMock;
     pPmt->closeFunction = closeMockReturnFailure;
-    EXPECT_EQ(pPmt->init(pTestFsAccess.get()), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pPmt->init(pTestFsAccess.get(), rootPciPathOfGpuDeviceInPmt), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTmapOfSubDeviceIdToPmtObjectWouldContainValidEntries) {
@@ -212,7 +228,8 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTmapOfS
         pPmt->mmapFunction = mmapMock;
         pPmt->munmapFunction = munmapMock;
         pPmt->closeFunction = closeMock;
-        PublicPlatformMonitoringTech::doInitPmtObject(pTestFsAccess.get(), deviceProperties.subdeviceId, pPmt, mapOfSubDeviceIdToPmtObject);
+        PublicPlatformMonitoringTech::doInitPmtObject(pTestFsAccess.get(), deviceProperties.subdeviceId, pPmt,
+                                                      rootPciPathOfGpuDeviceInPmt, mapOfSubDeviceIdToPmtObject);
         auto subDeviceIdToPmtEntry = mapOfSubDeviceIdToPmtObject.find(deviceProperties.subdeviceId);
         EXPECT_EQ(subDeviceIdToPmtEntry->second, pPmt);
         delete pPmt;
@@ -231,7 +248,8 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenOpenSyscallFailWhenDoingPMTInitThenPMTmapO
         pPmt->mmapFunction = mmapMock;
         pPmt->munmapFunction = munmapMock;
         pPmt->closeFunction = closeMock;
-        PublicPlatformMonitoringTech::doInitPmtObject(pTestFsAccess.get(), deviceProperties.subdeviceId, pPmt, mapOfSubDeviceIdToPmtObject);
+        PublicPlatformMonitoringTech::doInitPmtObject(pTestFsAccess.get(), deviceProperties.subdeviceId, pPmt,
+                                                      rootPciPathOfGpuDeviceInPmt, mapOfSubDeviceIdToPmtObject);
         EXPECT_TRUE(mapOfSubDeviceIdToPmtObject.empty());
     }
 }

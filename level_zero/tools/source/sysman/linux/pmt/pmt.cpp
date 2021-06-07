@@ -55,6 +55,22 @@ bool compareTelemNodes(std::string &telemNode1, std::string &telemNode2) {
     return indexForTelemNode1 < indexForTelemNode2;
 }
 
+// Check if Telemetry node(say /sys/class/intel_pmt/telem1) and rootPciPathOfGpuDevice share same PCI Root port
+static bool isValidTelemNode(FsAccess *pFsAccess, const std::string &rootPciPathOfGpuDevice, const std::string sysfsTelemNode) {
+    std::string realPathOfTelemNode;
+    auto result = pFsAccess->getRealPath(sysfsTelemNode, realPathOfTelemNode);
+    if (result != ZE_RESULT_SUCCESS) {
+        return false;
+    }
+
+    // Example: If
+    // rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
+    // realPathOfTelemNode = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
+    // As rootPciPathOfGpuDevice is a substring og realPathOfTelemNode , hence both sysfs telemNode and GPU device share same PCI Root.
+    // Hence this telem node entry is valid for GPU device.
+    return (realPathOfTelemNode.compare(0, rootPciPathOfGpuDevice.size(), rootPciPathOfGpuDevice) == 0);
+}
+
 ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess, std::string &rootPciPathOfGpuDevice) {
     std::vector<std::string> listOfTelemNodes;
     auto result = pFsAccess->listDirectory(baseTelemSysFS, listOfTelemNodes);
@@ -76,18 +92,7 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
     // Then listOfTelemNodes would contain telem1, telem2, telem3
     std::sort(listOfTelemNodes.begin(), listOfTelemNodes.end(), compareTelemNodes); // sort listOfTelemNodes, to arange telem nodes in ascending order
     for (const auto &telemNode : listOfTelemNodes) {
-        std::string realPathOfTelemNode;
-        result = pFsAccess->getRealPath(baseTelemSysFS + "/" + telemNode, realPathOfTelemNode);
-        if (result != ZE_RESULT_SUCCESS) {
-            return result;
-        }
-
-        // Check if Telemetry node(say telem1) and rootPciPathOfGpuDevice share same PCI Root port
-        // Example: If
-        // rootPciPathOfGpuDevice = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
-        // realPathOfTelemNode = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
-        // Thus As realPathOfTelemNode consists of rootPciPathOfGpuDevice, hence both telemNode and GPU device share same PCI Root.
-        if (realPathOfTelemNode.compare(0, rootPciPathOfGpuDevice.size(), rootPciPathOfGpuDevice) == 0) {
+        if (isValidTelemNode(pFsAccess, rootPciPathOfGpuDevice, baseTelemSysFS + "/" + telemNode)) {
             auto indexString = telemNode.substr(telem.size(), telemNode.size());
             rootDeviceTelemNodeIndex = stoi(indexString); // if telemNode is telemN, then rootDeviceTelemNodeIndex = N
             return ZE_RESULT_SUCCESS;
@@ -96,7 +101,7 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
     return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 }
 
-ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess) {
+ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string &rootPciPathOfGpuDevice) {
     std::string telemNode = telem + std::to_string(rootDeviceTelemNodeIndex);
     if (isSubdevice) {
         uint32_t telemNodeIndex = 0;
@@ -107,6 +112,10 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess) {
         telemNode = telem + std::to_string(telemNodeIndex);
     }
     std::string baseTelemSysFSNode = baseTelemSysFS + "/" + telemNode;
+    if (!isValidTelemNode(pFsAccess, rootPciPathOfGpuDevice, baseTelemSysFSNode)) {
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
     std::string telemetryDeviceEntry = baseTelemSysFSNode + "/" + telem;
     if (!pFsAccess->fileExists(telemetryDeviceEntry)) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
@@ -122,7 +131,8 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess) {
                               "Telemetry sysfs entry not available %s\n", guidPath.c_str());
         return result;
     }
-    if (getKeyOffsetMap(guid, keyOffsetMap) != ZE_RESULT_SUCCESS) {
+    result = getKeyOffsetMap(guid, keyOffsetMap);
+    if (ZE_RESULT_SUCCESS != result) {
         // We didnt have any entry for this guid in guidToKeyOffsetMap
         return result;
     }
@@ -175,8 +185,9 @@ PlatformMonitoringTech::PlatformMonitoringTech(FsAccess *pFsAccess, ze_bool_t on
 }
 
 void PlatformMonitoringTech::doInitPmtObject(FsAccess *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt,
+                                             const std::string &rootPciPathOfGpuDevice,
                                              std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject) {
-    if (pPmt->init(pFsAccess) == ZE_RESULT_SUCCESS) {
+    if (pPmt->init(pFsAccess, rootPciPathOfGpuDevice) == ZE_RESULT_SUCCESS) {
         mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
         return;
     }
@@ -193,7 +204,8 @@ void PlatformMonitoringTech::create(const std::vector<ze_device_handle_t> &devic
             auto pPmt = new PlatformMonitoringTech(pFsAccess, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                    deviceProperties.subdeviceId);
             UNRECOVERABLE_IF(nullptr == pPmt);
-            PlatformMonitoringTech::doInitPmtObject(pFsAccess, deviceProperties.subdeviceId, pPmt, mapOfSubDeviceIdToPmtObject);
+            PlatformMonitoringTech::doInitPmtObject(pFsAccess, deviceProperties.subdeviceId, pPmt,
+                                                    rootPciPathOfGpuDevice, mapOfSubDeviceIdToPmtObject);
         }
     }
 }

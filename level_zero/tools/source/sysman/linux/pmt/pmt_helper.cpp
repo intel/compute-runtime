@@ -16,6 +16,9 @@ const std::map<std::string, uint64_t> deviceKeyOffsetMap = {
     {"CORE_TEMPERATURES", 0x6c}};
 
 ze_result_t PlatformMonitoringTech::getKeyOffsetMap(std::string guid, std::map<std::string, uint64_t> &keyOffsetMap) {
+    if (guid.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     keyOffsetMap = deviceKeyOffsetMap;
     return ZE_RESULT_SUCCESS;
 }

@@ -37,8 +37,8 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
     static uint32_t rootDeviceTelemNodeIndex;
     std::map<std::string, uint64_t> keyOffsetMap;
     ze_result_t getKeyOffsetMap(std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
-    ze_result_t init(FsAccess *pFsAccess);
-    static void doInitPmtObject(FsAccess *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt,
+    ze_result_t init(FsAccess *pFsAccess, const std::string &rootPciPathOfGpuDevice);
+    static void doInitPmtObject(FsAccess *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt, const std::string &rootPciPathOfGpuDevice,
                                 std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject);
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;
