@@ -216,7 +216,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
 void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
                                                             const UnifiedMemoryProperties &memoryProperties,
                                                             void *cmdQ) {
-    if (memoryProperties.rootDeviceIndices.size() > 1 && !memoryProperties.device) {
+    if (memoryProperties.rootDeviceIndices.size() > 1) {
         return createHostUnifiedMemoryAllocation(size, memoryProperties);
     }
 
