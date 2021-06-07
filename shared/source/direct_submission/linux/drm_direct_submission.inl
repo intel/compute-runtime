@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/device/device.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"

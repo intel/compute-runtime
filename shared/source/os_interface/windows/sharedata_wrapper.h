@@ -9,13 +9,21 @@
 
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-braces"
+#pragma clang diagnostic ignored "-Wbraced-scalar-init"
+#endif
 #include "umKmInc/sharedata.h"
+#if __clang__
+#pragma clang diagnostic pop
+#endif
 
 using SKU_FEATURE_TABLE_GMM = SKU_FEATURE_TABLE;
 using WA_TABLE_GMM = WA_TABLE;
 using ADAPTER_INFO_GMM = ADAPTER_INFO;
 
-#if !defined(WDDM_LINUX)
+#if defined(UMD_KMD_COMMAND_BUFFER_REV_ID)
 using SKU_FEATURE_TABLE_KMD = SKU_FEATURE_TABLE_GMM;
 using WA_TABLE_KMD = WA_TABLE_GMM;
 using ADAPTER_INFO_KMD = ADAPTER_INFO_GMM;

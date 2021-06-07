@@ -94,7 +94,7 @@ struct TokenArray {
     TokenHeader header;
 
     TokenArray(uint16_t tokenId, uint16_t elementSizeBits, uint16_t elementsCount) : header(tokenId, DwordsCount) {
-        WCH_ASSERT(elementSizeBits * elementsCount <= DwordsCount * sizeof(uint32_t) * 8);
+        WCH_ASSERT(static_cast<size_t>(elementSizeBits * elementsCount) <= static_cast<size_t>(DwordsCount * sizeof(uint32_t) * 8U));
     }
 
     static_assert(DwordsCount <= 255, "");

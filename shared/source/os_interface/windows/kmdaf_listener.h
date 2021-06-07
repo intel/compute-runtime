@@ -12,6 +12,7 @@
 namespace NEO {
 
 struct KmDafListener {
+    MOCKABLE_VIRTUAL ~KmDafListener() = default;
 
     MOCKABLE_VIRTUAL void notifyLock(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_HANDLE hDevice, const D3DKMT_HANDLE hAllocation, D3DDDICB_LOCKFLAGS *pLockFlags, PFND3DKMT_ESCAPE pfnEscape);
 

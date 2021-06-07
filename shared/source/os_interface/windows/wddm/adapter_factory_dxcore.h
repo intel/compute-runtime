@@ -23,7 +23,7 @@ class DxCoreAdapterFactory : public AdapterFactory {
 
     bool createSnapshotOfAvailableAdapters() override;
 
-    bool isSupported() {
+    bool isSupported() override {
         return nullptr != adapterFactory;
     }
 

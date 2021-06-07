@@ -9,7 +9,7 @@
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/helpers/windows/gmm_callbacks.inl"
 
-using namespace NEO;
-
+namespace NEO {
 template struct DeviceCallbacks<ICLFamily>;
 template struct TTCallbacks<ICLFamily>;
+} // namespace NEO

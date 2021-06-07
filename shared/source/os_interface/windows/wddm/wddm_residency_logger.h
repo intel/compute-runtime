@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ class WddmResidencyLogger {
         IoFunctions::fprintf(pagingLog, "%s\n", id.str().c_str());
     }
 
-    ~WddmResidencyLogger() {
+    MOCKABLE_VIRTUAL ~WddmResidencyLogger() {
         IoFunctions::fclosePtr(pagingLog);
     }
 

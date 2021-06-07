@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/direct_submission/windows/wddm_direct_submission.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -18,8 +19,16 @@
 
 namespace NEO {
 
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-braces"
+#pragma clang diagnostic ignored "-Wbraced-scalar-init"
+#endif
 // Initialize COMMAND_BUFFER_HEADER         Type PatchList  Streamer Perf Tag
 DECLARE_COMMAND_BUFFER(CommandBufferHeader, UMD_OCL, FALSE, FALSE, PERFTAG_OCL);
+#if __clang__
+#pragma clang diagnostic pop
+#endif
 
 template <typename GfxFamily, typename Dispatcher>
 WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(Device &device,

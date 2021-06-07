@@ -54,7 +54,7 @@ bool DeviceTimeWddm::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     pGpuCpuTime->CPUTimeinNS = 0;
     pGpuCpuTime->GPUTimeStamp = 0;
 
-    TimeStampDataHeader escapeInfo = {0};
+    TimeStampDataHeader escapeInfo = {};
 
     if (runEscape(wddm, escapeInfo)) {
         auto productFamily = wddm->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily;

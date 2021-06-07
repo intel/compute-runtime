@@ -17,6 +17,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h
     ${CMAKE_CURRENT_SOURCE_DIR}/environment_variables.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_drm_stub.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win.cpp
@@ -55,7 +56,6 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_wddm.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_drm_stub.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/init_wddm_os_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener${KMDAF_FILE_SUFFIX}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.h

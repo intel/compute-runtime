@@ -10,9 +10,8 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/residency.h"
+#include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
-
-#include <d3dkmthk.h>
 
 namespace NEO {
 
