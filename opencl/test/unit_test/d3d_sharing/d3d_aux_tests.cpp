@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenCreatingT
     uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
-    EXPECT_TRUE(gmm->isRenderCompressed);
+    EXPECT_TRUE(gmm->isCompressionEnabled);
 }
 
 TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenFailOnAuxMappingThenDontSetAsRenderCompressed) {
@@ -62,7 +62,7 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenFailOnAux
     uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
-    EXPECT_EQ(!hwHelper.isPageTableManagerSupported(hwInfo), gmm->isRenderCompressed);
+    EXPECT_EQ(!hwHelper.isPageTableManagerSupported(hwInfo), gmm->isCompressionEnabled);
 }
 
 TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable) {
@@ -78,7 +78,7 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithoutUnifiedAuxFlagsWhenCreati
     ASSERT_NE(nullptr, image.get());
 
     EXPECT_EQ(0u, mockMM->mapAuxGpuVACalled);
-    EXPECT_FALSE(gmm->isRenderCompressed);
+    EXPECT_FALSE(gmm->isCompressionEnabled);
 }
 
 TYPED_TEST_P(D3DAuxTests, given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetRenderCompressed) {
@@ -94,7 +94,7 @@ TYPED_TEST_P(D3DAuxTests, given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
-    EXPECT_TRUE(gmm->isRenderCompressed);
+    EXPECT_TRUE(gmm->isCompressionEnabled);
 }
 
 TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetAsRenderCompressed) {
@@ -111,7 +111,7 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenCreatingT
     uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
-    EXPECT_TRUE(gmm->isRenderCompressed);
+    EXPECT_TRUE(gmm->isCompressionEnabled);
 }
 
 TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenFailOnAuxMappingThenDontSetAsRenderCompressed) {
@@ -129,7 +129,7 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenFailOnAux
     uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
-    EXPECT_EQ(!hwHelper.isPageTableManagerSupported(hwInfo), gmm->isRenderCompressed);
+    EXPECT_EQ(!hwHelper.isPageTableManagerSupported(hwInfo), gmm->isCompressionEnabled);
 }
 
 TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable) {
@@ -143,7 +143,7 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithoutUnifiedAuxFlagsWhenCreati
     ASSERT_NE(nullptr, image.get());
 
     EXPECT_EQ(0u, mockMM->mapAuxGpuVACalled);
-    EXPECT_FALSE(gmm->isRenderCompressed);
+    EXPECT_FALSE(gmm->isCompressionEnabled);
 }
 
 TYPED_TEST_P(D3DAuxTests, given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetRenderCompressed) {
@@ -159,7 +159,7 @@ TYPED_TEST_P(D3DAuxTests, given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
-    EXPECT_TRUE(gmm->isRenderCompressed);
+    EXPECT_TRUE(gmm->isCompressionEnabled);
 }
 
 REGISTER_TYPED_TEST_CASE_P(D3DAuxTests,

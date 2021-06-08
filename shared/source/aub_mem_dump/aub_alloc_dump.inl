@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,7 @@ SurfaceInfo *getDumpSurfaceInfo(GraphicsAllocation &gfxAllocation, DumpFormat du
         surfaceInfo->format = gmm->gmmResourceInfo->getResourceFormatSurfaceState();
         surfaceInfo->tilingType = gmm->gmmResourceInfo->getTileModeSurfaceState();
         surfaceInfo->surftype = getImageSurfaceTypeFromGmmResourceType<GfxFamily>(gmm->gmmResourceInfo->getResourceType());
-        surfaceInfo->compressed = gmm->isRenderCompressed;
+        surfaceInfo->compressed = gmm->isCompressionEnabled;
         surfaceInfo->dumpType = (AubAllocDump::DumpFormat::IMAGE_TRE == dumpFormat) ? dumpType::tre : dumpType::bmp;
     }
 
@@ -163,7 +163,7 @@ template <typename GfxFamily>
 void dumpImageInTreFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     auto gmm = gfxAllocation.getDefaultGmm();
-    if ((gmm->gmmResourceInfo->getNumSamples() > 1) || (gmm->isRenderCompressed)) {
+    if ((gmm->gmmResourceInfo->getNumSamples() > 1) || (gmm->isCompressionEnabled)) {
         DEBUG_BREAK_IF(true); //unsupported
         return;
     }

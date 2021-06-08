@@ -717,7 +717,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_TRUE(memoryManager->allocationGraphicsMemory64kbCreated);
-    EXPECT_TRUE(allocation->getDefaultGmm()->isRenderCompressed);
+    EXPECT_TRUE(allocation->getDefaultGmm()->isCompressionEnabled);
     if ((is32bit || rootDeviceEnvironment->isFullRangeSvm()) &&
         allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {
         EXPECT_GE(GmmHelper::decanonize(allocation->getGpuAddress()), standard64kbRangeMinimumAddress);
@@ -744,7 +744,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_FALSE(memoryManager->allocationGraphicsMemory64kbCreated);
-    EXPECT_FALSE(allocation->getDefaultGmm()->isRenderCompressed);
+    EXPECT_FALSE(allocation->getDefaultGmm()->isCompressionEnabled);
     if (is32bit || rootDeviceEnvironment->isFullRangeSvm()) {
 
         EXPECT_GE(GmmHelper::decanonize(allocation->getGpuAddress()), svmRangeMinimumAddress);
@@ -1772,7 +1772,7 @@ TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThen
 TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVaThenMapAuxVa) {
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, false));
-    gmm->isRenderCompressed = true;
+    gmm->isCompressionEnabled = true;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm(*executionEnvironment->rootDeviceEnvironments[1].get());
     wddm.init();
@@ -1808,7 +1808,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenReleaseingT
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(AllocationProperties(1, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, mockDeviceBitfield)));
     wddmAlloc->setGpuAddress(gpuVa);
-    wddmAlloc->getDefaultGmm()->isRenderCompressed = true;
+    wddmAlloc->getDefaultGmm()->isCompressionEnabled = true;
 
     GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
@@ -1831,7 +1831,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenReleasei
     executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.reset(mockMngr);
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize}));
-    wddmAlloc->getDefaultGmm()->isRenderCompressed = false;
+    wddmAlloc->getDefaultGmm()->isCompressionEnabled = false;
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
@@ -1841,7 +1841,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenReleasei
 TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMappedGpuVaThenDontMapAuxVa) {
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, false));
-    gmm->isRenderCompressed = false;
+    gmm->isCompressionEnabled = false;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm(*rootDeviceEnvironment);
     wddm.init();
@@ -1858,7 +1858,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMappedGp
 TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenReturnFalse) {
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, false));
-    gmm->isRenderCompressed = false;
+    gmm->isCompressionEnabled = false;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm(*rootDeviceEnvironment);
     wddm.init();
@@ -1877,7 +1877,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnse
     rootDeviceEnvironment->pageTableManager.reset(mockMngr);
 
     auto myGmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, false);
-    myGmm->isRenderCompressed = false;
+    myGmm->isCompressionEnabled = false;
     myGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = 1;
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize}));
@@ -1901,7 +1901,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsSetT
     rootDeviceEnvironment->pageTableManager.reset(mockMngr);
 
     auto myGmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, false);
-    myGmm->isRenderCompressed = true;
+    myGmm->isCompressionEnabled = true;
     myGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = 1;
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize}));

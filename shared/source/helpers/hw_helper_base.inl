@@ -152,7 +152,7 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironm
     state.setSurfaceBaseAddress(bufferStateAddress);
 
     Gmm *gmm = gfxAlloc ? gfxAlloc->getDefaultGmm() : nullptr;
-    if (gmm && gmm->isRenderCompressed && !forceNonAuxMode) {
+    if (gmm && gmm->isCompressionEnabled && !forceNonAuxMode) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
         EncodeSurfaceState<Family>::setCoherencyType(&state, RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
         EncodeSurfaceState<Family>::setBufferAuxParamsForCCS(&state);
@@ -180,7 +180,7 @@ bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const 
 }
 
 template <typename Family>
-bool HwHelperHw<Family>::is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isRenderCompressed) const {
+bool HwHelperHw<Family>::is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const {
     return false;
 }
 
@@ -653,5 +653,10 @@ size_t HwHelperHw<GfxFamily>::getPreemptionAllocationAlignment() const {
 
 template <typename GfxFamily>
 void HwHelperHw<GfxFamily>::applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const {}
+
+template <typename GfxFamily>
+void HwHelperHw<GfxFamily>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const {
+    gmm.resourceParams.Flags.Info.RenderCompressed = isRenderCompressed;
+}
 
 } // namespace NEO

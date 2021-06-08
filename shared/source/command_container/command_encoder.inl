@@ -346,7 +346,7 @@ void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_
     setCoherencyType(surfaceState, cpuCoherent ? R_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT : R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
 
     Gmm *gmm = allocation ? allocation->getDefaultGmm() : nullptr;
-    if (gmm && gmm->isRenderCompressed && !forceNonAuxMode) {
+    if (gmm && gmm->isCompressionEnabled && !forceNonAuxMode) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
         setCoherencyType(surfaceState, R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
         setBufferAuxParamsForCCS(surfaceState);

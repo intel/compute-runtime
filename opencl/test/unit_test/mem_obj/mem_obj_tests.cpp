@@ -318,9 +318,9 @@ TEST(MemObj, givenRenderCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
                   1, allocation->getUnderlyingBuffer(), nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), false, false, false);
 
-    allocation->getDefaultGmm()->isRenderCompressed = false;
+    allocation->getDefaultGmm()->isCompressionEnabled = false;
     EXPECT_TRUE(memObj.mappingOnCpuAllowed());
-    allocation->getDefaultGmm()->isRenderCompressed = true;
+    allocation->getDefaultGmm()->isCompressionEnabled = true;
     EXPECT_FALSE(memObj.mappingOnCpuAllowed());
 }
 

@@ -167,7 +167,7 @@ HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenRenderCompressedBufferIsSe
     auto graphicsAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     graphicsAllocation->setDefaultGmm(new Gmm(pDevice->getGmmClientContext(), graphicsAllocation->getUnderlyingBuffer(), buffer->getSize(), 0, false));
-    graphicsAllocation->getDefaultGmm()->isRenderCompressed = true;
+    graphicsAllocation->getDefaultGmm()->isCompressionEnabled = true;
     cl_mem clMem = buffer;
 
     cl_int ret = pKernel->setArgBuffer(0, sizeof(cl_mem), &clMem);

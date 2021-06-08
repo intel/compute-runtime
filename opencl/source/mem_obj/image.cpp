@@ -415,7 +415,7 @@ Image *Image::create(Context *context,
 
             if (context->isProvidingPerformanceHints() && HwHelper::renderCompressedImagesSupported(hwInfo)) {
                 if (allocationInfo[rootDeviceIndex].memory->getDefaultGmm()) {
-                    if (allocationInfo[rootDeviceIndex].memory->getDefaultGmm()->isRenderCompressed) {
+                    if (allocationInfo[rootDeviceIndex].memory->getDefaultGmm()->isCompressionEnabled) {
                         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_COMPRESSED, image);
                     } else {
                         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_NOT_COMPRESSED, image);

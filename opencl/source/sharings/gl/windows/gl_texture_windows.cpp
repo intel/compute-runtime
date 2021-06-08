@@ -149,8 +149,8 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     if (texInfo.isAuxEnabled && alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
         auto hwInfo = context->getDevice(0)->getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
-                                                                                                  : true;
+        alloc->getDefaultGmm()->isCompressionEnabled = hwHelper.isPageTableManagerSupported(hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                    : true;
     }
     auto multiGraphicsAllocation = MultiGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     multiGraphicsAllocation.addAllocation(alloc);

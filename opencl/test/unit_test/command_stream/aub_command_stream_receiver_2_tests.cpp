@@ -791,7 +791,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     gfxAllocation->setDefaultGmm(gmm);
 
     for (bool compressed : {false, true}) {
-        gmm->isRenderCompressed = compressed;
+        gmm->isCompressionEnabled = compressed;
 
         aubCsr->writeMemory(*gfxAllocation);
 

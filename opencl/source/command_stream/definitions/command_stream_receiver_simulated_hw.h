@@ -62,7 +62,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
 
         auto gmm = graphicsAllocation.getDefaultGmm();
 
-        allocationParams.additionalParams.compressionEnabled = gmm ? gmm->isRenderCompressed : false;
+        allocationParams.additionalParams.compressionEnabled = gmm ? gmm->isCompressionEnabled : false;
 
         this->aubManager->writeMemory2(allocationParams);
     }

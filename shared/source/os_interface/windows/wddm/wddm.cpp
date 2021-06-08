@@ -450,7 +450,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
 
     kmDafListener->notifyMapGpuVA(featureTable->ftrKmdDaf, getAdapter(), device, handle, MapGPUVA.VirtualAddress, getGdi()->escape);
 
-    if (gmm->isRenderCompressed && rootDeviceEnvironment.pageTableManager.get()) {
+    if (gmm->isCompressionEnabled && rootDeviceEnvironment.pageTableManager.get()) {
         return rootDeviceEnvironment.pageTableManager->updateAuxTable(gpuPtr, gmm, true);
     }
 

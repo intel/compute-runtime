@@ -618,7 +618,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationAndRenderCompressionWhenSetArgOnMult
 
     auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc));
     auto graphicsAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    graphicsAllocation->getDefaultGmm()->isRenderCompressed = true;
+    graphicsAllocation->getDefaultGmm()->isCompressionEnabled = true;
     image->setMcsSurfaceInfo(msi);
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
@@ -649,7 +649,7 @@ HWTEST_F(ImageSetArgTest, givenDepthFormatAndRenderCompressionWhenSetArgOnMultis
 
     auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc, &imgFormat));
     auto graphicsAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    graphicsAllocation->getDefaultGmm()->isRenderCompressed = true;
+    graphicsAllocation->getDefaultGmm()->isCompressionEnabled = true;
     image->setMcsSurfaceInfo(msi);
     cl_mem memObj = image.get();
 
@@ -688,7 +688,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
     EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
 
-    mcsAlloc->getDefaultGmm()->isRenderCompressed = true;
+    mcsAlloc->getDefaultGmm()->isCompressionEnabled = true;
 
     retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -881,7 +881,7 @@ HWTEST_F(ImageSetArgTest, givenRenderCompressedResourceWhenSettingImgArgThenSetC
 
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
-    srcAllocation->getDefaultGmm()->isRenderCompressed = true;
+    srcAllocation->getDefaultGmm()->isCompressionEnabled = true;
 
     srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex(), false);
 
@@ -897,7 +897,7 @@ HWTEST_F(ImageSetArgTest, givenNonRenderCompressedResourceWhenSettingImgArgThenD
 
     auto gmm = srcAllocation->getDefaultGmm();
     auto mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
-    gmm->isRenderCompressed = false;
+    gmm->isCompressionEnabled = false;
 
     EXPECT_CALL(*mockGmmResInfo, getUnifiedAuxSurfaceOffset(_)).Times(0);
 
@@ -1144,7 +1144,7 @@ HWTEST_F(ImageSetArgTest, givenMediaCompressedResourceThenSurfaceModeIsNone) {
     auto gmm = srcAllocation->getDefaultGmm();
 
     gmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
-    gmm->isRenderCompressed = true;
+    gmm->isCompressionEnabled = true;
     srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex(), false);
 
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);

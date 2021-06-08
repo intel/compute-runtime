@@ -355,7 +355,7 @@ HWTEST_F(AubAllocDumpTests, givenCompressedImageWritableWhenDumpAllocationIsCall
     ASSERT_NE(nullptr, image);
 
     auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    gfxAllocation->getDefaultGmm()->isRenderCompressed = true;
+    gfxAllocation->getDefaultGmm()->isCompressionEnabled = true;
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
@@ -453,7 +453,7 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
         ASSERT_NE(nullptr, imageAllocation);
 
         auto gmm = imageAllocation->getDefaultGmm();
-        gmm->isRenderCompressed = isCompressed;
+        gmm->isCompressionEnabled = isCompressed;
 
         std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*imageAllocation, dumpFormat));
         if (nullptr != surfaceInfo) {
@@ -464,7 +464,7 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
             EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getResourceFormatSurfaceState()), surfaceInfo->format);
             EXPECT_EQ(AubAllocDump::getImageSurfaceTypeFromGmmResourceType<FamilyType>(gmm->gmmResourceInfo->getResourceType()), surfaceInfo->surftype);
             EXPECT_EQ(gmm->gmmResourceInfo->getTileModeSurfaceState(), surfaceInfo->tilingType);
-            EXPECT_EQ(gmm->isRenderCompressed, surfaceInfo->compressed);
+            EXPECT_EQ(gmm->isCompressionEnabled, surfaceInfo->compressed);
             EXPECT_EQ((AubAllocDump::DumpFormat::IMAGE_TRE == dumpFormat) ? aub_stream::dumpType::tre : aub_stream::dumpType::bmp, surfaceInfo->dumpType);
         }
         memoryManager.freeGraphicsMemory(imageAllocation);

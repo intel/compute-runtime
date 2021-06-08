@@ -560,7 +560,7 @@ TEST_F(GlSharingTextureTests, givenAuxDisabledAndUnifiedAuxCapableWhenGlTextureI
     auto glTexture = std::unique_ptr<Image>(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_WRITE_ONLY, GL_SRGB8_ALPHA8, 0, textureId, &retVal));
     EXPECT_EQ(0u, tempMM->mapAuxGpuVACalled);
     auto graphicsAllocation = glTexture->getGraphicsAllocation(device->getRootDeviceIndex());
-    EXPECT_FALSE(graphicsAllocation->getDefaultGmm()->isRenderCompressed);
+    EXPECT_FALSE(graphicsAllocation->getDefaultGmm()->isCompressionEnabled);
 }
 
 class GetGlTextureInfoTests : public GlSharingTextureTests,

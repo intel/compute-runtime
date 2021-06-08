@@ -82,7 +82,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(const Allocati
 
     auto allocation = OsAgnosticMemoryManager::allocateGraphicsMemory64kb(allocationData);
     if (allocation) {
-        allocation->getDefaultGmm()->isRenderCompressed = preferRenderCompressedFlagPassed;
+        allocation->getDefaultGmm()->isCompressionEnabled = preferRenderCompressedFlagPassed;
     }
     return allocation;
 }

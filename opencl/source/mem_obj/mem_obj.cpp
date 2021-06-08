@@ -191,7 +191,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     case CL_MEM_USES_COMPRESSION_INTEL:
         gmm = allocation->getDefaultGmm();
         if (gmm != nullptr) {
-            usesCompression = gmm->isRenderCompressed;
+            usesCompression = gmm->isCompressionEnabled;
         } else {
             usesCompression = allocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
         }
@@ -398,7 +398,7 @@ bool MemObj::isTiledAllocation() const {
 bool MemObj::mappingOnCpuAllowed() const {
     auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
     return !isTiledAllocation() && !peekSharingHandler() && !isMipMapped(this) && !DebugManager.flags.DisableZeroCopyForBuffers.get() &&
-           !(graphicsAllocation->getDefaultGmm() && graphicsAllocation->getDefaultGmm()->isRenderCompressed) &&
+           !(graphicsAllocation->getDefaultGmm() && graphicsAllocation->getDefaultGmm()->isCompressionEnabled) &&
            MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool());
 }
 

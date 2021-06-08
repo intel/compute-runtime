@@ -37,7 +37,7 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
 
         auto gmm = allocation->getDefaultGmm();
 
-        params.additionalParams.compressionEnabled = gmm ? gmm->isRenderCompressed : false;
+        params.additionalParams.compressionEnabled = gmm ? gmm->isCompressionEnabled : false;
 
         aubManager->writeMemory2(params);
         residentAllocations.push_back(allocation);

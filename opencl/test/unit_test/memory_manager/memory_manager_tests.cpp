@@ -603,7 +603,7 @@ HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAligmentWhenAllocateGraphicsMemo
     class MockHwHelperHw : public HwHelperHw<FamilyType> {
       public:
         using HwHelperHw<FamilyType>::HwHelperHw;
-        bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isRenderCompressed) const override {
+        bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const override {
             return isEnable;
         }
         bool isEnable = false;

@@ -121,7 +121,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
         return nullptr;
     }
 
-    auto cpuPtr = gmm->isRenderCompressed ? nullptr : lockResource(wddmAllocation.get());
+    auto cpuPtr = gmm->isCompressionEnabled ? nullptr : lockResource(wddmAllocation.get());
 
     [[maybe_unused]] auto status = mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr);
     DEBUG_BREAK_IF(!status);
@@ -456,7 +456,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     auto defaultGmm = gfxAllocation->getDefaultGmm();
     if (defaultGmm) {
         auto index = gfxAllocation->getRootDeviceIndex();
-        if (defaultGmm->isRenderCompressed && executionEnvironment.rootDeviceEnvironments[index]->pageTableManager.get()) {
+        if (defaultGmm->isCompressionEnabled && executionEnvironment.rootDeviceEnvironments[index]->pageTableManager.get()) {
             [[maybe_unused]] auto status = executionEnvironment.rootDeviceEnvironments[index]->pageTableManager->updateAuxTable(input->getGpuAddress(), defaultGmm, false);
             DEBUG_BREAK_IF(!status);
         }

@@ -37,7 +37,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnC
     auto memoryOperationsInterface = getMemoryOperationsHandler();
 
     MockGmm gmm;
-    gmm.isRenderCompressed = true;
+    gmm.isCompressionEnabled = true;
     allocPtr->setDefaultGmm(&gmm);
 
     auto result = memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));

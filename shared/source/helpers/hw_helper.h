@@ -62,7 +62,7 @@ class HwHelper {
     virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isRenderCompressed) const = 0;
+    virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const = 0;
     virtual bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool hvAlign4Required() const = 0;
@@ -151,6 +151,7 @@ class HwHelper {
     virtual size_t getTimestampPacketAllocatorAlignment() const = 0;
     virtual size_t getSingleTimestampPacketSize() const = 0;
     virtual void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const = 0;
+    virtual void applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -244,7 +245,7 @@ class HwHelperHw : public HwHelper {
 
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
 
-    bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isRenderCompressed) const override;
+    bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const override;
 
     bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const override;
 
@@ -382,6 +383,8 @@ class HwHelperHw : public HwHelper {
     void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const override;
 
     bool preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const override;
+
+    void applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

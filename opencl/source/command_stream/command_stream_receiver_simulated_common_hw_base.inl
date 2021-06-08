@@ -51,7 +51,7 @@ bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForWriteMem
     gpuAddress = GmmHelper::decanonize(graphicsAllocation.getGpuAddress());
     size = graphicsAllocation.getUnderlyingBufferSize();
     auto gmm = graphicsAllocation.getDefaultGmm();
-    if (gmm && gmm->isRenderCompressed) {
+    if (gmm && gmm->isCompressionEnabled) {
         size = gmm->gmmResourceInfo->getSizeAllocation();
     }
 

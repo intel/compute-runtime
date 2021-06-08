@@ -50,7 +50,7 @@ class Gmm {
     GMM_RESCREATE_PARAMS resourceParams = {};
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
 
-    bool isRenderCompressed = false;
+    bool isCompressionEnabled = false;
     bool useSystemMemoryPool = true;
 
   protected:
