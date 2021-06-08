@@ -250,6 +250,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hSignalEvent) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     ze_result_t ret = ZE_RESULT_SUCCESS;
     auto event = Event::fromHandle(hSignalEvent);
     bool isTimestampEvent = event->isEventTimestampFlagSet();
@@ -268,7 +269,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
         }
     } else {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = (!event->signalScope) ? false : true;
+        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+            args.dcFlushEnable = (!event->signalScope) ? false : true;
+        }
         this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_SIGNALED, args, false, false, false);
         if (this->isSyncModeQueue) {
             this->csr->flushTagUpdate();
@@ -281,6 +284,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_event_handle_t hSignalEvent) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     ze_result_t ret = ZE_RESULT_SUCCESS;
     auto event = Event::fromHandle(hSignalEvent);
     bool isTimestampEvent = event->isEventTimestampFlagSet();
@@ -299,7 +303,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
         }
     } else {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = (!event->signalScope) ? false : true;
+        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+            args.dcFlushEnable = (!event->signalScope) ? false : true;
+        }
         this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_CLEARED, args, false, false, false);
         if (this->isSyncModeQueue) {
             this->csr->flushTagUpdate();
@@ -322,6 +328,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phWaitEvents) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     ze_result_t ret = ZE_RESULT_SUCCESS;
     bool isTimestampEvent = false;
 
@@ -344,9 +351,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
         }
     } else {
         bool dcFlushRequired = false;
-        for (uint32_t i = 0; i < numEvents; i++) {
-            auto event = Event::fromHandle(phWaitEvents[i]);
-            dcFlushRequired |= (!event->waitScope) ? false : true;
+        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+            for (uint32_t i = 0; i < numEvents; i++) {
+                auto event = Event::fromHandle(phWaitEvents[i]);
+                dcFlushRequired |= (!event->waitScope) ? false : true;
+            }
         }
 
         NEO::PipeControlArgs args;

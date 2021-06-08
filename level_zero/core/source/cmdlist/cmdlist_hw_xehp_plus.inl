@@ -138,7 +138,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         auto event = Event::fromHandle(hEvent);
         eventAlloc = &event->getAllocation(this->device);
         commandContainer.addToResidencyContainer(eventAlloc);
-        L3FlushEnable = (!event->signalScope) ? false : true;
+        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+            L3FlushEnable = (!event->signalScope) ? false : true;
+        }
         isTimestampEvent = event->isEventTimestampFlagSet();
         eventAddress = event->getPacketAddress(this->device);
     }

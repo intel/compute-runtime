@@ -625,7 +625,11 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWith
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
 
-    EXPECT_NE(cmdList.end(), itor);
+    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed()) {
+        EXPECT_NE(cmdList.end(), itor);
+    } else {
+        EXPECT_EQ(cmdList.end(), itor);
+    }
 }
 
 HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushThenPipeControlIsProgrammed) {

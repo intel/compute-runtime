@@ -377,7 +377,11 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventsThenS
     EXPECT_NE(cmdList.end(), itor);
     itor++;
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
+    if (MemorySynchronizationCommands<FamilyType>::isDcFlushAllowed()) {
+        EXPECT_NE(cmdList.end(), itor);
+    } else {
+        EXPECT_EQ(cmdList.end(), itor);
+    }
 }
 
 using platformSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;

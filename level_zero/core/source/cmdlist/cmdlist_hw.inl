@@ -269,7 +269,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
                                                           Event::STATE_CLEARED, args);
     } else {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = (!event->signalScope) ? false : true;
+        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+            args.dcFlushEnable = (!event->signalScope) ? false : true;
+        }
 
         auto &hwInfo = device->getNEODevice()->getHardwareInfo();
         size_t estimatedSizeRequired =
@@ -966,9 +968,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                      isStateless);
     }
 
-    if (flushHost) {
-        NEO::PipeControlArgs args(true);
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+    if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+        if (flushHost) {
+            NEO::PipeControlArgs args(true);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        }
     }
 
     return ret;
@@ -1067,14 +1071,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     appendEventForProfilingAllWalkers(hSignalEvent, false);
 
-    auto event = Event::fromHandle(hSignalEvent);
-    if (event) {
-        dstAllocationStruct.needsFlush &= !event->signalScope;
-    }
+    if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+        auto event = Event::fromHandle(hSignalEvent);
+        if (event) {
+            dstAllocationStruct.needsFlush &= !event->signalScope;
+        }
 
-    if (dstAllocationStruct.needsFlush && !isCopyOnly()) {
-        NEO::PipeControlArgs args(true);
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        if (dstAllocationStruct.needsFlush && !isCopyOnly()) {
+            NEO::PipeControlArgs args(true);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        }
     }
 
     return ret;
@@ -1140,14 +1146,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         return result;
     }
 
-    auto event = Event::fromHandle(hSignalEvent);
-    if (event) {
-        dstAllocationStruct.needsFlush &= !event->signalScope;
-    }
+    if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+        auto event = Event::fromHandle(hSignalEvent);
+        if (event) {
+            dstAllocationStruct.needsFlush &= !event->signalScope;
+        }
 
-    if (dstAllocationStruct.needsFlush && !isCopyOnly()) {
-        NEO::PipeControlArgs args(true);
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        if (dstAllocationStruct.needsFlush && !isCopyOnly()) {
+            NEO::PipeControlArgs args(true);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        }
     }
 
     return ZE_RESULT_SUCCESS;
@@ -1458,14 +1466,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     appendEventForProfilingAllWalkers(hSignalEvent, false);
 
-    auto event = Event::fromHandle(hSignalEvent);
-    if (event) {
-        hostPointerNeedsFlush &= !event->signalScope;
-    }
+    if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+        auto event = Event::fromHandle(hSignalEvent);
+        if (event) {
+            hostPointerNeedsFlush &= !event->signalScope;
+        }
 
-    if (hostPointerNeedsFlush) {
-        NEO::PipeControlArgs args(true);
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        if (hostPointerNeedsFlush) {
+            NEO::PipeControlArgs args(true);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+        }
     }
 
     return res;
@@ -1669,7 +1679,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     } else {
         NEO::PipeControlArgs args;
         applyScope = (!event->signalScope) ? false : true;
-        args.dcFlushEnable = applyScope;
+        if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+            args.dcFlushEnable = applyScope;
+        }
         if (applyScope || event->isEventTimestampFlagSet()) {
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
@@ -1702,9 +1714,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     constexpr uint32_t eventStateClear = static_cast<uint32_t>(-1);
     bool dcFlushRequired = false;
 
-    for (uint32_t i = 0; i < numEvents; i++) {
-        auto event = Event::fromHandle(phEvent[i]);
-        dcFlushRequired |= (!event->waitScope) ? false : true;
+    if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+        for (uint32_t i = 0; i < numEvents; i++) {
+            auto event = Event::fromHandle(phEvent[i]);
+            dcFlushRequired |= (!event->waitScope) ? false : true;
+        }
     }
 
     if (dcFlushRequired) {
@@ -1805,9 +1819,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
         if (beforeWalker) {
             appendWriteKernelTimestamp(hEvent, beforeWalker, true);
         } else {
-
             NEO::PipeControlArgs args = {};
-            args.dcFlushEnable = (!event->signalScope) ? false : true;
+            if (NEO::MemorySynchronizationCommands<GfxFamily>::isDcFlushAllowed()) {
+                args.dcFlushEnable = (!event->signalScope) ? false : true;
+            }
             NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args,
                                                                                       commandContainer.getDevice()->getHardwareInfo());
 
