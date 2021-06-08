@@ -76,7 +76,7 @@ if(WIN32)
                              ${NEO_SHARED_DIRECTORY}/os_interface/windows
                              ${NEO_SOURCE_DIR}/opencl/source/os_interface/windows
   )
-  target_compile_definitions(${NEO_STATIC_LIB_NAME} PRIVATE OGL=1)
+  target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC OGL=1)
 else()
   set(IGDRCL_EXTRA_LIBS dl pthread)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
