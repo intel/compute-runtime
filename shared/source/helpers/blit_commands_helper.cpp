@@ -16,15 +16,15 @@ namespace BlitHelperFunctions {
 BlitMemoryToAllocationFunc blitMemoryToAllocation = BlitHelper::blitMemoryToAllocation;
 } // namespace BlitHelperFunctions
 
-BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
-                                                                     CommandStreamReceiver &commandStreamReceiver,
-                                                                     GraphicsAllocation *memObjAllocation,
-                                                                     GraphicsAllocation *preallocatedHostAllocation,
-                                                                     const void *hostPtr, uint64_t memObjGpuVa,
-                                                                     uint64_t hostAllocGpuVa, Vec3<size_t> hostPtrOffset,
-                                                                     Vec3<size_t> copyOffset, Vec3<size_t> copySize,
-                                                                     size_t hostRowPitch, size_t hostSlicePitch,
-                                                                     size_t gpuRowPitch, size_t gpuSlicePitch) {
+BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection blitDirection,
+                                                               CommandStreamReceiver &commandStreamReceiver,
+                                                               GraphicsAllocation *memObjAllocation,
+                                                               GraphicsAllocation *preallocatedHostAllocation,
+                                                               const void *hostPtr, uint64_t memObjGpuVa,
+                                                               uint64_t hostAllocGpuVa, Vec3<size_t> hostPtrOffset,
+                                                               Vec3<size_t> copyOffset, Vec3<size_t> copySize,
+                                                               size_t hostRowPitch, size_t hostSlicePitch,
+                                                               size_t gpuRowPitch, size_t gpuSlicePitch) {
     GraphicsAllocation *hostAllocation = nullptr;
     auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
 

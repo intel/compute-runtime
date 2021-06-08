@@ -39,15 +39,15 @@ struct TimestampPacketDependencies;
 using BlitPropertiesContainer = StackVec<BlitProperties, 16>;
 
 struct BlitProperties {
-    static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
-                                                                CommandStreamReceiver &commandStreamReceiver,
-                                                                GraphicsAllocation *memObjAllocation,
-                                                                GraphicsAllocation *preallocatedHostAllocation,
-                                                                const void *hostPtr, uint64_t memObjGpuVa,
-                                                                uint64_t hostAllocGpuVa, Vec3<size_t> hostPtrOffset,
-                                                                Vec3<size_t> copyOffset, Vec3<size_t> copySize,
-                                                                size_t hostRowPitch, size_t hostSlicePitch,
-                                                                size_t gpuRowPitch, size_t gpuSlicePitch);
+    static BlitProperties constructPropertiesForReadWrite(BlitterConstants::BlitDirection blitDirection,
+                                                          CommandStreamReceiver &commandStreamReceiver,
+                                                          GraphicsAllocation *memObjAllocation,
+                                                          GraphicsAllocation *preallocatedHostAllocation,
+                                                          const void *hostPtr, uint64_t memObjGpuVa,
+                                                          uint64_t hostAllocGpuVa, Vec3<size_t> hostPtrOffset,
+                                                          Vec3<size_t> copyOffset, Vec3<size_t> copySize,
+                                                          size_t hostRowPitch, size_t hostSlicePitch,
+                                                          size_t gpuRowPitch, size_t gpuSlicePitch);
 
     static BlitProperties constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
                                                            Vec3<size_t> dstOffset, Vec3<size_t> srcOffset, Vec3<size_t> copySize,

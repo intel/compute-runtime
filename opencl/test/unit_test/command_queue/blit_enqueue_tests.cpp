@@ -47,11 +47,11 @@ struct BlitEnqueueTests : public ::testing::Test {
                     return BlitOperationResult::Unsupported;
                 }
 
-                auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                                            *bcsCsr, memory, nullptr,
-                                                                                            hostPtr,
-                                                                                            memory->getGpuAddress(), 0,
-                                                                                            0, 0, size, 0, 0, 0, 0);
+                auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                                      *bcsCsr, memory, nullptr,
+                                                                                      hostPtr,
+                                                                                      memory->getGpuAddress(), 0,
+                                                                                      0, 0, size, 0, 0, 0, 0);
 
                 BlitPropertiesContainer container;
                 container.push_back(blitProperties);

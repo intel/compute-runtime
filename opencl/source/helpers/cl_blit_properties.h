@@ -123,11 +123,11 @@ struct ClBlitProperties {
                          BlitterConstants::BlitDirection::HostPtrToImage != blitDirection &&
                          BlitterConstants::BlitDirection::ImageToHostPtr != blitDirection);
 
-        blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, gpuAllocation,
-                                                                               hostAllocation, hostPtr, memObjGpuVa, hostAllocGpuVa,
-                                                                               hostPtrOffset, copyOffset, copySize,
-                                                                               hostRowPitch, hostSlicePitch,
-                                                                               gpuRowPitch, gpuSlicePitch);
+        blitProperties = BlitProperties::constructPropertiesForReadWrite(blitDirection, commandStreamReceiver, gpuAllocation,
+                                                                         hostAllocation, hostPtr, memObjGpuVa, hostAllocGpuVa,
+                                                                         hostPtrOffset, copyOffset, copySize,
+                                                                         hostRowPitch, hostSlicePitch,
+                                                                         gpuRowPitch, gpuSlicePitch);
 
         if (BlitterConstants::BlitDirection::HostPtrToImage == blitDirection ||
             BlitterConstants::BlitDirection::ImageToHostPtr == blitDirection) {
