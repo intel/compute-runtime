@@ -345,6 +345,10 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
     return TranslationOutput::ErrorCode::Success;
 }
 
+CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> CompilerInterface::getIgcFeaturesAndWorkarounds(NEO::Device const &device) {
+    return getIgcDeviceCtx(device)->GetIgcFeaturesAndWorkaroundsHandle();
+}
+
 bool CompilerInterface::loadFcl() {
     return NEO::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fclLib, fclMain);
 }

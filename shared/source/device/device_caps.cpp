@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/basic_math.h"
@@ -18,6 +19,15 @@
 namespace NEO {
 
 static const char *spirvWithVersion = "SPIR-V_1.2 ";
+
+size_t Device::getMaxParameterSizeFromIGC() const {
+    CompilerInterface *compilerInterface = getCompilerInterface();
+    if (nullptr != compilerInterface) {
+        auto igcFeWa = compilerInterface->getIgcFeaturesAndWorkarounds(*this);
+        return igcFeWa->GetMaxOCLParamSize();
+    }
+    return 0;
+}
 
 void Device::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
@@ -46,6 +56,11 @@ void Device::initializeCaps() {
     deviceInfo.maxReadImageArgs = 128;
     deviceInfo.maxWriteImageArgs = 128;
     deviceInfo.maxParameterSize = 2048;
+
+    size_t maxParameterSizeFromIgc = getMaxParameterSizeFromIGC();
+    if (maxParameterSizeFromIgc > 0) {
+        deviceInfo.maxParameterSize = maxParameterSizeFromIgc;
+    }
 
     deviceInfo.addressBits = 64;
     deviceInfo.ilVersion = spirvWithVersion;

@@ -1459,6 +1459,19 @@ TEST_F(DeviceGetCapsTest, whenDeviceIsCreatedThenMaxParameterSizeIsSetCorrectly)
     EXPECT_EQ(2048u, caps.maxParameterSize);
 }
 
+TEST_F(DeviceGetCapsTest, givenNonZeroMaxParameterSizeFromIGCwhenDeviceIsCreatedThenMaxParameterSizeIsSetCorrectly) {
+    class MockDeviceWithMaxParameterSizeFromIGC : public MockDevice {
+      public:
+        MockDeviceWithMaxParameterSizeFromIGC(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
+            : MockDevice(executionEnvironment, deviceIndex) {
+            maxParameterSizeFromIGC = 1u;
+        }
+    };
+    auto device = std::make_unique<MockClDevice>(MockDeviceWithMaxParameterSizeFromIGC::createWithNewExecutionEnvironment<MockDeviceWithMaxParameterSizeFromIGC>(defaultHwInfo.get()));
+    const auto &caps = device->getSharedDeviceInfo();
+    EXPECT_EQ(1u, caps.maxParameterSize);
+}
+
 TEST_F(DeviceGetCapsTest, givenUnifiedMemorySharedSystemFlagWhenDeviceIsCreatedThenSystemMemoryIsSetCorrectly) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableSharedSystemUsmSupport.set(0u);
