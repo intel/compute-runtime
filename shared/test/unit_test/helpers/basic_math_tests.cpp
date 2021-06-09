@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/vec.h"
 
 #include "gtest/gtest.h"
 
@@ -213,4 +214,29 @@ TEST(ffs, givenNonZeroThenReturnFirstSetBitIndex) {
     EXPECT_EQ(16U, ffs((1U << 31U) | (1U << 31U) | (1U << 16U)));
     EXPECT_EQ(16ULL, ffs((1ULL << 63ULL) | (1ULL << 32ULL) | (1ULL << 16ULL)));
     EXPECT_EQ(63ULL, ffs(1ULL << 63ULL));
+}
+
+TEST(Vec3Tests, whenAccessingVec3ThenCorrectResultsAreReturned) {
+    Vec3<size_t> vec{1, 2, 3};
+
+    EXPECT_EQ(1u, vec[0]);
+    EXPECT_EQ(2u, vec[1]);
+    EXPECT_EQ(3u, vec[2]);
+    EXPECT_EQ(vec.x, vec[0]);
+    EXPECT_EQ(vec.y, vec[1]);
+    EXPECT_EQ(vec.z, vec[2]);
+
+    vec[0] = 10u;
+    vec[1] = 20u;
+    vec[2] = 30u;
+    EXPECT_EQ(10u, vec.x);
+    EXPECT_EQ(20u, vec.y);
+    EXPECT_EQ(30u, vec.z);
+    EXPECT_ANY_THROW(vec[3]);
+
+    const Vec3<size_t> vec2 = {1, 2, 3};
+    EXPECT_EQ(1u, vec2[0]);
+    EXPECT_EQ(2u, vec2[1]);
+    EXPECT_EQ(3u, vec2[2]);
+    EXPECT_ANY_THROW(vec2[3]);
 }
