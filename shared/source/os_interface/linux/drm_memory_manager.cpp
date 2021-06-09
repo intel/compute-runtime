@@ -252,27 +252,36 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     // It's needed to prevent overlapping pages with user pointers
     size_t cSize = std::max(alignUp(allocationData.size, minAlignment), minAlignment);
 
-    uint64_t gpuAddress = 0;
-    size_t alignedSize = cSize;
+    uint64_t gpuReservationAddress = 0;
+    uint64_t alignedGpuAddress = 0;
+    size_t alignedStorageSize = cSize;
+    size_t alignedVirtualAdressRangeSize = cSize;
     auto svmCpuAllocation = allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU;
     if (svmCpuAllocation) {
         //add 2MB padding in case reserved addr is not 2MB aligned
-        alignedSize = alignUp(cSize, cAlignment) + cAlignment;
+        alignedStorageSize = alignUp(cSize, cAlignment);
+        alignedVirtualAdressRangeSize = alignedStorageSize + cAlignment;
     }
 
     // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     if ((isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) && !allocationData.flags.isUSMHostAllocation) {
-        gpuAddress = acquireGpuRange(alignedSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
-        if (!gpuAddress) {
+        gpuReservationAddress = acquireGpuRange(alignedVirtualAdressRangeSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        if (!gpuReservationAddress) {
             return nullptr;
         }
 
+        alignedGpuAddress = gpuReservationAddress;
         if (svmCpuAllocation) {
-            gpuAddress = alignUp(gpuAddress, cAlignment);
+            alignedGpuAddress = alignUp(gpuReservationAddress, cAlignment);
         }
     }
 
-    return createAllocWithAlignment(allocationData, cSize, cAlignment, alignedSize, gpuAddress);
+    auto drmAllocation = createAllocWithAlignment(allocationData, cSize, cAlignment, alignedStorageSize, alignedGpuAddress);
+    if (drmAllocation != nullptr) {
+        drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuReservationAddress), alignedVirtualAdressRangeSize);
+    }
+
+    return drmAllocation;
 }
 
 DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress) {

@@ -3896,6 +3896,8 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedTh
     EXPECT_EQ(reinterpret_cast<void *>(allocation->getGpuAddress()), alignUp(allocation->getReservedAddressPtr(), allocationData.alignment));
     EXPECT_EQ(alignUp(allocationData.size, allocationData.alignment) + allocationData.alignment, allocation->getReservedAddressSize());
 
+    EXPECT_GT(allocation->getReservedAddressSize(), bo->peekSize());
+
     memoryManager->freeGraphicsMemory(allocation);
 }
 
