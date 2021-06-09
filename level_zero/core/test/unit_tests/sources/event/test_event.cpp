@@ -543,7 +543,7 @@ class TimestampEventCreate : public Test<DeviceFixture> {
 };
 
 TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventFlagSet) {
-    EXPECT_TRUE(event->isTimestampEvent);
+    EXPECT_TRUE(event->isEventTimestampFlagSet());
 }
 
 TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCorrectDataAreSet) {

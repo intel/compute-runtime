@@ -70,8 +70,6 @@ struct Event : _ze_event_handle_t {
     uint32_t kernelCount = 1u;
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
-    bool isTimestampEvent = false;
-    bool allocOnDevice = false;
     bool updateTaskCountEnabled = false;
 
     uint64_t globalStartTS;
@@ -83,9 +81,16 @@ struct Event : _ze_event_handle_t {
     MetricStreamer *metricStreamer = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
 
+    void setEventTimestampFlag(bool timestampFlag) {
+        isTimestampEvent = timestampFlag;
+    }
+
+    bool isEventTimestampFlagSet() { return isTimestampEvent; }
+
   protected:
     uint64_t gpuAddress;
     NEO::GraphicsAllocation *allocation = nullptr;
+    bool isTimestampEvent = false;
 };
 
 template <typename TagSizeT>
@@ -153,20 +158,27 @@ struct EventPool : _ze_event_pool_handle_t {
 
     virtual uint32_t getEventSize() = 0;
 
-    bool isEventPoolUsedForTimestamp = false;
-    bool allocOnDevice = false;
+    bool isEventPoolTimestampFlagSet() {
+        if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
+            return true;
+        }
+        return false;
+    }
+
+    bool isEventPoolDeviceAllocationFlagSet() {
+        if (!(eventPoolFlags & ZE_EVENT_POOL_FLAG_HOST_VISIBLE)) {
+            return true;
+        }
+        return false;
+    }
 
     std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
+    ze_event_pool_flags_t eventPoolFlags;
 };
 
 struct EventPoolImp : public EventPool {
     EventPoolImp(const ze_event_pool_desc_t *desc) : numEvents(desc->count) {
-        if (desc->flags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
-            isEventPoolUsedForTimestamp = true;
-        }
-        if (!(desc->flags & ZE_EVENT_POOL_FLAG_HOST_VISIBLE)) {
-            allocOnDevice = true;
-        }
+        eventPoolFlags = desc->flags;
     }
 
     ze_result_t initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices);

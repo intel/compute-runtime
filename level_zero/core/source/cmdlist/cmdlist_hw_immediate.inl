@@ -45,11 +45,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
     bool isTimestampEvent = false;
     for (uint32_t i = 0; i < numWaitEvents; i++) {
         auto event = Event::fromHandle(phWaitEvents[i]);
-        isTimestampEvent |= (event->isTimestampEvent) ? true : false;
+        isTimestampEvent |= (event->isEventTimestampFlagSet()) ? true : false;
     }
     if (hSignalEvent) {
         auto signalEvent = Event::fromHandle(hSignalEvent);
-        isTimestampEvent |= signalEvent->isTimestampEvent;
+        isTimestampEvent |= signalEvent->isEventTimestampFlagSet();
     }
     if (isSyncModeQueue || isTimestampEvent) {
         auto ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
@@ -126,7 +126,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hEvent) {
     auto event = Event::fromHandle(hEvent);
-    if (isSyncModeQueue || event->isTimestampEvent) {
+    if (isSyncModeQueue || event->isEventTimestampFlagSet()) {
         auto ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hEvent);
         if (ret == ZE_RESULT_SUCCESS) {
             executeCommandListImmediate(true);
@@ -146,7 +146,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_event_handle_t hEvent) {
     auto event = Event::fromHandle(hEvent);
-    if (isSyncModeQueue || event->isTimestampEvent) {
+    if (isSyncModeQueue || event->isEventTimestampFlagSet()) {
         auto ret = CommandListCoreFamily<gfxCoreFamily>::appendEventReset(hEvent);
         if (ret == ZE_RESULT_SUCCESS) {
             executeCommandListImmediate(true);
@@ -177,7 +177,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
     bool isTimestampEvent = false;
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
-        isTimestampEvent |= (event->isTimestampEvent) ? true : false;
+        isTimestampEvent |= (event->isEventTimestampFlagSet()) ? true : false;
     }
     if (isSyncModeQueue || isTimestampEvent) {
         auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phEvent);

@@ -241,7 +241,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
 
     uint32_t packetsToReset = 1;
 
-    if (event->isTimestampEvent) {
+    if (event->isEventTimestampFlagSet()) {
         baseAddr += event->getContextEndOffset();
         packetsToReset = EventPacketsCount::eventPackets;
         event->resetPackets();
@@ -1408,7 +1408,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(ze_event_
         return;
     }
     auto event = Event::fromHandle(hEvent);
-    if (event->isTimestampEvent) {
+    if (event->isEventTimestampFlagSet()) {
         appendEventForProfiling(hEvent, false);
     } else {
         CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hEvent);
@@ -1420,7 +1420,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(ze
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto event = Event::fromHandle(hEvent);
 
-    if (!event->isTimestampEvent) {
+    if (!event->isEventTimestampFlagSet()) {
         return;
     }
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
@@ -1524,7 +1524,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
     uint64_t baseAddr = event->getGpuAddress(this->device);
     size_t eventSignalOffset = 0;
-    if (event->isTimestampEvent) {
+    if (event->isEventTimestampFlagSet()) {
         eventSignalOffset = event->getContextEndOffset();
     }
 
@@ -1574,7 +1574,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         gpuAddr = event->getGpuAddress(this->device);
         uint32_t packetsToWait = event->getPacketsInUse();
 
-        if (event->isTimestampEvent) {
+        if (event->isEventTimestampFlagSet()) {
             gpuAddr += event->getContextEndOffset();
         }
         for (uint32_t i = 0u; i < packetsToWait; i++) {
@@ -1647,7 +1647,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
     } else {
         auto event = Event::fromHandle(hEvent);
 
-        if (!event->isTimestampEvent) {
+        if (!event->isEventTimestampFlagSet()) {
             return;
         }
 

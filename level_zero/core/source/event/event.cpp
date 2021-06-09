@@ -46,6 +46,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
 
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driver);
     bool useDevicesFromApi = true;
+    bool useDeviceAlloc = isEventPoolDeviceAllocationFlagSet();
 
     if (numDevices == 0) {
         numDevices = static_cast<uint32_t>(driverHandleImp->devices.size());
@@ -72,19 +73,19 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
         }
     }
 
-    if (this->devices.size() > 1) {
-        this->allocOnDevice = false;
-    }
-
     auto &hwHelper = devices[0]->getHwHelper();
 
     eventAlignment = static_cast<uint32_t>(hwHelper.getTimestampPacketAllocatorAlignment());
     eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * hwHelper.getSingleTimestampPacketSize(), eventAlignment));
 
     size_t alignedSize = alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k);
-    NEO::GraphicsAllocation::AllocationType allocationType = isEventPoolUsedForTimestamp ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
-                                                                                         : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
-    if (this->allocOnDevice && !isEventPoolUsedForTimestamp) {
+    NEO::GraphicsAllocation::AllocationType allocationType = isEventPoolTimestampFlagSet() ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
+                                                                                           : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    if (this->devices.size() > 1) {
+        useDeviceAlloc = false;
+    }
+
+    if (useDeviceAlloc && !isEventPoolTimestampFlagSet()) {
         allocationType = NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
     }
 
