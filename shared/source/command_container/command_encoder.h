@@ -332,7 +332,6 @@ struct EncodeAtomic {
                                 uint32_t operand1dword1);
 
     static void setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress);
-    static uint64_t getMiAtomicAddress(MI_ATOMIC &atomic);
 };
 
 template <typename GfxFamily>

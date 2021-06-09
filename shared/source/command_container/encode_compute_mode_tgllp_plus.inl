@@ -21,7 +21,7 @@ void EncodeStates<Family>::adjustStateComputeMode(LinearStream &csr, uint32_t nu
 }
 
 template <typename Family>
-void EncodeStoreMMIO<Family>::remapOffset(MI_STORE_REGISTER_MEM *pStoreRegMem) {
+inline void EncodeStoreMMIO<Family>::remapOffset(MI_STORE_REGISTER_MEM *pStoreRegMem) {
     pStoreRegMem->setMmioRemapEnable(true);
 }
 
@@ -43,7 +43,7 @@ void EncodeSetMMIO<Family>::remapOffset(MI_LOAD_REGISTER_REG *pMiLoadReg) {
 }
 
 template <typename Family>
-bool EncodeSetMMIO<Family>::isRemapApplicable(uint32_t offset) {
+inline bool EncodeSetMMIO<Family>::isRemapApplicable(uint32_t offset) {
     return (0x2000 <= offset && offset <= 0x27ff) ||
            (0x4200 <= offset && offset <= 0x420f) ||
            (0x4400 <= offset && offset <= 0x441f);

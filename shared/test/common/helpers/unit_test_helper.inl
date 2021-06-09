@@ -71,7 +71,7 @@ bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWait(const typename GfxFa
 }
 
 template <typename GfxFamily>
-inline uint64_t UnitTestHelper<GfxFamily>::getMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic) {
+inline uint64_t UnitTestHelper<GfxFamily>::getAtomicMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic) {
     return atomic.getMemoryAddress() | ((static_cast<uint64_t>(atomic.getMemoryAddressHigh())) << 32);
 }
 

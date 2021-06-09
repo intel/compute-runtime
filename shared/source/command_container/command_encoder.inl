@@ -84,7 +84,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 } // namespace NEO
 
 template <typename Family>
-size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
+inline size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
     return 0;
 }
 
@@ -424,7 +424,7 @@ size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {}
+inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
 void EncodeSurfaceState<Family>::setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
@@ -528,17 +528,17 @@ void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &c
 }
 
 template <typename Family>
-size_t EncodeIndirectParams<Family>::getCmdsSizeForIndirectParams() {
+inline size_t EncodeIndirectParams<Family>::getCmdsSizeForIndirectParams() {
     return 3 * sizeof(typename Family::MI_LOAD_REGISTER_MEM);
 }
 
 template <typename Family>
-size_t EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect() {
+inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect() {
     return 3 * (sizeof(MI_STORE_REGISTER_MEM));
 }
 
 template <typename Family>
-size_t EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect() {
+inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect() {
     return 3 * (sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) + sizeof(MI_STORE_REGISTER_MEM));
 }
 
@@ -565,20 +565,14 @@ void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
 }
 
 template <typename Family>
-size_t EncodeSempahore<Family>::getSizeMiSemaphoreWait() {
+inline size_t EncodeSempahore<Family>::getSizeMiSemaphoreWait() {
     return sizeof(MI_SEMAPHORE_WAIT);
 }
 
 template <typename Family>
-void EncodeAtomic<Family>::setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress) {
+inline void EncodeAtomic<Family>::setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress) {
     atomic.setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
     atomic.setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
-}
-
-template <typename Family>
-uint64_t EncodeAtomic<Family>::getMiAtomicAddress(MI_ATOMIC &atomic) {
-    uint64_t address = (static_cast<uint64_t>(atomic.getMemoryAddressHigh()) << 32) | (atomic.getMemoryAddress());
-    return address;
 }
 
 template <typename Family>
@@ -663,10 +657,10 @@ size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() {
 }
 
 template <typename GfxFamily>
-void EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const HardwareInfo &hwInfo) {}
+inline void EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const HardwareInfo &hwInfo) {}
 
 template <typename GfxFamily>
-size_t EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(size_t size) { return 0u; }
+inline size_t EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(size_t size) { return 0u; }
 
 template <typename Family>
 void EncodeMiArbCheck<Family>::program(LinearStream &commandStream) {
@@ -675,6 +669,6 @@ void EncodeMiArbCheck<Family>::program(LinearStream &commandStream) {
 }
 
 template <typename Family>
-size_t EncodeMiArbCheck<Family>::getCommandSize() { return sizeof(MI_ARB_CHECK); }
+inline size_t EncodeMiArbCheck<Family>::getCommandSize() { return sizeof(MI_ARB_CHECK); }
 
 } // namespace NEO

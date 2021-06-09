@@ -45,7 +45,7 @@ struct UnitTestHelper {
 
     static bool isAdditionalMiSemaphoreWait(const typename GfxFamily::MI_SEMAPHORE_WAIT &semaphoreWait);
 
-    static uint64_t getMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic);
+    static uint64_t getAtomicMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic);
 
     static bool requiresTimestampPacketsInSystemMemory();
 

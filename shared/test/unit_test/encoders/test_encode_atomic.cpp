@@ -9,6 +9,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/command_container_fixture.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 
 using namespace NEO;
 
@@ -37,7 +38,7 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicThenExpectAllFieldsSetCorre
 
     EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_4B_DECREMENT, miAtomicCmd->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_DWORD, miAtomicCmd->getDataSize());
-    EXPECT_EQ(address, EncodeAtomic<FamilyType>::getMiAtomicAddress(*miAtomicCmd));
+    EXPECT_EQ(address, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
     EXPECT_EQ(0x1u, miAtomicCmd->getReturnDataControl());
     EXPECT_EQ(0x1u, miAtomicCmd->getCsStall());
 }
@@ -75,7 +76,7 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
 
     EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_4B_MOVE, miAtomicCmd->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_DWORD, miAtomicCmd->getDataSize());
-    EXPECT_EQ(address, EncodeAtomic<FamilyType>::getMiAtomicAddress(*miAtomicCmd));
+    EXPECT_EQ(address, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
     EXPECT_EQ(0x0u, miAtomicCmd->getReturnDataControl());
     EXPECT_EQ(DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, miAtomicCmd->getDwordLength());
     EXPECT_EQ(0x1u, miAtomicCmd->getInlineData());
@@ -85,7 +86,7 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
     miAtomicCmd++;
     EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_MOVE, miAtomicCmd->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomicCmd->getDataSize());
-    EXPECT_EQ(address, EncodeAtomic<FamilyType>::getMiAtomicAddress(*miAtomicCmd));
+    EXPECT_EQ(address, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
     EXPECT_EQ(0x0u, miAtomicCmd->getReturnDataControl());
     EXPECT_EQ(DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, miAtomicCmd->getDwordLength());
     EXPECT_EQ(0x1u, miAtomicCmd->getInlineData());

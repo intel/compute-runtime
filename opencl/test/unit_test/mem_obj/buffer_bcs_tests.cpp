@@ -527,7 +527,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommand
             miAtomicsCount++;
             auto dataAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
             EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
-            EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getMemoryAddress(*miAtomicCmd));
+            EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
             EXPECT_EQ(1u, semaphoresCount);
         }
     }
@@ -572,7 +572,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandS
             miAtomicsCount++;
             auto dataAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
             EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
-            EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getMemoryAddress(*miAtomicCmd));
+            EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
             EXPECT_EQ(1u, semaphoresCount);
         }
     }

@@ -83,7 +83,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
         auto writeAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
 
         EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
-        EXPECT_EQ(writeAddress, UnitTestHelper<GfxFamily>::getMemoryAddress(*miAtomicCmd));
+        EXPECT_EQ(writeAddress, UnitTestHelper<GfxFamily>::getAtomicMemoryAddress(*miAtomicCmd));
     };
 
     void verifyDependencyCounterValues(TimestampPacketContainer *timestampPacketContainer, uint32_t expectedValue) {
