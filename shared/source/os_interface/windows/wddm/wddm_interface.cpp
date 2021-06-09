@@ -33,10 +33,9 @@ bool WddmInterface::createMonitoredFence(MonitoredFence &monitorFence) {
     return status == STATUS_SUCCESS;
 }
 void WddmInterface::destroyMonitorFence(D3DKMT_HANDLE fenceHandle) {
-    NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySyncObject = {0};
     destroySyncObject.hSyncObject = fenceHandle;
-    status = wddm.getGdi()->destroySynchronizationObject(&destroySyncObject);
+    [[maybe_unused]] NTSTATUS status = wddm.getGdi()->destroySynchronizationObject(&destroySyncObject);
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);
 }
 

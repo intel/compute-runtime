@@ -229,12 +229,11 @@ bool Wddm::createDevice(PreemptionMode preemptionMode) {
 }
 
 bool Wddm::destroyDevice() {
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_DESTROYDEVICE DestroyDevice = {};
     if (device) {
         DestroyDevice.hDevice = device;
 
-        status = getGdi()->destroyDevice(&DestroyDevice);
+        [[maybe_unused]] NTSTATUS status = getGdi()->destroyDevice(&DestroyDevice);
         DEBUG_BREAK_IF(status != STATUS_SUCCESS);
         device = 0;
     }
@@ -688,7 +687,7 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     D3DKMT_QUERYRESOURCEINFO QueryResourceInfo = {};
     QueryResourceInfo.hDevice = device;
     QueryResourceInfo.hGlobalShare = handle;
-    auto status = getGdi()->queryResourceInfo(&QueryResourceInfo);
+    [[maybe_unused]] auto status = getGdi()->queryResourceInfo(&QueryResourceInfo);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
     if (QueryResourceInfo.NumAllocations == 0) {
@@ -737,7 +736,7 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE queryResourceInfoFromNtHandle = {};
     queryResourceInfoFromNtHandle.hDevice = device;
     queryResourceInfoFromNtHandle.hNtHandle = handle;
-    auto status = getGdi()->queryResourceInfoFromNtHandle(&queryResourceInfoFromNtHandle);
+    [[maybe_unused]] auto status = getGdi()->queryResourceInfoFromNtHandle(&queryResourceInfoFromNtHandle);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
     std::unique_ptr<char[]> allocPrivateData(new char[queryResourceInfoFromNtHandle.TotalPrivateDriverDataSize]);
@@ -776,13 +775,12 @@ void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPrio
         temporaryResources->makeResidentResource(handle, size);
     }
 
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_LOCK2 lock2 = {};
 
     lock2.hAllocation = handle;
     lock2.hDevice = this->device;
 
-    status = getGdi()->lock2(&lock2);
+    [[maybe_unused]] NTSTATUS status = getGdi()->lock2(&lock2);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
     kmDafLock(handle);
@@ -790,13 +788,12 @@ void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPrio
 }
 
 void Wddm::unlockResource(const D3DKMT_HANDLE &handle) {
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_UNLOCK2 unlock2 = {};
 
     unlock2.hAllocation = handle;
     unlock2.hDevice = this->device;
 
-    status = getGdi()->unlock2(&unlock2);
+    [[maybe_unused]] NTSTATUS status = getGdi()->unlock2(&unlock2);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
     kmDafListener->notifyUnlock(featureTable->ftrKmdDaf, getAdapter(), device, &handle, 1, getGdi()->escape);

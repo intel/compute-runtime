@@ -80,7 +80,7 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
         this->isEnabled = true;
     }
 
-    ~WslComputeHelperUmKmDataTranslator() = default;
+    ~WslComputeHelperUmKmDataTranslator() override = default;
 
     size_t getSizeForAdapterInfoInternalRepresentation() override {
         return adapterInfoStructSize;

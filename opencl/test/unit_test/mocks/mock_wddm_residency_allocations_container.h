@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@ class MockWddmResidentAllocationsContainer : public WddmResidentAllocationsConta
     using WddmResidentAllocationsContainer::resourcesLock;
 
     MockWddmResidentAllocationsContainer(Wddm *wddm) : WddmResidentAllocationsContainer(wddm) {}
-    virtual ~MockWddmResidentAllocationsContainer() = default;
 
     MemoryOperationsStatus makeResidentResource(const D3DKMT_HANDLE &handle, size_t size) override {
         makeResidentResult.called++;

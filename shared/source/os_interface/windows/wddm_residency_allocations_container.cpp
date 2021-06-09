@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 namespace NEO {
 WddmResidentAllocationsContainer::~WddmResidentAllocationsContainer() {
-    evictAllResources();
+    evictAllResourcesNoLock();
 }
 
 MemoryOperationsStatus WddmResidentAllocationsContainer::isAllocationResident(const D3DKMT_HANDLE &handle) {
@@ -24,8 +24,12 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::isAllocationResident(co
 }
 
 MemoryOperationsStatus WddmResidentAllocationsContainer::evictAllResources() {
-    decltype(resourceHandles) resourcesToEvict;
     auto lock = acquireLock(resourcesLock);
+    return evictAllResourcesNoLock();
+}
+
+MemoryOperationsStatus WddmResidentAllocationsContainer::evictAllResourcesNoLock() {
+    decltype(resourceHandles) resourcesToEvict;
     resourceHandles.swap(resourcesToEvict);
     if (resourcesToEvict.empty()) {
         return MemoryOperationsStatus::MEMORY_NOT_FOUND;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ class Wddm;
 class WddmResidentAllocationsContainer {
   public:
     WddmResidentAllocationsContainer(Wddm *wddm) : wddm(wddm) {}
-    virtual ~WddmResidentAllocationsContainer();
+    MOCKABLE_VIRTUAL ~WddmResidentAllocationsContainer();
 
     MemoryOperationsStatus isAllocationResident(const D3DKMT_HANDLE &handle);
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictAllResources();
@@ -33,6 +33,8 @@ class WddmResidentAllocationsContainer {
     MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock) {
         return std::unique_lock<SpinLock>{lock};
     }
+
+    MemoryOperationsStatus evictAllResourcesNoLock();
 
     Wddm *wddm;
     std::vector<D3DKMT_HANDLE> resourceHandles;

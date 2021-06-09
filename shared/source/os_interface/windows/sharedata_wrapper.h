@@ -9,13 +9,13 @@
 
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
-#if __clang__
+#if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-braces"
 #pragma clang diagnostic ignored "-Wbraced-scalar-init"
 #endif
 #include "umKmInc/sharedata.h"
-#if __clang__
+#if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
 
@@ -30,6 +30,22 @@ using ADAPTER_INFO_KMD = ADAPTER_INFO_GMM;
 
 inline void propagateData(ADAPTER_INFO_KMD &) {
 }
+
+#if defined(__clang__) || defined(__GNUC__)
+static constexpr COMMAND_BUFFER_HEADER initCommandBufferHeader(uint32_t umdContextType, uint32_t umdPatchList, uint32_t usesResourceStreamer, uint32_t perfTag) {
+    COMMAND_BUFFER_HEADER ret = {};
+    ret.UmdContextType = umdContextType;
+    ret.UmdPatchList = umdPatchList;
+    ret.UsesResourceStreamer = usesResourceStreamer;
+    ret.PerfTag = perfTag;
+    return ret;
+}
+
+#undef DECLARE_COMMAND_BUFFER
+#define DECLARE_COMMAND_BUFFER(VARNAME, CONTEXTTYPE, PATCHLIST, STREAMER, PERFTAG) \
+    static constexpr COMMAND_BUFFER_HEADER VARNAME = initCommandBufferHeader(CONTEXTTYPE, PATCHLIST, STREAMER, PERFTAG);
+#endif
+
 #else
 struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM {
     bool FtrDesktop : 1;

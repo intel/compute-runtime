@@ -188,11 +188,13 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
     for (uint32_t i = 0; i < residencyCount; i++) {
         WddmAllocation *allocation = static_cast<WddmAllocation *>(allocationsForResidency[i]);
         ResidencyData &residencyData = allocation->getResidencyData();
-        bool fragmentResidency[3] = {false, false, false};
+        static constexpr int maxFragments = 3;
+        bool fragmentResidency[maxFragments] = {false, false, false};
         totalSize += allocation->getAlignedSize();
 
         DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, residencyData.resident[osContextId] ? "resident" : "not resident");
 
+        UNRECOVERABLE_IF(allocation->fragmentsStorage.fragmentCount > maxFragments);
         if (allocation->getTrimCandidateListPosition(this->osContextId) != trimListUnusedPosition) {
             DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, "on trimCandidateList");
             this->removeFromTrimCandidateList(allocation, false);
