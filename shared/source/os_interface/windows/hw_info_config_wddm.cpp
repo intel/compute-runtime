@@ -47,7 +47,7 @@ int HwInfoConfig::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo
     // Product specific config
     int ret = configureHardwareCustom(outHwInfo, osIface);
     if (ret != 0) {
-        outHwInfo = {};
+        *outHwInfo = {};
     }
     return ret;
 }
