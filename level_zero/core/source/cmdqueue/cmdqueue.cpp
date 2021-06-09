@@ -62,9 +62,6 @@ void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &
                                  NEO::QueueThrottle::HIGH, NEO::QueueSliceCount::defaultSliceCount,
                                  commandStream->getUsed(), commandStream, endingCmdPtr, false);
 
-    for (auto &surface : residencyContainer) {
-        csr->makeResident(*surface);
-    }
     csr->submitBatchBuffer(batchBuffer, residencyContainer);
     buffers.setCurrentFlushStamp(csr->obtainCurrentFlushStamp());
 }

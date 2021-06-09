@@ -111,9 +111,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
 
     GraphicsAllocation *getClearColorAllocation() override { return nullptr; }
-    void makeResident(GraphicsAllocation &gfxAllocation) override {
-        makeResidentCalledTimes++;
-    }
 
     void postInitFlagsSetup() override {}
 
@@ -121,7 +118,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     int *flushBatchedSubmissionsCallCounter = nullptr;
     uint32_t waitForCompletionWithTimeoutCalled = 0;
     uint32_t mockTagAddress = 0;
-    uint32_t makeResidentCalledTimes = 0;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
     bool downloadAllocationsCalled = false;

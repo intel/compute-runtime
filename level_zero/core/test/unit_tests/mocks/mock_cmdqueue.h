@@ -25,7 +25,6 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass::device;
     using BaseClass::preemptionCmdSyncProgramming;
     using BaseClass::printfFunctionContainer;
-    using BaseClass::submitBatchBuffer;
     using BaseClass::synchronizeByPollingForTaskCount;
     using CommandQueue::commandQueuePreemptionMode;
     using CommandQueue::internalUsage;

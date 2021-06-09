@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/scratch_space_controller_base.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
@@ -215,45 +214,6 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
     size_t maxSize = 2 * streamSizeMinimum;
     EXPECT_GT(maxSize, sizeAfter - sizeBefore);
 
-    commandQueue->destroy();
-}
-
-HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenSubmitBatchBufferCalledThenMakeResidentWasCalled) {
-    auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
-    const ze_command_queue_desc_t desc = {};
-    ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr.get(),
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    ResidencyContainer container;
-    MockGraphicsAllocation mockGA1, mockGA2;
-    container.push_back(&mockGA1);
-    container.push_back(&mockGA2);
-    commandQueue->submitBatchBuffer(0, container, nullptr);
-    EXPECT_EQ(csr->makeResidentCalledTimes, container.size());
-    commandQueue->destroy();
-}
-
-HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainerIsEmptyThenMakeResidentWasNotCalled) {
-    auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
-    const ze_command_queue_desc_t desc = {};
-    ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr.get(),
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    ResidencyContainer container;
-    commandQueue->submitBatchBuffer(0, container, nullptr);
-    EXPECT_EQ(csr->makeResidentCalledTimes, 0u);
     commandQueue->destroy();
 }
 
