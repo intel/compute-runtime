@@ -25,6 +25,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass::device;
     using BaseClass::preemptionCmdSyncProgramming;
     using BaseClass::printfFunctionContainer;
+    using BaseClass::submitBatchBuffer;
     using BaseClass::synchronizeByPollingForTaskCount;
     using CommandQueue::commandQueuePreemptionMode;
     using CommandQueue::internalUsage;
@@ -85,6 +86,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass::printfFunctionContainer;
     using L0::CommandQueue::internalUsage;
     using L0::CommandQueue::preemptionCmdSyncProgramming;
+    using L0::CommandQueueImp::csr;
 
     MockCommandQueueHw(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : L0::CommandQueueHw<gfxCoreFamily>(device, csr, desc) {
     }

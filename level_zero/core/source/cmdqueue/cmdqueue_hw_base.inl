@@ -104,8 +104,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::ResidencyContainer &residency,
-                                                       NEO::HeapContainer &heapContainer,
+void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &heapContainer,
                                                        NEO::ScratchSpaceController *scratchController,
                                                        bool &gsbaState, bool &frontEndState,
                                                        uint32_t perThreadScratchSpaceSize) {
@@ -114,7 +113,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::ResidencyContainer &
         scratchController->setRequiredScratchSpace(nullptr, 0u, perThreadScratchSpaceSize, 0u, csr->peekTaskCount(),
                                                    csr->getOsContext(), gsbaState, frontEndState);
         auto scratchAllocation = scratchController->getScratchSpaceAllocation();
-        residency.push_back(scratchAllocation);
+        csr->makeResident(*scratchAllocation);
     }
 }
 

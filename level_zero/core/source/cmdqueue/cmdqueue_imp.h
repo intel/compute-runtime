@@ -96,7 +96,6 @@ struct CommandQueueImp : public CommandQueue {
     std::vector<Kernel *> printfFunctionContainer;
     bool gpgpuEnabled = false;
     CommandBufferManager buffers;
-    NEO::ResidencyContainer residencyContainer;
     NEO::HeapContainer heapContainer;
 };
 

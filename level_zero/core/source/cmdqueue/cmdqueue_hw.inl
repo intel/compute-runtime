@@ -183,13 +183,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     spaceForResidency += residencyContainerSpaceForTagWrite;
 
-    residencyContainer.reserve(spaceForResidency);
+    csr->getResidencyAllocations().reserve(spaceForResidency);
 
     auto scratchSpaceController = csr->getScratchSpaceController();
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
-    handleScratchSpace(residencyContainer,
-                       heapContainer,
+    handleScratchSpace(heapContainer,
                        scratchSpaceController,
                        gsbaStateDirty, frontEndStateDirty,
                        perThreadScratchSpaceSize);
@@ -223,18 +222,18 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     const auto globalFenceAllocation = csr->getGlobalFenceAllocation();
     if (globalFenceAllocation) {
-        residencyContainer.push_back(globalFenceAllocation);
+        csr->makeResident(*globalFenceAllocation);
     }
     const auto workPartitionAllocation = csr->getWorkPartitionAllocation();
     if (workPartitionAllocation) {
-        residencyContainer.push_back(workPartitionAllocation);
+        csr->makeResident(*workPartitionAllocation);
     }
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         NEO::SWTagsManager *tagsManager = neoDevice->getRootDeviceEnvironment().tagsManager.get();
         UNRECOVERABLE_IF(tagsManager == nullptr);
-        residencyContainer.push_back(tagsManager->getBXMLHeapAllocation());
-        residencyContainer.push_back(tagsManager->getSWTagHeapAllocation());
+        csr->makeResident(*tagsManager->getBXMLHeapAllocation());
+        csr->makeResident(*tagsManager->getSWTagHeapAllocation());
         tagsManager->insertBXMLHeapAddress<GfxFamily>(child);
         tagsManager->insertSWTagHeapAddress<GfxFamily>(child);
     }
@@ -242,7 +241,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     csr->programHardwareContext(child);
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
-        residencyContainer.push_back(device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
+        csr->makeResident(*device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
     }
 
     if (!isCopyOnlyCommandQueue) {
@@ -281,17 +280,17 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                    (neoDevice->getDebugger() != nullptr && NEO::Debugger::isDebugEnabled(internalUsage));
 
         if (devicePreemption == NEO::PreemptionMode::MidThread) {
-            residencyContainer.push_back(csr->getPreemptionAllocation());
+            csr->makeResident(*csr->getPreemptionAllocation());
         }
 
         if (sipKernelUsed) {
             auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice).getSipAllocation();
-            residencyContainer.push_back(sipIsa);
+            csr->makeResident(*sipIsa);
         }
 
         if (NEO::Debugger::isDebugEnabled(internalUsage) && neoDevice->getDebugger()) {
             UNRECOVERABLE_IF(device->getDebugSurface() == nullptr);
-            residencyContainer.push_back(device->getDebugSurface());
+            csr->makeResident(*device->getDebugSurface());
         }
     }
 
@@ -355,9 +354,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                        commandList->getPrintfFunctionContainer().end());
 
         for (auto alloc : commandList->commandContainer.getResidencyContainer()) {
-            if (residencyContainer.end() ==
-                std::find(residencyContainer.begin(), residencyContainer.end(), alloc)) {
-                residencyContainer.push_back(alloc);
+            if (csr->getResidencyAllocations().end() ==
+                std::find(csr->getResidencyAllocations().begin(), csr->getResidencyAllocations().end(), alloc)) {
+                csr->makeResident(*alloc);
 
                 if (performMigration) {
                     if (alloc &&
@@ -385,7 +384,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     commandQueuePreemptionMode = statePreemption;
 
     if (hFence) {
-        residencyContainer.push_back(&fence->getAllocation());
+        csr->makeResident(fence->getAllocation());
         if (isCopyOnlyCommandQueue) {
             NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(child, fence->getGpuAddress(), Fence::STATE_SIGNALED, false, true);
         } else {
@@ -401,7 +400,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     dispatchTaskCountWrite(child, true);
 
-    residencyContainer.push_back(csr->getTagAllocation());
+    csr->makeResident(*csr->getTagAllocation());
     void *endingCmd = nullptr;
     if (directSubmissionEnabled) {
         endingCmd = child.getSpace(0);
@@ -417,17 +416,16 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         memset(paddingPtr, 0, padding);
     }
 
-    submitBatchBuffer(ptrDiff(child.getCpuBase(), commandStream->getCpuBase()), residencyContainer, endingCmd);
+    submitBatchBuffer(ptrDiff(child.getCpuBase(), commandStream->getCpuBase()), csr->getResidencyAllocations(), endingCmd);
 
     this->taskCount = csr->peekTaskCount();
 
-    csr->makeSurfacePackNonResident(residencyContainer);
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
 
     if (getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS) {
         this->synchronize(std::numeric_limits<uint64_t>::max());
     }
 
-    this->residencyContainer.clear();
     this->heapContainer.clear();
 
     return ZE_RESULT_SUCCESS;

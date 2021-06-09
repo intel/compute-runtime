@@ -20,6 +20,7 @@ class InternalAllocationStorage;
 class MemoryManager;
 struct HardwareInfo;
 class OsContext;
+class CommandStreamReceiver;
 
 namespace ScratchSpaceConstants {
 constexpr size_t scratchSpaceOffsetFor64Bit = 4096u;
@@ -69,7 +70,7 @@ class ScratchSpaceController {
                                                        OsContext &osContext,
                                                        bool &stateBaseAddressDirty,
                                                        bool &vfeStateDirty,
-                                                       ResidencyContainer &residency) = 0;
+                                                       CommandStreamReceiver *csr) = 0;
 
   protected:
     MemoryManager *getMemoryManager() const;

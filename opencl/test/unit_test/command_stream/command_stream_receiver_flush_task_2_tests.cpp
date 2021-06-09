@@ -552,7 +552,7 @@ struct MockScratchController : public ScratchSpaceController {
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
                                                bool &vfeStateDirty,
-                                               NEO::ResidencyContainer &residency) override {
+                                               NEO::CommandStreamReceiver *csr) override {
     }
     void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override{};
 };

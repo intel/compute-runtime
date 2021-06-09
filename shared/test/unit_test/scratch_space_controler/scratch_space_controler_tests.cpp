@@ -37,8 +37,8 @@ class MockScratchSpaceControllerBase : public ScratchSpaceControllerBase {
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
                                                bool &vfeStateDirty,
-                                               NEO::ResidencyContainer &residency) override {
-        ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(heapsHelper, requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, vfeStateDirty, residencyContainer);
+                                               NEO::CommandStreamReceiver *csr) override {
+        ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(heapsHelper, requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, vfeStateDirty, csr);
         programBindlessSurfaceStateForScratchCalled = true;
     }
     ResidencyContainer residencyContainer;
@@ -79,7 +79,7 @@ HWTEST_F(ScratchComtrolerTests, givenCommandQueueWhenProgramHeapBindlessCalledTh
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
     HeapContainer heapContainer;
-    scratchController->programBindlessSurfaceStateForScratch(nullptr, 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, scratchController->residencyContainer);
+    scratchController->programBindlessSurfaceStateForScratch(nullptr, 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
 
     EXPECT_TRUE(static_cast<MockScratchSpaceControllerBase *>(scratchController.get())->programBindlessSurfaceStateForScratchCalled);
 }

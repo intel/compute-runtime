@@ -98,6 +98,6 @@ void ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(BindlessH
                                                                        OsContext &osContext,
                                                                        bool &stateBaseAddressDirty,
                                                                        bool &vfeStateDirty,
-                                                                       ResidencyContainer &residency) {
+                                                                       NEO::CommandStreamReceiver *csr) {
 }
 } // namespace NEO

@@ -217,6 +217,24 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainerIsEmptyThenMakeResidentWasNotCalled) {
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->setupContext(*neoDevice->getDefaultEngine().osContext);
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr.get(),
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    ResidencyContainer container;
+    commandQueue->submitBatchBuffer(0, container, nullptr);
+    EXPECT_EQ(csr->makeResidentCalledTimes, 0u);
+    commandQueue->destroy();
+}
+
 TEST_F(CommandQueueCreate, whenCommandQueueCreatedThenExpectLinearStreamInitializedWithExpectedSize) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -580,7 +598,19 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
 }
 
 HWTEST_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutingCommandListsThenWorkPartitionAllocationIsMadeResident) {
-    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    class MyCsrMock : public MockCsrHw2<FamilyType> {
+        using MockCsrHw2<FamilyType>::MockCsrHw2;
+
+      public:
+        void makeResident(GraphicsAllocation &graphicsAllocation) override {
+            if (expectedGa == &graphicsAllocation) {
+                expectedGAWasMadeResident = true;
+            }
+        }
+        GraphicsAllocation *expectedGa = nullptr;
+        bool expectedGAWasMadeResident = false;
+    };
+    MyCsrMock csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.createWorkPartitionAllocation(*neoDevice);
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
@@ -597,12 +627,13 @@ HWTEST_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutin
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, returnValue));
     auto commandListHandle = commandList->toHandle();
+    auto workPartitionAllocation = csr.getWorkPartitionAllocation();
+    csr.expectedGa = workPartitionAllocation;
     auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
 
-    auto workPartitionAllocation = csr.getWorkPartitionAllocation();
     ASSERT_NE(nullptr, workPartitionAllocation);
-    EXPECT_TRUE(isAllocationInResidencyContainer(csr, workPartitionAllocation));
+    EXPECT_TRUE(csr.expectedGAWasMadeResident);
 
     commandQueue->destroy();
 }
@@ -877,12 +908,11 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
     MockCommandQueue(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : L0::CommandQueueHw<gfxCoreFamily>(device, csr, desc) {}
     using BaseClass = ::L0::CommandQueueHw<gfxCoreFamily>;
 
+    using BaseClass::csr;
     using BaseClass::heapContainer;
-    using BaseClass::residencyContainer;
 
     NEO::HeapContainer mockHeapContainer;
-    void handleScratchSpace(NEO::ResidencyContainer &residency,
-                            NEO::HeapContainer &heapContainer,
+    void handleScratchSpace(NEO::HeapContainer &heapContainer,
                             NEO::ScratchSpaceController *scratchController,
                             bool &gsbaState, bool &frontEndState,
                             uint32_t perThreadScratchSpaceSize) override {
@@ -966,7 +996,7 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
 
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
-    EXPECT_EQ(0u, commandQueue->residencyContainer.size());
+    EXPECT_EQ(0u, commandQueue->csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, commandQueue->heapContainer.size());
 
     commandQueue->destroy();

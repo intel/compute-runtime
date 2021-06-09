@@ -42,7 +42,7 @@ class ScratchSpaceControllerBase : public ScratchSpaceController {
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
                                                bool &vfeStateDirty,
-                                               ResidencyContainer &residency) override;
+                                               NEO::CommandStreamReceiver *csr) override;
 
   protected:
     void createScratchSpaceAllocation();
