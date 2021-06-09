@@ -319,6 +319,13 @@ struct MockCommandList : public CommandList {
     ADDMETHOD_NOBASE(appendPipeControl, ze_result_t, ZE_RESULT_SUCCESS,
                      (void *dstPtr,
                       uint64_t value));
+    ADDMETHOD_NOBASE(appendWaitOnMemory, ze_result_t, ZE_RESULT_SUCCESS,
+                     (void *desc, void *ptr,
+                      uint32_t data, ze_event_handle_t hSignalEvent));
+
+    ADDMETHOD_NOBASE(appendWriteToMemory, ze_result_t, ZE_RESULT_SUCCESS,
+                     (void *desc, void *ptr,
+                      uint64_t data));
 
     ADDMETHOD_NOBASE(executeCommandListImmediate, ze_result_t, ZE_RESULT_SUCCESS,
                      (bool perforMigration));

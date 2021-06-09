@@ -135,6 +135,10 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendMIBBEnd() override;
     ze_result_t appendMINoop() override;
     ze_result_t appendPipeControl(void *dstPtr, uint64_t value) override;
+    ze_result_t appendWaitOnMemory(void *desc, void *ptr,
+                                   uint32_t data, ze_event_handle_t hSignalEvent) override;
+    ze_result_t appendWriteToMemory(void *desc, void *ptr,
+                                    uint64_t data) override;
 
     ze_result_t appendQueryKernelTimestamps(uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
                                             const size_t *pOffsets, ze_event_handle_t hSignalEvent,
