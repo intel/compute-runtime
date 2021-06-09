@@ -38,7 +38,7 @@ void Wddm::unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, V
     unregisterTrimNotification.Callback = callback;
     unregisterTrimNotification.Handle = trimCallbackHandle;
 
-    NTSTATUS status = getGdi()->unregisterTrimNotification(&unregisterTrimNotification);
+    [[maybe_unused]] NTSTATUS status = getGdi()->unregisterTrimNotification(&unregisterTrimNotification);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 }
 

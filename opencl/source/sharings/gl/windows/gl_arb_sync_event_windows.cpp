@@ -30,7 +30,7 @@ void destroySync(Gdi &gdi, D3DKMT_HANDLE sync) {
     }
     D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySyncInfo = {};
     destroySyncInfo.hSyncObject = sync;
-    NTSTATUS status = gdi.destroySynchronizationObject(&destroySyncInfo);
+    [[maybe_unused]] NTSTATUS status = gdi.destroySynchronizationObject(&destroySyncInfo);
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);
 }
 
@@ -39,7 +39,7 @@ void destroyEvent(OSInterface &osInterface, HANDLE event) {
         return;
     }
 
-    auto ret = SysCalls::closeHandle(event);
+    [[maybe_unused]] auto ret = SysCalls::closeHandle(event);
     DEBUG_BREAK_IF(TRUE != ret);
 }
 
