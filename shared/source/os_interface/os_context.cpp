@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/direct_submission_properties.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
@@ -35,7 +36,7 @@ bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) co
         return true;
     }
 
-    if (engineType == aub_stream::EngineType::ENGINE_BCS) {
+    if (engineType == aub_stream::EngineType::ENGINE_BCS && ApiSpecificConfig::ApiType::OCL == ApiSpecificConfig::getApiType()) {
         return true;
     }
 
