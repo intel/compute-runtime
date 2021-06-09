@@ -75,7 +75,7 @@ class DrmMemoryManager : public MemoryManager {
 
     static std::unique_ptr<MemoryManager> create(ExecutionEnvironment &executionEnvironment);
 
-    DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties);
+    DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr);
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);

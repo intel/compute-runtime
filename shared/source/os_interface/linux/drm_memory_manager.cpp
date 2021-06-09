@@ -593,7 +593,7 @@ BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle)
 
 GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
     if (isHostIpcAllocation) {
-        return createUSMHostAllocationFromSharedHandle(handle, properties);
+        return createUSMHostAllocationFromSharedHandle(handle, properties, false);
     }
 
     std::unique_lock<std::mutex> lock(mtx);
@@ -774,7 +774,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
         properties.gpuAddress = castToUint64(ptr);
 
         auto internalHandle = defaultAlloc->peekInternalHandle(this);
-        return createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties);
+        return createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, true);
     } else {
         return allocateGraphicsMemoryWithProperties(properties, ptr);
     }
