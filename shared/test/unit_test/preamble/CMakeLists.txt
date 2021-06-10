@@ -9,5 +9,5 @@ set(NEO_CORE_PREAMBLE_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_tests.cpp
 )
-set_property(GLOBAL PROPERTY NEO_CORE_PREAMBLE_TESTS ${NEO_CORE_PREAMBLE_TESTS})
+target_sources(${TARGET_NAME} PRIVATE ${NEO_CORE_PREAMBLE_TESTS})
 add_subdirectories()
