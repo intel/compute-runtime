@@ -232,6 +232,7 @@ DEFINE_GET_SET(IgcFeaturesAndWorkarounds, 1, FtrIoMmuPageFaulting, bool);
 DEFINE_GET_SET(IgcFeaturesAndWorkarounds, 1, FtrWddm2Svm, bool);
 DEFINE_GET_SET(IgcFeaturesAndWorkarounds, 1, FtrPooledEuEnabled, bool);
 DEFINE_GET_SET(IgcFeaturesAndWorkarounds, 1, FtrResourceStreamer, bool);
+DEFINE_GET_SET(IgcFeaturesAndWorkarounds, 2, MaxOCLParamSize, uint32_t);
 
 #undef DEFINE_GET_SET
 
