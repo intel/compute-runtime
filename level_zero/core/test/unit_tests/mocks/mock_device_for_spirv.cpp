@@ -17,13 +17,19 @@
 
 namespace L0 {
 namespace ult {
-template <bool useImagesBuiltins>
-ze_result_t MockDeviceForSpv<useImagesBuiltins>::createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
-                                                              ze_module_build_log_handle_t *buildLog, ModuleType type) {
+template <bool useImagesBuiltins, bool isStateless>
+ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
+                                                                           ze_module_build_log_handle_t *buildLog, ModuleType type) {
+    const std::string BUILTIN_COPYFILL("builtin_copyfill");
+    const std::string BUILTIN_IMAGES("builtin_images");
+    if ((wasModuleCreated) && ((useImagesBuiltins != useImagesBuiltins_prev) || (isStateless != isStateless_prev)))
+        wasModuleCreated = false;
+
     if (!wasModuleCreated) {
 
         std::string kernelName;
-        retrieveBinaryKernelFilename(kernelName, (useImagesBuiltins ? KernelBinaryHelper::BUILT_INS_WITH_IMAGES : KernelBinaryHelper::BUILT_INS) + "_", ".gen");
+
+        retrieveBinaryKernelFilename(kernelName, (useImagesBuiltins ? BUILTIN_IMAGES : BUILTIN_COPYFILL) + (isStateless ? "_stateless_" : "_"), ".gen");
 
         size_t size = 0;
         auto src = loadDataFromFile(
@@ -39,11 +45,14 @@ ze_result_t MockDeviceForSpv<useImagesBuiltins>::createModule(const ze_module_de
 
         mockModulePtr.reset(Module::create(this, &moduleDesc, moduleBuildLog, ModuleType::Builtin));
         wasModuleCreated = true;
+        useImagesBuiltins_prev = useImagesBuiltins;
+        isStateless_prev = isStateless;
     }
     *module = mockModulePtr.get();
     return ZE_RESULT_SUCCESS;
 }
-template class MockDeviceForSpv<true>;
-template class MockDeviceForSpv<false>;
+template class MockDeviceForSpv<true, false>;
+template class MockDeviceForSpv<false, false>;
+template class MockDeviceForSpv<false, true>;
 }; // namespace ult
 } // namespace L0

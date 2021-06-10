@@ -26,23 +26,20 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     }
     ~BuiltinFunctionsLibImpl() override {
         builtins->reset();
-        pageFaultBuiltin.reset();
         imageBuiltins->reset();
     }
 
     Kernel *getFunction(Builtin func) override;
+    Kernel *getStatelessFunction(Builtin func) override;
     Kernel *getImageFunction(ImageBuiltin func) override;
-    Kernel *getPageFaultFunction() override;
     void initBuiltinKernel(Builtin builtId) override;
+    void initStatelessBuiltinKernel(Builtin builtId) override;
     void initBuiltinImageKernel(ImageBuiltin func) override;
-    void initPageFaultFunction() override;
     MOCKABLE_VIRTUAL std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName);
 
   protected:
     std::unique_ptr<BuiltinData> builtins[static_cast<uint32_t>(Builtin::COUNT)];
     std::unique_ptr<BuiltinData> imageBuiltins[static_cast<uint32_t>(ImageBuiltin::COUNT)];
-    std::unique_ptr<BuiltinData> pageFaultBuiltin;
-
     Device *device;
     NEO::BuiltIns *builtInsLib;
 };

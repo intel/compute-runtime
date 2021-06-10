@@ -39,13 +39,18 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
             break;
         };
     }
+
+    void initStatelessBuiltinKernel(Builtin func) override {
+    }
     void initBuiltinImageKernel(ImageBuiltin func) override {
     }
 
-    void initPageFaultFunction() override {}
-
     Kernel *getFunction(Builtin func) override {
         return func == Builtin::QueryKernelTimestampsWithOffsets ? builtins[1]->func.get() : builtins[0]->func.get();
+    }
+
+    Kernel *getStatelessFunction(Builtin func) override {
+        return nullptr;
     }
 
     std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {

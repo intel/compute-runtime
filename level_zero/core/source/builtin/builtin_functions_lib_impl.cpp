@@ -73,6 +73,64 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
     builtins[builtId] = loadBuiltIn(builtin, builtinName);
 }
 
+void BuiltinFunctionsLibImpl::initStatelessBuiltinKernel(Builtin func) {
+    auto builtId = static_cast<uint32_t>(func);
+
+    const char *builtinName = nullptr;
+    NEO::EBuiltInOps::Type builtin;
+
+    switch (static_cast<Builtin>(builtId)) {
+    case Builtin::CopyBufferBytes:
+        builtinName = "copyBufferToBufferBytesSingle";
+        builtin = NEO::EBuiltInOps::CopyBufferToBufferStateless;
+        break;
+    case Builtin::CopyBufferRectBytes2d:
+        builtinName = "CopyBufferRectBytes2d";
+        builtin = NEO::EBuiltInOps::CopyBufferRect;
+        break;
+    case Builtin::CopyBufferRectBytes3d:
+        builtinName = "CopyBufferRectBytes3d";
+        builtin = NEO::EBuiltInOps::CopyBufferRect;
+        break;
+    case Builtin::CopyBufferToBufferMiddle:
+        builtinName = "CopyBufferToBufferMiddleRegion";
+        builtin = NEO::EBuiltInOps::CopyBufferToBufferStateless;
+        break;
+    case Builtin::CopyBufferToBufferSide:
+        builtinName = "CopyBufferToBufferSideRegion";
+        builtin = NEO::EBuiltInOps::CopyBufferToBufferStateless;
+        break;
+    case Builtin::FillBufferImmediate:
+        builtinName = "FillBufferImmediate";
+        builtin = NEO::EBuiltInOps::FillBufferStateless;
+        break;
+    case Builtin::FillBufferSSHOffset:
+        builtinName = "FillBufferSSHOffset";
+        builtin = NEO::EBuiltInOps::FillBufferStateless;
+        break;
+    case Builtin::FillBufferMiddle:
+        builtinName = "FillBufferMiddle";
+        builtin = NEO::EBuiltInOps::FillBufferStateless;
+        break;
+    case Builtin::FillBufferRightLeftover:
+        builtinName = "FillBufferRightLeftover";
+        builtin = NEO::EBuiltInOps::FillBufferStateless;
+        break;
+    case Builtin::QueryKernelTimestamps:
+        builtinName = "QueryKernelTimestamps";
+        builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
+        break;
+    case Builtin::QueryKernelTimestampsWithOffsets:
+        builtinName = "QueryKernelTimestampsWithOffsets";
+        builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
+        break;
+    default:
+        UNRECOVERABLE_IF(true);
+    };
+
+    builtins[builtId] = loadBuiltIn(builtin, builtinName);
+}
+
 void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
     auto builtId = static_cast<uint32_t>(func);
 
@@ -140,6 +198,16 @@ Kernel *BuiltinFunctionsLibImpl::getFunction(Builtin func) {
 
     return builtins[builtId]->func.get();
 }
+
+Kernel *BuiltinFunctionsLibImpl::getStatelessFunction(Builtin func) {
+    auto builtId = static_cast<uint32_t>(func);
+
+    if (builtins[builtId].get() == nullptr) {
+        initStatelessBuiltinKernel(func);
+    }
+
+    return builtins[builtId]->func.get();
+}
 Kernel *BuiltinFunctionsLibImpl::getImageFunction(ImageBuiltin func) {
     auto builtId = static_cast<uint32_t>(func);
 
@@ -148,18 +216,6 @@ Kernel *BuiltinFunctionsLibImpl::getImageFunction(ImageBuiltin func) {
     }
 
     return imageBuiltins[builtId]->func.get();
-}
-
-void BuiltinFunctionsLibImpl::initPageFaultFunction() {
-    pageFaultBuiltin = loadBuiltIn(NEO::EBuiltInOps::CopyBufferToBuffer, "CopyBufferToBufferSideRegion");
-}
-
-Kernel *BuiltinFunctionsLibImpl::getPageFaultFunction() {
-    if (pageFaultBuiltin.get() == nullptr) {
-        initPageFaultFunction();
-    }
-
-    return pageFaultBuiltin->func.get();
 }
 
 std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) {

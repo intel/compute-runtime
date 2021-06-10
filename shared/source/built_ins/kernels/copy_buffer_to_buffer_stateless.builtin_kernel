@@ -72,4 +72,42 @@ __kernel void CopyBufferToBufferRightLeftover(
     pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
 }
 
+__kernel void copyBufferToBufferBytesSingle(__global uchar *dst, const __global uchar *src) {
+    size_t gid = get_global_id(0);
+    dst[gid] = (uchar)(src[gid]);
+}
+
+__kernel void CopyBufferToBufferSideRegion(
+    __global uchar* pDst,
+    const __global uchar* pSrc,
+    ulong len,
+    ulong dstSshOffset, 
+    ulong srcSshOffset 
+    )
+{
+    size_t gid = get_global_id(0);
+    __global uchar* pDstWithOffset = (__global uchar*)((__global uchar*)pDst + dstSshOffset);
+    __global uchar* pSrcWithOffset = (__global uchar*)((__global uchar*)pSrc + srcSshOffset);
+    if (gid < len) {
+        pDstWithOffset[ gid ] = pSrcWithOffset[ gid ];
+    }
+}
+
+__kernel void CopyBufferToBufferMiddleRegion(
+    __global uint* pDst,
+    const __global uint* pSrc,
+    ulong elems,
+    ulong dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
+    ulong srcSshOffset // Offset needed in case ptr has been adjusted for SSH alignment
+    )
+{
+    size_t gid = get_global_id(0);
+    __global uint* pDstWithOffset = (__global uint*)((__global uchar*)pDst + dstSshOffset);
+    __global uint* pSrcWithOffset = (__global uint*)((__global uchar*)pSrc + srcSshOffset);
+    if (gid < elems) {
+        uint4 loaded = vload4(gid, pSrcWithOffset);
+        vstore4(loaded, gid, pDstWithOffset);
+    }
+}
+
 )==="

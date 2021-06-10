@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,12 @@
 namespace L0 {
 namespace ult {
 
-template <bool useImagesBuiltins>
+template <bool useImagesBuiltins, bool isStateless>
 class MockDeviceForSpv : public Mock<DeviceImp> {
   protected:
-    bool wasModuleCreated;
+    bool wasModuleCreated = false;
+    bool useImagesBuiltins_prev = false;
+    bool isStateless_prev = false;
     std::unique_ptr<L0::Module> mockModulePtr;
 
   public:

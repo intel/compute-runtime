@@ -28,6 +28,12 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
             builtins[builtId] = loadBuiltIn(NEO::EBuiltInOps::CopyBufferToBuffer, "copyBufferToBufferBytesSingle");
         }
     }
+    void initStatelessBuiltinKernel(L0::Builtin func) override {
+        auto builtId = static_cast<uint32_t>(func);
+        if (builtins[builtId].get() == nullptr) {
+            builtins[builtId] = loadBuiltIn(NEO::EBuiltInOps::CopyBufferToBufferStateless, "copyBufferToBufferBytesSingle");
+        }
+    }
     void initBuiltinImageKernel(L0::ImageBuiltin func) override {
         auto builtId = static_cast<uint32_t>(func);
         if (imageBuiltins[builtId].get() == nullptr) {
@@ -35,19 +41,16 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
         }
     }
 
-    void initPageFaultFunction() override {
-        pageFaultBuiltin = loadBuiltIn(NEO::EBuiltInOps::CopyBufferToBuffer, "CopyBufferToBufferSideRegion");
-    }
     std::unique_ptr<WhiteBox<::L0::Kernel>> dummyKernel;
     std::unique_ptr<Module> dummyModule;
 
     Kernel *getFunction(Builtin func) override {
         return dummyKernel.get();
     }
-    Kernel *getImageFunction(ImageBuiltin func) override {
+    Kernel *getStatelessFunction(Builtin func) override {
         return dummyKernel.get();
     }
-    Kernel *getPageFaultFunction() override {
+    Kernel *getImageFunction(ImageBuiltin func) override {
         return dummyKernel.get();
     }
 

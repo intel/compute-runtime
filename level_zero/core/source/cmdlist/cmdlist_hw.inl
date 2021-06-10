@@ -719,11 +719,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
                                                                                uint64_t size,
                                                                                uint64_t elementSize,
                                                                                Builtin builtin,
-                                                                               ze_event_handle_t hSignalEvent) {
+                                                                               ze_event_handle_t hSignalEvent,
+                                                                               bool isStateless) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
-    auto builtinFunction = device->getBuiltinFunctionsLib()->getFunction(builtin);
+    Kernel *builtinFunction = nullptr;
+
+    if (isStateless) {
+        builtinFunction = device->getBuiltinFunctionsLib()->getStatelessFunction(builtin);
+    } else {
+        builtinFunction = device->getBuiltinFunctionsLib()->getFunction(builtin);
+    }
 
     uint32_t groupSizeX = builtinFunction->getImmutableData()
                               ->getDescriptor()
@@ -853,35 +860,36 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                                                       NEO::GraphicsAllocation *srcptr,
                                                                       size_t size, bool flushHost) {
 
-    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
-    auto builtinFunction = device->getBuiltinFunctionsLib()->getPageFaultFunction();
+    size_t middleElSize = sizeof(uint32_t) * 4;
+    uintptr_t rightSize = size % middleElSize;
+    bool isStateless = false;
 
-    uint32_t groupSizeX = builtinFunction->getImmutableData()
-                              ->getDescriptor()
-                              .kernelAttributes.simdSize;
-    uint32_t groupSizeY = 1u;
-    uint32_t groupSizeZ = 1u;
-
-    if (builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ)) {
-        DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+    if (size >= 4ull * MemoryConstants::gigaByte) {
+        isStateless = true;
     }
 
-    auto dstValPtr = static_cast<uintptr_t>(dstptr->getGpuAddress());
-    auto srcValPtr = static_cast<uintptr_t>(srcptr->getGpuAddress());
-
-    builtinFunction->setArgBufferWithAlloc(0, dstValPtr, dstptr);
-    builtinFunction->setArgBufferWithAlloc(1, srcValPtr, srcptr);
-    builtinFunction->setArgumentValue(2, sizeof(size), &size);
-
-    uint32_t groups = (static_cast<uint32_t>(size) + ((groupSizeX)-1)) / (groupSizeX);
-    ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
-
-    ze_result_t ret = appendLaunchKernelWithParams(builtinFunction->toHandle(), &dispatchFuncArgs,
-                                                   nullptr, false, false, false);
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
+    uint64_t dstAddress = dstptr->getGpuAddress();
+    uint64_t srcAddress = srcptr->getGpuAddress();
+    ze_result_t ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
+                                                   dstptr, 0,
+                                                   reinterpret_cast<void *>(&srcAddress),
+                                                   srcptr, 0,
+                                                   size - rightSize,
+                                                   middleElSize,
+                                                   Builtin::CopyBufferToBufferMiddle,
+                                                   nullptr,
+                                                   isStateless);
+    if (ret == ZE_RESULT_SUCCESS && rightSize) {
+        appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
+                                     dstptr, size - rightSize,
+                                     reinterpret_cast<void *>(&srcAddress),
+                                     srcptr, size - rightSize,
+                                     rightSize, 1UL,
+                                     Builtin::CopyBufferToBufferSide,
+                                     nullptr,
+                                     isStateless);
     }
 
     if (flushHost) {
@@ -902,7 +910,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     uintptr_t start = reinterpret_cast<uintptr_t>(dstptr);
-
+    bool isStateless = false;
     size_t middleAlignment = MemoryConstants::cacheLineSize;
     size_t middleElSize = sizeof(uint32_t) * 4;
 
@@ -925,6 +933,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     auto dstAllocationStruct = getAlignedAllocation(this->device, dstptr, size);
     auto srcAllocationStruct = getAlignedAllocation(this->device, srcptr, size);
 
+    if (size >= 4ull * MemoryConstants::gigaByte) {
+        isStateless = true;
+    }
+
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents);
 
     if (ret) {
@@ -944,7 +956,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                           srcAllocationStruct.alloc, srcAllocationStruct.offset,
                                                           leftSize, 1UL,
                                                           Builtin::CopyBufferToBufferSide,
-                                                          hSignalEvent);
+                                                          hSignalEvent,
+                                                          isStateless);
     }
 
     if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
@@ -959,7 +972,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                           middleSizeBytes,
                                                           middleElSize,
                                                           Builtin::CopyBufferToBufferMiddle,
-                                                          hSignalEvent);
+                                                          hSignalEvent,
+                                                          isStateless);
     }
 
     if (ret == ZE_RESULT_SUCCESS && rightSize) {
@@ -973,7 +987,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                           srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset,
                                                           rightSize, 1UL,
                                                           Builtin::CopyBufferToBufferSide,
-                                                          hSignalEvent);
+                                                          hSignalEvent,
+                                                          isStateless);
     }
 
     appendEventForProfilingAllWalkers(hSignalEvent, false);
@@ -1197,6 +1212,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    ze_event_handle_t hSignalEvent,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents) {
+    bool isStateless = false;
 
     if (isCopyOnly()) {
         return appendBlitFill(ptr, pattern, patternSize, size, hSignalEvent, numWaitEvents, phWaitEvents);
@@ -1226,11 +1242,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     auto dstAllocation = this->getAlignedAllocation(this->device, ptr, size);
+    if (size >= 4ull * MemoryConstants::gigaByte) {
+        isStateless = true;
+    }
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     if (patternSize == 1) {
-        auto builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
+        Kernel *builtinFunction = nullptr;
 
+        if (isStateless) {
+            builtinFunction = device->getBuiltinFunctionsLib()->getStatelessFunction(Builtin::FillBufferImmediate);
+        } else {
+            builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
+        }
         uint32_t groupSizeX = builtinFunction->getImmutableData()->getDescriptor().kernelAttributes.simdSize;
         if (groupSizeX > static_cast<uint32_t>(size)) {
             groupSizeX = static_cast<uint32_t>(size);
@@ -1269,7 +1293,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             }
         }
     } else {
-        auto builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
+
+        Kernel *builtinFunction = nullptr;
+        if (isStateless) {
+            builtinFunction = device->getBuiltinFunctionsLib()->getStatelessFunction(Builtin::FillBufferMiddle);
+        } else {
+            builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
+        }
 
         size_t middleElSize = sizeof(uint32_t);
         size_t adjustedSize = size / middleElSize;
@@ -1325,7 +1355,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             uint32_t dstOffsetRemainder = groups * groupSizeX * static_cast<uint32_t>(middleElSize);
             uint64_t patternOffsetRemainder = (groupSizeX * groups & (patternSizeInEls - 1)) * middleElSize;
 
-            auto builtinFunctionRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
+            Kernel *builtinFunctionRemainder;
+            if (isStateless) {
+                builtinFunctionRemainder = device->getBuiltinFunctionsLib()->getStatelessFunction(Builtin::FillBufferRightLeftover);
+            } else {
+                builtinFunctionRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
+            }
+
             builtinFunctionRemainder->setGroupSize(groupRemainderSizeX, 1u, 1u);
             ze_group_count_t dispatchFuncArgs{1u, 1u, 1u};
 
