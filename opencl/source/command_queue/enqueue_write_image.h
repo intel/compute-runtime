@@ -54,7 +54,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize, true);
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&dstImgSurf, nullptr};
-    auto blitAllowed = blitEnqueueAllowed(cmdType) && blitEnqueueImageAllowed(origin, region);
+    auto blitAllowed = blitEnqueueAllowed(cmdType) && blitEnqueueImageAllowed(origin, region, *dstImage);
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);

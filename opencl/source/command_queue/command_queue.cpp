@@ -745,7 +745,7 @@ bool CommandQueue::blitEnqueuePreferred(cl_command_type cmdType, const BuiltinOp
     return true;
 }
 
-bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region) {
+bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) {
     const auto &hwInfo = device->getHardwareInfo();
     const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto blitEnqueuImageAllowed = hwHelper.isBlitterForImagesSupported(hwInfo);
@@ -755,6 +755,7 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
     }
 
     blitEnqueuImageAllowed &= (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
+    blitEnqueuImageAllowed &= !isMipMapped(image.getImageDesc());
     return blitEnqueuImageAllowed;
 }
 

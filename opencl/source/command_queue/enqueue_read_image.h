@@ -41,7 +41,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     const cl_event *eventWaitList,
     cl_event *event) {
     cl_command_type cmdType = CL_COMMAND_READ_IMAGE;
-    auto blitAllowed = blitEnqueueAllowed(cmdType) && blitEnqueueImageAllowed(origin, region);
+    auto blitAllowed = blitEnqueueAllowed(cmdType) && blitEnqueueImageAllowed(origin, region, *srcImage);
     auto &csr = getCommandStreamReceiver(blitAllowed);
 
     if (nullptr == mapAllocation) {

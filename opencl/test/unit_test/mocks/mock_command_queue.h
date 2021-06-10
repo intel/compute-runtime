@@ -194,7 +194,7 @@ class MockCommandQueue : public CommandQueue {
 
 template <typename GfxFamily>
 class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
-    typedef CommandQueueHw<GfxFamily> BaseClass;
+    using BaseClass = CommandQueueHw<GfxFamily>;
 
   public:
     using BaseClass::bcsEngine;
@@ -310,8 +310,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return BaseClass::isCacheFlushForBcsRequired();
     }
 
-    bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region) override {
-        isBlitEnqueueImageAllowed = BaseClass::blitEnqueueImageAllowed(origin, region);
+    bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) override {
+        isBlitEnqueueImageAllowed = BaseClass::blitEnqueueImageAllowed(origin, region, image);
         return isBlitEnqueueImageAllowed;
     }
 

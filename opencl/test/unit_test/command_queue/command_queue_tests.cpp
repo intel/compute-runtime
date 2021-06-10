@@ -37,6 +37,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
+#include "opencl/test/unit_test/mocks/mock_image.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
@@ -1313,6 +1314,8 @@ TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenR
     DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0);
+    MockImageBase image;
+    image.imageDesc.num_mip_levels = 1;
 
     auto maxBlitWidth = static_cast<size_t>(BlitterConstants::maxBlitWidth);
     auto maxBlitHeight = static_cast<size_t>(BlitterConstants::maxBlitHeight);
@@ -1329,8 +1332,25 @@ TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenR
     for (auto &[regionX, regionY, originX, originY, expectedResult] : testParams) {
         size_t region[3] = {regionX, regionY, 0};
         size_t origin[3] = {originX, originY, 0};
-        EXPECT_EQ(expectedResult, queue.blitEnqueueImageAllowed(origin, region));
+        EXPECT_EQ(expectedResult, queue.blitEnqueueImageAllowed(origin, region, image));
     }
+}
+
+TEST(CommandQueue, givenMipMappedImageWhenCallingBlitEnqueueImageAllowedThenCorrectResultIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
+    MockContext context{};
+    MockCommandQueue queue(&context, context.getDevice(0), 0);
+
+    size_t correctRegion[3] = {10u, 10u, 0};
+    size_t correctOrigin[3] = {1u, 1u, 0};
+    MockImageBase image;
+
+    image.imageDesc.num_mip_levels = 1;
+    EXPECT_TRUE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
+
+    image.imageDesc.num_mip_levels = 2;
+    EXPECT_FALSE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
 }
 
 TEST(CommandQueue, givenSupportForOperationWhenValidatingSupportThenReturnSuccess) {
