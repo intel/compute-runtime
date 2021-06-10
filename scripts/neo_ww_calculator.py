@@ -37,4 +37,4 @@ def convert_ww(epoch):
     return 0
 
 if __name__ == '__main__':
-    exit(convert_ww(int(sys.argv[1])))
+    sys.exit(convert_ww(int(sys.argv[1])))
