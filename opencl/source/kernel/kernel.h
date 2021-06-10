@@ -229,7 +229,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void patchBlocksSimdSize();
     bool usesSyncBuffer();
     void patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOffset);
-    void patchBindlessSurfaceStateOffsets(const Device &device, const size_t sshOffset);
+    void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
 
     GraphicsAllocation *getKernelReflectionSurface() const {
         return kernelReflectionSurface;

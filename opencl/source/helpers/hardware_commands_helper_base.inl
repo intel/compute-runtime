@@ -226,7 +226,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     const auto &kernelInfo = kernel.getKernelInfo();
 
     ssh.align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-    kernel.patchBindlessSurfaceStateOffsets(device, ssh.getUsed());
 
     auto dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh, kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries,
                                                                                                   kernel.getSurfaceStateHeap(), kernel.getSurfaceStateHeapSize(),

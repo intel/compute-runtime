@@ -361,115 +361,25 @@ class KernelImageArgTestBindless : public KernelImageArgTest {
     void SetUp() override {
         DebugManager.flags.UseBindlessMode.set(1);
         KernelImageArgTest::SetUp();
+
+        auto &img = pKernelInfo->argAsImg(0);
+        img.bindful = undefined<SurfaceStateHeapOffset>;
+        img.bindless = bindlessOffset;
     }
     void TearDown() override {
         KernelImageArgTest::TearDown();
     }
     DebugManagerStateRestore restorer;
+    const CrossThreadDataOffset bindlessOffset = 0x10;
 };
 
 HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), bindlessOffset));
+    *patchLocation = 0xdead;
 
-    for (uint32_t i = 0; i < pKernelInfo->getExplicitArgs().size(); i++) {
-        if (pKernelInfo->getArgDescriptorAt(i).is<ArgDescriptor::ArgTImage>()) {
-            auto &argAsImg = pKernelInfo->argAsImg(i);
-            argAsImg.bindless = 0x20 + static_cast<uint32_t>(0x20 * i);
-            auto crossThreadDataOffset = argAsImg.bindless;
-            auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-            *patchLocation = 0xdead;
+    cl_mem memObj = image.get();
+    pKernel->setArg(0, sizeof(memObj), &memObj);
 
-        } else if (pKernelInfo->getArgDescriptorAt(i).is<ArgDescriptor::ArgTValue>()) {
-            auto &argAsVal = pKernelInfo->argAsVal(i);
-            argAsVal.elements[0].offset = 0x20 + static_cast<uint32_t>(0x20 * i);
-            auto crossThreadDataOffset = argAsVal.elements[0].offset;
-            auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-            *patchLocation = 0xdead;
-        }
-    }
-
-    uint32_t sshOffset = 0x4000;
-    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
-
-    for (uint32_t i = 0; i < pKernelInfo->getExplicitArgs().size(); i++) {
-        if (pKernelInfo->getArgDescriptorAt(i).is<ArgDescriptor::ArgTImage>()) {
-            auto argAsImg = pKernelInfo->argAsImg(i);
-            auto crossThreadDataOffset = argAsImg.bindless;
-            auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-
-            DataPortBindlessSurfaceExtendedMessageDescriptor extMessageDesc;
-            extMessageDesc.setBindlessSurfaceOffset(sshOffset + argAsImg.bindful);
-            auto expectedOffset = extMessageDesc.getBindlessSurfaceOffsetToPatch();
-            EXPECT_EQ(expectedOffset, *patchLocation);
-        } else {
-            ASSERT_TRUE(pKernelInfo->getArgDescriptorAt(i).is<ArgDescriptor::ArgTValue>());
-            auto argAsVal = pKernelInfo->argAsVal(i);
-            auto crossThreadDataOffset = argAsVal.elements[0].offset;
-            auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-            EXPECT_EQ(0xdeadu, *patchLocation);
-        }
-    }
-}
-
-TEST_F(KernelImageArgTest, givenUsedBindlessImagesAndNonImageArgWhenPatchingSurfaceStateOffsetsThenCrossThreadDataIsNotPatched) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
-
-    for (uint32_t i = 0; i < pKernelInfo->getExplicitArgs().size(); i++) {
-        if (pKernelInfo->getArgDescriptorAt(i).is<ArgDescriptor::ArgTImage>()) {
-            auto &argAsImg = pKernelInfo->argAsImg(i);
-            argAsImg.bindless = 0x20 + static_cast<uint32_t>(0x20 * i);
-            auto crossThreadDataOffset = argAsImg.bindless;
-            auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-            *patchLocation = 0xdead;
-
-        } else if (pKernelInfo->getArgDescriptorAt(i).is<ArgDescriptor::ArgTValue>()) {
-            auto &argAsVal = pKernelInfo->argAsVal(i);
-            argAsVal.elements[0].offset = 0x20 + static_cast<uint32_t>(0x20 * i);
-            auto crossThreadDataOffset = argAsVal.elements[0].offset;
-            auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-            *patchLocation = 0xdead;
-        }
-    }
-
-    int nonImageIndex = 2;
-
-    uint32_t sshOffset = 0x4000;
-    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
-
-    auto crossThreadDataOffset = pKernelInfo->argAsVal(nonImageIndex).elements[0].offset;
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-
-    EXPECT_EQ(0xdeadu, *patchLocation);
-}
-
-TEST_F(KernelImageArgTest, givenNotUsedBindlessImagesAndImageArgWhenPatchingSurfaceStateOffsetsThenCrossThreadDataIsNotPatched) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(0);
-
-    for (uint32_t i = 0; i < pKernelInfo->getExplicitArgs().size(); i++) {
-        if (pKernelInfo->getArgDescriptorAt(i).is<ArgDescriptor::ArgTImage>()) {
-            auto &argAsImg = pKernelInfo->argAsImg(i);
-            argAsImg.bindless = 0x20 + static_cast<uint32_t>(0x20 * i);
-            auto crossThreadDataOffset = argAsImg.bindless;
-            auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-            *patchLocation = 0xdead;
-        } else if (pKernelInfo->getArgDescriptorAt(i).is<ArgDescriptor::ArgTValue>()) {
-            auto &argAsVal = pKernelInfo->argAsVal(i);
-            argAsVal.elements[0].offset = 0x20 + static_cast<uint32_t>(0x20 * i);
-            auto crossThreadDataOffset = argAsVal.elements[0].offset;
-            auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-            *patchLocation = 0xdead;
-        }
-    }
-
-    int nonImageIndex = 2;
-
-    uint32_t sshOffset = 0x4000;
-    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
-
-    auto crossThreadDataOffset = pKernelInfo->argAsVal(nonImageIndex).elements[0].offset;
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-
-    EXPECT_EQ(0xdeadu, *patchLocation);
+    EXPECT_NE(0xdeadu, *patchLocation);
 }

@@ -1387,8 +1387,12 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         }
 
         if (isValidOffset(argAsPtr.bindful)) {
-            auto surfaceState = ptrOffset(getSurfaceStateHeap(), argAsPtr.bindful);
-            buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, isAuxTranslationKernel, arg.isReadOnly(), pClDevice->getDevice(),
+            buffer->setArgStateful(ptrOffset(getSurfaceStateHeap(), argAsPtr.bindful), forceNonAuxMode,
+                                   disableL3, isAuxTranslationKernel, arg.isReadOnly(), pClDevice->getDevice(),
+                                   kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
+        } else if (isValidOffset(argAsPtr.bindless)) {
+            buffer->setArgStateful(patchBindlessSurfaceState(graphicsAllocation, argAsPtr.bindless), forceNonAuxMode,
+                                   disableL3, isAuxTranslationKernel, arg.isReadOnly(), pClDevice->getDevice(),
                                    kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
         }
 
@@ -1500,8 +1504,13 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
 
         storeKernelArg(argIndex, IMAGE_OBJ, clMemObj, argVal, argSize);
 
-        DEBUG_BREAK_IF(isUndefinedOffset(argAsImg.bindful));
-        auto surfaceState = ptrOffset(getSurfaceStateHeap(), argAsImg.bindful);
+        void *surfaceState = nullptr;
+        if (isValidOffset(argAsImg.bindless)) {
+            surfaceState = patchBindlessSurfaceState(pImage->getGraphicsAllocation(rootDeviceIndex), argAsImg.bindless);
+        } else {
+            DEBUG_BREAK_IF(isUndefinedOffset(argAsImg.bindful));
+            surfaceState = ptrOffset(getSurfaceStateHeap(), argAsImg.bindful);
+        }
 
         // Sets SS structure
         if (arg.getExtendedTypeInfo().isMediaImage) {
@@ -2556,31 +2565,15 @@ uint64_t Kernel::getKernelStartOffset(
 
     return kernelStartOffset;
 }
-
-void Kernel::patchBindlessSurfaceStateOffsets(const Device &device, const size_t sshOffset) {
-    const auto usesBindlessAddressingForBuffers = kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode == KernelDescriptor::BindlessAndStateless;
-    const auto usesBindlessAddressingForImages = kernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode == KernelDescriptor::Bindless;
-
-    auto &hardwareInfo = device.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-
-    for (const auto &arg : kernelInfo.kernelDescriptor.payloadMappings.explicitArgs) {
-        if (arg.is<ArgDescriptor::ArgTPointer>() && usesBindlessAddressingForBuffers) {
-            const auto &argAsPtr = arg.as<ArgDescPointer>();
-
-            auto patchLocation = ptrOffset(crossThreadData, argAsPtr.bindless);
-            auto bindlessOffset = static_cast<uint32_t>(ptrOffset(sshOffset, argAsPtr.bindful));
-            auto patchValue = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(bindlessOffset);
-            patchWithRequiredSize(patchLocation, sizeof(patchValue), patchValue);
-        } else if (arg.is<ArgDescriptor::ArgTImage>() && usesBindlessAddressingForImages) {
-            const auto &argAsImg = arg.as<ArgDescImage>();
-
-            auto patchLocation = ptrOffset(crossThreadData, argAsImg.bindless);
-            auto bindlessOffset = static_cast<uint32_t>(ptrOffset(sshOffset, argAsImg.bindful));
-            auto patchValue = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(bindlessOffset);
-            patchWithRequiredSize(patchLocation, sizeof(patchValue), patchValue);
-        }
-    }
+void *Kernel::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
+    auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    auto surfaceStateSize = hwHelper.getRenderSurfaceStateSize();
+    NEO::BindlessHeapsHelper *bindlessHeapsHelper = getDevice().getDevice().getBindlessHeapsHelper();
+    auto ssInHeap = bindlessHeapsHelper->allocateSSInHeap(surfaceStateSize, alloc, NEO::BindlessHeapsHelper::GLOBAL_SSH);
+    auto patchLocation = ptrOffset(getCrossThreadData(), bindless);
+    auto patchValue = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
+    patchWithRequiredSize(patchLocation, sizeof(patchValue), patchValue);
+    return ssInHeap.ssPtr;
 }
 
 void Kernel::setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo) {

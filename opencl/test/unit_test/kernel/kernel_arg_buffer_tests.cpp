@@ -466,90 +466,32 @@ class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
     void SetUp() {
         DebugManager.flags.UseBindlessMode.set(1);
         KernelArgBufferFixture::SetUp();
+
+        pBuffer = new MockBuffer();
+        ASSERT_NE(nullptr, pBuffer);
+
+        pKernelInfo->argAsPtr(0).bindless = bindlessOffset;
+        pKernelInfo->argAsPtr(0).stateless = undefined<CrossThreadDataOffset>;
+        pKernelInfo->argAsPtr(0).bindful = undefined<SurfaceStateHeapOffset>;
     }
     void TearDown() override {
+        delete pBuffer;
         KernelArgBufferFixture::TearDown();
     }
     DebugManagerStateRestore restorer;
+    MockBuffer *pBuffer;
+    const CrossThreadDataOffset bindlessOffset = 0x10;
 };
 
 typedef Test<KernelArgBufferFixtureBindless> KernelArgBufferTestBindless;
 
 HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
-
-    auto crossThreadDataOffset = pKernelInfo->argAsPtr(0).stateless;
-    pKernelInfo->argAsPtr(0).stateless = undefined<CrossThreadDataOffset>;
-    pKernelInfo->argAsPtr(0).bindless = crossThreadDataOffset;
-    pKernelInfo->argAsPtr(0).bindful = 64;
-
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), bindlessOffset));
     *patchLocation = 0xdead;
 
-    uint32_t sshOffset = 0x1000;
-    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
-    DataPortBindlessSurfaceExtendedMessageDescriptor extMessageDesc;
-    extMessageDesc.setBindlessSurfaceOffset(sshOffset + pKernelInfo->argAsPtr(0).bindful);
-    auto expectedOffset = extMessageDesc.getBindlessSurfaceOffsetToPatch();
-    EXPECT_EQ(expectedOffset, *patchLocation);
+    cl_mem memObj = pBuffer;
+    retVal = pKernel->setArg(0, sizeof(memObj), &memObj);
 
-    sshOffset = static_cast<uint32_t>(maxNBitValue(20) + 1) - 64;
-    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
-    extMessageDesc.setBindlessSurfaceOffset(sshOffset + pKernelInfo->argAsPtr(0).bindful);
-    expectedOffset = extMessageDesc.getBindlessSurfaceOffsetToPatch();
-    EXPECT_EQ(expectedOffset, *patchLocation);
-}
-
-TEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndNonBufferArgWhenPatchingSurfaceStateOffsetsThenCrossThreadDataIsNotPatched) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
-
-    auto crossThreadDataOffset = pKernelInfo->argAsPtr(0).stateless;
-    pKernelInfo->argAsPtr(0).stateless = undefined<CrossThreadDataOffset>;
-    pKernelInfo->argAsPtr(0).bindless = crossThreadDataOffset;
-    pKernelInfo->argAsPtr(0).bindful = 64;
-
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-    *patchLocation = 0xdead;
-
-    uint32_t sshOffset = 4000;
-    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
-    EXPECT_EQ(0xdeadu, *patchLocation);
-}
-
-TEST_F(KernelArgBufferTest, givenNotUsedBindlessBuffersAndBufferArgWhenPatchingSurfaceStateOffsetsThenCrossThreadDataIsNotPatched) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(0);
-
-    auto crossThreadDataOffset = pKernelInfo->argAsPtr(0).stateless;
-    pKernelInfo->argAsPtr(0).stateless = undefined<CrossThreadDataOffset>;
-    pKernelInfo->argAsPtr(0).bindless = crossThreadDataOffset;
-    pKernelInfo->argAsPtr(0).bindful = 64;
-
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-    *patchLocation = 0xdead;
-
-    uint32_t sshOffset = 4000;
-    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
-    EXPECT_EQ(0xdeadu, *patchLocation);
-}
-
-HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersAndBuiltinKernelWhenPatchingSurfaceStateOffsetsThenOffsetIsPatched) {
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
-
-    auto crossThreadDataOffset = pKernelInfo->argAsPtr(0).stateless;
-    pKernelInfo->argAsPtr(0).stateless = undefined<CrossThreadDataOffset>;
-    pKernelInfo->argAsPtr(0).bindless = crossThreadDataOffset;
-    pKernelInfo->argAsPtr(0).bindful = 64;
-
-    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
-    *patchLocation = 0xdead;
-
-    pKernel->isBuiltIn = true;
-
-    uint32_t sshOffset = 0x1000;
-    pKernel->patchBindlessSurfaceStateOffsets(*pDevice, sshOffset);
     EXPECT_NE(0xdeadu, *patchLocation);
 }
