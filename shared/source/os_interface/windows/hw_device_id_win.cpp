@@ -12,7 +12,7 @@
 namespace NEO {
 
 HwDeviceIdWddm::~HwDeviceIdWddm() {
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    [[maybe_unused]] NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CLOSEADAPTER CloseAdapter = {0};
     CloseAdapter.hAdapter = adapter;
     status = static_cast<OsEnvironmentWin *>(osEnvironment)->gdi->closeAdapter(&CloseAdapter);

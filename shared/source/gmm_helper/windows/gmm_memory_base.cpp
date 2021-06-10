@@ -19,12 +19,12 @@ GmmMemoryBase::GmmMemoryBase(GmmClientContext *gmmClientContext) : clientContext
 bool GmmMemoryBase::configureDevice(GMM_ESCAPE_HANDLE hAdapter,
                                     GMM_ESCAPE_HANDLE hDevice,
                                     GMM_ESCAPE_FUNC_TYPE pfnEscape,
-                                    GMM_GFX_SIZE_T SvmSize,
-                                    BOOLEAN BDWL3Coherency,
+                                    GMM_GFX_SIZE_T svmSize,
+                                    BOOLEAN bdwL3Coherency,
                                     uintptr_t &minAddress,
                                     bool obtainMinAddress) {
     minAddress = windowsMinAddress;
-    auto retVal = configureDeviceAddressSpace(hAdapter, hDevice, pfnEscape, SvmSize, BDWL3Coherency);
+    auto retVal = configureDeviceAddressSpace(hAdapter, hDevice, pfnEscape, svmSize, bdwL3Coherency);
     if (obtainMinAddress) {
         minAddress = getInternalGpuVaRangeLimit();
     }

@@ -194,12 +194,13 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
 
         DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, residencyData.resident[osContextId] ? "resident" : "not resident");
 
-        UNRECOVERABLE_IF(allocation->fragmentsStorage.fragmentCount > maxFragments);
+        const auto fragmentCount = allocation->fragmentsStorage.fragmentCount;
+        UNRECOVERABLE_IF(fragmentCount > maxFragments);
         if (allocation->getTrimCandidateListPosition(this->osContextId) != trimListUnusedPosition) {
             DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, "on trimCandidateList");
             this->removeFromTrimCandidateList(allocation, false);
         } else {
-            for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
+            for (uint32_t allocationId = 0; allocationId < fragmentCount; allocationId++) {
                 fragmentResidency[allocationId] = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency->resident[osContextId];
                 DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "fragment handle =",
                         static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage)->handle,
@@ -207,8 +208,8 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
             }
         }
 
-        if (allocation->fragmentsStorage.fragmentCount > 0) {
-            for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
+        if (fragmentCount > 0) {
+            for (uint32_t allocationId = 0; allocationId < fragmentCount; allocationId++) {
                 if (!fragmentResidency[allocationId]) {
                     handlesForResidency.push_back(static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage)->handle);
                     totalHandlesCount++;

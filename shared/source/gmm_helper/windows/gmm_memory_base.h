@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,14 +19,14 @@ class GmmMemoryBase {
     MOCKABLE_VIRTUAL bool configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                       GMM_ESCAPE_HANDLE hDevice,
                                                       GMM_ESCAPE_FUNC_TYPE pfnEscape,
-                                                      GMM_GFX_SIZE_T SvmSize,
-                                                      BOOLEAN BDWL3Coherency);
+                                                      GMM_GFX_SIZE_T svmSize,
+                                                      BOOLEAN bdwL3Coherency);
 
     bool configureDevice(GMM_ESCAPE_HANDLE hAdapter,
                          GMM_ESCAPE_HANDLE hDevice,
                          GMM_ESCAPE_FUNC_TYPE pfnEscape,
-                         GMM_GFX_SIZE_T SvmSize,
-                         BOOLEAN BDWL3Coherency,
+                         GMM_GFX_SIZE_T svmSize,
+                         BOOLEAN bdwL3Coherency,
                          uintptr_t &minAddress,
                          bool obtainMinAddress);
 

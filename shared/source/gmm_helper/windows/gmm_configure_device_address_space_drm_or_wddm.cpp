@@ -16,8 +16,8 @@ namespace NEO {
 bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                 GMM_ESCAPE_HANDLE hDevice,
                                                 GMM_ESCAPE_FUNC_TYPE pfnEscape,
-                                                GMM_GFX_SIZE_T SvmSize,
-                                                BOOLEAN BDWL3Coherency) {
+                                                GMM_GFX_SIZE_T svmSize,
+                                                BOOLEAN bdwL3Coherency) {
     return true;
 }
 

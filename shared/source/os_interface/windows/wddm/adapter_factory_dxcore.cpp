@@ -76,7 +76,7 @@ bool DxCoreAdapterFactory::getAdapterDesc(uint32_t ordinal, AdapterDesc &outAdap
     }
 
     IDXCoreAdapter *adapter = nullptr;
-    HRESULT hr = adaptersInSnapshot->GetAdapter(ordinal, __uuidof(adapter), (void **)&adapter);
+    [[maybe_unused]] HRESULT hr = adaptersInSnapshot->GetAdapter(ordinal, __uuidof(adapter), (void **)&adapter);
     if ((hr != S_OK) || (adapter == nullptr)) {
         return false;
     }
