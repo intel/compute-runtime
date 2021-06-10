@@ -159,6 +159,9 @@ struct EventPool : _ze_event_pool_handle_t {
     virtual uint32_t getEventSize() = 0;
 
     bool isEventPoolTimestampFlagSet() {
+        if (NEO::DebugManager.flags.DisableTimestampEvents.get()) {
+            return false;
+        }
         if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
             return true;
         }

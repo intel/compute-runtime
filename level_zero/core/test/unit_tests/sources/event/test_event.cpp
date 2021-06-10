@@ -141,6 +141,41 @@ TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelT
     EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }
 
+TEST_F(EventPoolCreate, givenEventPoolCreatedWithTimestampFlagThenHasTimestampEventsReturnsTrue) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+    EventPoolImp *eventPoolImp = static_cast<EventPoolImp *>(eventPool.get());
+    EXPECT_TRUE(eventPoolImp->isEventPoolTimestampFlagSet());
+}
+
+TEST_F(EventPoolCreate, givenEventPoolCreatedWithNoTimestampFlagThenHasTimestampEventsReturnsFalse) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+    EventPoolImp *eventPoolImp = static_cast<EventPoolImp *>(eventPool.get());
+    EXPECT_FALSE(eventPoolImp->isEventPoolTimestampFlagSet());
+}
+
+TEST_F(EventPoolCreate, givenEventPoolCreatedWithTimestampFlagAndDisableTimestampEventsFlagThenHasTimestampEventsReturnsFalse) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.DisableTimestampEvents.set(1);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+    EventPoolImp *eventPoolImp = static_cast<EventPoolImp *>(eventPool.get());
+    EXPECT_FALSE(eventPoolImp->isEventPoolTimestampFlagSet());
+}
+
 TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsDeviceCommandStreamReceiver) {
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
