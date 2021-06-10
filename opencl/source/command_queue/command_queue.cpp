@@ -756,6 +756,8 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
 
     blitEnqueuImageAllowed &= (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
     blitEnqueuImageAllowed &= !isMipMapped(image.getImageDesc());
+    blitEnqueuImageAllowed &= !IsNV12Image(&image.getImageFormat());
+
     return blitEnqueuImageAllowed;
 }
 

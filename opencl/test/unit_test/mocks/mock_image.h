@@ -17,6 +17,7 @@ namespace NEO {
 
 struct MockImageBase : public Image {
     using Image::imageDesc;
+    using Image::imageFormat;
     MockGraphicsAllocation *graphicsAllocation = nullptr;
 
     MockImageBase() : Image(
