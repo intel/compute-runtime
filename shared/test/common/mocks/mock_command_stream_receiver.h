@@ -33,6 +33,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::newResources;
+    using CommandStreamReceiver::osContext;
     using CommandStreamReceiver::preemptionAllocation;
     using CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using CommandStreamReceiver::tagAddress;

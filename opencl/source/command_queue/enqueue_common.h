@@ -589,6 +589,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForMarker(CommandQueue &commandQu
 
     HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
     HardwareInterface<GfxFamily>::dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+    getGpgpuCommandStreamReceiver().makeResident(*hwTimeStamps->getBaseGraphicsAllocation());
 }
 
 template <typename GfxFamily>

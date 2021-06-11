@@ -176,6 +176,42 @@ HWTEST_F(CommandQueueHwTest, WhenEnqueuingBlockedMapUnmapOperationThenVirtualEve
     pHwQ->virtualEvent = nullptr;
 }
 
+class MockCommandStreamReceiverWithFailingFlushBatchedSubmission : public MockCommandStreamReceiver {
+  public:
+    using MockCommandStreamReceiver::MockCommandStreamReceiver;
+    bool flushBatchedSubmissions() override {
+        return false;
+    }
+};
+
+template <typename GfxFamily>
+struct MockCommandQueueHwWithOverwrittenCsr : public CommandQueueHw<GfxFamily> {
+    using CommandQueueHw<GfxFamily>::CommandQueueHw;
+    MockCommandStreamReceiverWithFailingFlushBatchedSubmission *csr;
+    CommandStreamReceiver &getGpgpuCommandStreamReceiver() const override { return *csr; }
+};
+
+HWTEST_F(CommandQueueHwTest, GivenCommandQueueWhenProcessDispatchForMarkerCalledThenEventAllocationIsMadeResident) {
+
+    pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+    MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
+    auto myCmdQ = std::make_unique<MockCommandQueueHwWithOverwrittenCsr<FamilyType>>(pCmdQ->getContextPtr(), pClDevice, nullptr, false);
+    myCmdQ->csr = &csr;
+    csr.osContext = &pCmdQ->getCommandStreamReceiver(false).getOsContext();
+    std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
+    ASSERT_NE(nullptr, event);
+
+    GraphicsAllocation *allocation = event->getHwTimeStampNode()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
+    ASSERT_NE(nullptr, allocation);
+    cl_event a = event.get();
+    EventsRequest eventsRequest(0, nullptr, &a);
+    uint32_t streamBuffer[100] = {};
+    NEO::LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
+    CsrDependencies deps = {};
+    myCmdQ->processDispatchForMarker(*myCmdQ.get(), &linearStream, eventsRequest, deps);
+    EXPECT_GT(csr.makeResidentCalledTimes, 0u);
+}
+
 HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnTrue) {
     auto pHwQ = static_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
 
@@ -1365,21 +1401,6 @@ HWTEST_F(CommandQueueHwTest, givenSizeWhenForceStatelessIsCalledThenCorrectValue
     uint64_t smallSize = bigSize - 1;
     EXPECT_FALSE(pCmdQHw->forceStateless(static_cast<size_t>(smallSize)));
 }
-
-class MockCommandStreamReceiverWithFailingFlushBatchedSubmission : public MockCommandStreamReceiver {
-  public:
-    using MockCommandStreamReceiver::MockCommandStreamReceiver;
-    bool flushBatchedSubmissions() override {
-        return false;
-    }
-};
-
-template <typename GfxFamily>
-struct MockCommandQueueHwWithOverwrittenCsr : public CommandQueueHw<GfxFamily> {
-    using CommandQueueHw<GfxFamily>::CommandQueueHw;
-    MockCommandStreamReceiverWithFailingFlushBatchedSubmission *csr;
-    CommandStreamReceiver &getGpgpuCommandStreamReceiver() const override { return *csr; }
-};
 
 HWTEST_F(CommandQueueHwTest, givenFlushWhenFlushBatchedSubmissionsFailsThenErrorIsRetured) {
     MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, pClDevice, nullptr, false);
