@@ -64,13 +64,15 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqeueing
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(*pKernel->localWorkSizeX, 8u);
-    EXPECT_EQ(*pKernel->localWorkSizeY, 2u);
-    EXPECT_EQ(*pKernel->localWorkSizeZ, 2u);
+    auto localWorkSizeVal = pKernel->getLocalWorkSizeValues();
+    EXPECT_EQ(8u, *localWorkSizeVal[0]);
+    EXPECT_EQ(2u, *localWorkSizeVal[1]);
+    EXPECT_EQ(2u, *localWorkSizeVal[2]);
 
-    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeX, 8u);
-    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeY, 2u);
-    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeZ, 2u);
+    auto enqueuedLocalWorkSize = pKernel->getEnqueuedLocalWorkSizeValues();
+    EXPECT_EQ(8u, *enqueuedLocalWorkSize[0]);
+    EXPECT_EQ(2u, *enqueuedLocalWorkSize[1]);
+    EXPECT_EQ(2u, *enqueuedLocalWorkSize[2]);
 }
 
 // Fully specified
@@ -91,13 +93,15 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenRequiredWorkGroupSizeWhenEnqeueingKer
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeX, 8u);
-    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeY, 2u);
-    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeZ, 2u);
+    auto localWorkSizeVal = pKernel->getLocalWorkSizeValues();
+    EXPECT_EQ(8u, *localWorkSizeVal[0]);
+    EXPECT_EQ(2u, *localWorkSizeVal[1]);
+    EXPECT_EQ(2u, *localWorkSizeVal[2]);
 
-    EXPECT_EQ(*pKernel->localWorkSizeX, 8u);
-    EXPECT_EQ(*pKernel->localWorkSizeY, 2u);
-    EXPECT_EQ(*pKernel->localWorkSizeZ, 2u);
+    auto enqueuedLocalWorkSize = pKernel->getEnqueuedLocalWorkSizeValues();
+    EXPECT_EQ(8u, *enqueuedLocalWorkSize[0]);
+    EXPECT_EQ(2u, *enqueuedLocalWorkSize[1]);
+    EXPECT_EQ(2u, *enqueuedLocalWorkSize[2]);
 }
 
 // Underspecified.  Won't permit.

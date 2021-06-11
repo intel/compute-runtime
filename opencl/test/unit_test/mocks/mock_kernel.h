@@ -103,18 +103,9 @@ class MockKernel : public Kernel {
     using Kernel::auxTranslationRequired;
     using Kernel::containsStatelessWrites;
     using Kernel::dataParameterSimdSize;
-    using Kernel::enqueuedLocalWorkSizeX;
-    using Kernel::enqueuedLocalWorkSizeY;
-    using Kernel::enqueuedLocalWorkSizeZ;
     using Kernel::executionType;
     using Kernel::getDevice;
     using Kernel::getHardwareInfo;
-    using Kernel::globalWorkOffsetX;
-    using Kernel::globalWorkOffsetY;
-    using Kernel::globalWorkOffsetZ;
-    using Kernel::globalWorkSizeX;
-    using Kernel::globalWorkSizeY;
-    using Kernel::globalWorkSizeZ;
     using Kernel::hasDirectStatelessAccessToHostMemory;
     using Kernel::hasIndirectStatelessAccessToHostMemory;
     using Kernel::isSchedulerKernel;
@@ -126,18 +117,9 @@ class MockKernel : public Kernel {
     using Kernel::kernelSubmissionMap;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
-    using Kernel::localWorkSizeX;
-    using Kernel::localWorkSizeX2;
-    using Kernel::localWorkSizeY;
-    using Kernel::localWorkSizeY2;
-    using Kernel::localWorkSizeZ;
-    using Kernel::localWorkSizeZ2;
     using Kernel::maxKernelWorkGroupSize;
     using Kernel::maxWorkGroupSizeForCrossThreadData;
     using Kernel::numberOfBindingTableStates;
-    using Kernel::numWorkGroupsX;
-    using Kernel::numWorkGroupsY;
-    using Kernel::numWorkGroupsZ;
     using Kernel::parentEventOffset;
     using Kernel::patchBufferOffset;
     using Kernel::patchWithImplicitSurface;
@@ -147,7 +129,6 @@ class MockKernel : public Kernel {
     using Kernel::svmAllocationsRequireCacheFlush;
     using Kernel::threadArbitrationPolicy;
     using Kernel::unifiedMemoryControls;
-    using Kernel::workDim;
 
     using Kernel::slmSizes;
     using Kernel::slmTotalSize;
@@ -558,24 +539,6 @@ class MockParentKernel : public Kernel {
 
 class MockSchedulerKernel : public SchedulerKernel {
   public:
-    using Kernel::enqueuedLocalWorkSizeX;
-    using Kernel::enqueuedLocalWorkSizeY;
-    using Kernel::enqueuedLocalWorkSizeZ;
-    using Kernel::globalWorkOffsetX;
-    using Kernel::globalWorkOffsetY;
-    using Kernel::globalWorkOffsetZ;
-    using Kernel::globalWorkSizeX;
-    using Kernel::globalWorkSizeY;
-    using Kernel::globalWorkSizeZ;
-    using Kernel::localWorkSizeX;
-    using Kernel::localWorkSizeX2;
-    using Kernel::localWorkSizeY;
-    using Kernel::localWorkSizeY2;
-    using Kernel::localWorkSizeZ;
-    using Kernel::localWorkSizeZ2;
-    using Kernel::numWorkGroupsX;
-    using Kernel::numWorkGroupsY;
-    using Kernel::numWorkGroupsZ;
     MockSchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg) : SchedulerKernel(programArg, kernelInfoArg, clDeviceArg){};
 };
 

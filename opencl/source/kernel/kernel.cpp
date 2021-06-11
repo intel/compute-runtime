@@ -151,7 +151,6 @@ cl_int Kernel::initialize() {
     auto &hwInfo = pClDevice->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto &kernelDescriptor = kernelInfo.kernelDescriptor;
-    const auto &dispatchTraits = kernelDescriptor.payloadMappings.dispatchTraits;
     const auto &implicitArgs = kernelDescriptor.payloadMappings.implicitArgs;
     const auto &explicitArgs = kernelDescriptor.payloadMappings.explicitArgs;
     auto maxSimdSize = kernelInfo.getMaxSimdSize();
@@ -175,41 +174,6 @@ cl_int Kernel::initialize() {
         }
 
         auto crossThread = reinterpret_cast<uint32_t *>(crossThreadData);
-        auto setDispatchTraitsIfValidOffset = [&](uint32_t *&crossThreadData, NEO::CrossThreadDataOffset offset) {
-            if (isValidOffset(offset)) {
-                crossThreadData = ptrOffset(crossThread, offset);
-            }
-        };
-        setDispatchTraitsIfValidOffset(globalWorkOffsetX, dispatchTraits.globalWorkOffset[0]);
-        setDispatchTraitsIfValidOffset(globalWorkOffsetY, dispatchTraits.globalWorkOffset[1]);
-        setDispatchTraitsIfValidOffset(globalWorkOffsetZ, dispatchTraits.globalWorkOffset[2]);
-
-        setDispatchTraitsIfValidOffset(localWorkSizeX, dispatchTraits.localWorkSize[0]);
-        setDispatchTraitsIfValidOffset(localWorkSizeY, dispatchTraits.localWorkSize[1]);
-        setDispatchTraitsIfValidOffset(localWorkSizeZ, dispatchTraits.localWorkSize[2]);
-
-        setDispatchTraitsIfValidOffset(localWorkSizeX2, dispatchTraits.localWorkSize2[0]);
-        setDispatchTraitsIfValidOffset(localWorkSizeY2, dispatchTraits.localWorkSize2[1]);
-        setDispatchTraitsIfValidOffset(localWorkSizeZ2, dispatchTraits.localWorkSize2[2]);
-
-        setDispatchTraitsIfValidOffset(globalWorkSizeX, dispatchTraits.globalWorkSize[0]);
-        setDispatchTraitsIfValidOffset(globalWorkSizeY, dispatchTraits.globalWorkSize[1]);
-        setDispatchTraitsIfValidOffset(globalWorkSizeZ, dispatchTraits.globalWorkSize[2]);
-
-        setDispatchTraitsIfValidOffset(globalWorkOffsetX, dispatchTraits.globalWorkOffset[0]);
-        setDispatchTraitsIfValidOffset(globalWorkOffsetY, dispatchTraits.globalWorkOffset[1]);
-        setDispatchTraitsIfValidOffset(globalWorkOffsetZ, dispatchTraits.globalWorkOffset[2]);
-
-        setDispatchTraitsIfValidOffset(enqueuedLocalWorkSizeX, dispatchTraits.enqueuedLocalWorkSize[0]);
-        setDispatchTraitsIfValidOffset(enqueuedLocalWorkSizeY, dispatchTraits.enqueuedLocalWorkSize[1]);
-        setDispatchTraitsIfValidOffset(enqueuedLocalWorkSizeZ, dispatchTraits.enqueuedLocalWorkSize[2]);
-
-        setDispatchTraitsIfValidOffset(numWorkGroupsX, dispatchTraits.numWorkGroups[0]);
-        setDispatchTraitsIfValidOffset(numWorkGroupsY, dispatchTraits.numWorkGroups[1]);
-        setDispatchTraitsIfValidOffset(numWorkGroupsZ, dispatchTraits.numWorkGroups[2]);
-
-        setDispatchTraitsIfValidOffset(workDim, dispatchTraits.workDim);
-
         auto setArgsIfValidOffset = [&](uint32_t *&crossThreadData, NEO::CrossThreadDataOffset offset, uint32_t value) {
             if (isValidOffset(offset)) {
                 crossThreadData = ptrOffset(crossThread, offset);
@@ -2646,48 +2610,49 @@ const HardwareInfo &Kernel::getHardwareInfo() const {
     return getDevice().getHardwareInfo();
 }
 
+void Kernel::setWorkDim(uint32_t workDim) {
+    patchNonPointer(getCrossThreadDataRef(), getDescriptor().payloadMappings.dispatchTraits.workDim, workDim);
+}
+
 void Kernel::setGlobalWorkOffsetValues(uint32_t globalWorkOffsetX, uint32_t globalWorkOffsetY, uint32_t globalWorkOffsetZ) {
-    *this->globalWorkOffsetX = globalWorkOffsetX;
-    *this->globalWorkOffsetY = globalWorkOffsetY;
-    *this->globalWorkOffsetZ = globalWorkOffsetZ;
+    patchVecNonPointer(getCrossThreadDataRef(),
+                       getDescriptor().payloadMappings.dispatchTraits.globalWorkOffset,
+                       {globalWorkOffsetX, globalWorkOffsetY, globalWorkOffsetZ});
 }
 
 void Kernel::setGlobalWorkSizeValues(uint32_t globalWorkSizeX, uint32_t globalWorkSizeY, uint32_t globalWorkSizeZ) {
-    *this->globalWorkSizeX = globalWorkSizeX;
-    *this->globalWorkSizeY = globalWorkSizeY;
-    *this->globalWorkSizeZ = globalWorkSizeZ;
+    patchVecNonPointer(getCrossThreadDataRef(),
+                       getDescriptor().payloadMappings.dispatchTraits.globalWorkSize,
+                       {globalWorkSizeX, globalWorkSizeY, globalWorkSizeZ});
 }
 
 void Kernel::setLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ) {
-    *this->localWorkSizeX = localWorkSizeX;
-    *this->localWorkSizeY = localWorkSizeY;
-    *this->localWorkSizeZ = localWorkSizeZ;
+    patchVecNonPointer(getCrossThreadDataRef(),
+                       getDescriptor().payloadMappings.dispatchTraits.localWorkSize,
+                       {localWorkSizeX, localWorkSizeY, localWorkSizeZ});
 }
 
 void Kernel::setLocalWorkSize2Values(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ) {
-    *this->localWorkSizeX2 = localWorkSizeX;
-    *this->localWorkSizeY2 = localWorkSizeY;
-    *this->localWorkSizeZ2 = localWorkSizeZ;
+    patchVecNonPointer(getCrossThreadDataRef(),
+                       getDescriptor().payloadMappings.dispatchTraits.localWorkSize2,
+                       {localWorkSizeX, localWorkSizeY, localWorkSizeZ});
 }
 
 void Kernel::setEnqueuedLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ) {
-    *this->enqueuedLocalWorkSizeX = localWorkSizeX;
-    *this->enqueuedLocalWorkSizeY = localWorkSizeY;
-    *this->enqueuedLocalWorkSizeZ = localWorkSizeZ;
-}
-
-bool Kernel::isLocalWorkSize2Patched() {
-    return localWorkSizeX2 != &dummyPatchLocation;
+    patchVecNonPointer(getCrossThreadDataRef(),
+                       getDescriptor().payloadMappings.dispatchTraits.enqueuedLocalWorkSize,
+                       {localWorkSizeX, localWorkSizeY, localWorkSizeZ});
 }
 
 void Kernel::setNumWorkGroupsValues(uint32_t numWorkGroupsX, uint32_t numWorkGroupsY, uint32_t numWorkGroupsZ) {
-    *this->numWorkGroupsX = numWorkGroupsX;
-    *this->numWorkGroupsY = numWorkGroupsY;
-    *this->numWorkGroupsZ = numWorkGroupsZ;
+    patchVecNonPointer(getCrossThreadDataRef(),
+                       getDescriptor().payloadMappings.dispatchTraits.numWorkGroups,
+                       {numWorkGroupsX, numWorkGroupsY, numWorkGroupsZ});
 }
 
-void Kernel::setWorkDim(uint32_t workDim) {
-    *this->workDim = workDim;
+bool Kernel::isLocalWorkSize2Patchable() {
+    const auto &localWorkSize2 = getDescriptor().payloadMappings.dispatchTraits.localWorkSize2;
+    return isValidOffset(localWorkSize2[0]) && isValidOffset(localWorkSize2[1]) && isValidOffset(localWorkSize2[2]);
 }
 
 uint32_t Kernel::getMaxKernelWorkGroupSize() const {

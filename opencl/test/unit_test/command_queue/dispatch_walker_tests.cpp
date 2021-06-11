@@ -248,7 +248,7 @@ HWTEST_F(DispatchWalkerTest, GivenDefaultLwsAlgorithmWhenDispatchingWalkerThenDi
             nullptr,
             CL_COMMAND_NDRANGE_KERNEL);
 
-        EXPECT_EQ(dimension, *kernel.workDim);
+        EXPECT_EQ(dimension, *kernel.getWorkDim());
     }
 }
 
@@ -279,7 +279,7 @@ HWTEST_F(DispatchWalkerTest, GivenSquaredLwsAlgorithmWhenDispatchingWalkerThenDi
             nullptr,
             nullptr,
             CL_COMMAND_NDRANGE_KERNEL);
-        EXPECT_EQ(dimension, *kernel.workDim);
+        EXPECT_EQ(dimension, *kernel.getWorkDim());
     }
 }
 
@@ -309,7 +309,7 @@ HWTEST_F(DispatchWalkerTest, GivenNdLwsAlgorithmWhenDispatchingWalkerThenDimensi
             nullptr,
             nullptr,
             CL_COMMAND_NDRANGE_KERNEL);
-        EXPECT_EQ(dimension, *kernel.workDim);
+        EXPECT_EQ(dimension, *kernel.getWorkDim());
     }
 }
 
@@ -340,7 +340,7 @@ HWTEST_F(DispatchWalkerTest, GivenOldLwsAlgorithmWhenDispatchingWalkerThenDimens
             nullptr,
             nullptr,
             CL_COMMAND_NDRANGE_KERNEL);
-        EXPECT_EQ(dimension, *kernel.workDim);
+        EXPECT_EQ(dimension, *kernel.getWorkDim());
     }
 }
 
@@ -372,9 +372,10 @@ HWTEST_F(DispatchWalkerTest, GivenNumWorkGroupsWhenDispatchingWalkerThenNumWorkG
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
 
-    EXPECT_EQ(2u, *kernel.numWorkGroupsX);
-    EXPECT_EQ(5u, *kernel.numWorkGroupsY);
-    EXPECT_EQ(10u, *kernel.numWorkGroupsZ);
+    auto numWorkGroups = kernel.getNumWorkGroupsValues();
+    EXPECT_EQ(2u, *numWorkGroups[0]);
+    EXPECT_EQ(5u, *numWorkGroups[1]);
+    EXPECT_EQ(10u, *numWorkGroups[2]);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenGlobalWorkOffsetWhenDispatchingWalkerThenGlobalWorkOffsetIsCorrectlySet) {
@@ -405,9 +406,10 @@ HWTEST_F(DispatchWalkerTest, GivenGlobalWorkOffsetWhenDispatchingWalkerThenGloba
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
 
-    EXPECT_EQ(1u, *kernel.globalWorkOffsetX);
-    EXPECT_EQ(2u, *kernel.globalWorkOffsetY);
-    EXPECT_EQ(3u, *kernel.globalWorkOffsetZ);
+    auto gwo = kernel.getGlobalWorkOffsetValues();
+    EXPECT_EQ(1u, *gwo[0]);
+    EXPECT_EQ(2u, *gwo[1]);
+    EXPECT_EQ(3u, *gwo[2]);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndDefaultAlgorithmWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -437,9 +439,11 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndDefaultAlgorithmWhenDispatch
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(2u, *kernel.localWorkSizeX);
-    EXPECT_EQ(5u, *kernel.localWorkSizeY);
-    EXPECT_EQ(1u, *kernel.localWorkSizeZ);
+
+    auto localWorkSize = kernel.getLocalWorkSizeValues();
+    EXPECT_EQ(2u, *localWorkSize[0]);
+    EXPECT_EQ(5u, *localWorkSize[1]);
+    EXPECT_EQ(1u, *localWorkSize[2]);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndNdOnWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -469,9 +473,11 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndNdOnWhenDispatchingWalkerThe
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(2u, *kernel.localWorkSizeX);
-    EXPECT_EQ(3u, *kernel.localWorkSizeY);
-    EXPECT_EQ(5u, *kernel.localWorkSizeZ);
+
+    auto localWorkSize = kernel.getLocalWorkSizeValues();
+    EXPECT_EQ(2u, *localWorkSize[0]);
+    EXPECT_EQ(3u, *localWorkSize[1]);
+    EXPECT_EQ(5u, *localWorkSize[2]);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -502,9 +508,11 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmWhenDispatch
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(2u, *kernel.localWorkSizeX);
-    EXPECT_EQ(5u, *kernel.localWorkSizeY);
-    EXPECT_EQ(1u, *kernel.localWorkSizeZ);
+
+    auto localWorkSize = kernel.getLocalWorkSizeValues();
+    EXPECT_EQ(2u, *localWorkSize[0]);
+    EXPECT_EQ(5u, *localWorkSize[1]);
+    EXPECT_EQ(1u, *localWorkSize[2]);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmOffAndNdOffWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -535,9 +543,11 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmOffAndNdOffW
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(2u, *kernel.localWorkSizeX);
-    EXPECT_EQ(5u, *kernel.localWorkSizeY);
-    EXPECT_EQ(1u, *kernel.localWorkSizeZ);
+
+    auto localWorkSize = kernel.getLocalWorkSizeValues();
+    EXPECT_EQ(2u, *localWorkSize[0]);
+    EXPECT_EQ(5u, *localWorkSize[1]);
+    EXPECT_EQ(1u, *localWorkSize[2]);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -566,9 +576,11 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeWhenDispatchingWalkerThenLwsIsC
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(1u, *kernel.localWorkSizeX);
-    EXPECT_EQ(2u, *kernel.localWorkSizeY);
-    EXPECT_EQ(3u, *kernel.localWorkSizeZ);
+
+    auto localWorkSize = kernel.getLocalWorkSizeValues();
+    EXPECT_EQ(1u, *localWorkSize[0]);
+    EXPECT_EQ(2u, *localWorkSize[1]);
+    EXPECT_EQ(3u, *localWorkSize[2]);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenTwoSetsOfLwsOffsetsWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -600,12 +612,15 @@ HWTEST_F(DispatchWalkerTest, GivenTwoSetsOfLwsOffsetsWhenDispatchingWalkerThenLw
         nullptr,
         nullptr,
         CL_COMMAND_NDRANGE_KERNEL);
-    EXPECT_EQ(1u, *kernel.localWorkSizeX);
-    EXPECT_EQ(2u, *kernel.localWorkSizeY);
-    EXPECT_EQ(3u, *kernel.localWorkSizeZ);
-    EXPECT_EQ(1u, *kernel.localWorkSizeX2);
-    EXPECT_EQ(2u, *kernel.localWorkSizeY2);
-    EXPECT_EQ(3u, *kernel.localWorkSizeZ2);
+
+    auto localWorkSize = kernel.getLocalWorkSizeValues();
+    EXPECT_EQ(1u, *localWorkSize[0]);
+    EXPECT_EQ(2u, *localWorkSize[1]);
+    EXPECT_EQ(3u, *localWorkSize[2]);
+    auto localWorkSize2 = kernel.getLocalWorkSize2Values();
+    EXPECT_EQ(1u, *localWorkSize2[0]);
+    EXPECT_EQ(2u, *localWorkSize2[1]);
+    EXPECT_EQ(3u, *localWorkSize2[2]);
 }
 
 HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorrect) {
@@ -644,15 +659,16 @@ HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorre
     auto dispatchId = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = static_cast<MockKernel &>(*dispatchInfo.getKernel());
+        auto localWorkSize = kernel.getLocalWorkSizeValues();
         if (dispatchId == 0) {
-            EXPECT_EQ(1u, *kernel.localWorkSizeX);
-            EXPECT_EQ(2u, *kernel.localWorkSizeY);
-            EXPECT_EQ(3u, *kernel.localWorkSizeZ);
+            EXPECT_EQ(1u, *localWorkSize[0]);
+            EXPECT_EQ(2u, *localWorkSize[1]);
+            EXPECT_EQ(3u, *localWorkSize[2]);
         }
         if (dispatchId == 1) {
-            EXPECT_EQ(4u, *kernel.localWorkSizeX);
-            EXPECT_EQ(5u, *kernel.localWorkSizeY);
-            EXPECT_EQ(6u, *kernel.localWorkSizeZ);
+            EXPECT_EQ(4u, *localWorkSize[0]);
+            EXPECT_EQ(5u, *localWorkSize[1]);
+            EXPECT_EQ(6u, *localWorkSize[2]);
         }
         dispatchId++;
     }
@@ -661,15 +677,16 @@ HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorre
 HWTEST_F(DispatchWalkerTest, GivenSplitWalkerWhenDispatchingWalkerThenLwsIsCorrect) {
     MockKernel kernel1(program.get(), kernelInfo, *pClDevice);
     MockKernel mainKernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 4;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 8;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[0] = 12;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[1] = 16;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[2] = 20;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 24;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[1] = 28;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[2] = 32;
+    auto &dispatchTraits = kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits;
+    dispatchTraits.localWorkSize[0] = 0;
+    dispatchTraits.localWorkSize[1] = 4;
+    dispatchTraits.localWorkSize[2] = 8;
+    dispatchTraits.localWorkSize2[0] = 12;
+    dispatchTraits.localWorkSize2[1] = 16;
+    dispatchTraits.localWorkSize2[2] = 20;
+    dispatchTraits.numWorkGroups[0] = 24;
+    dispatchTraits.numWorkGroups[1] = 28;
+    dispatchTraits.numWorkGroups[2] = 32;
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
     ASSERT_EQ(CL_SUCCESS, mainKernel.initialize());
 
@@ -697,26 +714,29 @@ HWTEST_F(DispatchWalkerTest, GivenSplitWalkerWhenDispatchingWalkerThenLwsIsCorre
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = static_cast<MockKernel &>(*dispatchInfo.getKernel());
+        auto localWorkSize = kernel.getLocalWorkSizeValues();
+        auto localWorkSize2 = kernel.getLocalWorkSize2Values();
+        auto numWorkGroups = kernel.getNumWorkGroupsValues();
         if (&kernel == &mainKernel) {
-            EXPECT_EQ(4u, *kernel.localWorkSizeX);
-            EXPECT_EQ(5u, *kernel.localWorkSizeY);
-            EXPECT_EQ(6u, *kernel.localWorkSizeZ);
-            EXPECT_EQ(4u, *kernel.localWorkSizeX2);
-            EXPECT_EQ(5u, *kernel.localWorkSizeY2);
-            EXPECT_EQ(6u, *kernel.localWorkSizeZ2);
-            EXPECT_EQ(3u, *kernel.numWorkGroupsX);
-            EXPECT_EQ(2u, *kernel.numWorkGroupsY);
-            EXPECT_EQ(2u, *kernel.numWorkGroupsZ);
+            EXPECT_EQ(4u, *localWorkSize[0]);
+            EXPECT_EQ(5u, *localWorkSize[1]);
+            EXPECT_EQ(6u, *localWorkSize[2]);
+            EXPECT_EQ(4u, *localWorkSize2[0]);
+            EXPECT_EQ(5u, *localWorkSize2[1]);
+            EXPECT_EQ(6u, *localWorkSize2[2]);
+            EXPECT_EQ(3u, *numWorkGroups[0]);
+            EXPECT_EQ(2u, *numWorkGroups[1]);
+            EXPECT_EQ(2u, *numWorkGroups[2]);
         } else {
-            EXPECT_EQ(0u, *kernel.localWorkSizeX);
-            EXPECT_EQ(0u, *kernel.localWorkSizeY);
-            EXPECT_EQ(0u, *kernel.localWorkSizeZ);
-            EXPECT_EQ(1u, *kernel.localWorkSizeX2);
-            EXPECT_EQ(2u, *kernel.localWorkSizeY2);
-            EXPECT_EQ(3u, *kernel.localWorkSizeZ2);
-            EXPECT_EQ(0u, *kernel.numWorkGroupsX);
-            EXPECT_EQ(0u, *kernel.numWorkGroupsY);
-            EXPECT_EQ(0u, *kernel.numWorkGroupsZ);
+            EXPECT_EQ(0u, *localWorkSize[0]);
+            EXPECT_EQ(0u, *localWorkSize[1]);
+            EXPECT_EQ(0u, *localWorkSize[2]);
+            EXPECT_EQ(1u, *localWorkSize2[0]);
+            EXPECT_EQ(2u, *localWorkSize2[1]);
+            EXPECT_EQ(3u, *localWorkSize2[2]);
+            EXPECT_EQ(0u, *numWorkGroups[0]);
+            EXPECT_EQ(0u, *numWorkGroups[1]);
+            EXPECT_EQ(0u, *numWorkGroups[2]);
         }
     }
 }
@@ -894,6 +914,8 @@ HWTEST_F(DispatchWalkerTest, givenThereAreAllocationsForReuseWhenDispatchWalkerI
 }
 
 HWTEST_F(DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenWorkDimensionsAreCorrect) {
+    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0;
+
     MockKernel kernel1(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
     MockKernel kernel2(program.get(), kernelInfo, *pClDevice);
@@ -914,7 +936,7 @@ HWTEST_F(DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenWorkDi
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = static_cast<MockKernel &>(*dispatchInfo.getKernel());
-        EXPECT_EQ(*kernel.workDim, dispatchInfo.getDim());
+        EXPECT_EQ(dispatchInfo.getDim(), *kernel.getWorkDim());
     }
 }
 

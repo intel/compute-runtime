@@ -2239,97 +2239,33 @@ struct KernelCrossThreadTests : Test<ClDeviceFixture> {
     SPatchExecutionEnvironment executionEnvironment = {};
 };
 
-TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenGlobalWorkOffsetIsCorrect) {
-
-    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkOffset[1] = 4;
+TEST_F(KernelCrossThreadTests, WhenLocalWorkSize2OffsetsAreValidThenIsLocalWorkSize2PatchableReturnsTrue) {
+    auto &localWorkSize2 = pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2;
+    localWorkSize2[0] = 0;
+    localWorkSize2[1] = 4;
+    localWorkSize2[2] = 8;
 
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.globalWorkOffsetX);
-    EXPECT_NE(nullptr, kernel.globalWorkOffsetY);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.globalWorkOffsetY);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.globalWorkOffsetZ);
+    EXPECT_TRUE(kernel.isLocalWorkSize2Patchable());
 }
 
-TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkSizeIsCorrect) {
-
-    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0xc;
-
+TEST_F(KernelCrossThreadTests, WhenNotAllLocalWorkSize2OffsetsAreValidThenIsLocalWorkSize2PatchableReturnsTrue) {
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    EXPECT_NE(nullptr, kernel.localWorkSizeX);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.localWorkSizeX);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.localWorkSizeY);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.localWorkSizeZ);
-}
-
-TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkSize2IsCorrect) {
-
-    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[1] = 0xd;
-
-    MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.localWorkSizeX2);
-    EXPECT_NE(nullptr, kernel.localWorkSizeY2);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.localWorkSizeY2);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.localWorkSizeZ2);
-}
-
-TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenGlobalWorkSizeIsCorrect) {
-
-    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[2] = 8;
-
-    MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.globalWorkSizeX);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.globalWorkSizeY);
-    EXPECT_NE(nullptr, kernel.globalWorkSizeZ);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.globalWorkSizeZ);
-}
-
-TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenLocalWorkDimIsCorrect) {
-
-    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.workDim = 12;
-
-    MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    EXPECT_NE(nullptr, kernel.workDim);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.workDim);
-}
-
-TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenNumWorkGroupsIsCorrect) {
-
-    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 0 * sizeof(uint32_t);
-    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[1] = 1 * sizeof(uint32_t);
-    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[2] = 2 * sizeof(uint32_t);
-
-    MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    EXPECT_NE(nullptr, kernel.numWorkGroupsX);
-    EXPECT_NE(nullptr, kernel.numWorkGroupsY);
-    EXPECT_NE(nullptr, kernel.numWorkGroupsZ);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.numWorkGroupsX);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.numWorkGroupsY);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.numWorkGroupsZ);
-}
-
-TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedLocalWorkSizeIsCorrect) {
-
-    pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[0] = 0;
-
-    MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    EXPECT_NE(nullptr, kernel.enqueuedLocalWorkSizeX);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.enqueuedLocalWorkSizeX);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.enqueuedLocalWorkSizeY);
-    EXPECT_EQ(&Kernel::dummyPatchLocation, kernel.enqueuedLocalWorkSizeZ);
+    auto &localWorkSize2 = pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2;
+    for (auto ele0 : {true, false}) {
+        for (auto ele1 : {true, false}) {
+            for (auto ele2 : {true, false}) {
+                if (ele0 && ele1 && ele2) {
+                    continue;
+                } else {
+                    localWorkSize2[0] = ele0 ? 0 : undefined<CrossThreadDataOffset>;
+                    localWorkSize2[1] = ele1 ? 4 : undefined<CrossThreadDataOffset>;
+                    localWorkSize2[2] = ele2 ? 8 : undefined<CrossThreadDataOffset>;
+                    EXPECT_FALSE(kernel.isLocalWorkSize2Patchable());
+                }
+            }
+        }
+    }
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedMaxWorkGroupSizeIsCorrect) {

@@ -215,7 +215,7 @@ void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQ
     kernel.setGlobalWorkOffsetValues(static_cast<uint32_t>(offset.x), static_cast<uint32_t>(offset.y), static_cast<uint32_t>(offset.z));
     kernel.setGlobalWorkSizeValues(static_cast<uint32_t>(gws.x), static_cast<uint32_t>(gws.y), static_cast<uint32_t>(gws.z));
 
-    if (isMainKernel || (!kernel.isLocalWorkSize2Patched())) {
+    if (isMainKernel || (!kernel.isLocalWorkSize2Patchable())) {
         kernel.setLocalWorkSizeValues(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
     }
 

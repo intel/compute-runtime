@@ -70,19 +70,22 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
         pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
         false);
 
-    EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.localWorkSizeX);
-    EXPECT_EQ(1u, *scheduler.localWorkSizeY);
-    EXPECT_EQ(1u, *scheduler.localWorkSizeZ);
+    auto localWorkSize = scheduler.getLocalWorkSizeValues();
+    EXPECT_EQ((uint32_t)scheduler.getLws(), *localWorkSize[0]);
+    EXPECT_EQ(1u, *localWorkSize[1]);
+    EXPECT_EQ(1u, *localWorkSize[2]);
 
-    if (scheduler.enqueuedLocalWorkSizeX != &Kernel::dummyPatchLocation) {
-        EXPECT_EQ((uint32_t)scheduler.getLws(), *scheduler.enqueuedLocalWorkSizeX);
+    auto enqueuedLocalWorkSize = scheduler.getEnqueuedLocalWorkSizeValues();
+    if (enqueuedLocalWorkSize[0] != &Kernel::dummyPatchLocation) {
+        EXPECT_EQ((uint32_t)scheduler.getLws(), *enqueuedLocalWorkSize[0]);
+        EXPECT_EQ(1u, *enqueuedLocalWorkSize[1]);
+        EXPECT_EQ(1u, *enqueuedLocalWorkSize[2]);
     }
-    EXPECT_EQ(1u, *scheduler.enqueuedLocalWorkSizeY);
-    EXPECT_EQ(1u, *scheduler.enqueuedLocalWorkSizeZ);
 
-    EXPECT_EQ((uint32_t)(scheduler.getGws() / scheduler.getLws()), *scheduler.numWorkGroupsX);
-    EXPECT_EQ(0u, *scheduler.numWorkGroupsY);
-    EXPECT_EQ(0u, *scheduler.numWorkGroupsZ);
+    auto numWorkGroups = scheduler.getNumWorkGroupsValues();
+    EXPECT_EQ((uint32_t)(scheduler.getGws() / scheduler.getLws()), *numWorkGroups[0]);
+    EXPECT_EQ(0u, *numWorkGroups[1]);
+    EXPECT_EQ(0u, *numWorkGroups[2]);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream, 0);
