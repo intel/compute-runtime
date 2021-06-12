@@ -14,7 +14,7 @@ using ::testing::Return;
 class OsEngine;
 namespace L0 {
 namespace ult {
-constexpr uint32_t handleComponentCount = 5u;
+constexpr uint32_t handleComponentCount = 6u;
 class ZesEngineFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<Mock<EngineNeoDrm>> pDrm;
@@ -106,7 +106,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertie
     EXPECT_FALSE(properties.onSubdevice);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[1], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, properties.type);
+    EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[2], &properties));
@@ -114,10 +114,14 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertie
     EXPECT_FALSE(properties.onSubdevice);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[3], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_COPY_SINGLE, properties.type);
+    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[4], &properties));
+    EXPECT_EQ(ZES_ENGINE_GROUP_COPY_SINGLE, properties.type);
+    EXPECT_FALSE(properties.onSubdevice);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[5], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 }
@@ -156,7 +160,7 @@ TEST_F(ZesEngineFixture, GivenTestDiscreteDevicesAndValidEngineHandleWhenCalling
     ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<EngineSysfsAccess>::getValStringSymLinkFailure));
 
-    auto pOsEngineTest1 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u);
+    auto pOsEngineTest1 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u);
 
     zes_engine_stats_t stats = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest1->getActivity(&stats));
@@ -166,7 +170,7 @@ TEST_F(ZesEngineFixture, GivenTestDiscreteDevicesAndValidEngineHandleWhenCalling
     ON_CALL(*pFsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EngineFsAccess>::readValFailure));
 
-    auto pOsEngineTest2 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u);
+    auto pOsEngineTest2 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest2->getActivity(&stats));
     delete pOsEngineTest1;
     delete pOsEngineTest2;
@@ -178,7 +182,7 @@ TEST_F(ZesEngineFixture, GivenTestIntegratedDevicesAndValidEngineHandleWhenCalli
     ON_CALL(*pFsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<EngineFsAccess>::readValFailure));
 
-    auto pOsEngineTest1 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u);
+    auto pOsEngineTest1 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest1->getActivity(&stats));
     delete pOsEngineTest1;
 }
@@ -204,7 +208,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAn
 }
 
 TEST_F(ZesEngineFixture, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
-    std::multimap<zes_engine_group_t, uint32_t> engineGroupInstance;
+    std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> engineGroupInstance;
     ON_CALL(*pDrm.get(), sysmanQueryEngineInfo())
         .WillByDefault(::testing::Invoke(pDrm.get(), &Mock<EngineNeoDrm>::queryEngineInfoMockReturnFalse));
 

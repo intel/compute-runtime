@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,16 +22,16 @@ EngineHandleContext::~EngineHandleContext() {
     releaseEngines();
 }
 
-void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance) {
-    Engine *pEngine = new EngineImp(pOsSysman, engineType, engineInstance);
+void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId) {
+    Engine *pEngine = new EngineImp(pOsSysman, engineType, engineInstance, subDeviceId);
     handleList.push_back(pEngine);
 }
 
 void EngineHandleContext::init() {
-    std::multimap<zes_engine_group_t, uint32_t> engineGroupInstance = {};
+    std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> engineGroupInstance = {}; //set contains pair of engine group and struct containing engine instance and subdeviceId
     OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman);
     for (auto itr = engineGroupInstance.begin(); itr != engineGroupInstance.end(); ++itr) {
-        createHandle(itr->first, itr->second);
+        createHandle(itr->first, itr->second.first, itr->second.second);
     }
 }
 

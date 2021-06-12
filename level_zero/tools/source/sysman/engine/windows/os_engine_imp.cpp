@@ -57,18 +57,18 @@ ze_result_t WddmEngineImp::getProperties(zes_engine_properties_t &properties) {
     return ZE_RESULT_SUCCESS;
 }
 
-WddmEngineImp::WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance) {
+WddmEngineImp::WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     this->engineGroup = engineType;
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
-OsEngine *OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance) {
-    WddmEngineImp *pWddmEngineImp = new WddmEngineImp(pOsSysman, engineType, engineInstance);
+OsEngine *OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId) {
+    WddmEngineImp *pWddmEngineImp = new WddmEngineImp(pOsSysman, engineType, engineInstance, subDeviceId);
     return static_cast<OsEngine *>(pWddmEngineImp);
 }
 
-ze_result_t OsEngine::getNumEngineTypeAndInstances(std::multimap<zes_engine_group_t, uint32_t> &engineGroupInstance, OsSysman *pOsSysman) {
+ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> &engineGroupInstance, OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 
@@ -93,7 +93,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::multimap<zes_engine_grou
     }
 
     for (uint32_t i = 0; i < maxNumEnginesSupported; i++) {
-        engineGroupInstance.insert({static_cast<zes_engine_group_t>(i), 0});
+        engineGroupInstance.insert({static_cast<zes_engine_group_t>(i), {0, 0}});
     }
 
     return status;

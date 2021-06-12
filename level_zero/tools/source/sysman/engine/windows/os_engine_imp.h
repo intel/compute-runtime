@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ class WddmEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
     ze_result_t getProperties(zes_engine_properties_t &properties) override;
 
     WddmEngineImp() = default;
-    WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance);
+    WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId);
     ~WddmEngineImp() override = default;
 
   protected:

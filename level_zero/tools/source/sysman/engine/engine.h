@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ struct _zes_engine_handle_t {
 };
 
 namespace L0 {
-
+using EngineInstanceSubDeviceId = std::pair<uint32_t, uint32_t>;
 struct OsSysman;
 
 class Engine : _zes_engine_handle_t {
@@ -43,7 +43,7 @@ struct EngineHandleContext {
     std::vector<Engine *> handleList = {};
 
   private:
-    void createHandle(zes_engine_group_t engineType, uint32_t engineInstance);
+    void createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId);
 };
 
 } // namespace L0

@@ -44,8 +44,8 @@ struct Mock<EngineNeoDrm> : public EngineNeoDrm {
         drm_i915_engine_info i915engineInfo[6] = {};
         i915engineInfo[0].engine.engine_class = I915_ENGINE_CLASS_RENDER;
         i915engineInfo[0].engine.engine_instance = 0;
-        i915engineInfo[1].engine.engine_class = I915_ENGINE_CLASS_VIDEO;
-        i915engineInfo[1].engine.engine_instance = 0;
+        i915engineInfo[1].engine.engine_class = I915_ENGINE_CLASS_RENDER;
+        i915engineInfo[1].engine.engine_instance = 1;
         i915engineInfo[2].engine.engine_class = I915_ENGINE_CLASS_VIDEO;
         i915engineInfo[2].engine.engine_instance = 1;
         i915engineInfo[3].engine.engine_class = I915_ENGINE_CLASS_COPY;

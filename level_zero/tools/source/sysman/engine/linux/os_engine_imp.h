@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,9 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getActivity(zes_engine_stats_t *pStats) override;
     ze_result_t getProperties(zes_engine_properties_t &properties) override;
+    static zes_engine_group_t getGroupFromEngineType(zes_engine_group_t type);
     LinuxEngineImp() = default;
-    LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance);
+    LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId);
     ~LinuxEngineImp() override {
         if (fd != -1) {
             close(static_cast<int>(fd));
@@ -34,6 +35,8 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
     PmuInterface *pPmuInterface = nullptr;
     NEO::Drm *pDrm = nullptr;
     Device *pDevice = nullptr;
+    uint32_t subDeviceId = 0;
+    uint32_t onSubDevice = 0;
 
   private:
     void init();
