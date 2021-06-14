@@ -69,6 +69,9 @@ cl_int MultiDeviceKernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, MultiG
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < kernels.size(); rootDeviceIndex++) {
         auto pKernel = getKernel(rootDeviceIndex);
         if (pKernel) {
+            if (svmAllocs && (svmAllocs->getGraphicsAllocations().size() <= rootDeviceIndex || !svmAllocs->getGraphicsAllocation(rootDeviceIndex))) {
+                continue;
+            }
             auto svmAlloc = svmAllocs ? svmAllocs->getGraphicsAllocation(rootDeviceIndex) : nullptr;
             pKernel->setArgSvmAlloc(argIndex, svmPtr, svmAlloc);
         }

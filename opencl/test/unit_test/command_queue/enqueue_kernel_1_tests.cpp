@@ -16,8 +16,10 @@
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
 
@@ -78,6 +80,95 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
     retVal = clReleaseMemObject(b1);
     EXPECT_EQ(CL_SUCCESS, retVal);
     clReleaseCommandQueue(pCmdQ2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(EnqueueMultiDeviceKernelTest, givenMultiDeviceKernelWhenSetArgDeviceUSMThenOnlyOneKernelIsPatched) {
+    REQUIRE_SVM_OR_SKIP(defaultHwInfo);
+    auto deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
+    auto device0 = deviceFactory->rootDevices[0];
+    auto device1 = deviceFactory->rootDevices[1];
+    auto device2 = deviceFactory->rootDevices[2];
+
+    cl_device_id devices[] = {device0, device1, device2};
+
+    auto context = std::make_unique<MockContext>(ClDeviceVector(devices, 3), false);
+
+    auto pCmdQ1 = context->getSpecialQueue(1u);
+    auto pCmdQ2 = context->getSpecialQueue(2u);
+
+    std::unique_ptr<char[]> pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
+
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+
+    pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    auto clProgram = clCreateProgramWithSource(
+        context.get(),
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, clProgram);
+
+    clBuildProgram(clProgram, 0, nullptr, nullptr, nullptr, nullptr);
+
+    auto clKernel = clCreateKernel(clProgram, "CopyBuffer", &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(clKernel);
+
+    auto buffer0 = clCreateBuffer(context.get(), 0, MemoryConstants::pageSize, nullptr, nullptr);
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+
+    retVal = clSetKernelArg(clKernel, 0, sizeof(cl_mem), &buffer0);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto deviceMem = clDeviceMemAllocINTEL(context.get(), device1, {}, MemoryConstants::pageSize, MemoryConstants::pageSize, &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clSetKernelArgSVMPointer(clKernel, 1, deviceMem);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(pMultiDeviceKernel->getKernel(0u)->isPatched());
+    EXPECT_TRUE(pMultiDeviceKernel->getKernel(1u)->isPatched());
+    EXPECT_FALSE(pMultiDeviceKernel->getKernel(2u)->isPatched());
+
+    retVal = clEnqueueNDRangeKernel(pCmdQ1, pMultiDeviceKernel, 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clEnqueueNDRangeKernel(pCmdQ2, pMultiDeviceKernel, 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
+
+    retVal = clReleaseMemObject(buffer0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clMemFreeINTEL(context.get(), deviceMem);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseKernel(clKernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(clProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
