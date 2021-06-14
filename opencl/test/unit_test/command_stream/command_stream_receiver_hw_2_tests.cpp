@@ -1306,6 +1306,26 @@ HWTEST_F(BcsTests, givenImage1DWhenAdjustBlitPropertiesForImageIsCalledThenValue
     EXPECT_EQ(expectedBytesPerPixel, bytesPerPixel);
 }
 
+HWTEST_F(BcsTests, givenImage2DArrayWhenAdjustBlitPropertiesForImageIsCalledThenValuesAreSetCorrectly) {
+    cl_image_desc imgDesc = Image1dDefaults::imageDesc;
+    imgDesc.image_width = 10u;
+    imgDesc.image_height = 3u;
+    imgDesc.image_depth = 0u;
+    imgDesc.image_array_size = 4u;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
+    Vec3<size_t> size{0, 0, 0};
+    size_t bytesPerPixel = 0u;
+    size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel);
+
+    EXPECT_EQ(imgDesc.image_width, size.x);
+    EXPECT_EQ(imgDesc.image_height, size.y);
+    EXPECT_EQ(imgDesc.image_array_size, size.z);
+    EXPECT_EQ(expectedBytesPerPixel, bytesPerPixel);
+}
+
 HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;

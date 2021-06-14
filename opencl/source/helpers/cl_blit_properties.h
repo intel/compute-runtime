@@ -165,6 +165,10 @@ struct ClBlitProperties {
         auto image_height = image->getImageDesc().image_height;
         auto image_depth = image->getImageDesc().image_depth;
 
+        if (image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+            image_depth = std::max(image_depth, image->getImageDesc().image_array_size);
+        }
+
         size.x = image_width;
         size.y = image_height ? image_height : 1;
         size.z = image_depth ? image_depth : 1;
