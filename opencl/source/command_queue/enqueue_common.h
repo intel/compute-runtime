@@ -982,13 +982,12 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
                                                          (uint32_t)multiDispatchInfo.size());
     }
     if (storeTimestampPackets) {
-        for (cl_uint i = 0; i < eventsRequest.numEventsInWaitList; i++) {
-            auto event = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
-            event->incRefInternal();
-        }
         command->setTimestampPacketNode(*timestampPacketContainer, std::move(timestampPacketDependencies));
         command->setEventsRequest(eventsRequest);
+    } else if (this->context->getRootDeviceIndices().size() > 1) {
+        command->setEventsRequest(eventsRequest);
     }
+
     outEvent->setCommand(std::move(command));
 
     eventBuilder->addParentEvents(ArrayRef<const cl_event>(eventsRequest.eventWaitList, eventsRequest.numEventsInWaitList));

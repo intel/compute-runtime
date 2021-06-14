@@ -84,7 +84,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         }
         if (bcsAllowed) {
             auto &selectorCopyEngine = device->getDeviceById(0)->getSelectorCopyEngine();
-            bcsEngine = &device->getDeviceById(0)->getEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), EngineUsage::Regular);
+            bcsEngine = device->getDeviceById(0)->getDevice().tryGetEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), EngineUsage::Regular);
         }
     }
 
@@ -783,13 +783,18 @@ bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const Ev
         return true;
     }
 
-    if ((CL_COMMAND_BARRIER == commandType || CL_COMMAND_MARKER == commandType) &&
-        getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (CL_COMMAND_BARRIER == commandType || CL_COMMAND_MARKER == commandType) {
+        auto timestampPacketWriteEnabled = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled();
+        if (timestampPacketWriteEnabled || context->getRootDeviceIndices().size() > 1) {
 
-        for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
-            auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
-            if (waitlistEvent->getTimestampPacketNodes()) {
-                return true;
+            for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
+                auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
+                if (timestampPacketWriteEnabled && waitlistEvent->getTimestampPacketNodes()) {
+                    return true;
+                }
+                if (waitlistEvent->getCommandQueue() && waitlistEvent->getCommandQueue()->getDevice().getRootDeviceIndex() != this->getDevice().getRootDeviceIndex()) {
+                    return true;
+                }
             }
         }
     }

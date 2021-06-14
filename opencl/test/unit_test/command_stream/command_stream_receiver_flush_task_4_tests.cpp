@@ -250,31 +250,34 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
     }
 }
 
-HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToMarkerThenMiSemaphoreWaitCommandSizeIsIncluded) {
+struct CrossDeviceDependenciesTests : public ::testing::Test {
+
+    void SetUp() override {
+
+        deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
+        auto device1 = deviceFactory->rootDevices[1];
+        auto device2 = deviceFactory->rootDevices[2];
+
+        cl_device_id devices[] = {device1, device2};
+
+        context = std::make_unique<MockContext>(ClDeviceVector(devices, 2), false);
+
+        pCmdQ1 = context.get()->getSpecialQueue(1u);
+        pCmdQ2 = context.get()->getSpecialQueue(2u);
+    }
+
+    void TearDown() override {
+    }
+
+    std::unique_ptr<UltClDeviceFactory> deviceFactory;
+    std::unique_ptr<MockContext> context;
+
+    CommandQueue *pCmdQ1 = nullptr;
+    CommandQueue *pCmdQ2 = nullptr;
+};
+
+HWTEST_F(CrossDeviceDependenciesTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToMarkerThenMiSemaphoreWaitCommandSizeIsIncluded) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    auto deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
-    auto device1 = deviceFactory->rootDevices[1];
-    auto device2 = deviceFactory->rootDevices[2];
-
-    auto mockCsr1 = new MockCommandStreamReceiver(*device1->executionEnvironment, device1->getRootDeviceIndex(), device1->getDeviceBitfield());
-    auto mockCsr2 = new MockCommandStreamReceiver(*device2->executionEnvironment, device2->getRootDeviceIndex(), device2->getDeviceBitfield());
-
-    device1->resetCommandStreamReceiver(mockCsr1);
-    device2->resetCommandStreamReceiver(mockCsr2);
-
-    cl_device_id devices[] = {device1, device2};
-
-    auto context = std::make_unique<MockContext>(ClDeviceVector(devices, 2), false);
-
-    auto pCmdQ1 = context.get()->getSpecialQueue(1u);
-    auto pCmdQ2 = context.get()->getSpecialQueue(2u);
-
-    MockKernelWithInternals mockKernel(ClDeviceVector(devices, 2));
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
-    dispatchInfo.setKernel(mockKernel.mockKernel);
-    multiDispatchInfo.push(dispatchInfo);
 
     Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
@@ -309,11 +312,7 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
         CsrDependencies csrDeps;
         eventsRequest.fillCsrDependenciesForTaskCountContainer(csrDeps, pCmdQ1->getCommandStreamReceiver(false));
 
-        HardwareParse csHwParser;
-        csHwParser.parseCommands<FamilyType>(pCmdQ1->getCS(0));
-        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
-
-        EXPECT_EQ(0u, semaphores.size());
+        EXPECT_EQ(0u, csrDeps.taskCountContainer.size());
         EXPECT_EQ(0u, TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<FamilyType>(csrDeps));
     }
 
@@ -339,13 +338,301 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
         CsrDependencies csrDeps;
         eventsRequest.fillCsrDependenciesForTaskCountContainer(csrDeps, pCmdQ2->getCommandStreamReceiver(false));
 
+        EXPECT_EQ(3u, csrDeps.taskCountContainer.size());
+        EXPECT_EQ(3u * sizeof(MI_SEMAPHORE_WAIT), TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<FamilyType>(csrDeps));
+    }
+}
+
+HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventWhenProgrammingCrossDeviceDependenciesForGpgpuCsrThenProgramSemaphoreWaitOnUnblockingEvent) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    UserEvent userEvent1(&pCmdQ1->getContext());
+
+    cl_event outputEvent1{};
+    cl_event inputEvent1 = &userEvent1;
+
+    pCmdQ1->enqueueMarkerWithWaitList(
+        1,
+        &inputEvent1,
+        &outputEvent1);
+
+    auto event1 = castToObject<Event>(outputEvent1);
+
+    ASSERT_NE(nullptr, event1);
+    EXPECT_EQ(CompletionStamp::notReady, event1->peekTaskCount());
+
+    cl_int retVal = CL_INVALID_PLATFORM;
+    auto buffer = Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    char hostPtr[MemoryConstants::pageSize]{};
+
+    cl_event outputEvent2{};
+
+    pCmdQ2->enqueueReadBuffer(buffer, CL_FALSE, 0, MemoryConstants::pageSize, hostPtr, nullptr,
+                              1,
+                              &outputEvent1,
+                              &outputEvent2);
+    {
         HardwareParse csHwParser;
         csHwParser.parseCommands<FamilyType>(pCmdQ2->getCS(0));
         auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
 
-        EXPECT_EQ(3u, semaphores.size());
-        EXPECT_EQ(3u * sizeof(MI_SEMAPHORE_WAIT), TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<FamilyType>(csrDeps));
+        EXPECT_EQ(0u, semaphores.size());
     }
+
+    auto event2 = castToObject<Event>(outputEvent2);
+
+    ASSERT_NE(nullptr, event2);
+    EXPECT_EQ(CompletionStamp::notReady, event2->peekTaskCount());
+
+    pCmdQ1->enqueueMarkerWithWaitList(
+        1,
+        &outputEvent2,
+        nullptr);
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(0u, semaphores.size());
+    }
+    userEvent1.setStatus(CL_COMPLETE);
+    event1->release();
+    event2->release();
+    pCmdQ1->finish();
+    pCmdQ2->finish();
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getGpgpuCommandStreamReceiver().getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(1u, semaphores.size());
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
+        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd->getSemaphoreGraphicsAddress());
+    }
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ2->getGpgpuCommandStreamReceiver().getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(1u, semaphores.size());
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
+        EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd->getSemaphoreGraphicsAddress());
+    }
+    buffer->release();
+}
+
+HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventWhenProgrammingSingleDeviceDependenciesForGpgpuCsrThenNoSemaphoreWaitIsProgrammed) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    UserEvent userEvent1(&pCmdQ1->getContext());
+
+    cl_event outputEvent1{};
+    cl_event inputEvent1 = &userEvent1;
+
+    pCmdQ1->enqueueMarkerWithWaitList(
+        1,
+        &inputEvent1,
+        &outputEvent1);
+
+    auto event1 = castToObject<Event>(outputEvent1);
+
+    ASSERT_NE(nullptr, event1);
+    EXPECT_EQ(CompletionStamp::notReady, event1->peekTaskCount());
+
+    cl_int retVal = CL_INVALID_PLATFORM;
+    auto buffer = Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    char hostPtr[MemoryConstants::pageSize]{};
+
+    cl_event outputEvent2{};
+
+    pCmdQ1->enqueueReadBuffer(buffer, CL_FALSE, 0, MemoryConstants::pageSize, hostPtr, nullptr,
+                              1,
+                              &outputEvent1,
+                              &outputEvent2);
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(0u, semaphores.size());
+    }
+
+    auto event2 = castToObject<Event>(outputEvent2);
+
+    ASSERT_NE(nullptr, event2);
+    EXPECT_EQ(CompletionStamp::notReady, event2->peekTaskCount());
+
+    pCmdQ1->enqueueMarkerWithWaitList(
+        1,
+        &outputEvent2,
+        nullptr);
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(0u, semaphores.size());
+    }
+    userEvent1.setStatus(CL_COMPLETE);
+    event1->release();
+    event2->release();
+    pCmdQ1->finish();
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getGpgpuCommandStreamReceiver().getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(0u, semaphores.size());
+    }
+    buffer->release();
+}
+
+HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventWhenProgrammingCrossDeviceDependenciesForBlitCsrThenProgramSemaphoreWaitOnUnblockingEvent) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(true);
+
+    for (auto &rootDeviceEnvironment : deviceFactory->rootDevices[0]->getExecutionEnvironment()->rootDeviceEnvironments) {
+        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+    }
+
+    auto clCmdQ1 = clCreateCommandQueue(context.get(), deviceFactory->rootDevices[1], {}, nullptr);
+    auto clCmdQ2 = clCreateCommandQueue(context.get(), deviceFactory->rootDevices[2], {}, nullptr);
+
+    pCmdQ1 = castToObject<CommandQueue>(clCmdQ1);
+    pCmdQ2 = castToObject<CommandQueue>(clCmdQ2);
+    ASSERT_NE(nullptr, pCmdQ1);
+    ASSERT_NE(nullptr, pCmdQ2);
+
+    if (!pCmdQ1->getBcsCommandStreamReceiver()) {
+        pCmdQ1->release();
+        pCmdQ2->release();
+        GTEST_SKIP();
+    }
+
+    UserEvent userEvent1(&pCmdQ1->getContext());
+
+    cl_event outputEvent1{};
+    cl_event inputEvent1 = &userEvent1;
+
+    pCmdQ1->enqueueMarkerWithWaitList(
+        1,
+        &inputEvent1,
+        &outputEvent1);
+
+    auto event1 = castToObject<Event>(outputEvent1);
+
+    ASSERT_NE(nullptr, event1);
+    EXPECT_EQ(CompletionStamp::notReady, event1->peekTaskCount());
+
+    cl_int retVal = CL_INVALID_PLATFORM;
+    auto buffer = Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    char hostPtr[MemoryConstants::pageSize]{};
+
+    cl_event outputEvent2{};
+
+    pCmdQ2->enqueueReadBuffer(buffer, CL_FALSE, 0, MemoryConstants::pageSize, hostPtr, nullptr,
+                              1,
+                              &outputEvent1,
+                              &outputEvent2);
+
+    auto event2 = castToObject<Event>(outputEvent2);
+
+    ASSERT_NE(nullptr, event2);
+    EXPECT_EQ(CompletionStamp::notReady, event2->peekTaskCount());
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ2->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(0u, semaphores.size());
+    }
+
+    cl_event outputEvent3{};
+    pCmdQ1->enqueueReadBuffer(buffer, CL_FALSE, 0, MemoryConstants::pageSize, hostPtr, nullptr,
+                              1,
+                              &outputEvent2,
+                              &outputEvent3);
+
+    auto event3 = castToObject<Event>(outputEvent3);
+
+    ASSERT_NE(nullptr, event3);
+    EXPECT_EQ(CompletionStamp::notReady, event3->peekTaskCount());
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ2->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(0u, semaphores.size());
+    }
+
+    pCmdQ2->enqueueMarkerWithWaitList(
+        1,
+        &outputEvent3,
+        nullptr);
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ2->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(0u, semaphores.size());
+    }
+    userEvent1.setStatus(CL_COMPLETE);
+    event1->release();
+    event2->release();
+    event3->release();
+    pCmdQ1->finish();
+    pCmdQ2->finish();
+
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getGpgpuCommandStreamReceiver().getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(1u, semaphores.size());
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
+        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ2->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd->getSemaphoreGraphicsAddress());
+    }
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ1->getBcsCommandStreamReceiver()->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_LE(1u, semaphores.size());
+    }
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ2->getGpgpuCommandStreamReceiver().getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_EQ(2u, semaphores.size());
+        auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
+        EXPECT_EQ(0u, semaphoreCmd0->getSemaphoreDataDword());
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pCmdQ1->getGpgpuCommandStreamReceiver().getTagAddress()), semaphoreCmd0->getSemaphoreGraphicsAddress());
+    }
+    {
+        HardwareParse csHwParser;
+        csHwParser.parseCommands<FamilyType>(pCmdQ2->getBcsCommandStreamReceiver()->getCS(0));
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
+
+        EXPECT_LE(1u, semaphores.size());
+    }
+    buffer->release();
+    pCmdQ1->release();
+    pCmdQ2->release();
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhenFlushingTaskThenWorkPartitionAllocationIsMadeResident) {

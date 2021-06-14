@@ -48,7 +48,7 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
 void EventsRequest::fillCsrDependenciesForTaskCountContainer(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr) const {
     for (cl_uint i = 0; i < this->numEventsInWaitList; i++) {
         auto event = castToObjectOrAbort<Event>(this->eventWaitList[i]);
-        if (event->isUserEvent()) {
+        if (event->isUserEvent() || CompletionStamp::notReady == event->peekTaskCount()) {
             continue;
         }
 

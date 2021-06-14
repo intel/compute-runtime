@@ -118,7 +118,11 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const Vec3<size_t
 
     auto sizePerBlit = (sizeof(typename GfxFamily::XY_COPY_BLT) + estimatePostBlitCommandSize());
 
-    return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) + (sizePerBlit * nBlits) + timestampCmdSize + estimatePreBlitCommandSize();
+    return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
+           TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<GfxFamily>(csrDependencies) +
+           (sizePerBlit * nBlits) +
+           timestampCmdSize +
+           estimatePreBlitCommandSize();
 }
 
 template <typename GfxFamily>
