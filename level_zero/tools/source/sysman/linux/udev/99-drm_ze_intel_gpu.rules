@@ -27,3 +27,10 @@ SUBSYSTEM=="drm", \
 ENV{DEVNAME}=="/dev/dri/card*", \
 ENV{ID_PATH_TAG}=="pci-*", \
 RUN+="/bin/sh -c 'touch /var/lib/libze_intel_gpu/add-$env{ID_PATH_TAG}; echo 1 > /var/lib/libze_intel_gpu/add-$env{ID_PATH_TAG}; rm /var/lib/libze_intel_gpu/remove-$env{ID_PATH_TAG}; echo 0 > /var/lib/libze_intel_gpu/wedged_file;'"
+ACTION=="change", \
+SUBSYSTEM=="platform", \
+ENV{DEVTYPE}=="mfd_device", \
+ENV{DRIVER}=="iaf", \
+ENV{TYPE}=="PORT_CHANGE", \
+ENV{ID_PATH_TAG}=="pci-*", \
+RUN+="/bin/sh -c 'pci_id_path_tag=${env{ID_PATH_TAG}::16}; filename=/var/lib/libze_intel_gpu/fabric-${pci_id_path_tag}; touch ${filename}; echo $(($(cat ${filename}) + 1)) > ${filename};'"

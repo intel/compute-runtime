@@ -1175,16 +1175,24 @@ int main(int argc, char *argv[]) {
         case 'E':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
                 zesDeviceEventRegister(device,
-                                       ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS);
+                                       ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
+                                           ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
+                                           ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
             });
             testSysmanListenEvents(driver, devices,
-                                   ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS);
+                                   ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
+                                       ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
+                                       ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
                 zesDeviceEventRegister(device,
-                                       ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS);
+                                       ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
+                                           ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
+                                           ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
             });
             testSysmanListenEventsEx(driver, devices,
-                                     ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS);
+                                     ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
+                                         ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
+                                         ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS | ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
             break;
         case 'F':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
