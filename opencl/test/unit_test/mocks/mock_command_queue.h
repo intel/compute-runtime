@@ -202,6 +202,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::blitEnqueueAllowed;
     using BaseClass::commandQueueProperties;
     using BaseClass::commandStream;
+    using BaseClass::deferredTimestampPackets;
     using BaseClass::gpgpuEngine;
     using BaseClass::isBlitAuxTranslationRequired;
     using BaseClass::latestSentEnqueueType;

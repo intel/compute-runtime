@@ -662,16 +662,22 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(1));
 
     clReleaseEvent(event1);
-    EXPECT_EQ(1u, mockTagAllocator->returnedToFreePoolNodes.size()); // removed last reference on node1
-    EXPECT_EQ(node1, mockTagAllocator->returnedToFreePoolNodes.at(0));
+    EXPECT_EQ(0u, mockTagAllocator->returnedToFreePoolNodes.size());
     EXPECT_EQ(3u, mockTagAllocator->releaseReferenceNodes.size()); // event1 released node1
     EXPECT_EQ(node1, mockTagAllocator->releaseReferenceNodes.at(2));
+    {
+        TimestampPacketContainer release;
+        cmdQ->deferredTimestampPackets->swapNodes(release);
+    }
+
+    EXPECT_EQ(1u, mockTagAllocator->returnedToFreePoolNodes.size()); // removed last reference on node1
+    EXPECT_EQ(node1, mockTagAllocator->returnedToFreePoolNodes.at(0));
 
     cmdQ.reset(nullptr);
     EXPECT_EQ(2u, mockTagAllocator->returnedToFreePoolNodes.size()); // removed last reference on node2
     EXPECT_EQ(node2, mockTagAllocator->returnedToFreePoolNodes.at(1));
-    EXPECT_EQ(4u, mockTagAllocator->releaseReferenceNodes.size()); // cmdQ released node2
-    EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(3));
+    EXPECT_EQ(5u, mockTagAllocator->releaseReferenceNodes.size()); // cmdQ released node2
+    EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(4));
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenWriteWalkerStamp) {
@@ -857,6 +863,62 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
         EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
         it++;
     }
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenTrackOwnershipUntilQueueIsCompleted) {
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
+    TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
+    uint64_t latestNode = 0;
+
+    {
+        cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+        latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+        EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+    }
+
+    {
+        cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+        EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().back()->getGpuAddress());
+        latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+    }
+
+    {
+        cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+        EXPECT_EQ(2u, deferredTimestampPackets->peekNodes().size());
+        EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().back()->getGpuAddress());
+        latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
+    }
+
+    cmdQ->flush();
+    EXPECT_EQ(2u, deferredTimestampPackets->peekNodes().size());
+    cmdQ->finish();
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockingThenTrackOwnershipUntilQueueIsCompleted) {
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingOnDifferentRootDeviceThenDontProgramSemaphoresOnCsrStream) {

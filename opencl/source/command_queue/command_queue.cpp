@@ -80,6 +80,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
 
         if (bcsAllowed || gpgpuEngine->commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+            deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         }
         if (bcsAllowed) {
             auto &selectorCopyEngine = device->getDeviceById(0)->getSelectorCopyEngine();
@@ -164,6 +165,15 @@ bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount) c
     }
 
     return false;
+}
+
+void CommandQueue::waitForLatestTaskCount() {
+    TimestampPacketContainer nodesToRelease;
+    if (deferredTimestampPackets) {
+        deferredTimestampPackets->swapNodes(nodesToRelease);
+    }
+
+    waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
 }
 
 void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
@@ -613,6 +623,8 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
     auto allocator = blitEnqueue ? getBcsCommandStreamReceiver()->getTimestampPacketAllocator()
                                  : getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
 
+    deferredTimestampPackets->assignAndIncrementNodesRefCounts(*timestampPacketContainer);
+
     previousNodes.swapNodes(*timestampPacketContainer);
 
     if ((previousNodes.peekNodes().size() > 0) && (previousNodes.peekNodes()[0]->getAllocator() != allocator)) {
@@ -839,6 +851,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType) {
     if (isEngineCopyOnly) {
         bcsEngine = &device->getEngine(engineType, EngineUsage::Regular);
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+        deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;
     } else {
         gpgpuEngine = &device->getEngine(engineType, EngineUsage::Regular);
@@ -871,7 +884,7 @@ void CommandQueue::waitUntilComplete(bool blockedQueue, PrintfHandler *printfHan
         }
     }
 
-    waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
+    waitForLatestTaskCount();
 
     if (printfHandler) {
         printfHandler->printEnqueueOutput();

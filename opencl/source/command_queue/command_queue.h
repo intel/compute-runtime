@@ -357,6 +357,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image);
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;
+    void waitForLatestTaskCount();
 
     Context *context = nullptr;
     ClDevice *device = nullptr;
@@ -386,6 +387,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool isSpecialCommandQueue = false;
     bool requiresCacheFlushAfterWalker = false;
 
+    std::unique_ptr<TimestampPacketContainer> deferredTimestampPackets;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
 };
 

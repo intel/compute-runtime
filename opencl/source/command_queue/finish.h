@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,8 @@ cl_int CommandQueueHw<GfxFamily>::finish() {
     while (isQueueBlocked())
         ;
 
-    auto taskCountToWaitFor = this->taskCount;
-    auto flushStampToWaitFor = this->flushStamp->peekStamp();
-
     // Stall until HW reaches CQ taskCount
-    waitUntilComplete(taskCountToWaitFor, this->bcsTaskCount, flushStampToWaitFor, false);
+    waitForLatestTaskCount();
 
     return CL_SUCCESS;
 }
