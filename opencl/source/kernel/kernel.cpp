@@ -284,7 +284,6 @@ cl_int Kernel::initialize() {
     // I think by this time we have decoded the binary and know the number of args etc.
     // double check this assumption
     bool usingBuffers = false;
-    bool usingImages = false;
     kernelArguments.resize(numArgs);
     kernelArgHandlers.resize(numArgs);
     kernelArgRequiresCacheFlush.resize(numArgs);

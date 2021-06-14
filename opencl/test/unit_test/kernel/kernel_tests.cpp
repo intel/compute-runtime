@@ -2044,6 +2044,7 @@ TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasIma
     EXPECT_FALSE(kernel->usesOnlyImages());
     kernel->initialize();
     EXPECT_TRUE(kernel->usesOnlyImages());
+    EXPECT_TRUE(kernel->usesImages());
 }
 
 TEST(KernelImageDetectionTests, givenKernelWithImagesAndBuffersWhenItIsAskedIfItHasImagesOnlyThenFalseIsReturned) {
@@ -2063,6 +2064,7 @@ TEST(KernelImageDetectionTests, givenKernelWithImagesAndBuffersWhenItIsAskedIfIt
     EXPECT_FALSE(kernel->usesOnlyImages());
     kernel->initialize();
     EXPECT_FALSE(kernel->usesOnlyImages());
+    EXPECT_TRUE(kernel->usesImages());
 }
 
 TEST(KernelImageDetectionTests, givenKernelWithNoImagesWhenItIsAskedIfItHasImagesOnlyThenFalseIsReturned) {
@@ -2079,6 +2081,7 @@ TEST(KernelImageDetectionTests, givenKernelWithNoImagesWhenItIsAskedIfItHasImage
     EXPECT_FALSE(kernel->usesOnlyImages());
     kernel->initialize();
     EXPECT_FALSE(kernel->usesOnlyImages());
+    EXPECT_FALSE(kernel->usesImages());
 }
 
 HWTEST_F(KernelResidencyTest, WhenMakingArgsResidentThenImageFromImageCheckIsCorrect) {
