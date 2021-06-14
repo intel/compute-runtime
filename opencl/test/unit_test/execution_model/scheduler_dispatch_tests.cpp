@@ -58,7 +58,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
     MultiDispatchInfo multiDispatchinfo(&scheduler);
     LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(),
                                                                                           false, false, false, multiDispatchinfo,
-                                                                                          nullptr, 0);
+                                                                                          nullptr, 0, false);
     pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
     GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
@@ -174,7 +174,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSched
 
     MultiDispatchInfo multiDispatchinfo(&scheduler);
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(), false, false, false, multiDispatchinfo,
-                                                            nullptr, 0);
+                                                            nullptr, 0, false);
     pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
     GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
@@ -209,7 +209,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, GivenEarlyReturnSet
     MultiDispatchInfo multiDispatchinfo(&scheduler);
     LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(),
                                                                                           false, false, false, multiDispatchinfo,
-                                                                                          nullptr, 0);
+                                                                                          nullptr, 0, false);
     pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
     GpgpuWalkerHelper<FamilyType>::dispatchScheduler(

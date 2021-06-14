@@ -223,7 +223,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandStreamFixture, GivenDispatchInfoW
     size_t totalKernelSize = alignUp(numOfKernels * size, MemoryConstants::pageSize);
 
     LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(), false, false,
-                                                                                          false, multiDispatchInfo, nullptr, 0);
+                                                                                          false, multiDispatchInfo, nullptr, 0, false);
 
     EXPECT_LT(totalKernelSize, commandStream.getMaxAvailableSpace());
 

@@ -228,7 +228,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     auto &commandStream = *obtainCommandStream<commandType>(csrDeps, false, blockQueue, multiDispatchInfo, eventsRequest,
-                                                            blockedCommandsData, surfacesForResidency, numSurfaceForResidency);
+                                                            blockedCommandsData, surfacesForResidency, numSurfaceForResidency, isMarkerWithProfiling);
     auto commandStreamStart = commandStream.getUsed();
 
     if (this->context->getRootDeviceIndices().size() > 1) {
@@ -1177,7 +1177,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     LinearStream *gpgpuCommandStream = {};
     size_t gpgpuCommandStreamStart = {};
     if (isGpgpuSubmissionForBcsRequired(blockQueue)) {
-        gpgpuCommandStream = obtainCommandStream<cmdType>(csrDeps, true, blockQueue, multiDispatchInfo, eventsRequest, blockedCommandsData, nullptr, 0);
+        gpgpuCommandStream = obtainCommandStream<cmdType>(csrDeps, true, blockQueue, multiDispatchInfo, eventsRequest, blockedCommandsData, nullptr, 0, false);
         gpgpuCommandStreamStart = gpgpuCommandStream->getUsed();
     }
 

@@ -452,7 +452,7 @@ class CommandQueueHw : public CommandQueue {
     LinearStream *obtainCommandStream(const CsrDependencies &csrDependencies, bool blitEnqueue, bool blockedQueue,
                                       const MultiDispatchInfo &multiDispatchInfo, const EventsRequest &eventsRequest,
                                       std::unique_ptr<KernelOperation> &blockedCommandsData,
-                                      Surface **surfaces, size_t numSurfaces) {
+                                      Surface **surfaces, size_t numSurfaces, bool isMarkerWithProfiling) {
         LinearStream *commandStream = nullptr;
 
         bool profilingRequired = (this->isProfilingEnabled() && eventsRequest.outEvent);
@@ -469,7 +469,7 @@ class CommandQueueHw : public CommandQueue {
             blockedCommandsData = std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
         } else {
             commandStream = &getCommandStream<GfxFamily, commandType>(*this, csrDependencies, profilingRequired, perfCountersRequired,
-                                                                      blitEnqueue, multiDispatchInfo, surfaces, numSurfaces);
+                                                                      blitEnqueue, multiDispatchInfo, surfaces, numSurfaces, isMarkerWithProfiling);
         }
         return commandStream;
     }

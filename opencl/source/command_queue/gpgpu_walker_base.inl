@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -177,7 +178,7 @@ size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWaDisableRccRhwoOptimization(cons
 }
 
 template <typename GfxFamily>
-size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
+size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, bool isMarkerWithProfiling) {
     size_t expectedSizeCS = 0;
     auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     auto &commandQueueHw = static_cast<CommandQueueHw<GfxFamily> &>(commandQueue);
@@ -205,8 +206,15 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps);
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
+        if (isMarkerWithProfiling) {
+            expectedSizeCS += 4 * EncodeStoreMMIO<GfxFamily>::size;
+        }
+    } else if (isMarkerWithProfiling) {
+        expectedSizeCS += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+        if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+            expectedSizeCS += 2 * EncodeStoreMMIO<GfxFamily>::size;
+        }
     }
-
     if (multiDispatchInfo.peekMainKernel()) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeForCacheFlushAfterWalkerCommands(*multiDispatchInfo.peekMainKernel(), commandQueue);
     }

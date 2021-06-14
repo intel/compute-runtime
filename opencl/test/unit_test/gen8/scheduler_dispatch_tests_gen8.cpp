@@ -37,7 +37,7 @@ BDWTEST_F(BdwSchedulerTest, givenCallToDispatchSchedulerWhenPipeControlWithCSSta
         MultiDispatchInfo multiDispatchinfo(&scheduler);
         LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(),
                                                                                               false, false, false, multiDispatchinfo,
-                                                                                              nullptr, 0);
+                                                                                              nullptr, 0, false);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
