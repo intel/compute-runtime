@@ -2504,8 +2504,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelHasDebugDataThenCorre
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     MockKernelWithInternals mockKernel(*pDevice);
     mockKernel.kernelInfo.kernelDescriptor.external.debugData.reset(new DebugData());
-    mockKernel.kernelInfo.kernelDescriptor.external.debugData->vIsa = reinterpret_cast<char *>(dummyDebugData);
-    mockKernel.kernelInfo.kernelDescriptor.external.debugData->vIsaSize = static_cast<uint32_t>(dummyDebugDataSize);
+    mockKernel.kernelInfo.debugData.vIsa = reinterpret_cast<char *>(dummyDebugData);
+    mockKernel.kernelInfo.debugData.vIsaSize = static_cast<uint32_t>(dummyDebugDataSize);
     mockKernel.kernelInfo.createKernelAllocation(pDevice->getDevice(), false);
     gtpinNotifyKernelCreate(static_cast<cl_kernel>(mockKernel.mockKernel->getMultiDeviceKernel()));
     EXPECT_EQ(debugDataPtr, dummyDebugData);

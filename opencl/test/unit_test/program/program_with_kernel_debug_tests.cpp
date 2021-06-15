@@ -57,6 +57,28 @@ TEST(ProgramFromBinary, givenBinaryWithDebugDataWhenCreatingProgramFromBinaryThe
     EXPECT_NE(0u, program->getDebugDataSize());
 }
 
+TEST(ProgramFromBinary, givenGtpinInitializedWhenCreatingProgramFromBinaryThenDebugDataIsAvailable) {
+    if (!defaultHwInfo->capabilityTable.debuggerSupported) {
+        GTEST_SKIP();
+    }
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "-cl-kernel-debug-enable_", ".bin");
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto program = std::make_unique<MockProgram>(toClDeviceVector(*device));
+    bool gtpinInitializedBackup = NEO::isGTPinInitialized;
+    NEO::isGTPinInitialized = true;
+
+    size_t binarySize = 0;
+    auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, program->getDebugData());
+    EXPECT_NE(0u, program->getDebugDataSize());
+    NEO::isGTPinInitialized = gtpinInitializedBackup;
+}
+
 class ProgramWithKernelDebuggingTest : public ProgramFixture,
                                        public ::testing::Test {
   public:
