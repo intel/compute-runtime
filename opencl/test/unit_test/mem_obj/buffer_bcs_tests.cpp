@@ -532,7 +532,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommand
         }
     }
     EXPECT_EQ(1u, semaphoresCount);
-    EXPECT_EQ(1u, miAtomicsCount);
+    EXPECT_EQ(0u, miAtomicsCount);
     EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
 }
 
@@ -577,7 +577,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandS
         }
     }
     EXPECT_EQ(1u, semaphoresCount);
-    EXPECT_EQ(1u, miAtomicsCount);
+    EXPECT_EQ(0u, miAtomicsCount);
     EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
 }
 

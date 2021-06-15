@@ -1469,6 +1469,35 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDep
     }
 }
 
+HWTEST_F(TimestampPacketTests, givenDefaultDebugFlagValueAndAlreadyAssignedNodeWhenEnqueueingThenKeepDependencyOnPreviousNodeWithoutAtomicIfItsNotReady) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManager.flags.DisableAtomicForPostSyncs.set(-1);
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    MockTimestampPacketContainer firstNode(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 0);
+
+    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
+    TimestampPacketContainer previousNodes;
+    cmdQ.obtainNewTimestampPacketNodes(2, previousNodes, false, false);
+    firstNode.add(cmdQ.timestampPacketContainer->peekNodes().at(0));
+    firstNode.add(cmdQ.timestampPacketContainer->peekNodes().at(1));
+    auto firstTag0 = firstNode.getNode(0);
+    auto firstTag1 = firstNode.getNode(1);
+
+    verifyDependencyCounterValues(&firstNode, 0);
+    cmdQ.enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    verifyDependencyCounterValues(&firstNode, 0);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
+
+    auto it = hwParser.cmdList.begin();
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it), firstTag0, 0);
+
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*++it), firstTag1, 0);
+}
+
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingToOoqThenDontKeepDependencyOnPreviousNodeIfItsNotReady) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;

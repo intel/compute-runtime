@@ -76,6 +76,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         REQUIRE_AUX_RESOLVES();
 
         DebugManager.flags.EnableTimestampPacket.set(timestampPacketEnabled);
+        DebugManager.flags.DisableAtomicForPostSyncs.set(!timestampPacketEnabled);
         DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
         DebugManager.flags.RenderCompressedBuffersEnabled.set(1);

@@ -47,6 +47,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
 
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(1);
+        DebugManager.flags.DisableAtomicForPostSyncs.set(0);
 
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);

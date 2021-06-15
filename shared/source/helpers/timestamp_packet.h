@@ -50,7 +50,7 @@ class TimestampPackets : public TagTypeBase {
     static constexpr size_t getSinglePacketSize() { return sizeof(Packet); }
 
     bool isCompleted() const {
-        if (DebugManager.flags.DisableAtomicForPostSyncs.get()) {
+        if (DebugManager.flags.DisableAtomicForPostSyncs.get() == 1) {
             return false;
         }
 
@@ -164,12 +164,7 @@ struct TimestampPacketHelper {
             EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
 
-        bool trackPostSyncDependencies = true;
-        if (DebugManager.flags.DisableAtomicForPostSyncs.get()) {
-            trackPostSyncDependencies = false;
-        }
-
-        if (trackPostSyncDependencies) {
+        if (DebugManager.flags.DisableAtomicForPostSyncs.get() == 0) {
             overrideSupportedDevicesCount(numSupportedDevices);
 
             for (uint32_t i = 0; i < numSupportedDevices; i++) {

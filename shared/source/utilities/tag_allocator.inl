@@ -253,10 +253,11 @@ uint32_t TagNode<TagType>::getPacketsUsed() const {
 template <typename TagType>
 uint32_t TagNode<TagType>::getImplicitGpuDependenciesCount() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        return tagForCpuAccess->getImplicitGpuDependenciesCount();
-    } else {
-        return 0;
+        if (DebugManager.flags.DisableAtomicForPostSyncs.get() == 0) {
+            return tagForCpuAccess->getImplicitGpuDependenciesCount();
+        }
     }
+    return 0;
 }
 
 template <typename TagType>
