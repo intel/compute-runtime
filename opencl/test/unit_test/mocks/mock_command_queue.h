@@ -74,8 +74,8 @@ class MockCommandQueue : public CommandQueue {
         return CommandQueue::waitUntilComplete(gpgpuTaskCountToWait, bcsTaskCountToWait, flushStampToWait, useQuickKmdSleep);
     }
 
-    cl_int enqueueCopyImage(Image *srcImage, Image *dstImage, const size_t srcOrigin[3],
-                            const size_t dstOrigin[3], const size_t region[3],
+    cl_int enqueueCopyImage(Image *srcImage, Image *dstImage, const size_t *srcOrigin,
+                            const size_t *dstOrigin, const size_t *region,
                             cl_uint numEventsInWaitList, const cl_event *eventWaitList,
                             cl_event *event) override { return CL_SUCCESS; }
 

@@ -76,8 +76,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     ~CommandQueue() override;
 
     // API entry points
-    virtual cl_int enqueueCopyImage(Image *srcImage, Image *dstImage, const size_t srcOrigin[3], const size_t dstOrigin[3],
-                                    const size_t region[3], cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
+    virtual cl_int enqueueCopyImage(Image *srcImage, Image *dstImage, const size_t *srcOrigin, const size_t *dstOrigin,
+                                    const size_t *region, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
     virtual cl_int enqueueFillImage(Image *image, const void *fillColor, const size_t *origin, const size_t *region,
                                     cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;

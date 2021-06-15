@@ -176,9 +176,9 @@ struct EnqueueCopyImageHelper {
     static cl_int enqueueCopyImage(CommandQueue *pCmdQ,
                                    Image *srcImage = nullptr,
                                    Image *dstImage = nullptr,
-                                   const size_t srcOrigin[3] = Traits::srcOrigin,
-                                   const size_t dstOrigin[3] = Traits::dstOrigin,
-                                   const size_t region[3] = Traits::region,
+                                   const size_t *srcOrigin = Traits::srcOrigin,
+                                   const size_t *dstOrigin = Traits::dstOrigin,
+                                   const size_t *region = Traits::region,
                                    cl_uint numEventsInWaitList = Traits::numEventsInWaitList,
                                    const cl_event *eventWaitList = Traits::eventWaitList,
                                    cl_event *event = Traits::event) {
