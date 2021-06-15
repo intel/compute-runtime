@@ -54,10 +54,6 @@ class TagNodeBase : public NonCopyableOrMovableClass {
 
     bool isProfilingCapable() const { return profilingCapable; }
 
-    void incImplicitCpuDependenciesCount() { implicitCpuDependenciesCount++; }
-
-    uint32_t getImplicitCpuDependenciesCount() const { return implicitCpuDependenciesCount.load(); }
-
     const TagAllocatorBase *getAllocator() const { return allocator; }
 
     // TagType specific calls
@@ -67,7 +63,6 @@ class TagNodeBase : public NonCopyableOrMovableClass {
     virtual size_t getContextStartOffset() const = 0;
     virtual size_t getContextEndOffset() const = 0;
     virtual size_t getGlobalEndOffset() const = 0;
-    virtual size_t getImplicitGpuDependenciesCountOffset() const = 0;
 
     virtual uint64_t getContextStartValue(uint32_t packetIndex) const = 0;
     virtual uint64_t getGlobalStartValue(uint32_t packetIndex) const = 0;
@@ -82,8 +77,6 @@ class TagNodeBase : public NonCopyableOrMovableClass {
 
     virtual size_t getSinglePacketSize() const = 0;
 
-    virtual uint32_t getImplicitGpuDependenciesCount() const = 0;
-
     virtual MetricsLibraryApi::QueryHandle_1_0 &getQueryHandleRef() const = 0;
 
   protected:
@@ -94,7 +87,6 @@ class TagNodeBase : public NonCopyableOrMovableClass {
     MultiGraphicsAllocation *gfxAllocation = nullptr;
     uint64_t gpuAddress = 0;
     std::atomic<uint32_t> refCount{0};
-    std::atomic<uint32_t> implicitCpuDependenciesCount{0};
     bool doNotReleaseNodes = false;
     bool profilingCapable = true;
 
@@ -112,7 +104,6 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
 
     void initialize() override {
         tagForCpuAccess->initialize();
-        implicitCpuDependenciesCount.store(0);
         setProfilingCapable(true);
     }
 
@@ -124,7 +115,6 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
     size_t getContextStartOffset() const override;
     size_t getContextEndOffset() const override;
     size_t getGlobalEndOffset() const override;
-    size_t getImplicitGpuDependenciesCountOffset() const override;
 
     uint64_t getContextStartValue(uint32_t packetIndex) const override;
     uint64_t getGlobalStartValue(uint32_t packetIndex) const override;
@@ -138,8 +128,6 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
     uint32_t getPacketsUsed() const override;
 
     size_t getSinglePacketSize() const override;
-
-    uint32_t getImplicitGpuDependenciesCount() const override;
 
     MetricsLibraryApi::QueryHandle_1_0 &getQueryHandleRef() const override;
 };

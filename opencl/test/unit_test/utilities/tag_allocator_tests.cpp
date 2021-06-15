@@ -542,7 +542,6 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_ANY_THROW(perfCounterNode.getContextStartOffset());
         EXPECT_ANY_THROW(perfCounterNode.getContextEndOffset());
         EXPECT_ANY_THROW(perfCounterNode.getGlobalEndOffset());
-        EXPECT_ANY_THROW(perfCounterNode.getImplicitGpuDependenciesCountOffset());
         EXPECT_ANY_THROW(perfCounterNode.getContextStartValue(0));
         EXPECT_ANY_THROW(perfCounterNode.getGlobalStartValue(0));
         EXPECT_ANY_THROW(perfCounterNode.getContextEndValue(0));
@@ -551,7 +550,6 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_ANY_THROW(perfCounterNode.getGlobalEndRef());
         EXPECT_ANY_THROW(perfCounterNode.setPacketsUsed(0));
         EXPECT_ANY_THROW(perfCounterNode.getPacketsUsed());
-        EXPECT_EQ(0u, perfCounterNode.getImplicitGpuDependenciesCount());
         EXPECT_ANY_THROW(perfCounterNode.getSinglePacketSize());
         EXPECT_ANY_THROW(perfCounterNode.assignDataToAllTimestamps(0, nullptr));
     }
@@ -563,10 +561,8 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_ANY_THROW(hwTimestampNode.getContextStartOffset());
         EXPECT_ANY_THROW(hwTimestampNode.getContextEndOffset());
         EXPECT_ANY_THROW(hwTimestampNode.getGlobalEndOffset());
-        EXPECT_ANY_THROW(hwTimestampNode.getImplicitGpuDependenciesCountOffset());
         EXPECT_ANY_THROW(hwTimestampNode.setPacketsUsed(0));
         EXPECT_ANY_THROW(hwTimestampNode.getPacketsUsed());
-        EXPECT_EQ(0u, hwTimestampNode.getImplicitGpuDependenciesCount());
         EXPECT_ANY_THROW(hwTimestampNode.getSinglePacketSize());
         EXPECT_ANY_THROW(hwTimestampNode.assignDataToAllTimestamps(0, nullptr));
         EXPECT_ANY_THROW(hwTimestampNode.getQueryHandleRef());

@@ -165,15 +165,6 @@ size_t TagNode<TagType>::getGlobalEndOffset() const {
 }
 
 template <typename TagType>
-size_t TagNode<TagType>::getImplicitGpuDependenciesCountOffset() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        return tagForCpuAccess->getImplicitGpuDependenciesCountOffset();
-    } else {
-        UNRECOVERABLE_IF(true);
-    }
-}
-
-template <typename TagType>
 uint64_t TagNode<TagType>::getContextStartValue(uint32_t packetIndex) const {
     if constexpr (TagType::getTagNodeType() != TagNodeType::HwPerfCounter) {
         return tagForCpuAccess->getContextStartValue(packetIndex);
@@ -248,16 +239,6 @@ uint32_t TagNode<TagType>::getPacketsUsed() const {
     } else {
         UNRECOVERABLE_IF(true);
     }
-}
-
-template <typename TagType>
-uint32_t TagNode<TagType>::getImplicitGpuDependenciesCount() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        if (DebugManager.flags.DisableAtomicForPostSyncs.get() == 0) {
-            return tagForCpuAccess->getImplicitGpuDependenciesCount();
-        }
-    }
-    return 0;
 }
 
 template <typename TagType>

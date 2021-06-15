@@ -17,7 +17,6 @@
 
 #include "pipe_control_args.h"
 
-#include <atomic>
 #include <cstdint>
 #include <vector>
 
@@ -57,7 +56,6 @@ class TimestampPackets : public TagTypeBase {
             packet.globalEnd = 1u;
         }
         packetsUsed = 1;
-        implicitGpuDependenciesCount = 0;
     }
 
     void assignDataToAllTimestamps(uint32_t packetIndex, void *source) {
@@ -68,7 +66,6 @@ class TimestampPackets : public TagTypeBase {
     static constexpr size_t getContextStartOffset() { return offsetof(Packet, contextStart); }
     static constexpr size_t getContextEndOffset() { return offsetof(Packet, contextEnd); }
     static constexpr size_t getGlobalEndOffset() { return offsetof(Packet, globalEnd); }
-    size_t getImplicitGpuDependenciesCountOffset() const { return ptrDiff(&implicitGpuDependenciesCount, this); }
 
     uint64_t getContextStartValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].contextStart); }
     uint64_t getGlobalStartValue(uint32_t packetIndex) const { return static_cast<uint64_t>(packets[packetIndex].globalStart); }
@@ -78,16 +75,13 @@ class TimestampPackets : public TagTypeBase {
     void setPacketsUsed(uint32_t used) { packetsUsed = used; }
     uint32_t getPacketsUsed() const { return packetsUsed; }
 
-    uint32_t getImplicitGpuDependenciesCount() const { return implicitGpuDependenciesCount; }
-
   protected:
     Packet packets[TimestampPacketSizeControl::preferredPacketCount];
-    uint32_t implicitGpuDependenciesCount = 0;
     uint32_t packetsUsed = 1;
 };
 #pragma pack()
 
-static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount + 2) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t>),
+static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount + 1) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t>),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 class TimestampPacketContainer : public NonCopyableClass {
@@ -130,44 +124,24 @@ struct TimestampPacketHelper {
         return timestampPacketNode.getGpuAddress() + timestampPacketNode.getGlobalStartOffset();
     }
 
-    static uint64_t getGpuDependenciesCountGpuAddress(const TagNodeBase &timestampPacketNode) {
-        return timestampPacketNode.getGpuAddress() + timestampPacketNode.getImplicitGpuDependenciesCountOffset();
-    }
-
-    static void overrideSupportedDevicesCount(uint32_t &numSupportedDevices);
-
     template <typename GfxFamily>
-    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNodeBase &timestampPacketNode, uint32_t numSupportedDevices) {
-        using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
+    static void programSemaphore(LinearStream &cmdStream, TagNodeBase &timestampPacketNode) {
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
         using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
         auto compareAddress = getContextEndGpuAddress(timestampPacketNode);
-        auto dependenciesCountAddress = getGpuDependenciesCountGpuAddress(timestampPacketNode);
 
         for (uint32_t packetId = 0; packetId < timestampPacketNode.getPacketsUsed(); packetId++) {
             uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
             EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
-
-        if (DebugManager.flags.DisableAtomicForPostSyncs.get() == 0) {
-            overrideSupportedDevicesCount(numSupportedDevices);
-
-            for (uint32_t i = 0; i < numSupportedDevices; i++) {
-                timestampPacketNode.incImplicitCpuDependenciesCount();
-            }
-            EncodeAtomic<GfxFamily>::programMiAtomic(cmdStream, dependenciesCountAddress,
-                                                     MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
-                                                     MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
-                                                     0u, 0u, 0x0u, 0x0u);
-        }
     }
 
     template <typename GfxFamily>
-    static void programCsrDependenciesForTimestampPacketContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies, uint32_t numSupportedDevices) {
+    static void programCsrDependenciesForTimestampPacketContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies) {
         for (auto timestampPacketContainer : csrDependencies.timestampPacketContainer) {
             for (auto &node : timestampPacketContainer->peekNodes()) {
-                TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(cmdStream, *node, numSupportedDevices);
+                TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node);
             }
         }
     }
@@ -188,9 +162,9 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily, AuxTranslationDirection auxTranslationDirection>
-    static void programSemaphoreWithImplicitDependencyForAuxTranslation(LinearStream &cmdStream,
-                                                                        const TimestampPacketDependencies *timestampPacketDependencies,
-                                                                        const HardwareInfo &hwInfo, uint32_t numSupportedDevices) {
+    static void programSemaphoreForAuxTranslation(LinearStream &cmdStream,
+                                                  const TimestampPacketDependencies *timestampPacketDependencies,
+                                                  const HardwareInfo &hwInfo) {
         auto &container = (auxTranslationDirection == AuxTranslationDirection::AuxToNonAux)
                               ? timestampPacketDependencies->auxToNonAuxNodes
                               : timestampPacketDependencies->nonAuxToAuxNodes;
@@ -207,7 +181,7 @@ struct TimestampPacketHelper {
         }
 
         for (auto &node : container.peekNodes()) {
-            TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(cmdStream, *node, numSupportedDevices);
+            TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node);
         }
     }
 
@@ -224,14 +198,12 @@ struct TimestampPacketHelper {
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue() {
-        return sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) + sizeof(typename GfxFamily::MI_ATOMIC);
+        return sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
     }
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForNodeDependency(TagNodeBase &timestampPacketNode) {
-        size_t totalMiSemaphoreWaitSize = timestampPacketNode.getPacketsUsed() * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
-
-        return totalMiSemaphoreWaitSize + sizeof(typename GfxFamily::MI_ATOMIC);
+        return (timestampPacketNode.getPacketsUsed() * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT));
     }
 
     template <typename GfxFamily>

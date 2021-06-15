@@ -21,7 +21,6 @@ using namespace NEO;
 struct TimestampPacketSimpleTests : public ::testing::Test {
     class MockTimestampPacketStorage : public TimestampPackets<uint32_t> {
       public:
-        using TimestampPackets<uint32_t>::implicitGpuDependenciesCount;
         using TimestampPackets<uint32_t>::packets;
     };
 
@@ -47,7 +46,6 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
 
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(1);
-        DebugManager.flags.DisableAtomicForPostSyncs.set(0);
 
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);
@@ -76,24 +74,6 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
 
         EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
     };
-
-    template <typename GfxFamily>
-    void verifyMiAtomic(typename GfxFamily::MI_ATOMIC *miAtomicCmd, TagNodeBase *timestampPacketNode) {
-        using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
-        EXPECT_NE(nullptr, miAtomicCmd);
-        auto writeAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
-
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
-        EXPECT_EQ(writeAddress, UnitTestHelper<GfxFamily>::getAtomicMemoryAddress(*miAtomicCmd));
-    };
-
-    void verifyDependencyCounterValues(TimestampPacketContainer *timestampPacketContainer, uint32_t expectedValue) {
-        auto &nodes = timestampPacketContainer->peekNodes();
-        EXPECT_NE(0u, nodes.size());
-        for (auto &node : nodes) {
-            EXPECT_EQ(expectedValue, node->getImplicitCpuDependenciesCount());
-        }
-    }
 
     ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockClDevice> device;
