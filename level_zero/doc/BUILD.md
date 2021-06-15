@@ -1,3 +1,11 @@
+<!---
+
+Copyright (C) 2020-2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
+
 # Building Level Zero
 
 These instructions have been tested on Ubuntu* and complement those existing for NEO in the top-level BUILD.md file.

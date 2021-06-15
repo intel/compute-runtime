@@ -1,3 +1,11 @@
+<!---
+
+Copyright (C) 2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
+
 # Release Notes v1.1
 
 Level Zero Core API.

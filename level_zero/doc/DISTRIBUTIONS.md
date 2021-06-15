@@ -1,3 +1,11 @@
+<!---
+
+Copyright (C) 2020-2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
+
 # Level Zero in Linux distributions
 
 ## Centos* 7, 8, Stream, Red Hat Enterprise Linux* 7

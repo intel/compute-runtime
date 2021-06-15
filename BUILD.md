@@ -1,3 +1,11 @@
+<!---
+
+Copyright (C) 2020-2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
+
 # Building NEO driver
 
 Instructions have been tested on Ubuntu* and CentOS*. They assume a clean installation of a stable version.

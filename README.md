@@ -1,3 +1,11 @@
+<!---
+
+Copyright (C) 2018-2021 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+-->
+
 # Intel(R) Graphics Compute Runtime for oneAPI Level Zero and OpenCL(TM) Driver
 
 ## Introduction
