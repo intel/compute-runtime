@@ -743,12 +743,18 @@ const std::vector<int> &Drm::getSliceMappings(uint32_t deviceIndex) {
     return topologyMap[deviceIndex].sliceIndices;
 }
 
-int Drm::waitHandle(uint32_t waitHandle) {
+int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
     drm_i915_gem_wait wait = {};
     wait.bo_handle = waitHandle;
-    wait.timeout_ns = -1;
+    wait.timeout_ns = timeout;
 
-    return ioctl(DRM_IOCTL_I915_GEM_WAIT, &wait);
+    int ret = ioctl(DRM_IOCTL_I915_GEM_WAIT, &wait);
+    if (ret != 0) {
+        int err = errno;
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_WAIT) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+    }
+
+    return ret;
 }
 
 } // namespace NEO

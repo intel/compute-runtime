@@ -76,15 +76,7 @@ int BufferObject::wait(int64_t timeoutNs) {
         return 0;
     }
 
-    drm_i915_gem_wait wait = {};
-    wait.bo_handle = this->handle;
-    wait.timeout_ns = -1;
-
-    int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_WAIT, &wait);
-    if (ret != 0) {
-        int err = errno;
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_WAIT) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-    }
+    int ret = this->drm->waitHandle(this->handle, -1);
     UNRECOVERABLE_IF(ret != 0);
 
     return ret;

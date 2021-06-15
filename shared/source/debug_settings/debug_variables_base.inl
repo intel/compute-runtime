@@ -232,7 +232,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, WaitLoopCount, -1, "-1: use default, >=0: number
 DECLARE_DEBUG_VARIABLE(int32_t, GTPinAllocateBufferInSharedMemory, -1, "Force GTPin to allocate buffer in shared memory")
 DECLARE_DEBUG_VARIABLE(int32_t, AlignLocalMemoryVaTo2MB, -1, "Allow 2MB pages for allocations with size>=2MB. On Linux it means aligned VA, on Windows it means aligned size. -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceForCompletionWait, -1, "-1: default (disabled), 0: disable, 1: enable : Use Wait User Fence instead Gem Wait")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceUseCtxId, -1, "-1: default (disabled), 0: disable, 1: enable : Use Context Id in Wait User Fence when waiting for completion tag")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceUseCtxId, -1, "-1: default (enabled), 0: disable, 1: enable : Use Context Id in Wait User Fence when waiting for completion tag")
 
 /*EXPERIMENTAL TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableCustomLocalMemoryAlignment, 0, "Align local memory allocations to a given value. Works only with allocations at least as big as the value.  0: no effect, 2097152: 2 megabytes, 1073741824: 1 gigabyte")

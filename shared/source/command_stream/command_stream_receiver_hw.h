@@ -118,7 +118,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return blitterDirectSubmission.get() != nullptr;
     }
 
-    virtual bool isNewResidencyModelActive() { return false; }
+    virtual bool isKmdWaitModeActive() { return true; }
 
     bool initDirectSubmission(Device &device, OsContext &osContext) override;
     GraphicsAllocation *getClearColorAllocation() override;

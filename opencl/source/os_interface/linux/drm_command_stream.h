@@ -45,7 +45,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     MOCKABLE_VIRTUAL void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
-    bool isNewResidencyModelActive() override;
+    bool isKmdWaitModeActive() override;
 
     DrmMemoryManager *getMemoryManager() const;
     GmmPageTableMngr *createPageTableManager() override;
@@ -71,6 +71,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     gemCloseWorkerMode gemCloseWorkerOperationMode;
 
     bool useUserFenceWait = false;
-    bool useContextForUserFenceWait = false;
+    bool useContextForUserFenceWait = true;
 };
 } // namespace NEO

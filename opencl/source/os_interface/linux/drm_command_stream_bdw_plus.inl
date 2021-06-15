@@ -23,7 +23,7 @@ int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue) {
     if (useContextForUserFenceWait) {
         ctxId = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0];
     }
-    return this->drm->waitUserFence(ctxId, getTagAllocation()->getGpuAddress(), waitValue, Drm::ValueWidth::U32);
+    return this->drm->waitUserFence(ctxId, getTagAllocation()->getGpuAddress(), waitValue, Drm::ValueWidth::U32, -1);
 }
 
 } // namespace NEO

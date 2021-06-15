@@ -52,11 +52,13 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get());
     }
-    if (DebugManager.flags.EnableUserFenceForCompletionWait.get() == 1) {
-        useUserFenceWait = true;
+    int overrideUserFenceForCompletionWait = DebugManager.flags.EnableUserFenceForCompletionWait.get();
+    if (overrideUserFenceForCompletionWait != -1) {
+        useUserFenceWait = !!(overrideUserFenceForCompletionWait);
     }
-    if (DebugManager.flags.EnableUserFenceUseCtxId.get() == 1) {
-        useContextForUserFenceWait = true;
+    int overrideUserFenceUseCtxId = DebugManager.flags.EnableUserFenceUseCtxId.get();
+    if (overrideUserFenceUseCtxId != -1) {
+        useContextForUserFenceWait = !!(overrideUserFenceUseCtxId);
     }
 }
 
@@ -207,15 +209,18 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSta
     if (useUserFenceWait) {
         waitUserFence(waitValue);
     } else {
-        this->drm->waitHandle(waitValue);
+        this->drm->waitHandle(waitValue, -1);
     }
 
     return true;
 }
 
 template <typename GfxFamily>
-bool DrmCommandStreamReceiver<GfxFamily>::isNewResidencyModelActive() {
-    return this->drm->isVmBindAvailable();
+bool DrmCommandStreamReceiver<GfxFamily>::isKmdWaitModeActive() {
+    if (this->drm->isVmBindAvailable()) {
+        return useUserFenceWait && useContextForUserFenceWait;
+    }
+    return true;
 }
 
 } // namespace NEO

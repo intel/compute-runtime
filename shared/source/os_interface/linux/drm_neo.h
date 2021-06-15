@@ -204,14 +204,14 @@ class Drm : public DriverModel {
     uint64_t getNextFenceVal(uint32_t vmHandleId) { return ++fenceVal[vmHandleId]; }
     uint64_t *getFenceAddr(uint32_t vmHandleId) { return &pagingFence[vmHandleId]; }
 
-    int waitHandle(uint32_t waitHandle);
+    int waitHandle(uint32_t waitHandle, int64_t timeout);
     enum class ValueWidth : uint32_t {
         U8,
         U16,
         U32,
         U64
     };
-    MOCKABLE_VIRTUAL int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth);
+    MOCKABLE_VIRTUAL int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout);
 
     void setNewResourceBound(bool value) { this->newResourceBound = value; };
     bool getNewResourceBound() { return this->newResourceBound; };

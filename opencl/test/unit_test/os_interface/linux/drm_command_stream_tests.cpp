@@ -1691,32 +1691,26 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagSetWhenDr
     mm->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagSetWhenDrmCsrThenExpectUseDrmWaitUserFenceCallWithZeroContext) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
-
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhenDrmCsrWaitsForFlushStampThenExpectUseDrmGemWaitCall) {
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
         new TestedDrmCommandStreamReceiver<FamilyType>(gemCloseWorkerMode::gemCloseWorkerInactive,
                                                        *this->executionEnvironment,
                                                        1);
-    EXPECT_TRUE(testedCsr->useUserFenceWait);
-    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
+    EXPECT_FALSE(testedCsr->useUserFenceWait);
+    EXPECT_TRUE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
+    mock->ioctl_cnt.gemWait = 0;
 
     FlushStamp handleToWait = 123;
     testedCsr->waitForFlushStamp(handleToWait);
 
-    EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
-    EXPECT_EQ(123u, testedCsr->waitUserFenceResult.waitValue);
-    EXPECT_EQ(0u, mock->waitUserFenceCall.ctxId);
-    EXPECT_EQ(1u, mock->waitUserFenceCall.called);
-    EXPECT_EQ(Drm::ValueWidth::U32, mock->waitUserFenceCall.dataWidth);
+    EXPECT_EQ(1, mock->ioctl_cnt.gemWait);
+    EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceAndUseCtxFlagsSetWhenDrmCsrThenExpectUseDrmWaitUserFenceCallWithNonZeroContext) {
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagSetWhenDrmCsrWaitsForFlushStampThenExpectUseDrmWaitUserFenceCallWithNonZeroContext) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
-    DebugManager.flags.EnableUserFenceUseCtxId.set(1);
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
         new TestedDrmCommandStreamReceiver<FamilyType>(gemCloseWorkerMode::gemCloseWorkerInactive,
@@ -1725,6 +1719,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceAndUseCtxFlag
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
+    mock->ioctl_cnt.gemWait = 0;
 
     auto osContextLinux = static_cast<const OsContextLinux *>(device->getDefaultEngine().osContext);
     std::vector<uint32_t> &drmCtxIds = const_cast<std::vector<uint32_t> &>(osContextLinux->getDrmContextIds());
@@ -1736,9 +1731,87 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceAndUseCtxFlag
     FlushStamp handleToWait = 123;
     testedCsr->waitForFlushStamp(handleToWait);
 
+    EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
     EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
     EXPECT_EQ(123u, testedCsr->waitUserFenceResult.waitValue);
-    EXPECT_NE(0u, mock->waitUserFenceCall.ctxId);
+
     EXPECT_EQ(1u, mock->waitUserFenceCall.called);
+
+    EXPECT_NE(0u, mock->waitUserFenceCall.ctxId);
+    EXPECT_EQ(-1, mock->waitUserFenceCall.timeout);
     EXPECT_EQ(Drm::ValueWidth::U32, mock->waitUserFenceCall.dataWidth);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceSetAndUseCtxFlagsNotSetWhenDrmCsrWaitsForFlushStampThenExpectUseDrmWaitUserFenceCallWithZeroContext) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    DebugManager.flags.EnableUserFenceUseCtxId.set(0);
+
+    TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
+        new TestedDrmCommandStreamReceiver<FamilyType>(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                       *this->executionEnvironment,
+                                                       1);
+    EXPECT_TRUE(testedCsr->useUserFenceWait);
+    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
+    device->resetCommandStreamReceiver(testedCsr);
+    mock->ioctl_cnt.gemWait = 0;
+
+    FlushStamp handleToWait = 123;
+    testedCsr->waitForFlushStamp(handleToWait);
+
+    EXPECT_EQ(0, mock->ioctl_cnt.gemWait);
+    EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
+    EXPECT_EQ(123u, testedCsr->waitUserFenceResult.waitValue);
+
+    EXPECT_EQ(1u, mock->waitUserFenceCall.called);
+
+    EXPECT_EQ(0u, mock->waitUserFenceCall.ctxId);
+    EXPECT_EQ(-1, mock->waitUserFenceCall.timeout);
+    EXPECT_EQ(Drm::ValueWidth::U32, mock->waitUserFenceCall.dataWidth);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenVmBindNotAvailableWhenCheckingForKmdWaitModeActiveThenReturnTrue) {
+    auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    mock->isVmBindAvailableCall.called = 0u;
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = false;
+
+    EXPECT_TRUE(testDrmCsr->isKmdWaitModeActive());
+    EXPECT_EQ(1u, mock->isVmBindAvailableCall.called);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenVmBindAvailableUseWaitCallAndUseContextIdTrueWhenCheckingForKmdWaitModeActiveThenReturnTrue) {
+    auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    mock->isVmBindAvailableCall.called = 0u;
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+    testDrmCsr->useUserFenceWait = true;
+    testDrmCsr->useContextForUserFenceWait = true;
+
+    EXPECT_TRUE(testDrmCsr->isKmdWaitModeActive());
+    EXPECT_EQ(1u, mock->isVmBindAvailableCall.called);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenVmBindAvailableUseWaitCallFalseAndUseContextIdTrueWhenCheckingForKmdWaitModeActiveThenReturnFalse) {
+    auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    mock->isVmBindAvailableCall.called = 0u;
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+    testDrmCsr->useUserFenceWait = false;
+    testDrmCsr->useContextForUserFenceWait = true;
+
+    EXPECT_FALSE(testDrmCsr->isKmdWaitModeActive());
+    EXPECT_EQ(1u, mock->isVmBindAvailableCall.called);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenVmBindAvailableUseWaitCallTrueAndUseContextIdFalseWhenCheckingForKmdWaitModeActiveThenReturnFalse) {
+    auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    mock->isVmBindAvailableCall.called = 0u;
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+    testDrmCsr->useUserFenceWait = true;
+    testDrmCsr->useContextForUserFenceWait = false;
+
+    EXPECT_FALSE(testDrmCsr->isKmdWaitModeActive());
+    EXPECT_EQ(1u, mock->isVmBindAvailableCall.called);
 }

@@ -356,18 +356,37 @@ class DrmMockCustom : public Drm {
         uint64_t value = 0u;
         uint32_t ctxId = 0u;
         ValueWidth dataWidth = ValueWidth::U8;
+        int64_t timeout = 0;
 
         uint32_t called = 0u;
     };
 
     WaitUserFenceCall waitUserFenceCall{};
 
-    int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth) override {
+    int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout) override {
         waitUserFenceCall.called++;
         waitUserFenceCall.ctxId = ctxId;
         waitUserFenceCall.address = address;
         waitUserFenceCall.dataWidth = dataWidth;
         waitUserFenceCall.value = value;
-        return Drm::waitUserFence(ctxId, address, value, dataWidth);
+        waitUserFenceCall.timeout = timeout;
+        return Drm::waitUserFence(ctxId, address, value, dataWidth, timeout);
+    }
+
+    struct IsVmBindAvailableCall {
+        bool callParent = true;
+        bool returnValue = true;
+        uint32_t called = 0u;
+    };
+
+    IsVmBindAvailableCall isVmBindAvailableCall{};
+
+    bool isVmBindAvailable() override {
+        isVmBindAvailableCall.called++;
+        if (isVmBindAvailableCall.callParent) {
+            return Drm::isVmBindAvailable();
+        } else {
+            return isVmBindAvailableCall.returnValue;
+        }
     }
 };
