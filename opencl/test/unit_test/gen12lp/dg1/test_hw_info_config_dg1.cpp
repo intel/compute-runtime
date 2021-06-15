@@ -38,7 +38,7 @@ DG1TEST_F(Dg1HwInfo, givenBoolWhenCallDg1HardwareInfoSetupThenFeatureTableAndWor
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
-    uint64_t config = 0x100060016;
+    uint64_t config = 0x100060010;
     for (auto setParamBool : boolValue) {
 
         gtSystemInfo = {0};
