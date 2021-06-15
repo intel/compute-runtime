@@ -36,6 +36,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxgi.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_with_fallback.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/read_preemption_regkey.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
 )
 
 set(NEO_CORE_OS_INTERFACE_WDDM
@@ -95,7 +96,6 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h
 )
 
