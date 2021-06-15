@@ -137,6 +137,8 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
     }
 
     // Cleanup
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));

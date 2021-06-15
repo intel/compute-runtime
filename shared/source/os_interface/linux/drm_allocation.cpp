@@ -143,8 +143,8 @@ void DrmAllocation::linkWithRegisteredHandle(uint32_t handle) {
 }
 
 void DrmAllocation::freeRegisteredBOBindExtHandles(Drm *drm) {
-    for (auto &i : registeredBoBindHandles) {
-        drm->unregisterResource(i);
+    for (auto it = registeredBoBindHandles.rbegin(); it != registeredBoBindHandles.rend(); ++it) {
+        drm->unregisterResource(*it);
     }
 }
 
