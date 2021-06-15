@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/linux/system_info.h"
 
 namespace NEO {
-
+struct HardwareInfo;
 struct SystemInfoImpl : public SystemInfo {
     ~SystemInfoImpl() override = default;
 
@@ -19,7 +19,7 @@ struct SystemInfoImpl : public SystemInfo {
     uint32_t getMaxSlicesSupported() const override { return 0; }
     uint32_t getMaxDualSubSlicesSupported() const override { return 0; }
     uint32_t getMaxEuPerDualSubSlice() const override { return 0; }
-    uint32_t getL3CacheSizeInKb() const override { return 0; }
+    uint64_t getL3CacheSizeInKb() const override { return 0; }
     uint32_t getL3BankCount() const override { return 0; }
     uint32_t getNumThreadsPerEu() const override { return 0; }
     uint32_t getTotalVsThreads() const override { return 0; }
@@ -30,6 +30,7 @@ struct SystemInfoImpl : public SystemInfo {
     uint32_t getMaxFillRate() const override { return 0; }
     uint32_t getMaxRCS() const override { return 0; }
     uint32_t getMaxCCS() const override { return 0; }
+    void checkSysInfoMismatch(HardwareInfo *hwInfo) override {}
 };
 
 } // namespace NEO

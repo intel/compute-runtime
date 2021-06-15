@@ -21,7 +21,7 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsNotCreatedAndNoIoc
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    EXPECT_TRUE(drm.querySystemInfo());
+    EXPECT_FALSE(drm.querySystemInfo());
 
     EXPECT_EQ(nullptr, drm.getSystemInfo());
     EXPECT_EQ(0u, drm.ioctlCallsCount);
@@ -32,6 +32,7 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThen
 
     EXPECT_EQ(0u, systemInfo.getL3CacheSizeInKb());
     EXPECT_EQ(0u, systemInfo.getL3BankCount());
+    EXPECT_EQ(0u, systemInfo.getNumThreadsPerEu());
     EXPECT_EQ(0u, systemInfo.getMaxFillRate());
     EXPECT_EQ(0u, systemInfo.getTotalVsThreads());
     EXPECT_EQ(0u, systemInfo.getTotalHsThreads());
@@ -45,11 +46,11 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThen
     EXPECT_EQ(0u, systemInfo.getMaxCCS());
 }
 
-TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystemInfoIsNotCreatedAndDebugMessageIsPrinted) {
-    struct DrmMockToFailQuerySystemInfo : public DrmMock {
-        DrmMockToFailQuerySystemInfo(RootDeviceEnvironment &rootDeviceEnvironment)
+TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoTrueThenSystemInfoIsNotCreatedAndDebugMessageIsNotPrinted) {
+    struct DrmMockToQuerySystemInfo : public DrmMock {
+        DrmMockToQuerySystemInfo(RootDeviceEnvironment &rootDeviceEnvironment)
             : DrmMock(rootDeviceEnvironment) {}
-        bool querySystemInfo() override { return false; }
+        bool querySystemInfo() override { return true; }
     };
 
     DebugManagerStateRestore restorer;
@@ -58,7 +59,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-    DrmMockToFailQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    DrmMockToQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
@@ -70,10 +71,13 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 
-    EXPECT_THAT(::testing::internal::GetCapturedStdout(), ::testing::HasSubstr("INFO: System Info query failed!\n"));
+    EXPECT_THAT(::testing::internal::GetCapturedStdout(), ::testing::IsEmpty());
 }
 
-TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenSystemInfoIsCreatedThenSetHardwareInfoAttributesWithZeros) {
+TEST(DrmSystemInfoTest, givenSystemInfoWhenSetupHardwareInfoThenFinishedWithSuccess) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
@@ -81,24 +85,12 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenSystemInfoIsCreatedThenSetHard
 
     HardwareInfo hwInfo = *defaultHwInfo;
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo, GTTYPE_UNDEFINED};
 
     drm.systemInfo.reset(new SystemInfoImpl(nullptr, 0));
+
+    ::testing::internal::CaptureStdout();
     int ret = drm.setupHardwareInfo(&device, false);
     EXPECT_EQ(ret, 0);
-
-    EXPECT_EQ_VAL(0u, gtSystemInfo.L3CacheSizeInKb);
-    EXPECT_EQ(0u, gtSystemInfo.L3BankCount);
-    EXPECT_EQ(0u, gtSystemInfo.MaxFillRate);
-    EXPECT_EQ(0u, gtSystemInfo.TotalVsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalHsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalDsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalGsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.TotalPsThreadsWindowerRange);
-    EXPECT_EQ(0u, gtSystemInfo.TotalDsThreads);
-    EXPECT_EQ(0u, gtSystemInfo.MaxEuPerSubSlice);
-    EXPECT_EQ(0u, gtSystemInfo.MaxSlicesSupported);
-    EXPECT_EQ(0u, gtSystemInfo.MaxSubSlicesSupported);
-    EXPECT_EQ(0u, gtSystemInfo.MaxDualSubSlicesSupported);
+    EXPECT_THAT(::testing::internal::GetCapturedStdout(), ::testing::IsEmpty());
 }

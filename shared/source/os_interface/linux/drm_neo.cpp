@@ -466,35 +466,18 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
 
     status = querySystemInfo();
-    if (!status) {
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
+    if (status) {
+        setupSystemInfo(hwInfo, systemInfo.get());
     }
-    if (systemInfo) {
-        setupSystemInfo(hwInfo, *systemInfo);
-    }
-
     device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+
+    if (systemInfo) {
+        systemInfo->checkSysInfoMismatch(hwInfo);
+    }
 
     setupCacheInfo(*hwInfo);
 
     return 0;
-}
-
-void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo &sysInfo) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * sysInfo.getNumThreadsPerEu();
-    gtSysInfo->L3CacheSizeInKb = sysInfo.getL3CacheSizeInKb();
-    gtSysInfo->L3BankCount = sysInfo.getL3BankCount();
-    gtSysInfo->MaxFillRate = sysInfo.getMaxFillRate();
-    gtSysInfo->TotalVsThreads = sysInfo.getTotalVsThreads();
-    gtSysInfo->TotalHsThreads = sysInfo.getTotalHsThreads();
-    gtSysInfo->TotalDsThreads = sysInfo.getTotalDsThreads();
-    gtSysInfo->TotalGsThreads = sysInfo.getTotalGsThreads();
-    gtSysInfo->TotalPsThreadsWindowerRange = sysInfo.getTotalPsThreads();
-    gtSysInfo->MaxEuPerSubSlice = sysInfo.getMaxEuPerDualSubSlice();
-    gtSysInfo->MaxSlicesSupported = sysInfo.getMaxSlicesSupported();
-    gtSysInfo->MaxSubSlicesSupported = sysInfo.getMaxDualSubSlicesSupported();
-    gtSysInfo->MaxDualSubSlicesSupported = sysInfo.getMaxDualSubSlicesSupported();
 }
 
 void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int fileDescriptor, const char *pciPath) {

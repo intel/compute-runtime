@@ -143,7 +143,7 @@ class Drm : public DriverModel {
     int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     int setupHardwareInfo(DeviceDescriptor *, bool);
-    void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo &sysInfo);
+    void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo);
     void setupCacheInfo(const HardwareInfo &hwInfo);
 
     PhysicalDevicePciBusInfo getPciBusInfo() const override;

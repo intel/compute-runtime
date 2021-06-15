@@ -52,8 +52,10 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
 }
 
 bool Drm::querySystemInfo() {
-    return true;
+    return false;
 }
+
+void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {}
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     auto length = 0;
