@@ -1,8 +1,8 @@
-REM
-REM Copyright (C) 2019 Intel Corporation
-REM
-REM SPDX-License-Identifier: MIT
-REM
+::
+:: Copyright (C) 2019-2021 Intel Corporation
+::
+:: SPDX-License-Identifier: MIT
+::
 
 @echo off
 setlocal EnableDelayedExpansion
