@@ -25,8 +25,8 @@ namespace NEO {
 template <typename Family>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                           const void *pThreadGroupDimensions, bool isIndirect, bool isPredicate, DispatchKernelEncoderI *dispatchInterface,
-                                          uint64_t eventAddress, bool isTimestampEvent, bool L3FlushEnable, Device *device, PreemptionMode preemptionMode, bool &requiresUncachedMocs,
-                                          uint32_t &partitionCount, bool isInternal) {
+                                          uint64_t eventAddress, bool isTimestampEvent, bool L3FlushEnable, Device *device, PreemptionMode preemptionMode,
+                                          bool &requiresUncachedMocs, bool useGlobalAtomics, uint32_t &partitionCount, bool isInternal) {
 
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -168,7 +168,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
             auto gmmHelper = container.getDevice()->getGmmHelper();
             uint32_t statelessMocsIndex =
                 requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-            EncodeStateBaseAddress<Family>::encode(container, sba, statelessMocsIndex);
+            EncodeStateBaseAddress<Family>::encode(container, sba, statelessMocsIndex, false);
             container.setDirtyStateForAllHeaps(false);
             requiresUncachedMocs = false;
         }
@@ -351,11 +351,11 @@ template <typename Family>
 void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd) {
     auto gmmHelper = container.getDevice()->getRootDeviceEnvironment().getGmmHelper();
     uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-    EncodeStateBaseAddress<Family>::encode(container, sbaCmd, statelessMocsIndex);
+    EncodeStateBaseAddress<Family>::encode(container, sbaCmd, statelessMocsIndex, false);
 }
 
 template <typename Family>
-void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex) {
+void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex, bool useGlobalAtomics) {
     EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), true);
 
     auto gmmHelper = container.getDevice()->getGmmHelper();
@@ -376,7 +376,7 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
         gmmHelper,
         false,
         MemoryCompressionState::NotApplicable,
-        false,
+        useGlobalAtomics,
         1u);
 
     auto pCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));

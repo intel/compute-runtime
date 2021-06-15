@@ -41,6 +41,7 @@ struct EncodeDispatchKernel {
                        Device *device,
                        PreemptionMode preemptionMode,
                        bool &requiresUncachedMocs,
+                       bool useGlobalAtomics,
                        uint32_t &partitionCount,
                        bool isInternal);
 
@@ -212,7 +213,7 @@ template <typename GfxFamily>
 struct EncodeStateBaseAddress {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     static void encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd);
-    static void encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex);
+    static void encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex, bool useGlobalAtomics);
 };
 
 template <typename GfxFamily>

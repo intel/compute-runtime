@@ -114,6 +114,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                  neoDevice,
                                                  commandListPreemptionMode,
                                                  this->containsStatelessUncachedResource,
+                                                 false,
                                                  partitionCount,
                                                  internalUsage);
 
