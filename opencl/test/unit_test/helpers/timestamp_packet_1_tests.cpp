@@ -68,8 +68,6 @@ HWTEST_F(TimestampPacketTests, givenDebugModeWhereAtomicsAreNotEmittedWhenComman
     EXPECT_EQ(0u, mockNode.getImplicitCpuDependenciesCount());
     tag.packets[0].contextEnd = 0u;
     tag.packets[0].globalEnd = 0u;
-
-    EXPECT_FALSE(tag.isCompleted());
 }
 
 HWTEST_F(TimestampPacketTests, givenMultipleDeviesWhenIncrementingCpuDependenciesThenIncrementMultipleTimes) {
@@ -121,28 +119,6 @@ TEST_F(TimestampPacketTests, givenTagNodeWhatAskingForGpuAddressesThenReturnCorr
     EXPECT_EQ(expectedCounterAddress, TimestampPacketHelper::getGpuDependenciesCountGpuAddress(mockNode));
 }
 
-TEST_F(TimestampPacketSimpleTests, whenContextEndTagIsNotOneThenMarkAsCompleted) {
-    MockTimestampPacketStorage timestampPacketStorage;
-    auto &packet = timestampPacketStorage.packets[0];
-    timestampPacketStorage.initialize();
-
-    packet.contextEnd = 1;
-    packet.globalEnd = 1;
-    EXPECT_FALSE(timestampPacketStorage.isCompleted());
-
-    packet.contextEnd = 1;
-    packet.globalEnd = 0;
-    EXPECT_FALSE(timestampPacketStorage.isCompleted());
-
-    packet.contextEnd = 0;
-    packet.globalEnd = 1;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
-
-    packet.contextEnd = 0;
-    packet.globalEnd = 0;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
-}
-
 TEST_F(TimestampPacketSimpleTests, givenTimestampPacketContainerWhenMovedThenMoveAllNodes) {
     EXPECT_TRUE(std::is_move_constructible<TimestampPacketContainer>::value);
     EXPECT_TRUE(std::is_move_assignable<TimestampPacketContainer>::value);
@@ -176,38 +152,6 @@ TEST_F(TimestampPacketSimpleTests, givenTimestampPacketContainerWhenMovedThenMov
     }
     EXPECT_EQ(1u, node0.returnCalls);
     EXPECT_EQ(1u, node1.returnCalls);
-}
-
-TEST_F(TimestampPacketSimpleTests, whenIsCompletedIsCalledThenItReturnsProperTimestampPacketStatus) {
-    MockTimestampPacketStorage timestampPacketStorage;
-    auto &packet = timestampPacketStorage.packets[0];
-    timestampPacketStorage.initialize();
-
-    EXPECT_FALSE(timestampPacketStorage.isCompleted());
-    packet.contextEnd = 0;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
-    packet.globalEnd = 0;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
-}
-
-TEST_F(TimestampPacketSimpleTests, givenMultiplePacketsInUseWhenCompletionIsCheckedThenVerifyAllUsedNodes) {
-    MockTimestampPacketStorage timestampPacketStorage;
-    auto &packets = timestampPacketStorage.packets;
-    timestampPacketStorage.initialize();
-
-    timestampPacketStorage.setPacketsUsed(TimestampPacketSizeControl::preferredPacketCount - 1);
-
-    for (uint32_t i = 0; i < timestampPacketStorage.getPacketsUsed() - 1; i++) {
-        packets[i].contextEnd = 0;
-        packets[i].globalEnd = 0;
-        EXPECT_FALSE(timestampPacketStorage.isCompleted());
-    }
-
-    packets[timestampPacketStorage.getPacketsUsed() - 1].globalEnd = 0;
-    EXPECT_FALSE(timestampPacketStorage.isCompleted());
-
-    packets[timestampPacketStorage.getPacketsUsed() - 1].contextEnd = 0;
-    EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
 TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
@@ -339,7 +283,6 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAlloc
     auto tag = csr.getTimestampPacketAllocator()->getTag();
     setTagToReadyState(tag);
 
-    EXPECT_TRUE(tag->isCompleted());
     EXPECT_FALSE(tag->canBeReleased());
 }
 
@@ -1401,35 +1344,6 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThen
     userEvent.setStatus(CL_COMPLETE);
     EXPECT_TRUE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
     cmdQ->isQueueBlocked();
-}
-
-HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenDontKeepDependencyOnPreviousNodeIfItsReady) {
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-
-    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
-    TimestampPacketContainer previousNodes;
-    cmdQ.obtainNewTimestampPacketNodes(1, previousNodes, false, false);
-    auto firstNode = cmdQ.timestampPacketContainer->peekNodes().at(0);
-    setTagToReadyState(firstNode);
-
-    cmdQ.enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
-
-    uint32_t semaphoresFound = 0;
-    uint32_t atomicsFound = 0;
-    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
-        if (genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(*it)) {
-            semaphoresFound++;
-        }
-        if (genCmdCast<typename FamilyType::MI_ATOMIC *>(*it)) {
-            atomicsFound++;
-        }
-    }
-    uint32_t expectedSemaphoresCount = (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 2 : 0);
-    EXPECT_EQ(expectedSemaphoresCount, semaphoresFound);
-    EXPECT_EQ(0u, atomicsFound);
 }
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDependencyOnPreviousNodeIfItsNotReady) {

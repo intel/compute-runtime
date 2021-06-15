@@ -281,15 +281,6 @@ void TagNode<TagType>::assignDataToAllTimestamps(uint32_t packetIndex, void *sou
 }
 
 template <typename TagType>
-bool TagNode<TagType>::isCompleted() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
-        return tagForCpuAccess->isCompleted();
-    } else {
-        return true;
-    }
-}
-
-template <typename TagType>
 MetricsLibraryApi::QueryHandle_1_0 &TagNode<TagType>::getQueryHandleRef() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::HwPerfCounter) {
         return tagForCpuAccess->query.handle;

@@ -41,7 +41,6 @@ void TagNodeBase::returnTag() {
 
 bool TagNodeBase::canBeReleased() const {
     return (!doNotReleaseNodes) &&
-           (isCompleted()) &&
            (getImplicitGpuDependenciesCount() == getImplicitCpuDependenciesCount());
 }
 

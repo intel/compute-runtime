@@ -49,20 +49,6 @@ class TimestampPackets : public TagTypeBase {
 
     static constexpr size_t getSinglePacketSize() { return sizeof(Packet); }
 
-    bool isCompleted() const {
-        if (DebugManager.flags.DisableAtomicForPostSyncs.get() == 1) {
-            return false;
-        }
-
-        for (uint32_t i = 0; i < packetsUsed; i++) {
-            if (packets[i].contextEnd == 1) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     void initialize() {
         for (auto &packet : packets) {
             packet.contextStart = 1u;
