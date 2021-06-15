@@ -76,7 +76,8 @@ class HeapAllocator {
                         pLeftBound += sizeToAllocate;
                     }
                 } else {
-                    const uint64_t misalignment = pRightBound - alignDown(pRightBound, alignment);
+                    const uint64_t pStart = pRightBound - sizeToAllocate;
+                    const uint64_t misalignment = pStart - alignDown(pStart, alignment);
                     if (pLeftBound + sizeToAllocate + misalignment <= pRightBound) {
                         if (misalignment) {
                             pRightBound -= misalignment;
