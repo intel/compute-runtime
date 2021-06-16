@@ -170,7 +170,7 @@ cl_int Program::build(
             break;
         }
 
-        if (isKernelDebugEnabled()) {
+        if (isKernelDebugEnabled() || gtpinIsGTPinInitialized()) {
 
             for (auto &clDevice : deviceVector) {
                 auto rootDeviceIndex = clDevice->getRootDeviceIndex();
