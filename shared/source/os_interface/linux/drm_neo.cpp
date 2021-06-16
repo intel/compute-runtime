@@ -94,7 +94,7 @@ int Drm::ioctl(unsigned long request, void *arg) {
         returnedErrno = errno;
 
         if (printIoctl) {
-            printf("IOCTL %s returns %d, errno %d\n", this->ioctlToString(request).c_str(), ret, returnedErrno);
+            printf("IOCTL %s returns %d, errno %d(%s)\n", this->ioctlToString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
         }
 
         if (measureTime) {

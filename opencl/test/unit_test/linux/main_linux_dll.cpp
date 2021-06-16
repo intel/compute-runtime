@@ -177,7 +177,7 @@ TEST(DrmTest, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
     drm->destroyDrmContext(contextId);
 
     std::string output = ::testing::internal::GetCapturedStdout();
-    EXPECT_STREQ(output.c_str(), "IOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY called\nIOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY returns 0, errno 9\n");
+    EXPECT_STREQ(output.c_str(), "IOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY called\nIOCTL DRM_IOCTL_I915_GEM_CONTEXT_DESTROY returns 0, errno 9(Bad file descriptor)\n");
 }
 
 TEST(DrmTest, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {
