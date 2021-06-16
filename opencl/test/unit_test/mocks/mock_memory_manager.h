@@ -170,6 +170,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool isMockHostMemoryManager = false;
     bool isMockEventPoolCreateMemoryManager = false;
     bool limitedGPU = false;
+    bool returnFakeAllocation = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;

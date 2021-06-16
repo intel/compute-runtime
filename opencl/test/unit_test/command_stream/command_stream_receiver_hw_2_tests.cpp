@@ -1113,6 +1113,8 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
 
     EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(region, rootDeviceEnvironment));
 
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->returnFakeAllocation = true;
     // from hostPtr
     HardwareParse hwParser;
     auto offset = csr.commandStream.getUsed();
@@ -1123,6 +1125,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
                                                                           0, srcOrigin, dstOrigin, region,
                                                                           srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch);
 
+    memoryManager->returnFakeAllocation = false;
     blitBuffer(&csr, blitProperties, true);
     hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 

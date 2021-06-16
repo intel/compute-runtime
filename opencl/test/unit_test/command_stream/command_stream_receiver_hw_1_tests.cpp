@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "test.h"
@@ -1070,7 +1071,8 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     size_t srcRowPitch = std::get<0>(GetParam()).srcRowPitch;
     size_t srcSlicePitch = std::get<0>(GetParam()).srcSlicePitch;
     auto allocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
-
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->returnFakeAllocation = true;
     auto blitProperties = BlitProperties::constructPropertiesForReadWrite(std::get<1>(GetParam()),     //blitDirection
                                                                           csr, allocation,             //commandStreamReceiver
                                                                           nullptr,                     //memObjAllocation
@@ -1085,6 +1087,8 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
                                                                           srcRowPitch,                 //gpuRowPitch
                                                                           srcSlicePitch                //gpuSlicePitch
     );
+
+    memoryManager->returnFakeAllocation = false;
     blitBuffer(&csr, blitProperties, true);
 
     HardwareParse hwParser;
@@ -1169,6 +1173,8 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     size_t srcSlicePitch = std::get<0>(GetParam()).srcSlicePitch;
     auto allocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
 
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->returnFakeAllocation = true;
     auto blitProperties = BlitProperties::constructPropertiesForReadWrite(std::get<1>(GetParam()),     //blitDirection
                                                                           csr, allocation,             //commandStreamReceiver
                                                                           nullptr,                     //memObjAllocation
@@ -1183,6 +1189,8 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
                                                                           srcRowPitch,                 //gpuRowPitch
                                                                           srcSlicePitch                //gpuSlicePitch
     );
+
+    memoryManager->returnFakeAllocation = false;
     blitBuffer(&csr, blitProperties, true);
 
     HardwareParse hwParser;

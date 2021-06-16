@@ -28,19 +28,19 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
     GraphicsAllocation *hostAllocation = nullptr;
     auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
 
+    copySize.y = copySize.y ? copySize.y : 1;
+    copySize.z = copySize.z ? copySize.z : 1;
+
     if (preallocatedHostAllocation) {
         hostAllocation = preallocatedHostAllocation;
         UNRECOVERABLE_IF(hostAllocGpuVa == 0);
     } else {
-        HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize.x), true);
+        HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize.x * copySize.y * copySize.z), true);
         bool success = commandStreamReceiver.createAllocationForHostSurface(hostPtrSurface, false);
         UNRECOVERABLE_IF(!success);
         hostAllocation = hostPtrSurface.getAllocation();
         hostAllocGpuVa = hostAllocation->getGpuAddress();
     }
-
-    copySize.y = copySize.y ? copySize.y : 1;
-    copySize.z = copySize.z ? copySize.z : 1;
 
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection ||
         BlitterConstants::BlitDirection::HostPtrToImage == blitDirection) {
