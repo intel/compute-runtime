@@ -137,6 +137,7 @@ class CommandComputeKernel : public Command {
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
 
     LinearStream *getCommandStream() override { return kernelOperation->commandStream.get(); }
+    Kernel *peekKernel() const { return kernel; }
 
   protected:
     std::vector<Surface *> surfaces;

@@ -66,6 +66,32 @@ HWTEST_F(EnqueueReadImageTest, GivenBlockingEnqueueWhenReadingImageThenTaskLevel
     EXPECT_EQ(oldCsrTaskLevel, pCmdQ->taskLevel);
 }
 
+HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageThenBuiltinKernelIsResolved) {
+
+    UserEvent userEvent{};
+    cl_event inputEvent = &userEvent;
+    cl_event outputEvent{};
+
+    EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, srcImage, CL_FALSE,
+                                               EnqueueReadImageTraits::origin,
+                                               EnqueueReadImageTraits::region,
+                                               EnqueueReadImageTraits::rowPitch,
+                                               EnqueueReadImageTraits::slicePitch,
+                                               EnqueueReadImageTraits::hostPtr,
+                                               EnqueueReadImageTraits::mapAllocation,
+                                               1u,
+                                               &inputEvent,
+                                               &outputEvent);
+
+    auto pEvent = castToObject<Event>(outputEvent);
+    auto pCommand = static_cast<CommandComputeKernel *>(pEvent->peekCommand());
+    EXPECT_FALSE(pCommand->peekKernel()->Kernel::canTransformImages());
+    EXPECT_TRUE(pCommand->peekKernel()->isPatched());
+    userEvent.setStatus(CL_COMPLETE);
+    pEvent->release();
+    pCmdQ->finish();
+}
+
 HWTEST_F(EnqueueReadImageTest, GivenNonBlockingEnqueueWhenReadingImageThenTaskLevelIsIncremented) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
