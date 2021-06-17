@@ -40,6 +40,8 @@ constexpr unsigned long int invalidIoctl = static_cast<unsigned long int>(-1);
 int setErrno = 0;
 int fstatFuncRetVal = 0;
 uint32_t preadFuncCalled = 0u;
+uint32_t mmapFuncCalled = 0u;
+uint32_t munmapFuncCalled = 0u;
 
 int close(int fileDescriptor) {
     closeFuncCalled++;
@@ -134,6 +136,16 @@ int fstat(int fd, struct stat *buf) {
 
 ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
     preadFuncCalled++;
+    return 0;
+}
+
+void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) {
+    mmapFuncCalled++;
+    return 0;
+}
+
+int munmap(void *addr, size_t size) {
+    munmapFuncCalled++;
     return 0;
 }
 
