@@ -248,9 +248,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     }
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
     if (isCopyOnly()) {
+        NEO::MiFlushArgs args;
+        args.commandWithPostSync = true;
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(),
                                                           event->getGpuAddress(this->device),
-                                                          Event::STATE_CLEARED, false, true);
+                                                          Event::STATE_CLEARED, args);
     } else {
         NEO::PipeControlArgs args;
         args.dcFlushEnable = (!event->signalScope) ? false : true;
@@ -282,7 +284,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
 
     if (!hSignalEvent) {
         if (isCopyOnly()) {
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
+            NEO::MiFlushArgs args;
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args);
         } else {
             NEO::PipeControlArgs args;
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
@@ -1426,7 +1429,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(ze
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
 
     if (!beforeWalker) {
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
+        NEO::MiFlushArgs args;
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args);
     }
     appendWriteKernelTimestamp(hEvent, beforeWalker, false);
 }
@@ -1529,7 +1533,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     }
 
     if (isCopyOnly()) {
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED, false, true);
+        NEO::MiFlushArgs args;
+        args.commandWithPostSync = true;
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED, args);
     } else {
         NEO::PipeControlArgs args;
         args.dcFlushEnable = (!event->signalScope) ? false : true;
@@ -1561,7 +1567,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
     if (dcFlushRequired) {
         if (isCopyOnly()) {
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
+            NEO::MiFlushArgs args;
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args);
         } else {
             NEO::PipeControlArgs args(true);
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
@@ -1683,11 +1690,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     }
 
     if (isCopyOnly()) {
+        NEO::MiFlushArgs args;
+        args.timeStampOperation = true;
+        args.commandWithPostSync = true;
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(),
                                                           reinterpret_cast<uint64_t>(dstptr),
                                                           0,
-                                                          true,
-                                                          true);
+                                                          args);
     } else {
         NEO::PipeControlArgs args(false);
 

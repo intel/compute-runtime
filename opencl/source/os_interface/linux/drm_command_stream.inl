@@ -60,6 +60,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     if (overrideUserFenceUseCtxId != -1) {
         useContextForUserFenceWait = !!(overrideUserFenceUseCtxId);
     }
+    useNotifyEnableForPostSync = useUserFenceWait;
 }
 
 template <typename GfxFamily>

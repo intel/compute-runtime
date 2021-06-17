@@ -37,7 +37,7 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingMonitorFenceCmdThenDis
 
     uint64_t expectedGpuAddress = 0x5100ull;
     uint64_t expectedValue = 0x1234ull;
-    BlitterDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, expectedGpuAddress, expectedValue, pDevice->getHardwareInfo());
+    BlitterDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, expectedGpuAddress, expectedValue, pDevice->getHardwareInfo(), false);
 
     EXPECT_EQ(expectedSize, cmdBuffer.getUsed());
 

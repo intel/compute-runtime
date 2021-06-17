@@ -24,6 +24,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
+    using CommandStreamReceiver::useNotifyEnableForPostSync;
     using DrmCommandStreamReceiver<GfxFamily>::residency;
     using DrmCommandStreamReceiver<GfxFamily>::useContextForUserFenceWait;
     using DrmCommandStreamReceiver<GfxFamily>::useUserFenceWait;

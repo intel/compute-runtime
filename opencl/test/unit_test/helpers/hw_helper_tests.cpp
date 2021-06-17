@@ -337,6 +337,36 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
 }
 
+HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsedThenNotifyEnableFlagIsTrue) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    uint64_t address = 0x1234567887654321;
+    uint64_t immediateData = 0x1234;
+
+    auto expectedPipeControl = FamilyType::cmdInitPipeControl;
+    expectedPipeControl.setCommandStreamerStallEnable(true);
+    expectedPipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
+    expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
+    expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
+    expectedPipeControl.setImmediateData(immediateData);
+    expectedPipeControl.setNotifyEnable(true);
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+
+    PipeControlArgs args;
+    args.notifyEnable = true;
+    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
+        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, hardwareInfo, args);
+    auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
+    auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleSynchronization(hardwareInfo);
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
+    ASSERT_NE(nullptr, pipeControl);
+
+    EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
+    EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
+}
+
 TEST(HwInfoTest, givenHwInfoWhenChosenEngineTypeQueriedThenDefaultIsReturned) {
     HardwareInfo hwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;

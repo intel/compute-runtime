@@ -43,7 +43,8 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(const RootDeviceEnviron
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchPreBlitCommand(LinearStream &linearStream) {
     if (BlitCommandsHelper<GfxFamily>::preBlitCommandWARequired()) {
-        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, false, false);
+        MiFlushArgs args;
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args);
     }
 }
 
@@ -58,13 +59,14 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePreBlitCommandSize() {
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream) {
+    MiFlushArgs args;
     if (DebugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
         switch (DebugManager.flags.PostBlitCommand.get()) {
         case BlitterConstants::PostBlitMode::MiArbCheck:
             EncodeMiArbCheck<GfxFamily>::program(linearStream);
             return;
         case BlitterConstants::PostBlitMode::MiFlush:
-            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, false, false);
+            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args);
             return;
         default:
             return;
@@ -72,7 +74,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
     }
 
     if (BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired()) {
-        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, false, false);
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args);
     }
 
     EncodeMiArbCheck<GfxFamily>::program(linearStream);
@@ -298,7 +300,9 @@ template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger, DebugPauseState waitCondition) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(confirmationTrigger), false, true);
+    MiFlushArgs args;
+    args.commandWithPostSync = true;
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(confirmationTrigger), args);
 
     EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(waitCondition), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
 }

@@ -26,8 +26,12 @@ template <typename GfxFamily>
 inline void BlitterDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdBuffer,
                                                                uint64_t gpuAddress,
                                                                uint64_t immediateData,
-                                                               const HardwareInfo &hwInfo) {
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdBuffer, gpuAddress, immediateData, false, true);
+                                                               const HardwareInfo &hwInfo,
+                                                               bool useNotifyEnable) {
+    MiFlushArgs args;
+    args.commandWithPostSync = true;
+    args.notifyEnable = useNotifyEnable;
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdBuffer, gpuAddress, immediateData, args);
 }
 
 template <typename GfxFamily>
@@ -38,7 +42,8 @@ inline size_t BlitterDispatcher<GfxFamily>::getSizeMonitorFence(const HardwareIn
 
 template <typename GfxFamily>
 inline void BlitterDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo) {
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdBuffer, 0ull, 0ull, false, false);
+    MiFlushArgs args;
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdBuffer, 0ull, 0ull, args);
 }
 
 template <typename GfxFamily>

@@ -255,6 +255,10 @@ class CommandStreamReceiver {
 
     virtual void postInitFlagsSetup() = 0;
 
+    bool isUsedNotifyEnableForPostSync() const {
+        return useNotifyEnableForPostSync;
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
@@ -356,6 +360,7 @@ class CommandStreamReceiver {
     bool newResources = false;
     bool useGpuIdleImplicitFlush = false;
     bool lastSentUseGlobalAtomics = false;
+    bool useNotifyEnableForPostSync = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

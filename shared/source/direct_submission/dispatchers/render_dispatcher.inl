@@ -29,7 +29,8 @@ template <typename GfxFamily>
 inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdBuffer,
                                                               uint64_t gpuAddress,
                                                               uint64_t immediateData,
-                                                              const HardwareInfo &hwInfo) {
+                                                              const HardwareInfo &hwInfo,
+                                                              bool useNotifyEnable) {
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
     PipeControlArgs args(true);
     MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(

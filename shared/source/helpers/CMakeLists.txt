@@ -107,6 +107,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/vec.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/${BRANCH_DIR_SUFFIX}/hw_cmds.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/${BRANCH_DIR_SUFFIX}/engine_group_types.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions/mi_flush_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/pipe_control_args_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/pipe_control_args.h
 )

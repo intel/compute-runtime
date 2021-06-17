@@ -23,7 +23,8 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithNoPostSyncThe
     MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
     LinearStream stream(&gfxAllocation);
 
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, 0, 0, false, false);
+    MiFlushArgs args;
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, 0, 0, args);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed());
@@ -44,7 +45,9 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithPostSyncDataT
     uint64_t address = 0x1000;
     uint64_t data = 0x4321;
 
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, address, data, false, true);
+    MiFlushArgs args;
+    args.commandWithPostSync = true;
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, address, data, args);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed());
@@ -74,7 +77,9 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithTimestampFasl
     uint64_t address = 0x1000;
     uint64_t data = 0x4321;
 
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, address, data, false, true);
+    MiFlushArgs args;
+    args.commandWithPostSync = true;
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, address, data, args);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed());
@@ -103,7 +108,10 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithTimestampTrue
     uint64_t address = 0x1000;
     uint64_t data = 0x4321;
 
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, address, data, true, true);
+    MiFlushArgs args;
+    args.timeStampOperation = true;
+    args.commandWithPostSync = true;
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, address, data, args);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed());

@@ -64,7 +64,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPip
     uint32_t gpuVaLow = static_cast<uint32_t>(gpuVa & 0x0000FFFFFFFFull);
     uint32_t gpuVaHigh = static_cast<uint32_t>(gpuVa >> 32);
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo, false);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);

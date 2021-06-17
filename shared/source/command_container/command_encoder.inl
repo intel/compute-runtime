@@ -636,17 +636,18 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer
 }
 
 template <typename GfxFamily>
-void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData, bool timeStampOperation, bool commandWithPostSync) {
+void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData, MiFlushArgs &args) {
     programMiFlushDwWA(commandStream);
 
     auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
     MI_FLUSH_DW miFlush = GfxFamily::cmdInitMiFlushDw;
-    if (commandWithPostSync) {
-        auto postSyncType = timeStampOperation ? MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER : MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD;
+    if (args.commandWithPostSync) {
+        auto postSyncType = args.timeStampOperation ? MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER : MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD;
         miFlush.setPostSyncOperation(postSyncType);
         miFlush.setDestinationAddress(immediateDataGpuAddress);
         miFlush.setImmediateData(immediateData);
     }
+    miFlush.setNotifyEnable(args.notifyEnable);
     appendMiFlushDw(&miFlush);
     *miFlushDwCmd = miFlush;
 }

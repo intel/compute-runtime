@@ -22,16 +22,18 @@ class DrmMemoryManager;
 template <typename GfxFamily>
 class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
   protected:
-    typedef DeviceCommandStreamReceiver<GfxFamily> BaseClass;
-    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAddress;
-    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAllocation;
-    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::taskCount;
+    using BaseClass = DeviceCommandStreamReceiver<GfxFamily>;
+
     using BaseClass::getScratchPatchAddress;
     using BaseClass::makeNonResident;
     using BaseClass::makeResident;
     using BaseClass::mediaVfeStateDirty;
     using BaseClass::osContext;
     using BaseClass::requiredScratchSize;
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAddress;
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAllocation;
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::taskCount;
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::useNotifyEnableForPostSync;
 
   public:
     // When drm is null default implementation is used. In this case DrmCommandStreamReceiver is responsible to free drm.

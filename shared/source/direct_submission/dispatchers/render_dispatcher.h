@@ -19,7 +19,8 @@ class RenderDispatcher : public Dispatcher<GfxFamily> {
     static void dispatchMonitorFence(LinearStream &cmdBuffer,
                                      uint64_t gpuAddress,
                                      uint64_t immediateData,
-                                     const HardwareInfo &hwInfo);
+                                     const HardwareInfo &hwInfo,
+                                     bool useNotifyEnable);
     static size_t getSizeMonitorFence(const HardwareInfo &hwInfo);
 
     static void dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo);

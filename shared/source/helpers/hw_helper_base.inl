@@ -250,6 +250,7 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
     pipeControl.setVfCacheInvalidationEnable(args.vfCacheInvalidationEnable);
     pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
     pipeControl.setTlbInvalidate(args.tlbInvalidation);
+    pipeControl.setNotifyEnable(args.notifyEnable);
 
     if (isDcFlushAllowed()) {
         pipeControl.setDcFlushEnable(args.dcFlushEnable);

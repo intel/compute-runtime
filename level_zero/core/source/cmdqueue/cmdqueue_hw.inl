@@ -386,7 +386,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (hFence) {
         csr->makeResident(fence->getAllocation());
         if (isCopyOnlyCommandQueue) {
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(child, fence->getGpuAddress(), Fence::STATE_SIGNALED, false, true);
+            NEO::MiFlushArgs args;
+            args.commandWithPostSync = true;
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(child, fence->getGpuAddress(), Fence::STATE_SIGNALED, args);
         } else {
             NEO::PipeControlArgs args(true);
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
@@ -509,9 +511,13 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountWrite(NEO::LinearStream &co
     auto gpuAddress = static_cast<uint64_t>(csr->getTagAllocation()->getGpuAddress());
 
     if (isCopyOnlyCommandQueue) {
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, gpuAddress, taskCountToWrite, false, true);
+        NEO::MiFlushArgs args;
+        args.commandWithPostSync = true;
+        args.notifyEnable = csr->isUsedNotifyEnableForPostSync();
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, gpuAddress, taskCountToWrite, args);
     } else {
         NEO::PipeControlArgs args(true);
+        args.notifyEnable = csr->isUsedNotifyEnableForPostSync();
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
             commandStream,
             POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
