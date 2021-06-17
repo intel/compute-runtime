@@ -79,6 +79,14 @@ class BufferObject {
     bool isMarkedForCapture() {
         return allowCapture;
     }
+
+    bool isImmediateBindingRequired() {
+        return requiresImmediateBinding;
+    }
+    void requireImmediateBinding(bool required) {
+        requiresImmediateBinding = required;
+    }
+
     void setCacheRegion(CacheRegion regionIndex) { cacheRegion = regionIndex; }
     CacheRegion peekCacheRegion() const { return cacheRegion; }
 
@@ -94,6 +102,7 @@ class BufferObject {
     //Tiling
     uint32_t tiling_mode;
     bool allowCapture = false;
+    bool requiresImmediateBinding = false;
 
     uint32_t getOsContextId(OsContext *osContext);
     MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);

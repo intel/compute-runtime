@@ -4243,7 +4243,7 @@ TEST(DrmMemoryManager, givenNullBoWhenRegisteringBindExtHandleThenEarlyReturn) {
     gfxAllocation.freeRegisteredBOBindExtHandles(mockDrm.get());
 }
 
-TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationIsRegisteredThenBosAreMarkedForCapture) {
+TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationIsRegisteredThenBosAreMarkedForCaptureAndRequireImmediateBinding) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
@@ -4257,6 +4257,7 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationIsRegister
     allocation.registerBOBindExtHandle(&drm);
 
     EXPECT_TRUE(bo.isMarkedForCapture());
+    EXPECT_TRUE(bo.isImmediateBindingRequired());
 }
 
 TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenIsaIsRegisteredThenCookieIsAddedToBoHandle) {

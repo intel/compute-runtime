@@ -128,6 +128,8 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
                     bo->addBindExtHandle(cookieHandle);
                     registeredBoBindHandles.push_back(cookieHandle);
                 }
+
+                bo->requireImmediateBinding(true);
             }
         }
     }
