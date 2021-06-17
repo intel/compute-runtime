@@ -54,6 +54,7 @@ class DrmBufferObjectFixture {
     void SetUp() {
         this->mock = std::make_unique<DrmMockCustom>();
         ASSERT_NE(nullptr, this->mock);
+        constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
         osContext.reset(new OsContextLinux(*this->mock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false));
         this->mock->reset();
         bo = new TestedBufferObject(this->mock.get());
@@ -84,7 +85,7 @@ TEST_F(DrmBufferObjectTest, WhenCallingExecThenReturnIsCorrect) {
 }
 
 TEST_F(DrmBufferObjectTest, GivenInvalidParamsWhenCallingExecThenEfaultIsReturned) {
-    mock->ioctl_expected.total = 1;
+    mock->ioctl_expected.total = 2;
     mock->ioctl_res = -1;
     mock->errnoValue = EFAULT;
     drm_i915_gem_exec_object2 execObjectsStorage = {};
@@ -143,7 +144,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWh
 TEST_F(DrmBufferObjectTest, whenExecFailsThenPinFails) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
 
-    mock->ioctl_expected.total = 1;
+    mock->ioctl_expected.total = 2;
     mock->ioctl_res = -1;
     this->mock->errnoValue = EINVAL;
 
@@ -159,7 +160,7 @@ TEST_F(DrmBufferObjectTest, whenExecFailsThenPinFails) {
 TEST_F(DrmBufferObjectTest, whenExecFailsThenValidateHostPtrFails) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
 
-    mock->ioctl_expected.total = 1;
+    mock->ioctl_expected.total = 2;
     mock->ioctl_res = -1;
     this->mock->errnoValue = EINVAL;
 
@@ -233,6 +234,7 @@ TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundI
 TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenValidateHostptrIsCalledThenErrorIsReturned) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[256]);
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom);
+    constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
     OsContextLinux osContext(*mock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     ASSERT_NE(nullptr, mock.get());
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
@@ -256,6 +258,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenValidateHostptrIsCalledThenErr
 TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[256]);
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom);
+    constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
     OsContextLinux osContext(*mock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     ASSERT_NE(nullptr, mock.get());
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));

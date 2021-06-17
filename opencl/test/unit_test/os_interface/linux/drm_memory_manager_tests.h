@@ -159,6 +159,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
             i++;
         }
         mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
+        constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));
 
         ASSERT_NE(nullptr, memoryManager);

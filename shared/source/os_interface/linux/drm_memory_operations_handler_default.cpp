@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,9 @@ std::unique_lock<std::mutex> DrmMemoryOperationsHandlerDefault::lockHandlerIfUse
         return lock;
     }
     return std::unique_lock<std::mutex>();
+}
+
+void DrmMemoryOperationsHandlerDefault::evictUnusedAllocations() {
 }
 
 } // namespace NEO

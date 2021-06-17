@@ -77,10 +77,10 @@ class DrmMockCustom : public Drm {
     using Drm::memoryInfo;
 
     struct IoctlResExt {
-        int32_t no;
+        std::vector<int32_t> no;
         int32_t res;
 
-        IoctlResExt(int32_t no, int32_t res) : no(no), res(res) {}
+        IoctlResExt(int32_t no, int32_t res) : no(1u, no), res(res) {}
     };
 
     class Ioctls {
@@ -319,7 +319,7 @@ class DrmMockCustom : public Drm {
             }
         }
 
-        if (ext->no != -1 && ext->no == ioctl_cnt.total.load()) {
+        if (!ext->no.empty() && std::find(ext->no.begin(), ext->no.end(), ioctl_cnt.total.load()) != ext->no.end()) {
             ioctl_cnt.total.fetch_add(1);
             return ext->res;
         }

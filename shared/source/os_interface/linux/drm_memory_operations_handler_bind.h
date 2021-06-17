@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
     void mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) override;
     std::unique_lock<std::mutex> lockHandlerIfUsed() override;
 
-    MOCKABLE_VIRTUAL void evictUnusedAllocations();
+    void evictUnusedAllocations() override;
 
   protected:
     void evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield);

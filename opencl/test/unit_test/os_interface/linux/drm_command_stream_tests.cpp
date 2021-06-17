@@ -807,7 +807,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     EXPECT_TRUE(cmdBuffers.peekIsEmpty());
 
     auto commandBufferGraphicsAllocation = submittedCommandBuffer.getGraphicsAllocation();
-    EXPECT_FALSE(commandBufferGraphicsAllocation->isResident(csr->getOsContext().getContextId()));
+    EXPECT_TRUE(commandBufferGraphicsAllocation->isResident(csr->getOsContext().getContextId()));
 
     //preemption allocation
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
