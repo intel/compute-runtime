@@ -400,6 +400,9 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
     auto &hardwareInfo = module->getDevice()->getHwInfo();
 
     auto dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
+    if (dssCount == 0) {
+        dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
+    }
     auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     auto &descriptor = kernelImmData->getDescriptor();
     auto availableThreadCount = hwHelper.calculateAvailableThreadCount(

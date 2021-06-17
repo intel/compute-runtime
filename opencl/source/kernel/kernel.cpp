@@ -1022,6 +1022,9 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
 
     const auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     auto dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
+    if (dssCount == 0) {
+        dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
+    }
     auto availableThreadCount = hwHelper.calculateAvailableThreadCount(
         hardwareInfo.platform.eProductFamily,
         kernelDescriptor.kernelAttributes.numGrfRequired,
