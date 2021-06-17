@@ -345,7 +345,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironm
                 hwDeviceIds.push_back(std::unique_ptr<HwDeviceId>(hwDeviceId.release()));
             }
 
-            if (hwDeviceIds.size() == numRootDevices) {
+            if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {
                 break;
             }
         }

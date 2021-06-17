@@ -19,6 +19,7 @@ void WINAPI ULTGetSystemInfo(SYSTEM_INFO *pSystemInfo) {
 }
 
 const char *UltDxCoreAdapter::description = "Intel";
+bool UltDXCoreAdapterList::firstInvalid = false;
 
 extern uint32_t numRootDevicesToEnum = 1;
 

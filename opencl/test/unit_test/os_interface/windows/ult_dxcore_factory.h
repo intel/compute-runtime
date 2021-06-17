@@ -20,6 +20,7 @@ static constexpr auto error = 1;
 class UltDxCoreAdapter : public IDXCoreAdapter {
   public:
     const static char *description;
+    LUID luid = {0u, 0x1234u};
     bool STDMETHODCALLTYPE IsValid() override {
         return true;
     }
@@ -52,8 +53,8 @@ class UltDxCoreAdapter : public IDXCoreAdapter {
             memcpy_s(propertyData, bufferSize, description, requiredSize);
             break;
         case DXCoreAdapterProperty::InstanceLuid:
-            reinterpret_cast<LUID *>(propertyData)->HighPart = 0x1234;
-            reinterpret_cast<LUID *>(propertyData)->LowPart = 0;
+            reinterpret_cast<LUID *>(propertyData)->HighPart = luid.HighPart;
+            reinterpret_cast<LUID *>(propertyData)->LowPart = luid.LowPart;
             break;
         case DXCoreAdapterProperty::HardwareID: {
             DXCoreHardwareID ret = {};
@@ -137,8 +138,15 @@ class UltDxCoreAdapter : public IDXCoreAdapter {
 extern uint32_t numRootDevicesToEnum;
 class UltDXCoreAdapterList : public IDXCoreAdapterList {
   public:
+    static bool firstInvalid;
     HRESULT STDMETHODCALLTYPE GetAdapter(uint32_t index, REFIID riid, _COM_Outptr_ void **ppvAdapter) override {
-        *reinterpret_cast<UltDxCoreAdapter **>(ppvAdapter) = new UltDxCoreAdapter;
+        auto adapter = new UltDxCoreAdapter;
+        if (firstInvalid && 0 == index) {
+            adapter->luid.HighPart = 0u;
+            adapter->luid.LowPart = 0u;
+        }
+
+        *reinterpret_cast<UltDxCoreAdapter **>(ppvAdapter) = adapter;
         return S_OK;
     }
     uint32_t STDMETHODCALLTYPE GetAdapterCount() override {

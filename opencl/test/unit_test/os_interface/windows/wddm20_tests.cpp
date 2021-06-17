@@ -128,6 +128,15 @@ TEST(WddmDiscoverDevices, givenMultipleRootDevicesExposedWhenCreateMultipleRootD
     EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
 }
 
+TEST(WddmDiscoverDevices, givenInvalidFirstAdapterWhenDiscoveringAdaptersThenReturnAllValidAdapters) {
+    VariableBackup<uint32_t> backup{&numRootDevicesToEnum, 2u};
+    VariableBackup<bool> backup2{&UltDXCoreAdapterList::firstInvalid, true};
+
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(1u, hwDeviceIds.size());
+}
+
 TEST(WddmDiscoverDevices, givenMultipleRootDevicesExposedWhenCreateMultipleRootDevicesFlagIsSetToGreaterValueThenDiscoverSpecifiedNumberOfDevices) {
     DebugManagerStateRestore restorer{};
     VariableBackup<uint32_t> backup{&numRootDevicesToEnum};
