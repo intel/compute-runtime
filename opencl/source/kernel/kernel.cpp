@@ -766,6 +766,14 @@ void Kernel::resizeSurfaceStateHeap(void *pNewSsh, size_t newSshSize, size_t new
     localBindingTableOffset = newBindingTableOffset;
 }
 
+void Kernel::markArgPatchedAndResolveArgs(uint32_t argIndex) {
+    if (!kernelArguments[argIndex].isPatched) {
+        patchedArgumentsNum++;
+        kernelArguments[argIndex].isPatched = true;
+    }
+    resolveArgs();
+}
+
 cl_int Kernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) {
     cl_int retVal = CL_SUCCESS;
     bool updateExposedKernel = true;
@@ -782,13 +790,9 @@ cl_int Kernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) {
         retVal = (this->*argHandler)(argIndex, argSize, argVal);
     }
     if (retVal == CL_SUCCESS) {
-        if (!kernelArguments[argIndex].isPatched) {
-            patchedArgumentsNum++;
-            kernelArguments[argIndex].isPatched = true;
-        }
         auto argIsUncacheable = kernelArguments[argIndex].isStatelessUncacheable;
         statelessUncacheableArgsCount += (argIsUncacheable ? 1 : 0) - (argWasUncacheable ? 1 : 0);
-        resolveArgs();
+        markArgPatchedAndResolveArgs(argIndex);
     }
     return retVal;
 }
@@ -806,7 +810,11 @@ cl_int Kernel::setArg(uint32_t argIndex, cl_mem argVal) {
 }
 
 cl_int Kernel::setArg(uint32_t argIndex, cl_mem argVal, uint32_t mipLevel) {
-    return setArgImageWithMipLevel(argIndex, sizeof(argVal), &argVal, mipLevel);
+    auto retVal = setArgImageWithMipLevel(argIndex, sizeof(argVal), &argVal, mipLevel);
+    if (retVal == CL_SUCCESS) {
+        markArgPatchedAndResolveArgs(argIndex);
+    }
+    return retVal;
 }
 
 void *Kernel::patchBufferOffset(const ArgDescPointer &argAsPtr, void *svmPtr, GraphicsAllocation *svmAlloc) {
