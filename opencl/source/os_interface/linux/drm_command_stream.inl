@@ -61,6 +61,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
         useContextForUserFenceWait = !!(overrideUserFenceUseCtxId);
     }
     useNotifyEnableForPostSync = useUserFenceWait;
+    kmdWaitTimeout = DebugManager.flags.SetKmdWaitTimeout.get();
 }
 
 template <typename GfxFamily>
@@ -104,8 +105,8 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
         return this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
     }
 
-    if (useUserFenceWait) {
-        this->flushStamp->setStamp(taskCount + 1);
+    if (isUserFenceWaitActive()) {
+        this->flushStamp->setStamp(taskCount);
     } else {
         this->flushStamp->setStamp(bb->peekHandle());
     }
@@ -209,10 +210,10 @@ GmmPageTableMngr *DrmCommandStreamReceiver<GfxFamily>::createPageTableManager() 
 template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp) {
     auto waitValue = static_cast<uint32_t>(flushStamp);
-    if (useUserFenceWait) {
+    if (isUserFenceWaitActive()) {
         waitUserFence(waitValue);
     } else {
-        this->drm->waitHandle(waitValue, -1);
+        this->drm->waitHandle(waitValue, kmdWaitTimeout);
     }
 
     return true;
@@ -221,9 +222,14 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSta
 template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::isKmdWaitModeActive() {
     if (this->drm->isVmBindAvailable()) {
-        return useUserFenceWait && useContextForUserFenceWait;
+        return useUserFenceWait;
     }
     return true;
+}
+
+template <typename GfxFamily>
+inline bool DrmCommandStreamReceiver<GfxFamily>::isUserFenceWaitActive() {
+    return (this->drm->isVmBindAvailable() && useUserFenceWait);
 }
 
 } // namespace NEO

@@ -198,6 +198,8 @@ class DrmMockCustom : public Drm {
     //DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM
     drm_i915_gem_context_param recordedGetContextParam = {0};
     __u64 getContextParamRetValue = 0;
+    //DRM_IOCTL_I915_GEM_WAIT
+    int64_t gemWaitTimeout = 0;
 
     int errnoValue = 0;
 
@@ -275,9 +277,11 @@ class DrmMockCustom : public Drm {
             ioctl_cnt.gemSetDomain++;
         } break;
 
-        case DRM_IOCTL_I915_GEM_WAIT:
+        case DRM_IOCTL_I915_GEM_WAIT: {
+            auto gemWaitParams = (drm_i915_gem_wait *)arg;
+            gemWaitTimeout = gemWaitParams->timeout_ns;
             ioctl_cnt.gemWait++;
-            break;
+        } break;
 
         case DRM_IOCTL_GEM_CLOSE:
             ioctl_cnt.gemClose++;

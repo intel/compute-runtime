@@ -20,10 +20,11 @@ void DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batch
 template <typename GfxFamily>
 int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue) {
     uint32_t ctxId = 0u;
+    uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
     if (useContextForUserFenceWait) {
         ctxId = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0];
     }
-    return this->drm->waitUserFence(ctxId, getTagAllocation()->getGpuAddress(), waitValue, Drm::ValueWidth::U32, -1);
+    return this->drm->waitUserFence(ctxId, tagAddress, waitValue, Drm::ValueWidth::U32, kmdWaitTimeout);
 }
 
 } // namespace NEO
