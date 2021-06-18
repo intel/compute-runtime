@@ -79,7 +79,8 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     true,                                          // hostPtrTrackingEnabled
     false,                                         // levelZeroSupported
     true,                                          // isIntegratedDevice
-    true                                           // supportsMediaBlock
+    true,                                          // supportsMediaBlock
+    false                                          // fusedEuEnabled
 };
 
 WorkaroundTable EHL::workaroundTable = {};

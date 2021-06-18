@@ -79,7 +79,8 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     true,                                          // hostPtrTrackingEnabled
     false,                                         // levelZeroSupported
     true,                                          // isIntegratedDevice
-    true                                           // supportsMediaBlock
+    true,                                          // supportsMediaBlock
+    false                                          // fusedEuEnabled
 };
 
 WorkaroundTable LKF::workaroundTable = {};

@@ -76,7 +76,8 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     true,                                          // hostPtrTrackingEnabled
     false,                                         // levelZeroSupported
     true,                                          // isIntegratedDevice
-    true                                           // supportsMediaBlock
+    true,                                          // supportsMediaBlock
+    false                                          // fusedEuEnabled
 };
 
 WorkaroundTable GLK::workaroundTable = {};

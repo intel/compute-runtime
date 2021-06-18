@@ -85,7 +85,8 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     false,                                         // hostPtrTrackingEnabled
     true,                                          // levelZeroSupported
     false,                                         // isIntegratedDevice
-    true                                           // supportsMediaBlock
+    true,                                          // supportsMediaBlock
+    true                                           // fusedEuEnabled
 };
 
 WorkaroundTable DG1::workaroundTable = {};

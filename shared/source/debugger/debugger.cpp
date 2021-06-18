@@ -23,6 +23,10 @@ std::unique_ptr<Debugger> Debugger::create(HardwareInfo *hwInfo) {
         auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
         bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == hwHelper.getSipKernelType(true));
         sourceLevelDebugger->initialize(localMemorySipAvailable);
+
+        if (sourceLevelDebugger->isDebuggerActive()) {
+            hwInfo->capabilityTable.fusedEuEnabled = false;
+        }
     }
     return sourceLevelDebugger;
 }

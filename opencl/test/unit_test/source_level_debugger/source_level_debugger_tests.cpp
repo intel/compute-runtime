@@ -68,6 +68,42 @@ TEST(SourceLevelDebugger, givenPlatformWhenItIsCreatedThenSourceLevelDebuggerIsC
     }
 }
 
+TEST(SourceLevelDebugger, givenPlatformWhenSourceLevelDebuggerIsCreatedThenRuntimeCapabilityHasFusedEusDisabled) {
+    DebuggerLibraryRestorer restorer;
+
+    if (defaultHwInfo->capabilityTable.debuggerSupported) {
+        DebuggerLibrary::setLibraryAvailable(true);
+        DebuggerLibrary::setDebuggerActive(true);
+        auto executionEnvironment = new ExecutionEnvironment();
+        MockPlatform platform(*executionEnvironment);
+        platform.initializeWithNewDevices();
+
+        ASSERT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->debugger);
+
+        EXPECT_FALSE(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.fusedEuEnabled);
+    }
+}
+
+TEST(SourceLevelDebugger, givenPlatformWhenInitializingSourceLevelDebuggerFailsThenRuntimeCapabilityFusedEusAreNotModified) {
+    DebuggerLibraryRestorer restorer;
+
+    if (defaultHwInfo->capabilityTable.debuggerSupported) {
+        DebuggerLibraryInterceptor interceptor;
+        DebuggerLibrary::setLibraryAvailable(true);
+        DebuggerLibrary::setDebuggerActive(true);
+        interceptor.initRetVal = -1;
+        DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+        auto executionEnvironment = new ExecutionEnvironment();
+        MockPlatform platform(*executionEnvironment);
+        platform.initializeWithNewDevices();
+
+        bool defaultValue = defaultHwInfo->capabilityTable.fusedEuEnabled;
+
+        ASSERT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->debugger);
+        EXPECT_EQ(defaultValue, executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.fusedEuEnabled);
+    }
+}
+
 TEST(SourceLevelDebugger, givenNoKernelDebuggerLibraryWhenSourceLevelDebuggerIsCreatedThenLibraryIsNotLoaded) {
     DebuggerLibraryRestorer restorer;
     DebuggerLibrary::setLibraryAvailable(false);

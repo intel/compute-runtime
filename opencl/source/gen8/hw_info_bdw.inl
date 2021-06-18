@@ -84,7 +84,8 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     true,                                          // hostPtrTrackingEnabled
     false,                                         // levelZeroSupported
     true,                                          // isIntegratedDevice
-    true                                           // supportsMediaBlock
+    true,                                          // supportsMediaBlock
+    false                                          // fusedEuEnabled
 };
 
 WorkaroundTable BDW::workaroundTable = {};

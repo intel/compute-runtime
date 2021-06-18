@@ -65,6 +65,7 @@ struct RuntimeCapabilityTable {
     bool levelZeroSupported;
     bool isIntegratedDevice;
     bool supportsMediaBlock;
+    bool fusedEuEnabled;
 };
 
 struct HardwareCapabilities {

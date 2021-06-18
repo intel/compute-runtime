@@ -84,7 +84,8 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // hostPtrTrackingEnabled
     true,                                          // levelZeroSupported
     true,                                          // isIntegratedDevice
-    true                                           // supportsMediaBlock
+    true,                                          // supportsMediaBlock
+    false                                          // fusedEuEnabled
 };
 
 WorkaroundTable SKL::workaroundTable = {};

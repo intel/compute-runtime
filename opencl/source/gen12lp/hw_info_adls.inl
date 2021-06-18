@@ -81,7 +81,8 @@ const RuntimeCapabilityTable ADLS::capabilityTable{
     false,                                          // hostPtrTrackingEnabled
     true,                                           // levelZeroSupported
     true,                                           // isIntegratedDevice
-    true                                            // supportsMediaBlock
+    true,                                           // supportsMediaBlock
+    true                                            // fusedEuEnabled
 };
 
 WorkaroundTable ADLS::workaroundTable = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@ namespace NEO {
 template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const {
     auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.waDisableFusedThreadScheduling;
+    fusedEuDispatchEnabled &= hwInfo.capabilityTable.fusedEuEnabled;
+
     if (DebugManager.flags.CFEFusedEUDispatch.get() != -1) {
         fusedEuDispatchEnabled = (DebugManager.flags.CFEFusedEUDispatch.get() == 0);
     }

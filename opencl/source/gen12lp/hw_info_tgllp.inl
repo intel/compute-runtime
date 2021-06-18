@@ -81,7 +81,8 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // hostPtrTrackingEnabled
     true,                                            // levelZeroSupported
     true,                                            // isIntegratedDevice
-    true                                             // supportsMediaBlock
+    true,                                            // supportsMediaBlock
+    true                                             // fusedEuEnabled
 };
 
 WorkaroundTable TGLLP::workaroundTable = {};
