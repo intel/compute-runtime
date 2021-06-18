@@ -1079,6 +1079,7 @@ Image *Image::redescribe() {
     image->setQPitch(this->getQPitch());
     image->setCubeFaceIndex(this->getCubeFaceIndex());
     image->associatedMemObject = this->associatedMemObject;
+    image->createFunction = createFunction;
     return image;
 }
 
