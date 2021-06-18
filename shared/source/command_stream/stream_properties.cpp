@@ -9,9 +9,7 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t numGrfRequired, bool isMultiOsContextCapable,
-                                               bool useGlobalAtomics, bool areMultipleSubDevicesInContext,
-                                               uint32_t threadArbitrationPolicy) {
+void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t numGrfRequired, uint32_t threadArbitrationPolicy) {
     clearIsDirty();
 
     int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);

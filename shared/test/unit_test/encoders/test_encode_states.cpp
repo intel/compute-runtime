@@ -295,6 +295,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, whenAdjustPipelineSelectIsC
 HWTEST2_F(CommandEncodeStatesTest, whenAdjustStateComputeModeIsCalledThenNothingHappens, IsAtMostGen11) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     auto initialUsed = cmdContainer->getCommandStream()->getUsed();
-    NEO::EncodeStates<FamilyType>::adjustStateComputeMode(*cmdContainer->getCommandStream(), 0, nullptr, false, false, false, false, 0);
+    NEO::EncodeStates<FamilyType>::adjustStateComputeMode(*cmdContainer->getCommandStream(), 0, nullptr, false, 0);
     EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
 }

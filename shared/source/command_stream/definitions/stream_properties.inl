@@ -12,8 +12,7 @@ namespace NEO {
 struct StateComputeModeProperties {
     StreamProperty isCoherencyRequired{};
 
-    void setProperties(bool requiresCoherency, uint32_t numGrfRequired, bool isMultiOsContextCapable,
-                       bool useGlobalAtomics, bool areMultipleSubDevicesInContext, uint32_t threadArbitrationPolicy);
+    void setProperties(bool requiresCoherency, uint32_t numGrfRequired, uint32_t threadArbitrationPolicy);
     void setProperties(const StateComputeModeProperties &properties);
     bool isDirty();
     void clearIsDirty();
