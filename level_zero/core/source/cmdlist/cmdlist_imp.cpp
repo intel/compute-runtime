@@ -49,7 +49,8 @@ ze_result_t CommandListImp::appendMetricQueryEnd(zet_metric_query_handle_t hMetr
     return MetricQuery::fromHandle(hMetricQuery)->appendEnd(*this, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType, ze_result_t &returnValue) {
+CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
+                                 ze_command_list_flags_t flags, ze_result_t &returnValue) {
     CommandListAllocatorFn allocator = nullptr;
     if (productFamily < IGFX_MAX_PRODUCT) {
         allocator = commandListFactory[productFamily];
@@ -60,7 +61,7 @@ CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::En
 
     if (allocator) {
         commandList = static_cast<CommandListImp *>((*allocator)(CommandList::defaultNumIddsPerBlock));
-        returnValue = commandList->initialize(device, engineGroupType);
+        returnValue = commandList->initialize(device, engineGroupType, flags);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
             commandList = nullptr;
@@ -88,7 +89,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     if (allocator) {
         commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
         commandList->internalUsage = internalUsage;
-        returnValue = commandList->initialize(device, engineGroupType);
+        returnValue = commandList->initialize(device, engineGroupType, desc->flags);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
             commandList = nullptr;

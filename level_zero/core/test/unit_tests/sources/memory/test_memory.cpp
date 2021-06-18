@@ -1432,7 +1432,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_NE(nullptr, ptr);
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
     result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
@@ -1459,7 +1459,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_NE(nullptr, ptr);
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device0, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device0, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
     result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
@@ -1487,7 +1487,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_NE(nullptr, ptr);
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
     result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
@@ -1515,7 +1515,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_NE(nullptr, ptr);
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device0, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device0, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
     result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
@@ -1535,7 +1535,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     uint8_t *ptr = new uint8_t[size];
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device0, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device0, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
     ze_result_t result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
@@ -1562,7 +1562,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_NE(nullptr, ptr);
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
     EXPECT_THROW(commandList->getAlignedAllocation(device1, ptr, size), std::exception);
 
@@ -1588,7 +1588,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_NE(nullptr, ptr);
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
     AlignedAllocationData outData = commandList->getAlignedAllocation(device1, ptr, size);
     EXPECT_NE(outData.alignedAllocationPtr, 0u);
@@ -1615,7 +1615,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     EXPECT_NE(nullptr, ptr);
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device0, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device0, NEO::EngineGroupType::RenderCompute, 0u);
 
     AlignedAllocationData outData = commandList->getAlignedAllocation(device0, ptr, size);
     EXPECT_NE(outData.alignedAllocationPtr, 0u);

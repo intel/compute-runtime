@@ -42,7 +42,7 @@ void AUBFixtureL0::SetUp(const HardwareInfo *hardwareInfo) {
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
     ze_result_t returnValue;
-    commandList.reset(ult::whitebox_cast(CommandList::create(hwInfo.platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)));
+    commandList.reset(ult::whitebox_cast(CommandList::create(hwInfo.platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;

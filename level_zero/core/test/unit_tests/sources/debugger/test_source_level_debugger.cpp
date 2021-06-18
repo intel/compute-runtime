@@ -37,7 +37,7 @@ HWTEST_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsEx
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, deviceL0, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+        CommandList::create(productFamily, deviceL0, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
@@ -86,7 +86,7 @@ HWTEST_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsEx
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, deviceL0, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+        CommandList::create(productFamily, deviceL0, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);

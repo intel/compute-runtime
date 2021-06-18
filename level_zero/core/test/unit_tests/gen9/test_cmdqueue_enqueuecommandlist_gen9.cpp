@@ -43,7 +43,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenPipelin
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
 
@@ -84,7 +84,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenStateBa
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
 
@@ -131,7 +131,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenMidThre
     ASSERT_NE(nullptr, commandQueue->commandStream);
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
-    auto commandList = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto commandList = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandList->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
 
     ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
@@ -178,10 +178,10 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     ASSERT_NE(nullptr, commandQueue->commandStream);
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
-    auto commandListMidThread = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto commandListMidThread = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListMidThread->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
 
-    auto commandListThreadGroup = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto commandListThreadGroup = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListThreadGroup->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
 
     ze_command_list_handle_t commandLists[] = {commandListMidThread->toHandle(),

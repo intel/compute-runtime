@@ -147,7 +147,7 @@ struct CommandList : _ze_command_list_handle_t {
                                             uint64_t data) = 0;
 
     static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
-                               ze_result_t &resultValue);
+                               ze_command_list_flags_t flags, ze_result_t &resultValue);
     static CommandList *createImmediate(uint32_t productFamily, Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType,
@@ -206,7 +206,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::vector<Kernel *> printfFunctionContainer;
 
     virtual ze_result_t executeCommandListImmediate(bool performMigration) = 0;
-    virtual ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType) = 0;
+    virtual ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) = 0;
     virtual ~CommandList();
     NEO::CommandContainer commandContainer;
     bool getContainsStatelessUncachedResource() { return containsStatelessUncachedResource; }
@@ -231,6 +231,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t commandListPerThreadScratchSize = 0u;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
     NEO::EngineGroupType engineGroupType;
+    ze_command_list_flags_t flags = 0u;
     UnifiedMemoryControls unifiedMemoryControls;
     bool indirectAllocationsAllowed = false;
     bool internalUsage = false;

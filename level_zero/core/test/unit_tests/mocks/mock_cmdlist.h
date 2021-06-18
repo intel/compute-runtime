@@ -42,6 +42,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::commandsToPatch;
     using BaseClass::engineGroupType;
     using BaseClass::finalStreamState;
+    using BaseClass::flags;
     using BaseClass::getAlignedAllocation;
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getHostPtrAlloc;
@@ -332,7 +333,8 @@ struct MockCommandList : public CommandList {
 
     ADDMETHOD_NOBASE(initialize, ze_result_t, ZE_RESULT_SUCCESS,
                      (L0::Device * device,
-                      NEO::EngineGroupType engineGroupType));
+                      NEO::EngineGroupType engineGroupType,
+                      ze_command_list_flags_t flags));
 
     ADDMETHOD_NOBASE(setSyncModeQueue, ze_result_t, ZE_RESULT_SUCCESS,
                      (bool syncMode));

@@ -107,7 +107,7 @@ HWTEST2_F(AppendFillFixture,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     auto result = commandList->appendMemoryFill(immediateDstPtr, &immediatePattern,
                                                 sizeof(immediatePattern),
@@ -120,7 +120,7 @@ HWTEST2_F(AppendFillFixture,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     auto result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -131,7 +131,7 @@ HWTEST2_F(AppendFillFixture,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     commandList->thresholdOfCallsToAppendLaunchKernelWithParamsToFail = 0;
 
     auto result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr);
@@ -143,7 +143,7 @@ HWTEST2_F(AppendFillFixture,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 4, allocSize, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -165,7 +165,7 @@ HWTEST2_F(AppendFillFixture,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 4, allocSize, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -185,7 +185,7 @@ HWTEST2_F(AppendFillFixture,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
     size_t nonMultipleSize = allocSize + 1;
     uint8_t *nonMultipleDstPtr = new uint8_t[nonMultipleSize];
@@ -200,7 +200,7 @@ HWTEST2_F(AppendFillFixture,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     commandList->thresholdOfCallsToAppendLaunchKernelWithParamsToFail = 1;
 
     size_t nonMultipleSize = allocSize + 1;

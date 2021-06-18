@@ -24,11 +24,11 @@ struct CommandQueueExecuteCommandLists : public Test<DeviceFixture> {
         DeviceFixture::SetUp();
 
         ze_result_t returnValue;
-        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle();
+        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle();
+        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     }
@@ -408,10 +408,10 @@ void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool p
     preemptionCmdProgramming = NEO::PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(NEO::PreemptionMode::ThreadGroup, NEO::PreemptionMode::Disabled) > 0u;
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
-    auto commandListDisabled = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto commandListDisabled = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListDisabled->commandListPreemptionMode = NEO::PreemptionMode::Disabled;
 
-    auto commandListThreadGroup = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto commandListThreadGroup = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListThreadGroup->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
 
     ze_command_list_handle_t commandLists[] = {commandListDisabled->toHandle(),
@@ -564,7 +564,7 @@ struct CommandQueueExecuteCommandListSWTagsTests : public Test<DeviceFixture> {
         DeviceFixture::SetUp();
 
         ze_result_t returnValue;
-        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle();
+        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 

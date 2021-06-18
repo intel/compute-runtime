@@ -90,7 +90,7 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
     uint32_t engineGroupIndex = desc->commandQueueGroupOrdinal;
     mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *commandList = CommandList::create(productFamily, this, static_cast<NEO::EngineGroupType>(engineGroupIndex), returnValue);
+    *commandList = CommandList::create(productFamily, this, static_cast<NEO::EngineGroupType>(engineGroupIndex), desc->flags, returnValue);
 
     return returnValue;
 }

@@ -34,7 +34,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierThenCheckWhet
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Copy);
+    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
     uint64_t gpuAddress = 0x1200;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
     size_t size = 0x1100;
@@ -67,7 +67,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryNotInSvmManagerWhenAppendingMemoryBa
     const void **pRanges = reinterpret_cast<const void **>(&_pRanges[0]);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
-    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_FALSE(ret);
 
     auto usedSpaceBefore =
@@ -102,7 +102,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarri
     const void **pRanges = const_cast<const void **>(&_pRanges);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
-    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_FALSE(ret);
 
     auto usedSpaceBefore =
@@ -165,7 +165,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddres
     const void **pRanges = const_cast<const void **>(&_pRanges);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
-    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_FALSE(ret);
 
     auto usedSpaceBefore =
@@ -225,7 +225,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
     ASSERT_NE(nullptr, commandList);
-    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_FALSE(ret);
 
     const void *ranges[] = {_pRanges};
@@ -258,7 +258,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
     ASSERT_NE(nullptr, commandList);
-    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute);
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_FALSE(ret);
 
     const void *ranges[] = {nullptr};

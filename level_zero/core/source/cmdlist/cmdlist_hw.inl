@@ -99,11 +99,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO::EngineGroupType engineGroupType) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO::EngineGroupType engineGroupType,
+                                                             ze_command_list_flags_t flags) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     this->device = device;
     this->commandListPreemptionMode = device->getDevicePreemptionMode();
     this->engineGroupType = engineGroupType;
+    this->flags = flags;
 
     commandContainer.setReservedSshSize(getReserveSshSize());
     auto returnValue = commandContainer.initialize(static_cast<DeviceImp *>(device)->neoDevice);

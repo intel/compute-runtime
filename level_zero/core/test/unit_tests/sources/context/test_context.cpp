@@ -457,6 +457,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
                                                                      device,
                                                                      NEO::EngineGroupType::Copy,
+                                                                     0u,
                                                                      returnValue));
     auto commandListHandle = commandList->toHandle();
     res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
@@ -507,6 +508,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
                                                                      device,
                                                                      NEO::EngineGroupType::Copy,
+                                                                     0u,
                                                                      returnValue));
     auto commandListHandle = commandList->toHandle();
     res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);

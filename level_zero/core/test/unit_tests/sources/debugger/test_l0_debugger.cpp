@@ -145,7 +145,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValid
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
@@ -221,7 +221,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsE
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(4096);
 
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
@@ -270,7 +270,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIsS
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
@@ -306,7 +306,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQueu
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
@@ -337,7 +337,7 @@ HWTEST_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueueI
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
@@ -360,7 +360,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
 
     size_t usedSpaceBefore = 0;
     ze_result_t returnValue;
-    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle();
+    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
     auto commandList = CommandList::fromHandle(commandListHandle);
 
     auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
@@ -390,7 +390,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenBindle
 
     Mock<::L0::Kernel> kernel;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
     auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -429,7 +429,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
 
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);

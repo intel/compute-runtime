@@ -48,7 +48,7 @@ struct CommandListCoreFamily : CommandListImp {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     using CommandListImp::CommandListImp;
-    ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType) override;
+    ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) override;
     virtual void programL3(bool isSLMused);
     ~CommandListCoreFamily() override;
 
