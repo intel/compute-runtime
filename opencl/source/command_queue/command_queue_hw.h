@@ -374,6 +374,7 @@ class CommandQueueHw : public CommandQueue {
                                       LinearStream &commandStream,
                                       size_t commandStreamStart,
                                       bool &blocking,
+                                      bool clearDependenciesForSubCapture,
                                       const MultiDispatchInfo &multiDispatchInfo,
                                       const EnqueueProperties &enqueueProperties,
                                       TimestampPacketDependencies &timestampPacketDependencies,

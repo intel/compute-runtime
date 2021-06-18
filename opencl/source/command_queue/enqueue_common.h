@@ -162,7 +162,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     auto devQueue = this->getContext().getDefaultDeviceQueue();
     DeviceQueueHw<GfxFamily> *devQueueHw = castToObject<DeviceQueueHw<GfxFamily>>(devQueue);
-    auto clearAllDependencies = queueDependenciesClearRequired();
 
     TagNodeBase *hwTimeStamps = nullptr;
 
@@ -188,7 +187,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     enqueueHandlerHook(commandType, multiDispatchInfo);
 
-    aubCaptureHook(blocking, clearAllDependencies, multiDispatchInfo);
+    bool clearDependenciesForSubCapture = false;
+    aubCaptureHook(blocking, clearDependenciesForSubCapture, multiDispatchInfo);
+
+    bool clearAllDependencies = (queueDependenciesClearRequired() || clearDependenciesForSubCapture);
 
     if (DebugManager.flags.MakeEachEnqueueBlocking.get()) {
         blocking = true;
@@ -206,7 +208,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     bool enqueueWithBlitAuxTranslation = isBlitAuxTranslationRequired(multiDispatchInfo);
 
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+        if (!clearDependenciesForSubCapture) {
+            eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+        }
+
         auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
 
         size_t nodesCount = 0u;
@@ -298,6 +303,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 commandStream,
                 commandStreamStart,
                 blocking,
+                clearDependenciesForSubCapture,
                 multiDispatchInfo,
                 enqueueProperties,
                 timestampPacketDependencies,
@@ -708,6 +714,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     LinearStream &commandStream,
     size_t commandStreamStart,
     bool &blocking,
+    bool clearDependenciesForSubCapture,
     const MultiDispatchInfo &multiDispatchInfo,
     const EnqueueProperties &enqueueProperties,
     TimestampPacketDependencies &timestampPacketDependencies,
@@ -855,7 +862,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = specialPipelineSelectMode;
 
-    if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && !clearDependenciesForSubCapture) {
         eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
         dispatchFlags.csrDependencies.makeResident(getGpgpuCommandStreamReceiver());
     }

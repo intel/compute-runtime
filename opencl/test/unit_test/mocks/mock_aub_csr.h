@@ -12,6 +12,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/dispatch_flags_helper.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/platform/platform.h"
@@ -60,6 +61,14 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     using AUBCommandStreamReceiverHw<GfxFamily>::getParametersForWriteMemory;
     using AUBCommandStreamReceiverHw<GfxFamily>::writeMemory;
     using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;
+
+    CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
+                              const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
+                              uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+        recordedDispatchFlags = dispatchFlags;
+
+        return AUBCommandStreamReceiverHw<GfxFamily>::flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+    }
 
     DispatchMode peekDispatchMode() const {
         return this->dispatchMode;
@@ -132,6 +141,8 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool isMultiOsContextCapable() const override {
         return multiOsContextCapable;
     }
+
+    DispatchFlags recordedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     bool multiOsContextCapable = false;
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;

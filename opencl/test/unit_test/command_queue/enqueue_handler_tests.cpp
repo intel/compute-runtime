@@ -25,7 +25,9 @@
 #include "opencl/test/unit_test/mocks/mock_internal_allocation_storage.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
+#include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
@@ -174,6 +176,53 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCapt
     // deactivate subcapture
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_FALSE(cmdQ.timestampPacketDependenciesCleared);
+}
+
+HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenInputEventsWhenDispatchingEnqueueWithSubCaptureThenClearDependencies) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(1);
+    DebugManager.flags.EnableTimestampPacket.set(true);
+
+    auto defaultEngine = defaultHwInfo->capabilityTable.defaultEngineType;
+
+    MockOsContext mockOsContext(0, 1, EngineTypeUsage{defaultEngine, EngineUsage::Regular}, PreemptionMode::Disabled, false);
+
+    auto aubCsr = new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto aubCsr2 = std::make_unique<MockAubCsr<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+    aubCsr->setupContext(mockOsContext);
+    aubCsr2->setupContext(mockOsContext);
+
+    pDevice->resetCommandStreamReceiver(aubCsr);
+
+    AubSubCaptureCommon subCaptureCommon;
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
+    subCaptureCommon.subCaptureFilter.dumpKernelName = "";
+    subCaptureCommon.subCaptureFilter.dumpKernelStartIdx = 0;
+    subCaptureCommon.subCaptureFilter.dumpKernelEndIdx = 1;
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("file_name.aub", subCaptureCommon);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockCmdQWithAubSubCapture<FamilyType> cmdQ(context, pClDevice);
+    MockKernelWithInternals mockKernel(*pClDevice);
+    mockKernel.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
+    size_t gws[3] = {1, 0, 0};
+
+    MockTimestampPacketContainer onCsrTimestamp(*aubCsr->getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer outOfCsrTimestamp(*aubCsr2->getTimestampPacketAllocator(), 1);
+
+    Event event1(&cmdQ, 0, 0, 0);
+    Event event2(&cmdQ, 0, 0, 0);
+    event1.addTimestampPacketNodes(onCsrTimestamp);
+    event1.addTimestampPacketNodes(outOfCsrTimestamp);
+
+    cl_event waitlist[] = {&event1, &event2};
+
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 2, waitlist, nullptr);
+    EXPECT_TRUE(cmdQ.timestampPacketDependenciesCleared);
+
+    CsrDependencies &outOfCsrDeps = aubCsr->recordedDispatchFlags.csrDependencies;
+    EXPECT_EQ(0u, outOfCsrDeps.timestampPacketContainer.size());
 }
 
 template <typename GfxFamily>
