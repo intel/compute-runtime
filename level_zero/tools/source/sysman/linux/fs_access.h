@@ -48,6 +48,7 @@ class FsAccess {
     std::string getBaseName(const std::string path);
     std::string getDirName(const std::string path);
     virtual bool fileExists(const std::string file);
+    virtual bool directoryExists(const std::string path);
 
   protected:
     FsAccess();
@@ -106,6 +107,7 @@ class SysfsAccess : private FsAccess {
     MOCKABLE_VIRTUAL ze_result_t unbindDevice(const std::string device);
     MOCKABLE_VIRTUAL bool fileExists(const std::string file) override;
     MOCKABLE_VIRTUAL bool isMyDeviceFile(const std::string dev);
+    MOCKABLE_VIRTUAL bool directoryExists(const std::string path) override;
 
   private:
     SysfsAccess(const std::string file);

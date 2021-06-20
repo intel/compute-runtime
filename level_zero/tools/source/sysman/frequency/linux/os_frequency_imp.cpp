@@ -285,14 +285,26 @@ ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
 }
 
 void LinuxFrequencyImp::init() {
-    minFreqFile = "gt_min_freq_mhz";
-    maxFreqFile = "gt_max_freq_mhz";
-    requestFreqFile = "gt_punit_req_freq_mhz";
-    tdpFreqFile = "gt_rapl_PL1_freq_mhz";
-    actualFreqFile = "gt_act_freq_mhz";
-    efficientFreqFile = "gt_RP1_freq_mhz";
-    maxValFreqFile = "gt_RP0_freq_mhz";
-    minValFreqFile = "gt_RPn_freq_mhz";
+    const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
+    if (pSysfsAccess->directoryExists(baseDir)) {
+        minFreqFile = baseDir + "rps_min_freq_mhz";
+        maxFreqFile = baseDir + "rps_max_freq_mhz";
+        requestFreqFile = baseDir + "punit_req_freq_mhz";
+        tdpFreqFile = baseDir + "rapl_PL1_freq_mhz";
+        actualFreqFile = baseDir + "rps_act_freq_mhz";
+        efficientFreqFile = baseDir + "rps_RP1_freq_mhz";
+        maxValFreqFile = baseDir + "rps_RP0_freq_mhz";
+        minValFreqFile = baseDir + "rps_RPn_freq_mhz";
+    } else {
+        minFreqFile = "gt_min_freq_mhz";
+        maxFreqFile = "gt_max_freq_mhz";
+        requestFreqFile = "punit_req_freq_mhz";
+        tdpFreqFile = "rapl_PL1_freq_mhz";
+        actualFreqFile = "gt_act_freq_mhz";
+        efficientFreqFile = "gt_RP1_freq_mhz";
+        maxValFreqFile = "gt_RP0_freq_mhz";
+        minValFreqFile = "gt_RPn_freq_mhz";
+    }
 }
 
 LinuxFrequencyImp::LinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t frequencyDomainNumber) : isSubdevice(onSubdevice), subdeviceId(subdeviceId), frequencyDomainNumber(frequencyDomainNumber) {

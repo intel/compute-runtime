@@ -277,6 +277,15 @@ bool FsAccess::isRootUser() {
     return (geteuid() == 0);
 }
 
+bool FsAccess::directoryExists(const std::string path) {
+    ::DIR *pDir = ::opendir(path.c_str());
+    if (pDir != NULL) {
+        ::closedir(pDir);
+        return true;
+    }
+    return false;
+}
+
 // Procfs Access
 const std::string ProcfsAccess::procDir = "/proc/";
 const std::string ProcfsAccess::fdDir = "/fd/";
@@ -552,6 +561,10 @@ ze_result_t SysfsAccess::unbindDevice(std::string device) {
 bool SysfsAccess::fileExists(const std::string file) {
     // Prepend sysfs directory path and call the base fileExists
     return FsAccess::fileExists(fullPath(file).c_str());
+}
+
+bool SysfsAccess::directoryExists(const std::string path) {
+    return FsAccess::fileExists(fullPath(path).c_str());
 }
 
 bool SysfsAccess::isMyDeviceFile(const std::string dev) {

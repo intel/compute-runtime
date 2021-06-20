@@ -30,10 +30,10 @@ constexpr double minVal = 300.0;
 constexpr uint32_t numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
 constexpr uint32_t handleComponentCount = 1u;
 class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
-
   protected:
     std::unique_ptr<Mock<FrequencySysfsAccess>> pSysfsAccess;
     SysfsAccess *pSysfsAccessOld = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -53,6 +53,8 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getVal));
         ON_CALL(*pSysfsAccess.get(), write(_, _))
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::setVal));
+        ON_CALL(*pSysfsAccess.get(), directoryExists(_))
+            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::mockDirectoryExistsSuccess));
 
         // delete handles created in initial SysmanDeviceHandleContext::init() call
         for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
@@ -60,7 +62,6 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
         }
         pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
-        std::vector<ze_device_handle_t> deviceHandles;
         // We received a device handle. Check for subdevices in this device
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
         if (subDeviceCount == 0) {
@@ -299,6 +300,67 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
         EXPECT_EQ(0u, state.throttleReasons);
         EXPECT_EQ(nullptr, state.pNext);
         EXPECT_LE(state.currentVoltage, 0);
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetStateWithLegacyPathThenVerifyzesFrequencyGetStateTestCallSucceeds) {
+    ON_CALL(*pSysfsAccess.get(), read(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValLegacy));
+    ON_CALL(*pSysfsAccess.get(), write(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::setValLegacy));
+    ON_CALL(*pSysfsAccess.get(), directoryExists(_))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::mockDirectoryExistsFailure));
+    for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
+    pSysmanDeviceImp->pFrequencyHandleContext->init(deviceHandles);
+
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        const double testRequestValue = 400.0;
+        const double testTdpValue = 1100.0;
+        const double testEfficientValue = 300.0;
+        const double testActualValue = 550.0;
+        zes_freq_state_t state;
+
+        pSysfsAccess->setValLegacy(requestFreqFileLegacy, testRequestValue);
+        pSysfsAccess->setValLegacy(tdpFreqFileLegacy, testTdpValue);
+        pSysfsAccess->setValLegacy(actualFreqFileLegacy, testActualValue);
+        pSysfsAccess->setValLegacy(efficientFreqFileLegacy, testEfficientValue);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetState(handle, &state));
+        EXPECT_DOUBLE_EQ(testRequestValue, state.request);
+        EXPECT_DOUBLE_EQ(testTdpValue, state.tdp);
+        EXPECT_DOUBLE_EQ(testEfficientValue, state.efficient);
+        EXPECT_DOUBLE_EQ(testActualValue, state.actual);
+        EXPECT_EQ(0u, state.throttleReasons);
+        EXPECT_EQ(nullptr, state.pNext);
+        EXPECT_LE(state.currentVoltage, 0);
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetRangeWithLegacyPathThenVerifyzesFrequencyGetRangeTestCallSucceeds) {
+    ON_CALL(*pSysfsAccess.get(), read(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValLegacy));
+    ON_CALL(*pSysfsAccess.get(), write(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::setValLegacy));
+    ON_CALL(*pSysfsAccess.get(), directoryExists(_))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::mockDirectoryExistsFailure));
+    for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
+    pSysmanDeviceImp->pFrequencyHandleContext->init(deviceHandles);
+    auto handles = get_freq_handles(handleComponentCount);
+    double minFreqLegacy = 400.0;
+    double maxFreqLegacy = 1200.0;
+    pSysfsAccess->setValLegacy(minFreqFileLegacy, minFreqLegacy);
+    pSysfsAccess->setValLegacy(maxFreqFileLegacy, maxFreqLegacy);
+    for (auto handle : handles) {
+        zes_freq_range_t limits;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
+        EXPECT_DOUBLE_EQ(minFreqLegacy, limits.min);
+        EXPECT_DOUBLE_EQ(maxFreqLegacy, limits.max);
     }
 }
 
