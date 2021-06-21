@@ -165,7 +165,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                  this->containsStatelessUncachedResource,
                                                  false,
                                                  partitionCount,
-                                                 internalUsage);
+                                                 internalUsage,
+                                                 isCooperative);
 
     if (neoDevice->getDebugger()) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);

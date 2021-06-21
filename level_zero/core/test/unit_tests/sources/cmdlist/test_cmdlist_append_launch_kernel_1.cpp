@@ -105,8 +105,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAp
     const auto streamCpu = stream->getCpuBase();
 
     Vec3<size_t> groupCount{1, 1, 1};
-    auto requiredSizeEstimate = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(device->getNEODevice(),
-                                                                                                       {0, 0, 0}, groupCount, false);
+    auto requiredSizeEstimate = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        device->getNEODevice(), {0, 0, 0}, groupCount, false, false);
     auto available = stream->getAvailableSpace();
     stream->getSpace(available - requiredSizeEstimate + 1);
     auto bbEndPosition = stream->getSpace(0);
@@ -127,6 +127,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAp
                                                   requiresUncachedMocs,
                                                   false,
                                                   partitionCount,
+                                                  false,
                                                   false);
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
@@ -249,7 +250,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
-    auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false);
+    auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false);
 
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
 
@@ -259,7 +261,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
-    estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false);
+    estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false);
 
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
     EXPECT_LE(sizeAfter - sizeBefore, estimate);

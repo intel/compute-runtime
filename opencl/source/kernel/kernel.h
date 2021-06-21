@@ -227,7 +227,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void patchDefaultDeviceQueue(DeviceQueue *devQueue);
     void patchEventPool(DeviceQueue *devQueue);
     void patchBlocksSimdSize();
-    bool usesSyncBuffer();
+    bool usesSyncBuffer() const;
     void patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOffset);
     void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
 

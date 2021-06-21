@@ -83,7 +83,7 @@ class CommandStreamReceiver {
                                       uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
 
     virtual bool flushBatchedSubmissions() = 0;
-    bool submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
+    MOCKABLE_VIRTUAL bool submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
     virtual void programHardwareContext(LinearStream &cmdStream) = 0;
     virtual size_t getCmdsSizeForHardwareContext() const = 0;
 

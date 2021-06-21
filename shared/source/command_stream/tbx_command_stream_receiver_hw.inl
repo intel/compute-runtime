@@ -241,7 +241,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, Resi
         }
     }
 
-    submitBatchBuffer(
+    submitBatchBufferTbx(
         batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer,
         this->getMemoryBank(batchBuffer.commandBufferAllocation),
         this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
@@ -256,7 +256,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, Resi
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead) {
+void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBufferTbx(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead) {
     if (hardwareContextController) {
         if (batchBufferSize) {
             hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k, overrideRingHead);

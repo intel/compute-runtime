@@ -83,7 +83,8 @@ struct CommandQueueImp : public CommandQueue {
     virtual bool getPreemptionCmdProgramming() = 0;
 
   protected:
-    MOCKABLE_VIRTUAL void submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr);
+    MOCKABLE_VIRTUAL void submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
+                                            bool isCooperative);
 
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeout);
 

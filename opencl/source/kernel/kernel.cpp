@@ -1176,7 +1176,7 @@ bool Kernel::hasRunFinished(TimestampPacketContainer *timestampContainer) {
 }
 
 bool Kernel::isSingleSubdevicePreferred() const {
-    return this->singleSubdevicePreferredInCurrentEnqueue;
+    return this->singleSubdevicePreferredInCurrentEnqueue || this->usesSyncBuffer();
 }
 
 void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
@@ -2364,7 +2364,7 @@ void Kernel::patchBlocksSimdSize() {
     }
 }
 
-bool Kernel::usesSyncBuffer() {
+bool Kernel::usesSyncBuffer() const {
     return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesSyncBuffer;
 }
 

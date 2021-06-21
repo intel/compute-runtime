@@ -69,12 +69,13 @@ void CommandQueueImp::reserveLinearStreamSize(size_t size) {
     }
 }
 
-void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr) {
+void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
+                                        bool isCooperative) {
     UNRECOVERABLE_IF(csr == nullptr);
 
     NEO::BatchBuffer batchBuffer(commandStream->getGraphicsAllocation(), offset, 0u, nullptr, false, false,
                                  NEO::QueueThrottle::HIGH, NEO::QueueSliceCount::defaultSliceCount,
-                                 commandStream->getUsed(), commandStream, endingCmdPtr, false);
+                                 commandStream->getUsed(), commandStream, endingCmdPtr, isCooperative);
 
     commandStream->getGraphicsAllocation()->updateTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
     commandStream->getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());

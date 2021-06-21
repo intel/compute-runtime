@@ -44,7 +44,8 @@ struct EncodeDispatchKernel {
                        bool &requiresUncachedMocs,
                        bool useGlobalAtomics,
                        uint32_t &partitionCount,
-                       bool isInternal);
+                       bool isInternal,
+                       bool isCooperative);
 
     static void encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd);
 
@@ -52,7 +53,8 @@ struct EncodeDispatchKernel {
 
     static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 
-    static size_t estimateEncodeDispatchKernelCmdsSize(Device *device, Vec3<size_t> groupStart, Vec3<size_t> groupCount, bool isInternal);
+    static size_t estimateEncodeDispatchKernelCmdsSize(Device *device, Vec3<size_t> groupStart, Vec3<size_t> groupCount,
+                                                       bool isInternal, bool isCooperative);
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                     size_t *lws,

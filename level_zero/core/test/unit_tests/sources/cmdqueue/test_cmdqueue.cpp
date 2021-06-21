@@ -255,7 +255,7 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
                                                            false,
                                                            returnValue));
     ResidencyContainer container;
-    commandQueue->submitBatchBuffer(0, container, nullptr);
+    commandQueue->submitBatchBuffer(0, container, nullptr, false);
     EXPECT_EQ(csr->makeResidentCalledTimes, 0u);
 
     EXPECT_EQ(commandQueue->commandStream->getGraphicsAllocation()->getTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());

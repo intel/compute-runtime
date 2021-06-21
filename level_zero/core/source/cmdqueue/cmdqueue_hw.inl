@@ -411,7 +411,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         memset(paddingPtr, 0, padding);
     }
 
-    submitBatchBuffer(ptrDiff(child.getCpuBase(), commandStream->getCpuBase()), csr->getResidencyAllocations(), endingCmd);
+    submitBatchBuffer(ptrDiff(child.getCpuBase(), commandStream->getCpuBase()), csr->getResidencyAllocations(), endingCmd,
+                      commandListsContainCooperativeKernels);
 
     this->taskCount = csr->peekTaskCount();
 

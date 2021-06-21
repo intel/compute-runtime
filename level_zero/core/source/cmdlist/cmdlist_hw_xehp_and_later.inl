@@ -203,7 +203,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         }
     }
 
-    auto isMultiOsContextCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(device->getNEODevice()->getDeviceBitfield(), true);
+    auto isMultiOsContextCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(device->getNEODevice()->getDeviceBitfield(),
+                                                                                        !isCooperative);
     updateStreamProperties(*kernel, isMultiOsContextCapable);
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
@@ -224,7 +225,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                  this->containsStatelessUncachedResource,
                                                  kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
                                                  partitionCount,
-                                                 internalUsage);
+                                                 internalUsage,
+                                                 isCooperative);
     if (hEvent) {
         auto event = Event::fromHandle(hEvent);
         if (isTimestampEvent && partitionCount > 1) {

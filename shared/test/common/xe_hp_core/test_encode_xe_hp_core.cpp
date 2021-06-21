@@ -95,7 +95,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithImplicitScalingTests, givenCl
     bool useGlobalAtomics = true;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics,
+                                             partitionCount, false, false);
 
     EXPECT_TRUE(cmdContainer->lastSentUseGlobalAtomics);
 
@@ -122,7 +123,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithImplicitScalingTests, givenCl
     cmdContainer->lastSentUseGlobalAtomics = true;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics,
+                                             partitionCount, false, false);
 
     EXPECT_TRUE(cmdContainer->lastSentUseGlobalAtomics);
 
@@ -146,7 +148,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithImplicitScalingTests, givenCl
     cmdContainer->lastSentUseGlobalAtomics = true;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics,
+                                             partitionCount, false, false);
 
     EXPECT_FALSE(cmdContainer->lastSentUseGlobalAtomics);
 
@@ -173,7 +176,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithImplicitScalingTests, givenCl
     cmdContainer->lastSentUseGlobalAtomics = true;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics,
+                                             partitionCount, false, false);
 
     EXPECT_FALSE(cmdContainer->lastSentUseGlobalAtomics);
 
@@ -199,7 +203,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithImplicitScalingTests, givenCl
     bool useGlobalAtomics = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics,
+                                             partitionCount, false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -233,7 +238,8 @@ XE_HP_CORE_TEST_F(EncodeKernelGlobalAtomicsTestWithNoImplicitScalingTests, given
     bool useGlobalAtomics = true;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, useGlobalAtomics,
+                                             partitionCount, false, false);
 
     EXPECT_FALSE(cmdContainer->lastSentUseGlobalAtomics);
     GenCmdList commands;

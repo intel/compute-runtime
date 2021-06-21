@@ -98,8 +98,8 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::writeMMIO(offset, value);
         writeMMIOCalled = true;
     }
-    void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) override {
-        AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits);
+    void submitBatchBufferAub(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) override {
+        AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBufferAub(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits);
         submitBatchBufferCalled = true;
     }
 

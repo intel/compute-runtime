@@ -325,6 +325,20 @@ TEST_F(KernelTests, GivenInvalidParamNameWhenGettingWorkGroupInfoThenInvalidValu
     EXPECT_EQ(0x1234u, paramValueSizeRet);
 }
 
+TEST_F(KernelTests, WhenIsSingleSubdevicePreferredIsCalledThenCorrectValuesAreReturned) {
+    std::unique_ptr<MockKernel> pKernel{MockKernel::create<MockKernel>(pClDevice->getDevice(), pProgram)};
+    for (auto usesSyncBuffer : ::testing::Bool()) {
+        pKernel->getAllocatedKernelInfo()->kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = usesSyncBuffer;
+        for (auto singleSubdevicePreferredInCurrentEnqueue : ::testing::Bool()) {
+            pKernel->singleSubdevicePreferredInCurrentEnqueue = singleSubdevicePreferredInCurrentEnqueue;
+
+            EXPECT_EQ(usesSyncBuffer, pKernel->usesSyncBuffer());
+            auto expectedSingleSubdevicePreferredInCurrentEnqueue = singleSubdevicePreferredInCurrentEnqueue || usesSyncBuffer;
+            EXPECT_EQ(expectedSingleSubdevicePreferredInCurrentEnqueue, pKernel->isSingleSubdevicePreferred());
+        }
+    }
+}
+
 class KernelFromBinaryTest : public ProgramSimpleFixture {
   public:
     void SetUp() override {

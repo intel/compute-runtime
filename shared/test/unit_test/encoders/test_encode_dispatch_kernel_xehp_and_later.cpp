@@ -43,7 +43,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterTha
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -71,7 +72,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSimdSizeWhenDispatchi
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -94,7 +96,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZero
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -128,7 +131,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenOverrideSlmTotalSizeD
 
         uint32_t partitionCount = 0;
         EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                                 pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                                 pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                                 false, false);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -165,7 +169,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhe
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -203,7 +208,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhe
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -241,7 +247,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDisp
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -271,7 +278,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAllocationWhenDi
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), eventAddress, true, true,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -293,7 +301,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAddressWhenEncod
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), eventAddress, true, true,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -316,7 +325,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCleanHeapsWhenDispatc
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -357,7 +367,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
         bool requiresUncachedMocs = false;
         uint32_t partitionCount = 0;
         EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                                 pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                                 pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                                 false, false);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -383,7 +394,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
         bool requiresUncachedMocs = false;
         uint32_t partitionCount = 0;
         EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                                 pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                                 pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                                 false, false);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -404,7 +416,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
         bool requiresUncachedMocs = false;
         uint32_t partitionCount = 0;
         EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                                 pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                                 pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                                 false, false);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -439,7 +452,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhe
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
@@ -467,7 +481,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredIsF
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -495,7 +510,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAnd
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -526,7 +542,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAnd
     bool requiresUncachedMocs = false;
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false,
-                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, false);
+                                             pDevice, NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount,
+                                             false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -905,10 +922,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
 
     bool requiresUncachedMocs = false;
     bool isInternal = false;
-    size_t regularEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal);
+    size_t regularEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
     uint32_t partitionCount = 0;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
-                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal);
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
 
     size_t containerUsedAfterBase = cmdContainer->getCommandStream()->getUsed();
 
@@ -922,9 +940,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
 
     DebugManager.flags.EnableWalkerPartition.set(-1);
 
-    size_t partitionEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal);
+    size_t partitionEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
-                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal);
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
 
     size_t total = cmdContainer->getCommandStream()->getUsed();
     size_t partitionedWalkerSize = total - containerUsedAfterBase;
@@ -965,16 +984,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
 
     DebugManager.flags.EnableWalkerPartition.set(0);
     bool isInternal = false;
-    size_t baseEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal);
+    size_t baseEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
 
     DebugManager.flags.EnableWalkerPartition.set(1);
 
     uint32_t partitionCount = 0;
     bool requiresUncachedMocs = false;
 
-    size_t partitionEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal);
+    size_t partitionEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
-                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal);
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
 
     EXPECT_EQ(2u, partitionCount);
     size_t partitionedWalkerSize = cmdContainer->getCommandStream()->getUsed();
@@ -1048,17 +1069,19 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
 
     DebugManager.flags.EnableWalkerPartition.set(0);
     bool isInternal = false;
-    size_t baseEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal);
+    size_t baseEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
 
     DebugManager.flags.EnableWalkerPartition.set(1);
     isInternal = true;
     uint32_t partitionCount = 0;
     bool requiresUncachedMocs = false;
-    size_t internalEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal);
+    size_t internalEstimateSize = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
+        pDevice, Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1), isInternal, false);
     EXPECT_EQ(baseEstimateSize, internalEstimateSize);
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, false, false, pDevice,
-                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal);
+                                             NEO::PreemptionMode::Disabled, requiresUncachedMocs, false, partitionCount, isInternal, false);
     EXPECT_EQ(1u, partitionCount);
     size_t internalWalkerSize = cmdContainer->getCommandStream()->getUsed();
 

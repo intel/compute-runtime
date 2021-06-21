@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "test.h"
 
@@ -428,6 +430,55 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListsWithCooperativeAndNo
         auto result = pCommandQueue->executeCommandLists(2, commandLists, nullptr, false);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE, result);
     }
+    pCommandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListWithCooperativeKernelsWhenExecuteCommandListsIsCalledThenCorrectBatchBufferIsSubmitted, IsAtLeastXeHpCore) {
+    struct MockCsr : NEO::CommandStreamReceiverHw<FamilyType> {
+        using NEO::CommandStreamReceiverHw<FamilyType>::CommandStreamReceiverHw;
+        bool submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+            useSingleSubdeviceValue = batchBuffer.useSingleSubdevice;
+            submitBatchBufferCalled++;
+            return NEO::CommandStreamReceiver::submitBatchBuffer(batchBuffer, allocationsForResidency);
+        }
+        bool useSingleSubdeviceValue = false;
+        uint32_t submitBatchBufferCalled = 0;
+    };
+
+    NEO::UltDeviceFactory deviceFactory{1, 4};
+    auto pNeoDevice = deviceFactory.rootDevices[0];
+
+    ze_command_queue_desc_t desc = {};
+    MockCsr *pMockCsr = new MockCsr{*pNeoDevice->getExecutionEnvironment(), pNeoDevice->getRootDeviceIndex(), pNeoDevice->getDeviceBitfield()};
+    pNeoDevice->resetCommandStreamReceiver(pMockCsr);
+
+    Mock<L0::DeviceImp> device{pNeoDevice, pNeoDevice->getExecutionEnvironment()};
+    auto pCommandQueue = new MockCommandQueueHw<gfxCoreFamily>{&device, pMockCsr, &desc};
+    pCommandQueue->initialize(false, false);
+
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(&device, nullptr));
+    kernel.module = pMockModule.get();
+
+    ze_group_count_t threadGroupDimensions{1, 1, 1};
+    auto pCommandListWithCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandListWithCooperativeKernels->initialize(&device, NEO::EngineGroupType::Compute, 0u);
+    pCommandListWithCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, false, false, true);
+    ze_command_list_handle_t commandListCooperative[] = {pCommandListWithCooperativeKernels->toHandle()};
+    auto result = pCommandQueue->executeCommandLists(1, commandListCooperative, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, pMockCsr->submitBatchBufferCalled);
+    EXPECT_TRUE(pMockCsr->useSingleSubdeviceValue);
+
+    auto pCommandListWithNonCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandListWithNonCooperativeKernels->initialize(&device, NEO::EngineGroupType::Compute, 0u);
+    pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, false, false, false);
+    ze_command_list_handle_t commandListNonCooperative[] = {pCommandListWithNonCooperativeKernels->toHandle()};
+    result = pCommandQueue->executeCommandLists(1, commandListNonCooperative, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, pMockCsr->submitBatchBufferCalled);
+    EXPECT_FALSE(pMockCsr->useSingleSubdeviceValue);
+
     pCommandQueue->destroy();
 }
 

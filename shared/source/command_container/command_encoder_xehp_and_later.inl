@@ -38,7 +38,7 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                           const void *pThreadGroupDimensions, bool isIndirect, bool isPredicate, DispatchKernelEncoderI *dispatchInterface,
                                           uint64_t eventAddress, bool isTimestampEvent, bool L3FlushEnable, Device *device, PreemptionMode preemptionMode,
-                                          bool &requiresUncachedMocs, bool useGlobalAtomics, uint32_t &partitionCount, bool isInternal) {
+                                          bool &requiresUncachedMocs, bool useGlobalAtomics, uint32_t &partitionCount, bool isInternal, bool isCooperative) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
     using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
     using MI_BATCH_BUFFER_END = typename Family::MI_BATCH_BUFFER_END;
@@ -59,7 +59,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     if (!isIndirect) {
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
-    size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device, threadStartVec, threadDimsVec, isInternal);
+    size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device, threadStartVec, threadDimsVec,
+                                                                        isInternal, isCooperative);
     if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
         auto bbEnd = listCmdBufferStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *bbEnd = Family::cmdInitBatchBufferEnd;
@@ -256,7 +257,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *device);
 
-    if (ImplicitScalingHelper::isImplicitScalingEnabled(device->getDeviceBitfield(), true) &&
+    if (ImplicitScalingHelper::isImplicitScalingEnabled(device->getDeviceBitfield(), !isCooperative) &&
         !isInternal) {
         const uint64_t workPartitionAllocationGpuVa = device->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
         ImplicitScalingDispatch<Family>::dispatchCommands(*listCmdBufferStream,
@@ -421,15 +422,17 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 }
 
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, Vec3<size_t> groupStart, Vec3<size_t> groupCount,
-                                                                          bool isInternal) {
+size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, Vec3<size_t> groupStart,
+                                                                          Vec3<size_t> groupCount, bool isInternal,
+                                                                          bool isCooperative) {
     size_t totalSize = sizeof(WALKER_TYPE);
     totalSize += PreemptionHelper::getPreemptionWaCsSize<Family>(*device);
     totalSize += EncodeStates<Family>::getAdjustStateComputeModeSize();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForIndirectParams();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
-    if (ImplicitScalingHelper::isImplicitScalingEnabled(device->getDeviceBitfield(), true) &&
+
+    if (ImplicitScalingHelper::isImplicitScalingEnabled(device->getDeviceBitfield(), !isCooperative) &&
         !isInternal) {
         const bool staticPartitioning = device->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled();
         totalSize += ImplicitScalingDispatch<Family>::getSize(true, staticPartitioning, device->getDeviceBitfield(), groupStart, groupCount);

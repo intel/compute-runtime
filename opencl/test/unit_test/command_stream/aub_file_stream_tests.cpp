@@ -204,8 +204,8 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenSubmitBatchBufferI
     aubCsr->initializeEngine();
     mockAubFileStream->lockStreamCalled = false;
 
-    aubCsr->submitBatchBuffer(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, aubCsr->getMemoryBank(batchBuffer.commandBufferAllocation),
-                              aubCsr->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
+    aubCsr->submitBatchBufferAub(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, aubCsr->getMemoryBank(batchBuffer.commandBufferAllocation),
+                                 aubCsr->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
     EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
 }
 
