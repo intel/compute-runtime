@@ -222,6 +222,52 @@ HWTEST_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenPassedPtrIsSetAsBaseAd
     context->freeMem(devicePtr);
 }
 
+HWTEST_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenSizeIsDecereasedByOffset) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = kernelName.c_str();
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
+    auto allocSize = 16384u;
+    void *devicePtr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    res = context->allocDeviceMem(device->toHandle(),
+                                  &deviceDesc,
+                                  allocSize,
+                                  0u,
+                                  &devicePtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAlloc);
+
+    uint32_t argIndex = 0u;
+    uint32_t offset = 0x1234;
+    const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>().bufferOffset = undefined<NEO::CrossThreadDataOffset>;
+    const_cast<KernelDescriptor *>(&(kernelImp->getImmutableData()->getDescriptor()))->payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>().bindful = 0x80;
+
+    kernelImp->setBufferSurfaceState(argIndex, ptrOffset(devicePtr, offset), gpuAlloc);
+
+    auto argInfo = kernelImp->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+    auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
+    auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+    SURFACE_STATE_BUFFER_LENGTH length = {0};
+    length.Length = static_cast<uint32_t>((gpuAlloc->getUnderlyingBufferSize() - offset) - 1);
+    EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.SurfaceState.Width + 1));
+    EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.SurfaceState.Height + 1));
+    EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.SurfaceState.Depth + 1));
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+
+    context->freeMem(devicePtr);
+}
+
 using ModuleUncachedBufferTest = Test<ModuleFixture>;
 
 struct KernelImpUncachedTest : public KernelImp {

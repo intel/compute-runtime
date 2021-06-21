@@ -36,12 +36,14 @@ struct KernelHw : public KernelImp {
         baseAddress &= sshAlignmentMask;
 
         auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
+        size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
         auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         bool offsetWasPatched = NEO::patchNonPointer(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
                                                      argInfo.bufferOffset, static_cast<uint32_t>(offset));
         if (false == offsetWasPatched) {
             // fallback to handling offset in surface state
             baseAddress = reinterpret_cast<uintptr_t>(address);
+            bufferSizeForSsh -= offset;
             DEBUG_BREAK_IF(baseAddress != (baseAddress & sshAlignmentMask));
             offset = 0;
         }
@@ -53,7 +55,6 @@ struct KernelHw : public KernelImp {
         }
         uint64_t bufferAddressForSsh = baseAddress;
         auto alignment = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment();
-        size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
         bufferSizeForSsh = alignUp(bufferSizeForSsh, alignment);
 
         bool l3Enabled = true;
