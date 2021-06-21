@@ -297,6 +297,8 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
             tag->assignDataToAllTimestamps(i, zeros);
         }
 
+        EXPECT_TRUE(tag->isCompleted());
+
         bool canBeReleased = tag->canBeReleased();
         allocator->returnTag(tag);
 

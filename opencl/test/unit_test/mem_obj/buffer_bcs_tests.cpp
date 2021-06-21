@@ -493,6 +493,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBu
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
 
@@ -511,6 +512,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommand
     hwParser.parseCommands<FamilyType>(*cmdQ->peekCommandStream());
 
     uint32_t semaphoresCount = 0;
+    uint32_t miAtomicsCount = 0;
     for (auto &cmd : hwParser.cmdList) {
         if (auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd)) {
             if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*semaphoreCmd)) {
@@ -519,14 +521,24 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommand
             semaphoresCount++;
             auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
             EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(0u, miAtomicsCount);
+
+        } else if (auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(cmd)) {
+            miAtomicsCount++;
+            auto dataAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
+            EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
+            EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
+            EXPECT_EQ(1u, semaphoresCount);
         }
     }
     EXPECT_EQ(1u, semaphoresCount);
+    EXPECT_EQ(1u, miAtomicsCount);
     EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
 
@@ -545,6 +557,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandS
     hwParser.parseCommands<FamilyType>(*cmdQ->peekCommandStream());
 
     uint32_t semaphoresCount = 0;
+    uint32_t miAtomicsCount = 0;
     for (auto &cmd : hwParser.cmdList) {
         if (auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd)) {
             if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*semaphoreCmd)) {
@@ -553,15 +566,25 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandS
             semaphoresCount++;
             auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
             EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(0u, miAtomicsCount);
+
+        } else if (auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(cmd)) {
+            miAtomicsCount++;
+            auto dataAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
+            EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
+            EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
+            EXPECT_EQ(1u, semaphoresCount);
         }
     }
     EXPECT_EQ(1u, semaphoresCount);
+    EXPECT_EQ(1u, miAtomicsCount);
     EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
 }
 
 template <typename FamilyType>
 void BcsBufferTests::waitForCacheFlushFromBcsTest(MockCommandQueueHw<FamilyType> &commandQueue) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     bool isCacheFlushForBcsRequired = commandQueue.isCacheFlushForBcsRequired();

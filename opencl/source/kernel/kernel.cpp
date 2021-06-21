@@ -1150,10 +1150,8 @@ bool Kernel::hasTunningFinished(KernelSubmissionData &submissionData) {
 
 bool Kernel::hasRunFinished(TimestampPacketContainer *timestampContainer) {
     for (const auto &node : timestampContainer->peekNodes()) {
-        for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
-            if (node->getContextEndValue(i) == 1) {
-                return false;
-            }
+        if (!node->isCompleted()) {
+            return false;
         }
     }
     return true;

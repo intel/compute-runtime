@@ -165,6 +165,15 @@ size_t TagNode<TagType>::getGlobalEndOffset() const {
 }
 
 template <typename TagType>
+size_t TagNode<TagType>::getImplicitGpuDependenciesCountOffset() const {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+        return tagForCpuAccess->getImplicitGpuDependenciesCountOffset();
+    } else {
+        UNRECOVERABLE_IF(true);
+    }
+}
+
+template <typename TagType>
 uint64_t TagNode<TagType>::getContextStartValue(uint32_t packetIndex) const {
     if constexpr (TagType::getTagNodeType() != TagNodeType::HwPerfCounter) {
         return tagForCpuAccess->getContextStartValue(packetIndex);
@@ -242,6 +251,15 @@ uint32_t TagNode<TagType>::getPacketsUsed() const {
 }
 
 template <typename TagType>
+uint32_t TagNode<TagType>::getImplicitGpuDependenciesCount() const {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+        return tagForCpuAccess->getImplicitGpuDependenciesCount();
+    } else {
+        return 0;
+    }
+}
+
+template <typename TagType>
 size_t TagNode<TagType>::getSinglePacketSize() const {
     if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
         return TagType::getSinglePacketSize();
@@ -258,6 +276,15 @@ void TagNode<TagType>::assignDataToAllTimestamps(uint32_t packetIndex, void *sou
         UNUSED_VARIABLE(packetIndex);
         UNUSED_VARIABLE(source);
         UNRECOVERABLE_IF(true);
+    }
+}
+
+template <typename TagType>
+bool TagNode<TagType>::isCompleted() const {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+        return tagForCpuAccess->isCompleted();
+    } else {
+        return true;
     }
 }
 

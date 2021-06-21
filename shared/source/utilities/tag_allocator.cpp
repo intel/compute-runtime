@@ -40,7 +40,9 @@ void TagNodeBase::returnTag() {
 }
 
 bool TagNodeBase::canBeReleased() const {
-    return !doNotReleaseNodes;
+    return (!doNotReleaseNodes) &&
+           (isCompleted()) &&
+           (getImplicitGpuDependenciesCount() == getImplicitCpuDependenciesCount());
 }
 
 } // namespace NEO

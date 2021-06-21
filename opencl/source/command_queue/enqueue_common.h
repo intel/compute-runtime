@@ -275,7 +275,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
 
         if (flushDependenciesForNonKernelCommand) {
-            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps);
+            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(
+                commandStream,
+                csrDeps,
+                getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices());
         }
 
         if (isMarkerWithProfiling) {
@@ -504,7 +507,8 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
                 args);
         }
 
-        TimestampPacketHelper::programSemaphore<GfxFamily>(*commandStream, *currentTimestampPacketNode);
+        TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *currentTimestampPacketNode,
+                                                                                 getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices());
     }
     return blitProperties;
 }
@@ -562,7 +566,10 @@ void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
                                                              LinearStream *commandStream,
                                                              CsrDependencies &csrDeps) {
 
-    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDeps);
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(
+        *commandStream,
+        csrDeps,
+        getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices());
 
     uint64_t postSyncAddress = 0;
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {

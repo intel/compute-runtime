@@ -31,7 +31,7 @@ void TimestampPacketContainer::resolveDependencies(bool clearAllDependencies) {
     std::vector<TagNodeBase *> pendingNodes;
 
     for (auto node : timestampPacketNodes) {
-        if (clearAllDependencies) {
+        if (node->canBeReleased() || clearAllDependencies) {
             node->returnTag();
         } else {
             pendingNodes.push_back(node);
