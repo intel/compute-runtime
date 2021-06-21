@@ -105,7 +105,7 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
     this->devices = devices;
     memoryManager = devices[0]->getMemoryManager();
     svmAllocsManager = new MockSVMAllocsManager(memoryManager,
-                                                false);
+                                                true);
 
     for (auto &rootDeviceIndex : rootDeviceIndices) {
         DeviceBitfield deviceBitfield{};

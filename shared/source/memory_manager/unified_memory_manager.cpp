@@ -171,18 +171,29 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     auto rootDeviceIndex = memoryProperties.device
                                ? memoryProperties.device->getRootDeviceIndex()
                                : *memoryProperties.rootDeviceIndices.begin();
-    auto &deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
+    DeviceBitfield deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
 
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
 
     GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(memoryProperties);
+
+    bool multiStorageAllocation = (deviceBitfield.count() > 1) && multiOsContextSupport;
+    if ((deviceBitfield.count() > 1) && !multiOsContextSupport) {
+        for (uint32_t i = 0;; i++) {
+            if (deviceBitfield.test(i)) {
+                deviceBitfield.reset();
+                deviceBitfield.set(i);
+                break;
+            }
+        }
+    }
 
     AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
                                                  true,
                                                  alignedSize,
                                                  allocationType,
                                                  false,
-                                                 (deviceBitfield.count() > 1) && multiOsContextSupport,
+                                                 multiStorageAllocation,
                                                  deviceBitfield};
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
@@ -380,7 +391,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
     size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
-    const DeviceBitfield &subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
+    DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties cpuProperties{rootDeviceIndex,
                                        true, // allocateMemory
                                        alignedSize, GraphicsAllocation::AllocationType::SVM_CPU,
@@ -396,12 +407,23 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     setUnifiedAllocationProperties(allocationCpu, svmProperties);
     void *svmPtr = allocationCpu->getUnderlyingBuffer();
 
+    bool multiStorageAllocation = (subDevices.count() > 1) && multiOsContextSupport;
+    if ((subDevices.count() > 1) && !multiOsContextSupport) {
+        for (uint32_t i = 0;; i++) {
+            if (subDevices.test(i)) {
+                subDevices.reset();
+                subDevices.set(i);
+                break;
+            }
+        }
+    }
+
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        false,
                                        alignedSize,
                                        GraphicsAllocation::AllocationType::SVM_GPU,
                                        false,
-                                       (subDevices.count() > 1) && multiOsContextSupport,
+                                       multiStorageAllocation,
                                        subDevices};
 
     gpuProperties.alignment = 2 * MemoryConstants::megaByte;
