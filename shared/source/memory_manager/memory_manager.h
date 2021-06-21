@@ -265,8 +265,8 @@ class MemoryManager {
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     HeapAssigner heapAssigner;
     AlignmentSelector alignmentSelector = {};
-    std::once_flag checkIsaPlacementOnce;
-    bool isaInLocalMemory = false;
+    std::unique_ptr<std::once_flag[]> checkIsaPlacementOnceFlags;
+    std::vector<bool> isaInLocalMemory;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

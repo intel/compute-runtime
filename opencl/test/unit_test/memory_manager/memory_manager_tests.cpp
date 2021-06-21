@@ -2671,6 +2671,10 @@ TEST_F(MemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHasCo
     }
 }
 
+TEST_F(MemoryManagerMultiRootDeviceTests, GivenMultipleRootDevicesWhenMemoryManagerInitializedThenIsaLocalMemoryPlacementIsCheckedForEveryRootDevice) {
+    EXPECT_EQ(3u, mockMemoryManager->isaInLocalMemory.size());
+}
+
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhen64BitAndHostPtrTrackingDisabledThenNonSvmHostPtrUsageIsSet) {
 
     DebugManagerStateRestore dbgRestore;

@@ -41,9 +41,13 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
                                                                            multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
 
     bool anyLocalMemorySupported = false;
+    const auto rootEnvCount = executionEnvironment.rootDeviceEnvironments.size();
 
-    defaultEngineIndex.resize(executionEnvironment.rootDeviceEnvironments.size());
-    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); ++rootDeviceIndex) {
+    defaultEngineIndex.resize(rootEnvCount);
+    checkIsaPlacementOnceFlags = std::make_unique<std::once_flag[]>(rootEnvCount);
+    isaInLocalMemory.resize(rootEnvCount);
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootEnvCount; ++rootDeviceIndex) {
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
         localMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(HwHelper::getSubDevicesCount(hwInfo)));
         this->localMemorySupported.push_back(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo));
@@ -785,14 +789,14 @@ bool MemoryManager::isAllocationTypeToCapture(GraphicsAllocation::AllocationType
 }
 
 bool MemoryManager::isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex) {
-    std::call_once(checkIsaPlacementOnce, [&] {
+    std::call_once(checkIsaPlacementOnceFlags[rootDeviceIndex], [&] {
         AllocationProperties properties = {rootDeviceIndex, 0x1000, GraphicsAllocation::AllocationType::KERNEL_ISA, 1};
         AllocationData data;
         getAllocationData(data, properties, nullptr, StorageInfo());
-        isaInLocalMemory = !data.flags.useSystemMemory;
+        isaInLocalMemory[rootDeviceIndex] = !data.flags.useSystemMemory;
     });
 
-    return isaInLocalMemory;
+    return isaInLocalMemory[rootDeviceIndex];
 }
 
 bool MemoryTransferHelper::transferMemoryToAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory, size_t srcSize) {
