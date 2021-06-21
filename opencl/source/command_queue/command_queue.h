@@ -331,6 +331,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     uint64_t getSliceCount() const { return sliceCount; }
 
+    TimestampPacketContainer *getDeferredTimestampPackets() const { return deferredTimestampPackets.get(); }
+
     uint64_t dispatchHints = 0;
 
   protected:

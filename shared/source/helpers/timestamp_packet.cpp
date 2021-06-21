@@ -55,3 +55,11 @@ void TimestampPacketContainer::makeResident(CommandStreamReceiver &commandStream
         commandStreamReceiver.makeResident(*node->getBaseGraphicsAllocation());
     }
 }
+
+void TimestampPacketDependencies::moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer) {
+    timestampPacketContainer.assignAndIncrementNodesRefCounts(cacheFlushNodes);
+    timestampPacketContainer.assignAndIncrementNodesRefCounts(previousEnqueueNodes);
+    timestampPacketContainer.assignAndIncrementNodesRefCounts(barrierNodes);
+    timestampPacketContainer.assignAndIncrementNodesRefCounts(auxToNonAuxNodes);
+    timestampPacketContainer.assignAndIncrementNodesRefCounts(nonAuxToAuxNodes);
+}

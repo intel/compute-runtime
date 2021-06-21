@@ -432,6 +432,10 @@ void Command::setTimestampPacketNode(TimestampPacketContainer &current, Timestam
 }
 
 Command::~Command() {
+    if (commandQueue.getDeferredTimestampPackets() && timestampPacketDependencies.get()) {
+        timestampPacketDependencies->moveNodesToNewContainer(*commandQueue.getDeferredTimestampPackets());
+    }
+
     for (cl_event &eventFromWaitList : eventsWaitlist) {
         auto event = castToObjectOrAbort<Event>(eventFromWaitList);
         event->decRefInternal();

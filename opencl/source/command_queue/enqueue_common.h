@@ -388,6 +388,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                        std::move(printfHandler));
     }
 
+    if (deferredTimestampPackets.get()) {
+        timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
+    }
+
     queueOwnership.unlock();
     commandStreamRecieverOwnership.unlock();
 
@@ -1212,6 +1216,8 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     if (blockQueue) {
         enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, eventBuilder, nullptr);
     }
+
+    timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
 
     queueOwnership.unlock();
     commandStreamRecieverOwnership.unlock();

@@ -128,6 +128,8 @@ struct TimestampPacketDependencies : public NonCopyableClass {
     TimestampPacketContainer barrierNodes;
     TimestampPacketContainer auxToNonAuxNodes;
     TimestampPacketContainer nonAuxToAuxNodes;
+
+    void moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer);
 };
 
 struct TimestampPacketHelper {

@@ -623,8 +623,6 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
     auto allocator = blitEnqueue ? getBcsCommandStreamReceiver()->getTimestampPacketAllocator()
                                  : getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
 
-    deferredTimestampPackets->assignAndIncrementNodesRefCounts(*timestampPacketContainer);
-
     previousNodes.swapNodes(*timestampPacketContainer);
 
     if ((previousNodes.peekNodes().size() > 0) && (previousNodes.peekNodes()[0]->getAllocator() != allocator)) {
