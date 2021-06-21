@@ -503,7 +503,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     void patchBlocksCurbeWithConstantValues();
 
-    void markArgPatchedAndResolveArgs(uint32_t argIndex);
     void resolveArgs();
 
     void reconfigureKernel();
