@@ -1933,6 +1933,76 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     EXPECT_EQ(Drm::ValueWidth::U32, mock->waitUserFenceCall.dataWidth);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
+                   givenWaitUserFenceSetWhenDrmCsrIsCreatedThenUseNotifyEnableFlagIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+
+    std::unique_ptr<TestedDrmCommandStreamReceiver<FamilyType>> testedCsr =
+        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                     *this->executionEnvironment,
+                                                                     1);
+
+    EXPECT_TRUE(testedCsr->useUserFenceWait);
+    EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
+                   givenWaitUserFenceNotSetWhenDrmCsrIsCreatedThenUseNotifyEnableFlagIsNotSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableUserFenceForCompletionWait.set(0);
+
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+
+    std::unique_ptr<TestedDrmCommandStreamReceiver<FamilyType>> testedCsr =
+        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                     *this->executionEnvironment,
+                                                                     1);
+
+    EXPECT_FALSE(testedCsr->useUserFenceWait);
+    EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
+                   givenWaitUserFenceNotSetAndOverrideNotifyEnableSetWhenDrmCsrIsCreatedThenUseNotifyEnableFlagIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableUserFenceForCompletionWait.set(0);
+    DebugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.set(1);
+
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+
+    std::unique_ptr<TestedDrmCommandStreamReceiver<FamilyType>> testedCsr =
+        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                     *this->executionEnvironment,
+                                                                     1);
+
+    EXPECT_FALSE(testedCsr->useUserFenceWait);
+    EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
+                   givenWaitUserFenceSetAndOverrideNotifyEnableNotSetWhenDrmCsrIsCreatedThenUseNotifyEnableFlagIsNotSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    DebugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.set(0);
+
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+
+    std::unique_ptr<TestedDrmCommandStreamReceiver<FamilyType>> testedCsr =
+        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                     *this->executionEnvironment,
+                                                                     1);
+
+    EXPECT_TRUE(testedCsr->useUserFenceWait);
+    EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenVmBindNotAvailableWhenCheckingForKmdWaitModeActiveThenReturnTrue) {
     auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     mock->isVmBindAvailableCall.called = 0u;

@@ -61,6 +61,10 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
         useContextForUserFenceWait = !!(overrideUserFenceUseCtxId);
     }
     useNotifyEnableForPostSync = useUserFenceWait;
+    int overrideUseNotifyEnableForPostSync = DebugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.get();
+    if (overrideUseNotifyEnableForPostSync != -1) {
+        useNotifyEnableForPostSync = !!(overrideUseNotifyEnableForPostSync);
+    }
     kmdWaitTimeout = DebugManager.flags.SetKmdWaitTimeout.get();
 }
 
