@@ -459,7 +459,7 @@ class CommandQueueHw : public CommandQueue {
         bool profilingRequired = (this->isProfilingEnabled() && eventsRequest.outEvent);
         bool perfCountersRequired = (this->isPerfCountersEnabled() && eventsRequest.outEvent);
 
-        if (isBlockedCommandStreamRequired(commandType, eventsRequest, blockedQueue)) {
+        if (isBlockedCommandStreamRequired(commandType, eventsRequest, blockedQueue, isMarkerWithProfiling)) {
             constexpr size_t additionalAllocationSize = CSRequirements::csOverfetchSize;
             constexpr size_t allocationSize = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
             commandStream = new LinearStream();

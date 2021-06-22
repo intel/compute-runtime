@@ -326,6 +326,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         }
     }
 
+    uint64_t getTimeInNSFromTimestampData(const TimeStampData &timestamp) const;
     bool calcProfilingData();
     MOCKABLE_VIRTUAL void calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS);
     MOCKABLE_VIRTUAL void synchronizeTaskCount() {
