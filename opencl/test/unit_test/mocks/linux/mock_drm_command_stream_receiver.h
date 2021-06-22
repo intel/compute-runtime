@@ -19,6 +19,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::createPreemptionAllocation;
     using CommandStreamReceiver::flushStamp;
+    using CommandStreamReceiver::getTagAddress;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::makeResident;
     using CommandStreamReceiver::taskCount;

@@ -361,20 +361,22 @@ class DrmMockCustom : public Drm {
         uint32_t ctxId = 0u;
         ValueWidth dataWidth = ValueWidth::U8;
         int64_t timeout = 0;
+        uint16_t flags = 0;
 
         uint32_t called = 0u;
     };
 
     WaitUserFenceCall waitUserFenceCall{};
 
-    int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout) override {
+    int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) override {
         waitUserFenceCall.called++;
         waitUserFenceCall.ctxId = ctxId;
         waitUserFenceCall.address = address;
         waitUserFenceCall.dataWidth = dataWidth;
         waitUserFenceCall.value = value;
         waitUserFenceCall.timeout = timeout;
-        return Drm::waitUserFence(ctxId, address, value, dataWidth, timeout);
+        waitUserFenceCall.flags = flags;
+        return Drm::waitUserFence(ctxId, address, value, dataWidth, timeout, flags);
     }
 
     struct IsVmBindAvailableCall {

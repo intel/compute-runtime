@@ -211,7 +211,7 @@ class Drm : public DriverModel {
         U32,
         U64
     };
-    MOCKABLE_VIRTUAL int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout);
+    MOCKABLE_VIRTUAL int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags);
 
     void setNewResourceBound(bool value) { this->newResourceBound = value; };
     bool getNewResourceBound() { return this->newResourceBound; };
