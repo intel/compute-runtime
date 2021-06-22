@@ -185,6 +185,8 @@ class Wddm : public DriverModel {
 
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
 
+    size_t getMaxMemAllocSize() const override;
+
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
 
   protected:

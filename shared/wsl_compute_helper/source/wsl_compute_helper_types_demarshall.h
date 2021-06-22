@@ -1018,6 +1018,10 @@ struct Demarshaller<TOK_S_GT_SYSTEM_INFO> {
                     uint32_t arrayElementIdSliceInfo = varLen->arrayElementId;
                     const TokenHeader *tokSliceInfo = varLen->getValue<TokenHeader>();
                     const TokenHeader *tokSliceInfoEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                    static constexpr auto maxDstSlicesInfo = sizeof(dst.SystemInfo.SliceInfo) / sizeof(dst.SystemInfo.SliceInfo[0]);
+                    if (arrayElementIdSliceInfo >= maxDstSlicesInfo) {
+                        tokSliceInfo = tokSliceInfoEnd;
+                    }
                     while (tokSliceInfo < tokSliceInfoEnd) {
                         if (false == tokSliceInfo->flags.flag4IsVariableLength) {
                             switch (tokSliceInfo->id) {
@@ -3783,6 +3787,10 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                                 uint32_t arrayElementIdSliceInfo = varLen->arrayElementId;
                                 const TokenHeader *tokSliceInfo = varLen->getValue<TokenHeader>();
                                 const TokenHeader *tokSliceInfoEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                                static constexpr auto maxDstSlicesInfo = sizeof(dst.SystemInfo.SliceInfo) / sizeof(dst.SystemInfo.SliceInfo[0]);
+                                if (arrayElementIdSliceInfo >= maxDstSlicesInfo) {
+                                    tokSliceInfo = tokSliceInfoEnd;
+                                }
                                 while (tokSliceInfo < tokSliceInfoEnd) {
                                     if (false == tokSliceInfo->flags.flag4IsVariableLength) {
                                         switch (tokSliceInfo->id) {

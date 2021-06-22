@@ -82,8 +82,8 @@ class WddmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
 
-    MOCKABLE_VIRTUAL size_t getHugeGfxMemoryChunkSize() const { return 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k; }
-    GraphicsAllocation *allocateHugeGraphicsMemory(const AllocationData &allocationData);
+    MOCKABLE_VIRTUAL size_t getHugeGfxMemoryChunkSize() const;
+    GraphicsAllocation *allocateHugeGraphicsMemory(const AllocationData &allocationData, bool sharedVirtualAddress);
 
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex);
     static bool validateAllocation(WddmAllocation *alloc);

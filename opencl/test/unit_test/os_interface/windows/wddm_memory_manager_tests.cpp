@@ -1606,22 +1606,25 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequest
     wddm->mapGpuVaStatus = true;
     VariableBackup<bool> restorer{&wddm->callBaseMapGpuVa, false};
 
-    DebugManager.flags.Enable64kbpages.set(true);
-    MemoryManagerCreate<MockWddmMemoryManager> memoryManager(true, false, *executionEnvironment);
-    if (memoryManager.isLimitedGPU(0)) {
-        GTEST_SKIP();
+    for (bool enable64KBpages : {true, false}) {
+        wddm->createAllocationResult.called = 0U;
+        DebugManager.flags.Enable64kbpages.set(enable64KBpages);
+        MemoryManagerCreate<MockWddmMemoryManager> memoryManager(true, false, *executionEnvironment);
+        if (memoryManager.isLimitedGPU(0)) {
+            GTEST_SKIP();
+        }
+        EXPECT_EQ(0, wddm->createAllocationResult.called);
+
+        memoryManager.hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k - MemoryConstants::pageSize;
+
+        WddmAllocation *wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize64k * 3, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield}));
+        EXPECT_NE(nullptr, wddmAlloc);
+        EXPECT_EQ(4, wddmAlloc->getNumGmms());
+        EXPECT_EQ(4, wddm->createAllocationResult.called);
+        EXPECT_EQ(wddmAlloc->getGpuAddressToModify(), GmmHelper::canonize(wddmAlloc->reservedGpuVirtualAddress));
+
+        memoryManager.freeGraphicsMemory(wddmAlloc);
     }
-    EXPECT_EQ(0, wddm->createAllocationResult.called);
-
-    memoryManager.hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k - MemoryConstants::pageSize;
-
-    WddmAllocation *wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize64k * 3, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield}));
-    EXPECT_NE(nullptr, wddmAlloc);
-    EXPECT_EQ(4, wddmAlloc->getNumGmms());
-    EXPECT_EQ(4, wddm->createAllocationResult.called);
-    EXPECT_EQ(wddmAlloc->getGpuAddressToModify(), GmmHelper::canonize(wddmAlloc->reservedGpuVirtualAddress));
-
-    memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenCorrectHugeGfxMemoryChunkIsSet) {

@@ -78,6 +78,13 @@ void Device::initializeCaps() {
         deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, this->hardwareCapabilities.maxMemAllocSize);
     }
 
+    // Some specific driver model configurations may impose additional limitations
+    auto driverModelMaxMemAlloc = std::numeric_limits<size_t>::max();
+    if (this->executionEnvironment->rootDeviceEnvironments[0]->osInterface) {
+        driverModelMaxMemAlloc = this->executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->getMaxMemAllocSize();
+    }
+    deviceInfo.maxMemAllocSize = std::min<std::uint64_t>(driverModelMaxMemAlloc, deviceInfo.maxMemAllocSize);
+
     deviceInfo.profilingTimerResolution = getProfilingTimerResolution();
     if (DebugManager.flags.OverrideProfilingTimerResolution.get() != -1) {
         deviceInfo.profilingTimerResolution = static_cast<double>(DebugManager.flags.OverrideProfilingTimerResolution.get());

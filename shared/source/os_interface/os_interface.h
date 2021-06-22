@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/driver_info.h"
 
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -77,6 +78,10 @@ class DriverModel : public NonCopyableClass {
     }
 
     virtual PhysicalDevicePciBusInfo getPciBusInfo() const = 0;
+
+    virtual size_t getMaxMemAllocSize() const {
+        return std::numeric_limits<size_t>::max();
+    }
 
   protected:
     DriverModelType driverModelType;

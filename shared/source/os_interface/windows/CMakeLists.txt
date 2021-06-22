@@ -60,6 +60,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/init_wddm_os_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener${KMDAF_FILE_SUFFIX}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/max_chunk_size_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.cpp
@@ -75,6 +76,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxcore.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/configure_device_address_space_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/set_gmm_input_args_${DRIVER_MODEL}.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/max_mem_alloc_size_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_defs.h

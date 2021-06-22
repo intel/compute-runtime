@@ -529,6 +529,30 @@ TEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsSupportedW
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
 }
 
+TEST_F(DeviceGetCapsTest, whenDriverModelHasLimitationForMaxMemoryAllocationSizeThenTakeItIntoAccount) {
+    struct MockDriverModel : NEO::DriverModel {
+        size_t maxAllocSize;
+
+        MockDriverModel(size_t maxAllocSize) : NEO::DriverModel(NEO::DriverModelType::UNKNOWN), maxAllocSize(maxAllocSize) {}
+
+        void setGmmInputArgs(void *args) override {}
+        uint32_t getDeviceHandle() const override { return {}; }
+        PhysicalDevicePciBusInfo getPciBusInfo() const override { return {}; }
+        size_t getMaxMemAllocSize() const override {
+            return maxAllocSize;
+        }
+    };
+
+    DebugManagerStateRestore dbgRestorer;
+    size_t maxAllocSizeTestValue = 512;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    device->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<MockDriverModel>(maxAllocSizeTestValue));
+    device->initializeCaps();
+    const auto &caps = device->getDeviceInfo();
+    EXPECT_EQ(maxAllocSizeTestValue, caps.maxMemAllocSize);
+}
+
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenExtensionsStringEndsWithSpace) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();

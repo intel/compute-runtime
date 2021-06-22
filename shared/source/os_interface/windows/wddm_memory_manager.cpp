@@ -97,7 +97,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     size_t sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
     if (sizeAligned > getHugeGfxMemoryChunkSize()) {
-        return allocateHugeGraphicsMemory(allocationData);
+        return allocateHugeGraphicsMemory(allocationData, false);
     }
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
@@ -129,7 +129,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
     return wddmAllocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const AllocationData &allocationData) {
+GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const AllocationData &allocationData, bool sharedVirtualAddress) {
     void *hostPtr = nullptr, *alignedPtr = nullptr;
     size_t alignedSize = 0;
     bool uncacheable = allocationData.flags.uncacheable;
@@ -175,7 +175,7 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
 
     wddmAllocation->storageInfo.multiStorage = true;
 
-    if (!createWddmAllocation(wddmAllocation.get(), nullptr)) {
+    if (!createWddmAllocation(wddmAllocation.get(), sharedVirtualAddress ? hostPtr : nullptr)) {
         for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
             delete wddmAllocation->getGmm(gmmId);
         }
@@ -193,6 +193,9 @@ GraphicsAllocation *WddmMemoryManager::allocateUSMHostGraphicsMemory(const Alloc
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
     size_t newAlignment = allocationData.alignment ? alignUp(allocationData.alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize;
     size_t sizeAligned = allocationData.size ? alignUp(allocationData.size, MemoryConstants::pageSize) : MemoryConstants::pageSize;
+    if (sizeAligned > getHugeGfxMemoryChunkSize()) {
+        return allocateHugeGraphicsMemory(allocationData, true);
+    }
     void *pSysMem = allocateSystemMemory(sizeAligned, newAlignment);
     Gmm *gmm = nullptr;
 
@@ -238,7 +241,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
     auto alignedSize = alignSizeWholePage(allocationData.hostPtr, allocationData.size);
     if (alignedSize > getHugeGfxMemoryChunkSize()) {
-        return allocateHugeGraphicsMemory(allocationData);
+        return allocateHugeGraphicsMemory(allocationData, false);
     }
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
@@ -266,7 +269,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
     if (allocationData.size > getHugeGfxMemoryChunkSize()) {
-        return allocateHugeGraphicsMemory(allocationData);
+        return allocateHugeGraphicsMemory(allocationData, false);
     }
 
     if (mallocRestrictions.minAddress > reinterpret_cast<uintptr_t>(allocationData.hostPtr)) {
