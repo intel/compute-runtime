@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
@@ -251,4 +252,32 @@ HWTEST_F(MarkerTest, givenMarkerCallFollowingNdrangeCallInBatchedModeWhenWaitFor
 
     clReleaseEvent(eventFromMarker);
     clReleaseEvent(eventFromNdr);
+}
+
+struct MarkerWithProfilingTest : public MarkerTest {
+    void SetUp() override {
+        dbgRestore = std::make_unique<DebugManagerStateRestore>();
+        DebugManager.flags.EnableTimestampPacket.set(0);
+        MarkerTest::SetUp();
+    }
+
+    void TearDown() override {
+        MarkerTest::TearDown();
+        dbgRestore.reset(nullptr);
+    }
+
+    std::unique_ptr<DebugManagerStateRestore> dbgRestore;
+};
+
+struct WhiteBoxCommandQueue : public CommandQueue {
+    using CommandQueue::isBlockedCommandStreamRequired;
+};
+
+HWTEST_F(MarkerWithProfilingTest, givenMarkerWithProfilingAndBlockedEnqueueThenBlockedCommandStreamIsRequired) {
+    auto cmdQueueWB = static_cast<WhiteBoxCommandQueue *>(pCmdQ);
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+
+    bool ret = cmdQueueWB->isBlockedCommandStreamRequired(CL_COMMAND_MARKER, eventsRequest, true, true);
+
+    EXPECT_TRUE(ret);
 }

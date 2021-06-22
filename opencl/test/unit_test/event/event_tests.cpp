@@ -26,6 +26,7 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_ostime.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
@@ -698,6 +699,90 @@ TEST_F(InternalsEventTest, GivenProfilingWhenUserEventCreatedThenProfilingNotSet
 
     std::unique_ptr<MockEvent<Event>> event(new MockEvent<Event>(pCmdQ.get(), CL_COMMAND_USER, 0, 0));
     EXPECT_FALSE(event.get()->isProfilingEnabled());
+}
+
+TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenGetEventProfilingInfoThenCpuTimestampIsReturned) {
+    pClDevice->setOSTime(new MockOSTimeWithConstTimestamp());
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
+    MockEvent<Event> event(&cmdQ, CL_COMMAND_MARKER, 0, 0);
+
+    event.setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(cmdQ)));
+
+    event.submitCommand(false);
+    uint64_t submitTime = 0ULL;
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submitTime, 0);
+
+    EXPECT_EQ(submitTime, MockDeviceTimeWithConstTimestamp::CPU_TIME_IN_NS);
+}
+
+TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenGetEventProfilingInfoThenGpuTimestampIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableDeviceBasedTimestamps.set(true);
+
+    pClDevice->setOSTime(new MockOSTimeWithConstTimestamp());
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
+    MockEvent<Event> event(&cmdQ, CL_COMMAND_MARKER, 0, 0);
+
+    event.setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(cmdQ)));
+
+    event.submitCommand(false);
+    uint64_t submitTime = 0ULL;
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submitTime, 0);
+
+    auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
+    EXPECT_EQ(submitTime, static_cast<uint64_t>(MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP * resolution));
+}
+
+TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledWhenCalculateStartTimestampThenCorrectTimeIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableDeviceBasedTimestamps.set(true);
+
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
+    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
+
+    HwTimeStamps timestamp{};
+    timestamp.GlobalStartTS = 2;
+    event.queueTimeStamp.GPUTimeStamp = 1;
+    TagNode<HwTimeStamps> timestampNode{};
+    timestampNode.tagForCpuAccess = &timestamp;
+    event.timeStampNode = &timestampNode;
+
+    uint64_t start;
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
+
+    auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
+    EXPECT_EQ(start, static_cast<uint64_t>(timestamp.GlobalStartTS * resolution));
+
+    event.timeStampNode = nullptr;
+}
+
+TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmallerThanQueueTSWhenCalculateStartTimestampThenCorrectTimeIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableDeviceBasedTimestamps.set(true);
+
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
+    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
+
+    HwTimeStamps timestamp{};
+    timestamp.GlobalStartTS = 1;
+    event.queueTimeStamp.GPUTimeStamp = 2;
+    TagNode<HwTimeStamps> timestampNode{};
+    timestampNode.tagForCpuAccess = &timestamp;
+    event.timeStampNode = &timestampNode;
+
+    uint64_t start = 0u;
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
+
+    auto &hwHelper = HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
+    auto refStartTime = static_cast<uint64_t>(timestamp.GlobalStartTS * resolution + (1ULL << hwHelper.getGlobalTimeStampBits()) * resolution);
+    EXPECT_EQ(start, refStartTime);
+
+    event.timeStampNode = nullptr;
 }
 
 TEST_F(InternalsEventTest, GivenProfilingWHENMapOperationTHENTimesSet) {
