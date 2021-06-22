@@ -199,8 +199,13 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
 
     ::testing::internal::CaptureStdout();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
+    const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
+    const std::string engineUsage = EngineHelpers::engineUsageToString(csr->getOsContext().getEngineUsage());
     std::ostringstream expectedValue;
-    expectedValue << "Submission to RootDevice Index: " << csr->getRootDeviceIndex() << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong() << ", EngineId: " << csr->getOsContext().getEngineType() << "\n";
+    expectedValue << "Submission to RootDevice Index: " << csr->getRootDeviceIndex()
+                  << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong()
+                  << ", EngineId: " << csr->getOsContext().getEngineType()
+                  << " (" << engineType << ", " << engineUsage << ")\n";
     EXPECT_THAT(::testing::internal::GetCapturedStdout(), ::testing::HasSubstr(expectedValue.str()));
 }
 

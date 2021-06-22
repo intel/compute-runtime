@@ -669,7 +669,12 @@ bool CommandStreamReceiver::needsPageTableManager(aub_stream::EngineType engineT
 
 void CommandStreamReceiver::printDeviceIndex() {
     if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
-        printf("Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u\n", this->getRootDeviceIndex(), this->osContext->getDeviceBitfield().to_ulong(), this->osContext->getEngineType());
+        printf("Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u (%s, %s)\n",
+               this->getRootDeviceIndex(),
+               this->osContext->getDeviceBitfield().to_ulong(),
+               this->osContext->getEngineType(),
+               EngineHelpers::engineTypeToString(this->osContext->getEngineType()).c_str(),
+               EngineHelpers::engineUsageToString(this->osContext->getEngineUsage()).c_str());
     }
 }
 

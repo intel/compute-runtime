@@ -236,8 +236,14 @@ TEST_F(WddmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndices)
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     ::testing::internal::CaptureStdout();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
+    const std::string engineUsage = EngineHelpers::engineUsageToString(csr->getOsContext().getEngineUsage());
     std::ostringstream expectedValue;
-    expectedValue << "Submission to RootDevice Index: " << csr->getRootDeviceIndex() << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong() << ", EngineId: " << csr->getOsContext().getEngineType() << "\n";
+    expectedValue << "Submission to RootDevice Index: " << csr->getRootDeviceIndex()
+                  << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong()
+                  << ", EngineId: " << csr->getOsContext().getEngineType()
+                  << " (" << engineType << ", " << engineUsage << ")\n";
     EXPECT_STREQ(::testing::internal::GetCapturedStdout().c_str(), expectedValue.str().c_str());
 
     memoryManager->freeGraphicsMemory(commandBuffer);
