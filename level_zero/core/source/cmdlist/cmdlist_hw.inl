@@ -1702,8 +1702,15 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
 
             NEO::PipeControlArgs args = {};
             args.dcFlushEnable = (!event->signalScope) ? false : true;
+            NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args,
+                                                                                      commandContainer.getDevice()->getHardwareInfo());
 
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+
+            uint64_t baseAddr = event->getGpuAddress(this->device);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(),
+                                                                                        baseAddr,
+                                                                                        commandContainer.getDevice()->getHardwareInfo());
             appendWriteKernelTimestamp(hEvent, beforeWalker, true);
         }
     }
