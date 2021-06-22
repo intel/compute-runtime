@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,7 +144,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemOpenIpcHandleTracingWrapperWithOn
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeMemOpenIpcHandle_Tracing(nullptr, nullptr, ipchandle, ZE_IPC_MEMORY_FLAG_TBD, nullptr);
+    result = zeMemOpenIpcHandle_Tracing(nullptr, nullptr, ipchandle, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }

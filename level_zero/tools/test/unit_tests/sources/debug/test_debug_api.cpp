@@ -94,7 +94,7 @@ TEST(DebugSessionTest, WhenUnsupportedFunctionCalledThenErrorIsReturned) {
     result = L0::DebugApiHandlers::debugGetRegisterSetProperties(hDevice, nullptr, nullptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 
-    zet_debug_regset_type_t type = {ZET_DEBUG_REGSET_TYPE_INVALID};
+    uint32_t type = {0};
     result = L0::DebugApiHandlers::debugReadRegisters(session, thread, type, 0, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 

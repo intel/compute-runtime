@@ -91,7 +91,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zetDebugReadRegisters(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread,
-    zet_debug_regset_type_t type,
+    uint32_t type,
     uint32_t start,
     uint32_t count,
     void *pRegisterValues) {
@@ -102,7 +102,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zetDebugWriteRegisters(
     zet_debug_session_handle_t hDebug,
     ze_device_thread_t thread,
-    zet_debug_regset_type_t type,
+    uint32_t type,
     uint32_t start,
     uint32_t count,
     void *pRegisterValues) {
