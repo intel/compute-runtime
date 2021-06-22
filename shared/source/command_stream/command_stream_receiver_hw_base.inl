@@ -568,6 +568,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, chainedBatchBuffer,
                             dispatchFlags.requiresCoherency, dispatchFlags.lowPriority, dispatchFlags.throttle, dispatchFlags.sliceCount,
                             streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, dispatchFlags.useSingleSubdevice};
+    streamToSubmit.getGraphicsAllocation()->updateTaskCount(this->taskCount + 1, this->osContext->getContextId());
+    streamToSubmit.getGraphicsAllocation()->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {

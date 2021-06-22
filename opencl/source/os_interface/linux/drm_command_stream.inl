@@ -69,8 +69,6 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
     this->printDeviceIndex();
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
     DEBUG_BREAK_IF(!alloc);
-    alloc->updateTaskCount(this->taskCount + 1, this->osContext->getContextId());
-    alloc->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
 
     BufferObject *bb = alloc->getBO();
     if (bb == nullptr) {
