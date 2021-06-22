@@ -4621,6 +4621,12 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
         return retVal;
     }
 
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueSVMMemcpy, &retVal);
+        return retVal;
+    }
+
     retVal = pCommandQueue->enqueueSVMMemcpy(
         blockingCopy,
         dstPtr,
@@ -4675,6 +4681,12 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
 
     if ((svmPtr == nullptr) || (size == 0)) {
         retVal = CL_INVALID_VALUE;
+        TRACING_EXIT(clEnqueueSVMMemFill, &retVal);
+        return retVal;
+    }
+
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
+        retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clEnqueueSVMMemFill, &retVal);
         return retVal;
     }
@@ -4735,6 +4747,12 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
         return retVal;
     }
 
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueSVMMap, &retVal);
+        return retVal;
+    }
+
     retVal = pCommandQueue->enqueueSVMMap(
         blockingMap,
         mapFlags,
@@ -4778,6 +4796,12 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
 
     auto &device = pCommandQueue->getDevice();
     if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueSVMUnmap, &retVal);
+        return retVal;
+    }
+
+    if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clEnqueueSVMUnmap, &retVal);
         return retVal;

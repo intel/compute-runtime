@@ -11,6 +11,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "cl_api_tests.h"
 
@@ -123,6 +124,29 @@ TEST_F(clEnqueueSVMMemFillTests, GivenValidParametersWhenFillingSVMMemoryThenSuc
 
         clSVMFree(pContext, ptrSvm);
     }
+}
+
+TEST_F(clEnqueueSVMMemFillTests, GivenQueueIncapableWhenFillingSvmBufferThenInvalidOperationIsReturned) {
+    REQUIRE_SVM_OR_SKIP(pDevice);
+
+    disableQueueCapabilities(CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL);
+
+    void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
+    EXPECT_NE(nullptr, ptrSvm);
+
+    auto retVal = clEnqueueSVMMemFill(
+        pCommandQueue, // cl_command_queue command_queue
+        ptrSvm,        // void *svm_ptr
+        nullptr,       // const void *pattern
+        0,             // size_t pattern_size
+        256,           // size_t size
+        0,             // cl_uint num_events_in_wait_list
+        nullptr,       // cl_evebt *event_wait_list
+        nullptr        // cL_event *event
+    );
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+
+    clSVMFree(pContext, ptrSvm);
 }
 
 TEST_F(clEnqueueSVMMemFillTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMemFillThenInvalidOperationErrorIsReturned) {

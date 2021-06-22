@@ -11,6 +11,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "cl_api_tests.h"
 
@@ -95,6 +96,38 @@ TEST_F(clEnqueueSVMUnmapTests, GivenValidParametersWhenUnmappingSvmThenSuccessIs
 
         clSVMFree(pContext, ptrSvm);
     }
+}
+
+TEST_F(clEnqueueSVMUnmapTests, GivenQueueIncapableWhenUnmappingSvmBufferThenInvalidOperationIsReturned) {
+    REQUIRE_SVM_OR_SKIP(pDevice);
+
+    void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
+    EXPECT_NE(nullptr, ptrSvm);
+
+    auto retVal = clEnqueueSVMMap(
+        pCommandQueue, // cl_command_queue command_queue
+        CL_FALSE,      // cl_bool blocking_map
+        CL_MAP_READ,   // cl_map_flags map_flags
+        ptrSvm,        // void *svm_ptr
+        256,           // size_t size
+        0,             // cl_uint num_events_in_wait_list
+        nullptr,       // const cL_event *event_wait_list
+        nullptr        // cl_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    disableQueueCapabilities(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL);
+
+    retVal = clEnqueueSVMUnmap(
+        pCommandQueue, // cl_command_queue command_queue
+        ptrSvm,        // void *svm_ptr
+        0,             // cl_uint num_events_in_wait_list
+        nullptr,       // const cL_event *event_wait_list
+        nullptr        // cl_event *event
+    );
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+
+    clSVMFree(pContext, ptrSvm);
 }
 
 TEST_F(clEnqueueSVMUnmapTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMUnmapThenInvalidOperationErrorIsReturned) {
