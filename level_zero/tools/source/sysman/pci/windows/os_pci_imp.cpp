@@ -171,8 +171,49 @@ ze_result_t WddmPciImp::getState(zes_pci_state_t *state) {
     return status;
 }
 
+bool WddmPciImp::resizableBarSupported() {
+    uint32_t valueSmall = 0;
+    bool supported = false;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+
+    request.commandId = KmdSysman::Command::Get;
+    request.componentId = KmdSysman::Component::PciComponent;
+    request.paramInfo = KmdSysman::PciDomainsType::PciCurrentDevice;
+    request.requestId = KmdSysman::Requests::Pci::ResizableBarSupported;
+
+    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+        supported = static_cast<bool>(valueSmall);
+    }
+
+    return supported;
+}
+
+bool WddmPciImp::resizableBarEnabled() {
+    uint32_t valueSmall = 0;
+    bool enabled = false;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+
+    request.commandId = KmdSysman::Command::Get;
+    request.componentId = KmdSysman::Component::PciComponent;
+    request.paramInfo = KmdSysman::PciDomainsType::PciCurrentDevice;
+    request.requestId = KmdSysman::Requests::Pci::ResizableBarEnabled;
+
+    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
+        memcpy_s(&valueSmall, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+        enabled = static_cast<bool>(valueSmall);
+    }
+
+    return enabled;
+}
+
 ze_result_t WddmPciImp::initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    zes_pci_bar_properties_t *pBarProp = new zes_pci_bar_properties_t;
+    memset(pBarProp, 0, sizeof(zes_pci_bar_properties_t));
+    pBarProperties.push_back(pBarProp);
+    return ZE_RESULT_SUCCESS;
 }
 
 WddmPciImp::WddmPciImp(OsSysman *pOsSysman) {

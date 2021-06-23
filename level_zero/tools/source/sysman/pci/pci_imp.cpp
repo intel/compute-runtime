@@ -94,7 +94,21 @@ ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properti
     }
     if (nullptr != pProperties) {
         for (uint32_t i = 0; i < numToCopy; i++) {
-            pProperties[i] = *pciBarProperties[i];
+            pProperties[i].base = pciBarProperties[i]->base;
+            pProperties[i].index = pciBarProperties[i]->index;
+            pProperties[i].size = pciBarProperties[i]->size;
+            pProperties[i].type = pciBarProperties[i]->type;
+
+            if (pProperties[i].pNext != nullptr && pProperties[i].stype == zes_structure_type_t::ZES_STRUCTURE_TYPE_PCI_BAR_PROPERTIES_1_2) {
+                zes_pci_bar_properties_1_2_t *pBarPropsExt = static_cast<zes_pci_bar_properties_1_2_t *>(pProperties[i].pNext);
+                // base, index, size and type are the same as the non 1.2 struct.
+                pBarPropsExt->base = pciBarProperties[i]->base;
+                pBarPropsExt->index = pciBarProperties[i]->index;
+                pBarPropsExt->size = pciBarProperties[i]->size;
+                pBarPropsExt->type = pciBarProperties[i]->type;
+                pBarPropsExt->resizableBarEnabled = resizableBarEnabled;
+                pBarPropsExt->resizableBarSupported = resizableBarSupported;
+            }
         }
     }
     return ZE_RESULT_SUCCESS;
@@ -109,6 +123,8 @@ void PciImp::init() {
     }
     UNRECOVERABLE_IF(nullptr == pOsPci);
     pOsPci->getProperties(&pciProperties);
+    resizableBarEnabled = pOsPci->resizableBarEnabled();
+    resizableBarSupported = pOsPci->resizableBarSupported();
     std::string bdf;
     pOsPci->getPciBdf(bdf);
     if (bdf.empty()) {

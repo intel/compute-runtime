@@ -303,6 +303,10 @@ enum Pci {
     CurrentLinkRxCounter,
     CurrentLinkTxCounter,
 
+    // resizable bar
+    ResizableBarSupported,
+    ResizableBarEnabled,
+
     MaxPciRequests,
 };
 

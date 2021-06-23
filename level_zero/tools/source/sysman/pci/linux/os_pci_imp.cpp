@@ -125,6 +125,7 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_propert
         getBarBaseAndSize(ReadBytes[i], baseAddr, barSize, barFlags);
         if (baseAddr && !(barFlags & 0x1)) { // we do not update for I/O ports
             zes_pci_bar_properties_t *pBarProp = new zes_pci_bar_properties_t;
+            memset(pBarProp, 0, sizeof(zes_pci_bar_properties_t));
             pBarProp->index = i;
             pBarProp->base = baseAddr;
             pBarProp->size = barSize;
@@ -147,6 +148,14 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_propert
         result = ZE_RESULT_ERROR_UNKNOWN;
     }
     return result;
+}
+
+bool LinuxPciImp::resizableBarSupported() {
+    return false;
+}
+
+bool LinuxPciImp::resizableBarEnabled() {
+    return false;
 }
 
 ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {

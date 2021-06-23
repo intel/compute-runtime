@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,8 @@ struct Mock<PciKmdSysManager> : public PciKmdSysManager {
     uint32_t mockMaxLinkWidth[3] = {1, 0, 8};
     uint32_t mockCurrentLinkSpeed[3] = {1, 0, 3};
     uint32_t mockCurrentLinkWidth[3] = {1, 0, 1};
+    uint32_t mockResizableBarSupported[3] = {1, 1, 1};
+    uint32_t mockResizableBarEnabled[3] = {1, 1, 1};
 
     void getPciProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
@@ -85,6 +87,18 @@ struct Mock<PciKmdSysManager> : public PciKmdSysManager {
         case KmdSysman::Requests::Pci::CurrentLinkWidth: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockCurrentLinkWidth[domain];
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
+        case KmdSysman::Requests::Pci::ResizableBarSupported: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = mockResizableBarSupported[domain];
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
+        case KmdSysman::Requests::Pci::ResizableBarEnabled: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = mockResizableBarEnabled[domain];
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
