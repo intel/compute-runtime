@@ -629,7 +629,9 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
         clearAllDependencies = false;
     }
 
-    previousNodes.resolveDependencies(clearAllDependencies);
+    if (clearAllDependencies) {
+        previousNodes.moveNodesToNewContainer(*deferredTimestampPackets);
+    }
 
     DEBUG_BREAK_IF(timestampPacketContainer->peekNodes().size() > 0);
 

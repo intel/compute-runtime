@@ -903,6 +903,22 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
 }
 
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingToOoqThenMoveToDeferredList) {
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    cmdQ->setOoqEnabled();
+
+    TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+}
+
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockingThenTrackOwnershipUntilQueueIsCompleted) {
     DebugManager.flags.MakeEachEnqueueBlocking.set(true);
 
@@ -1401,35 +1417,6 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThen
     userEvent.setStatus(CL_COMPLETE);
     EXPECT_TRUE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
     cmdQ->isQueueBlocked();
-}
-
-HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenDontKeepDependencyOnPreviousNodeIfItsReady) {
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-
-    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
-    TimestampPacketContainer previousNodes;
-    cmdQ.obtainNewTimestampPacketNodes(1, previousNodes, false, false);
-    auto firstNode = cmdQ.timestampPacketContainer->peekNodes().at(0);
-    setTagToReadyState(firstNode);
-
-    cmdQ.enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
-
-    uint32_t semaphoresFound = 0;
-    uint32_t atomicsFound = 0;
-    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
-        if (genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(*it)) {
-            semaphoresFound++;
-        }
-        if (genCmdCast<typename FamilyType::MI_ATOMIC *>(*it)) {
-            atomicsFound++;
-        }
-    }
-    uint32_t expectedSemaphoresCount = (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 2 : 0);
-    EXPECT_EQ(expectedSemaphoresCount, semaphoresFound);
-    EXPECT_EQ(0u, atomicsFound);
 }
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDependencyOnPreviousNodeIfItsNotReady) {

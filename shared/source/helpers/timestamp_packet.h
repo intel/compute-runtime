@@ -115,8 +115,8 @@ class TimestampPacketContainer : public NonCopyableClass {
     void add(TagNodeBase *timestampPacketNode);
     void swapNodes(TimestampPacketContainer &timestampPacketContainer);
     void assignAndIncrementNodesRefCounts(const TimestampPacketContainer &inputTimestampPacketContainer);
-    void resolveDependencies(bool clearAllDependencies);
     void makeResident(CommandStreamReceiver &commandStreamReceiver);
+    void moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer);
 
   protected:
     std::vector<TagNodeBase *> timestampPacketNodes;
