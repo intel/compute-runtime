@@ -101,3 +101,13 @@ HWTEST_F(CommandEncoderTests, givenNotify) {
     EXPECT_EQ(immData, miFlushDwCmd->getImmediateData());
     EXPECT_EQ(1u, static_cast<uint32_t>(miFlushDwCmd->getNotifyEnable()));
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, whenAppendParamsForImageFromBufferThenNothingChanges) {
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    auto expectedState = surfaceState;
+
+    EXPECT_EQ(0, memcmp(&expectedState, &surfaceState, sizeof(surfaceState)));
+    EncodeSurfaceState<FamilyType>::appendParamsForImageFromBuffer(&surfaceState);
+
+    EXPECT_EQ(0, memcmp(&expectedState, &surfaceState, sizeof(surfaceState)));
+}

@@ -266,6 +266,7 @@ struct EncodeSurfaceState {
     static void setClearColorParams(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static void setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static void disableCompressionFlags(R_SURFACE_STATE *surfaceState);
+    static void appendParamsForImageFromBuffer(R_SURFACE_STATE *surfaceState);
 };
 
 template <typename GfxFamily>

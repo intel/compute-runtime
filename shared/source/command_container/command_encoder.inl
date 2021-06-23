@@ -452,6 +452,10 @@ bool EncodeSurfaceState<Family>::isAuxModeEnabled(R_SURFACE_STATE *surfaceState,
 }
 
 template <typename Family>
+void EncodeSurfaceState<Family>::appendParamsForImageFromBuffer(R_SURFACE_STATE *surfaceState) {
+}
+
+template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
 
     if (container.nextIddInBlock == container.getNumIddPerBlock()) {
