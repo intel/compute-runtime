@@ -114,6 +114,17 @@ struct Mock<Device> : public Device {
                  ze_device_cache_properties_t *pCacheProperties),
                 (override));
     MOCK_METHOD(ze_result_t,
+                reserveCache,
+                (size_t cacheLevel,
+                 size_t cacheReservationSize),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                setCacheAdvice,
+                (void *ptr,
+                 size_t regionSize,
+                 ze_cache_ext_region_t cacheRegion),
+                (override));
+    MOCK_METHOD(ze_result_t,
                 imageGetProperties,
                 (const ze_image_desc_t *desc,
                  ze_image_properties_t *pImageProperties),

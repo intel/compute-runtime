@@ -31,6 +31,7 @@
 #include "opencl/source/program/program.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
+#include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -505,6 +506,50 @@ ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_prop
     pCacheProperties[0].cacheSize = hardwareInfo.gtSystemInfo.L3BankCount * 128 * KB;
     pCacheProperties[0].flags = 0;
 
+    if (pCacheProperties->pNext) {
+        auto extendedProperties = reinterpret_cast<ze_device_cache_properties_t *>(pCacheProperties->pNext);
+        if (extendedProperties->stype == ZE_STRUCTURE_TYPE_CACHE_RESERVATION_EXT_DESC) {
+            auto cacheReservationProperties = reinterpret_cast<ze_cache_reservation_ext_desc_t *>(extendedProperties);
+            cacheReservationProperties->maxCacheReservationSize = cacheReservation->getMaxCacheReservationSize();
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DeviceImp::reserveCache(size_t cacheLevel, size_t cacheReservationSize) {
+    if (cacheReservation->getMaxCacheReservationSize() == 0) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (cacheLevel == 0) {
+        cacheLevel = 3;
+    }
+
+    auto result = cacheReservation->reserveCache(cacheLevel, cacheReservationSize);
+    if (result == false) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DeviceImp::setCacheAdvice(void *ptr, size_t regionSize, ze_cache_ext_region_t cacheRegion) {
+    if (cacheReservation->getMaxCacheReservationSize() == 0) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (cacheRegion == ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_REGION_DEFAULT) {
+        cacheRegion = ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_NON_RESERVED_REGION;
+    }
+
+    auto result = cacheReservation->setCacheAdvice(ptr, regionSize, cacheRegion);
+    if (result == false) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -609,6 +654,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
     device->metricContext = MetricContext::create(*device);
     device->builtins = BuiltinFunctionsLib::create(
         device, neoDevice->getBuiltIns());
+    device->cacheReservation = CacheReservation::create(*device);
     device->maxNumHwThreads = NEO::HwHelper::getMaxThreadsForVfe(neoDevice->getHardwareInfo());
 
     const bool allocateDebugSurface = (device->getL0Debugger() || neoDevice->getDeviceInfo().debuggerActive) && !isSubDevice;
@@ -716,6 +762,7 @@ void DeviceImp::releaseResources() {
     }
     metricContext.reset();
     builtins.reset();
+    cacheReservation.reset();
 
     if (getSourceLevelDebugger()) {
         getSourceLevelDebugger()->notifyDeviceDestruction();

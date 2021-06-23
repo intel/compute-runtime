@@ -122,3 +122,20 @@ zeDeviceGetGlobalTimestamps(
     uint64_t *deviceTimestamp) {
     return L0::Device::fromHandle(hDevice)->getGlobalTimestamps(hostTimestamp, deviceTimestamp);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDeviceReserveCacheExt(
+    ze_device_handle_t hDevice,
+    size_t cacheLevel,
+    size_t cacheReservationSize) {
+    return L0::Device::fromHandle(hDevice)->reserveCache(cacheLevel, cacheReservationSize);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDeviceSetCacheAdviceExt(
+    ze_device_handle_t hDevice,
+    void *ptr,
+    size_t regionSize,
+    ze_cache_ext_region_t cacheRegion) {
+    return L0::Device::fromHandle(hDevice)->setCacheAdvice(ptr, regionSize, cacheRegion);
+}

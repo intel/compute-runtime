@@ -382,6 +382,7 @@ if(BUILD_WITH_L0)
                                    L0_API
                                    L0_SOURCES_LINUX
                                    L0_SOURCES_WINDOWS
+                                   L0_SRCS_CACHE_RESERVATION
                                    L0_SRCS_COMPILER_INTERFACE
                                    L0_SRCS_DEBUGGER
                                    L0_SRCS_DRIVER
@@ -389,11 +390,13 @@ if(BUILD_WITH_L0)
     )
     if(WIN32)
       append_sources_from_properties(L0_RUNTIME_SOURCES
+                                     L0_SRCS_CACHE_RESERVATION_WINDOWS
                                      L0_SRCS_DEBUGGER_WINDOWS
                                      L0_SRCS_DRIVER_WINDOWS
       )
     else()
       append_sources_from_properties(L0_RUNTIME_SOURCES
+                                     L0_SRCS_CACHE_RESERVATION_LINUX
                                      L0_SRCS_DEBUGGER_LINUX
                                      L0_SRCS_DRIVER_LINUX
       )

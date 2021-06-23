@@ -10,6 +10,7 @@
 #include "shared/source/utilities/spinlock.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
+#include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -45,6 +46,8 @@ struct DeviceImp : public Device {
     ze_result_t getProperties(ze_device_properties_t *pDeviceProperties) override;
     ze_result_t getSubDevices(uint32_t *pCount, ze_device_handle_t *phSubdevices) override;
     ze_result_t getCacheProperties(uint32_t *pCount, ze_device_cache_properties_t *pCacheProperties) override;
+    ze_result_t reserveCache(size_t cacheLevel, size_t cacheReservationSize) override;
+    ze_result_t setCacheAdvice(void *ptr, size_t regionSize, ze_cache_ext_region_t cacheRegion) override;
     ze_result_t imageGetProperties(const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) override;
     ze_result_t getDeviceImageProperties(ze_device_image_properties_t *pDeviceImageProperties) override;
     ze_result_t getCommandQueueGroupProperties(uint32_t *pCount,
@@ -97,6 +100,7 @@ struct DeviceImp : public Device {
     void *execEnvironment = nullptr;
     std::unique_ptr<BuiltinFunctionsLib> builtins = nullptr;
     std::unique_ptr<MetricContext> metricContext = nullptr;
+    std::unique_ptr<CacheReservation> cacheReservation = nullptr;
     uint32_t maxNumHwThreads = 0;
     uint32_t numSubDevices = 0;
     std::vector<Device *> subDevices;
