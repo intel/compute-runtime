@@ -92,7 +92,7 @@ TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledThenItAllocate
 TEST(clUnifiedSharedMemoryTests, whenUnifiedSharedMemoryAllocationCallsAreCalledWithSizeGreaterThenMaxMemAllocSizeThenErrorIsReturned) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
-    auto maxMemAllocSize = mockContext.getDevice(0u)->getHardwareCapabilities().maxMemAllocSize;
+    auto maxMemAllocSize = mockContext.getDevice(0u)->getDevice().getDeviceInfo().maxMemAllocSize;
     size_t requestedSize = static_cast<size_t>(maxMemAllocSize) + 1u;
 
     auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, requestedSize, 0, &retVal);

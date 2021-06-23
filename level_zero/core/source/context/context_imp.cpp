@@ -69,7 +69,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
     }
 
     if (relaxedSizeAllowed == false &&
-        (size > this->driverHandle->devices[0]->getNEODevice()->getHardwareCapabilities().maxMemAllocSize)) {
+        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().maxMemAllocSize)) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
@@ -137,7 +137,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     }
 
     if (relaxedSizeAllowed == false &&
-        (size > this->driverHandle->devices[0]->getNEODevice()->getHardwareCapabilities().maxMemAllocSize)) {
+        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().maxMemAllocSize)) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
@@ -192,7 +192,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     }
 
     if (relaxedSizeAllowed == false &&
-        (size > this->devices.begin()->second->getNEODevice()->getHardwareCapabilities().maxMemAllocSize)) {
+        (size > this->devices.begin()->second->getNEODevice()->getDeviceInfo().maxMemAllocSize)) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }

@@ -37,6 +37,11 @@ void Device::initializeCaps() {
         addressing32bitAllowed = false;
     }
 
+    deviceInfo.sharedSystemAllocationsSupport = hwInfoConfig->getSharedSystemMemCapabilities();
+    if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
+        deviceInfo.sharedSystemAllocationsSupport = DebugManager.flags.EnableSharedSystemUsmSupport.get();
+    }
+
     deviceInfo.vendorId = 0x8086;
     deviceInfo.maxReadImageArgs = 128;
     deviceInfo.maxWriteImageArgs = 128;
@@ -67,7 +72,11 @@ void Device::initializeCaps() {
     deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, deviceInfo.maxMemAllocSize); // if globalMemSize was reduced for 32b
 
     // OpenCL 1.2 requires 128MB minimum
-    deviceInfo.maxMemAllocSize = std::min(std::max(deviceInfo.maxMemAllocSize / 2, static_cast<uint64_t>(128llu * MB)), this->hardwareCapabilities.maxMemAllocSize);
+    deviceInfo.maxMemAllocSize = std::max(deviceInfo.maxMemAllocSize / 2, static_cast<uint64_t>(128llu * MB));
+
+    if (!deviceInfo.sharedSystemAllocationsSupport) {
+        deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, this->hardwareCapabilities.maxMemAllocSize);
+    }
 
     deviceInfo.profilingTimerResolution = getProfilingTimerResolution();
     if (DebugManager.flags.OverrideProfilingTimerResolution.get() != -1) {
@@ -137,11 +146,6 @@ void Device::initializeCaps() {
 
     if (deviceInfo.debuggerActive) {
         this->preemptionMode = PreemptionMode::Disabled;
-    }
-
-    deviceInfo.sharedSystemAllocationsSupport = hwInfoConfig->getSharedSystemMemCapabilities();
-    if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
-        deviceInfo.sharedSystemAllocationsSupport = DebugManager.flags.EnableSharedSystemUsmSupport.get();
     }
 
     std::stringstream deviceName;

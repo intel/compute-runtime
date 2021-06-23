@@ -149,7 +149,7 @@ struct OutOfMemoryTests : public ::testing::Test {
 
 TEST_F(OutOfMemoryTests,
        givenCallToDeviceAllocAndFailureToAllocateThenOutOfDeviceMemoryIsReturned) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize - 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize - 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -225,7 +225,7 @@ struct MemoryRelaxedSizeTests : public ::testing::Test {
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToHostAllocWithAllowedSizeAndWithoutRelaxedFlagThenAllocationIsMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize - 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize - 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -241,7 +241,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToHostAllocWithLargerThanAllowedSizeAndWithoutRelaxedFlagThenAllocationIsNotMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -254,7 +254,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToHostAllocWithLargerThanAllowedSizeAndRelaxedFlagThenAllocationIsMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -275,7 +275,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToHostAllocWithLargerThanAllowedSizeAndRelaxedFlagWithIncorrectFlagThenAllocationIsNotMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -293,7 +293,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToHostAllocWithLargerThanAllowedSizeAndRelaxedDescriptorWithWrongStypeThenUnsupportedSizeIsReturned) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -311,7 +311,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithAllowedSizeAndWithoutRelaxedFlagThenAllocationIsMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize - 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize - 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -328,7 +328,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithLargerThanAllowedSizeAndWithoutRelaxedFlagThenAllocationIsNotMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -342,7 +342,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithLargerThanAllowedSizeAndRelaxedFlagThenAllocationIsMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -383,7 +383,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithLargerThanAllowedSizeAndRelaxedFlagWithIncorrectFlagThenAllocationIsNotMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -402,7 +402,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithLargerThanAllowedSizeAndRelaxedDescriptorWithWrongStypeThenUnsupportedSizeIsReturned) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -421,7 +421,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToSharedAllocWithAllowedSizeAndWithoutRelaxedFlagThenAllocationIsMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize - 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize - 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -440,7 +440,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToSharedAllocWithLargerThanAllowedSizeAndWithoutRelaxedFlagThenAllocationIsNotMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -456,7 +456,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToSharedAllocWithLargerThanAllowedSizeAndRelaxedFlagThenAllocationIsMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -501,7 +501,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToSharedAllocWithLargerThanAllowedSizeAndRelaxedFlagWithIncorrectFlagThenAllocationIsNotMade) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -522,7 +522,7 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToSharedAllocWithLargerThanAllowedSizeAndRelaxedDescriptorWithWrongStypeThenUnsupportedSizeIsReturned) {
-    size_t size = device->getNEODevice()->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -1833,7 +1833,7 @@ TEST_F(MemoryFailedOpenIpcHandleTest,
 using DeviceMemorySizeTest = Test<DeviceFixture>;
 
 TEST_F(DeviceMemorySizeTest, givenSizeGreaterThanLimitThenDeviceAllocationFails) {
-    size_t size = neoDevice->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t size = neoDevice->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 

@@ -180,7 +180,9 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_LE(sharedCaps.maxReadImageArgs * sizeof(cl_mem), sharedCaps.maxParameterSize);
     EXPECT_LE(sharedCaps.maxWriteImageArgs * sizeof(cl_mem), sharedCaps.maxParameterSize);
     EXPECT_LE(128u * MB, sharedCaps.maxMemAllocSize);
-    EXPECT_GE((4 * GB) - (8 * KB), sharedCaps.maxMemAllocSize);
+    if (!sharedCaps.sharedSystemAllocationsSupport) {
+        EXPECT_GE((4 * GB) - (8 * KB), sharedCaps.maxMemAllocSize);
+    }
     EXPECT_LE(65536u, sharedCaps.imageMaxBufferSize);
 
     EXPECT_GT(sharedCaps.maxWorkGroupSize, 0u);
@@ -498,7 +500,9 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     EXPECT_EQ(sharedCaps.globalMemSize, expectedSize);
 }
 
-TEST_F(DeviceGetCapsTest, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
+TEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsNotSupportedWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
@@ -508,7 +512,20 @@ TEST_F(DeviceGetCapsTest, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjus
 
     uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
     expectedSize = std::min(expectedSize, hwCaps.maxMemAllocSize);
+    EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
+}
 
+TEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsSupportedWhenCalculatingMaxAllocSizeThenAdjustToGlobalMemSize) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    const auto &caps = device->getDeviceInfo();
+
+    HardwareCapabilities hwCaps = {0};
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    hwHelper.setupHardwareCapabilities(&hwCaps, *defaultHwInfo);
+
+    uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
 }
 
