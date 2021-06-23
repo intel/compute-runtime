@@ -592,7 +592,6 @@ TEST_F(PerformanceCountersMetricsLibraryTest, WhenGettingHwPerfCounterThenValidP
     ASSERT_NE(nullptr, perfCounter);
 
     ASSERT_EQ(0ULL, perfCounter->tagForCpuAccess->report[0]);
-    EXPECT_TRUE(perfCounter->isCompleted());
 
     auto perfCounter2 = event->getHwPerfCounterNode();
     ASSERT_EQ(perfCounter, perfCounter2);

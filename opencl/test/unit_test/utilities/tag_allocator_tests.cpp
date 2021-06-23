@@ -34,13 +34,10 @@ struct TagAllocatorTest : public Test<MemoryAllocatorFixture> {
                 assignDataToAllTimestamps(i, zeros);
             }
             setPacketsUsed(packetsUsed);
-
-            EXPECT_TRUE(isCompleted());
         }
 
         void setToNonReadyState() {
             packets[0].contextEnd = 1;
-            EXPECT_FALSE(isCompleted());
         }
     };
 
@@ -99,6 +96,7 @@ class MockTagAllocator : public TagAllocator<TagType> {
     using BaseClass::gfxAllocations;
     using BaseClass::populateFreeTags;
     using BaseClass::releaseDeferredTags;
+    using BaseClass::returnTagToDeferredPool;
     using BaseClass::rootDeviceIndices;
     using BaseClass::TagAllocator;
     using BaseClass::usedTags;
@@ -386,15 +384,15 @@ TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhen
     EXPECT_EQ(nullptr, tagAllocator.getUsedTagsHead());
 }
 
-TEST_F(TagAllocatorTest, givenNotReadyTagWhenReturnedThenMoveToDeferredList) {
+TEST_F(TagAllocatorTest, givenNotReadyTagWhenReturnedThenMoveToFreeList) {
     MockTagAllocator<MockTimestampPackets32> tagAllocator(memoryManager, 1, 1, deviceBitfield);
     auto node = static_cast<TagNode<MockTimestampPackets32> *>(tagAllocator.getTag());
 
     node->tagForCpuAccess->setToNonReadyState();
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
     tagAllocator.returnTag(node);
-    EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
-    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
+    EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
+    EXPECT_FALSE(tagAllocator.freeTags.peekIsEmpty());
 }
 
 TEST_F(TagAllocatorTest, givenTagNodeWhenCompletionCheckIsDisabledThenStatusIsMarkedAsNotReady) {
@@ -408,6 +406,11 @@ TEST_F(TagAllocatorTest, givenTagNodeWhenCompletionCheckIsDisabledThenStatusIsMa
     EXPECT_FALSE(node->canBeReleased());
 
     tagAllocator.returnTag(node);
+    EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
+    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
+
+    tagAllocator.releaseDeferredTags();
+
     EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
     EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
 }
@@ -443,38 +446,11 @@ TEST_F(TagAllocatorTest, givenEmptyFreeListWhenAskingForNewTagThenTryToReleaseDe
     MockTagAllocator<MockTimestampPackets32> tagAllocator(memoryManager, 1, 1, deviceBitfield);
     auto node = static_cast<TagNode<MockTimestampPackets32> *>(tagAllocator.getTag());
 
-    node->tagForCpuAccess->setToNonReadyState();
-    tagAllocator.returnTag(node);
-    node->tagForCpuAccess->setToNonReadyState();
+    tagAllocator.returnTagToDeferredPool(node);
     EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
     node = static_cast<TagNode<MockTimestampPackets32> *>(tagAllocator.getTag());
     EXPECT_NE(nullptr, node);
     EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty()); // empty again - new pool wasnt allocated
-}
-
-TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTagsToFreePool) {
-    MockTagAllocator<MockTimestampPackets32> tagAllocator(memoryManager, 2, 1, deviceBitfield); // pool with 2 tags
-    auto node1 = static_cast<TagNode<MockTimestampPackets32> *>(tagAllocator.getTag());
-    auto node2 = static_cast<TagNode<MockTimestampPackets32> *>(tagAllocator.getTag());
-
-    node1->tagForCpuAccess->setToNonReadyState();
-    node2->tagForCpuAccess->setToNonReadyState();
-    tagAllocator.returnTag(node1);
-    tagAllocator.returnTag(node2);
-
-    tagAllocator.releaseDeferredTags();
-    EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
-    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
-
-    node1->tagForCpuAccess->setTagToReadyState();
-    tagAllocator.releaseDeferredTags();
-    EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
-    EXPECT_FALSE(tagAllocator.freeTags.peekIsEmpty());
-
-    node2->tagForCpuAccess->setTagToReadyState();
-    tagAllocator.releaseDeferredTags();
-    EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
-    EXPECT_FALSE(tagAllocator.freeTags.peekIsEmpty());
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {
@@ -571,7 +547,6 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_ANY_THROW(perfCounterNode.getContextStartOffset());
         EXPECT_ANY_THROW(perfCounterNode.getContextEndOffset());
         EXPECT_ANY_THROW(perfCounterNode.getGlobalEndOffset());
-        EXPECT_ANY_THROW(perfCounterNode.getImplicitGpuDependenciesCountOffset());
         EXPECT_ANY_THROW(perfCounterNode.getContextStartValue(0));
         EXPECT_ANY_THROW(perfCounterNode.getGlobalStartValue(0));
         EXPECT_ANY_THROW(perfCounterNode.getContextEndValue(0));
@@ -580,10 +555,8 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_ANY_THROW(perfCounterNode.getGlobalEndRef());
         EXPECT_ANY_THROW(perfCounterNode.setPacketsUsed(0));
         EXPECT_ANY_THROW(perfCounterNode.getPacketsUsed());
-        EXPECT_EQ(0u, perfCounterNode.getImplicitGpuDependenciesCount());
         EXPECT_ANY_THROW(perfCounterNode.getSinglePacketSize());
         EXPECT_ANY_THROW(perfCounterNode.assignDataToAllTimestamps(0, nullptr));
-        EXPECT_TRUE(perfCounterNode.isCompleted());
     }
 
     {
@@ -593,13 +566,10 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
         EXPECT_ANY_THROW(hwTimestampNode.getContextStartOffset());
         EXPECT_ANY_THROW(hwTimestampNode.getContextEndOffset());
         EXPECT_ANY_THROW(hwTimestampNode.getGlobalEndOffset());
-        EXPECT_ANY_THROW(hwTimestampNode.getImplicitGpuDependenciesCountOffset());
         EXPECT_ANY_THROW(hwTimestampNode.setPacketsUsed(0));
         EXPECT_ANY_THROW(hwTimestampNode.getPacketsUsed());
-        EXPECT_EQ(0u, hwTimestampNode.getImplicitGpuDependenciesCount());
         EXPECT_ANY_THROW(hwTimestampNode.getSinglePacketSize());
         EXPECT_ANY_THROW(hwTimestampNode.assignDataToAllTimestamps(0, nullptr));
-        EXPECT_TRUE(hwTimestampNode.isCompleted());
         EXPECT_ANY_THROW(hwTimestampNode.getQueryHandleRef());
     }
 

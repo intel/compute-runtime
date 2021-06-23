@@ -137,13 +137,13 @@ bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
 template <typename Family>
 void CommandQueueHw<Family>::setupBlitAuxTranslation(MultiDispatchInfo &multiDispatchInfo) {
     multiDispatchInfo.begin()->dispatchInitCommands.registerMethod(
-        TimestampPacketHelper::programSemaphoreWithImplicitDependencyForAuxTranslation<Family, AuxTranslationDirection::AuxToNonAux>);
+        TimestampPacketHelper::programSemaphoreForAuxTranslation<Family, AuxTranslationDirection::AuxToNonAux>);
 
     multiDispatchInfo.begin()->dispatchInitCommands.registerCommandsSizeEstimationMethod(
         TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family, AuxTranslationDirection::AuxToNonAux>);
 
     multiDispatchInfo.rbegin()->dispatchEpilogueCommands.registerMethod(
-        TimestampPacketHelper::programSemaphoreWithImplicitDependencyForAuxTranslation<Family, AuxTranslationDirection::NonAuxToAux>);
+        TimestampPacketHelper::programSemaphoreForAuxTranslation<Family, AuxTranslationDirection::NonAuxToAux>);
 
     multiDispatchInfo.rbegin()->dispatchEpilogueCommands.registerCommandsSizeEstimationMethod(
         TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family, AuxTranslationDirection::NonAuxToAux>);
