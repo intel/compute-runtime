@@ -38,6 +38,7 @@ class HwInfoConfig {
     virtual uint64_t getSharedSystemMemCapabilities() = 0;
     virtual void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) = 0;
     virtual uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) = 0;
+    virtual bool isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const = 0;
     uint32_t threadsPerEu;
 };
 
@@ -59,6 +60,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint64_t getSharedSystemMemCapabilities() override;
     void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) override;
     uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) override;
+    bool isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

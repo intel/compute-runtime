@@ -1998,6 +1998,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
     args.hdcPipelineFlush = true;
     args.textureCacheInvalidationEnable = true;
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+    auto &hwInfo = device->getHwInfo();
 
     STATE_BASE_ADDRESS sba;
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer, sba);
@@ -2012,6 +2013,8 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
 
         device->getL0Debugger()->captureStateBaseAddress(commandContainer, sbaAddresses);
     }
+
+    NEO::EncodeStateBaseAddress<GfxFamily>::addStateBaseAddressIfRequired(commandContainer, sba, hwInfo);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

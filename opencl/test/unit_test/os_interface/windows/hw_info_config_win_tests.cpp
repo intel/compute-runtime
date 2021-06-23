@@ -67,6 +67,11 @@ void HwInfoConfigHw<IGFX_UNKNOWN>::convertTimestampsFromOaToCsDomain(uint64_t &t
 template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo){};
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
     this->executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     this->rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
@@ -115,6 +120,11 @@ TEST_F(HwInfoConfigTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabl
     ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
     ASSERT_EQ(0, ret);
     EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled);
+}
+
+HWTEST_F(HwInfoConfigTestWindows, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned) {
+    bool ret = hwConfig.isAdditionalStateBaseAddressWARequired(outHwInfo);
+    EXPECT_FALSE(ret);
 }
 
 HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoThenSetCoherencySupportCorrectly) {

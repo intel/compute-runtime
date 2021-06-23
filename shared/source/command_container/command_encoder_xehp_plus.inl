@@ -485,6 +485,9 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
 }
 
 template <typename Family>
+void EncodeStateBaseAddress<Family>::addStateBaseAddressIfRequired(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, const HardwareInfo &hwInfo) {}
+
+template <typename Family>
 void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;

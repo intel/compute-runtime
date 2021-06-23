@@ -139,3 +139,10 @@ HWTEST_F(HwInfoConfigTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsC
 
     EXPECT_EQ(0, memcmp(&initialState, &state, sizeof(SAMPLER_STATE)));
 }
+
+HWTEST_F(HwInfoConfigTest, whenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned) {
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    bool ret = hwInfoConfig->isAdditionalStateBaseAddressWARequired(pInHwInfo);
+
+    EXPECT_FALSE(ret);
+}

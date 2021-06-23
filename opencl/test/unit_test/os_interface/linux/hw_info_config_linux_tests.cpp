@@ -88,6 +88,12 @@ void HwInfoConfigHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler, const Hardw
 
 template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData){};
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO
 
 struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
@@ -537,6 +543,11 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenFailingGttSizeIoctlWhenInitializingHwInf
     EXPECT_TRUE(outHwInfo.capabilityTable.ftrSvm);
     EXPECT_NE(0u, outHwInfo.capabilityTable.gpuAddressSpace);
     EXPECT_EQ(pInHwInfo.capabilityTable.gpuAddressSpace, outHwInfo.capabilityTable.gpuAddressSpace);
+}
+
+HWTEST_F(HwInfoConfigTestLinuxDummy, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned) {
+    bool ret = hwConfig.isAdditionalStateBaseAddressWARequired(outHwInfo);
+    EXPECT_FALSE(ret);
 }
 
 using HwConfigLinux = ::testing::Test;

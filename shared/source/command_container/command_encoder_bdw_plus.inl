@@ -387,6 +387,9 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
 }
 
 template <typename Family>
+void EncodeStateBaseAddress<Family>::addStateBaseAddressIfRequired(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, const HardwareInfo &hwInfo) {}
+
+template <typename Family>
 void EncodeL3State<Family>::encode(CommandContainer &container, bool enableSLM) {
     auto offset = L3CNTLRegisterOffset<Family>::registerOffset;
     auto data = PreambleHelper<Family>::getL3Config(container.getDevice()->getHardwareInfo(), enableSLM);
