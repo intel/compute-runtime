@@ -2117,6 +2117,10 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainVersionSectionsThenE
     auto zeInfo = ConstStringRef("kernels:\n");
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
 
+    auto version = NEO::zeInfoDecoderVersion;
+    auto expectedWarning = "DeviceBinaryFormat::Zebin::.ze_info : No version info provided (i.e. no version entry in global scope of DeviceBinaryFormat::Zebin::.ze_info) - will use decoder's default : '" +
+                           std::to_string(version.major) + "." + std::to_string(version.minor) + "'\n";
+
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
     singleBinary.deviceBinary = zebin.storage;
@@ -2124,7 +2128,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainVersionSectionsThenE
     std::string decodeWarnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : No version info provided (i.e. no version entry in global scope of DeviceBinaryFormat::Zebin::.ze_info) - will use decoder's default : '1.0'\n", decodeWarnings.c_str());
+    EXPECT_STREQ(expectedWarning.c_str(), decodeWarnings.c_str());
     EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
 }
 
@@ -2149,6 +2153,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMinorVersionIsNewerThenEmitsWarnin
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
     auto version = NEO::zeInfoDecoderVersion;
+    std::string expectedWarning = "DeviceBinaryFormat::Zebin::.ze_info : Minor version : " + std::to_string(version.minor + 1) + " is newer than available in decoder : " + std::to_string(version.minor) + " - some features may be skipped\n";
     version.minor += 1;
     auto zeInfo = std::string("version:\'") + toString(version) + "\'\nkernels:\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
@@ -2160,7 +2165,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMinorVersionIsNewerThenEmitsWarnin
     std::string decodeWarnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
     EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Minor version : 1 is newer than available in decoder : 0 - some features may be skipped\n", decodeWarnings.c_str());
+    EXPECT_STREQ(expectedWarning.c_str(), decodeWarnings.c_str());
     EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
 }
 
