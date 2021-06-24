@@ -88,6 +88,8 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) = 0;
     virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) = 0;
 
+    static void getAttentionBitmaskForThread(uint32_t slice, uint32_t subslice, uint32_t eu, uint32_t thread, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize);
+
   protected:
     static bool isAnyTrackedAddressChanged(SbaAddresses sba) {
         return sba.GeneralStateBaseAddress != 0 ||

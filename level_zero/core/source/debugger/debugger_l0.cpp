@@ -106,4 +106,65 @@ void DebuggerL0::captureStateBaseAddress(NEO::CommandContainer &container, SbaAd
     }
 }
 
+void DebuggerL0::getAttentionBitmaskForThread(uint32_t slice, uint32_t subslice, uint32_t eu, uint32_t thread, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) {
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
+    const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
+
+    bitmaskSize = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice * bytesPerEu;
+    bitmask = std::make_unique<uint8_t[]>(bitmaskSize);
+
+    int threadValue = 0xff;
+    if (numThreadsPerEu == 7) {
+        threadValue = 0x7f;
+    }
+
+    if (slice == UINT32_MAX && subslice == UINT32_MAX && eu == UINT32_MAX && thread == UINT32_MAX) {
+        memset(bitmask.get(), threadValue, bitmaskSize);
+        return;
+    }
+
+    for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
+        if (slice != UINT32_MAX) {
+            sliceID = slice;
+        }
+        uint8_t *sliceData = ptrOffset(bitmask.get(), threadsSizePerSlice * sliceID);
+
+        for (uint32_t subsliceID = 0; subsliceID < numSubslicesPerSlice; subsliceID++) {
+            if (subslice != UINT32_MAX) {
+                subsliceID = subslice;
+            }
+            uint8_t *subsliceData = ptrOffset(sliceData, numEuPerSubslice * bytesPerEu * subsliceID);
+
+            for (uint32_t euID = 0; euID < numEuPerSubslice; euID++) {
+                if (eu != UINT32_MAX) {
+                    euID = eu;
+                }
+                uint8_t *euData = ptrOffset(subsliceData, bytesPerEu * euID);
+
+                if (thread == UINT32_MAX) {
+                    *euData = threadValue;
+                } else {
+                    UNRECOVERABLE_IF(thread > 7);
+                    *euData = (1 << thread);
+                }
+
+                UNRECOVERABLE_IF(numThreadsPerEu > 8);
+
+                if (eu != UINT32_MAX) {
+                    break;
+                }
+            }
+            if (subslice != UINT32_MAX) {
+                break;
+            }
+        }
+        if (slice != UINT32_MAX) {
+            break;
+        }
+    }
+}
+
 } // namespace L0

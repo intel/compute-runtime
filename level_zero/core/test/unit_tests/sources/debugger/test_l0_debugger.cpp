@@ -21,6 +21,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
+#include <bitset>
+
 namespace L0 {
 namespace ult {
 
@@ -776,5 +778,213 @@ TEST(Debugger, givenNonLegacyDebuggerWhenInitializingDeviceCapsThenUnrecoverable
 
     EXPECT_THROW(NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u), std::exception);
 }
+
+static void printAttentionBitmask(uint8_t *expected, uint8_t *actual, uint32_t maxSlices, uint32_t maxSubSlicesPerSlice, uint32_t maxEuPerSubslice, uint32_t threadsPerEu, bool printBitmask = false) {
+    auto bytesPerThread = threadsPerEu > 8 ? 2u : 1u;
+
+    auto bytesPerSlice = maxSubSlicesPerSlice * maxEuPerSubslice * bytesPerThread;
+    auto bytesPerSubSlice = maxEuPerSubslice * bytesPerThread;
+
+    for (uint32_t slice = 0; slice < maxSlices; slice++) {
+        for (uint32_t subslice = 0; subslice < maxSubSlicesPerSlice; subslice++) {
+            for (uint32_t eu = 0; eu < maxEuPerSubslice; eu++) {
+                for (uint32_t byte = 0; byte < bytesPerThread; byte++) {
+                    if (printBitmask) {
+                        std::bitset<8> bits(actual[slice * bytesPerSlice + subslice * bytesPerSubSlice + eu * bytesPerThread + byte]);
+                        std::cout << " slice = " << slice << " subslice = " << subslice << " eu = " << eu << " threads bitmask = " << bits << "\n";
+                    }
+
+                    if (expected[slice * bytesPerSlice + subslice * bytesPerSubSlice + eu * bytesPerThread + byte] !=
+                        actual[slice * bytesPerSlice + subslice * bytesPerSubSlice + eu * bytesPerThread + byte]) {
+                        std::bitset<8> bits(actual[slice * bytesPerSlice + subslice * bytesPerSubSlice + eu * bytesPerThread + byte]);
+                        std::bitset<8> bitsExpected(expected[slice * bytesPerSlice + subslice * bytesPerSubSlice + eu * bytesPerThread + byte]);
+                        ASSERT_FALSE(true) << " got: slice = " << slice << " subslice = " << subslice << " eu = " << eu << " threads bitmask = " << bits << "\n"
+                                           << " expected: slice = " << slice << " subslice = " << subslice << " eu = " << eu << " threads bitmask = " << bitsExpected << "\n";
+                        ;
+                    }
+                }
+            }
+        }
+    }
+
+    if (printBitmask) {
+        std::cout << "\n\n";
+    }
+}
+TEST(DebuggerL0, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrectBitmaskIsReturned) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t size = 0;
+
+    uint32_t subslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    uint32_t subslice = subslicesPerSlice > 1 ? subslicesPerSlice - 1 : 0;
+
+    const auto threadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const auto bytesPerEu = threadsPerEu <= 8 ? 1 : 2;
+
+    const auto threadsSizePerSubSlice = hwInfo.gtSystemInfo.MaxEuPerSubSlice * bytesPerEu;
+    const auto threadsSizePerSlice = threadsSizePerSubSlice * subslicesPerSlice;
+
+    DebuggerL0::getAttentionBitmaskForThread(0, 0, 0, 6, hwInfo, bitmask, size);
+
+    auto expectedBitmask = std::make_unique<uint8_t[]>(size);
+    uint8_t *data = nullptr;
+    memset(expectedBitmask.get(), 0, size);
+
+    auto returnedBitmask = bitmask.get();
+    EXPECT_EQ(uint8_t(1u << 6), returnedBitmask[0]);
+
+    DebuggerL0::getAttentionBitmaskForThread(0, 0, 1, 3, hwInfo, bitmask, size);
+    returnedBitmask = bitmask.get();
+    returnedBitmask += bytesPerEu;
+    EXPECT_EQ(uint8_t(1u << 3), returnedBitmask[0]);
+
+    DebuggerL0::getAttentionBitmaskForThread(0, subslice, 3, 6, hwInfo, bitmask, size);
+
+    data = expectedBitmask.get();
+    memset(expectedBitmask.get(), 0, size);
+
+    data = ptrOffset(data, subslice * threadsSizePerSubSlice);
+    data = ptrOffset(data, 3 * bytesPerEu);
+    data[0] = 1 << 6;
+
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+
+    DebuggerL0::getAttentionBitmaskForThread(hwInfo.gtSystemInfo.MaxSlicesSupported - 1, subslice, 3, 6, hwInfo, bitmask, size);
+    data = expectedBitmask.get();
+    memset(expectedBitmask.get(), 0, size);
+
+    data = ptrOffset(data, (hwInfo.gtSystemInfo.MaxSlicesSupported - 1) * threadsSizePerSlice);
+    data = ptrOffset(data, subslice * threadsSizePerSubSlice);
+    data = ptrOffset(data, 3 * bytesPerEu);
+    data[0] = 1 << 6;
+
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+
+    DebuggerL0::getAttentionBitmaskForThread(hwInfo.gtSystemInfo.MaxSlicesSupported - 1, subslice, 5, 0, hwInfo, bitmask, size);
+    data = expectedBitmask.get();
+    memset(expectedBitmask.get(), 0, size);
+
+    data = ptrOffset(data, (hwInfo.gtSystemInfo.MaxSlicesSupported - 1) * threadsSizePerSlice);
+    data = ptrOffset(data, subslice * threadsSizePerSubSlice);
+    data = ptrOffset(data, 5 * bytesPerEu);
+    data[0] = 1;
+
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+}
+
+TEST(DebuggerL0, givenAllSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrectBitmaskIsReturned) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t size = 0;
+
+    uint32_t subslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    uint32_t subsliceID = subslicesPerSlice > 2 ? subslicesPerSlice - 2 : 0;
+
+    const auto threadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const auto bytesPerEu = threadsPerEu <= 8 ? 1u : 2u;
+
+    const auto threadsSizePerSubSlice = hwInfo.gtSystemInfo.MaxEuPerSubSlice * bytesPerEu;
+    const auto threadsSizePerSlice = threadsSizePerSubSlice * subslicesPerSlice;
+
+    const auto threadID = threadsPerEu - 1;
+
+    // ALL slices
+    DebuggerL0::getAttentionBitmaskForThread(UINT32_MAX, subsliceID, 0, threadID, hwInfo, bitmask, size);
+    auto expectedBitmask = std::make_unique<uint8_t[]>(size);
+    uint8_t *data = nullptr;
+
+    memset(expectedBitmask.get(), 0, size);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.MaxSlicesSupported; i++) {
+        data = ptrOffset(expectedBitmask.get(), i * threadsSizePerSlice);
+        data = ptrOffset(data, subsliceID * threadsSizePerSubSlice);
+        data[0] = 1 << threadID;
+    }
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+
+    // ALL Subslices
+    DebuggerL0::getAttentionBitmaskForThread(hwInfo.gtSystemInfo.MaxSlicesSupported - 1, UINT32_MAX, 0, threadID, hwInfo, bitmask, size);
+    memset(expectedBitmask.get(), 0, size);
+
+    data = ptrOffset(expectedBitmask.get(), (hwInfo.gtSystemInfo.MaxSlicesSupported - 1) * threadsSizePerSlice);
+
+    for (uint32_t i = 0; i < subslicesPerSlice; i++) {
+        data[i * threadsSizePerSubSlice] = 1 << threadID;
+    }
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+
+    // ALL EUs
+    DebuggerL0::getAttentionBitmaskForThread(hwInfo.gtSystemInfo.MaxSlicesSupported - 1, subsliceID, UINT32_MAX, threadID, hwInfo, bitmask, size);
+    memset(expectedBitmask.get(), 0, size);
+
+    data = ptrOffset(expectedBitmask.get(), (hwInfo.gtSystemInfo.MaxSlicesSupported - 1) * threadsSizePerSlice);
+    data = ptrOffset(data, subsliceID * threadsSizePerSubSlice);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.MaxEuPerSubSlice; i++) {
+        data[i * bytesPerEu] = 1 << threadID;
+    }
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+
+    // ALL threads
+    DebuggerL0::getAttentionBitmaskForThread(hwInfo.gtSystemInfo.MaxSlicesSupported - 1, subsliceID, 1, UINT32_MAX, hwInfo, bitmask, size);
+    memset(expectedBitmask.get(), 0, size);
+
+    data = ptrOffset(expectedBitmask.get(), (hwInfo.gtSystemInfo.MaxSlicesSupported - 1) * threadsSizePerSlice);
+    data = ptrOffset(data, subsliceID * threadsSizePerSubSlice);
+    data = ptrOffset(data, 1 * bytesPerEu);
+
+    for (uint32_t byte = 0; byte < bytesPerEu; byte++) {
+        for (uint32_t i = 0; i < std::min(threadsPerEu, 8u); i++) {
+            data[byte] |= 1 << i;
+        }
+    }
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+
+    // ALL slices, All subslices, ALL EUs, ALL threads
+    DebuggerL0::getAttentionBitmaskForThread(UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX, hwInfo, bitmask, size);
+
+    auto expectedThreads = threadsPerEu == 7 ? 0x7f : 0xff;
+    memset(expectedBitmask.get(), expectedThreads, size);
+    EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+
+    // ALL slices, All subslices
+    DebuggerL0::getAttentionBitmaskForThread(UINT32_MAX, UINT32_MAX, 0, 0, hwInfo, bitmask, size);
+    memset(expectedBitmask.get(), 0, size);
+    data = expectedBitmask.get();
+
+    for (uint32_t slice = 0; slice < hwInfo.gtSystemInfo.MaxSlicesSupported; slice++) {
+        for (uint32_t subslice = 0; subslice < subslicesPerSlice; subslice++) {
+            data[slice * threadsSizePerSlice + subslice * threadsSizePerSubSlice] = 1;
+        }
+    }
+
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+
+    // ALL slices, All subslices, ALL EUs
+    DebuggerL0::getAttentionBitmaskForThread(UINT32_MAX, UINT32_MAX, UINT32_MAX, 0, hwInfo, bitmask, size);
+    memset(expectedBitmask.get(), 0, size);
+    data = expectedBitmask.get();
+
+    for (uint32_t slice = 0; slice < hwInfo.gtSystemInfo.MaxSlicesSupported; slice++) {
+        for (uint32_t subslice = 0; subslice < subslicesPerSlice; subslice++) {
+            for (uint32_t eu = 0; eu < hwInfo.gtSystemInfo.MaxEuPerSubSlice; eu++) {
+                data[slice * threadsSizePerSlice + subslice * threadsSizePerSubSlice + eu * bytesPerEu] = 1;
+            }
+        }
+    }
+
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
+}
+
 } // namespace ult
 } // namespace L0
