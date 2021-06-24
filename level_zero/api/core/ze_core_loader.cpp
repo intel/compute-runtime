@@ -584,3 +584,19 @@ zeGetKernelExpProcAddrTable(
     driver_ddiTable.core_ddiTable.KernelExp = *pDdiTable;
     return result;
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeGetImageExpProcAddrTable(
+    ze_api_version_t version,
+    ze_image_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    pDdiTable->pfnGetMemoryPropertiesExp = zeImageGetMemoryPropertiesExp;
+    driver_ddiTable.core_ddiTable.ImageExp = *pDdiTable;
+    return result;
+}

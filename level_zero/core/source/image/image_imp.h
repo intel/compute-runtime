@@ -25,6 +25,15 @@ struct ImageImp : public Image {
     ze_image_desc_t getImageDesc() override {
         return imageFormatDesc;
     }
+
+    ze_result_t getMemoryProperties(ze_image_memory_properties_exp_t *pMemoryProperties) override {
+        pMemoryProperties->rowPitch = imgInfo.rowPitch;
+        pMemoryProperties->slicePitch = imgInfo.slicePitch;
+        pMemoryProperties->size = imgInfo.surfaceFormat->ImageElementSizeInBytes;
+
+        return ZE_RESULT_SUCCESS;
+    }
+
     static NEO::ImageType convertType(const ze_image_type_t type) {
         switch (type) {
         case ZE_IMAGE_TYPE_2D:

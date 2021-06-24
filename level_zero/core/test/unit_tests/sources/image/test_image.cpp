@@ -619,5 +619,42 @@ TEST(ImageFormatDescHelperTest, givenSupportedSwizzlesThenProperClEnumIsReturned
     EXPECT_EQ(getClChannelOrder(format), static_cast<cl_channel_order>(CL_BGRA));
 }
 
+using ImageGetMemoryProperties = Test<DeviceFixture>;
+
+HWTEST2_F(ImageGetMemoryProperties, givenImageMemoryPropertiesExpStructureWhenGetMemroyPropertiesThenProperDataAreSet, ImageSupport) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 1u;
+    zeDesc.width = 1u;
+    zeDesc.miplevels = 1u;
+    zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
+    zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_32,
+                     ZE_IMAGE_FORMAT_TYPE_UINT,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R,
+                     ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B,
+                     ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+    Image *image_ptr;
+    auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    std::unique_ptr<L0::Image> image(image_ptr);
+
+    ASSERT_NE(image, nullptr);
+
+    ze_image_memory_properties_exp_t imageMemoryPropertiesExp = {};
+
+    image->getMemoryProperties(&imageMemoryPropertiesExp);
+
+    auto imageInfo = image->getImageInfo();
+
+    EXPECT_EQ(imageInfo.surfaceFormat->ImageElementSizeInBytes, imageMemoryPropertiesExp.size);
+    EXPECT_EQ(imageInfo.slicePitch, imageMemoryPropertiesExp.slicePitch);
+    EXPECT_EQ(imageInfo.rowPitch, imageMemoryPropertiesExp.rowPitch);
+}
+
 } // namespace ult
 } // namespace L0
