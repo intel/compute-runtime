@@ -10,7 +10,6 @@
 #include <level_zero/zet_api.h>
 
 struct _zet_debug_session_handle_t {};
-typedef struct _zet_debug_regset_properties_exp_t zet_debug_regset_properties_exp_t;
 
 namespace L0 {
 
@@ -36,7 +35,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual ze_result_t acknowledgeEvent(const zet_debug_event_t *event) = 0;
     virtual ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
     virtual ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
-    virtual ze_result_t getRegisterSetPropertiesExp(uint32_t *pCount, zet_debug_regset_properties_exp_t *pRegisterSetPropertiesExp) = 0;
+    virtual ze_result_t getRegisterSetProperties(uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) = 0;
 
     Device *getConnectedDevice() { return connectedDevice; }
 

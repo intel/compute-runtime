@@ -56,7 +56,7 @@ struct DebugSessionMock : public L0::RootDebugSession {
     ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    ze_result_t getRegisterSetPropertiesExp(uint32_t *pCount, zet_debug_regset_properties_exp_t *pRegisterSetPropertiesExp) override {
+    ze_result_t getRegisterSetProperties(uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     void startAsyncThread() override {
