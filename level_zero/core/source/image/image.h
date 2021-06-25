@@ -16,10 +16,10 @@ struct _ze_image_handle_t {};
 
 namespace NEO {
 struct ImageInfo;
-}
+struct ImageDescriptor;
+} // namespace NEO
 
 namespace L0 {
-
 struct Image : _ze_image_handle_t {
     template <typename Type>
     struct Allocator {
@@ -30,6 +30,8 @@ struct Image : _ze_image_handle_t {
     virtual ze_result_t destroy() = 0;
 
     static ze_result_t create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc, Image **pImage);
+
+    virtual ze_result_t createView(Device *device, const ze_image_desc_t *desc, ze_image_handle_t *pImage) = 0;
 
     virtual NEO::GraphicsAllocation *getAllocation() = 0;
     virtual void copySurfaceStateToSSH(void *surfaceStateHeap,

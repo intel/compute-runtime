@@ -16,18 +16,26 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/compiler_support.h"
 
+#include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/image_hw.h"
 
 namespace L0 {
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
+    StructuresLookupTable lookupTable = {};
+    auto parseResult = prepareL0StructuresLookupTable(lookupTable, desc);
+
+    if (parseResult != ZE_RESULT_SUCCESS) {
+        return parseResult;
+    }
+
     bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
 
-    auto imageDescriptor = convertDescriptor(*desc);
-    imgInfo.imgDesc = imageDescriptor;
+    imgInfo.imgDesc = lookupTable.imageProperties.imageDescriptor;
 
     imgInfo.surfaceFormat = &ImageFormats::formats[desc->format.layout][desc->format.type];
     imageFormatDesc = *const_cast<ze_image_desc_t *>(desc);
@@ -57,34 +65,36 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     }
 
     imgInfo.linearStorage = surfaceType == RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D;
-    imgInfo.plane = GMM_NO_PLANE;
+    imgInfo.plane = isImageView ? static_cast<GMM_YUV_PLANE>(lookupTable.imageProperties.planeIndex + 1u) : GMM_NO_PLANE;
     imgInfo.useLocalMemory = false;
     imgInfo.preferRenderCompression = false;
 
-    if (desc->pNext) {
-        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
-        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC) {
-            return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
-        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD) {
-            const ze_external_memory_import_fd_t *externalMemoryImportDesc =
-                reinterpret_cast<const ze_external_memory_import_fd_t *>(extendedDesc);
-            if (externalMemoryImportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
+    if (!isImageView) {
+        if (lookupTable.isSharedHandle) {
+            if (!lookupTable.sharedHandleType.isSupportedHandle) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
-
-            NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::SHARED_IMAGE, device->getNEODevice()->getDeviceBitfield());
-
-            allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(externalMemoryImportDesc->fd, properties, false, false);
-            device->getNEODevice()->getMemoryManager()->closeSharedHandle(allocation);
+            if (lookupTable.sharedHandleType.isDMABUFHandle) {
+                NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::SHARED_IMAGE, device->getNEODevice()->getDeviceBitfield());
+                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(lookupTable.sharedHandleType.fd, properties, false, false);
+                device->getNEODevice()->getMemoryManager()->closeSharedHandle(allocation);
+            } else if (lookupTable.sharedHandleType.isNTHandle) {
+                auto verifyResult = device->getNEODevice()->getMemoryManager()->verifyHandle(NEO::toOsHandle(lookupTable.sharedHandleType.ntHnadle), device->getNEODevice()->getRootDeviceIndex(), true);
+                if (!verifyResult) {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                }
+                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromNTHandle(lookupTable.sharedHandleType.ntHnadle, device->getNEODevice()->getRootDeviceIndex());
+            }
         } else {
-            return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
-        }
-    } else {
-        NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::IMAGE, device->getNEODevice()->getDeviceBitfield());
+            NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::IMAGE, device->getNEODevice()->getDeviceBitfield());
 
-        allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+            allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        }
+        if (allocation == nullptr) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
     }
-    UNRECOVERABLE_IF(allocation == nullptr);
+
     auto gmm = this->allocation->getDefaultGmm();
     auto gmmHelper = static_cast<const NEO::RootDeviceEnvironment &>(device->getNEODevice()->getRootDeviceEnvironment()).getGmmHelper();
 
