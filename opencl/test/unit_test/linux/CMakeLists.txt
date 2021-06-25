@@ -31,6 +31,7 @@ add_executable(igdrcl_${target_name}
                ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/linux${BRANCH_DIR_SUFFIX}/drm_other_requests.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
+               ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.cpp
 )
 if(NEO__LIBVA_FOUND)
   target_sources(igdrcl_${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/va_tests.cpp)
