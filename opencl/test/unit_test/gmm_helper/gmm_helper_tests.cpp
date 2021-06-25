@@ -29,6 +29,7 @@
 #include "GL/glext.h"
 #include "gtest/gtest.h"
 #include "igfxfmid.h"
+#include "mock_gmm_client_context.h"
 
 using MockExecutionEnvironmentGmmFixtureTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;
 
@@ -830,8 +831,38 @@ TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceT
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
 }
 
-using GmmCompressionTest = GmmTests;
-TEST_F(GmmCompressionTest, givenEnabledAndNotPreferredE2ECWhenApplyingForBuffersThenDontSetValidFlags) {
+struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
+    void SetUp() override {
+        MockExecutionEnvironmentGmmFixtureTest::SetUp();
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        localPlatformDevice = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+        localPlatformDevice->capabilityTable.ftrRenderCompressedImages = true;
+        localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
+        localPlatformDevice->featureTable.ftrLocalMemory = true;
+
+        setupImgInfo();
+    }
+
+    void setupImgInfo() {
+        imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        imgDesc.image_width = 2;
+        imgDesc.image_height = 2;
+        imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+        imgInfo.preferRenderCompression = true;
+        imgInfo.useLocalMemory = true;
+
+        // allowed for render compression:
+        imgInfo.surfaceFormat = &SurfaceFormats::readWrite()[0].surfaceFormat;
+        imgInfo.plane = GMM_YUV_PLANE::GMM_NO_PLANE;
+    }
+
+    HardwareInfo *localPlatformDevice = nullptr;
+    cl_image_desc imgDesc = {};
+    ImageInfo imgInfo = {};
+};
+
+TEST_F(GmmCompressionTests, givenEnabledAndNotPreferredE2ECWhenApplyingForBuffersThenDontSetValidFlags) {
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, 0, false));
     gmm->resourceParams = {};
 
@@ -844,7 +875,7 @@ TEST_F(GmmCompressionTest, givenEnabledAndNotPreferredE2ECWhenApplyingForBuffers
     EXPECT_FALSE(gmm->isCompressionEnabled);
 }
 
-TEST_F(GmmCompressionTest, givenDisabledAndPreferredE2ECWhenApplyingForBuffersThenDontSetValidFlags) {
+TEST_F(GmmCompressionTests, givenDisabledAndPreferredE2ECWhenApplyingForBuffersThenDontSetValidFlags) {
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, 0, false));
     gmm->resourceParams = {};
 
@@ -855,6 +886,230 @@ TEST_F(GmmCompressionTest, givenDisabledAndPreferredE2ECWhenApplyingForBuffersTh
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
     EXPECT_FALSE(gmm->isCompressionEnabled);
+}
+
+HWTEST_F(GmmCompressionTests, givenAllValidInputsWhenQueryingThenSetAppropriateFlags) {
+    EXPECT_TRUE(localPlatformDevice->capabilityTable.ftrRenderCompressedImages);
+    EXPECT_TRUE(imgInfo.preferRenderCompression);
+    EXPECT_TRUE(imgInfo.surfaceFormat->GMMSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
+    EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
+
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
+    auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    EXPECT_GT(compressionFormat, 0u);
+
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.TiledY);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
+    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    EXPECT_TRUE(queryGmm->isCompressionEnabled);
+}
+
+TEST_F(GmmCompressionTests, givenAllValidInputsAndNoLocalMemoryRequestWhenQueryingThenRenderCompressionFlagsAreNotSet) {
+    EXPECT_TRUE(localPlatformDevice->capabilityTable.ftrRenderCompressedImages);
+    EXPECT_TRUE(imgInfo.preferRenderCompression);
+    EXPECT_TRUE(imgInfo.surfaceFormat->GMMSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
+    EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
+
+    imgInfo.useLocalMemory = false;
+
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
+    auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    EXPECT_GT(compressionFormat, 0u);
+
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+}
+
+TEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionWhenQueryingThenSetAppropriateFlags) {
+    localPlatformDevice->capabilityTable.ftrRenderCompressedImages = false;
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+}
+
+HWTEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionAndEnabledDebugFlagWhenQueryingThenSetAppropriateFlags) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+    localPlatformDevice->capabilityTable.ftrRenderCompressedImages = false;
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
+    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    EXPECT_TRUE(queryGmm->isCompressionEnabled);
+
+    DebugManager.flags.RenderCompressedImagesEnabled.set(0);
+    localPlatformDevice->capabilityTable.ftrRenderCompressedImages = true;
+    queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+}
+
+TEST_F(GmmCompressionTests, givenNotPreferredCompressionFlagWhenQueryingThenDisallow) {
+    imgInfo.preferRenderCompression = false;
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+
+    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+}
+
+TEST_F(GmmCompressionTests, givenNV12FormatWhenQueryingThenDisallow) {
+    imgInfo.surfaceFormat = &SurfaceFormats::planarYuv()[0].surfaceFormat;
+    EXPECT_TRUE(imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+
+    auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
+    auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    EXPECT_GT(compressionFormat, 0u);
+
+    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+}
+
+TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndFlatCcsFtrSetWhenQueryingThenDisallowOnGmmFlatCcsFormat) {
+    auto mockGmmClient = static_cast<MockGmmClientContext *>(getGmmClientContext());
+    imgInfo.surfaceFormat = &SurfaceFormats::readOnlyDepth()[2].surfaceFormat;
+
+    localPlatformDevice->featureTable.ftrFlatPhysCCS = true;
+    uint8_t validFormat = static_cast<uint8_t>(GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID);
+    uint8_t invalidFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
+
+    mockGmmClient->compressionFormatToReturn = invalidFormat;
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
+    auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    EXPECT_EQ(compressionFormat, invalidFormat);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+
+    mockGmmClient->compressionFormatToReturn = validFormat;
+    queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    EXPECT_TRUE(queryGmm->isCompressionEnabled);
+}
+
+TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndFlatCcsFtrNotSetWhenQueryingThenDisallowOnGmmE2CCompFormat) {
+    auto mockGmmClient = static_cast<MockGmmClientContext *>(getGmmClientContext());
+    imgInfo.surfaceFormat = &SurfaceFormats::readOnlyDepth()[2].surfaceFormat;
+
+    localPlatformDevice->featureTable.ftrFlatPhysCCS = false;
+    uint8_t invalidFormat = static_cast<uint8_t>(GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID);
+    uint8_t validFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
+    mockGmmClient->compressionFormatToReturn = invalidFormat;
+
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
+    auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    EXPECT_EQ(compressionFormat, invalidFormat);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+
+    mockGmmClient->compressionFormatToReturn = validFormat;
+    queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+    EXPECT_TRUE(queryGmm->isCompressionEnabled);
+}
+
+TEST_F(GmmCompressionTests, givenPlaneFormatWhenQueryingThenDisallow) {
+    GMM_YUV_PLANE gmmPlane[4] = {GMM_YUV_PLANE::GMM_NO_PLANE, GMM_YUV_PLANE::GMM_PLANE_U,
+                                 GMM_YUV_PLANE::GMM_PLANE_V, GMM_YUV_PLANE::GMM_PLANE_Y};
+
+    for (auto &plane : gmmPlane) {
+        imgInfo.plane = plane;
+        auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+
+        EXPECT_EQ(queryGmm->isCompressionEnabled,
+                  plane == GMM_YUV_PLANE::GMM_NO_PLANE);
+    }
+}
+
+TEST_F(GmmCompressionTests, givenPackedYuvFormatWhenQueryingThenDisallow) {
+    for (auto &surfaceFormat : SurfaceFormats::packedYuv()) {
+        imgInfo.surfaceFormat = &surfaceFormat.surfaceFormat;
+        auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
+
+        EXPECT_FALSE(queryGmm->isCompressionEnabled);
+    }
+}
+HWTEST_F(GmmCompressionTests, whenConstructedWithPreferRenderCompressionFlagThenApplyAuxFlags) {
+    Gmm gmm1(getGmmClientContext(), nullptr, 1, 0, false);
+    EXPECT_EQ(0u, gmm1.resourceParams.Flags.Info.RenderCompressed);
+
+    Gmm gmm2(getGmmClientContext(), nullptr, 1, 0, false, false, true, {});
+    EXPECT_EQ(0u, gmm2.resourceParams.Flags.Info.RenderCompressed);
+
+    Gmm gmm3(getGmmClientContext(), nullptr, 1, 0, false, true, true, {});
+    EXPECT_EQ(1u, gmm3.resourceParams.Flags.Info.RenderCompressed);
+}
+
+TEST_F(GmmCompressionTests, givenMediaCompressedImageApplyAuxFlagsForImageThenSetFlagsToCompressed) {
+    MockGmm gmm(getGmmClientContext(), nullptr, 1, 0, false);
+    gmm.resourceParams.Flags.Info.MediaCompressed = true;
+    gmm.resourceParams.Flags.Info.RenderCompressed = false;
+    gmm.setupImageResourceParams(imgInfo);
+
+    EXPECT_TRUE(gmm.isCompressionEnabled);
+}
+
+TEST_F(GmmCompressionTests, givenRenderCompressedImageApplyAuxFlagsForImageThenSetFlagsToCompressed) {
+    MockGmm gmm(getGmmClientContext(), nullptr, 1, 0, false);
+    gmm.resourceParams.Flags.Info.MediaCompressed = false;
+    gmm.resourceParams.Flags.Info.RenderCompressed = true;
+    gmm.setupImageResourceParams(imgInfo);
+
+    EXPECT_TRUE(gmm.isCompressionEnabled);
+}
+
+HWTEST_F(GmmCompressionTests, givenEnabledAndPreferredE2ECWhenApplyingForBuffersThenSetValidFlags) {
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), nullptr, 1, 0, false));
+    gmm->resourceParams = {};
+
+    localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    gmm->applyAuxFlagsForBuffer(true);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(1u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_TRUE(gmm->isCompressionEnabled);
+}
+
+HWTEST_F(GmmCompressionTests, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingForBuffersThenSetValidFlags) {
+    DebugManagerStateRestore restore;
+    Gmm gmm(getGmmClientContext(), nullptr, 1, 0, false);
+    gmm.resourceParams = {};
+
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = false;
+
+    gmm.applyAuxFlagsForBuffer(true);
+    EXPECT_EQ(1u, gmm.resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, gmm.resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(1u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_TRUE(gmm.isCompressionEnabled);
+
+    gmm.resourceParams = {};
+    gmm.isCompressionEnabled = false;
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    gmm.applyAuxFlagsForBuffer(true);
+    EXPECT_EQ(0u, gmm.resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.CCS);
+    EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_FALSE(gmm.isCompressionEnabled);
 }
 
 } // namespace NEO
