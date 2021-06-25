@@ -14,7 +14,7 @@ struct HwInfoConfigTestLinuxIcllp : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
-        drm->StoredDeviceID = IICL_LP_GT1_MOB_DEVICE_F0_ID;
+        drm->storedDeviceID = IICL_LP_GT1_MOB_DEVICE_F0_ID;
         drm->setGtType(GTTYPE_GT1);
     }
 };
@@ -23,10 +23,10 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenIcllpThenHwInfoIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.platform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.platform.usRevId);
-    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ((unsigned short)drm->storedDeviceID, outHwInfo.platform.usDeviceID);
+    EXPECT_EQ((unsigned short)drm->storedDeviceRevID, outHwInfo.platform.usRevId);
+    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
@@ -45,23 +45,23 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenIcllpThenHwInfoIsCorrect) {
 ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenInvalidDeviceIdWhenConfiguringHwInfoThenNegativeOneReturned) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
-    drm->StoredRetValForDeviceID = -1;
+    drm->storedRetValForDeviceID = -1;
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 
-    drm->StoredRetValForDeviceID = 0;
-    drm->StoredRetValForDeviceRevID = -1;
+    drm->storedRetValForDeviceID = 0;
+    drm->storedRetValForDeviceRevID = -1;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 
-    drm->StoredRetValForDeviceRevID = 0;
+    drm->storedRetValForDeviceRevID = 0;
     drm->failRetTopology = true;
-    drm->StoredRetValForEUVal = -1;
+    drm->storedRetValForEUVal = -1;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 
-    drm->StoredRetValForEUVal = 0;
-    drm->StoredRetValForSSVal = -1;
+    drm->storedRetValForEUVal = 0;
+    drm->storedRetValForSSVal = -1;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 }

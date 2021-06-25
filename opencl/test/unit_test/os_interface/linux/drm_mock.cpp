@@ -21,52 +21,52 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     if ((request == DRM_IOCTL_I915_GETPARAM) && (arg != nullptr)) {
         auto gp = static_cast<drm_i915_getparam_t *>(arg);
         if (gp->param == I915_PARAM_EU_TOTAL) {
-            if (0 == this->StoredRetValForEUVal) {
-                *gp->value = this->StoredEUVal;
+            if (0 == this->storedRetValForEUVal) {
+                *gp->value = this->storedEUVal;
             }
-            return this->StoredRetValForEUVal;
+            return this->storedRetValForEUVal;
         }
         if (gp->param == I915_PARAM_SUBSLICE_TOTAL) {
-            if (0 == this->StoredRetValForSSVal) {
-                *gp->value = this->StoredSSVal;
+            if (0 == this->storedRetValForSSVal) {
+                *gp->value = this->storedSSVal;
             }
-            return this->StoredRetValForSSVal;
+            return this->storedRetValForSSVal;
         }
         if (gp->param == I915_PARAM_CHIPSET_ID) {
-            if (0 == this->StoredRetValForDeviceID) {
-                *gp->value = this->StoredDeviceID;
+            if (0 == this->storedRetValForDeviceID) {
+                *gp->value = this->storedDeviceID;
             }
-            return this->StoredRetValForDeviceID;
+            return this->storedRetValForDeviceID;
         }
         if (gp->param == I915_PARAM_REVISION) {
-            if (0 == this->StoredRetValForDeviceRevID) {
-                *gp->value = this->StoredDeviceRevID;
+            if (0 == this->storedRetValForDeviceRevID) {
+                *gp->value = this->storedDeviceRevID;
             }
-            return this->StoredRetValForDeviceRevID;
+            return this->storedRetValForDeviceRevID;
         }
         if (gp->param == I915_PARAM_HAS_POOLED_EU) {
-            if (0 == this->StoredRetValForPooledEU) {
-                *gp->value = this->StoredHasPooledEU;
+            if (0 == this->storedRetValForPooledEU) {
+                *gp->value = this->storedHasPooledEU;
             }
-            return this->StoredRetValForPooledEU;
+            return this->storedRetValForPooledEU;
         }
         if (gp->param == I915_PARAM_MIN_EU_IN_POOL) {
-            if (0 == this->StoredRetValForMinEUinPool) {
-                *gp->value = this->StoredMinEUinPool;
+            if (0 == this->storedRetValForMinEUinPool) {
+                *gp->value = this->storedMinEUinPool;
             }
-            return this->StoredRetValForMinEUinPool;
+            return this->storedRetValForMinEUinPool;
         }
         if (gp->param == I915_PARAM_HAS_SCHEDULER) {
-            *gp->value = this->StoredPreemptionSupport;
-            return this->StoredRetVal;
+            *gp->value = this->storedPreemptionSupport;
+            return this->storedRetVal;
         }
         if (gp->param == I915_PARAM_HAS_EXEC_SOFTPIN) {
-            *gp->value = this->StoredExecSoftPin;
-            return this->StoredRetVal;
+            *gp->value = this->storedExecSoftPin;
+            return this->storedRetVal;
         }
         if (gp->param == I915_PARAM_CS_TIMESTAMP_FREQUENCY) {
             *gp->value = this->storedCsTimestampFrequency;
-            return this->StoredRetVal;
+            return this->storedRetVal;
         }
     }
 
@@ -74,35 +74,35 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         auto create = static_cast<drm_i915_gem_context_create_ext *>(arg);
         this->receivedCreateContextId = create->ctx_id;
         this->receivedContextCreateFlags = create->flags;
-        return this->StoredRetVal;
+        return this->storedRetVal;
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_DESTROY) && (arg != nullptr)) {
         auto destroy = static_cast<drm_i915_gem_context_destroy *>(arg);
         this->receivedDestroyContextId = destroy->ctx_id;
-        return this->StoredRetVal;
+        return this->storedRetVal;
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM) && (arg != nullptr)) {
         receivedContextParamRequestCount++;
         receivedContextParamRequest = *static_cast<drm_i915_gem_context_param *>(arg);
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PRIORITY) {
-            return this->StoredRetVal;
+            return this->storedRetVal;
         }
         if ((receivedContextParamRequest.param == I915_CONTEXT_PRIVATE_PARAM_BOOST) && (receivedContextParamRequest.value == 1)) {
-            return this->StoredRetVal;
+            return this->storedRetVal;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_SSEU) {
-            if (StoredRetValForSetSSEU == 0) {
+            if (storedRetValForSetSSEU == 0) {
                 storedParamSseu = (*static_cast<drm_i915_gem_context_param_sseu *>(reinterpret_cast<void *>(receivedContextParamRequest.value))).slice_mask;
             }
-            return this->StoredRetValForSetSSEU;
+            return this->storedRetValForSetSSEU;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PERSISTENCE) {
-            return this->StoredRetValForPersistant;
+            return this->storedRetValForPersistant;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_VM) {
-            return this->StoredRetVal;
+            return this->storedRetVal;
         }
     }
 
@@ -111,21 +111,21 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         receivedContextParamRequest = *static_cast<drm_i915_gem_context_param *>(arg);
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_GTT_SIZE) {
             static_cast<drm_i915_gem_context_param *>(arg)->value = this->storedGTTSize;
-            return this->StoredRetValForGetGttSize;
+            return this->storedRetValForGetGttSize;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_SSEU) {
-            if (StoredRetValForGetSSEU == 0) {
+            if (storedRetValForGetSSEU == 0) {
                 (*static_cast<drm_i915_gem_context_param_sseu *>(reinterpret_cast<void *>(receivedContextParamRequest.value))).slice_mask = storedParamSseu;
             }
-            return this->StoredRetValForGetSSEU;
+            return this->storedRetValForGetSSEU;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PERSISTENCE) {
-            static_cast<drm_i915_gem_context_param *>(arg)->value = this->StoredPersistentContextsSupport;
-            return this->StoredRetValForPersistant;
+            static_cast<drm_i915_gem_context_param *>(arg)->value = this->storedPersistentContextsSupport;
+            return this->storedRetValForPersistant;
         }
 
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_VM) {
-            static_cast<drm_i915_gem_context_param *>(arg)->value = this->StoredRetValForVmId;
+            static_cast<drm_i915_gem_context_param *>(arg)->value = this->storedRetValForVmId;
             return 0u;
         }
     }
@@ -206,9 +206,9 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
                 if (this->failRetTopology) {
                     return -1;
                 }
-                topologyArg->max_slices = this->StoredSVal;
-                topologyArg->max_subslices = this->StoredSVal ? (this->StoredSSVal / this->StoredSVal) : 0;
-                topologyArg->max_eus_per_subslice = this->StoredSSVal ? (this->StoredEUVal / this->StoredSSVal) : 0;
+                topologyArg->max_slices = this->storedSVal;
+                topologyArg->max_subslices = this->storedSVal ? (this->storedSSVal / this->storedSVal) : 0;
+                topologyArg->max_eus_per_subslice = this->storedSSVal ? (this->storedEUVal / this->storedSSVal) : 0;
 
                 if (this->disableSomeTopology) {
                     memset(topologyArg->data, 0xCA, dataSize);

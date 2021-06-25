@@ -58,13 +58,13 @@ TEST(DrmQueryTest, GivenDrmWhenQueryingTopologyInfoCorrectMaxValuesAreSet) {
 
     EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
-    EXPECT_EQ(drm.StoredSVal, topologyData.sliceCount);
-    EXPECT_EQ(drm.StoredSSVal, topologyData.subSliceCount);
-    EXPECT_EQ(drm.StoredEUVal, topologyData.euCount);
+    EXPECT_EQ(drm.storedSVal, topologyData.sliceCount);
+    EXPECT_EQ(drm.storedSSVal, topologyData.subSliceCount);
+    EXPECT_EQ(drm.storedEUVal, topologyData.euCount);
 
-    EXPECT_EQ(drm.StoredSVal, topologyData.maxSliceCount);
-    EXPECT_EQ(drm.StoredSSVal / drm.StoredSVal, topologyData.maxSubSliceCount);
-    EXPECT_EQ(drm.StoredEUVal / drm.StoredSSVal, topologyData.maxEuCount);
+    EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
+    EXPECT_EQ(drm.storedSSVal / drm.storedSVal, topologyData.maxSubSliceCount);
+    EXPECT_EQ(drm.storedEUVal / drm.storedSSVal, topologyData.maxEuCount);
 }
 
 TEST(DrmQueryTest, givenDrmWhenGettingSliceMappingsThenCorrectMappingReturned) {
@@ -120,6 +120,6 @@ HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOn
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, outHwInfo.gtSystemInfo.MaxSubSlicesSupported);
     EXPECT_EQ(hwInfo.gtSystemInfo.SliceCount, outHwInfo.gtSystemInfo.MaxSlicesSupported);
 
-    EXPECT_EQ(static_cast<uint32_t>(drm->StoredEUVal), outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ(static_cast<uint32_t>(drm->StoredSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
 }

@@ -30,11 +30,11 @@ TEST(DrmTest, WhenGettingDeviceIdThenCorrectIdReturned) {
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, pDrm);
 
-    pDrm->StoredDeviceID = 0x1234;
+    pDrm->storedDeviceID = 0x1234;
     int deviceID = 0;
     int ret = pDrm->getDeviceID(deviceID);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(pDrm->StoredDeviceID, deviceID);
+    EXPECT_EQ(pDrm->storedDeviceID, deviceID);
     delete pDrm;
 }
 
@@ -112,8 +112,8 @@ TEST(DrmTest, WhenGettingRevisionIdThenCorrectIdIsReturned) {
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, pDrm);
 
-    pDrm->StoredDeviceID = 0x1234;
-    pDrm->StoredDeviceRevID = 0xB;
+    pDrm->storedDeviceID = 0x1234;
+    pDrm->storedDeviceRevID = 0xB;
     int deviceID = 0;
     int ret = pDrm->getDeviceID(deviceID);
     EXPECT_EQ(0, ret);
@@ -121,8 +121,8 @@ TEST(DrmTest, WhenGettingRevisionIdThenCorrectIdIsReturned) {
     ret = pDrm->getDeviceRevID(revID);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(pDrm->StoredDeviceID, deviceID);
-    EXPECT_EQ(pDrm->StoredDeviceRevID, revID);
+    EXPECT_EQ(pDrm->storedDeviceID, deviceID);
+    EXPECT_EQ(pDrm->storedDeviceRevID, revID);
 
     delete pDrm;
 }
@@ -133,13 +133,13 @@ TEST(DrmTest, GivenDrmWhenAskedForGttSizeThenReturnCorrectValue) {
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     uint64_t queryGttSize = 0;
 
-    drm->StoredRetValForGetGttSize = 0;
+    drm->storedRetValForGetGttSize = 0;
     drm->storedGTTSize = 1ull << 31;
     EXPECT_EQ(0, drm->queryGttSize(queryGttSize));
     EXPECT_EQ(drm->storedGTTSize, queryGttSize);
 
     queryGttSize = 0;
-    drm->StoredRetValForGetGttSize = -1;
+    drm->storedRetValForGetGttSize = -1;
     EXPECT_NE(0, drm->queryGttSize(queryGttSize));
     EXPECT_EQ(0u, queryGttSize);
 }
@@ -148,27 +148,27 @@ TEST(DrmTest, GivenDrmWhenAskedForPreemptionThenCorrectValueReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    pDrm->StoredRetVal = 0;
-    pDrm->StoredPreemptionSupport =
+    pDrm->storedRetVal = 0;
+    pDrm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
     pDrm->checkPreemptionSupport();
     EXPECT_TRUE(pDrm->isPreemptionSupported());
 
-    pDrm->StoredPreemptionSupport = 0;
+    pDrm->storedPreemptionSupport = 0;
     pDrm->checkPreemptionSupport();
     EXPECT_FALSE(pDrm->isPreemptionSupported());
 
-    pDrm->StoredRetVal = -1;
-    pDrm->StoredPreemptionSupport =
+    pDrm->storedRetVal = -1;
+    pDrm->storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
     pDrm->checkPreemptionSupport();
     EXPECT_FALSE(pDrm->isPreemptionSupported());
 
-    pDrm->StoredPreemptionSupport = 0;
+    pDrm->storedPreemptionSupport = 0;
     pDrm->checkPreemptionSupport();
     EXPECT_FALSE(pDrm->isPreemptionSupported());
 
@@ -179,9 +179,9 @@ TEST(DrmTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    pDrm->StoredRetVal = -1;
+    pDrm->storedRetVal = -1;
     EXPECT_THROW(pDrm->createDrmContext(1, false), std::exception);
-    pDrm->StoredRetVal = 0;
+    pDrm->storedRetVal = 0;
     delete pDrm;
 }
 
@@ -249,7 +249,7 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
     auto expectedCount = 0u;
 
     {
-        drmMock.StoredRetValForPersistant = -1;
+        drmMock.storedRetValForPersistant = -1;
         drmMock.checkNonPersistentContextsSupport();
         expectedCount += 2;
         OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
@@ -257,7 +257,7 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
     {
-        drmMock.StoredRetValForPersistant = 0;
+        drmMock.storedRetValForPersistant = 0;
         drmMock.checkNonPersistentContextsSupport();
         ++expectedCount;
         OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
@@ -306,7 +306,7 @@ TEST(DrmTest, WhenGettingExecSoftPinThenCorrectValueIsReturned) {
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0, execSoftPin);
 
-    pDrm->StoredExecSoftPin = 1;
+    pDrm->storedExecSoftPin = 1;
     ret = pDrm->getExecSoftPin(execSoftPin);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1, execSoftPin);
@@ -332,23 +332,23 @@ TEST(DrmTest, WhenGettingEnabledPooledEuThenCorrectValueIsReturned) {
 
     int enabled = 0;
     int ret = 0;
-    pDrm->StoredHasPooledEU = -1;
+    pDrm->storedHasPooledEU = -1;
 #if defined(I915_PARAM_HAS_POOLED_EU)
     ret = pDrm->getEnabledPooledEu(enabled);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(-1, enabled);
 
-    pDrm->StoredHasPooledEU = 0;
+    pDrm->storedHasPooledEU = 0;
     ret = pDrm->getEnabledPooledEu(enabled);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0, enabled);
 
-    pDrm->StoredHasPooledEU = 1;
+    pDrm->storedHasPooledEU = 1;
     ret = pDrm->getEnabledPooledEu(enabled);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1, enabled);
 
-    pDrm->StoredRetValForPooledEU = -1;
+    pDrm->storedRetValForPooledEU = -1;
     ret = pDrm->getEnabledPooledEu(enabled);
     EXPECT_EQ(-1, ret);
     EXPECT_EQ(1, enabled);
@@ -365,7 +365,7 @@ TEST(DrmTest, WhenGettingMinEuInPoolThenCorrectValueIsReturned) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    pDrm->StoredMinEUinPool = -1;
+    pDrm->storedMinEUinPool = -1;
     int minEUinPool = 0;
     int ret = 0;
 #if defined(I915_PARAM_MIN_EU_IN_POOL)
@@ -373,17 +373,17 @@ TEST(DrmTest, WhenGettingMinEuInPoolThenCorrectValueIsReturned) {
     EXPECT_EQ(0, ret);
     EXPECT_EQ(-1, minEUinPool);
 
-    pDrm->StoredMinEUinPool = 0;
+    pDrm->storedMinEUinPool = 0;
     ret = pDrm->getMinEuInPool(minEUinPool);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0, minEUinPool);
 
-    pDrm->StoredMinEUinPool = 1;
+    pDrm->storedMinEUinPool = 1;
     ret = pDrm->getMinEuInPool(minEUinPool);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1, minEUinPool);
 
-    pDrm->StoredRetValForMinEUinPool = -1;
+    pDrm->storedRetValForMinEUinPool = -1;
     ret = pDrm->getMinEuInPool(minEUinPool);
     EXPECT_EQ(-1, ret);
     EXPECT_EQ(1, minEUinPool);
@@ -410,7 +410,7 @@ TEST(DrmTest, givenPlatformWhereGetSseuRetFailureWhenCallSetQueueSliceCountThenS
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->StoredRetValForGetSSEU = -1;
+    drm->storedRetValForGetSSEU = -1;
     drm->checkQueueSliceSupport();
 
     EXPECT_FALSE(drm->sliceCountChangeSupported);
@@ -422,10 +422,10 @@ TEST(DrmTest, whenCheckNonPeristentSupportIsCalledThenAreNonPersistentContextsSu
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->StoredRetValForPersistant = -1;
+    drm->storedRetValForPersistant = -1;
     drm->checkNonPersistentContextsSupport();
     EXPECT_FALSE(drm->areNonPersistentContextsSupported());
-    drm->StoredRetValForPersistant = 0;
+    drm->storedRetValForPersistant = 0;
     drm->checkNonPersistentContextsSupport();
     EXPECT_TRUE(drm->areNonPersistentContextsSupported());
 }
@@ -435,8 +435,8 @@ TEST(DrmTest, givenPlatformWhereSetSseuRetFailureWhenCallSetQueueSliceCountThenR
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->StoredRetValForSetSSEU = -1;
-    drm->StoredRetValForGetSSEU = 0;
+    drm->storedRetValForSetSSEU = -1;
+    drm->storedRetValForGetSSEU = 0;
     drm->checkQueueSliceSupport();
 
     EXPECT_TRUE(drm->sliceCountChangeSupported);
@@ -448,8 +448,8 @@ TEST(DrmTest, givenPlatformWithSupportToChangeSliceCountWhenCallSetQueueSliceCou
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->StoredRetValForSetSSEU = 0;
-    drm->StoredRetValForSetSSEU = 0;
+    drm->storedRetValForSetSSEU = 0;
+    drm->storedRetValForSetSSEU = 0;
     drm->checkQueueSliceSupport();
 
     EXPECT_TRUE(drm->sliceCountChangeSupported);
@@ -514,7 +514,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPer
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
 
-    drmMock.StoredRetValForVmId = 20;
+    drmMock.storedRetValForVmId = 20;
 
     OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     osContext.ensureContextInitialized();
@@ -534,7 +534,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenImpl
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
 
-    drmMock.StoredRetValForVmId = 20;
+    drmMock.storedRetValForVmId = 20;
     DeviceBitfield deviceBitfield(1 << 3);
 
     OsContextLinux osContext(drmMock, 0u, deviceBitfield, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
@@ -558,7 +558,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenIm
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
 
-    drmMock.StoredRetValForVmId = 20;
+    drmMock.storedRetValForVmId = 20;
     DeviceBitfield deviceBitfield(1 | 1 << 1);
 
     OsContextLinux osContext(drmMock, 0u, deviceBitfield, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
@@ -583,7 +583,7 @@ TEST(DrmTest, givenNoPerContextVmsDrmWhenCreatingOsContextsThenVmIdIsNotQueriedA
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_FALSE(drmMock.requirePerContextVM);
 
-    drmMock.StoredRetValForVmId = 1;
+    drmMock.storedRetValForVmId = 1;
 
     OsContextLinux osContext(drmMock, 0u, 1, EngineTypeUsage{aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::Disabled, false);
     osContext.ensureContextInitialized();
@@ -645,9 +645,9 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingTimestampFrequencyThenCaptur
     std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
 
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(1000000000, frequency);
+    EXPECT_EQ(1000, frequency);
 
-    std::string expectedString = "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CS_TIMESTAMP_FREQUENCY, output value: 1000000000, retCode: 0";
+    std::string expectedString = "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CS_TIMESTAMP_FREQUENCY, output value: 1000, retCode: 0";
     EXPECT_NE(std::string::npos, outputString.find(expectedString));
 }
 
@@ -667,9 +667,9 @@ TEST(DrmTest, givenPrintIoctlDebugFlagNotSetWhenGettingTimestampFrequencyThenCap
     std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
 
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(1000000000, frequency);
+    EXPECT_EQ(1000, frequency);
 
-    std::string expectedString = "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CS_TIMESTAMP_FREQUENCY, output value: 1000000000, retCode: 0";
+    std::string expectedString = "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CS_TIMESTAMP_FREQUENCY, output value: 1000, retCode: 0";
     EXPECT_EQ(std::string::npos, outputString.find(expectedString));
 }
 
@@ -683,8 +683,8 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
 
     drm.failRetTopology = true;
 
-    drm.StoredEUVal = 48;
-    drm.StoredSSVal = 6;
+    drm.storedEUVal = 48;
+    drm.storedSSVal = 6;
     hwInfo->gtSystemInfo.SliceCount = 2;
 
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
@@ -706,9 +706,9 @@ TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopolo
     drm.disableSomeTopology = true;
 
     Drm::QueryTopologyData topologyData = {};
-    drm.StoredSVal = 2;
-    drm.StoredSSVal = 6;
-    drm.StoredEUVal = 16;
+    drm.storedSVal = 2;
+    drm.storedSSVal = 6;
+    drm.storedEUVal = 16;
 
     EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
@@ -716,6 +716,6 @@ TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopolo
     EXPECT_EQ(1, topologyData.subSliceCount);
     EXPECT_EQ(1, topologyData.euCount);
 
-    EXPECT_EQ(drm.StoredSVal, topologyData.maxSliceCount);
+    EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
     EXPECT_EQ(2, topologyData.maxSubSliceCount);
 }

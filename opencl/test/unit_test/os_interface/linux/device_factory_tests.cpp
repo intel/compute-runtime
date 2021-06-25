@@ -14,8 +14,8 @@
 TEST_F(DeviceFactoryLinuxTest, WhenPreparingDeviceEnvironmentsThenInitializedCorrectly) {
     const HardwareInfo *refHwinfo = defaultHwInfo.get();
 
-    pDrm->StoredEUVal = 16;
-    pDrm->StoredSSVal = 8;
+    pDrm->storedEUVal = 16;
+    pDrm->storedSSVal = 8;
 
     bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
@@ -34,9 +34,9 @@ TEST_F(DeviceFactoryLinuxTest, WhenPreparingDeviceEnvironmentsThenInitializedCor
 TEST_F(DeviceFactoryLinuxTest, givenSomeDisabledSSAndEUWhenPrepareDeviceEnvironmentsThenCorrectObtainEUCntSSCnt) {
     const HardwareInfo *refHwinfo = defaultHwInfo.get();
 
-    pDrm->StoredEUVal = 144;
-    pDrm->StoredSSVal = 12;
-    pDrm->StoredSVal = 2;
+    pDrm->storedEUVal = 144;
+    pDrm->storedSSVal = 12;
+    pDrm->storedSVal = 2;
     pDrm->disableSomeTopology = true;
 
     bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
@@ -53,12 +53,12 @@ TEST_F(DeviceFactoryLinuxTest, givenSomeDisabledSSAndEUWhenPrepareDeviceEnvironm
 
 TEST_F(DeviceFactoryLinuxTest, GivenInvalidHwInfoWhenPreparingDeviceEnvironmentsThenFailIsReturned) {
 
-    pDrm->StoredRetValForDeviceID = -1;
+    pDrm->storedRetValForDeviceID = -1;
 
     bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
     EXPECT_FALSE(success);
 
-    pDrm->StoredRetValForDeviceID = 0;
+    pDrm->storedRetValForDeviceID = 0;
 }
 
 TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAllocatedAndItContainDrm) {

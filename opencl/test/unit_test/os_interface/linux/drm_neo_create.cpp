@@ -19,11 +19,11 @@ namespace NEO {
 class DrmMockDefault : public DrmMock {
   public:
     DrmMockDefault(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
-        StoredRetVal = 0;
-        StoredRetValForDeviceID = 0;
-        StoredRetValForDeviceRevID = 0;
-        StoredRetValForPooledEU = 0;
-        StoredRetValForMinEUinPool = 0;
+        storedRetVal = 0;
+        storedRetValForDeviceID = 0;
+        storedRetValForDeviceRevID = 0;
+        storedRetValForPooledEU = 0;
+        storedRetValForMinEUinPool = 0;
         setGtType(GTTYPE_GT1);
     }
 };

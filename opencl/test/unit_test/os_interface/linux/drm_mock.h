@@ -117,37 +117,37 @@ class DrmMock : public Drm {
     bool failRetTopology = false;
     bool baseErrno = true;
     int errnoRetVal = 0;
-    int StoredEUVal = 8;
-    int StoredSSVal = 2;
-    int StoredSVal = 1;
-    int StoredDeviceID = 1;
-    int StoredDeviceRevID = 1;
-    int StoredHasPooledEU = 1;
-    int StoredMinEUinPool = 1;
-    int StoredPersistentContextsSupport = 1;
-    int StoredRetVal = 0;
-    int StoredRetValForGetGttSize = 0;
-    int StoredRetValForGetSSEU = 0;
-    int StoredRetValForSetSSEU = 0;
-    int StoredRetValForDeviceID = 0;
-    int StoredRetValForEUVal = 0;
-    int StoredRetValForSSVal = 0;
-    int StoredRetValForDeviceRevID = 0;
-    int StoredRetValForPooledEU = 0;
-    int StoredRetValForMinEUinPool = 0;
-    int StoredRetValForPersistant = 0;
-    int StoredPreemptionSupport =
+    int storedEUVal = 8;
+    int storedSSVal = 2;
+    int storedSVal = 1;
+    int storedDeviceID = 1;
+    int storedDeviceRevID = 1;
+    int storedHasPooledEU = 1;
+    int storedMinEUinPool = 1;
+    int storedPersistentContextsSupport = 1;
+    int storedRetVal = 0;
+    int storedRetValForGetGttSize = 0;
+    int storedRetValForGetSSEU = 0;
+    int storedRetValForSetSSEU = 0;
+    int storedRetValForDeviceID = 0;
+    int storedRetValForEUVal = 0;
+    int storedRetValForSSVal = 0;
+    int storedRetValForDeviceRevID = 0;
+    int storedRetValForPooledEU = 0;
+    int storedRetValForMinEUinPool = 0;
+    int storedRetValForPersistant = 0;
+    int storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    int StoredExecSoftPin = 0;
-    int StoredRetValForVmId = 1;
-    int storedCsTimestampFrequency = 1000000000;
+    int storedExecSoftPin = 0;
+    int storedRetValForVmId = 1;
+    int storedCsTimestampFrequency = 1000;
 
     bool disableSomeTopology = false;
     bool allowDebugAttach = false;
     bool allowDebugAttachCallBase = false;
-    uint32_t passedContextDebugId = uint32_t(-1);
+    uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
 
     uint32_t receivedContextCreateFlags = 0;
     uint32_t receivedCreateContextId = 0;

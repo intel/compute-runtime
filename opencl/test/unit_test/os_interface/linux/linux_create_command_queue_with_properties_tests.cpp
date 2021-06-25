@@ -217,7 +217,7 @@ HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSlic
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.sliceCount = commandQueue->getSliceCount();
-    drm->StoredRetValForSetSSEU = -1;
+    drm->storedRetValForSetSSEU = -1;
 
     auto lastSliceCountBeforeFlushTask = mockCsr->lastSentSliceCount;
     mockCsr->flushTask(commandStream,
