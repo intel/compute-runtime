@@ -629,6 +629,50 @@ TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextFo
     EXPECT_EQ(static_cast<uint32_t>(-1), drmMock.passedContextDebugId);
 }
 
+TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingTimestampFrequencyThenCaptureExpectedOutput) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintIoctlEntries.set(true);
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    int frequency = 0;
+
+    testing::internal::CaptureStdout(); // start capturing
+
+    int ret = drm.getTimestampFrequency(frequency);
+    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(1000000000, frequency);
+
+    std::string expectedString = "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CS_TIMESTAMP_FREQUENCY, output value: 1000000000, retCode: 0";
+    EXPECT_NE(std::string::npos, outputString.find(expectedString));
+}
+
+TEST(DrmTest, givenPrintIoctlDebugFlagNotSetWhenGettingTimestampFrequencyThenCaptureExpectedOutput) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintIoctlEntries.set(false);
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    int frequency = 0;
+
+    testing::internal::CaptureStdout(); // start capturing
+
+    int ret = drm.getTimestampFrequency(frequency);
+    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(1000000000, frequency);
+
+    std::string expectedString = "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CS_TIMESTAMP_FREQUENCY, output value: 1000000000, retCode: 0";
+    EXPECT_EQ(std::string::npos, outputString.find(expectedString));
+}
+
 TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSystemInfoArePreserved) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

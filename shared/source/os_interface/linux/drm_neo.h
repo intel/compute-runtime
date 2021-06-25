@@ -97,6 +97,7 @@ class Drm : public DriverModel {
     int getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency);
     int getEnabledPooledEu(int &enabled);
     int getMinEuInPool(int &minEUinPool);
+    int getTimestampFrequency(int &frequency);
 
     int queryGttSize(uint64_t &gttSizeOutput);
     bool isPreemptionSupported() const { return preemptionSupported; }

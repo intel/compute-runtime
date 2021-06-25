@@ -112,13 +112,9 @@ bool DeviceTimeDrm::getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
 
 double DeviceTimeDrm::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const {
     if (pDrm) {
-        drm_i915_getparam_t getParam = {};
         int frequency = 0;
 
-        getParam.param = I915_PARAM_CS_TIMESTAMP_FREQUENCY;
-        getParam.value = &frequency;
-        auto error = pDrm->ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
-
+        auto error = pDrm->getTimestampFrequency(frequency);
         if (!error) {
             return 1000000000.0 / frequency;
         }
@@ -128,13 +124,9 @@ double DeviceTimeDrm::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo
 
 uint64_t DeviceTimeDrm::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const {
     if (pDrm) {
-        drm_i915_getparam_t getParam = {};
         int frequency = 0;
 
-        getParam.param = I915_PARAM_CS_TIMESTAMP_FREQUENCY;
-        getParam.value = &frequency;
-        auto error = pDrm->ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
-
+        auto error = pDrm->getTimestampFrequency(frequency);
         if (!error) {
             return static_cast<uint64_t>(frequency);
         }

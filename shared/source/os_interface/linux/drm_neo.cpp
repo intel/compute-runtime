@@ -54,6 +54,8 @@ constexpr const char *getIoctlParamString(int param) {
         return "I915_PARAM_SUBSLICE_TOTAL";
     case I915_PARAM_MIN_EU_IN_POOL:
         return "I915_PARAM_MIN_EU_IN_POOL";
+    case I915_PARAM_CS_TIMESTAMP_FREQUENCY:
+        return "I915_PARAM_CS_TIMESTAMP_FREQUENCY";
     default:
         break;
     }
@@ -123,11 +125,12 @@ int Drm::getParamIoctl(int param, int *dstValue) {
     getParam.value = dstValue;
 
     int retVal = ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
-
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout,
-                       "\nDRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode: %d\n",
-                       IoctlHelper::getIoctlParamString(param), *getParam.value, retVal);
-
+    if (DebugManager.flags.PrintIoctlEntries.get()) {
+        printf("DRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode:% d\n",
+               IoctlHelper::getIoctlParamString(param),
+               *getParam.value,
+               retVal);
+    }
     return retVal;
 }
 
@@ -755,6 +758,11 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
     }
 
     return ret;
+}
+
+int Drm::getTimestampFrequency(int &frequency) {
+    frequency = 0;
+    return getParamIoctl(I915_PARAM_CS_TIMESTAMP_FREQUENCY, &frequency);
 }
 
 } // namespace NEO

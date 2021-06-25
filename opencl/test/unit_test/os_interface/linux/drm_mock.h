@@ -142,6 +142,7 @@ class DrmMock : public Drm {
         I915_SCHEDULER_CAP_PREEMPTION;
     int StoredExecSoftPin = 0;
     int StoredRetValForVmId = 1;
+    int storedCsTimestampFrequency = 1000000000;
 
     bool disableSomeTopology = false;
     bool allowDebugAttach = false;

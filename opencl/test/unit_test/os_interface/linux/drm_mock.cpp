@@ -64,6 +64,10 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
             *gp->value = this->StoredExecSoftPin;
             return this->StoredRetVal;
         }
+        if (gp->param == I915_PARAM_CS_TIMESTAMP_FREQUENCY) {
+            *gp->value = this->storedCsTimestampFrequency;
+            return this->StoredRetVal;
+        }
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT) && (arg != nullptr)) {

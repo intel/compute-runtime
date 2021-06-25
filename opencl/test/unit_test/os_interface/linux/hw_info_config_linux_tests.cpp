@@ -383,7 +383,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledThreadGroupOnWhenCon
 
 TEST_F(HwInfoConfigTestLinuxDummy, givenDebugFlagSetWhenConfiguringHwInfoThenPrintGetParamIoctlsOutput) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    DebugManager.flags.PrintIoctlEntries.set(true);
 
     testing::internal::CaptureStdout(); // start capturing
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
@@ -396,7 +396,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenDebugFlagSetWhenConfiguringHwInfoThenPri
 
     }};
 
-    DebugManager.flags.PrintDebugMessages.set(false);
+    DebugManager.flags.PrintIoctlEntries.set(false);
     std::string output = testing::internal::GetCapturedStdout(); // stop capturing
     for (const auto &expectedString : expectedStrings) {
         EXPECT_NE(std::string::npos, output.find(expectedString));
