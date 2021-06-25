@@ -639,6 +639,7 @@ HWTEST2_F(ContextTest, WhenCreatingImageThenSuccessIsReturned, IsAtMostProductDG
 
     ze_image_handle_t image = {};
     ze_image_desc_t imageDesc = {};
+    imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
 
     res = contextImp->createImage(device, &imageDesc, &image);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
