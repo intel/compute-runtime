@@ -19,6 +19,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/gfx_partition_tests.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/page_table_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/physical_address_allocator_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/physical_address_allocator_hw_tests.cpp
 )
 
 add_subdirectories()
