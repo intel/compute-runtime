@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,6 +15,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_semaphore.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_set_mmio.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_states.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_implicit_scaling.cpp
 )
 
 add_subdirectories()
