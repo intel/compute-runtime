@@ -167,4 +167,37 @@ void DebuggerL0::getAttentionBitmaskForThread(uint32_t slice, uint32_t subslice,
     }
 }
 
+std::vector<ze_device_thread_t> DebuggerL0::getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, const uint8_t *bitmask, const size_t bitmaskSize) {
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
+    const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
+    const uint32_t threadsSizePerSubSlice = numEuPerSubslice * bytesPerEu;
+
+    UNRECOVERABLE_IF(bytesPerEu != 1);
+    std::vector<ze_device_thread_t> threads;
+
+    for (uint32_t slice = 0; slice < hwInfo.gtSystemInfo.MaxSlicesSupported; slice++) {
+        for (uint32_t subslice = 0; subslice < numSubslicesPerSlice; subslice++) {
+            for (uint32_t eu = 0; eu < hwInfo.gtSystemInfo.MaxEuPerSubSlice; eu++) {
+                size_t offset = slice * threadsSizePerSlice + subslice * threadsSizePerSubSlice + eu * bytesPerEu;
+
+                if (offset >= bitmaskSize) {
+                    return threads;
+                }
+
+                std::bitset<8> bits(bitmask[offset]);
+                for (uint32_t i = 0; i < 8; i++) {
+                    if (bits.test(i)) {
+                        threads.emplace_back(ze_device_thread_t{slice, subslice, eu, i});
+                    }
+                }
+            }
+        }
+    }
+
+    return threads;
+}
+
 } // namespace L0
