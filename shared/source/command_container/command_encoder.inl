@@ -277,6 +277,20 @@ void EncodeMath<Family>::bitwiseAnd(CommandContainer &container,
 }
 
 template <typename Family>
+void EncodeMath<Family>::bitwiseOr(CommandContainer &container,
+                                   AluRegisters firstOperandRegister,
+                                   AluRegisters secondOperandRegister,
+                                   AluRegisters finalResultRegister) {
+    uint32_t *cmd = EncodeMath<Family>::commandReserve(container);
+    EncodeMathMMIO<Family>::encodeAlu(reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd),
+                                      firstOperandRegister,
+                                      secondOperandRegister,
+                                      AluRegisters::OPCODE_OR,
+                                      finalResultRegister,
+                                      AluRegisters::R_ACCU);
+}
+
+template <typename Family>
 inline void EncodeSetMMIO<Family>::encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap) {
     LriHelper<Family>::program(container.getCommandStream(),
                                offset,
@@ -499,6 +513,54 @@ void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &conta
             continue;
         }
         EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), GPUGPU_DISPATCHDIM[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
+    }
+}
+
+template <typename Family>
+void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset workDimOffset, void *crossThreadAddress, const uint32_t *groupSize) {
+    if (NEO::isValidOffset(workDimOffset)) {
+        constexpr uint32_t GROUP_SIZE_1_GT_1_REGISTER = CS_GPR_R0;
+        constexpr AluRegisters GROUP_SIZE_1_GT_1_ALU_REGISTER = AluRegisters::R_0;
+
+        constexpr AluRegisters GROUP_DIM_2_GT_1_ALU_REGISTER = AluRegisters::R_1;
+
+        constexpr AluRegisters GROUP_DIM_1_GT_1_ALU_REGISTER = AluRegisters::R_2;
+
+        constexpr uint32_t SUB_RESULT_REGISTER = CS_GPR_R3;
+        constexpr AluRegisters SUB_RESULT_ALU_REGISTER = AluRegisters::R_3;
+
+        constexpr uint32_t RESULT_REGISTER = CS_GPR_R4;
+        constexpr AluRegisters RESULT_ALU_REGISTER = AluRegisters::R_4;
+
+        constexpr uint32_t CONSTANT_ONE_REGISTER = CS_GPR_R5;
+        constexpr AluRegisters CONSTANT_ONE_ALU_REGISTER = AluRegisters::R_5;
+
+        constexpr uint32_t GROUP_DIM_2_REGISTER = CS_GPR_R6;
+        constexpr AluRegisters GROUP_DIM_2_ALU_REGISTER = AluRegisters::R_6;
+
+        constexpr uint32_t GROUP_DIM_1_REGISTER = CS_GPR_R7;
+        constexpr AluRegisters GROUP_DIM_1_ALU_REGISTER = AluRegisters::R_7;
+
+        if (groupSize[2] > 1) {
+            EncodeSetMMIO<Family>::encodeIMM(container, RESULT_REGISTER, 3, true);
+        } else {
+            EncodeSetMMIO<Family>::encodeIMM(container, GROUP_SIZE_1_GT_1_REGISTER, groupSize[1] > 1, true);
+            EncodeSetMMIO<Family>::encodeREG(container, GROUP_DIM_2_REGISTER, GPUGPU_DISPATCHDIM[2]);
+            EncodeSetMMIO<Family>::encodeREG(container, GROUP_DIM_1_REGISTER, GPUGPU_DISPATCHDIM[1]);
+
+            EncodeSetMMIO<Family>::encodeIMM(container, CONSTANT_ONE_REGISTER, 1, true);
+            EncodeMath<Family>::greaterThan(container, GROUP_DIM_2_ALU_REGISTER, CONSTANT_ONE_ALU_REGISTER, GROUP_DIM_2_GT_1_ALU_REGISTER);
+            EncodeMath<Family>::greaterThan(container, GROUP_DIM_1_ALU_REGISTER, CONSTANT_ONE_ALU_REGISTER, GROUP_DIM_1_GT_1_ALU_REGISTER);
+
+            EncodeSetMMIO<Family>::encodeIMM(container, SUB_RESULT_REGISTER, 0, true);
+            EncodeMath<Family>::bitwiseOr(container, GROUP_DIM_2_GT_1_ALU_REGISTER, GROUP_DIM_1_GT_1_ALU_REGISTER, SUB_RESULT_ALU_REGISTER);
+            EncodeMath<Family>::bitwiseOr(container, SUB_RESULT_ALU_REGISTER, GROUP_SIZE_1_GT_1_ALU_REGISTER, SUB_RESULT_ALU_REGISTER);
+
+            EncodeSetMMIO<Family>::encodeIMM(container, RESULT_REGISTER, 1, true);
+            EncodeMath<Family>::addition(container, RESULT_ALU_REGISTER, SUB_RESULT_ALU_REGISTER, RESULT_ALU_REGISTER);
+            EncodeMath<Family>::addition(container, RESULT_ALU_REGISTER, GROUP_DIM_2_GT_1_ALU_REGISTER, RESULT_ALU_REGISTER);
+        }
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RESULT_REGISTER, ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), workDimOffset));
     }
 }
 

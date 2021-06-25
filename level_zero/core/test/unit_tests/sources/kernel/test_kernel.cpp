@@ -1824,6 +1824,66 @@ HWTEST_F(KernelGlobalWorkOffsetTests, whenSettingGlobalOffsetThenCrossThreadData
     EXPECT_EQ(*(dst.begin() + desc.payloadMappings.dispatchTraits.globalWorkOffset[2]), globalOffsetz);
 }
 
+using KernelWorkDimTests = Test<ModuleImmutableDataFixture>;
+
+HWTEST_F(KernelWorkDimTests, givenGroupCountsWhenPatchingWorkDimThenCrossThreadDataIsPatched) {
+    struct MockKernelWithMockCrossThreadData : public MockKernel {
+      public:
+        MockKernelWithMockCrossThreadData(MockModule *mockModule) : MockKernel(mockModule) {}
+        void setCrossThreadData(uint32_t _crossThreadDataSize) {
+            crossThreadData.reset(new uint8_t[_crossThreadDataSize]);
+            crossThreadDataSize = _crossThreadDataSize;
+            memset(crossThreadData.get(), 0x00, crossThreadDataSize);
+        }
+    };
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    auto kernel = std::make_unique<MockKernelWithMockCrossThreadData>(module.get());
+    createKernel(kernel.get());
+    kernel->setCrossThreadData(sizeof(uint32_t));
+
+    kernel->patchWorkDim(1, 1, 1);
+
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.dispatchTraits.workDim = 0x0u;
+
+    auto destinationBuffer = ArrayRef<const uint8_t>(kernel->getCrossThreadData(), kernel->getCrossThreadDataSize());
+    auto &kernelDescriptor = mockKernelImmData->getDescriptor();
+    auto workDimInCrossThreadDataPtr = destinationBuffer.begin() + kernelDescriptor.payloadMappings.dispatchTraits.workDim;
+    EXPECT_EQ(*workDimInCrossThreadDataPtr, 0u);
+
+    std::array<std::array<uint32_t, 7>, 8> sizesCountsWorkDim{
+        std::array<uint32_t, 7>{2, 1, 1, 1, 1, 1, 1},
+        std::array<uint32_t, 7>{1, 1, 1, 1, 1, 1, 1},
+        std::array<uint32_t, 7>{1, 2, 1, 2, 1, 1, 2},
+        std::array<uint32_t, 7>{1, 2, 1, 1, 1, 1, 2},
+        std::array<uint32_t, 7>{1, 1, 1, 1, 2, 1, 2},
+        std::array<uint32_t, 7>{1, 1, 1, 2, 2, 2, 3},
+        std::array<uint32_t, 7>{1, 1, 2, 1, 1, 1, 3},
+        std::array<uint32_t, 7>{1, 1, 1, 1, 1, 2, 3}};
+    for (auto parameters : sizesCountsWorkDim) {
+
+        uint32_t groupSizeX = parameters[0];
+        uint32_t groupSizeY = parameters[1];
+        uint32_t groupSizeZ = parameters[2];
+
+        uint32_t groupCountX = parameters[3];
+        uint32_t groupCountY = parameters[4];
+        uint32_t groupCountZ = parameters[5];
+
+        uint32_t expectedWorkDim = parameters[6];
+
+        ze_result_t res = kernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+        EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+        kernel->patchWorkDim(groupCountX, groupCountY, groupCountZ);
+        EXPECT_EQ(*workDimInCrossThreadDataPtr, expectedWorkDim);
+    }
+}
+
 using KernelPrintHandlerTest = Test<ModuleFixture>;
 struct MyPrintfHandler : public PrintfHandler {
     static uint32_t getPrintfSurfaceInitialDataSize() {

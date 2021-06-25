@@ -116,6 +116,8 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual ze_result_t setGlobalOffsetExp(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) = 0;
     virtual uint32_t patchGlobalOffset() = 0;
 
+    virtual void patchWorkDim(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
+
     virtual ze_result_t suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount) = 0;
     virtual ze_result_t setCacheConfig(ze_cache_config_flags_t flags) = 0;
 

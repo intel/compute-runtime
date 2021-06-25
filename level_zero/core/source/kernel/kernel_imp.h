@@ -126,6 +126,8 @@ struct KernelImp : Kernel {
     ze_result_t setGlobalOffsetExp(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) override;
     uint32_t patchGlobalOffset() override;
 
+    void patchWorkDim(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
+
     ze_result_t setCacheConfig(ze_cache_config_flags_t flags) override;
     bool usesRayTracing() {
         return kernelImmData->getDescriptor().hasRTCalls();

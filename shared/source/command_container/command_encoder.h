@@ -126,6 +126,10 @@ struct EncodeMath {
                            AluRegisters firstOperandRegister,
                            AluRegisters secondOperandRegister,
                            AluRegisters finalResultRegister);
+    static void bitwiseOr(CommandContainer &container,
+                          AluRegisters firstOperandRegister,
+                          AluRegisters secondOperandRegister,
+                          AluRegisters finalResultRegister);
 };
 
 template <typename GfxFamily>
@@ -169,6 +173,7 @@ struct EncodeIndirectParams {
     using MI_MATH = typename GfxFamily::MI_MATH;
     using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
     static void setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress);
+    static void setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offset, void *crossThreadAddress, const uint32_t *groupSize);
     static void setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, const uint32_t *lws);
 
     static size_t getCmdsSizeForIndirectParams();

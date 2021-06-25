@@ -145,6 +145,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
             void *gpuPtr = reinterpret_cast<void *>(heapIndirect->getHeapGpuBase() + heapIndirect->getUsed() - sizeThreadData);
             EncodeIndirectParams<Family>::setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, gpuPtr);
             EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, gpuPtr, dispatchInterface->getGroupSize());
+            EncodeIndirectParams<Family>::setWorkDimIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.workDim, gpuPtr, dispatchInterface->getGroupSize());
         }
 
         ptr = ptrOffset(ptr, sizeCrossThreadData);

@@ -591,44 +591,95 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenAppendLaunchKernelS
     EXPECT_EQ(1u, event->getPacketsInUse());
 }
 
-HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWorkGroupCountAndGlobalWorkSizeIsSetInCrossThreadData) {
+HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWorkGroupCountAndGlobalWorkSizeAndWorkDimIsSetInCrossThreadData) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     Mock<::L0::Kernel> kernel;
+    kernel.groupSize[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;
+    kernel.descriptor.payloadMappings.dispatchTraits.workDim = 2;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),
                                                      static_cast<ze_group_count_t *>(alloc),
                                                      nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    kernel.groupSize[2] = 2;
+    result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),
+                                                     static_cast<ze_group_count_t *>(alloc),
+                                                     nullptr, 0, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
 
     auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
+    EXPECT_NE(itor, cmdList.end());
 
-    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor = find<MI_LOAD_REGISTER_IMM *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
+    itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+    itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+    itor = find<MI_STORE_REGISTER_MEM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+
+    itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+
+    itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+    itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+
+    itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+    itor++; //MI_MATH_ALU_INST_INLINE doesn't have tagMI_COMMAND_OPCODE, can't find it in cmdList
+    EXPECT_NE(itor, cmdList.end());
+    itor++;
+    EXPECT_NE(itor, cmdList.end());
+
+    itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+    itor++;
+    EXPECT_NE(itor, cmdList.end());
+    itor++;
+    EXPECT_NE(itor, cmdList.end());
+
+    itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+    itor++;
+    EXPECT_NE(itor, cmdList.end());
+    itor++;
+    EXPECT_NE(itor, cmdList.end());
+
+    itor = find<MI_STORE_REGISTER_MEM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+
+    itor = find<MI_STORE_REGISTER_MEM *>(++itor, cmdList.end()); //kernel with groupSize[2] = 2
+    EXPECT_NE(itor, cmdList.end());
+
+    itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+    itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+    itor = find<MI_STORE_REGISTER_MEM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+
+    itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
+    itor = find<MI_STORE_REGISTER_MEM *>(++itor, cmdList.end());
+    EXPECT_NE(itor, cmdList.end());
 
     context->freeMem(alloc);
 }
