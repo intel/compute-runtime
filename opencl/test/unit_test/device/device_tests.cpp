@@ -17,6 +17,7 @@
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -552,7 +553,7 @@ HWTEST_F(DeviceHwTest, givenDeviceCreationWhenCsrFailsToCreateGlobalSyncAllocati
     EXPECT_EQ(nullptr, mockDevice);
 }
 
-TEST(DeviceGenEngineTest, givenHwCsrModeWhenGetEngineThenDedicatedForInternalUsageEngineIsReturned) {
+TEST(DeviceGetEngineTest, givenHwCsrModeWhenGetEngineThenDedicatedForInternalUsageEngineIsReturned) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
 
     auto &internalEngine = device->getInternalEngine();
@@ -560,7 +561,7 @@ TEST(DeviceGenEngineTest, givenHwCsrModeWhenGetEngineThenDedicatedForInternalUsa
     EXPECT_NE(defaultEngine.commandStreamReceiver, internalEngine.commandStreamReceiver);
 }
 
-TEST(DeviceGenEngineTest, whenCreateDeviceThenInternalEngineHasDefaultType) {
+TEST(DeviceGetEngineTest, whenCreateDeviceThenInternalEngineHasDefaultType) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
 
     auto internalEngineType = device->getInternalEngine().osContext->getEngineType();
@@ -568,14 +569,14 @@ TEST(DeviceGenEngineTest, whenCreateDeviceThenInternalEngineHasDefaultType) {
     EXPECT_EQ(defaultEngineType, internalEngineType);
 }
 
-TEST(DeviceGenEngineTest, givenCreatedDeviceWhenRetrievingDefaultEngineThenOsContextHasDefaultFieldSet) {
+TEST(DeviceGetEngineTest, givenCreatedDeviceWhenRetrievingDefaultEngineThenOsContextHasDefaultFieldSet) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
 
     auto &defaultEngine = device->getDefaultEngine();
     EXPECT_TRUE(defaultEngine.osContext->isDefaultContext());
 }
 
-TEST(DeviceGenEngineTest, givenNoEmptyGroupsWhenGettingNonEmptyGroupsThenReturnCorrectResults) {
+TEST(DeviceGetEngineTest, givenNoEmptyGroupsWhenGettingNonEmptyGroupsThenReturnCorrectResults) {
     const auto nonEmptyEngineGroup = std::vector<EngineControl>{EngineControl{nullptr, nullptr}};
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
@@ -593,7 +594,7 @@ TEST(DeviceGenEngineTest, givenNoEmptyGroupsWhenGettingNonEmptyGroupsThenReturnC
     EXPECT_EQ(nullptr, device->getNonEmptyEngineGroup(4));
 }
 
-TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupsThenReturnCorrectResults) {
+TEST(DeviceGetEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupsThenReturnCorrectResults) {
     const auto emptyEngineGroup = std::vector<EngineControl>{};
     const auto nonEmptyEngineGroup = std::vector<EngineControl>{EngineControl{nullptr, nullptr}};
 
@@ -610,7 +611,7 @@ TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupsThenReturnCor
     EXPECT_EQ(nullptr, device->getNonEmptyEngineGroup(2));
 }
 
-TEST(DeviceGenEngineTest, givenNoEmptyGroupsWhenGettingNonEmptyGroupIndexThenReturnCorrectResults) {
+TEST(DeviceGetEngineTest, givenNoEmptyGroupsWhenGettingNonEmptyGroupIndexThenReturnCorrectResults) {
     const auto nonEmptyEngineGroup = std::vector<EngineControl>{EngineControl{nullptr, nullptr}};
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
@@ -629,7 +630,7 @@ TEST(DeviceGenEngineTest, givenNoEmptyGroupsWhenGettingNonEmptyGroupIndexThenRet
     EXPECT_ANY_THROW(device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(5u)));
 }
 
-TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupIndexThenReturnCorrectResults) {
+TEST(DeviceGetEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupIndexThenReturnCorrectResults) {
     const auto emptyEngineGroup = std::vector<EngineControl>{};
     const auto nonEmptyEngineGroup = std::vector<EngineControl>{EngineControl{nullptr, nullptr}};
 
@@ -649,7 +650,7 @@ TEST(DeviceGenEngineTest, givenEmptyGroupsWhenGettingNonEmptyGroupIndexThenRetur
     EXPECT_ANY_THROW(device->getIndexOfNonEmptyEngineGroup(static_cast<EngineGroupType>(5u)));
 }
 
-TEST(DeviceGenEngineTest, givenDeferredContextInitializationEnabledWhenCreatingEnginesThenInitializeOnlyOsContextsWhichRequireIt) {
+TEST(DeviceGetEngineTest, givenDeferredContextInitializationEnabledWhenCreatingEnginesThenInitializeOnlyOsContextsWhichRequireIt) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.DeferOsContextInitialization.set(1);
 
@@ -664,7 +665,7 @@ TEST(DeviceGenEngineTest, givenDeferredContextInitializationEnabledWhenCreatingE
     }
 }
 
-TEST(DeviceGenEngineTest, givenDeferredContextInitializationDisabledWhenCreatingEnginesThenInitializeAllOsContexts) {
+TEST(DeviceGetEngineTest, givenDeferredContextInitializationDisabledWhenCreatingEnginesThenInitializeAllOsContexts) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.DeferOsContextInitialization.set(0);
 
@@ -673,6 +674,20 @@ TEST(DeviceGenEngineTest, givenDeferredContextInitializationDisabledWhenCreating
     for (const EngineControl &engine : device->getEngines()) {
         EXPECT_TRUE(engine.osContext->isInitialized());
     }
+}
+
+TEST(DeviceGetEngineTest, givenNonHwCsrModeWhenGetEngineThenDefaultEngineIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
+
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useHwCsr = true;
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+
+    auto &internalEngine = device->getInternalEngine();
+    auto &defaultEngine = device->getDefaultEngine();
+    EXPECT_EQ(defaultEngine.commandStreamReceiver, internalEngine.commandStreamReceiver);
 }
 
 using DeviceQueueFamiliesTests = ::testing::Test;

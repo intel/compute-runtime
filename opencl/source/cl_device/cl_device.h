@@ -69,7 +69,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     EngineControl &getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage);
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
-    EngineControl *getInternalCopyEngine();
     SelectorCopyEngine &getSelectorCopyEngine();
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;

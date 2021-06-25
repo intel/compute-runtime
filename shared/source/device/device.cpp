@@ -543,6 +543,16 @@ const std::vector<EngineControl> &Device::getEngines() const {
     return this->engines;
 }
 
+EngineControl &Device::getInternalEngine() {
+    if (this->engines[0].commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
+        return this->getDefaultEngine();
+    }
+
+    auto engineType = getChosenEngineType(getHardwareInfo());
+
+    return this->getDeviceById(0)->getEngine(engineType, EngineUsage::Internal);
+}
+
 void Device::initializeRayTracing() {
     if (rtMemoryBackedBuffer == nullptr) {
         auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(*this);
