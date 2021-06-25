@@ -16,7 +16,7 @@ namespace L0 {
 ImageAllocatorFn imageFactory[IGFX_MAX_PRODUCT] = {};
 
 ImageImp::~ImageImp() {
-    if (this->device != nullptr) {
+    if (!isImageView && this->device != nullptr) {
         this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->allocation);
     }
 }
@@ -24,6 +24,29 @@ ImageImp::~ImageImp() {
 ze_result_t ImageImp::destroy() {
     delete this;
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ImageImp::createView(Device *device, const ze_image_desc_t *desc, ze_image_handle_t *pImage) {
+    auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+
+    ImageAllocatorFn allocator = nullptr;
+    allocator = imageFactory[productFamily];
+
+    ImageImp *image = nullptr;
+
+    image = static_cast<ImageImp *>((*allocator)());
+    image->isImageView = true;
+    image->allocation = allocation;
+    auto result = image->initialize(device, desc);
+
+    if (result != ZE_RESULT_SUCCESS) {
+        image->destroy();
+        image = nullptr;
+    }
+
+    *pImage = image;
+
+    return result;
 }
 
 ze_result_t Image::create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc, Image **pImage) {
