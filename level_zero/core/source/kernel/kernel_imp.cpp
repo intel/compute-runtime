@@ -683,6 +683,23 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
     uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
     pKernelProperties->maxNumSubgroups = maxKernelWorkGroupSize / kernelDescriptor.kernelAttributes.simdSize;
 
+    void *pNext = pKernelProperties->pNext;
+    while (pNext) {
+        ze_base_desc_t *extendedProperties = reinterpret_cast<ze_base_desc_t *>(pKernelProperties->pNext);
+        if (extendedProperties->stype == ZE_STRUCTURE_TYPE_KERNEL_PREFERRED_GROUP_SIZE_PROPERTIES) {
+            ze_kernel_preferred_group_size_properties_t *preferredGroupSizeProperties =
+                reinterpret_cast<ze_kernel_preferred_group_size_properties_t *>(extendedProperties);
+
+            preferredGroupSizeProperties->preferredMultiple = this->kernelImmData->getKernelInfo()->getMaxSimdSize();
+            auto &hwHelper = NEO::HwHelper::get(this->module->getDevice()->getHwInfo().platform.eRenderCoreFamily);
+            if (hwHelper.isFusedEuDispatchEnabled(this->module->getDevice()->getHwInfo())) {
+                preferredGroupSizeProperties->preferredMultiple *= 2;
+            }
+        }
+
+        pNext = const_cast<void *>(extendedProperties->pNext);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
