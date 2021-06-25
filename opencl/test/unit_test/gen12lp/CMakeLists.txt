@@ -5,7 +5,13 @@
 #
 
 if(TESTS_GEN12LP)
+  set(IGDRCL_SRCS_tests_gen12lp_excludes
+      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_gen12lp.cpp
+  )
+  set_property(GLOBAL APPEND PROPERTY IGDRCL_SRCS_tests_excludes ${IGDRCL_SRCS_tests_gen12lp_excludes})
+
   set(IGDRCL_SRCS_tests_gen12lp
+      ${IGDRCL_SRCS_tests_gen12lp_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_tests_gen12lp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/buffer_tests_gen12lp.inl

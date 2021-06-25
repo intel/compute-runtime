@@ -92,7 +92,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
     } test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family##_init;
 
 #define IS_TEST_EXCLUDED(test_suite_name, test_name) \
-    NEO::TestExcludes::isTestExcluded(#test_suite_name #test_name, ::productFamily)
+    NEO::TestExcludes::isTestExcluded(#test_suite_name #test_name, ::productFamily, ::renderCoreFamily)
 
 #ifdef TEST_F
 #undef TEST_F

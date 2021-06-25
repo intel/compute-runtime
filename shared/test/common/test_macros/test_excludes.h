@@ -6,14 +6,15 @@
  */
 
 #pragma once
+#include "igfxfmid.h"
 
 #include <cstdint>
 
 namespace NEO {
 namespace TestExcludes {
 
-bool isTestExcluded(const char *testName, const uint32_t product);
-void addTestExclude(const char *testName, const uint32_t product);
-
+bool isTestExcluded(const char *testName, const PRODUCT_FAMILY productFamily, const GFXCORE_FAMILY gfxFamily);
+void addTestExclude(const char *testName, const PRODUCT_FAMILY family);
+void addTestExclude(const char *testName, const GFXCORE_FAMILY family);
 } // namespace TestExcludes
 } // namespace NEO
