@@ -34,8 +34,19 @@ std::string engineTypeToString(aub_stream::EngineType engineType) {
         return "VECS";
     case aub_stream::EngineType::ENGINE_CCS:
         return "CCS";
+    case aub_stream::EngineType::ENGINE_CCS1:
+        return "CCS1";
+    case aub_stream::EngineType::ENGINE_CCS2:
+        return "CCS2";
+    case aub_stream::EngineType::ENGINE_CCS3:
+        return "CCS3";
     default:
         return engineTypeToStringAdditional(engineType);
     }
 }
+
+bool isCcs(aub_stream::EngineType engineType) {
+    return engineType >= aub_stream::ENGINE_CCS && engineType <= aub_stream::ENGINE_CCS3;
+}
+
 } // namespace NEO::EngineHelpers

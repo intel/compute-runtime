@@ -29,7 +29,19 @@ TEST(EngineNodeHelperTests, givenValidEngineTypeWhenGettingStringRepresentationT
     CHECK_ENGINE(VCS);
     CHECK_ENGINE(VECS);
     CHECK_ENGINE(CCS);
+    CHECK_ENGINE(CCS1);
+    CHECK_ENGINE(CCS2);
+    CHECK_ENGINE(CCS3);
 #undef CHECK_ENGINE
+}
+
+TEST(EngineNodeHelperTests, givenCcsEngineWhenHelperIsUsedThenReturnTrue) {
+    EXPECT_TRUE(EngineHelpers::isCcs(aub_stream::EngineType::ENGINE_CCS));
+    EXPECT_TRUE(EngineHelpers::isCcs(aub_stream::EngineType::ENGINE_CCS1));
+    EXPECT_TRUE(EngineHelpers::isCcs(aub_stream::EngineType::ENGINE_CCS2));
+    EXPECT_TRUE(EngineHelpers::isCcs(aub_stream::EngineType::ENGINE_CCS3));
+    EXPECT_FALSE(EngineHelpers::isCcs(aub_stream::EngineType::ENGINE_RCS));
+    EXPECT_FALSE(EngineHelpers::isCcs(aub_stream::EngineType::NUM_ENGINES));
 }
 
 TEST(EngineNodeHelperTests, givenInvalidEngineTypeWhenGettingStringRepresentationThenItIsCorrect) {
