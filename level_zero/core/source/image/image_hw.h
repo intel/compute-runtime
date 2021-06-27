@@ -15,6 +15,7 @@
 #include "level_zero/core/source/image/image_imp.h"
 
 namespace L0 {
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct ImageCoreFamily : public ImageImp {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
