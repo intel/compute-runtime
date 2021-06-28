@@ -758,44 +758,6 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
                         sizeof(kernelProperties.uuid.mid)));
 }
 
-HWTEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructToGetPropertiesThenPreferredMultipleIsReturned) {
-    ze_kernel_properties_t kernelProperties = {};
-    kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
-
-    ze_kernel_preferred_group_size_properties_t preferredGroupProperties = {};
-    preferredGroupProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PREFERRED_GROUP_SIZE_PROPERTIES;
-
-    kernelProperties.pNext = &preferredGroupProperties;
-
-    ze_result_t res = kernel->getProperties(&kernelProperties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto &hwHelper = NEO::HwHelper::get(module->getDevice()->getHwInfo().platform.eRenderCoreFamily);
-    if (hwHelper.isFusedEuDispatchEnabled(module->getDevice()->getHwInfo())) {
-        EXPECT_EQ(preferredGroupProperties.preferredMultiple, static_cast<uint32_t>(kernel->getImmutableData()->getKernelInfo()->getMaxSimdSize()) * 2);
-    } else {
-        EXPECT_EQ(preferredGroupProperties.preferredMultiple, static_cast<uint32_t>(kernel->getImmutableData()->getKernelInfo()->getMaxSimdSize()));
-    }
-}
-
-HWTEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructWithWrongStypeSuccessIsReturnedAndNoFieldsInPreferredGroupSizeStructAreSet) {
-    ze_kernel_properties_t kernelProperties = {};
-    kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
-
-    ze_kernel_preferred_group_size_properties_t preferredGroupProperties = {};
-    preferredGroupProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
-
-    kernelProperties.pNext = &preferredGroupProperties;
-
-    uint32_t dummyPreferredMultiple = 101;
-    preferredGroupProperties.preferredMultiple = dummyPreferredMultiple;
-
-    ze_result_t res = kernel->getProperties(&kernelProperties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    EXPECT_EQ(preferredGroupProperties.preferredMultiple, dummyPreferredMultiple);
-}
-
 HWTEST_F(KernelPropertiesTests, givenValidKernelThenProfilePropertiesAreRetrieved) {
     zet_profile_properties_t kernelProfileProperties = {};
 
