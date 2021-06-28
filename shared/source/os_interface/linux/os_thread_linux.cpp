@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/linux/os_thread_linux.h"
 
+#include <sched.h>
+
 namespace NEO {
 ThreadLinux::ThreadLinux(pthread_t threadId) : threadId(threadId){};
 
@@ -21,7 +23,7 @@ void ThreadLinux::join() {
 }
 
 void ThreadLinux::yield() {
-    pthread_yield();
+    sched_yield();
 }
 
 } // namespace NEO

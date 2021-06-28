@@ -27,6 +27,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <sched.h>
 #include <thread>
 
 using namespace NEO;
@@ -121,7 +122,7 @@ TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsWhenClosingGemThenSucceeds) {
 
     //wait for worker to complete or deadCnt drops
     while (!worker->isEmpty() && (deadCnt-- > 0))
-        pthread_yield(); //yield to another threads
+        sched_yield(); //yield to another threads
 
     worker->close(false);
 
@@ -142,7 +143,7 @@ TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsAndCloseFalseWhenClosingGemTh
 
     //wait for worker to complete or deadCnt drops
     while (!worker->isEmpty() && (deadCnt-- > 0))
-        pthread_yield(); //yield to another threads
+        sched_yield(); //yield to another threads
 
     //and check if GEM was closed
     EXPECT_EQ(1, this->drmMock->gem_close_cnt.load());
