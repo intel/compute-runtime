@@ -17,10 +17,10 @@ namespace ult {
 class AUBHelloWorldL0 : public AUBFixtureL0,
                         public ::testing::Test {
   protected:
-    void SetUp() {
+    void SetUp() override {
         AUBFixtureL0::SetUp(NEO::defaultHwInfo.get());
     }
-    void TearDown() {
+    void TearDown() override {
         AUBFixtureL0::TearDown();
     }
 };

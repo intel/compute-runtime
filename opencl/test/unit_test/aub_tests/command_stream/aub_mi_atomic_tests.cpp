@@ -17,7 +17,7 @@
 using namespace NEO;
 
 struct MiAtomicAubFixture : public AUBFixture {
-    void SetUp() {
+    void SetUp() override {
         AUBFixture::SetUp(nullptr);
         auto memoryManager = this->device->getMemoryManager();
 
@@ -53,7 +53,7 @@ struct MiAtomicAubFixture : public AUBFixture {
                                  streamAllocation->getUnderlyingBufferSize());
     }
 
-    void TearDown() {
+    void TearDown() override {
         auto memoryManager = this->device->getMemoryManager();
         memoryManager->freeGraphicsMemory(streamAllocation);
         memoryManager->freeGraphicsMemory(deviceSurface);
