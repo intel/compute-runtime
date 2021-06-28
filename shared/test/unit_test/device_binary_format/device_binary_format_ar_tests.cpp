@@ -9,6 +9,8 @@
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
@@ -153,7 +155,72 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackBestMatchThenTryUnpackingAnyU
     EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
 }
 
-TEST(UnpackSingleDeviceBinaryAr, WhenCouldFindBinaryWithRightPointerSizeThenUnpackingFails) {
+TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrAvailableThenUseIr) {
+    PatchTokensTestData::ValidEmptyProgram programTokens;
+    std::string requiredProduct = NEO::hardwarePrefix[productFamily];
+    std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
+    std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
+
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEnc64;
+    elfEnc64.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+    elfEnc64.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, NEO::Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(NEO::spirvMagic.begin(), NEO::spirvMagic.size()));
+    auto elfData = elfEnc64.encode();
+
+    NEO::Ar::ArEncoder encoder{true};
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProduct, ArrayRef<const uint8_t>(elfData)));
+
+    NEO::TargetDevice target;
+    target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
+    target.stepping = programTokens.header->SteppingId;
+    target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
+
+    auto arData = encoder.encode();
+    std::string unpackErrors;
+    std::string unpackWarnings;
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
+    EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
+
+    EXPECT_FALSE(unpacked.intermediateRepresentation.empty());
+}
+
+TEST(UnpackSingleDeviceBinaryAr, WhenOnlyIrIsAvailableThenUseOneFromBestMatchedBinary) {
+    PatchTokensTestData::ValidEmptyProgram programTokens;
+    std::string requiredProduct = NEO::hardwarePrefix[productFamily];
+    std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
+    std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
+
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEnc64Best;
+    elfEnc64Best.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+    elfEnc64Best.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, NEO::Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(NEO::llvmBcMagic.begin(), NEO::llvmBcMagic.size()));
+    auto elfDataBest = elfEnc64Best.encode();
+
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEnc64Second;
+    elfEnc64Second.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+    elfEnc64Second.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, NEO::Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(NEO::spirvMagic.begin(), NEO::spirvMagic.size()));
+    auto elfDataSecond = elfEnc64Second.encode();
+
+    NEO::Ar::ArEncoder encoder{true};
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProduct, ArrayRef<const uint8_t>(elfDataSecond)));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProduct + "." + requiredStepping, ArrayRef<const uint8_t>(elfDataBest)));
+
+    NEO::TargetDevice target;
+    target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
+    target.stepping = programTokens.header->SteppingId;
+    target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
+
+    auto arData = encoder.encode();
+    std::string unpackErrors;
+    std::string unpackWarnings;
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
+    EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
+
+    EXPECT_FALSE(unpacked.intermediateRepresentation.empty());
+    EXPECT_TRUE(NEO::isLlvmBitcode(unpacked.intermediateRepresentation));
+}
+
+TEST(UnpackSingleDeviceBinaryAr, WhenCouldNotFindBinaryWithRightPointerSizeThenUnpackingFails) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
