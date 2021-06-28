@@ -168,10 +168,10 @@ ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags 
 }
 
 ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat, bool supportsOcl20Features) noexcept {
-    if (NEO::IsNV12Image(imageFormat)) {
+    if (NEO::isNV12Image(imageFormat)) {
         return planarYuv();
     }
-    else if (IsPackedYuvImage(imageFormat)) {
+    else if (isPackedYuvImage(imageFormat)) {
         return packedYuv();
     }
     else if (Image::isDepthFormat(*imageFormat)) {

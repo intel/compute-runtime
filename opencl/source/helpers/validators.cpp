@@ -148,7 +148,7 @@ cl_int validateYuvOperation(const size_t *origin, const size_t *region) {
     return ((origin[0] % 2 == 0) && (region[0] % 2 == 0)) ? CL_SUCCESS : CL_INVALID_VALUE;
 }
 
-bool IsPackedYuvImage(const cl_image_format *imageFormat) {
+bool isPackedYuvImage(const cl_image_format *imageFormat) {
     auto channelOrder = imageFormat->image_channel_order;
     return (channelOrder == CL_YUYV_INTEL) ||
            (channelOrder == CL_UYVY_INTEL) ||
@@ -156,7 +156,7 @@ bool IsPackedYuvImage(const cl_image_format *imageFormat) {
            (channelOrder == CL_VYUY_INTEL);
 }
 
-bool IsNV12Image(const cl_image_format *imageFormat) {
+bool isNV12Image(const cl_image_format *imageFormat) {
     return imageFormat->image_channel_order == CL_NV12_INTEL;
 }
 } // namespace NEO

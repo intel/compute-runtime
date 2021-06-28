@@ -2771,7 +2771,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
             TRACING_EXIT(clEnqueueReadImage, &retVal);
             return retVal;
         }
-        if (IsPackedYuvImage(&pImage->getImageFormat())) {
+        if (isPackedYuvImage(&pImage->getImageFormat())) {
             retVal = validateYuvOperation(origin, region);
             if (retVal != CL_SUCCESS) {
                 TRACING_EXIT(clEnqueueReadImage, &retVal);
@@ -2844,7 +2844,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
             TRACING_EXIT(clEnqueueWriteImage, &retVal);
             return retVal;
         }
-        if (IsPackedYuvImage(&pImage->getImageFormat())) {
+        if (isPackedYuvImage(&pImage->getImageFormat())) {
             retVal = validateYuvOperation(origin, region);
             if (retVal != CL_SUCCESS) {
                 TRACING_EXIT(clEnqueueWriteImage, &retVal);
@@ -2971,14 +2971,14 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
             TRACING_EXIT(clEnqueueCopyImage, &retVal);
             return retVal;
         }
-        if (IsPackedYuvImage(&pSrcImage->getImageFormat())) {
+        if (isPackedYuvImage(&pSrcImage->getImageFormat())) {
             retVal = validateYuvOperation(srcOrigin, region);
             if (retVal != CL_SUCCESS) {
                 TRACING_EXIT(clEnqueueCopyImage, &retVal);
                 return retVal;
             }
         }
-        if (IsPackedYuvImage(&pDstImage->getImageFormat())) {
+        if (isPackedYuvImage(&pDstImage->getImageFormat())) {
             retVal = validateYuvOperation(dstOrigin, region);
 
             if (retVal != CL_SUCCESS) {
@@ -3054,7 +3054,7 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
         WithCastToInternal(dstBuffer, &pDstBuffer));
 
     if (CL_SUCCESS == retVal) {
-        if (IsPackedYuvImage(&pSrcImage->getImageFormat())) {
+        if (isPackedYuvImage(&pSrcImage->getImageFormat())) {
             retVal = validateYuvOperation(srcOrigin, region);
             if (retVal != CL_SUCCESS) {
                 TRACING_EXIT(clEnqueueCopyImageToBuffer, &retVal);
@@ -3119,7 +3119,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
         WithCastToInternal(dstImage, &pDstImage));
 
     if (CL_SUCCESS == retVal) {
-        if (IsPackedYuvImage(&pDstImage->getImageFormat())) {
+        if (isPackedYuvImage(&pDstImage->getImageFormat())) {
             retVal = validateYuvOperation(dstOrigin, region);
             if (retVal != CL_SUCCESS) {
                 TRACING_EXIT(clEnqueueCopyBufferToImage, &retVal);
@@ -3264,7 +3264,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
             retVal = CL_INVALID_OPERATION;
             break;
         }
-        if (IsPackedYuvImage(&pImage->getImageFormat())) {
+        if (isPackedYuvImage(&pImage->getImageFormat())) {
             retVal = validateYuvOperation(origin, region);
             if (retVal != CL_SUCCESS) {
                 break;

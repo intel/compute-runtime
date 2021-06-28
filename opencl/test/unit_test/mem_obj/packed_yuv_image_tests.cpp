@@ -85,7 +85,7 @@ TEST_P(PackedYuvImageTest, GivenValidPackedYuvImageFormatAndDescriptorWhenCreati
         nullptr,
         retVal);
     ASSERT_NE(nullptr, image);
-    EXPECT_TRUE(IsPackedYuvImage(&image->getImageFormat()));
+    EXPECT_TRUE(isPackedYuvImage(&image->getImageFormat()));
     delete image;
 }
 

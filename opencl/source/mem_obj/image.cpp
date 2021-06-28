@@ -180,7 +180,7 @@ Image *Image::create(Context *context,
             imageWidth = parentImage->getImageDesc().image_width;
             imageHeight = parentImage->getImageDesc().image_height;
             imageDepth = 1;
-            if (IsNV12Image(&parentImage->getImageFormat())) {
+            if (isNV12Image(&parentImage->getImageFormat())) {
                 if (imageDesc->image_depth == 1) { // UV Plane
                     imageWidth /= 2;
                     imageHeight /= 2;
@@ -212,7 +212,7 @@ Image *Image::create(Context *context,
             hostPtrMinSize = hostPtrSlicePitch * imageDepth;
             break;
         case CL_MEM_OBJECT_IMAGE2D:
-            if (IsNV12Image(&surfaceFormat->OCLImageFormat)) {
+            if (isNV12Image(&surfaceFormat->OCLImageFormat)) {
                 hostPtrMinSize = hostPtrRowPitch * imageHeight + hostPtrRowPitch * imageHeight / 2;
             } else {
                 hostPtrMinSize = hostPtrRowPitch * imageHeight;
@@ -466,7 +466,7 @@ Image *Image::create(Context *context,
                 if (!isCpuTransferPreferrred) {
                     auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
 
-                    if (IsNV12Image(&image->getImageFormat())) {
+                    if (isNV12Image(&image->getImageFormat())) {
                         errcodeRet = image->writeNV12Planes(hostPtr, hostPtrRowPitch, rootDeviceIndex);
                     } else {
                         errcodeRet = cmdQ->enqueueWriteImage(image, CL_TRUE, &copyOrigin[0], &copyRegion[0],
@@ -588,12 +588,12 @@ cl_int Image::validate(Context *context,
                 return CL_INVALID_VALUE;
             }
         }
-        if (parentImage && !IsNV12Image(&parentImage->getImageFormat())) { // Image 2d from image 2d
+        if (parentImage && !isNV12Image(&parentImage->getImageFormat())) { // Image 2d from image 2d
             if (!parentImage->hasSameDescriptor(*imageDesc) || !parentImage->hasValidParentImageFormat(surfaceFormat->OCLImageFormat)) {
                 return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             }
         }
-        if (!(parentImage && IsNV12Image(&parentImage->getImageFormat())) &&
+        if (!(parentImage && isNV12Image(&parentImage->getImageFormat())) &&
             (imageDesc->image_width == 0 || imageDesc->image_height == 0)) {
             return CL_INVALID_IMAGE_DESCRIPTOR;
         }
@@ -713,9 +713,9 @@ cl_int Image::validatePackedYUV(const MemoryProperties &memoryProperties, const 
 }
 
 cl_int Image::validateImageTraits(Context *context, const MemoryProperties &memoryProperties, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr) {
-    if (IsNV12Image(imageFormat))
+    if (isNV12Image(imageFormat))
         return validatePlanarYUV(context, memoryProperties, imageDesc, hostPtr);
-    else if (IsPackedYuvImage(imageFormat))
+    else if (isPackedYuvImage(imageFormat))
         return validatePackedYUV(memoryProperties, imageDesc);
 
     return CL_SUCCESS;
@@ -1418,7 +1418,7 @@ bool Image::isValidDepthStencilFormat(const cl_image_format *imageFormat) {
 bool Image::isValidYUVFormat(const cl_image_format *imageFormat) {
     auto dataType = imageFormat->image_channel_data_type;
 
-    bool isValidOrder = IsNV12Image(imageFormat) || IsPackedYuvImage(imageFormat);
+    bool isValidOrder = isNV12Image(imageFormat) || isPackedYuvImage(imageFormat);
 
     bool isValidDataType = (dataType == CL_UNORM_INT8);
 

@@ -45,7 +45,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     imgInfo.qPitch = qPitch;
     imgInfo.surfaceFormat = &getSurfaceFormatInfo().surfaceFormat;
 
-    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, graphicsAllocation->getDefaultGmm(), *gmmHelper, cubeFaceIndex, graphicsAllocation->getGpuAddress(), surfaceOffsets, IsNV12Image(&this->getImageFormat()));
+    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, graphicsAllocation->getDefaultGmm(), *gmmHelper, cubeFaceIndex, graphicsAllocation->getGpuAddress(), surfaceOffsets, isNV12Image(&this->getImageFormat()));
 
     if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
         // image1d_buffer is image1d created from buffer. The length of buffer could be larger
@@ -171,7 +171,7 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory, uint32_t rootDeviceIndex
         reinterpret_cast<void *>(&state),
         gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
 
-    if (IsNV12Image(&this->getImageFormat())) {
+    if (isNV12Image(&this->getImageFormat())) {
         state.setInterleaveChroma(true);
         state.setYOffsetForUCb(this->surfaceOffsets.yOffsetForUVplane);
     }
