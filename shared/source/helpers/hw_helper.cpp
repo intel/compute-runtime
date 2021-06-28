@@ -70,7 +70,7 @@ uint32_t HwHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
     }
 }
 
-uint32_t HwHelper::getEnginesCount(const HardwareInfo &hwInfo) {
+uint32_t HwHelper::getGpgpuEnginesCount(const HardwareInfo &hwInfo) {
     uint32_t enginesCount = 0;
 
     if (hwInfo.featureTable.ftrCCSNode) {

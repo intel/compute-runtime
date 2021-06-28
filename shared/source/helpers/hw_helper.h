@@ -154,7 +154,7 @@ class HwHelper {
     virtual void applyRenderCompressionFlag(Gmm &gmm, uint32_t isRenderCompressed) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
-    static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
+    static uint32_t getGpgpuEnginesCount(const HardwareInfo &hwInfo);
     static uint32_t getCopyEnginesCount(const HardwareInfo &hwInfo);
 
   protected:
