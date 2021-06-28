@@ -1334,3 +1334,19 @@ HWTEST_F(HwHelperTest, whenSetRenderCompressedFlagThenProperFlagSet) {
     hwHelper.applyRenderCompressionFlag(*gmm, 0);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
 }
+
+HWTEST_F(HwHelperTest, givenRcsOrCcsEnabledWhenQueryingEngineCountThenReturnCorrectValue) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 3;
+    hwInfo.featureTable.ftrRcsNode = false;
+    hwInfo.featureTable.ftrCCSNode = false;
+
+    EXPECT_EQ(0u, HwHelper::getEnginesCount(hwInfo));
+
+    hwInfo.featureTable.ftrCCSNode = true;
+    EXPECT_EQ(3u, HwHelper::getEnginesCount(hwInfo));
+
+    hwInfo.featureTable.ftrRcsNode = true;
+    EXPECT_EQ(4u, HwHelper::getEnginesCount(hwInfo));
+}

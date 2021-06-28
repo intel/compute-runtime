@@ -59,4 +59,28 @@ uint32_t HwHelper::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_
     uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
     return maxNumEUsPerSubSlice * numThreadsPerEU;
 }
+
+uint32_t HwHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
+    if (DebugManager.flags.CreateMultipleSubDevices.get() > 0) {
+        return DebugManager.flags.CreateMultipleSubDevices.get();
+    } else if (pHwInfo->gtSystemInfo.MultiTileArchInfo.IsValid && pHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount > 0u) {
+        return pHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount;
+    } else {
+        return 1u;
+    }
+}
+
+uint32_t HwHelper::getEnginesCount(const HardwareInfo &hwInfo) {
+    uint32_t enginesCount = 0;
+
+    if (hwInfo.featureTable.ftrCCSNode) {
+        enginesCount += hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+    }
+
+    if (hwInfo.featureTable.ftrRcsNode) {
+        enginesCount += 1;
+    }
+
+    return enginesCount;
+}
 } // namespace NEO
