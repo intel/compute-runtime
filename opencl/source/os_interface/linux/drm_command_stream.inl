@@ -44,6 +44,14 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     residency.reserve(512);
     execObjectsStorage.reserve(512);
 
+    if (this->drm->isVmBindAvailable()) {
+        gemCloseWorkerOperationMode = gemCloseWorkerMode::gemCloseWorkerInactive;
+    }
+
+    if (DebugManager.flags.EnableGemCloseWorker.get() != -1) {
+        gemCloseWorkerOperationMode = DebugManager.flags.EnableGemCloseWorker.get() ? gemCloseWorkerMode::gemCloseWorkerActive : gemCloseWorkerMode::gemCloseWorkerInactive;
+    }
+
     auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
     auto localMemoryEnabled = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
 

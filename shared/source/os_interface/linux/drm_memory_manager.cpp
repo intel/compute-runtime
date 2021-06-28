@@ -53,6 +53,8 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
 }
 
 void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
+    bool disableGemCloseWorker = true;
+
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
         if (!getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigner.apiAllowExternalHeapForSshAndDsh)) {
@@ -60,10 +62,11 @@ void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
             return;
         }
         localMemAllocs.emplace_back();
+        disableGemCloseWorker &= getDrm(rootDeviceIndex).isVmBindAvailable();
     }
     MemoryManager::virtualPaddingAvailable = true;
 
-    if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
+    if (disableGemCloseWorker) {
         mode = gemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
@@ -1006,17 +1009,6 @@ void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
                                                                        localMemAllocs[allocation->getRootDeviceIndex()].end(),
                                                                        allocation),
                                                            localMemAllocs[allocation->getRootDeviceIndex()].end());
-}
-
-void DrmMemoryManager::disableGemCloseWorkerForNewResidencyModel() {
-    for (auto &engine : this->registeredEngines) {
-        auto rootDeviceIndex = engine.commandStreamReceiver->getRootDeviceIndex();
-        auto &drm = this->getDrm(rootDeviceIndex);
-
-        if (drm.isVmBindAvailable()) {
-            engine.commandStreamReceiver->initializeDefaultsForInternalEngine();
-        }
-    }
 }
 
 void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {

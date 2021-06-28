@@ -24,20 +24,9 @@ CommandStreamReceiver *createDrmCommandStreamReceiver(bool withAubDump,
                                                                                          rootDeviceIndex,
                                                                                          deviceBitfield);
     } else {
-        auto gemMode = gemCloseWorkerMode::gemCloseWorkerActive;
-
-        if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
-            gemMode = gemCloseWorkerMode::gemCloseWorkerInactive;
-        }
-
-        if (DebugManager.flags.EnableGemCloseWorker.get() != -1) {
-            gemMode = DebugManager.flags.EnableGemCloseWorker.get() ? gemCloseWorkerMode::gemCloseWorkerActive : gemCloseWorkerMode::gemCloseWorkerInactive;
-        }
-
         return new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment,
                                                        rootDeviceIndex,
-                                                       deviceBitfield,
-                                                       gemMode);
+                                                       deviceBitfield);
     }
 }
 } // namespace NEO

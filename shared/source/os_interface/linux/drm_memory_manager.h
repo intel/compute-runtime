@@ -71,8 +71,6 @@ class DrmMemoryManager : public MemoryManager {
     void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) override;
     void unregisterAllocation(GraphicsAllocation *allocation);
 
-    void disableGemCloseWorkerForNewResidencyModel() override;
-
     static std::unique_ptr<MemoryManager> create(ExecutionEnvironment &executionEnvironment);
 
     DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr);

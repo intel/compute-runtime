@@ -155,8 +155,6 @@ std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvir
         }
     }
 
-    executionEnvironment.memoryManager->disableGemCloseWorkerForNewResidencyModel();
-
     return devices;
 }
 

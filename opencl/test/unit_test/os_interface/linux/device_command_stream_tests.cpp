@@ -103,13 +103,3 @@ HWTEST_F(DeviceCommandStreamSetInternalUsageTests, givenValidDrmCsrThenGemCloseW
     drmCsr->initializeDefaultsForInternalEngine();
     EXPECT_EQ(drmCsr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerInactive);
 }
-
-HWTEST_F(DeviceCommandStreamSetInternalUsageTests, givenEnableDirectSubmissionWhenCreateDrmCommandStreamReceiverThenGemCloseWorkerInactive) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDirectSubmission.set(1);
-
-    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
-
-    auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
-    EXPECT_EQ(drmCsr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerInactive);
-}

@@ -210,7 +210,6 @@ class MemoryManager {
     virtual void registerSysMemAlloc(GraphicsAllocation *allocation){};
     virtual void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex){};
 
-    virtual void disableGemCloseWorkerForNewResidencyModel(){};
     bool isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex);
 
   protected:
