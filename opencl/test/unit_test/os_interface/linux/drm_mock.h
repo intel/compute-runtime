@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <fstream>
 #include <limits.h>
+#include <map>
 
 using namespace NEO;
 
@@ -247,3 +248,6 @@ class DrmMockResources : public DrmMock {
     size_t registeredDataSize;
     uint32_t currentCookie = 2;
 };
+
+extern std::map<unsigned long, const char *> ioctlCodeStringMap;
+extern std::map<int, const char *> ioctlParamCodeStringMap;

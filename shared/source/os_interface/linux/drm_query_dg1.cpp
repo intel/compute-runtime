@@ -19,6 +19,22 @@
 namespace NEO {
 class OsContext;
 
+namespace IoctlHelper {
+std::string getIoctlStringRemaining(unsigned long request) {
+    switch (request) {
+    default:
+        return std::to_string(request);
+    }
+}
+
+std::string getIoctlParamStringRemaining(int param) {
+    switch (param) {
+    default:
+        return std::to_string(param);
+    }
+}
+} // namespace IoctlHelper
+
 int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
     maxGpuFrequency = 0;
     std::string clockSysFsPath = getSysFsPciPath();
@@ -93,10 +109,6 @@ bool Drm::isVmBindAvailable() {
 }
 
 void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isSpecialContextRequested) {
-}
-
-std::string Drm::ioctlToStringImpl(unsigned long request) {
-    return std::to_string(request);
 }
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {

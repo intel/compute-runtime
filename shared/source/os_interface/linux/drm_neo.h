@@ -55,6 +55,13 @@ struct DeviceDescriptor { // NOLINT(clang-analyzer-optin.performance.Padding)
 
 extern const DeviceDescriptor deviceDescriptorTable[];
 
+namespace IoctlHelper {
+std::string getIoctlParamString(int param);
+std::string getIoctlParamStringRemaining(int param);
+std::string getIoctlString(unsigned long request);
+std::string getIoctlStringRemaining(unsigned long request);
+} // namespace IoctlHelper
+
 class Drm : public DriverModel {
     friend DeviceFactory;
 
@@ -232,8 +239,6 @@ class Drm : public DriverModel {
     bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping);
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
-    std::string ioctlToString(unsigned long request);
-    std::string ioctlToStringImpl(unsigned long request);
     std::string getSysFsPciPath();
     std::unique_ptr<uint8_t[]> query(uint32_t queryId, uint32_t queryItemFlags, int32_t &length);
     void printIoctlStatistics();

@@ -36,7 +36,7 @@
 namespace NEO {
 
 namespace IoctlHelper {
-constexpr const char *getIoctlParamString(int param) {
+std::string getIoctlParamString(int param) {
     switch (param) {
     case I915_PARAM_CHIPSET_ID:
         return "I915_PARAM_CHIPSET_ID";
@@ -57,10 +57,131 @@ constexpr const char *getIoctlParamString(int param) {
     case I915_PARAM_CS_TIMESTAMP_FREQUENCY:
         return "I915_PARAM_CS_TIMESTAMP_FREQUENCY";
     default:
-        break;
+        return getIoctlParamStringRemaining(param);
     }
+}
 
-    return "UNKNOWN";
+std::string getIoctlString(unsigned long request) {
+    switch (request) {
+    case DRM_IOCTL_I915_GEM_EXECBUFFER2:
+        return "DRM_IOCTL_I915_GEM_EXECBUFFER2";
+    case DRM_IOCTL_I915_GEM_WAIT:
+        return "DRM_IOCTL_I915_GEM_WAIT";
+    case DRM_IOCTL_GEM_CLOSE:
+        return "DRM_IOCTL_GEM_CLOSE";
+    case DRM_IOCTL_I915_GEM_USERPTR:
+        return "DRM_IOCTL_I915_GEM_USERPTR";
+    case DRM_IOCTL_I915_INIT:
+        return "DRM_IOCTL_I915_INIT";
+    case DRM_IOCTL_I915_FLUSH:
+        return "DRM_IOCTL_I915_FLUSH";
+    case DRM_IOCTL_I915_FLIP:
+        return "DRM_IOCTL_I915_FLIP";
+    case DRM_IOCTL_I915_BATCHBUFFER:
+        return "DRM_IOCTL_I915_BATCHBUFFER";
+    case DRM_IOCTL_I915_IRQ_EMIT:
+        return "DRM_IOCTL_I915_IRQ_EMIT";
+    case DRM_IOCTL_I915_IRQ_WAIT:
+        return "DRM_IOCTL_I915_IRQ_WAIT";
+    case DRM_IOCTL_I915_GETPARAM:
+        return "DRM_IOCTL_I915_GETPARAM";
+    case DRM_IOCTL_I915_SETPARAM:
+        return "DRM_IOCTL_I915_SETPARAM";
+    case DRM_IOCTL_I915_ALLOC:
+        return "DRM_IOCTL_I915_ALLOC";
+    case DRM_IOCTL_I915_FREE:
+        return "DRM_IOCTL_I915_FREE";
+    case DRM_IOCTL_I915_INIT_HEAP:
+        return "DRM_IOCTL_I915_INIT_HEAP";
+    case DRM_IOCTL_I915_CMDBUFFER:
+        return "DRM_IOCTL_I915_CMDBUFFER";
+    case DRM_IOCTL_I915_DESTROY_HEAP:
+        return "DRM_IOCTL_I915_DESTROY_HEAP";
+    case DRM_IOCTL_I915_SET_VBLANK_PIPE:
+        return "DRM_IOCTL_I915_SET_VBLANK_PIPE";
+    case DRM_IOCTL_I915_GET_VBLANK_PIPE:
+        return "DRM_IOCTL_I915_GET_VBLANK_PIPE";
+    case DRM_IOCTL_I915_VBLANK_SWAP:
+        return "DRM_IOCTL_I915_VBLANK_SWAP";
+    case DRM_IOCTL_I915_HWS_ADDR:
+        return "DRM_IOCTL_I915_HWS_ADDR";
+    case DRM_IOCTL_I915_GEM_INIT:
+        return "DRM_IOCTL_I915_GEM_INIT";
+    case DRM_IOCTL_I915_GEM_EXECBUFFER:
+        return "DRM_IOCTL_I915_GEM_EXECBUFFER";
+    case DRM_IOCTL_I915_GEM_EXECBUFFER2_WR:
+        return "DRM_IOCTL_I915_GEM_EXECBUFFER2_WR";
+    case DRM_IOCTL_I915_GEM_PIN:
+        return "DRM_IOCTL_I915_GEM_PIN";
+    case DRM_IOCTL_I915_GEM_UNPIN:
+        return "DRM_IOCTL_I915_GEM_UNPIN";
+    case DRM_IOCTL_I915_GEM_BUSY:
+        return "DRM_IOCTL_I915_GEM_BUSY";
+    case DRM_IOCTL_I915_GEM_SET_CACHING:
+        return "DRM_IOCTL_I915_GEM_SET_CACHING";
+    case DRM_IOCTL_I915_GEM_GET_CACHING:
+        return "DRM_IOCTL_I915_GEM_GET_CACHING";
+    case DRM_IOCTL_I915_GEM_THROTTLE:
+        return "DRM_IOCTL_I915_GEM_THROTTLE";
+    case DRM_IOCTL_I915_GEM_ENTERVT:
+        return "DRM_IOCTL_I915_GEM_ENTERVT";
+    case DRM_IOCTL_I915_GEM_LEAVEVT:
+        return "DRM_IOCTL_I915_GEM_LEAVEVT";
+    case DRM_IOCTL_I915_GEM_CREATE:
+        return "DRM_IOCTL_I915_GEM_CREATE";
+    case DRM_IOCTL_I915_GEM_PREAD:
+        return "DRM_IOCTL_I915_GEM_PREAD";
+    case DRM_IOCTL_I915_GEM_PWRITE:
+        return "DRM_IOCTL_I915_GEM_PWRITE";
+    case DRM_IOCTL_I915_GEM_SET_DOMAIN:
+        return "DRM_IOCTL_I915_GEM_SET_DOMAIN";
+    case DRM_IOCTL_I915_GEM_SW_FINISH:
+        return "DRM_IOCTL_I915_GEM_SW_FINISH";
+    case DRM_IOCTL_I915_GEM_SET_TILING:
+        return "DRM_IOCTL_I915_GEM_SET_TILING";
+    case DRM_IOCTL_I915_GEM_GET_TILING:
+        return "DRM_IOCTL_I915_GEM_GET_TILING";
+    case DRM_IOCTL_I915_GEM_GET_APERTURE:
+        return "DRM_IOCTL_I915_GEM_GET_APERTURE";
+    case DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID:
+        return "DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID";
+    case DRM_IOCTL_I915_GEM_MADVISE:
+        return "DRM_IOCTL_I915_GEM_MADVISE";
+    case DRM_IOCTL_I915_OVERLAY_PUT_IMAGE:
+        return "DRM_IOCTL_I915_OVERLAY_PUT_IMAGE";
+    case DRM_IOCTL_I915_OVERLAY_ATTRS:
+        return "DRM_IOCTL_I915_OVERLAY_ATTRS";
+    case DRM_IOCTL_I915_SET_SPRITE_COLORKEY:
+        return "DRM_IOCTL_I915_SET_SPRITE_COLORKEY";
+    case DRM_IOCTL_I915_GET_SPRITE_COLORKEY:
+        return "DRM_IOCTL_I915_GET_SPRITE_COLORKEY";
+    case DRM_IOCTL_I915_GEM_CONTEXT_CREATE:
+        return "DRM_IOCTL_I915_GEM_CONTEXT_CREATE";
+    case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT:
+        return "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT";
+    case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY:
+        return "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY";
+    case DRM_IOCTL_I915_REG_READ:
+        return "DRM_IOCTL_I915_REG_READ";
+    case DRM_IOCTL_I915_GET_RESET_STATS:
+        return "DRM_IOCTL_I915_GET_RESET_STATS";
+    case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM:
+        return "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM";
+    case DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM:
+        return "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM";
+    case DRM_IOCTL_I915_PERF_OPEN:
+        return "DRM_IOCTL_I915_PERF_OPEN";
+    case DRM_IOCTL_I915_PERF_ADD_CONFIG:
+        return "DRM_IOCTL_I915_PERF_ADD_CONFIG";
+    case DRM_IOCTL_I915_PERF_REMOVE_CONFIG:
+        return "DRM_IOCTL_I915_PERF_REMOVE_CONFIG";
+    case DRM_IOCTL_I915_QUERY:
+        return "DRM_IOCTL_I915_QUERY";
+    case DRM_IOCTL_I915_GEM_MMAP:
+        return "DRM_IOCTL_I915_GEM_MMAP";
+    default:
+        return getIoctlStringRemaining(request);
+    }
 }
 
 } // namespace IoctlHelper
@@ -88,7 +209,7 @@ int Drm::ioctl(unsigned long request, void *arg) {
         auto printIoctl = DebugManager.flags.PrintIoctlEntries.get();
 
         if (printIoctl) {
-            printf("IOCTL %s called\n", this->ioctlToString(request).c_str());
+            printf("IOCTL %s called\n", IoctlHelper::getIoctlString(request).c_str());
         }
 
         ret = SysCalls::ioctl(getFileDescriptor(), request, arg);
@@ -96,7 +217,7 @@ int Drm::ioctl(unsigned long request, void *arg) {
         returnedErrno = errno;
 
         if (printIoctl) {
-            printf("IOCTL %s returns %d, errno %d(%s)\n", this->ioctlToString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+            printf("IOCTL %s returns %d, errno %d(%s)\n", IoctlHelper::getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
         }
 
         if (measureTime) {
@@ -127,7 +248,7 @@ int Drm::getParamIoctl(int param, int *dstValue) {
     int retVal = ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
     if (DebugManager.flags.PrintIoctlEntries.get()) {
         printf("DRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode:% d\n",
-               IoctlHelper::getIoctlParamString(param),
+               IoctlHelper::getIoctlParamString(param).c_str(),
                *getParam.value,
                retVal);
     }
@@ -493,130 +614,9 @@ void Drm::printIoctlStatistics() {
     printf("\n--- Ioctls statistics ---\n");
     printf("%40s %15s %10s %20s", "Request", "Total time(ns)", "Count", "Avg time per ioctl\n");
     for (const auto &ioctlData : this->ioctlStatistics) {
-        printf("%40s %15llu %10lu %20f\n", this->ioctlToString(ioctlData.first).c_str(), ioctlData.second.first, static_cast<unsigned long>(ioctlData.second.second), ioctlData.second.first / static_cast<double>(ioctlData.second.second));
+        printf("%40s %15llu %10lu %20f\n", IoctlHelper::getIoctlString(ioctlData.first).c_str(), ioctlData.second.first, static_cast<unsigned long>(ioctlData.second.second), ioctlData.second.first / static_cast<double>(ioctlData.second.second));
     }
     printf("\n");
-}
-
-std::string Drm::ioctlToString(unsigned long request) {
-    switch (request) {
-    case DRM_IOCTL_I915_GEM_EXECBUFFER2:
-        return "DRM_IOCTL_I915_GEM_EXECBUFFER2";
-    case DRM_IOCTL_I915_GEM_WAIT:
-        return "DRM_IOCTL_I915_GEM_WAIT";
-    case DRM_IOCTL_GEM_CLOSE:
-        return "DRM_IOCTL_GEM_CLOSE";
-    case DRM_IOCTL_I915_GEM_USERPTR:
-        return "DRM_IOCTL_I915_GEM_USERPTR";
-    case DRM_IOCTL_I915_INIT:
-        return "DRM_IOCTL_I915_INIT";
-    case DRM_IOCTL_I915_FLUSH:
-        return "DRM_IOCTL_I915_FLUSH";
-    case DRM_IOCTL_I915_FLIP:
-        return "DRM_IOCTL_I915_FLIP";
-    case DRM_IOCTL_I915_BATCHBUFFER:
-        return "DRM_IOCTL_I915_BATCHBUFFER";
-    case DRM_IOCTL_I915_IRQ_EMIT:
-        return "DRM_IOCTL_I915_IRQ_EMIT";
-    case DRM_IOCTL_I915_IRQ_WAIT:
-        return "DRM_IOCTL_I915_IRQ_WAIT";
-    case DRM_IOCTL_I915_GETPARAM:
-        return "DRM_IOCTL_I915_GETPARAM";
-    case DRM_IOCTL_I915_SETPARAM:
-        return "DRM_IOCTL_I915_SETPARAM";
-    case DRM_IOCTL_I915_ALLOC:
-        return "DRM_IOCTL_I915_ALLOC";
-    case DRM_IOCTL_I915_FREE:
-        return "DRM_IOCTL_I915_FREE";
-    case DRM_IOCTL_I915_INIT_HEAP:
-        return "DRM_IOCTL_I915_INIT_HEAP";
-    case DRM_IOCTL_I915_CMDBUFFER:
-        return "DRM_IOCTL_I915_CMDBUFFER";
-    case DRM_IOCTL_I915_DESTROY_HEAP:
-        return "DRM_IOCTL_I915_DESTROY_HEAP";
-    case DRM_IOCTL_I915_SET_VBLANK_PIPE:
-        return "DRM_IOCTL_I915_SET_VBLANK_PIPE";
-    case DRM_IOCTL_I915_GET_VBLANK_PIPE:
-        return "DRM_IOCTL_I915_GET_VBLANK_PIPE";
-    case DRM_IOCTL_I915_VBLANK_SWAP:
-        return "DRM_IOCTL_I915_VBLANK_SWAP";
-    case DRM_IOCTL_I915_HWS_ADDR:
-        return "DRM_IOCTL_I915_HWS_ADDR";
-    case DRM_IOCTL_I915_GEM_INIT:
-        return "DRM_IOCTL_I915_GEM_INIT";
-    case DRM_IOCTL_I915_GEM_EXECBUFFER:
-        return "DRM_IOCTL_I915_GEM_EXECBUFFER";
-    case DRM_IOCTL_I915_GEM_EXECBUFFER2_WR:
-        return "DRM_IOCTL_I915_GEM_EXECBUFFER2_WR";
-    case DRM_IOCTL_I915_GEM_PIN:
-        return "DRM_IOCTL_I915_GEM_PIN";
-    case DRM_IOCTL_I915_GEM_UNPIN:
-        return "DRM_IOCTL_I915_GEM_UNPIN";
-    case DRM_IOCTL_I915_GEM_BUSY:
-        return "DRM_IOCTL_I915_GEM_BUSY";
-    case DRM_IOCTL_I915_GEM_SET_CACHING:
-        return "DRM_IOCTL_I915_GEM_SET_CACHING";
-    case DRM_IOCTL_I915_GEM_GET_CACHING:
-        return "DRM_IOCTL_I915_GEM_GET_CACHING";
-    case DRM_IOCTL_I915_GEM_THROTTLE:
-        return "DRM_IOCTL_I915_GEM_THROTTLE";
-    case DRM_IOCTL_I915_GEM_ENTERVT:
-        return "DRM_IOCTL_I915_GEM_ENTERVT";
-    case DRM_IOCTL_I915_GEM_LEAVEVT:
-        return "DRM_IOCTL_I915_GEM_LEAVEVT";
-    case DRM_IOCTL_I915_GEM_CREATE:
-        return "DRM_IOCTL_I915_GEM_CREATE";
-    case DRM_IOCTL_I915_GEM_PREAD:
-        return "DRM_IOCTL_I915_GEM_PREAD";
-    case DRM_IOCTL_I915_GEM_PWRITE:
-        return "DRM_IOCTL_I915_GEM_PWRITE";
-    case DRM_IOCTL_I915_GEM_SET_DOMAIN:
-        return "DRM_IOCTL_I915_GEM_SET_DOMAIN";
-    case DRM_IOCTL_I915_GEM_SW_FINISH:
-        return "DRM_IOCTL_I915_GEM_SW_FINISH";
-    case DRM_IOCTL_I915_GEM_SET_TILING:
-        return "DRM_IOCTL_I915_GEM_SET_TILING";
-    case DRM_IOCTL_I915_GEM_GET_TILING:
-        return "DRM_IOCTL_I915_GEM_GET_TILING";
-    case DRM_IOCTL_I915_GEM_GET_APERTURE:
-        return "DRM_IOCTL_I915_GEM_GET_APERTURE";
-    case DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID:
-        return "DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID";
-    case DRM_IOCTL_I915_GEM_MADVISE:
-        return "DRM_IOCTL_I915_GEM_MADVISE";
-    case DRM_IOCTL_I915_OVERLAY_PUT_IMAGE:
-        return "DRM_IOCTL_I915_OVERLAY_PUT_IMAGE";
-    case DRM_IOCTL_I915_OVERLAY_ATTRS:
-        return "DRM_IOCTL_I915_OVERLAY_ATTRS";
-    case DRM_IOCTL_I915_SET_SPRITE_COLORKEY:
-        return "DRM_IOCTL_I915_SET_SPRITE_COLORKEY";
-    case DRM_IOCTL_I915_GET_SPRITE_COLORKEY:
-        return "DRM_IOCTL_I915_GET_SPRITE_COLORKEY";
-    case DRM_IOCTL_I915_GEM_CONTEXT_CREATE:
-        return "DRM_IOCTL_I915_GEM_CONTEXT_CREATE";
-    case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT:
-        return "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT";
-    case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY:
-        return "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY";
-    case DRM_IOCTL_I915_REG_READ:
-        return "DRM_IOCTL_I915_REG_READ";
-    case DRM_IOCTL_I915_GET_RESET_STATS:
-        return "DRM_IOCTL_I915_GET_RESET_STATS";
-    case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM:
-        return "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM";
-    case DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM:
-        return "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM";
-    case DRM_IOCTL_I915_PERF_OPEN:
-        return "DRM_IOCTL_I915_PERF_OPEN";
-    case DRM_IOCTL_I915_PERF_ADD_CONFIG:
-        return "DRM_IOCTL_I915_PERF_ADD_CONFIG";
-    case DRM_IOCTL_I915_PERF_REMOVE_CONFIG:
-        return "DRM_IOCTL_I915_PERF_REMOVE_CONFIG";
-    case DRM_IOCTL_I915_QUERY:
-        return "DRM_IOCTL_I915_QUERY";
-    default:
-        return ioctlToStringImpl(request);
-    }
 }
 
 bool Drm::createVirtualMemoryAddressSpace(uint32_t vmCount) {

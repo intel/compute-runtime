@@ -123,3 +123,15 @@ HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOn
     EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
 }
+
+TEST(DrmQueryTest, givenIoctlWhenParseToStringThenProperStringIsReturned) {
+    for (auto ioctlCodeString : ioctlCodeStringMap) {
+        EXPECT_STREQ(IoctlHelper::getIoctlString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
+    }
+}
+
+TEST(DrmQueryTest, givenIoctlParamWhenParseToStringThenProperStringIsReturned) {
+    for (auto ioctlParamCodeString : ioctlParamCodeStringMap) {
+        EXPECT_STREQ(IoctlHelper::getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
+    }
+}
