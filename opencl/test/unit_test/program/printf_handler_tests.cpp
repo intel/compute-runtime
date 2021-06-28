@@ -5,9 +5,13 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/event/user_event.h"
 #include "opencl/source/program/printf_handler.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -15,12 +19,13 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-
-#include "gtest/gtest.h"
+#include "test.h"
 
 using namespace NEO;
 
-TEST(PrintfHandlerTest, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResultIsNullptr) {
+using PrintfHandlerTests = ::testing::Test;
+
+TEST_F(PrintfHandlerTests, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResultIsNullptr) {
     MockClDevice *device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     MockContext context;
 
@@ -42,7 +47,7 @@ TEST(PrintfHandlerTest, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenR
     delete device;
 }
 
-TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenGetSurfaceIsCalledThenResultIsNullptr) {
+TEST_F(PrintfHandlerTests, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenGetSurfaceIsCalledThenResultIsNullptr) {
     MockClDevice *device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     MockContext context;
 
@@ -67,7 +72,52 @@ TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenGetS
     delete device;
 }
 
-TEST(PrintfHandlerTest, givenParentKernelWihoutPrintfAndBlockKernelWithPrintfWhenPrintfHandlerCreateCalledThenResaultIsAnObject) {
+HWTEST_F(PrintfHandlerTests, givenPrintfHandlerWhenEnqueueIsBlockedThenDontUsePrintfObjectAfterMove) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    class MyMockCommandQueueHw : public CommandQueueHw<FamilyType> {
+      public:
+        using CommandQueueHw<FamilyType>::CommandQueueHw;
+        using CommandQueueHw<FamilyType>::enqueueKernel;
+
+        void waitUntilComplete(bool blockedQueue, PrintfHandler *printfHandler) override {
+            waitCalled = true;
+            printfHandlerUsedForWait = printfHandler;
+        }
+
+        bool waitCalled = false;
+        PrintfHandler *printfHandlerUsedForWait = nullptr;
+    };
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context;
+
+    MyMockCommandQueueHw cmdQ(&context, device.get(), nullptr, false);
+
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
+    kernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
+
+    uint64_t crossThread[10];
+    auto program = std::make_unique<MockProgram>(&context, false, toClDeviceVector(*device));
+    auto kernel = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
+    kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
+    kernel->incRefInternal();
+
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent};
+
+    size_t gws[] = {1, 1, 1};
+    cmdQ.enqueueKernel(kernel.get(), 1, nullptr, gws, nullptr, 1, waitlist, nullptr);
+
+    EXPECT_TRUE(cmdQ.waitCalled);
+    EXPECT_EQ(nullptr, cmdQ.printfHandlerUsedForWait);
+
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_FALSE(cmdQ.isQueueBlocked());
+}
+
+TEST_F(PrintfHandlerTests, givenParentKernelWihoutPrintfAndBlockKernelWithPrintfWhenPrintfHandlerCreateCalledThenResaultIsAnObject) {
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context(device.get());
@@ -80,7 +130,7 @@ TEST(PrintfHandlerTest, givenParentKernelWihoutPrintfAndBlockKernelWithPrintfWhe
     ASSERT_NE(nullptr, printfHandler.get());
 }
 
-TEST(PrintfHandlerTest, givenParentKernelAndBlockKernelWithoutPrintfWhenPrintfHandlerCreateCalledThenResaultIsNullptr) {
+TEST_F(PrintfHandlerTests, givenParentKernelAndBlockKernelWithoutPrintfWhenPrintfHandlerCreateCalledThenResaultIsNullptr) {
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context(device.get());
@@ -92,7 +142,7 @@ TEST(PrintfHandlerTest, givenParentKernelAndBlockKernelWithoutPrintfWhenPrintfHa
 
     ASSERT_EQ(nullptr, printfHandler.get());
 }
-TEST(PrintfHandlerTest, givenParentKernelWithPrintfAndBlockKernelWithoutPrintfWhenPrintfHandlerCreateCalledThenResaultIsAnObject) {
+TEST_F(PrintfHandlerTests, givenParentKernelWithPrintfAndBlockKernelWithoutPrintfWhenPrintfHandlerCreateCalledThenResaultIsAnObject) {
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context(device.get());
@@ -105,7 +155,7 @@ TEST(PrintfHandlerTest, givenParentKernelWithPrintfAndBlockKernelWithoutPrintfWh
     ASSERT_NE(nullptr, printfHandler);
 }
 
-TEST(PrintfHandlerTest, givenMultiDispatchInfoWithMultipleKernelsWhenCreatingAndDispatchingPrintfHandlerThenPickMainKernel) {
+TEST_F(PrintfHandlerTests, givenMultiDispatchInfoWithMultipleKernelsWhenCreatingAndDispatchingPrintfHandlerThenPickMainKernel) {
     MockContext context;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto program = std::make_unique<MockProgram>(&context, false, toClDeviceVector(*device));
@@ -138,7 +188,7 @@ TEST(PrintfHandlerTest, givenMultiDispatchInfoWithMultipleKernelsWhenCreatingAnd
     EXPECT_NE(nullptr, printfHandler->getSurface());
 }
 
-TEST(PrintfHandlerTest, GivenEmptyMultiDispatchInfoWhenCreatingPrintfHandlerThenPrintfHandlerIsNotCreated) {
+TEST_F(PrintfHandlerTests, GivenEmptyMultiDispatchInfoWhenCreatingPrintfHandlerThenPrintfHandlerIsNotCreated) {
     MockClDevice device{new MockDevice};
     MockKernelWithInternals mockKernelWithInternals{device};
     MockMultiDispatchInfo multiDispatchInfo{&device, mockKernelWithInternals.mockKernel};
@@ -149,7 +199,7 @@ TEST(PrintfHandlerTest, GivenEmptyMultiDispatchInfoWhenCreatingPrintfHandlerThen
     EXPECT_EQ(nullptr, printfHandler);
 }
 
-TEST(PrintfHandlerTest, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenPreparingPrintfSurfaceDispatchThenBlitterIsUsed) {
+TEST_F(PrintfHandlerTests, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenPreparingPrintfSurfaceDispatchThenBlitterIsUsed) {
     REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
 
     DebugManagerStateRestore restorer;

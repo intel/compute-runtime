@@ -393,7 +393,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     commandStreamRecieverOwnership.unlock();
 
     if (blocking) {
-        waitUntilComplete(blockQueue, printfHandler.get());
+        waitUntilComplete(blockQueue, (blockQueue ? nullptr : printfHandler.get()));
     }
 }
 
