@@ -276,8 +276,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsRegion(const BlitPropert
     UNRECOVERABLE_IF(blitProperties.copySize.x > BlitterConstants::maxBlitWidth || blitProperties.copySize.y > BlitterConstants::maxBlitHeight);
     auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
 
-    bltCmd.setSourceBaseAddress(blitProperties.srcAllocation->getGpuAddress());
-    bltCmd.setDestinationBaseAddress(blitProperties.dstAllocation->getGpuAddress());
+    bltCmd.setSourceBaseAddress(blitProperties.srcGpuAddress);
+    bltCmd.setDestinationBaseAddress(blitProperties.dstGpuAddress);
 
     bltCmd.setDestinationX1CoordinateLeft(static_cast<uint32_t>(blitProperties.dstOffset.x));
     bltCmd.setDestinationY1CoordinateTop(static_cast<uint32_t>(blitProperties.dstOffset.y));

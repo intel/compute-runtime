@@ -1297,8 +1297,8 @@ HWTEST_F(BcsTests, givenImage1DWhenAdjustBlitPropertiesForImageIsCalledThenValue
     Vec3<size_t> size{0, 0, 0};
     size_t bytesPerPixel = 0u;
     size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-
-    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel);
+    uint64_t gpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress);
 
     EXPECT_EQ(imgDesc.image_width, size.x);
     EXPECT_EQ(1u, size.y);
@@ -1317,13 +1317,29 @@ HWTEST_F(BcsTests, givenImage2DArrayWhenAdjustBlitPropertiesForImageIsCalledThen
     Vec3<size_t> size{0, 0, 0};
     size_t bytesPerPixel = 0u;
     size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-
-    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel);
+    uint64_t gpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress);
 
     EXPECT_EQ(imgDesc.image_width, size.x);
     EXPECT_EQ(imgDesc.image_height, size.y);
     EXPECT_EQ(imgDesc.image_array_size, size.z);
     EXPECT_EQ(expectedBytesPerPixel, bytesPerPixel);
+}
+
+HWTEST_F(BcsTests, givenImageWithSurfaceOffsetWhenAdjustBlitPropertiesForImageIsCalledThenGpuAddressIsCorrect) {
+    cl_image_desc imgDesc = Image1dDefaults::imageDesc;
+    std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
+    Vec3<size_t> size{0, 0, 0};
+    size_t bytesPerPixel = 0u;
+
+    uint64_t surfaceOffset = 0x01000;
+    image->setSurfaceOffsets(surfaceOffset, 0, 0, 0);
+    uint64_t gpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
+    uint64_t expectedGpuAddress = gpuAddress + surfaceOffset;
+
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress);
+
+    EXPECT_EQ(gpuAddress, expectedGpuAddress);
 }
 
 HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
