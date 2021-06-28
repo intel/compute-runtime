@@ -1370,6 +1370,27 @@ TEST(CommandQueue, givenHalfFloatImageWhenCallingBlitEnqueueImageAllowedThenCorr
     EXPECT_TRUE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
 }
 
+TEST(CommandQueue, givenImageWithDifferentImageTypesWhenCallingBlitEnqueueImageAllowedThenCorrectResultIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
+    MockContext context{};
+    MockCommandQueue queue(&context, context.getDevice(0), 0);
+
+    size_t correctRegion[3] = {10u, 10u, 0};
+    size_t correctOrigin[3] = {1u, 1u, 0};
+    MockImageBase image;
+
+    image.imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
+    EXPECT_FALSE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
+
+    int imageTypes[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
+
+    for (auto imageType : imageTypes) {
+        image.imageDesc.image_type = imageType;
+        EXPECT_TRUE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
+    }
+}
+
 TEST(CommandQueue, givenSupportForOperationWhenValidatingSupportThenReturnSuccess) {
     MockCommandQueue queue{};
 
