@@ -58,7 +58,7 @@ void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &kernel,
     ze_kernel_desc_t kernelDesc = {};
     kernelDesc.pKernelName = "increment_by_one";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
-    ze_kernel_properties_t kernProps;
+    ze_kernel_properties_t kernProps{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));
     std::cout << "Kernel : \n"
               << " * name : " << kernelDesc.pKernelName << "\n"

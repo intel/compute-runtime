@@ -126,7 +126,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
     kernelDesc.pKernelName = "scratch_kernel";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 
-    ze_kernel_properties_t kernelProperties = {};
+    ze_kernel_properties_t kernelProperties{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernelProperties));
     std::cout << "Scratch size = " << kernelProperties.spillMemSize << "\n";
 

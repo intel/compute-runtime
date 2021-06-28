@@ -80,7 +80,7 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
     ze_kernel_desc_t kernelDesc = {};
     kernelDesc.pKernelName = "kernel_copy";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
-    ze_kernel_properties_t kernProps;
+    ze_kernel_properties_t kernProps{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));
     std::cout << "Kernel : \n"
               << " * name : " << kernelDesc.pKernelName << "\n"
