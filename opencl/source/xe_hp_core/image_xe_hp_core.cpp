@@ -6,12 +6,11 @@
  */
 
 #include "shared/source/device/device.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/xe_hp_core/hw_cmds.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/image.inl"
-
-#include "gmm_client_context.h"
 
 namespace NEO {
 

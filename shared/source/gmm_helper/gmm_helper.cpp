@@ -7,14 +7,13 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
-
-#include "gmm_client_context.h"
 
 #include <algorithm>
 
@@ -47,5 +46,5 @@ GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hw
 
 GmmHelper::~GmmHelper() = default;
 
-decltype(GmmHelper::createGmmContextWrapperFunc) GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<GmmClientContext>;
+decltype(GmmHelper::createGmmContextWrapperFunc) GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<GmmClientContext>;
 } // namespace NEO

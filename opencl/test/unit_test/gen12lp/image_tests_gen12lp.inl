@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -17,8 +18,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
-
-#include "mock_gmm_client_context.h"
 
 #include <functional>
 

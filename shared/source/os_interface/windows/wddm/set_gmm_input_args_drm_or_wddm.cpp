@@ -5,9 +5,8 @@
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
-
-#include "gmm_client_context.h"
 
 namespace NEO {
 

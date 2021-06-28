@@ -14,6 +14,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
@@ -24,7 +25,6 @@
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 
-#include "gmm_client_context.h"
 #include "pipe_control_args.h"
 
 #include <algorithm>

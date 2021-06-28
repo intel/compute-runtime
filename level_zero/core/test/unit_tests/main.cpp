@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
 #endif
 
     if (useMockGmm) {
-        NEO::GmmHelper::createGmmContextWrapperFunc = NEO::GmmClientContextBase::create<MockGmmClientContext>;
+        NEO::GmmHelper::createGmmContextWrapperFunc = NEO::GmmClientContext::create<MockGmmClientContext>;
     } else {
         NEO::GmmInterface::initialize(nullptr, nullptr);
     }

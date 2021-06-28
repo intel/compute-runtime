@@ -442,7 +442,7 @@ int main(int argc, char **argv) {
     SetUnhandledExceptionFilter(&UltExceptionFilter);
 #endif
     if (useMockGmm) {
-        GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<MockGmmClientContext>;
+        GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
     } else {
         GmmInterface::initialize(nullptr, nullptr);
     }

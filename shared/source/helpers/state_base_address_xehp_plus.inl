@@ -7,10 +7,9 @@
 
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/state_base_address_base.inl"
-
-#include "gmm_client_context.h"
 
 namespace NEO {
 

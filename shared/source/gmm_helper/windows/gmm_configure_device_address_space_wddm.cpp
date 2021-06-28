@@ -5,11 +5,10 @@
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/windows/gmm_memory_base.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/windows/windows_defs.h"
-
-#include "gmm_client_context.h"
 
 namespace NEO {
 

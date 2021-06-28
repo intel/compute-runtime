@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -39,7 +40,6 @@
 #include "shared/source/sku_info/operations/windows/sku_info_receiver.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "gmm_client_context.h"
 #include "gmm_memory.h"
 
 namespace NEO {

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -26,7 +27,6 @@
 
 #include "GL/gl.h"
 #include "GL/glext.h"
-#include "gmm_client_context.h"
 #include "gtest/gtest.h"
 #include "igfxfmid.h"
 

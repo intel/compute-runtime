@@ -31,7 +31,6 @@
 #include "opencl/source/sharings/sharing_factory.h"
 
 #include "CL/cl_ext.h"
-#include "gmm_client_context.h"
 
 #include <algorithm>
 #include <map>

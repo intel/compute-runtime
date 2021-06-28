@@ -476,7 +476,7 @@ int main(int argc, char **argv) {
     }
 #endif
     if (useMockGmm) {
-        GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<MockGmmClientContext>;
+        GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
     } else {
         GmmInterface::initialize(nullptr, nullptr);
     }

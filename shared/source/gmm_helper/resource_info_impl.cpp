@@ -5,10 +5,9 @@
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
-
-#include "gmm_client_context.h"
 
 namespace NEO {
 
