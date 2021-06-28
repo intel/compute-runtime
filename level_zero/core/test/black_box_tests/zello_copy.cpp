@@ -454,7 +454,7 @@ int main(int argc, char *argv[]) {
     auto device = devices[0];
     bool outputValidationSuccessful = false;
 
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     std::cout << "Device : \n"
               << " * name : " << deviceProperties.name << "\n"

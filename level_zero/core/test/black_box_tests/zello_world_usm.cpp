@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     auto devices = zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     std::cout << "Device : \n"
               << " * name : " << deviceProperties.name << "\n"
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<char[]> spirvInput(new char[length]);
     file.read(spirvInput.get(), length);
 
-    ze_module_desc_t moduleDesc = {};
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     ze_module_build_log_handle_t buildlog;
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvInput.get());
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     }
     SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
-    ze_kernel_desc_t kernelDesc = {};
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "CopyBufferToBufferBytes";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
         zeMemAllocShared(context, &deviceDesc, &hostDesc,
                          allocSize, 1, device, &dstBuffer));
 
-    ze_memory_allocation_properties_t memProperties = {};
+    ze_memory_allocation_properties_t memProperties = {ZE_STRUCTURE_TYPE_MEMORY_ALLOCATION_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeMemGetAllocProperties(context, srcBuffer, &memProperties, &device));
 
     SUCCESS_OR_TERMINATE_BOOL(memProperties.type == ZE_MEMORY_TYPE_SHARED);

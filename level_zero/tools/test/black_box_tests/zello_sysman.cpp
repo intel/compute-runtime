@@ -126,7 +126,7 @@ void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_ha
     devices.resize(deviceCount);
     VALIDATECALL(zeDeviceGet(driverHandle, &deviceCount, devices.data()));
 
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     for (const auto &device : devices) {
         VALIDATECALL(zeDeviceGetProperties(device, &deviceProperties));
 

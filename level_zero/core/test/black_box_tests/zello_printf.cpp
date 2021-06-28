@@ -31,7 +31,7 @@ void testPrintfKernel(ze_context_handle_t context, ze_device_handle_t &device) {
     ze_command_list_handle_t cmdList;
     ze_group_count_t dispatchTraits;
 
-    ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
 
     cmdQueueDesc.ordinal = 0;
     cmdQueueDesc.index = 0;
@@ -47,7 +47,7 @@ void testPrintfKernel(ze_context_handle_t context, ze_device_handle_t &device) {
     }
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
-    ze_module_desc_t moduleDesc = {};
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = spirV.data();
     moduleDesc.inputSize = spirV.size();
@@ -55,7 +55,7 @@ void testPrintfKernel(ze_context_handle_t context, ze_device_handle_t &device) {
 
     SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
 
-    ze_kernel_desc_t kernelDesc = {};
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "test_printf";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
     auto devices = zelloInitContextAndGetDevices(context);
     auto device = devices[0];
 
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     std::cout << "Device : \n"
               << " * name : " << deviceProperties.name << "\n"

@@ -104,7 +104,7 @@ void executeKernelAndValidate(ze_context_handle_t context,
                               setGlobalWorkOffsetFunctionType pfnSetGlobalWorkOffset,
                               bool &outputValidationSuccessful) {
     ze_command_queue_handle_t cmdQueue;
-    ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     ze_command_list_handle_t cmdList;
 
     cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
@@ -114,11 +114,11 @@ void executeKernelAndValidate(ze_context_handle_t context,
     SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
     // Create two shared buffers
     constexpr size_t allocSize = 4096;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     deviceDesc.ordinal = 0;
 
-    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
     void *srcBuffer = nullptr;
@@ -149,7 +149,7 @@ void executeKernelAndValidate(ze_context_handle_t context,
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
 
-    ze_module_desc_t moduleDesc = {};
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     ze_module_build_log_handle_t buildlog;
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = spirV.data();
@@ -168,10 +168,10 @@ void executeKernelAndValidate(ze_context_handle_t context,
     }
     SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
-    ze_kernel_desc_t kernelDesc = {};
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "kernel_copy";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
-    ze_kernel_properties_t kernProps;
+    ze_kernel_properties_t kernProps = {ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));
     std::cout << "Kernel : \n"
               << " * name : " << kernelDesc.pKernelName << "\n"
@@ -291,7 +291,7 @@ int main(int argc, char *argv[]) {
 
     setGlobalWorkOffsetFunctionType pfnSetGlobalWorkOffset = findSymbolForSetGlobalWorkOffsetFunction(userPath);
 
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     std::cout << "Device : \n"
               << " * name : " << deviceProperties.name << "\n"

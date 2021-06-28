@@ -27,7 +27,7 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
-    ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
 
     cmdQueueDesc.pNext = nullptr;
@@ -45,7 +45,7 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     cmdListDesc.commandQueueGroupOrdinal = copyQueueGroup;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 
-    ze_device_mem_alloc_desc_t deviceDesc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     deviceDesc.ordinal = 0;
     deviceDesc.flags = 0;
@@ -97,7 +97,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
-    ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
 
     cmdQueueDesc.pNext = nullptr;
@@ -115,13 +115,13 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     cmdListDesc.commandQueueGroupOrdinal = copyQueueGroup;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 
-    ze_host_mem_alloc_desc_t hostDesc;
+    ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
     hostDesc.pNext = nullptr;
     hostDesc.flags = 0;
     SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, (void **)(&hostBuffer)));
 
-    ze_device_mem_alloc_desc_t deviceDesc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     deviceDesc.ordinal = 0;
     deviceDesc.flags = 0;
@@ -165,7 +165,7 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
-    ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
 
     cmdQueueDesc.pNext = nullptr;
@@ -202,13 +202,13 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
     const ze_copy_region_t dstRegion = {dstOriginX, dstOriginY, 0, width, height, 0};
     const ze_copy_region_t srcRegion = {srcOriginX, srcOriginY, 0, width, height, 0};
 
-    ze_device_mem_alloc_desc_t deviceDesc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     deviceDesc.ordinal = 0;
     deviceDesc.flags = 0;
     deviceDesc.pNext = nullptr;
 
-    ze_host_mem_alloc_desc_t hostDesc;
+    ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
     hostDesc.pNext = nullptr;
     hostDesc.flags = 0;
@@ -292,7 +292,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
-    ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
 
     cmdQueueDesc.pNext = nullptr;
@@ -313,13 +313,13 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     // Initialize buffers
     // buffer0 and buffer1 are shared allocations, so they have UVA between host and device
     // and there's no need to perform explicit copies
-    ze_device_mem_alloc_desc_t deviceDesc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     deviceDesc.ordinal = 0;
     deviceDesc.flags = 0;
     deviceDesc.pNext = nullptr;
 
-    ze_host_mem_alloc_desc_t hostDesc;
+    ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
     hostDesc.pNext = nullptr;
     hostDesc.flags = 0;
@@ -397,7 +397,7 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
-    ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
 
     cmdQueueDesc.pNext = nullptr;
@@ -439,13 +439,13 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
     const ze_copy_region_t dstRegion = {dstOriginX, dstOriginY, dstOriginZ, width, height, depth};
     const ze_copy_region_t srcRegion = {srcOriginX, srcOriginY, dstOriginZ, width, height, depth};
 
-    ze_device_mem_alloc_desc_t deviceDesc;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     deviceDesc.ordinal = 0;
     deviceDesc.flags = 0;
     deviceDesc.pNext = nullptr;
 
-    ze_host_mem_alloc_desc_t hostDesc;
+    ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
     hostDesc.pNext = nullptr;
     hostDesc.flags = 0;
@@ -539,7 +539,7 @@ int main(int argc, char *argv[]) {
     auto devices = zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     std::cout << "Device : \n"
               << " * name : " << deviceProperties.name << "\n"

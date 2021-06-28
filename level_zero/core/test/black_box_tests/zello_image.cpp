@@ -68,7 +68,7 @@ void testAppendImageFunction(ze_driver_handle_t driver,
 
     ze_command_list_handle_t cmdList;
 
-    ze_command_list_desc_t cmdListDesc = {};
+    ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = cmdQueueOrdinal;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 

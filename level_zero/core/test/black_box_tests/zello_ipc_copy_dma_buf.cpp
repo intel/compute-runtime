@@ -86,7 +86,7 @@ inline void initializeProcess(ze_context_handle_t &context,
     ze_driver_handle_t driverHandle;
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
 
-    ze_context_desc_t contextDesc = {};
+    ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
     SUCCESS_OR_TERMINATE(zeContextCreate(driverHandle, &contextDesc, &context));
 
     // Retrieve device
@@ -97,7 +97,7 @@ inline void initializeProcess(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, &device));
 
     // Print some properties
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
 
     std::cout << "Device : \n"
@@ -112,10 +112,13 @@ inline void initializeProcess(ze_context_handle_t &context,
         std::terminate();
     }
     std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
+    for (auto &queueProperty : queueProperties) {
+        queueProperty.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_GROUP_PROPERTIES;
+    }
     SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups,
                                                                 queueProperties.data()));
 
-    ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     for (uint32_t i = 0; i < numQueueGroups; i++) {
         if (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) {
             cmdQueueDesc.ordinal = i;
@@ -126,7 +129,7 @@ inline void initializeProcess(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
 
     // Create command list
-    ze_command_list_desc_t cmdListDesc = {};
+    ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = cmdQueueDesc.ordinal;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 }
@@ -183,7 +186,7 @@ void run_server(bool &validRet) {
     initializeProcess(context, device, cmdQueue, cmdList);
 
     void *zeBuffer = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
 
     for (uint32_t i = 0; i < CHILDPROCESSES; i++) {
@@ -224,7 +227,7 @@ void run_server(bool &validRet) {
         }
 
         void *validateBuffer = nullptr;
-        ze_host_mem_alloc_desc_t hostDesc = {};
+        ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
         SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc,
                                               allocSize, 1, device, &validateBuffer));
 

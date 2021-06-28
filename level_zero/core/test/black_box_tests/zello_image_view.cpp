@@ -55,7 +55,7 @@ void testAppendImageViewCopy(ze_context_handle_t &context, ze_device_handle_t &d
     ze_command_queue_handle_t cmdQueue = nullptr;
     ze_command_list_handle_t cmdList = nullptr;
 
-    ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -181,7 +181,7 @@ void testAppendImageViewCopy(ze_context_handle_t &context, ze_device_handle_t &d
         ze_module_handle_t module = nullptr;
         ze_kernel_handle_t kernel = nullptr;
 
-        ze_module_desc_t moduleDesc = {};
+        ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
         ze_module_build_log_handle_t buildlog;
         moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
         moduleDesc.pInputModule = spirV.data();
@@ -200,7 +200,7 @@ void testAppendImageViewCopy(ze_context_handle_t &context, ze_device_handle_t &d
         }
         SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
-        ze_kernel_desc_t kernelDesc = {};
+        ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
         kernelDesc.pKernelName = "ReadNV12Kernel";
         SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 
@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
     auto device = devices[0];
     bool outputValidationSuccessful;
 
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     std::cout << "Device : \n"
               << " * name : " << deviceProperties.name << "\n"

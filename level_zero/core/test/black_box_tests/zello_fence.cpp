@@ -32,7 +32,7 @@ void createModule(ze_context_handle_t &context, ze_module_handle_t &module, ze_d
     }
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
-    ze_module_desc_t moduleDesc = {};
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     ze_module_build_log_handle_t buildlog;
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = spirV.data();
@@ -55,7 +55,7 @@ void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &kernel,
                   uint32_t numThreads, uint32_t sizex, uint32_t sizey,
                   uint32_t sizez) {
 
-    ze_kernel_desc_t kernelDesc = {};
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "increment_by_one";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
     ze_kernel_properties_t kernProps{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
@@ -104,7 +104,7 @@ bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
     uint32_t groupSizeZ = 1u;
 
     // Create commandQueue and cmdList
-    ze_command_queue_desc_t cmdQueueDesc = {};
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
     auto devices = zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     std::cout << "Device : \n"
               << " * name : " << deviceProperties.name << "\n"
