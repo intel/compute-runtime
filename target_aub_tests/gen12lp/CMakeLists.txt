@@ -1,9 +1,9 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2019-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-if(TESTS_SKL)
+if(TESTS_GEN12LP)
   add_subdirectories()
 endif()

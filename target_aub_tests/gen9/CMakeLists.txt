@@ -4,6 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(TESTS_SKL)
+if(TESTS_GEN9)
   add_subdirectories()
 endif()

@@ -5,5 +5,6 @@
 #
 
 if(TESTS_SKL)
-  add_subdirectories()
+  set(aub_test_config "skl/1/3/8/9")
+  include(${NEO_SOURCE_DIR}/cmake/run_aub_test_target.cmake)
 endif()

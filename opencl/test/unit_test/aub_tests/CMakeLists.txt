@@ -41,9 +41,6 @@ if(WIN32)
   )
 endif()
 
-add_custom_target(run_aub_tests)
-set_target_properties(run_aub_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
-
 if(WIN32)
   target_include_directories(igdrcl_aub_tests PRIVATE
                              ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_DIR_SUFFIX}
