@@ -34,7 +34,7 @@ struct KernelHw : public KernelImp {
 
         // Remove misalligned bytes, accounted for in in bufferOffset patch token
         baseAddress &= sshAlignmentMask;
-
+        auto misalignedSize = ptrDiff(alloc->getGpuAddressToPatch(), baseAddress);
         auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
         size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
         auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
@@ -55,6 +55,7 @@ struct KernelHw : public KernelImp {
         }
         uint64_t bufferAddressForSsh = baseAddress;
         auto alignment = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment();
+        bufferSizeForSsh += misalignedSize;
         bufferSizeForSsh = alignUp(bufferSizeForSsh, alignment);
 
         bool l3Enabled = true;

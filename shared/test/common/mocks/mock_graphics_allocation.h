@@ -18,11 +18,14 @@ constexpr size_t mockMaxOsContextCount = 4u;
 
 class MockGraphicsAllocation : public MemoryAllocation {
   public:
+    using MemoryAllocation::allocationOffset;
     using MemoryAllocation::aubInfo;
+    using MemoryAllocation::gpuAddress;
     using MemoryAllocation::MemoryAllocation;
     using MemoryAllocation::memoryPool;
     using MemoryAllocation::objectNotResident;
     using MemoryAllocation::objectNotUsed;
+    using MemoryAllocation::size;
     using MemoryAllocation::usageInfos;
 
     MockGraphicsAllocation()
