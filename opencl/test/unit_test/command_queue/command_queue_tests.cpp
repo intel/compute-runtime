@@ -1353,23 +1353,6 @@ TEST(CommandQueue, givenMipMappedImageWhenCallingBlitEnqueueImageAllowedThenCorr
     EXPECT_FALSE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
 }
 
-TEST(CommandQueue, givenNV12ImageWhenCallingBlitEnqueueImageAllowedThenCorrectResultIsReturned) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
-    MockContext context{};
-    MockCommandQueue queue(&context, context.getDevice(0), 0);
-
-    size_t correctRegion[3] = {10u, 10u, 0};
-    size_t correctOrigin[3] = {1u, 1u, 0};
-    MockImageBase image;
-
-    image.imageFormat.image_channel_order = CL_NV12_INTEL;
-    EXPECT_FALSE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
-
-    image.imageFormat.image_channel_order = CL_RGBA;
-    EXPECT_TRUE(queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, image));
-}
-
 TEST(CommandQueue, givenHalfFloatImageWhenCallingBlitEnqueueImageAllowedThenCorrectResultIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableBlitterForReadWriteImage.set(1);
