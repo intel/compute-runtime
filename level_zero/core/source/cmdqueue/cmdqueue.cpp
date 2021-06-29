@@ -62,6 +62,9 @@ void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &
                                  NEO::QueueThrottle::HIGH, NEO::QueueSliceCount::defaultSliceCount,
                                  commandStream->getUsed(), commandStream, endingCmdPtr, false);
 
+    commandStream->getGraphicsAllocation()->updateTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
+    commandStream->getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
+
     csr->submitBatchBuffer(batchBuffer, csr->getResidencyAllocations());
     buffers.setCurrentFlushStamp(csr->obtainCurrentFlushStamp());
 }
