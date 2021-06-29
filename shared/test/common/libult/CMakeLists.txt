@@ -68,7 +68,7 @@ target_include_directories(igdrcl_libult_common PRIVATE
 )
 
 set_target_properties(igdrcl_libult_common PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_target_properties(igdrcl_libult_common PROPERTIES FOLDER ${NEO_SHARED_TEST_DIRECTORY})
+set_target_properties(igdrcl_libult_common PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_FOLDER})
 set_property(TARGET igdrcl_libult_common APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
 target_include_directories(igdrcl_libult_common PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
 target_compile_definitions(igdrcl_libult_common PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
