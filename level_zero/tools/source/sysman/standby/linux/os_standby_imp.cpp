@@ -47,12 +47,17 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
 }
 
 ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
-    // standbyModeFile is not writable.
-    // Mode cannot be set from L0.
-    // To set the mode, user must reload
-    // the i915 module and set module parameter
-    // enable_rc6 appropriately.
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    if (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) {
+        result = pSysfsAccess->write(standbyModeFile, standbyModeDefault);
+    } else {
+        result = pSysfsAccess->write(standbyModeFile, standbyModeNever);
+    }
+
+    if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return result;
 }
 
 LinuxStandbyImp::LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,8 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
         ON_CALL(*ptestSysfsAccess.get(), read(_, Matcher<int &>(_)))
             .WillByDefault(::testing::Invoke(ptestSysfsAccess.get(), &Mock<StandbySysfsAccess>::getVal));
+        ON_CALL(*ptestSysfsAccess.get(), write(_, Matcher<int>(_)))
+            .WillByDefault(::testing::Invoke(ptestSysfsAccess.get(), &Mock<StandbySysfsAccess>::setVal));
         ON_CALL(*ptestSysfsAccess.get(), canRead(_))
             .WillByDefault(::testing::Invoke(ptestSysfsAccess.get(), &Mock<StandbySysfsAccess>::getCanReadStatus));
         for (const auto &handle : pSysmanDeviceImp->pStandbyHandleContext->handleList) {
@@ -163,13 +165,80 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThe
     }
 }
 
-TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeThenVerifySysmanzesySetModeCallFailsWithUnsupported) {
+TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetModeOnUnavailableFileThenVerifyzesStandbyGetModeCallFailsForUnsupportedFeature) {
+    zes_standby_promo_mode_t mode = {};
+    ptestSysfsAccess->setVal(standbyModeFile, standbyModeInvalid);
     auto handles = get_standby_handles(mockHandleCount);
 
+    ptestSysfsAccess->isStandbyModeFileAvailable = false;
+
+    for (auto hSysmanStandby : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesStandbyGetMode(hSysmanStandby, &mode));
+    }
+}
+
+TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetModeWithInsufficientPermissionsThenVerifyzesStandbyGetModeCallFailsForInsufficientPermissions) {
+    zes_standby_promo_mode_t mode = {};
+    ptestSysfsAccess->setVal(standbyModeFile, standbyModeInvalid);
+    auto handles = get_standby_handles(mockHandleCount);
+
+    ptestSysfsAccess->mockStandbyFileMode &= ~S_IRUSR;
+
+    for (auto hSysmanStandby : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesStandbyGetMode(hSysmanStandby, &mode));
+    }
+}
+
+TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeThenwithUnwritableFileVerifySysmanzesySetModeCallFailedWithInsufficientPermissions) {
+    auto handles = get_standby_handles(mockHandleCount);
+    ptestSysfsAccess->mockStandbyFileMode &= ~S_IWUSR;
+
+    for (auto hSysmanStandby : handles) {
+        EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_NEVER));
+    }
+}
+
+TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeOnUnavailableFileThenVerifyzesStandbySetModeCallFailsForUnsupportedFeature) {
+    auto handles = get_standby_handles(mockHandleCount);
+
+    ptestSysfsAccess->isStandbyModeFileAvailable = false;
     for (auto hSysmanStandby : handles) {
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_NEVER));
     }
 }
+
+TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeNeverThenVerifySysmanzesySetModeCallSucceeds) {
+    auto handles = get_standby_handles(mockHandleCount);
+
+    for (auto hSysmanStandby : handles) {
+        zes_standby_promo_mode_t mode;
+        ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_DEFAULT, mode);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_NEVER));
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_NEVER, mode);
+    }
+}
+
+TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeDefaultThenVerifySysmanzesySetModeCallSucceeds) {
+    auto handles = get_standby_handles(mockHandleCount);
+
+    for (auto hSysmanStandby : handles) {
+        zes_standby_promo_mode_t mode;
+        ptestSysfsAccess->setVal(standbyModeFile, standbyModeNever);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_NEVER, mode);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_DEFAULT));
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
+        EXPECT_EQ(ZES_STANDBY_PROMO_MODE_DEFAULT, mode);
+    }
+}
+
 TEST_F(ZesStandbyFixture, GivenOnSubdeviceNotSetWhenValidatingosStandbyGetPropertiesThenSuccessIsReturned) {
     zes_standby_properties_t properties = {};
     ze_device_properties_t deviceProperties = {};
@@ -260,5 +329,6 @@ TEST_F(ZesStandbyMultiDeviceFixture, GivenOnSubdeviceNotSetWhenValidatingosStand
     EXPECT_EQ(properties.onSubdevice, isSubDevice);
     delete pLinuxStandbyImp;
 }
+
 } // namespace ult
 } // namespace L0
