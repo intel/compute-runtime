@@ -1143,6 +1143,30 @@ HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOpti
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
 }
 
+HWTEST_F(ModuleTranslationUnitTest, givenSystemSharedAllocationAllowedWhenBuildingModuleThen4GbBuffersAreRequired) {
+    struct MockCompilerInterface : CompilerInterface {
+        TranslationOutput::ErrorCode build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &output) override {
+            inputInternalOptions = input.internalOptions.begin();
+            return TranslationOutput::ErrorCode::Success;
+        }
+        std::string inputInternalOptions;
+    };
+
+    auto mockCompilerInterface = new MockCompilerInterface;
+    auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
+
+    MockModuleTranslationUnit moduleTu(device);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    EXPECT_TRUE(ret);
+
+    if (neoDevice->areSharedSystemAllocationsAllowed()) {
+        EXPECT_NE(mockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
+    } else {
+        EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
+    }
+}
+
 using PrintfModuleTest = Test<DeviceFixture>;
 
 HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAllocationIsPlacedInResidencyContainer) {
