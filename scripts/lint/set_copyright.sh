@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #
 # Copyright (C) 2018-2020 Intel Corporation
 #

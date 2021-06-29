@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 #
 # Copyright (C) 2018-2021 Intel Corporation
 #
@@ -152,6 +153,8 @@ def main(args):
                 first_line = ''
             else:
                 line = fin.readline()
+                while(line == '\n'):
+                    line = fin.readline()
 
             is_cpp = False
 
@@ -235,7 +238,7 @@ def main(args):
             os.remove(path)
             with open(path, 'w') as fout:
                 if first_line:
-                    fout.write(first_line)
+                    fout.write(f'{first_line}\n')
 
                 fout.write(''.join(written_header))
                 contents = ''.join(gathered_lines)
