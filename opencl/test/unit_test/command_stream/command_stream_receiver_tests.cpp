@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
+#include "opencl/source/command_stream/definitions/command_stream_receiver_simulated_hw.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -43,7 +44,6 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
 
-#include "command_stream_receiver_simulated_hw.h"
 #include "gmock/gmock.h"
 
 using namespace NEO;

@@ -882,19 +882,18 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithKernelIsaWhenAllocati
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
     EXPECT_NE(0u, allocation->getGpuAddress());
-    EXPECT_EQ(EngineLimits::maxHandleCount, allocation->getNumGmms());
+    EXPECT_EQ(1u, allocation->getNumGmms());
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     auto &bos = drmAllocation->getBOs();
     auto boAddress = drmAllocation->getGpuAddress();
-    for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
-        auto bo = bos[handleId];
-        ASSERT_NE(nullptr, bo);
-        auto boSize = allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation();
-        EXPECT_EQ(boAddress, bo->peekAddress());
-        EXPECT_EQ(boSize, bo->peekSize());
-        EXPECT_EQ(boSize, 3 * MemoryConstants::pageSize64k);
-    }
+
+    auto bo = bos[0];
+    ASSERT_NE(nullptr, bo);
+    auto boSize = allocation->getGmm(0)->gmmResourceInfo->getSizeAllocation();
+    EXPECT_EQ(boAddress, bo->peekAddress());
+    EXPECT_EQ(boSize, bo->peekSize());
+    EXPECT_EQ(boSize, 3 * MemoryConstants::pageSize64k);
 
     memoryManager->freeGraphicsMemory(allocation);
 }

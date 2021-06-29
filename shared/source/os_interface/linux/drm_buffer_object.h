@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "drm/i915_drm.h"
-#include "engine_limits.h"
 
 #include <array>
 #include <atomic>

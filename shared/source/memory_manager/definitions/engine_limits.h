@@ -11,7 +11,7 @@
 namespace NEO {
 namespace EngineLimits {
 
-constexpr uint32_t maxHandleCount = 1u;
+constexpr uint32_t maxHandleCount = 4u;
 
 }; // namespace EngineLimits
 } // namespace NEO

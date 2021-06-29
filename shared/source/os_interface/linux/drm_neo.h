@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/engine_info.h"
@@ -18,7 +19,6 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "drm/i915_drm.h"
-#include "engine_limits.h"
 #include "engine_node.h"
 #include "igfxfmid.h"
 

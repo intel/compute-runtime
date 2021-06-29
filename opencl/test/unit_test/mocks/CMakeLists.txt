@@ -25,6 +25,7 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr_simulated_common_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_execution_environment.h

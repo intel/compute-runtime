@@ -6,12 +6,22 @@
  */
 
 #pragma once
+#include "shared/source/aub/aub_helper.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"
+#include "opencl/source/helpers/hardware_context_controller.h"
 
+#include "aub_mem_dump.h"
 #include "third_party/aub_stream/headers/allocation_params.h"
+#include "third_party/aub_stream/headers/aub_manager.h"
+#include "third_party/aub_stream/headers/hardware_context.h"
 
 namespace NEO {
 class GraphicsAllocation;
@@ -21,11 +31,47 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulatedCommonHw;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::osContext;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getDeviceIndex;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::writeMemory;
 
   public:
     uint32_t getMemoryBank(GraphicsAllocation *allocation) const {
-        return MemoryBanks::getBank(getDeviceIndex());
+        if (aubManager) {
+            return static_cast<uint32_t>(getMemoryBanksBitfield(allocation).to_ulong());
+        }
+
+        uint32_t deviceIndexChosen = allocation->storageInfo.memoryBanks.any()
+                                         ? getDeviceIndexFromStorageInfo(allocation->storageInfo)
+                                         : getDeviceIndex();
+
+        if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
+            return MemoryBanks::getBankForLocalMemory(deviceIndexChosen);
+        }
+        return MemoryBanks::getBank(deviceIndexChosen);
     }
+
+    static uint32_t getDeviceIndexFromStorageInfo(StorageInfo storageInfo) {
+        uint32_t deviceIndex = 0;
+        while (!storageInfo.memoryBanks.test(0)) {
+            storageInfo.memoryBanks >>= 1;
+            deviceIndex++;
+        }
+        return deviceIndex;
+    }
+
+    DeviceBitfield getMemoryBanksBitfield(GraphicsAllocation *allocation) const {
+        if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
+            if (allocation->storageInfo.memoryBanks.any()) {
+                if (allocation->storageInfo.cloningOfPageTables || this->isMultiOsContextCapable()) {
+                    return allocation->storageInfo.memoryBanks;
+                }
+            }
+            return this->osContext->getDeviceBitfield();
+        }
+        return {};
+    }
+
     int getAddressSpace(int hint) {
         bool traceLocalAllowed = false;
         switch (hint) {
@@ -46,7 +92,9 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         return AubMemDump::AddressSpaceValues::TraceNonlocal;
     }
     PhysicalAddressAllocator *createPhysicalAddressAllocator(const HardwareInfo *hwInfo) {
-        return new PhysicalAddressAllocator();
+        const auto bankSize = AubHelper::getMemBankSize(hwInfo);
+        const auto devicesCount = HwHelper::getSubDevicesCount(hwInfo);
+        return new PhysicalAddressAllocatorHw<GfxFamily>(bankSize, devicesCount);
     }
     void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override {
         uint64_t gpuAddress;
@@ -64,20 +112,44 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
 
         allocationParams.additionalParams.compressionEnabled = gmm ? gmm->isCompressionEnabled : false;
 
-        this->aubManager->writeMemory2(allocationParams);
+        if (graphicsAllocation.storageInfo.cloningOfPageTables || !graphicsAllocation.isAllocatedInLocalMemoryPool()) {
+            aubManager->writeMemory2(allocationParams);
+        } else {
+            hardwareContextController->writeMemory(allocationParams);
+        }
     }
 
     void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation) override {
-        graphicsAllocation.setAubWritable(writable, getMemoryBank(&graphicsAllocation));
+        auto bank = getMemoryBank(&graphicsAllocation);
+        if (bank == 0u || graphicsAllocation.storageInfo.cloningOfPageTables) {
+            bank = GraphicsAllocation::defaultBank;
+        }
+
+        graphicsAllocation.setAubWritable(writable, bank);
     }
+
     bool isAubWritable(GraphicsAllocation &graphicsAllocation) const override {
-        return graphicsAllocation.isAubWritable(getMemoryBank(&graphicsAllocation));
+        auto bank = getMemoryBank(&graphicsAllocation);
+        if (bank == 0u || graphicsAllocation.storageInfo.cloningOfPageTables) {
+            bank = GraphicsAllocation::defaultBank;
+        }
+        return graphicsAllocation.isAubWritable(bank);
     }
+
     void setTbxWritable(bool writable, GraphicsAllocation &graphicsAllocation) override {
-        graphicsAllocation.setTbxWritable(writable, getMemoryBank(&graphicsAllocation));
+        auto bank = getMemoryBank(&graphicsAllocation);
+        if (bank == 0u || graphicsAllocation.storageInfo.cloningOfPageTables) {
+            bank = GraphicsAllocation::defaultBank;
+        }
+        graphicsAllocation.setTbxWritable(writable, bank);
     }
+
     bool isTbxWritable(GraphicsAllocation &graphicsAllocation) const override {
-        return graphicsAllocation.isTbxWritable(getMemoryBank(&graphicsAllocation));
+        auto bank = getMemoryBank(&graphicsAllocation);
+        if (bank == 0u || graphicsAllocation.storageInfo.cloningOfPageTables) {
+            bank = GraphicsAllocation::defaultBank;
+        }
+        return graphicsAllocation.isTbxWritable(bank);
     }
 };
 } // namespace NEO

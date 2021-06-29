@@ -14,9 +14,9 @@
 #include "shared/source/utilities/spinlock.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
+#include "opencl/source/command_stream/definitions/command_stream_receiver_simulated_hw.h"
 
 #include "aub_mapper.h"
-#include "command_stream_receiver_simulated_hw.h"
 
 namespace NEO {
 

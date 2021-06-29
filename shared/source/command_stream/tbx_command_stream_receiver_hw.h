@@ -11,8 +11,9 @@
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/page_table.h"
 
+#include "opencl/source/command_stream/definitions/command_stream_receiver_simulated_hw.h"
+
 #include "aub_mapper.h"
-#include "command_stream_receiver_simulated_hw.h"
 
 #include <set>
 

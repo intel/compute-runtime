@@ -80,6 +80,24 @@ bool GraphicsAllocation::isAllocationLockable() const {
     return 0 == gmm->resourceParams.Flags.Info.NotLockable;
 }
 
+void GraphicsAllocation::setAubWritable(bool writable, uint32_t banks) {
+    UNRECOVERABLE_IF(banks == 0);
+    aubInfo.aubWritable = static_cast<uint32_t>(setBits(aubInfo.aubWritable, writable, banks));
+}
+
+bool GraphicsAllocation::isAubWritable(uint32_t banks) const {
+    return isAnyBitSet(aubInfo.aubWritable, banks);
+}
+
+void GraphicsAllocation::setTbxWritable(bool writable, uint32_t banks) {
+    UNRECOVERABLE_IF(banks == 0);
+    aubInfo.tbxWritable = static_cast<uint32_t>(setBits(aubInfo.tbxWritable, writable, banks));
+}
+
+bool GraphicsAllocation::isTbxWritable(uint32_t banks) const {
+    return isAnyBitSet(aubInfo.tbxWritable, banks);
+}
+
 constexpr uint32_t GraphicsAllocation::objectNotUsed;
 constexpr uint32_t GraphicsAllocation::objectNotResident;
 constexpr uint32_t GraphicsAllocation::objectAlwaysResident;

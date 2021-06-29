@@ -496,4 +496,20 @@ void SVMAllocsManager::removeSvmMapOperation(const void *regionSvmPtr) {
     svmMapOperations.remove(regionSvmPtr);
 }
 
+GraphicsAllocation::AllocationType SVMAllocsManager::getGraphicsAllocationType(const UnifiedMemoryProperties &unifiedMemoryProperties) const {
+    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    if (unifiedMemoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+        if (unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined) {
+            allocationType = GraphicsAllocation::AllocationType::WRITE_COMBINED;
+        } else {
+            if (DebugManager.flags.EnableStatelessCompression.get()) {
+                allocationType = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
+            } else {
+                allocationType = GraphicsAllocation::AllocationType::BUFFER;
+            }
+        }
+    }
+    return allocationType;
+}
+
 } // namespace NEO

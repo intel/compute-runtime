@@ -7,7 +7,9 @@
 
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "gtest/gtest.h"
+#include "opencl/test/unit_test/mocks/mock_aub_csr.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "test.h"
 
 using namespace NEO;
 
@@ -236,4 +238,165 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThen
 
         EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation.getUsedPageSize());
     }
+}
+
+struct GraphicsAllocationTests : public ::testing::Test {
+    template <typename GfxFamily>
+    void initializeCsr() {
+        executionEnvironment.initializeMemoryManager();
+        DeviceBitfield deviceBitfield(3);
+        auto csr = new MockAubCsr<GfxFamily>("", true, executionEnvironment, 0, deviceBitfield);
+        csr->multiOsContextCapable = true;
+        aubCsr.reset(csr);
+    }
+
+    template <typename GfxFamily>
+    MockAubCsr<GfxFamily> &getAubCsr() {
+        return *(static_cast<MockAubCsr<GfxFamily> *>(aubCsr.get()));
+    }
+
+    void gfxAllocationSetToDefault() {
+        graphicsAllocation.storageInfo.readOnlyMultiStorage = false;
+        graphicsAllocation.storageInfo.memoryBanks = 0;
+        graphicsAllocation.overrideMemoryPool(MemoryPool::MemoryNull);
+    }
+
+    void gfxAllocationEnableReadOnlyMultiStorage(uint32_t banks) {
+        graphicsAllocation.storageInfo.cloningOfPageTables = false;
+        graphicsAllocation.storageInfo.readOnlyMultiStorage = true;
+        graphicsAllocation.storageInfo.memoryBanks = banks;
+        graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    }
+
+    MockExecutionEnvironment executionEnvironment;
+    std::unique_ptr<CommandStreamReceiver> aubCsr;
+    MockGraphicsAllocation graphicsAllocation;
+};
+
+HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationWhenIsAubWritableIsCalledThenTrueIsReturned) {
+    initializeCsr<FamilyType>();
+    auto &aubCsr = getAubCsr<FamilyType>();
+
+    gfxAllocationSetToDefault();
+    EXPECT_TRUE(aubCsr.isAubWritable(graphicsAllocation));
+
+    gfxAllocationEnableReadOnlyMultiStorage(0b1111);
+    EXPECT_TRUE(aubCsr.isAubWritable(graphicsAllocation));
+}
+
+HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationThatHasPageTablesCloningWhenWriteableFlagsAreUsedThenDefaultBankIsUsed) {
+    initializeCsr<FamilyType>();
+    auto &aubCsr = getAubCsr<FamilyType>();
+
+    gfxAllocationSetToDefault();
+    graphicsAllocation.storageInfo.memoryBanks = 0x2;
+    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    graphicsAllocation.storageInfo.cloningOfPageTables = true;
+
+    EXPECT_TRUE(aubCsr.isAubWritable(graphicsAllocation));
+
+    //modify non default bank
+    graphicsAllocation.setAubWritable(false, 0x2);
+
+    EXPECT_TRUE(aubCsr.isAubWritable(graphicsAllocation));
+
+    aubCsr.setAubWritable(false, graphicsAllocation);
+
+    EXPECT_FALSE(aubCsr.isAubWritable(graphicsAllocation));
+
+    EXPECT_TRUE(aubCsr.isTbxWritable(graphicsAllocation));
+
+    graphicsAllocation.setTbxWritable(false, 0x2);
+    EXPECT_TRUE(aubCsr.isTbxWritable(graphicsAllocation));
+
+    aubCsr.setTbxWritable(false, graphicsAllocation);
+
+    EXPECT_FALSE(aubCsr.isTbxWritable(graphicsAllocation));
+}
+
+HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationWhenAubWritableIsSetToFalseThenAubWritableIsFalse) {
+    initializeCsr<FamilyType>();
+    auto &aubCsr = getAubCsr<FamilyType>();
+
+    gfxAllocationSetToDefault();
+    aubCsr.setAubWritable(false, graphicsAllocation);
+    EXPECT_FALSE(aubCsr.isAubWritable(graphicsAllocation));
+
+    gfxAllocationEnableReadOnlyMultiStorage(0b1111);
+    aubCsr.setAubWritable(false, graphicsAllocation);
+    EXPECT_FALSE(aubCsr.isAubWritable(graphicsAllocation));
+}
+
+HWTEST_F(GraphicsAllocationTests, givenMultiStorageGraphicsAllocationWhenAubWritableIsSetOnSpecificBanksThenCorrectValuesAreSet) {
+    initializeCsr<FamilyType>();
+    auto &aubCsr = getAubCsr<FamilyType>();
+    gfxAllocationEnableReadOnlyMultiStorage(0b1010);
+
+    aubCsr.setAubWritable(false, graphicsAllocation);
+    EXPECT_EQ(graphicsAllocation.aubInfo.aubWritable, maxNBitValue(32) & ~(0b1010));
+
+    EXPECT_FALSE(graphicsAllocation.isAubWritable(0b10));
+    EXPECT_FALSE(graphicsAllocation.isAubWritable(0b1000));
+    EXPECT_FALSE(graphicsAllocation.isAubWritable(0b1010));
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(0b1));
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(0b100));
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(0b101));
+
+    aubCsr.setAubWritable(true, graphicsAllocation);
+    EXPECT_EQ(graphicsAllocation.aubInfo.aubWritable, maxNBitValue(32));
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(0b1));
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(0b10));
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(0b100));
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(0b1000));
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(0b101));
+    EXPECT_TRUE(graphicsAllocation.isAubWritable(0b1010));
+}
+
+HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationWhenIsTbxWritableIsCalledThenTrueIsReturned) {
+    initializeCsr<FamilyType>();
+    auto &aubCsr = getAubCsr<FamilyType>();
+
+    gfxAllocationSetToDefault();
+    EXPECT_TRUE(aubCsr.isTbxWritable(graphicsAllocation));
+
+    gfxAllocationEnableReadOnlyMultiStorage(0b1111);
+    EXPECT_TRUE(aubCsr.isTbxWritable(graphicsAllocation));
+};
+
+HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationWhenTbxWritableIsSetToFalseThenTbxWritableIsFalse) {
+    initializeCsr<FamilyType>();
+    auto &aubCsr = getAubCsr<FamilyType>();
+
+    gfxAllocationSetToDefault();
+    aubCsr.setTbxWritable(false, graphicsAllocation);
+    EXPECT_FALSE(aubCsr.isTbxWritable(graphicsAllocation));
+
+    gfxAllocationEnableReadOnlyMultiStorage(0b1111);
+    aubCsr.setTbxWritable(false, graphicsAllocation);
+    EXPECT_FALSE(aubCsr.isTbxWritable(graphicsAllocation));
+}
+
+HWTEST_F(GraphicsAllocationTests, givenMultiStorageGraphicsAllocationWhenTbxWritableIsSetOnSpecificBanksThenCorrectValuesAreSet) {
+    initializeCsr<FamilyType>();
+    auto &aubCsr = getAubCsr<FamilyType>();
+    gfxAllocationEnableReadOnlyMultiStorage(0b1010);
+
+    aubCsr.setTbxWritable(false, graphicsAllocation);
+    EXPECT_EQ(graphicsAllocation.aubInfo.tbxWritable, maxNBitValue(32) & ~(0b1010));
+
+    EXPECT_FALSE(graphicsAllocation.isTbxWritable(0b10));
+    EXPECT_FALSE(graphicsAllocation.isTbxWritable(0b1000));
+    EXPECT_FALSE(graphicsAllocation.isTbxWritable(0b1010));
+    EXPECT_TRUE(graphicsAllocation.isTbxWritable(0b1));
+    EXPECT_TRUE(graphicsAllocation.isTbxWritable(0b100));
+    EXPECT_TRUE(graphicsAllocation.isTbxWritable(0b101));
+
+    aubCsr.setTbxWritable(true, graphicsAllocation);
+    EXPECT_EQ(graphicsAllocation.aubInfo.tbxWritable, maxNBitValue(32));
+    EXPECT_TRUE(graphicsAllocation.isTbxWritable(0b1));
+    EXPECT_TRUE(graphicsAllocation.isTbxWritable(0b10));
+    EXPECT_TRUE(graphicsAllocation.isTbxWritable(0b100));
+    EXPECT_TRUE(graphicsAllocation.isTbxWritable(0b1000));
+    EXPECT_TRUE(graphicsAllocation.isTbxWritable(0b101));
+    EXPECT_TRUE(graphicsAllocation.isTbxWritable(0b1010));
 }
