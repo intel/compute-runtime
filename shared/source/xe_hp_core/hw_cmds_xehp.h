@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/xe_hp_core/hw_cmds_base.h"
 namespace NEO {
-
 struct XEHP : public XeHpFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
@@ -34,4 +33,5 @@ class XEHP_CONFIG : public XEHP {
   private:
     static GT_SYSTEM_INFO gtSystemInfo;
 };
+#include "hw_cmds_xehp.inl"
 } // namespace NEO

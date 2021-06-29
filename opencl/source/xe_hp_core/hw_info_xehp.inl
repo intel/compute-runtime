@@ -146,18 +146,5 @@ void XEHP_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFea
         XEHP::setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
-
-const HardwareInfo XEHP::hwInfo = XEHP_CONFIG::hwInfo;
-const uint64_t XEHP::defaultHardwareInfoConfig = 0;
-
-void setupXEHPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
-    if (hwInfoConfig == 0x0) {
-        // Default config
-        XEHP_CONFIG::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else {
-        UNRECOVERABLE_IF(true);
-    }
-}
-
-void (*XEHP::setupHardwareInfo)(HardwareInfo *, bool, const uint64_t) = setupXEHPHardwareInfoImpl;
+#include "hw_info_config_xehp.inl"
 } // namespace NEO

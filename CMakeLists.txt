@@ -952,7 +952,10 @@ if(MSVC)
 else()
   include_directories(${NEO_SHARED_DIRECTORY}/os_interface/linux/flags${BRANCH_DIR_SUFFIX})
 endif()
-
+if(SUPPORT_XE_HP_CORE)
+  include_directories(${NEO_SHARED_DIRECTORY}/xe_hp_core/definitions${BRANCH_DIR_SUFFIX})
+  include_directories(${NEO_SOURCE_DIR}/opencl/source/xe_hp_core/definitions${BRANCH_DIR_SUFFIX})
+endif()
 # Define where to put binaries
 set(TargetDir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 if(MSVC)
