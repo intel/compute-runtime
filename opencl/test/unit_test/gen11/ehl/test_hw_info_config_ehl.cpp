@@ -63,4 +63,4 @@ EHLTEST_F(EhlHwInfo, givenBoolWhenCallEhlHardwareInfoSetupThenFeatureTableAndWor
     }
 }
 
-HWCMDTEST_EXCLUDE_FAMILY(DeviceFactoryTest, givenInvalidHwConfigStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenThrowsException, IGFX_ELKHARTLAKE);
+HWTEST_EXCLUDE_PRODUCT(DeviceFactoryTest, givenInvalidHwConfigStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenThrowsException, IGFX_ELKHARTLAKE);

@@ -12,6 +12,7 @@
 #include "test.h"
 
 #include <sstream>
+#include <unordered_set>
 
 TEST(ProgramDumper, GivenEmptyProgramThenProperlyCreatesDumpStringWithWarnig) {
     NEO::PatchTokenBinary::ProgramFromPatchtokens emptyProgram = {};

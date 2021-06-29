@@ -7,7 +7,7 @@
 
 #include "test.h"
 
-HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestBdw, givenHwCmdTestWhenBdwExcludedThenDontRunOnBdw, IGFX_BROADWELL);
-HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestBdw, givenHwTestWhenBdwExcludedThenDontRunOnBdw, IGFX_BROADWELL);
-HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestSkl, givenHwCmdTestWhenSklExcludedThenDontRunOnSkl, IGFX_SKYLAKE);
-HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestSkl, givenHwTestWhenSklExcludedThenDontRunOnSkl, IGFX_SKYLAKE);
+HWTEST_EXCLUDE_PRODUCT(ExcludeTestBdw, givenHwCmdTestWhenBdwExcludedThenDontRunOnBdw, IGFX_BROADWELL);
+HWTEST_EXCLUDE_PRODUCT(ExcludeTestBdw, givenHwTestWhenBdwExcludedThenDontRunOnBdw, IGFX_BROADWELL);
+HWTEST_EXCLUDE_PRODUCT(ExcludeTestSkl, givenHwCmdTestWhenSklExcludedThenDontRunOnSkl, IGFX_SKYLAKE);
+HWTEST_EXCLUDE_PRODUCT(ExcludeTestSkl, givenHwTestWhenSklExcludedThenDontRunOnSkl, IGFX_SKYLAKE);
