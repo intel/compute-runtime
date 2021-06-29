@@ -227,6 +227,14 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
     }
 
+    if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) {
+        unifiedMemoryProperties.allocationFlags.allocFlags.usmInitialPlacementGpu = 1;
+    }
+
+    if (hostDesc->flags & ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) {
+        unifiedMemoryProperties.allocationFlags.allocFlags.usmInitialPlacementCpu = 1;
+    }
+
     auto usmPtr =
         this->driverHandle->svmAllocsManager->createSharedUnifiedMemoryAllocation(size,
                                                                                   unifiedMemoryProperties,
