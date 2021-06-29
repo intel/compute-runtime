@@ -39,7 +39,7 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
     cmdListDesc.flags = 0;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 
-    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_DEVICE_IMAGE_PROPERTIES,
                                   nullptr,
                                   0,
                                   ZE_IMAGE_TYPE_2D,
@@ -58,7 +58,7 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
     SUCCESS_OR_TERMINATE(
         zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&srcImgDesc), &srcImg));
 
-    ze_image_desc_t dstImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+    ze_image_desc_t dstImgDesc = {ZE_STRUCTURE_TYPE_DEVICE_IMAGE_PROPERTIES,
                                   nullptr,
                                   ZE_IMAGE_FLAG_KERNEL_WRITE,
                                   ZE_IMAGE_TYPE_2D,

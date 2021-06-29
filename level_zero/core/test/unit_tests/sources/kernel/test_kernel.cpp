@@ -156,7 +156,6 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
 
     ze_image_desc_t desc = {};
 
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     desc.type = ZE_IMAGE_TYPE_3D;
     desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
     desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
@@ -1566,7 +1565,6 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfac
     imageArg.bindless = 0x0;
     imageArg.bindful = undefined<SurfaceStateHeapOffset>;
     ze_image_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     auto &hwHelper = NEO::HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
     auto surfaceStateSize = hwHelper.getRenderSurfaceStateSize();
 
@@ -1592,7 +1590,6 @@ HWTEST2_F(SetKernelArg, givenImageAndBindfulKernelWhenSetArgImageThenCopySurface
     imageArg.bindless = undefined<CrossThreadDataOffset>;
     imageArg.bindful = 0x40;
     ze_image_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
 
     auto imageHW = std::make_unique<MyMockImage<gfxCoreFamily>>();
     auto ret = imageHW->initialize(device, &desc);
@@ -1620,7 +1617,6 @@ HWTEST2_F(SetKernelArg, givenSupportsMediaBlockAndIsMediaBlockImageWhenSetArgIma
     auto &arg = const_cast<NEO::ArgDescriptor &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex]);
     auto imageHW = std::make_unique<MyMockImageMediaBlock<gfxCoreFamily>>();
     ze_image_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     auto ret = imageHW->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
     auto handle = imageHW->toHandle();
