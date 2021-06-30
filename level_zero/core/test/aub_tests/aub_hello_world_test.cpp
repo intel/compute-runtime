@@ -7,7 +7,7 @@
 
 #include "test.h"
 
-#include "level_zero/core/test/unit_tests/aub_tests/fixtures/aub_fixture.h"
+#include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
 
 #include "test_mode.h"
 

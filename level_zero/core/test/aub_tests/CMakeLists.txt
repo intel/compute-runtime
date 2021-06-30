@@ -4,8 +4,9 @@
 # SPDX-License-Identifier: MIT
 #
 
-project(ze_intel_gpu_aub_tests)
+link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
+set(TARGET_NAME ${TARGET_NAME_L0}_aub_tests)
 set(L0_AUB_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_property(NEO_SHARED_aub_tests_configurations GLOBAL PROPERTY NEO_SHARED_aub_tests_configurations)
@@ -18,11 +19,21 @@ list(APPEND L0_AUB_TESTS__TARGET_OBJECTS
      ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
 )
 
-add_executable(ze_intel_gpu_aub_tests
+function(ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION)
+  set(L0_TESTED_PRODUCT_FAMILIES ${ALL_TESTED_PRODUCT_FAMILY})
+  string(REPLACE ";" "," L0_TESTED_PRODUCT_FAMILIES "${L0_TESTED_PRODUCT_FAMILIES}")
+  add_definitions(-DSUPPORTED_TEST_PRODUCT_FAMILIES=${L0_TESTED_PRODUCT_FAMILIES})
+endfunction()
+
+ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
+
+add_executable(${TARGET_NAME}
                ${L0_AUB_TESTS__TARGET_OBJECTS}
 )
 
-target_sources(ze_intel_gpu_aub_tests PRIVATE
+set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})
+
+target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${L0_CORE_ENABLERS}
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/main.cpp
@@ -33,7 +44,7 @@ target_sources(ze_intel_gpu_aub_tests PRIVATE
                ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
 )
 
-target_sources(ze_intel_gpu_aub_tests PRIVATE
+target_sources(${TARGET_NAME} PRIVATE
                ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/ult_device_factory.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/ult_device_factory.h
@@ -51,7 +62,7 @@ target_sources(ze_intel_gpu_aub_tests PRIVATE
                ${NEO_SHARED_DIRECTORY}/aub/aub_stream_interface.cpp
 )
 
-target_sources(ze_intel_gpu_aub_tests PRIVATE
+target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:${L0_MOCKABLE_LIB_NAME}>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_fixtures>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>
@@ -61,7 +72,7 @@ target_sources(ze_intel_gpu_aub_tests PRIVATE
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
 )
 
-target_sources(ze_intel_gpu_aub_tests PRIVATE
+target_sources(${TARGET_NAME} PRIVATE
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}/kernel_binary_helper_hash_value.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
@@ -74,12 +85,12 @@ target_sources(ze_intel_gpu_aub_tests PRIVATE
 
 if(UNIX)
   if(NOT DISABLE_WDDM_LINUX)
-    target_sources(ze_intel_gpu_aub_tests PRIVATE
+    target_sources(${TARGET_NAME} PRIVATE
                    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
     )
   endif()
-  target_sources(ze_intel_gpu_aub_tests PRIVATE
+  target_sources(${TARGET_NAME} PRIVATE
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
@@ -89,7 +100,7 @@ if(UNIX)
                  ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
   )
 else()
-  target_sources(ze_intel_gpu_aub_tests PRIVATE
+  target_sources(${TARGET_NAME} PRIVATE
                  ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
@@ -105,23 +116,23 @@ else()
   )
 endif()
 
-copy_gmm_dll_for(ze_intel_gpu_aub_tests)
+copy_gmm_dll_for(${TARGET_NAME})
 add_subdirectories()
 
-target_link_libraries(ze_intel_gpu_aub_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
-target_link_libraries(ze_intel_gpu_aub_tests ${HW_LIBS_ULT})
-target_link_libraries(ze_intel_gpu_aub_tests gmock-gtest)
-target_link_libraries(ze_intel_gpu_aub_tests ${IGDRCL_EXTRA_LIBS})
+target_link_libraries(${TARGET_NAME} ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
+target_link_libraries(${TARGET_NAME} ${HW_LIBS_ULT})
+target_link_libraries(${TARGET_NAME} gmock-gtest)
+target_link_libraries(${TARGET_NAME} ${IGDRCL_EXTRA_LIBS})
 
 if(UNIX)
-  target_link_libraries(ze_intel_gpu_aub_tests rt)
-  target_link_libraries(ze_intel_gpu_aub_tests ${GMM_LINK_NAME})
+  target_link_libraries(${TARGET_NAME} rt)
+  target_link_libraries(${TARGET_NAME} ${GMM_LINK_NAME})
 else()
-  target_link_libraries(ze_intel_gpu_aub_tests dbghelp)
-  add_dependencies(ze_intel_gpu_aub_tests ${GMM_TARGET_NAME})
+  target_link_libraries(${TARGET_NAME} dbghelp)
+  add_dependencies(${TARGET_NAME} ${GMM_TARGET_NAME})
 endif()
 
-target_include_directories(ze_intel_gpu_aub_tests PRIVATE
+target_include_directories(${TARGET_NAME} PRIVATE
                            ${CMAKE_CURRENT_SOURCE_DIR}
                            ${NEO_SOURCE_DIR}/shared/test/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
@@ -134,4 +145,4 @@ target_include_directories(ze_intel_gpu_aub_tests PRIVATE
                            ${WDK_DIR}
 )
 
-create_project_source_tree(ze_intel_gpu_aub_tests)
+create_project_source_tree(${TARGET_NAME})
