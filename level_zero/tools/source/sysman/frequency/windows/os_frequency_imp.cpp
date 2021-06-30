@@ -245,19 +245,8 @@ ze_result_t WddmFrequencyImp::getOcMode(zes_oc_mode_t *pCurrentOcMode) {
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::FrequencyComponent;
-    request.requestId = KmdSysman::Requests::Frequency::CurrentFixedMode;
-    request.paramInfo = static_cast<uint32_t>(this->frequencyDomainNumber);
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-    currentFixedMode = value ? ZES_OC_MODE_FIXED : ZES_OC_MODE_OFF;
-
     request.requestId = KmdSysman::Requests::Frequency::CurrentVoltageMode;
+    request.paramInfo = static_cast<uint32_t>(this->frequencyDomainNumber);
 
     status = pKmdSysManager->requestSingle(request, response);
 
@@ -268,14 +257,19 @@ ze_result_t WddmFrequencyImp::getOcMode(zes_oc_mode_t *pCurrentOcMode) {
     memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
     currentVoltageMode = value ? ZES_OC_MODE_OVERRIDE : ZES_OC_MODE_INTERPOLATIVE;
 
-    *pCurrentOcMode = static_cast<zes_oc_mode_t>(currentVoltageMode + currentFixedMode);
+    *pCurrentOcMode = currentVoltageMode;
 
     return status;
 }
 
 ze_result_t WddmFrequencyImp::setOcMode(zes_oc_mode_t currentOcMode) {
-    if (currentOcMode == ZES_OC_MODE_OFF || currentOcMode == ZES_OC_MODE_FIXED) {
-        this->currentFixedMode = currentOcMode;
+    if (currentOcMode == ZES_OC_MODE_FIXED) {
+        this->currentVoltageMode = ZES_OC_MODE_INTERPOLATIVE;
+        return ze_result_t::ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
+    }
+
+    if (currentOcMode == ZES_OC_MODE_OFF) {
+        this->currentVoltageMode = ZES_OC_MODE_INTERPOLATIVE;
         return applyOcSettings();
     }
 
@@ -423,7 +417,8 @@ ze_result_t WddmFrequencyImp::applyOcSettings() {
     request.paramInfo = static_cast<uint32_t>(this->frequencyDomainNumber);
     request.dataSize = sizeof(int32_t);
 
-    value = (currentFixedMode == ZES_OC_MODE_FIXED) ? 1 : 0;
+    // Fixed mode not supported.
+    value = 0;
     memcpy_s(request.dataBuffer, sizeof(int32_t), &value, sizeof(int32_t));
 
     status = pKmdSysManager->requestSingle(request, response);
@@ -556,13 +551,6 @@ void WddmFrequencyImp::readOverclockingInfo() {
     if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
         memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
         ocCapabilities.maxOcVoltage = static_cast<double>(value);
-    }
-
-    request.requestId = KmdSysman::Requests::Frequency::CurrentFixedMode;
-
-    if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
-        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-        currentFixedMode = value ? ZES_OC_MODE_FIXED : ZES_OC_MODE_OFF;
     }
 
     request.requestId = KmdSysman::Requests::Frequency::CurrentFrequencyTarget;

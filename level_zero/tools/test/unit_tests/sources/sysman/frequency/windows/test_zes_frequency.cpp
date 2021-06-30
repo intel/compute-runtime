@@ -455,27 +455,27 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
         zes_oc_mode_t newmode;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
-        EXPECT_EQ(mode, ZES_OC_MODE_INTERPOLATIVE);
+        EXPECT_EQ(newmode, ZES_OC_MODE_INTERPOLATIVE);
 
         mode = ZES_OC_MODE_OFF;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
-        EXPECT_EQ(mode, ZES_OC_MODE_OFF);
+        EXPECT_EQ(newmode, ZES_OC_MODE_INTERPOLATIVE);
 
         mode = ZES_OC_MODE_FIXED;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, zesFrequencyOcSetMode(handle, mode));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
-        EXPECT_EQ(mode, ZES_OC_MODE_FIXED);
+        EXPECT_EQ(newmode, ZES_OC_MODE_INTERPOLATIVE);
 
         mode = ZES_OC_MODE_OFF;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
-        EXPECT_EQ(mode, ZES_OC_MODE_OFF);
+        EXPECT_EQ(newmode, ZES_OC_MODE_INTERPOLATIVE);
 
         mode = ZES_OC_MODE_OVERRIDE;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
-        EXPECT_EQ(mode, ZES_OC_MODE_OVERRIDE);
+        EXPECT_EQ(newmode, ZES_OC_MODE_OVERRIDE);
 
         domainIndex++;
     }

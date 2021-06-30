@@ -65,7 +65,6 @@ class WddmFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     double minRangeFreq = -1.0;
     double maxRangeFreq = -1.0;
     zes_oc_capabilities_t ocCapabilities = {};
-    zes_oc_mode_t currentFixedMode = ZES_OC_MODE_OFF;
     zes_oc_mode_t currentVoltageMode = ZES_OC_MODE_OFF;
     double currentFrequencyTarget = -1.0;
     double currentVoltageTarget = -1.0;
