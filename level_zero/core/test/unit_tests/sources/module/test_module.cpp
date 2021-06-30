@@ -1156,13 +1156,23 @@ HWTEST_F(ModuleTranslationUnitTest, givenSystemSharedAllocationAllowedWhenBuildi
     auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
 
-    MockModuleTranslationUnit moduleTu(device);
-    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
-    EXPECT_TRUE(ret);
+    {
+        neoDevice->deviceInfo.sharedSystemAllocationsSupport = true;
 
-    if (neoDevice->areSharedSystemAllocationsAllowed()) {
+        MockModuleTranslationUnit moduleTu(device);
+        auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+        EXPECT_TRUE(ret);
+
         EXPECT_NE(mockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
-    } else {
+    }
+
+    {
+        neoDevice->deviceInfo.sharedSystemAllocationsSupport = false;
+
+        MockModuleTranslationUnit moduleTu(device);
+        auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+        EXPECT_TRUE(ret);
+
         EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
     }
 }
