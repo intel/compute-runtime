@@ -66,7 +66,7 @@ void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &
     commandStream->getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
 
     csr->submitBatchBuffer(batchBuffer, csr->getResidencyAllocations());
-    buffers.setCurrentFlushStamp(csr->obtainCurrentFlushStamp());
+    buffers.setCurrentFlushStamp(csr->peekTaskCount(), csr->obtainCurrentFlushStamp());
 }
 
 ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
@@ -151,8 +151,8 @@ ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, si
 
     memset(buffers[BUFFER_ALLOCATION::FIRST]->getUnderlyingBuffer(), 0, buffers[BUFFER_ALLOCATION::FIRST]->getUnderlyingBufferSize());
     memset(buffers[BUFFER_ALLOCATION::SECOND]->getUnderlyingBuffer(), 0, buffers[BUFFER_ALLOCATION::SECOND]->getUnderlyingBufferSize());
-    flushId[BUFFER_ALLOCATION::FIRST] = 0u;
-    flushId[BUFFER_ALLOCATION::SECOND] = 0u;
+    flushId[BUFFER_ALLOCATION::FIRST] = std::make_pair(0u, 0u);
+    flushId[BUFFER_ALLOCATION::SECOND] = std::make_pair(0u, 0u);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -174,10 +174,10 @@ void CommandQueueImp::CommandBufferManager::switchBuffers(NEO::CommandStreamRece
         bufferUse = BUFFER_ALLOCATION::FIRST;
     }
 
-    NEO::FlushStamp completionId = flushId[bufferUse];
-    if (completionId != 0u) {
+    auto completionId = flushId[bufferUse];
+    if (completionId.second != 0u) {
         UNRECOVERABLE_IF(csr == nullptr);
-        csr->waitForFlushStamp(completionId);
+        csr->waitForTaskCountWithKmdNotifyFallback(completionId.first, completionId.second, false, false);
     }
 }
 

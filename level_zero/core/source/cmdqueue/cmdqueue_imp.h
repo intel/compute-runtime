@@ -43,13 +43,13 @@ struct CommandQueueImp : public CommandQueue {
             return buffers[bufferUse];
         }
 
-        void setCurrentFlushStamp(NEO::FlushStamp flushStamp) {
-            flushId[bufferUse] = flushStamp;
+        void setCurrentFlushStamp(uint32_t taskCount, NEO::FlushStamp flushStamp) {
+            flushId[bufferUse] = std::make_pair(taskCount, flushStamp);
         }
 
       private:
         NEO::GraphicsAllocation *buffers[BUFFER_ALLOCATION::COUNT];
-        NEO::FlushStamp flushId[BUFFER_ALLOCATION::COUNT];
+        std::pair<uint32_t, NEO::FlushStamp> flushId[BUFFER_ALLOCATION::COUNT];
         BUFFER_ALLOCATION bufferUse = BUFFER_ALLOCATION::FIRST;
     };
     static constexpr size_t defaultQueueCmdBufferSize = 128 * MemoryConstants::kiloByte;

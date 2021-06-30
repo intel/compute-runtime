@@ -98,7 +98,7 @@ TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutput
     commandQueue->destroy();
 }
 
-TEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched) {
+HWTEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
 
@@ -115,14 +115,38 @@ TEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched) 
     auto firstAllocation = commandQueue->commandStream->getGraphicsAllocation();
     EXPECT_EQ(firstAllocation, commandQueue->buffers.getCurrentBufferAllocation());
 
+    uint32_t currentTaskCount = 33u;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
+
     commandQueue->commandStream->getSpace(maxSize - 16u);
+    commandQueue->buffers.setCurrentFlushStamp(121u, 121u);
     size_t nextSize = 16u + 16u;
     commandQueue->reserveLinearStreamSize(nextSize);
 
     auto secondAllocation = commandQueue->commandStream->getGraphicsAllocation();
     EXPECT_EQ(secondAllocation, commandQueue->buffers.getCurrentBufferAllocation());
-
     EXPECT_NE(firstAllocation, secondAllocation);
+    EXPECT_EQ(csr.latestWaitForCompletionWithTimeoutTaskCount, currentTaskCount);
+
+    commandQueue->commandStream->getSpace(maxSize - 16u);
+    commandQueue->buffers.setCurrentFlushStamp(244u, 244u);
+    commandQueue->reserveLinearStreamSize(nextSize);
+
+    auto thirdAllocation = commandQueue->commandStream->getGraphicsAllocation();
+    EXPECT_EQ(thirdAllocation, commandQueue->buffers.getCurrentBufferAllocation());
+    EXPECT_EQ(thirdAllocation, firstAllocation);
+    EXPECT_NE(thirdAllocation, secondAllocation);
+    EXPECT_EQ(csr.latestWaitForCompletionWithTimeoutTaskCount, 121u);
+
+    commandQueue->commandStream->getSpace(maxSize - 16u);
+    commandQueue->reserveLinearStreamSize(nextSize);
+
+    auto fourthAllocation = commandQueue->commandStream->getGraphicsAllocation();
+    EXPECT_EQ(fourthAllocation, commandQueue->buffers.getCurrentBufferAllocation());
+    EXPECT_EQ(fourthAllocation, secondAllocation);
+    EXPECT_NE(fourthAllocation, firstAllocation);
+    EXPECT_EQ(csr.latestWaitForCompletionWithTimeoutTaskCount, 244u);
 
     commandQueue->destroy();
 }
