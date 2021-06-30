@@ -21,6 +21,8 @@ struct SystemInfoImpl : public SystemInfo {
     uint32_t getMaxEuPerDualSubSlice() const override { return 0; }
     uint64_t getL3CacheSizeInKb() const override { return 0; }
     uint32_t getL3BankCount() const override { return 0; }
+    uint32_t getMemoryType() const override { return 0; }
+    uint32_t getMaxMemoryChannels() const override { return 0; }
     uint32_t getNumThreadsPerEu() const override { return 0; }
     uint32_t getTotalVsThreads() const override { return 0; }
     uint32_t getTotalHsThreads() const override { return 0; }

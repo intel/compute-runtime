@@ -32,6 +32,8 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThen
 
     EXPECT_EQ(0u, systemInfo.getL3CacheSizeInKb());
     EXPECT_EQ(0u, systemInfo.getL3BankCount());
+    EXPECT_EQ(0u, systemInfo.getMemoryType());
+    EXPECT_EQ(0u, systemInfo.getMaxMemoryChannels());
     EXPECT_EQ(0u, systemInfo.getNumThreadsPerEu());
     EXPECT_EQ(0u, systemInfo.getMaxFillRate());
     EXPECT_EQ(0u, systemInfo.getTotalVsThreads());

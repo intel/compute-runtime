@@ -716,6 +716,7 @@ void testSysmanMemory(ze_device_handle_t &device) {
             std::cout << "On Subdevice = " << memoryProperties.onSubdevice << std::endl;
             std::cout << "Subdevice Id = " << memoryProperties.subdeviceId << std::endl;
             std::cout << "Memory Size = " << memoryProperties.physicalSize << std::endl;
+            std::cout << "Number of channels = " << memoryProperties.numChannels << std::endl;
         }
 
         VALIDATECALL(zesMemoryGetState(handle, &memoryState));

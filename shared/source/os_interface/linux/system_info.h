@@ -19,6 +19,8 @@ struct SystemInfo {
     virtual uint32_t getMaxEuPerDualSubSlice() const = 0;
     virtual uint64_t getL3CacheSizeInKb() const = 0;
     virtual uint32_t getL3BankCount() const = 0;
+    virtual uint32_t getMemoryType() const = 0;
+    virtual uint32_t getMaxMemoryChannels() const = 0;
     virtual uint32_t getNumThreadsPerEu() const = 0;
     virtual uint32_t getTotalVsThreads() const = 0;
     virtual uint32_t getTotalHsThreads() const = 0;
