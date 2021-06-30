@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
 #include "test.h"
@@ -18,7 +19,7 @@ typedef ::testing::Types<DG1_CONFIG> dg1TestTypes;
 TYPED_TEST_CASE(Dg1HwInfoTests, dg1TestTypes);
 
 TYPED_TEST(Dg1HwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValueOfLocalMemoryFeature) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
 
     EXPECT_FALSE(featureTable.ftrLocalMemory);

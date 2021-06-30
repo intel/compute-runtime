@@ -72,7 +72,7 @@ RKLTEST_F(HwInfoConfigTestLinuxRkl, GivenIncorrectDataWhenConfiguringHwInfoThenE
 }
 
 TEST(RklHwInfoTests, WhenSettingUpHwInfoThenConfigIsCorrect) {
-    HardwareInfo hwInfo{};
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());

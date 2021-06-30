@@ -90,7 +90,7 @@ class TgllpHwInfoTests : public ::testing::Test {};
 typedef ::testing::Types<TGLLP_1x6x16> tgllpTestTypes;
 TYPED_TEST_CASE(TgllpHwInfoTests, tgllpTestTypes);
 TYPED_TEST(TgllpHwInfoTests, gtSetupIsCorrect) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());

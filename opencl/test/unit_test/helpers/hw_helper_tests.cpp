@@ -368,7 +368,7 @@ HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsed
 }
 
 TEST(HwInfoTest, givenHwInfoWhenChosenEngineTypeQueriedThenDefaultIsReturned) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     auto engineType = getChosenEngineType(hwInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, engineType);
@@ -377,7 +377,7 @@ TEST(HwInfoTest, givenHwInfoWhenChosenEngineTypeQueriedThenDefaultIsReturned) {
 TEST(HwInfoTest, givenNodeOrdinalSetWhenChosenEngineTypeQueriedThenSetValueIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.NodeOrdinal.set(aub_stream::ENGINE_VECS);
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     auto engineType = getChosenEngineType(hwInfo);
     EXPECT_EQ(aub_stream::ENGINE_VECS, engineType);
@@ -1301,9 +1301,9 @@ TEST_F(HwHelperTest, whenGettingDefaultRevisionIdThenCorrectValueIsReturned) {
     }
 }
 
-TEST_F(HwHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
+HWTEST_F(HwHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
     auto &hwHelper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(0u, hwHelper.getNumCacheRegions(*defaultHwInfo));
+    EXPECT_EQ(0u, hwHelper.getNumCacheRegions());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, whenCheckingForSmallKernelPreferenceThenFalseIsReturned) {

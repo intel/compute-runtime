@@ -16,7 +16,7 @@ using namespace NEO;
 using TgllpHwInfoConfig = ::testing::Test;
 
 TGLLPTEST_F(TgllpHwInfoConfig, givenHwInfoErrorneousConfigStringThenThrow) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
@@ -29,7 +29,7 @@ TGLLPTEST_F(TgllpHwInfoConfig, givenHwInfoErrorneousConfigStringThenThrow) {
 }
 
 TGLLPTEST_F(TgllpHwInfoConfig, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturned) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     uint64_t config = 0x100060010;
@@ -52,7 +52,7 @@ using TgllpHwInfo = ::testing::Test;
 TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     static bool boolValue[]{
         true, false};
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -98,7 +98,7 @@ TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTable
 }
 
 TGLLPTEST_F(TgllpHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
 
     uint64_t config = 0x100060010;
     hardwareInfoSetup[productFamily](&hwInfo, false, config);

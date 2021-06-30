@@ -4404,7 +4404,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCac
     memoryManager->cleanOsHandles(storage, rootDeviceIndex);
 }
 
-TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithIncorrectCacheRegionThenReturnNull) {
+HWTEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithIncorrectCacheRegionThenReturnNull) {
     mock->ioctl_expected.total = -1;
     auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
     drm->setupCacheInfo(*defaultHwInfo.get());
@@ -4420,7 +4420,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithInc
     EXPECT_EQ(allocation, nullptr);
 }
 
-TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithWithAlignmentFromUserptrWhenItIsCreatedWithIncorrectCacheRegionThenReturnNull) {
+HWTEST_F(DrmMemoryManagerTest, givenDrmAllocationWithWithAlignmentFromUserptrWhenItIsCreatedWithIncorrectCacheRegionThenReturnNull) {
     mock->ioctl_expected.total = -1;
     auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
     drm->setupCacheInfo(*defaultHwInfo.get());

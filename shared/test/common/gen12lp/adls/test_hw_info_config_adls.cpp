@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
-
 using namespace NEO;
 
 using AdlsHwInfo = ::testing::Test;
@@ -17,7 +17,7 @@ using AdlsHwInfo = ::testing::Test;
 ADLSTEST_F(AdlsHwInfo, givenBoolWhenCallAdlsHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     static bool boolValue[]{
         true, false};
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;

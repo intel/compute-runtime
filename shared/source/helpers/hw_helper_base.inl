@@ -633,7 +633,7 @@ uint32_t HwHelperHw<GfxFamily>::getDefaultRevisionId(const HardwareInfo &hwInfo)
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getNumCacheRegions(const HardwareInfo &hwInfo) const {
+uint32_t HwHelperHw<GfxFamily>::getNumCacheRegions() const {
     return 0;
 }
 

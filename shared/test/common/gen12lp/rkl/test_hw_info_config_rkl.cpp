@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
@@ -19,7 +20,7 @@ RKLTEST_F(RklHwInfo, givenBoolWhenCallRklHardwareInfoSetupThenFeatureTableAndWor
         0x100020010};
     bool boolValue[]{
         true, false};
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;

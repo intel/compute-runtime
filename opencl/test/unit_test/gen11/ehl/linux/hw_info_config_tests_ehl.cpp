@@ -69,7 +69,7 @@ EHLTEST_F(HwInfoConfigTestLinuxEhl, GivenInvalidDeviceIdWhenConfiguringHwInfoThe
 template <typename T>
 class EhlHwInfoTests : public ::testing::Test {};
 TEST(EhlHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());

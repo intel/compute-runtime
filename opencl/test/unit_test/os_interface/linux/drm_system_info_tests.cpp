@@ -60,7 +60,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMockToFailQuerySystemInfo drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo, GTTYPE_UNDEFINED};
 
@@ -79,7 +79,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenSystemInfoIsCreatedThenSetHard
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo, GTTYPE_UNDEFINED};

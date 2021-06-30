@@ -206,7 +206,7 @@ class GlkHwInfoTests : public ::testing::Test {
 typedef ::testing::Types<GLK_1x3x6, GLK_1x2x6> glkTestTypes;
 TYPED_TEST_CASE(GlkHwInfoTests, glkTestTypes);
 TYPED_TEST(GlkHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());

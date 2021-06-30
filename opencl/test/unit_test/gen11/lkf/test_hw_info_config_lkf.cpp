@@ -5,15 +5,16 @@
  *
  */
 
-#include "test.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
+#include "test.h"
 using namespace NEO;
 
 TEST(LkfHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     if (IGFX_LAKEFIELD != productFamily) {
         return;
     }
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
@@ -28,7 +29,7 @@ TEST(LkfHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThr
 using LkfHwInfo = ::testing::Test;
 
 LKFTEST_F(LkfHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
 
     uint64_t config = 0x100080008;
     hardwareInfoSetup[productFamily](&hwInfo, false, config);
@@ -40,7 +41,7 @@ LKFTEST_F(LkfHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled
 LKFTEST_F(LkfHwInfo, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     bool boolValue[]{
         true, false};
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;

@@ -156,7 +156,7 @@ class BdwHwInfoTests : public ::testing::Test {
 typedef ::testing::Types<BDW_1x2x6, BDW_1x3x6, BDW_1x3x8, BDW_2x3x8> bdwTestTypes;
 TYPED_TEST_CASE(BdwHwInfoTests, bdwTestTypes);
 TYPED_TEST(BdwHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());

@@ -71,7 +71,7 @@ class LkfHwInfoTests : public ::testing::Test {};
 typedef ::testing::Types<LKF_1x8x8> lkfTestTypes;
 TYPED_TEST_CASE(LkfHwInfoTests, lkfTestTypes);
 TYPED_TEST(LkfHwInfoTests, gtSetupIsCorrect) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());

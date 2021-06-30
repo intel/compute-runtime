@@ -5,15 +5,16 @@
  *
  */
 
-#include "test.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
+#include "test.h"
 using namespace NEO;
 
 TEST(BdwHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     if (IGFX_BROADWELL != productFamily) {
         return;
     }
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
@@ -35,7 +36,7 @@ BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWor
         0x100030006};
     bool boolValue[]{
         true, false};
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -68,7 +69,7 @@ BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWor
 }
 
 BDWTEST_F(BdwHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
 
     uint64_t config = 0x0;
     hardwareInfoSetup[productFamily](&hwInfo, false, config);

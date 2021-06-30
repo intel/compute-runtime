@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
@@ -16,7 +17,7 @@ TEST(Dg1HwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThr
     if (IGFX_DG1 != productFamily) {
         return;
     }
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
@@ -33,7 +34,7 @@ using Dg1HwInfo = ::testing::Test;
 DG1TEST_F(Dg1HwInfo, givenBoolWhenCallDg1HardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     bool boolValue[]{
         true, false};
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;

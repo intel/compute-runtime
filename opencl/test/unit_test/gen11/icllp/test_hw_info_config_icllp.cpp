@@ -5,15 +5,16 @@
  *
  */
 
-#include "test.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
+#include "test.h"
 using namespace NEO;
 
 TEST(IcllpHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     if (IGFX_ICELAKE_LP != productFamily) {
         return;
     }
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     gtSystemInfo = {0};
 
@@ -36,7 +37,7 @@ ICLLPTEST_F(IcllpHwInfo, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatureTable
     bool boolValue[]{
         true, false};
 
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;

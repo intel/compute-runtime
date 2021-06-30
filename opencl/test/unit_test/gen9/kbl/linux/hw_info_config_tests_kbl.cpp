@@ -225,7 +225,7 @@ class KblHwInfoTests : public ::testing::Test {
 typedef ::testing::Types<KBL_1x2x6, KBL_1x3x6, KBL_1x3x8, KBL_2x3x8, KBL_3x3x8> kblTestTypes;
 TYPED_TEST_CASE(KblHwInfoTests, kblTestTypes);
 TYPED_TEST(KblHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());

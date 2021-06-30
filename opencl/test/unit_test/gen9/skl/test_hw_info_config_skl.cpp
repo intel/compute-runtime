@@ -5,15 +5,16 @@
  *
  */
 
-#include "test.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
+#include "test.h"
 using namespace NEO;
 
 TEST(SklHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
     if (IGFX_SKYLAKE != productFamily) {
         return;
     }
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     gtSystemInfo = {0};
 
@@ -37,7 +38,7 @@ SKLTEST_F(SklHwInfo, givenBoolWhenCallSklHardwareInfoSetupThenFeatureTableAndWor
     bool boolValue[]{
         true, false};
 
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;

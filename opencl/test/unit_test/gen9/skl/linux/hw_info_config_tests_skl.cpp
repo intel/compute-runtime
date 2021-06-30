@@ -249,7 +249,7 @@ class SklHwInfoTests : public ::testing::Test {
 typedef ::testing::Types<SKL_1x2x6, SKL_1x3x6, SKL_1x3x8, SKL_2x3x8, SKL_3x3x8> sklTestTypes;
 TYPED_TEST_CASE(SklHwInfoTests, sklTestTypes);
 TYPED_TEST(SklHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
@@ -271,7 +271,7 @@ TYPED_TEST(SklHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
 }
 
 TYPED_TEST(SklHwInfoTests, givenGTSystemInfoTypeWhenConfigureHardwareCustomThenSliceCountDontChange) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto osInterface = std::unique_ptr<OSInterface>(new OSInterface());
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 

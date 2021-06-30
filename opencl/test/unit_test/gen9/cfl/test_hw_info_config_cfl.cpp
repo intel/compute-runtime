@@ -5,15 +5,16 @@
  *
  */
 
-#include "test.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
+#include "test.h"
 using namespace NEO;
 
 TEST(CflHwInfoConfig, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
     if (IGFX_COFFEELAKE != productFamily) {
         return;
     }
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
@@ -36,7 +37,7 @@ CFLTEST_F(CflHwInfo, givenBoolWhenCallCflHardwareInfoSetupThenFeatureTableAndWor
         0x100030006};
     bool boolValue[]{
         true, false};
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;

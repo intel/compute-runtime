@@ -5,9 +5,10 @@
  *
  */
 
+#include "shared/test/common/helpers/default_hw_info.h"
+
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
 #include "opencl/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
-
 using namespace NEO;
 
 struct HwInfoConfigTestLinuxBxt : HwInfoConfigTestLinux {
@@ -215,7 +216,7 @@ class BxtHwInfoTests : public ::testing::Test {
 typedef ::testing::Types<BXT_1x2x6, BXT_1x3x6> bxtTestTypes;
 TYPED_TEST_CASE(BxtHwInfoTests, bxtTestTypes);
 TYPED_TEST(BxtHwInfoTests, WhenConfiguringHwInfoThenConfigIsCorrect) {
-    HardwareInfo hwInfo;
+    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());

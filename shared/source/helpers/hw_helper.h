@@ -140,7 +140,7 @@ class HwHelper {
     virtual bool isDirectSubmissionSupported() const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
     virtual uint32_t getDefaultRevisionId(const HardwareInfo &hwInfo) const = 0;
-    virtual uint32_t getNumCacheRegions(const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getNumCacheRegions() const = 0;
     virtual bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
     virtual uint32_t getPlanarYuvMaxHeight() const = 0;
     virtual bool isBlitterForImagesSupported(const HardwareInfo &hwInfo) const = 0;
@@ -363,7 +363,7 @@ class HwHelperHw : public HwHelper {
 
     uint32_t getDefaultRevisionId(const HardwareInfo &hwInfo) const override;
 
-    uint32_t getNumCacheRegions(const HardwareInfo &hwInfo) const override;
+    uint32_t getNumCacheRegions() const override;
 
     bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const override;
 
