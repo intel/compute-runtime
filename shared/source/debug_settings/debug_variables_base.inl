@@ -282,6 +282,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceForCompletionWait, -1, "-1: defau
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceUseCtxId, -1, "-1: default (enabled), 0: disable, 1: enable : Use Context Id in Wait User Fence when waiting for completion tag")
 DECLARE_DEBUG_VARIABLE(int32_t, SetKmdWaitTimeout, -1, "-1: default (infinity), >0: amount of time units for wait function timeout")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNotifyEnableForTagUpdatePostSync, -1, "-1: default (usage determined by user fence wait call), 0: disable use of NotifyEnable flag, 1: enable use NotifyEnable flag")
+DECLARE_DEBUG_VARIABLE(int32_t, Force32BitDriverSupport, -1, "-1: default, 0: disable, 1: enable, Forces the driver to support 32 bit.")
 
 /*EXPERIMENTAL TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableCustomLocalMemoryAlignment, 0, "Align local memory allocations to a given value. Works only with allocations at least as big as the value.  0: no effect, 2097152: 2 megabytes, 1073741824: 1 gigabyte")
