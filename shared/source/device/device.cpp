@@ -466,12 +466,13 @@ EngineControl &Device::getEngine(uint32_t index) {
 }
 
 bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const {
-    TimeStampData timeStamp;
-    bool retVal = getOSTime()->getCpuGpuTime(&timeStamp);
+    TimeStampData queueTimeStamp;
+    bool retVal = getOSTime()->getCpuGpuTime(&queueTimeStamp);
     if (retVal) {
-        auto resolution = getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
-        *deviceTimestamp = static_cast<uint64_t>(timeStamp.GPUTimeStamp * resolution);
+        uint64_t resolution = (uint64_t)getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
+        *deviceTimestamp = queueTimeStamp.GPUTimeStamp * resolution;
     }
+
     retVal = getOSTime()->getCpuTime(hostTimestamp);
     return retVal;
 }

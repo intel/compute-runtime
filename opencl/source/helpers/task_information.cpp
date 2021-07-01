@@ -380,14 +380,14 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         false,                                                //useGlobalAtomics
         1u);                                                  //numDevicesInContext
 
+    UNRECOVERABLE_IF(!kernelOperation->blitEnqueue && !commandStreamReceiver.peekTimestampPacketWriteEnabled() && commandQueue.getContext().getRootDeviceIndices().size() == 1);
+
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
     }
 
-    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
-        makeTimestampPacketsResident(commandStreamReceiver);
-    }
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
+    makeTimestampPacketsResident(commandStreamReceiver);
 
     gtpinNotifyPreFlushTask(&commandQueue);
 

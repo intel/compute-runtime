@@ -160,19 +160,21 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         return CL_PROFILING_INFO_NOT_AVAILABLE;
     }
 
-    uint64_t timestamp;
-
     // if paramValue is NULL, it is ignored
     switch (paramName) {
     case CL_PROFILING_COMMAND_QUEUED:
-        timestamp = getTimeInNSFromTimestampData(queueTimeStamp);
-        src = &timestamp;
+        src = &queueTimeStamp.CPUTimeinNS;
+        if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
+            src = &queueTimeStamp.GPUTimeStamp;
+        }
         srcSize = sizeof(cl_ulong);
         break;
 
     case CL_PROFILING_COMMAND_SUBMIT:
-        timestamp = getTimeInNSFromTimestampData(submitTimeStamp);
-        src = &timestamp;
+        src = &submitTimeStamp.CPUTimeinNS;
+        if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
+            src = &submitTimeStamp.GPUTimeStamp;
+        }
         srcSize = sizeof(cl_ulong);
         break;
 
@@ -247,20 +249,6 @@ cl_ulong Event::getDelta(cl_ulong startTime,
     return Delta;
 }
 
-uint64_t Event::getTimeInNSFromTimestampData(const TimeStampData &timestamp) const {
-    if (isCPUProfilingPath()) {
-        return timestamp.CPUTimeinNS;
-    }
-
-    if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
-        return timestamp.GPUTimeStamp;
-    }
-
-    double resolution = cmdQueue ? cmdQueue->getDevice().getDeviceInfo().profilingTimerResolution : 0.0;
-
-    return static_cast<uint64_t>(timestamp.GPUTimeStamp * resolution);
-}
-
 bool Event::calcProfilingData() {
     if (!dataCalculated && !profilingCpuPath) {
         if (timestampPacketContainer && timestampPacketContainer->peekNodes().size() > 0) {
@@ -306,21 +294,31 @@ bool Event::calcProfilingData() {
 }
 
 void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) {
+
     uint64_t gpuDuration = 0;
     uint64_t cpuDuration = 0;
 
     uint64_t gpuCompleteDuration = 0;
     uint64_t cpuCompleteDuration = 0;
 
-    auto &device = this->cmdQueue->getDevice();
-    auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
-    auto frequency = device.getDeviceInfo().profilingTimerResolution;
+    auto &hwHelper = HwHelper::get(this->cmdQueue->getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    auto frequency = cmdQueue->getDevice().getDeviceInfo().profilingTimerResolution;
+    auto gpuTimeStamp = queueTimeStamp.GPUTimeStamp;
 
-    startTimeStamp = hwHelper.getGpuTimeStampInNS(globalStartTS, frequency);
+    int64_t c0 = queueTimeStamp.CPUTimeinNS - hwHelper.getGpuTimeStampInNS(gpuTimeStamp, frequency);
 
-    if (startTimeStamp < queueTimeStamp.GPUTimeStamp) {
-        startTimeStamp += static_cast<uint64_t>((1ULL << (hwHelper.getGlobalTimeStampBits())) * frequency);
+    startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
+    if (startTimeStamp < queueTimeStamp.CPUTimeinNS) {
+        c0 += static_cast<uint64_t>((1ULL << (hwHelper.getGlobalTimeStampBits())) * frequency);
+        startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
     }
+
+    /* calculation based on equation
+       CpuTime = GpuTime * scalar + const( == c0)
+       scalar = DeltaCpu( == dCpu) / DeltaGpu( == dGpu)
+       to determine the value of the const we can use one pair of values
+       const = CpuTimeQueue - GpuTimeQueue * scalar
+    */
 
     //If device enqueue has not updated complete timestamp, assign end timestamp
     gpuDuration = getDelta(contextStartTS, contextEndTS);

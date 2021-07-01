@@ -774,12 +774,12 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
     return blitEnqueuImageAllowed;
 }
 
-bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue, bool isMarkerWithProfiling) const {
+bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue) const {
     if (!blockedQueue) {
         return false;
     }
 
-    if (isCacheFlushCommand(commandType) || !isCommandWithoutKernel(commandType) || isMarkerWithProfiling) {
+    if (isCacheFlushCommand(commandType) || !isCommandWithoutKernel(commandType)) {
         return true;
     }
 
