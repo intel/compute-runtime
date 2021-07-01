@@ -70,13 +70,21 @@ std::string DriverInfoWindows::getVersion(std::string defaultVersion) {
 };
 
 bool DriverInfoWindows::isCompatibleDriverStore() const {
-    auto currentLibraryPath = getCurrentLibraryPath();
+    auto toLowerAndUnifyDriverStore = [](std::string &input) -> std::string {
+        std::transform(input.begin(), input.end(), input.begin(), [](unsigned char c) { return std::tolower(c); });
+        auto hostDriverStorePos = input.find("\\hostdriverstore\\");
+        if (hostDriverStorePos != std::string::npos) {
+            input.erase(hostDriverStorePos + 1, 4);
+        }
+        return input;
+    };
+    auto currentLibraryPath = toLowerAndUnifyDriverStore(getCurrentLibraryPath());
     auto openclDriverName = registryReader.get()->getSetting("OpenCLDriverName", std::string{});
     if (openclDriverName.empty()) {
         return false;
     }
 
-    auto driverStorePath = registryReader.get()->getSetting("DriverStorePathForComputeRuntime", currentLibraryPath);
+    auto driverStorePath = toLowerAndUnifyDriverStore(registryReader.get()->getSetting("DriverStorePathForComputeRuntime", currentLibraryPath));
     return currentLibraryPath.find(driverStorePath.c_str()) == 0u;
 }
 
