@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
@@ -599,4 +600,220 @@ HWTEST_F(OneMipLevelWriteImageTests, GivenNotMippedImageWhenWritingImageThenDoNo
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(builtinOpsParamsCaptured);
     EXPECT_EQ(0u, usedBuiltinOpsParams.dstMipLevel);
+}
+
+HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageThenBuiltinKernelIsResolved) {
+
+    UserEvent userEvent{};
+    cl_event inputEvent = &userEvent;
+    cl_event outputEvent{};
+
+    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage, CL_FALSE,
+                                                 EnqueueWriteImageTraits::origin,
+                                                 EnqueueWriteImageTraits::region,
+                                                 EnqueueWriteImageTraits::rowPitch,
+                                                 EnqueueWriteImageTraits::slicePitch,
+                                                 EnqueueWriteImageTraits::hostPtr,
+                                                 EnqueueWriteImageTraits::mapAllocation,
+                                                 1u,
+                                                 &inputEvent,
+                                                 &outputEvent);
+
+    auto pEvent = castToObject<Event>(outputEvent);
+    auto pCommand = static_cast<CommandComputeKernel *>(pEvent->peekCommand());
+    EXPECT_FALSE(pCommand->peekKernel()->Kernel::canTransformImages());
+    EXPECT_TRUE(pCommand->peekKernel()->isPatched());
+    userEvent.setStatus(CL_COMPLETE);
+    pEvent->release();
+    pCmdQ->finish();
+}
+
+HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageThenKernelRequiresMigration) {
+
+    MockDefaultContext context;
+
+    auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
+
+    auto pImage = Image2dHelper<>::create(&context);
+    EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
+
+    UserEvent userEvent{};
+    cl_event inputEvent = &userEvent;
+    cl_event outputEvent{};
+
+    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ1, pImage, CL_FALSE,
+                                                 EnqueueWriteImageTraits::origin,
+                                                 EnqueueWriteImageTraits::region,
+                                                 EnqueueWriteImageTraits::rowPitch,
+                                                 EnqueueWriteImageTraits::slicePitch,
+                                                 EnqueueWriteImageTraits::hostPtr,
+                                                 EnqueueWriteImageTraits::mapAllocation,
+                                                 1u,
+                                                 &inputEvent,
+                                                 &outputEvent);
+
+    auto pEvent = castToObject<Event>(outputEvent);
+    auto pCommand = static_cast<CommandComputeKernel *>(pEvent->peekCommand());
+    auto pKernel = pCommand->peekKernel();
+    EXPECT_FALSE(pKernel->Kernel::canTransformImages());
+    EXPECT_TRUE(pKernel->isPatched());
+    EXPECT_TRUE(pKernel->requiresMemoryMigration());
+
+    auto &memObjectsForMigration = pKernel->getMemObjectsToMigrate();
+    ASSERT_EQ(1u, memObjectsForMigration.size());
+    auto memObj = memObjectsForMigration.begin()->second;
+    for (auto &rootDeviceIndex : context.getRootDeviceIndices()) {
+        EXPECT_EQ(pImage->getMultiGraphicsAllocation().getGraphicsAllocation(rootDeviceIndex), memObj->getMultiGraphicsAllocation().getGraphicsAllocation(rootDeviceIndex));
+    }
+
+    EXPECT_TRUE(memObj->getMultiGraphicsAllocation().requiresMigrations());
+
+    EXPECT_EQ(MigrationSyncData::locationUndefined, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+
+    userEvent.setStatus(CL_COMPLETE);
+
+    EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    pEvent->release();
+    pCmdQ1->finish();
+    pCmdQ1->release();
+    pImage->release();
+}
+
+HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageIsCalledMultipleTimesThenEachKernelUsesDifferentImage) {
+
+    MockDefaultContext context;
+
+    auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
+
+    auto pImage = Image2dHelper<>::create(&context);
+    EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
+
+    UserEvent userEvent{};
+    cl_event inputEvent = &userEvent;
+    cl_event outputEvent0{};
+    cl_event outputEvent1{};
+
+    EXPECT_EQ(MigrationSyncData::locationUndefined, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ1, pImage, CL_FALSE,
+                                                 EnqueueWriteImageTraits::origin,
+                                                 EnqueueWriteImageTraits::region,
+                                                 EnqueueWriteImageTraits::rowPitch,
+                                                 EnqueueWriteImageTraits::slicePitch,
+                                                 EnqueueWriteImageTraits::hostPtr,
+                                                 EnqueueWriteImageTraits::mapAllocation,
+                                                 1u,
+                                                 &inputEvent,
+                                                 &outputEvent0);
+    EXPECT_EQ(MigrationSyncData::locationUndefined, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+
+    auto pEvent0 = castToObject<Event>(outputEvent0);
+    auto pCommand0 = static_cast<CommandComputeKernel *>(pEvent0->peekCommand());
+    auto pKernel0 = pCommand0->peekKernel();
+    EXPECT_FALSE(pKernel0->Kernel::canTransformImages());
+    EXPECT_TRUE(pKernel0->isPatched());
+    EXPECT_TRUE(pKernel0->requiresMemoryMigration());
+
+    auto &memObjectsForMigration0 = pKernel0->getMemObjectsToMigrate();
+    ASSERT_EQ(1u, memObjectsForMigration0.size());
+    auto memObj0 = memObjectsForMigration0.begin()->second;
+    for (auto &rootDeviceIndex : context.getRootDeviceIndices()) {
+        EXPECT_EQ(pImage->getMultiGraphicsAllocation().getGraphicsAllocation(rootDeviceIndex), memObj0->getMultiGraphicsAllocation().getGraphicsAllocation(rootDeviceIndex));
+    }
+
+    EXPECT_TRUE(memObj0->getMultiGraphicsAllocation().requiresMigrations());
+
+    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ1, pImage, CL_FALSE,
+                                                 EnqueueWriteImageTraits::origin,
+                                                 EnqueueWriteImageTraits::region,
+                                                 EnqueueWriteImageTraits::rowPitch,
+                                                 EnqueueWriteImageTraits::slicePitch,
+                                                 EnqueueWriteImageTraits::hostPtr,
+                                                 EnqueueWriteImageTraits::mapAllocation,
+                                                 1u,
+                                                 &outputEvent0,
+                                                 &outputEvent1);
+    EXPECT_EQ(MigrationSyncData::locationUndefined, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+
+    auto pEvent1 = castToObject<Event>(outputEvent1);
+    auto pCommand1 = static_cast<CommandComputeKernel *>(pEvent1->peekCommand());
+    auto pKernel1 = pCommand1->peekKernel();
+    EXPECT_FALSE(pKernel1->Kernel::canTransformImages());
+    EXPECT_TRUE(pKernel1->isPatched());
+    EXPECT_TRUE(pKernel1->requiresMemoryMigration());
+
+    auto &memObjectsForMigration1 = pKernel1->getMemObjectsToMigrate();
+    ASSERT_EQ(1u, memObjectsForMigration1.size());
+    auto memObj1 = memObjectsForMigration1.begin()->second;
+    for (auto &rootDeviceIndex : context.getRootDeviceIndices()) {
+        EXPECT_EQ(pImage->getMultiGraphicsAllocation().getGraphicsAllocation(rootDeviceIndex), memObj1->getMultiGraphicsAllocation().getGraphicsAllocation(rootDeviceIndex));
+    }
+
+    EXPECT_TRUE(memObj1->getMultiGraphicsAllocation().requiresMigrations());
+
+    EXPECT_NE(memObj0, memObj1);
+
+    userEvent.setStatus(CL_COMPLETE);
+
+    EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    pEvent0->release();
+    pEvent1->release();
+    pCmdQ1->finish();
+    pCmdQ1->release();
+    pImage->release();
+}
+
+HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWriteImageIsCalledThenCommandQueueIsFlushed) {
+    MockDefaultContext context;
+
+    auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
+
+    auto pImage = Image2dHelper<>::create(&context);
+    EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
+    auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ1->getGpgpuCommandStreamReceiver());
+
+    EXPECT_FALSE(ultCsr.flushBatchedSubmissionsCalled);
+    EXPECT_EQ(MigrationSyncData::locationUndefined, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ1, pImage, CL_FALSE);
+
+    EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    EXPECT_TRUE(ultCsr.flushBatchedSubmissionsCalled);
+    pCmdQ1->finish();
+    pCmdQ1->release();
+    pImage->release();
+}
+
+HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWriteImageIsCalledThenTlbCacheIsInvalidated) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    MockDefaultContext context;
+
+    auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
+
+    auto pImage = Image2dHelper<>::create(&context);
+    EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
+
+    EXPECT_EQ(MigrationSyncData::locationUndefined, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ1, pImage, CL_FALSE);
+
+    EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    pCmdQ1->finish();
+
+    {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(pCmdQ1->getCS(0), 0);
+        auto pipeControls = findAll<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        EXPECT_LT(0u, pipeControls.size());
+        bool pipeControlWithTlbInvalidateFound = false;
+        for (auto &pipeControl : pipeControls) {
+            auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControl);
+            if (pipeControlCmd->getTlbInvalidate()) {
+                EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+                pipeControlWithTlbInvalidateFound = true;
+            }
+        }
+        EXPECT_TRUE(pipeControlWithTlbInvalidateFound);
+    }
+
+    pCmdQ1->release();
+    pImage->release();
 }

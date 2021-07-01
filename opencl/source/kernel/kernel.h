@@ -424,6 +424,8 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void setMultiDeviceKernel(MultiDeviceKernel *pMultiDeviceKernelToSet) { pMultiDeviceKernel = pMultiDeviceKernelToSet; }
 
     bool areMultipleSubDevicesInContext() const;
+    bool requiresMemoryMigration() const { return migratableArgsMap.size() > 0; }
+    const std::map<uint32_t, MemObj *> &getMemObjectsToMigrate() const { return migratableArgsMap; }
 
   protected:
     struct ObjectCounts {
@@ -549,6 +551,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     std::vector<PatchInfoData> patchInfoDataList;
     std::unique_ptr<ImageTransformer> imageTransformer;
+    std::map<uint32_t, MemObj *> migratableArgsMap{};
 
     bool specialPipelineSelectMode = false;
     bool svmAllocationsRequireCacheFlush = false;

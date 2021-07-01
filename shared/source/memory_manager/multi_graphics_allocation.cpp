@@ -7,10 +7,33 @@
 
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/memory_manager/migration_sync_data.h"
+
 namespace NEO {
 
 MultiGraphicsAllocation::MultiGraphicsAllocation(uint32_t maxRootDeviceIndex) {
     graphicsAllocations.resize(maxRootDeviceIndex + 1);
+}
+
+MultiGraphicsAllocation::MultiGraphicsAllocation(const MultiGraphicsAllocation &multiGraphicsAllocation) {
+    this->graphicsAllocations = multiGraphicsAllocation.graphicsAllocations;
+    this->migrationSyncData = multiGraphicsAllocation.migrationSyncData;
+    this->isMultiStorage = multiGraphicsAllocation.isMultiStorage;
+    if (migrationSyncData) {
+        migrationSyncData->incRefInternal();
+    }
+}
+MultiGraphicsAllocation::MultiGraphicsAllocation(MultiGraphicsAllocation &&multiGraphicsAllocation) {
+    this->graphicsAllocations = std::move(multiGraphicsAllocation.graphicsAllocations);
+    std::swap(this->migrationSyncData, multiGraphicsAllocation.migrationSyncData);
+    this->isMultiStorage = multiGraphicsAllocation.isMultiStorage;
+};
+
+MultiGraphicsAllocation::~MultiGraphicsAllocation() {
+    if (migrationSyncData) {
+        migrationSyncData->decRefInternal();
+    }
 }
 
 GraphicsAllocation *MultiGraphicsAllocation::getDefaultGraphicsAllocation() const {
@@ -48,4 +71,22 @@ StackVec<GraphicsAllocation *, 1> const &MultiGraphicsAllocation::getGraphicsAll
     return graphicsAllocations;
 }
 
+void MultiGraphicsAllocation::setMultiStorage(bool value) {
+    isMultiStorage = value;
+    if (isMultiStorage && !migrationSyncData) {
+        migrationSyncData = createMigrationSyncDataFunc(getDefaultGraphicsAllocation()->getUnderlyingBufferSize());
+        migrationSyncData->incRefInternal();
+    }
+}
+
+bool MultiGraphicsAllocation::requiresMigrations() const {
+    if (migrationSyncData && migrationSyncData->isMigrationInProgress()) {
+        return false;
+    }
+    return isMultiStorage;
+}
+
+decltype(MultiGraphicsAllocation::createMigrationSyncDataFunc) MultiGraphicsAllocation::createMigrationSyncDataFunc = [](size_t size) -> MigrationSyncData * {
+    return new MigrationSyncData(size);
+};
 } // namespace NEO

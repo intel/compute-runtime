@@ -34,8 +34,8 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferred_deleter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_direct_submission_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_direct_submission_diagnostic_collector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_direct_submission_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_dispatch_kernel_encoder_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_dispatch_kernel_encoder_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_elf.h
@@ -48,6 +48,8 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_io_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_operations_handler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_migration_sync_data.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_multi_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_physical_address_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.cpp

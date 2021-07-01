@@ -173,12 +173,14 @@ SchedulerKernel &MockContext::getSchedulerKernel() {
     return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
 }
 
-MockDefaultContext::MockDefaultContext() : MockContext(nullptr, nullptr) {
+MockDefaultContext::MockDefaultContext() : MockDefaultContext(false) {}
+
+MockDefaultContext::MockDefaultContext(bool initSpecialQueues) : MockContext(nullptr, nullptr) {
     pRootDevice0 = ultClDeviceFactory.rootDevices[0];
     pRootDevice1 = ultClDeviceFactory.rootDevices[1];
     pRootDevice2 = ultClDeviceFactory.rootDevices[2];
     cl_device_id deviceIds[] = {pRootDevice0, pRootDevice1, pRootDevice2};
-    initializeWithDevices(ClDeviceVector{deviceIds, 3}, true);
+    initializeWithDevices(ClDeviceVector{deviceIds, 3}, !initSpecialQueues);
 }
 
 MockSpecializedContext::MockSpecializedContext() : MockContext(nullptr, nullptr) {

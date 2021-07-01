@@ -1364,9 +1364,8 @@ INSTANTIATE_TEST_CASE_P(clCreateNon2dImageFromImageTests,
 
 using clCreateImageWithMultiDeviceContextTests = MultiRootDeviceFixture;
 
-TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithoutHostPtrAndWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyCreatedAndMapPtrIsSet) {
+TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithoutHostPtrAndWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyCreatedAndMapPtrIsNotSet) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-    DebugManagerStateRestore dbgRestore;
 
     std::unique_ptr<Image> image(ImageHelper<ImageWithoutHostPtr>::create(context.get()));
 
@@ -1375,10 +1374,8 @@ TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithoutHostPtr
     EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(2u), nullptr);
     EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u), image->getMultiGraphicsAllocation().getGraphicsAllocation(2u));
 
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(image->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
-
-    EXPECT_NE(image->getAllocatedMapPtr(), nullptr);
+    EXPECT_EQ(image->getAllocatedMapPtr(), nullptr);
+    EXPECT_TRUE(image->getMultiGraphicsAllocation().requiresMigrations());
 }
 
 TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithHostPtrAndWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyCreatedAndMapPtrIsNotSet) {
@@ -1392,8 +1389,7 @@ TEST_F(clCreateImageWithMultiDeviceContextTests, GivenImageCreatedWithHostPtrAnd
     EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(2u), nullptr);
     EXPECT_NE(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u), image->getMultiGraphicsAllocation().getGraphicsAllocation(2u));
 
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(image->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(image->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
+    EXPECT_TRUE(image->getMultiGraphicsAllocation().requiresMigrations());
 
     EXPECT_EQ(image->getAllocatedMapPtr(), nullptr);
 }

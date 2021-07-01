@@ -56,6 +56,7 @@ class MockContext : public Context {
 
 struct MockDefaultContext : MockContext {
     MockDefaultContext();
+    MockDefaultContext(bool initSpecialQueues);
 
     UltClDeviceFactory ultClDeviceFactory{3, 0};
     MockClDevice *pRootDevice0;

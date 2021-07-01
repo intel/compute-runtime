@@ -221,6 +221,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         if (updateTag) {
             PipeControlArgs args(dispatchFlags.dcFlush);
             args.notifyEnable = isUsedNotifyEnableForPostSync();
+            args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
             MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 commandStreamTask,
                 PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,

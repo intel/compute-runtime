@@ -151,6 +151,12 @@ class MemObj : public BaseObject<_cl_mem> {
     const cl_mem_flags &getFlagsIntel() const { return flagsIntel; }
     const MultiGraphicsAllocation &getMultiGraphicsAllocation() const { return multiGraphicsAllocation; }
     static void cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, AllocationInfoType &allocationInfo, bool isParentObject);
+    MemObj *getHighestRootMemObj() {
+        if (!associatedMemObject) {
+            return this;
+        }
+        return associatedMemObject->getHighestRootMemObj();
+    }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);

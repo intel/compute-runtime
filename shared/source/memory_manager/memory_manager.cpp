@@ -126,7 +126,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const Alloc
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImageFromHostPtr(const AllocationData &allocationData) {
     bool copyRequired = isCopyRequired(*allocationData.imgInfo, allocationData.hostPtr);
 
-    if (allocationData.hostPtr && (!copyRequired || allocationData.flags.crossRootDeviceAccess)) {
+    if (allocationData.hostPtr && !copyRequired) {
         return allocateGraphicsMemoryWithHostPtr(allocationData);
     }
     return nullptr;

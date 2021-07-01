@@ -773,6 +773,20 @@ void Kernel::markArgPatchedAndResolveArgs(uint32_t argIndex) {
         patchedArgumentsNum++;
         kernelArguments[argIndex].isPatched = true;
     }
+    if (program->getContextPtr() && getContext().getRootDeviceIndices().size() > 1u && Kernel::isMemObj(kernelArguments[argIndex].type) && kernelArguments[argIndex].object) {
+        auto argMemObj = castToObjectOrAbort<MemObj>(reinterpret_cast<cl_mem>(kernelArguments[argIndex].object));
+        auto memObj = argMemObj->getHighestRootMemObj();
+        auto migrateRequiredForArg = memObj->getMultiGraphicsAllocation().requiresMigrations();
+
+        if (migratableArgsMap.find(argIndex) == migratableArgsMap.end() && migrateRequiredForArg) {
+            migratableArgsMap.insert({argIndex, memObj});
+        } else if (migrateRequiredForArg) {
+            migratableArgsMap[argIndex] = memObj;
+        } else {
+            migratableArgsMap.erase(argIndex);
+        }
+    }
+
     resolveArgs();
 }
 

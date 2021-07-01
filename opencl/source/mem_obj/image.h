@@ -199,6 +199,8 @@ class Image : public MemObj {
 
     static cl_int checkIfDeviceSupportsImages(cl_context context);
 
+    void fillImageRegion(size_t *region) const;
+
   protected:
     Image(Context *context,
           const MemoryProperties &memoryProperties,

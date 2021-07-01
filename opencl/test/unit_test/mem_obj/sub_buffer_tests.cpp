@@ -59,6 +59,18 @@ TEST_F(SubBufferTest, WhenCreatingSubBufferThenRefInternalCountIsIncremented) {
     EXPECT_EQ(1, buffer->getRefInternalCount());
 }
 
+TEST_F(SubBufferTest, givenSubBufferWhenGetHighestRootMemObjIsCalledThenProperMemObjIsReturned) {
+    cl_buffer_region region0 = {2, 12};
+
+    auto subBuffer = buffer->createSubBuffer(CL_MEM_READ_ONLY, 0, &region0, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(static_cast<MemObj *>(buffer), buffer->getHighestRootMemObj());
+    EXPECT_EQ(static_cast<MemObj *>(buffer), subBuffer->getHighestRootMemObj());
+
+    subBuffer->release();
+}
+
 TEST_F(SubBufferTest, GivenUnalignedHostPtrBufferWhenSubBufferIsCreatedThenItIsNonZeroCopy) {
     cl_buffer_region region = {2, 2};
     cl_int retVal = 0;

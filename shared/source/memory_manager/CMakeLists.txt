@@ -40,6 +40,8 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_operations_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_operations_status.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/migration_sync_data.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/migration_sync_data.h
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_graphics_allocation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.cpp

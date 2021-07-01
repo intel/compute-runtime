@@ -40,6 +40,8 @@ struct DispatchFlagsHelper {
             false,                                   //usePerDssBackedBuffer
             false,                                   //useSingleSubdevice
             false,                                   //useGlobalAtomics
-            false);                                  //areMultipleSubDevicesInContext
+            false,                                   //areMultipleSubDevicesInContext
+            false                                    //memoryMigrationRequired
+        );
     }
 };

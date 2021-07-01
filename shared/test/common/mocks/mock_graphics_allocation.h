@@ -60,5 +60,4 @@ static inline MultiGraphicsAllocation toMultiGraphicsAllocation(GraphicsAllocati
 }
 
 } // namespace GraphicsAllocationHelper
-
 } // namespace NEO

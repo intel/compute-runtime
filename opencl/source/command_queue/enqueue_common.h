@@ -35,6 +35,7 @@
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/source/memory_manager/migration_controller.h"
 #include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/source/program/printf_handler.h"
 
@@ -289,6 +290,14 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     const EnqueueProperties enqueueProperties(false, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
                                               flushDependenciesForNonKernelCommand, isMarkerWithProfiling, &blitPropertiesContainer);
 
+    bool migratedMemory = false;
+
+    if (!blockQueue && multiDispatchInfo.peekMainKernel() && multiDispatchInfo.peekMainKernel()->requiresMemoryMigration()) {
+        for (auto &arg : multiDispatchInfo.peekMainKernel()->getMemObjectsToMigrate()) {
+            MigrationController::handleMigration(*this->context, getGpgpuCommandStreamReceiver(), arg.second);
+            migratedMemory = true;
+        }
+    }
     if (!blockQueue) {
         if (parentKernel) {
             processDeviceEnqueue(devQueueHw, multiDispatchInfo, hwTimeStamps, blocking);
@@ -394,6 +403,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     if (blocking) {
         waitUntilComplete(blockQueue, (blockQueue ? nullptr : printfHandler.get()));
+    }
+    if (migratedMemory) {
+        getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
     }
 }
 
@@ -860,7 +872,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         usePerDssBackedBuffer,                                                                      //usePerDssBackedBuffer
         kernel->isSingleSubdevicePreferred(),                                                       //useSingleSubdevice
         useGlobalAtomics,                                                                           //useGlobalAtomics
-        kernel->areMultipleSubDevicesInContext()                                                    //areMultipleSubDevicesInContext
+        kernel->areMultipleSubDevicesInContext(),                                                   //areMultipleSubDevicesInContext
+        kernel->requiresMemoryMigration()                                                           //memoryMigrationRequired
     );
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
@@ -1054,6 +1067,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             surface->makeResident(getGpgpuCommandStreamReceiver());
         }
 
+        auto rootDeviceIndex = getDevice().getRootDeviceIndex();
         DispatchFlags dispatchFlags(
             {},                                                                  //csrDependencies
             &timestampPacketDependencies.barrierNodes,                           //barrierTimestampPacketNodes
@@ -1081,7 +1095,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             false,                                                               //usePerDssBackedBuffer
             false,                                                               //useSingleSubdevice
             false,                                                               //useGlobalAtomics
-            1u);                                                                 //numDevicesInContext
+            context->containsMultipleSubDevices(rootDeviceIndex),                //areMultipleSubDevicesInContext
+            false);                                                              //memoryMigrationRequired
 
         if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);

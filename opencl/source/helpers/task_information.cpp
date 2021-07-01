@@ -77,7 +77,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         false,                                                                       //usePerDssBackedBuffer
         false,                                                                       //useSingleSubdevice
         false,                                                                       //useGlobalAtomics
-        1u);                                                                         //numDevicesInContext
+        false,                                                                       //areMultipleSubDevicesInContext
+        false);                                                                      //memoryMigrationRequired
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
@@ -243,7 +244,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         kernel->requiresPerDssBackedBuffer(),                                             //usePerDssBackedBuffer
         kernel->isSingleSubdevicePreferred(),                                             //useSingleSubdevice
         kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
-        kernel->areMultipleSubDevicesInContext());                                        //areMultipleSubDevicesInContext
+        kernel->areMultipleSubDevicesInContext(),                                         //areMultipleSubDevicesInContext
+        kernel->requiresMemoryMigration());                                               //memoryMigrationRequired
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
@@ -268,6 +270,12 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
     gtpinNotifyPreFlushTask(&commandQueue);
+
+    if (kernel->requiresMemoryMigration()) {
+        for (auto &arg : kernel->getMemObjectsToMigrate()) {
+            MigrationController::handleMigration(commandQueue.getContext(), commandStreamReceiver, arg.second);
+        }
+    }
 
     completionStamp = commandStreamReceiver.flushTask(*kernelOperation->commandStream,
                                                       0,
@@ -351,34 +359,36 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         }
     }
 
+    auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
     DispatchFlags dispatchFlags(
-        {},                                                   //csrDependencies
-        barrierNodes,                                         //barrierTimestampPacketNodes
-        {},                                                   //pipelineSelectArgs
-        commandQueue.flushStamp->getStampReference(),         //flushStampReference
-        commandQueue.getThrottle(),                           //throttle
-        commandQueue.getDevice().getPreemptionMode(),         //preemptionMode
-        GrfConfig::NotApplicable,                             //numGrfRequired
-        L3CachingSettings::NotApplicable,                     //l3CacheSettings
-        ThreadArbitrationPolicy::NotPresent,                  //threadArbitrationPolicy
-        AdditionalKernelExecInfo::NotApplicable,              //additionalKernelExecInfo
-        KernelExecutionType::NotApplicable,                   //kernelExecutionType
-        MemoryCompressionState::NotApplicable,                //memoryCompressionState
-        commandQueue.getSliceCount(),                         //sliceCount
-        true,                                                 //blocking
-        false,                                                //dcFlush
-        false,                                                //useSLM
-        true,                                                 //guardCommandBufferWithPipeControl
-        false,                                                //GSBA32BitRequired
-        false,                                                //requiresCoherency
-        commandQueue.getPriority() == QueuePriority::LOW,     //lowPriority
-        false,                                                //implicitFlush
-        commandStreamReceiver.isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
-        false,                                                //epilogueRequired
-        false,                                                //usePerDssBackedBuffer
-        false,                                                //useSingleSubdevice
-        false,                                                //useGlobalAtomics
-        1u);                                                  //numDevicesInContext
+        {},                                                                    //csrDependencies
+        barrierNodes,                                                          //barrierTimestampPacketNodes
+        {},                                                                    //pipelineSelectArgs
+        commandQueue.flushStamp->getStampReference(),                          //flushStampReference
+        commandQueue.getThrottle(),                                            //throttle
+        commandQueue.getDevice().getPreemptionMode(),                          //preemptionMode
+        GrfConfig::NotApplicable,                                              //numGrfRequired
+        L3CachingSettings::NotApplicable,                                      //l3CacheSettings
+        ThreadArbitrationPolicy::NotPresent,                                   //threadArbitrationPolicy
+        AdditionalKernelExecInfo::NotApplicable,                               //additionalKernelExecInfo
+        KernelExecutionType::NotApplicable,                                    //kernelExecutionType
+        MemoryCompressionState::NotApplicable,                                 //memoryCompressionState
+        commandQueue.getSliceCount(),                                          //sliceCount
+        true,                                                                  //blocking
+        false,                                                                 //dcFlush
+        false,                                                                 //useSLM
+        true,                                                                  //guardCommandBufferWithPipeControl
+        false,                                                                 //GSBA32BitRequired
+        false,                                                                 //requiresCoherency
+        commandQueue.getPriority() == QueuePriority::LOW,                      //lowPriority
+        false,                                                                 //implicitFlush
+        commandStreamReceiver.isNTo1SubmissionModelEnabled(),                  //outOfOrderExecutionAllowed
+        false,                                                                 //epilogueRequired
+        false,                                                                 //usePerDssBackedBuffer
+        false,                                                                 //useSingleSubdevice
+        false,                                                                 //useGlobalAtomics
+        commandQueue.getContext().containsMultipleSubDevices(rootDeviceIndex), //areMultipleSubDevicesInContext
+        false);                                                                //memoryMigrationRequired
 
     UNRECOVERABLE_IF(!kernelOperation->blitEnqueue && !commandStreamReceiver.peekTimestampPacketWriteEnabled() && commandQueue.getContext().getRootDeviceIndices().size() == 1);
 

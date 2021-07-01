@@ -33,7 +33,6 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
 CommandQueue *CommandQueueHwFixture::createCommandQueue(
     ClDevice *pDevice,
     const cl_command_queue_properties *properties) {
-
     if (pDevice == nullptr) {
         if (this->device == nullptr) {
             this->device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
@@ -42,13 +41,20 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
         pDevice = this->device;
     }
 
-    if (!context)
+    if (!context) {
         context = new MockContext(pDevice);
+    }
+    return createCommandQueue(pDevice, properties, context);
+}
 
+CommandQueue *CommandQueueHwFixture::createCommandQueue(
+    ClDevice *pDevice,
+    const cl_command_queue_properties *properties,
+    Context *pContext) {
     auto funcCreate = commandQueueFactory[pDevice->getRenderCoreFamily()];
     assert(nullptr != funcCreate);
 
-    return funcCreate(context, pDevice, properties, false);
+    return funcCreate(pContext, pDevice, properties, false);
 }
 
 void CommandQueueHwFixture::SetUp() {
