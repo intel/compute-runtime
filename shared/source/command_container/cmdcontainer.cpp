@@ -129,6 +129,7 @@ void CommandContainer::reset() {
 
     commandStream->replaceBuffer(cmdBufferAllocations[0]->getUnderlyingBuffer(),
                                  defaultListCmdBufferSize);
+    commandStream->replaceGraphicsAllocation(cmdBufferAllocations[0]);
     addToResidencyContainer(commandStream->getGraphicsAllocation());
 
     for (auto &indirectHeap : indirectHeaps) {

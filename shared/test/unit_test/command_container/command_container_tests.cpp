@@ -608,3 +608,43 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenDestructionThenNonHeapAllo
     cmdContainer.reset();
     EXPECT_EQ(alloc.getUnderlyingBufferSize(), size);
 }
+
+TEST_F(CommandContainerTest, givenContainerAllocatesNextCommandBufferWhenResetingContainerThenExpectFirstCommandBufferAllocationIsReused) {
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    cmdContainer->initialize(pDevice);
+
+    auto stream = cmdContainer->getCommandStream();
+    ASSERT_NE(nullptr, stream);
+    auto firstCmdBufferAllocation = stream->getGraphicsAllocation();
+    ASSERT_NE(nullptr, firstCmdBufferAllocation);
+    auto firstCmdBufferCpuPointer = stream->getSpace(0);
+    EXPECT_EQ(firstCmdBufferCpuPointer, firstCmdBufferAllocation->getUnderlyingBuffer());
+
+    cmdContainer->allocateNextCommandBuffer();
+    auto secondCmdBufferAllocation = stream->getGraphicsAllocation();
+    ASSERT_NE(nullptr, secondCmdBufferAllocation);
+    EXPECT_NE(firstCmdBufferAllocation, secondCmdBufferAllocation);
+    auto secondCmdBufferCpuPointer = stream->getSpace(0);
+    EXPECT_EQ(secondCmdBufferCpuPointer, secondCmdBufferAllocation->getUnderlyingBuffer());
+    EXPECT_NE(firstCmdBufferCpuPointer, secondCmdBufferCpuPointer);
+
+    cmdContainer->reset();
+
+    auto aferResetCmdBufferAllocation = stream->getGraphicsAllocation();
+    ASSERT_NE(nullptr, aferResetCmdBufferAllocation);
+    auto afterResetCmdBufferCpuPointer = stream->getSpace(0);
+    EXPECT_EQ(afterResetCmdBufferCpuPointer, aferResetCmdBufferAllocation->getUnderlyingBuffer());
+
+    EXPECT_EQ(firstCmdBufferAllocation, aferResetCmdBufferAllocation);
+    EXPECT_EQ(firstCmdBufferCpuPointer, afterResetCmdBufferCpuPointer);
+
+    bool firstAllocationFound = false;
+    auto &residencyContainer = cmdContainer->getResidencyContainer();
+    for (auto *allocation : residencyContainer) {
+        if (allocation == firstCmdBufferAllocation) {
+            firstAllocationFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(firstAllocationFound);
+}
