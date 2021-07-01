@@ -205,7 +205,7 @@ TEST(ReferenceTrackedObject, GivenInternalAndApiReferenceCountWhenDecrementingTh
             }
             // 3. Test api ref count 0 and dec internal ref count to 0
             ASSERT_FALSE(wasDeleted);
-            auto autoDeleter = a->decRefInternal();
+            auto autoDeleter = a->decRefInternal(); // NOLINT(clang-analyzer-cplusplus.NewDelete)
             EXPECT_TRUE(autoDeleter.isUnused());
             EXPECT_EQ(a, autoDeleter.get());
             EXPECT_EQ(a, &*autoDeleter);
