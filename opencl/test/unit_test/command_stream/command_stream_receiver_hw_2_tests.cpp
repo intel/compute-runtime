@@ -311,6 +311,28 @@ HWTEST_F(BcsTests, givenMultipleBlitPropertiesWhenDispatchingThenProgramCommands
     EXPECT_EQ(2u, dependenciesFound);
 }
 
+HWTEST_F(BcsTests, whenBlitBufferThenCommandBufferHasProperTaskCount) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                          csr, graphicsAllocation, nullptr, hostPtr,
+                                                                          graphicsAllocation->getGpuAddress(), 0,
+                                                                          0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+    BlitPropertiesContainer blitPropertiesContainer;
+    blitPropertiesContainer.push_back(blitProperties);
+
+    csr.blitBuffer(blitPropertiesContainer, true, false);
+
+    EXPECT_EQ(csr.getCS(0u).getGraphicsAllocation()->getTaskCount(csr.getOsContext().getContextId()), csr.peekTaskCount());
+    EXPECT_EQ(csr.getCS(0u).getGraphicsAllocation()->getResidencyTaskCount(csr.getOsContext().getContextId()), csr.peekTaskCount());
+}
+
 HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferThenCommandBufferIsConstructedProperly) {
     auto bcsOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, pDevice->getDeviceBitfield(), EngineTypeUsage{aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::Disabled, false));
     auto bcsCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
