@@ -88,12 +88,15 @@ bool PageFaultManager::verifyPageFault(void *ptr) {
         auto &pageFaultData = alloc.second;
         if (ptr >= allocPtr && ptr < ptrOffset(allocPtr, pageFaultData.size)) {
             this->setAubWritable(true, allocPtr, pageFaultData.unifiedMemoryManager);
-
             gpuDomainHandler(this, allocPtr, pageFaultData);
             return true;
         }
     }
     return false;
+}
+
+void PageFaultManager::setGpuDomainHandler(gpuDomainHandlerFunc gpuHandlerFuncPtr) {
+    this->gpuDomainHandler = gpuHandlerFuncPtr;
 }
 
 void PageFaultManager::handleGpuDomainTransferForHw(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {

@@ -24,6 +24,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/program/sync_buffer_handler.inl"
 
@@ -696,9 +697,60 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_handle_t hDevice,
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
+    MemAdviseFlags flags;
+    flags.memadvise_flags = 0;
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     if (allocData) {
+        DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
+
+        if (deviceImp->memAdviseSharedAllocations.find(allocData) != deviceImp->memAdviseSharedAllocations.end()) {
+            flags = deviceImp->memAdviseSharedAllocations[allocData];
+        }
+
+        switch (advice) {
+        case ZE_MEMORY_ADVICE_SET_READ_MOSTLY:
+            flags.read_only = 1;
+            break;
+        case ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY:
+            flags.read_only = 0;
+            break;
+        case ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION:
+            flags.device_preferred_location = 1;
+            break;
+        case ZE_MEMORY_ADVICE_CLEAR_PREFERRED_LOCATION:
+            flags.device_preferred_location = 0;
+            break;
+        case ZE_MEMORY_ADVICE_SET_NON_ATOMIC_MOSTLY:
+            flags.non_atomic = 1;
+            break;
+        case ZE_MEMORY_ADVICE_CLEAR_NON_ATOMIC_MOSTLY:
+            flags.non_atomic = 0;
+            break;
+        case ZE_MEMORY_ADVICE_BIAS_CACHED:
+            flags.cached_memory = 1;
+            break;
+        case ZE_MEMORY_ADVICE_BIAS_UNCACHED:
+            flags.cached_memory = 0;
+            break;
+        default:
+            break;
+        }
+
+        NEO::PageFaultManager *pageFaultManager = nullptr;
+        pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+        if (pageFaultManager) {
+            /* If Read Only and Device Preferred Hints have been cleared, then cpu_migration of Shared memory can be re-enabled*/
+            if (flags.cpu_migration_blocked) {
+                if (flags.read_only == 0 && flags.device_preferred_location == 0) {
+                    pageFaultManager->protectCPUMemoryAccess(const_cast<void *>(ptr), size);
+                    flags.cpu_migration_blocked = 0;
+                }
+            }
+            /* Given MemAdvise hints, use different gpu Domain Handler for the Page Fault Handling */
+            pageFaultManager->setGpuDomainHandler(L0::handleGpuDomainTransferForHwWithHints);
+        }
+        deviceImp->memAdviseSharedAllocations[allocData] = flags;
         return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_UNKNOWN;
