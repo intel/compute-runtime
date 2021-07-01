@@ -11,11 +11,7 @@
 #include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
-bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
-    return false;
-}
-void Kernel::reconfigureKernel() {
-}
+
 int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
     auto hwInfo = clDevice.getHardwareInfo();
     auto &hwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -39,14 +35,8 @@ bool Kernel::requiresPerDssBackedBuffer() const {
     return DebugManager.flags.ForcePerDssBackedBufferProgramming.get();
 }
 
-bool Kernel::requiresLimitedWorkgroupSize() const {
-    return this->isBuiltIn;
-}
-
 int32_t Kernel::setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue) {
     return CL_INVALID_VALUE;
 }
 
-void Kernel::updateAuxTranslationRequired() {
-}
 } // namespace NEO

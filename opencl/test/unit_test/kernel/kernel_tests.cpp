@@ -3171,3 +3171,43 @@ TEST_F(KernelTests, givenKernelWithSimdEqual1WhenKernelCreatedThenMaxWorgGroupSi
     EXPECT_LT(pKernel->getMaxKernelWorkGroupSize(), deviceMaxWorkGroupSize);
     EXPECT_EQ(pKernel->getMaxKernelWorkGroupSize(), maxThreadsPerWG);
 }
+
+struct KernelLargeGrfTests : Test<ClDeviceFixture> {
+    void SetUp() override {
+        ClDeviceFixture::SetUp();
+        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
+        pKernelInfo = std::make_unique<KernelInfo>();
+        pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 64;
+    }
+
+    void TearDown() override {
+        ClDeviceFixture::TearDown();
+    }
+
+    std::unique_ptr<MockProgram> program;
+    std::unique_ptr<KernelInfo> pKernelInfo;
+    SPatchExecutionEnvironment executionEnvironment = {};
+};
+
+HWTEST_F(KernelLargeGrfTests, GivenLargeGrfWhenGettingMaxWorkGroupSizeThenCorrectValueReturned) {
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4;
+    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize = 0;
+    {
+        MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
+
+        pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber - 1;
+        EXPECT_EQ(CL_SUCCESS, kernel.initialize());
+        EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.maxWorkGroupSizeForCrossThreadData);
+        EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.maxKernelWorkGroupSize);
+    }
+
+    {
+        MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
+
+        pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+        EXPECT_EQ(CL_SUCCESS, kernel.initialize());
+        EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, *kernel.maxWorkGroupSizeForCrossThreadData);
+        EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, kernel.maxKernelWorkGroupSize);
+    }
+}

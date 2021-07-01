@@ -461,6 +461,150 @@ TEST_F(KernelArgBufferTest, whenSettingAuxTranslationRequiredThenIsAuxTranslatio
     }
 }
 
+TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnTrue) {
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+
+    auto val = (cl_mem)&buffer;
+    auto pVal = &val;
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pKernel->hasDirectStatelessAccessToHostMemory());
+
+    EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+
+    pKernel->updateAuxTranslationRequired();
+
+    EXPECT_TRUE(pKernel->isAuxTranslationRequired());
+}
+
+TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithNoDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnFalse) {
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+    auto val = (cl_mem)&buffer;
+    auto pVal = &val;
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
+
+    EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+
+    pKernel->updateAuxTranslationRequired();
+
+    EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+}
+
+TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnTrue) {
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    char data[128];
+    void *ptr = &data;
+    MockGraphicsAllocation gfxAllocation(ptr, 128);
+    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+
+    auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pKernel->hasDirectStatelessAccessToHostMemory());
+
+    EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+
+    pKernel->updateAuxTranslationRequired();
+
+    EXPECT_TRUE(pKernel->isAuxTranslationRequired());
+}
+
+TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithNoDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnFalse) {
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    char data[128];
+    void *ptr = &data;
+    MockGraphicsAllocation gfxAllocation(ptr, 128);
+    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+    auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
+
+    EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+
+    pKernel->updateAuxTranslationRequired();
+
+    EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+}
+
+TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithNoIndirectStatelessAccessWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnFalse) {
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    pKernelInfo->hasIndirectStatelessAccess = false;
+
+    MockGraphicsAllocation gfxAllocation;
+    gfxAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+
+    pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
+
+    EXPECT_FALSE(pKernel->hasIndirectStatelessAccessToHostMemory());
+
+    EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+
+    pKernel->updateAuxTranslationRequired();
+
+    EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+}
+
+TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectStatelessAccessWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnTrueForHostMemoryAllocation) {
+    DebugManagerStateRestore debugRestorer;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    pKernelInfo->hasIndirectStatelessAccess = true;
+
+    const auto allocationTypes = {GraphicsAllocation::AllocationType::BUFFER,
+                                  GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
+                                  GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY};
+
+    MockGraphicsAllocation gfxAllocation;
+
+    for (const auto type : allocationTypes) {
+        gfxAllocation.setAllocationType(type);
+
+        pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
+
+        if (type == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
+            EXPECT_TRUE(pKernel->hasIndirectStatelessAccessToHostMemory());
+        } else {
+            EXPECT_FALSE(pKernel->hasIndirectStatelessAccessToHostMemory());
+        }
+
+        EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+
+        pKernel->updateAuxTranslationRequired();
+
+        if (type == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
+            EXPECT_TRUE(pKernel->isAuxTranslationRequired());
+        } else {
+            EXPECT_FALSE(pKernel->isAuxTranslationRequired());
+        }
+
+        pKernel->clearUnifiedMemoryExecInfo();
+        pKernel->setAuxTranslationRequired(false);
+    }
+}
+
 class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
   public:
     void SetUp() {

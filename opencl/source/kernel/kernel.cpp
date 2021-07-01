@@ -2670,4 +2670,87 @@ bool Kernel::areMultipleSubDevicesInContext() const {
     return context ? context->containsMultipleSubDevices(clDevice.getRootDeviceIndex()) : false;
 }
 
+void Kernel::reconfigureKernel() {
+    auto &kernelDescriptor = kernelInfo.kernelDescriptor;
+    if (kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::LargeGrfNumber) {
+        maxKernelWorkGroupSize >>= 1;
+    }
+    this->containsStatelessWrites = kernelDescriptor.kernelAttributes.flags.usesStatelessWrites;
+    this->specialPipelineSelectMode = kernelDescriptor.extendedInfo.get() ? kernelDescriptor.extendedInfo->specialPipelineSelectModeRequired() : false;
+}
+bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
+    if (false == HwHelper::cacheFlushAfterWalkerSupported(commandQueue.getDevice().getHardwareInfo())) {
+        return false;
+    }
+
+    if (DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.get() != -1) {
+        return !!DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.get();
+    }
+
+    bool cmdQueueRequiresCacheFlush = commandQueue.getRequiresCacheFlushAfterWalker();
+    if (false == cmdQueueRequiresCacheFlush) {
+        return false;
+    }
+    if (commandQueue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable()) {
+        return false;
+    }
+    bool isMultiDevice = commandQueue.getContext().containsMultipleSubDevices(commandQueue.getDevice().getRootDeviceIndex());
+    if (false == isMultiDevice) {
+        return false;
+    }
+    bool isDefaultContext = (commandQueue.getContext().peekContextType() == ContextType::CONTEXT_TYPE_DEFAULT);
+    if (true == isDefaultContext) {
+        return false;
+    }
+
+    if (getProgram()->getGlobalSurface(commandQueue.getDevice().getRootDeviceIndex()) != nullptr) {
+        return true;
+    }
+    if (svmAllocationsRequireCacheFlush) {
+        return true;
+    }
+    size_t args = kernelArgRequiresCacheFlush.size();
+    for (size_t i = 0; i < args; i++) {
+        if (kernelArgRequiresCacheFlush[i] != nullptr) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Kernel::requiresLimitedWorkgroupSize() const {
+    if (!this->isBuiltIn) {
+        return false;
+    }
+    if (this->auxTranslationDirection != AuxTranslationDirection::None) {
+        return false;
+    }
+
+    //if source is buffer in local memory, no need for limited workgroup
+    if (this->kernelInfo.getArgDescriptorAt(0).is<ArgDescriptor::ArgTPointer>()) {
+        if (this->getKernelArgInfo(0).object) {
+            auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+            auto buffer = castToObject<Buffer>(this->getKernelArgInfo(0u).object);
+            if (buffer && buffer->getGraphicsAllocation(rootDeviceIndex)->getMemoryPool() == MemoryPool::LocalMemory) {
+                return false;
+            }
+        }
+    }
+
+    //if we are reading from image no need for limited workgroup
+    if (this->kernelInfo.getArgDescriptorAt(0).is<ArgDescriptor::ArgTImage>()) {
+        return false;
+    }
+
+    return true;
+}
+
+void Kernel::updateAuxTranslationRequired() {
+    if (DebugManager.flags.EnableStatelessCompression.get()) {
+        if (hasDirectStatelessAccessToHostMemory() || hasIndirectStatelessAccessToHostMemory()) {
+            setAuxTranslationRequired(true);
+        }
+    }
+}
+
 } // namespace NEO
