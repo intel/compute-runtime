@@ -80,6 +80,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     indirectAllocationsAllowed = false;
     unifiedMemoryControls.indirectHostAllocationsAllowed = false;
     unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
+    unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
     commandListPreemptionMode = device->getDevicePreemptionMode();
     commandListPerThreadScratchSize = 0u;
     requiredStreamState = {};

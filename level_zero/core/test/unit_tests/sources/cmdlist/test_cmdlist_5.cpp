@@ -804,5 +804,32 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
     EXPECT_EQ(used, commandContainer.getCommandStream()->getUsed());
 }
 
+HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResetingCommandListThenExpectAllFlagsSetToDefault, TestPlatforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_FALSE(commandList->indirectAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+
+    commandList->indirectAllocationsAllowed = true;
+    commandList->unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+    commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
+    commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+
+    returnValue = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_FALSE(commandList->indirectAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+}
+
 } // namespace ult
 } // namespace L0

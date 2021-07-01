@@ -47,8 +47,10 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::hostPtrMap;
+    using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
     using BaseClass::requiredStreamState;
+    using BaseClass::unifiedMemoryControls;
     using BaseClass::updateStreamProperties;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
