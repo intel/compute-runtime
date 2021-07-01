@@ -235,7 +235,7 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
     }
 
     if (phDevices == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
     }
 
     for (uint32_t i = 0; i < *pCount; i++) {

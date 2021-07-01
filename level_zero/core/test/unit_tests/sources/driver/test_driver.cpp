@@ -460,6 +460,19 @@ TEST_F(DriverHandleTest, givenInitializedDriverWhenGetDeviceIsCalledThenOneDevic
     EXPECT_NE(nullptr, &device);
 }
 
+TEST_F(DriverHandleTest, whenQueryingForApiVersionThenExpectedVersionIsReturned) {
+    ze_api_version_t version = {};
+    ze_result_t result = driverHandle->getApiVersion(&version);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_API_VERSION_1_1, version);
+}
+
+TEST_F(DriverHandleTest, whenQueryingForDevicesWithCountGreaterThanZeroAndNullDevicePointerThenNullHandleIsReturned) {
+    uint32_t count = 1;
+    ze_result_t result = driverHandle->getDevice(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, result);
+}
+
 TEST_F(DriverHandleTest, givenValidDriverHandleWhenGetSvmAllocManagerIsCalledThenSvmAllocsManagerIsObtained) {
     auto svmAllocsManager = driverHandle->getSvmAllocsManager();
     EXPECT_NE(nullptr, svmAllocsManager);
