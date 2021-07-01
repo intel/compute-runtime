@@ -667,13 +667,14 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
     // Load partition ID to wparid register and execute walker
     programMiLoadRegisterMem<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, workPartitionAllocationGpuVa, wparidCCSOffset);
     programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, partitionCount);
-    programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, true); // flush L3 cache
 
     // Prepare for cleanup section
     if (nativeCrossTileAtomicSync) {
         const auto finalSyncTileCountField = gpuAddressOfAllocation + controlSectionOffset + offsetof(StaticPartitioningControlSection, finalSyncTileCounter);
         programNativeCrossTileSyncControl<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, finalSyncTileCountField);
     }
+
+    programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, true); // flush L3 cache
 
     // Synchronize tiles after walker
     if (isSemaphoreProgrammingRequired()) {
