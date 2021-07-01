@@ -107,9 +107,14 @@ void Device::initializeCaps() {
     deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.featureTable.ftrPooledEuEnabled == 0)
                                           ? (systemInfo.EUCount / systemInfo.SubSliceCount)
                                           : systemInfo.EuCountPerPoolMin;
+
+    deviceInfo.maxNumEUsPerDualSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.featureTable.ftrPooledEuEnabled == 0)
+                                              ? (systemInfo.EUCount / systemInfo.DualSubSliceCount)
+                                              : systemInfo.EuCountPerPoolMin;
+
     deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
     deviceInfo.threadsPerEUConfigs = hwHelper.getThreadsPerEUConfigs();
-    auto maxWS = hwHelper.getMaxThreadsForWorkgroup(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice)) * simdSizeUsed;
+    auto maxWS = hwHelper.getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) * simdSizeUsed;
 
     maxWS = Math::prevPowerOfTwo(maxWS);
     deviceInfo.maxWorkGroupSize = std::min(maxWS, 1024u);
