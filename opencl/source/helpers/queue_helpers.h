@@ -60,8 +60,6 @@ inline void releaseQueue<CommandQueue>(cl_command_queue commandQueue, cl_int &re
     }
 }
 
-void getIntelQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, GetInfoHelper &getInfoHelper, cl_int &retVal);
-
 inline void getHostQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, GetInfoHelper &getInfoHelper, cl_int &retVal) {
     switch (paramName) {
     case CL_QUEUE_FAMILY_INTEL:
@@ -71,7 +69,7 @@ inline void getHostQueueInfo(CommandQueue *queue, cl_command_queue_info paramNam
         retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(queue->getQueueIndexWithinFamily()));
         break;
     default:
-        getIntelQueueInfo(queue, paramName, getInfoHelper, retVal);
+        retVal = CL_INVALID_VALUE;
         break;
     }
 }
@@ -169,6 +167,4 @@ returnType getCmdQueueProperties(const cl_queue_properties *properties,
     }
     return 0;
 }
-bool isExtraToken(const cl_queue_properties *property);
-bool verifyExtraTokens(ClDevice *&device, Context &context, const cl_queue_properties *properties);
 } // namespace NEO

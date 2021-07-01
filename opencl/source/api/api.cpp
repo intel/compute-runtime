@@ -5143,8 +5143,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             tokenValue != CL_QUEUE_THROTTLE_KHR &&
             tokenValue != CL_QUEUE_SLICE_COUNT_INTEL &&
             tokenValue != CL_QUEUE_FAMILY_INTEL &&
-            tokenValue != CL_QUEUE_INDEX_INTEL &&
-            !isExtraToken(propertiesAddress)) {
+            tokenValue != CL_QUEUE_INDEX_INTEL) {
             err.set(CL_INVALID_VALUE);
             TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
@@ -5152,12 +5151,6 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
 
         propertiesAddress += 2;
         tokenValue = *propertiesAddress;
-    }
-
-    if (!verifyExtraTokens(pDevice, *pContext, properties)) {
-        err.set(CL_INVALID_VALUE);
-        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
-        return commandQueue;
     }
 
     auto commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(properties);
