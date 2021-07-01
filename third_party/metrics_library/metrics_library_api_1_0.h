@@ -78,13 +78,12 @@ enum class ClientApi : uint32_t
 enum class ClientGen : uint32_t
 {
     Unknown = 0,
-    Gen9,
-    Gen9LP,
-    Gen10,
-    Gen11,
-    Gen11LP,
-    Gen12,
-    XE_HP,
+    Gen9 = 1,
+    Gen9LP = 2,
+    Gen11 = 4,
+    Gen11LP = 5,
+    Gen12 = 6,
+    XeHP = 9,
     // ...
     Last
 };

@@ -23,7 +23,7 @@ const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTran
 
 template <>
 uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
-    return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::XE_HP);
+    return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::XeHP);
 }
 
 template <>
