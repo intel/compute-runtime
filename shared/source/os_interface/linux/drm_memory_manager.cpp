@@ -191,8 +191,7 @@ bool DrmMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo->platform.eRenderCoreFamily);
 
-    auto useKmdMigration = hwHelper.isKmdMigrationSupported(*hwInfo) &&
-                           this->getDrm(rootDeviceIndex).isVmBindAvailable();
+    auto useKmdMigration = hwHelper.isKmdMigrationSupported(*hwInfo);
 
     if (DebugManager.flags.UseKmdMigration.get() != -1) {
         useKmdMigration = DebugManager.flags.UseKmdMigration.get();

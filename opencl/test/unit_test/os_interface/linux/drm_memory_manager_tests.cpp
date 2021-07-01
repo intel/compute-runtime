@@ -92,46 +92,17 @@ TEST_F(DrmMemoryManagerTest, givenDebugVariableWhenCreatingDrmMemoryManagerThenS
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCheckForKmdMigrationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
-    auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
-
-    {
-        DebugManager.flags.UseKmdMigration.set(-1);
-
-        drm->bindAvailable = false;
-        auto retVal = memoryManager->isKmdMigrationAvailable(rootDeviceIndex);
-
-        EXPECT_FALSE(retVal);
-
-        drm->bindAvailable = true;
-        retVal = memoryManager->isKmdMigrationAvailable(rootDeviceIndex);
-
-        auto hwInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-        auto &hwHelper = NEO::HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-        EXPECT_EQ(hwHelper.isKmdMigrationSupported(*hwInfo), retVal);
-    }
     {
         DebugManager.flags.UseKmdMigration.set(1);
 
-        drm->bindAvailable = false;
         auto retVal = memoryManager->isKmdMigrationAvailable(rootDeviceIndex);
-
-        EXPECT_TRUE(retVal);
-
-        drm->bindAvailable = true;
-        retVal = memoryManager->isKmdMigrationAvailable(rootDeviceIndex);
 
         EXPECT_TRUE(retVal);
     }
     {
         DebugManager.flags.UseKmdMigration.set(0);
 
-        drm->bindAvailable = false;
         auto retVal = memoryManager->isKmdMigrationAvailable(rootDeviceIndex);
-
-        EXPECT_FALSE(retVal);
-
-        drm->bindAvailable = true;
-        retVal = memoryManager->isKmdMigrationAvailable(rootDeviceIndex);
 
         EXPECT_FALSE(retVal);
     }
