@@ -23,6 +23,14 @@ namespace L0 {
 
 CommandQueueAllocatorFn commandQueueFactory[IGFX_MAX_PRODUCT] = {};
 
+CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
+    : device(device), csr(csr), desc(*desc) {
+    int overrideCmdQueueSyncMode = NEO::DebugManager.flags.OverrideCmdQueueSynchronousMode.get();
+    if (overrideCmdQueueSyncMode != -1) {
+        this->desc.mode = static_cast<ze_command_queue_mode_t>(overrideCmdQueueSyncMode);
+    }
+}
+
 ze_result_t CommandQueueImp::destroy() {
     delete this;
     return ZE_RESULT_SUCCESS;
@@ -130,7 +138,7 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     return commandQueue;
 }
 
-ze_command_queue_mode_t CommandQueueImp::getSynchronousMode() {
+ze_command_queue_mode_t CommandQueueImp::getSynchronousMode() const {
     return desc.mode;
 }
 
