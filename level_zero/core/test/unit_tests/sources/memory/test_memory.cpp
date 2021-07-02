@@ -2455,6 +2455,32 @@ TEST_F(ImportFdUncachedTests,
 }
 
 TEST_F(ImportFdUncachedTests,
+       givenCallToImportFdHandleWithUncachedIpcFlagsThenLocallyUncachedResourceIsSet) {
+    ze_ipc_memory_flags_t flags = ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
+    uint64_t handle = 1;
+    void *ptr = driverHandle->importFdHandle(device->toHandle(), flags, handle, nullptr);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
+
+    context->freeMem(ptr);
+}
+
+TEST_F(ImportFdUncachedTests,
+       givenCallToImportFdHandleWithBothUncachedFlagsThenLocallyUncachedResourceIsSet) {
+    ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED | ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
+    uint64_t handle = 1;
+    void *ptr = driverHandle->importFdHandle(device->toHandle(), flags, handle, nullptr);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
+
+    context->freeMem(ptr);
+}
+
+TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithoutUncachedFlagsThenLocallyUncachedResourceIsNotSet) {
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;

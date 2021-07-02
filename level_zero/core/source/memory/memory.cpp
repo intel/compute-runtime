@@ -42,6 +42,10 @@ void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_
         allocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
     }
 
+    if (flags & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED) {
+        allocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
+    }
+
     this->getSvmAllocsManager()->insertSVMAlloc(allocData);
 
     if (pAlloc) {
