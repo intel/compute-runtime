@@ -78,20 +78,18 @@ ze_result_t FirmwareUtilImp::getFirstDevice(igsc_device_info *info) {
 }
 
 ze_result_t FirmwareUtilImp::fwDeviceInit() {
-    char *devicePath = nullptr;
     int ret;
     igsc_device_info info;
     ze_result_t result = getFirstDevice(&info);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    devicePath = strdup(info.name);
-    ret = deviceInitByDevice(&fwDeviceHandle, devicePath);
+    fwDevicePath.assign(info.name);
+
+    ret = deviceInitByDevice(&fwDeviceHandle, fwDevicePath.c_str());
     if (ret != 0) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    fwDevicePath = *devicePath;
-    free(devicePath);
     return ZE_RESULT_SUCCESS;
 }
 

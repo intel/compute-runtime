@@ -74,8 +74,8 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     template <class T>
     bool getSymbolAddr(const std::string name, T &proc);
 
-    std::string fwDevicePath;
-    struct igsc_device_handle fwDeviceHandle;
+    std::string fwDevicePath{};
+    struct igsc_device_handle fwDeviceHandle = {};
     bool loadEntryPoints();
 
     NEO::OsLibrary *libraryHandle = nullptr;
