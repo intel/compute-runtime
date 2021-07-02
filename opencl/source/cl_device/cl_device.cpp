@@ -132,7 +132,7 @@ const HardwareInfo &ClDevice::getHardwareInfo() const { return device.getHardwar
 EngineControl &ClDevice::getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) { return device.getEngine(engineType, engineUsage); }
 EngineControl &ClDevice::getDefaultEngine() { return device.getDefaultEngine(); }
 EngineControl &ClDevice::getInternalEngine() { return device.getInternalEngine(); }
-std::atomic<uint32_t> &ClDevice::getSelectorCopyEngine() { return device.getSelectorCopyEngine(); }
+SelectorCopyEngine &ClDevice::getSelectorCopyEngine() { return device.getSelectorCopyEngine(); }
 MemoryManager *ClDevice::getMemoryManager() const { return device.getMemoryManager(); }
 GmmHelper *ClDevice::getGmmHelper() const { return device.getGmmHelper(); }
 GmmClientContext *ClDevice::getGmmClientContext() const { return device.getGmmClientContext(); }

@@ -13,9 +13,11 @@ bool isBcs(aub_stream::EngineType engineType) {
     return engineType == aub_stream::ENGINE_BCS;
 }
 
-aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, std::atomic<uint32_t> &selectorCopyEngine) {
+aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, SelectorCopyEngine &selectorCopyEngine, bool internalUsage) {
     return aub_stream::EngineType::ENGINE_BCS;
 }
+
+void releaseBcsEngineType(aub_stream::EngineType engineType, SelectorCopyEngine &selectorCopyEngine) {}
 
 std::string engineTypeToStringAdditional(aub_stream::EngineType engineType) {
     return "Unknown";

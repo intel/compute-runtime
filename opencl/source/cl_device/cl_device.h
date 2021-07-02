@@ -36,6 +36,7 @@ struct EngineControl;
 struct HardwareCapabilities;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
+struct SelectorCopyEngine;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -69,7 +70,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
     EngineControl *getInternalCopyEngine();
-    std::atomic<uint32_t> &getSelectorCopyEngine();
+    SelectorCopyEngine &getSelectorCopyEngine();
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;
     GmmClientContext *getGmmClientContext() const;

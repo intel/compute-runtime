@@ -67,6 +67,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     CommandQueue() = delete;
 
+    CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage);
+
     CommandQueue(Context *context, ClDevice *device,
                  const cl_queue_properties *properties);
 

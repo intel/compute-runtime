@@ -36,7 +36,7 @@ class CommandQueueHw : public CommandQueue {
     CommandQueueHw(Context *context,
                    ClDevice *device,
                    const cl_queue_properties *properties,
-                   bool internalUsage) : BaseClass(context, device, properties) {
+                   bool internalUsage) : BaseClass(context, device, properties, internalUsage) {
 
         auto clPriority = getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR);
 

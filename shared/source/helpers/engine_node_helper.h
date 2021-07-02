@@ -15,6 +15,7 @@
 
 namespace NEO {
 struct HardwareInfo;
+struct SelectorCopyEngine;
 
 enum class EngineUsage : uint32_t {
     Regular,
@@ -29,7 +30,8 @@ using EngineTypeUsage = std::pair<aub_stream::EngineType, EngineUsage>;
 namespace EngineHelpers {
 bool isCcs(aub_stream::EngineType engineType);
 bool isBcs(aub_stream::EngineType engineType);
-aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, std::atomic<uint32_t> &selectorCopyEngine);
+aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, SelectorCopyEngine &selectorCopyEngine, bool internalUsage = false);
+void releaseBcsEngineType(aub_stream::EngineType engineType, SelectorCopyEngine &selectorCopyEngine);
 
 std::string engineTypeToString(aub_stream::EngineType engineType);
 std::string engineTypeToStringAdditional(aub_stream::EngineType engineType);

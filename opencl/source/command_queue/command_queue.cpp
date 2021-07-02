@@ -60,6 +60,9 @@ CommandQueue *CommandQueue::create(Context *context,
 }
 
 CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties)
+    : CommandQueue(context, device, properties, false) {}
+
+CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage)
     : context(context), device(device) {
     if (context) {
         context->incRefInternal();
@@ -83,8 +86,10 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
             deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         }
         if (bcsAllowed) {
-            auto &selectorCopyEngine = device->getDeviceById(0)->getSelectorCopyEngine();
-            bcsEngine = device->getDeviceById(0)->getDevice().tryGetEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), EngineUsage::Regular);
+            auto &neoDevice = device->getDeviceById(0)->getDevice();
+            auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
+            auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine, internalUsage);
+            bcsEngine = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
         }
     }
 
@@ -108,6 +113,11 @@ CommandQueue::~CommandQueue() {
 
         if (this->perfCountersEnabled) {
             device->getPerformanceCounters()->shutdown();
+        }
+
+        if (bcsEngine) {
+            auto &selectorCopyEngine = device->getDeviceById(0)->getSelectorCopyEngine();
+            EngineHelpers::releaseBcsEngineType(bcsEngine->getEngineType(), selectorCopyEngine);
         }
     }
 
