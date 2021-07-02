@@ -77,8 +77,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
     program->retainForKernel();
     imageTransformer.reset(new ImageTransformer);
     if (kernelInfoArg.kernelDescriptor.kernelAttributes.simdSize == 1u) {
-        auto deviceInfo = getDevice().getDevice().getDeviceInfo();
-        maxKernelWorkGroupSize = HwHelper::get(getHardwareInfo().platform.eRenderCoreFamily).getMaxThreadsForWorkgroupInDSSOrSS(getHardwareInfo(), static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice));
+        maxKernelWorkGroupSize = HwHelper::get(getHardwareInfo().platform.eRenderCoreFamily).getMaxThreadsForWorkgroup(getHardwareInfo(), static_cast<uint32_t>(getDevice().getDevice().getDeviceInfo().maxNumEUsPerSubSlice));
     } else {
         maxKernelWorkGroupSize = static_cast<uint32_t>(clDevice.getSharedDeviceInfo().maxWorkGroupSize);
     }

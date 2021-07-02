@@ -1685,20 +1685,3 @@ HWTEST_F(QueueFamilyNameTest, givenBcsWhenGettingQueueFamilyNameThenReturnProper
 HWTEST_F(QueueFamilyNameTest, givenInvalidEngineGroupWhenGettingQueueFamilyNameThenReturnEmptyName) {
     verify(EngineGroupType::MaxEngineGroups, "");
 }
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupCalculatedCorrectly) {
-    HardwareInfo myHwInfo = *defaultHwInfo;
-    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
-    PLATFORM &myPlatform = myHwInfo.platform;
-
-    mySysInfo.EUCount = 16;
-    mySysInfo.SubSliceCount = 4;
-    mySysInfo.DualSubSliceCount = 2;
-    mySysInfo.ThreadCount = 16 * 8;
-    myPlatform.usRevId = 0x4;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
-    auto minSimd = 8;
-
-    auto expectedWG = (mySysInfo.ThreadCount / mySysInfo.EUCount) * (mySysInfo.EUCount / mySysInfo.SubSliceCount) * minSimd;
-
-    EXPECT_EQ(expectedWG, device->sharedDeviceInfo.maxWorkGroupSize);
-}
