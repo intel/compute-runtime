@@ -2515,6 +2515,7 @@ HWTEST_F(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedTh
 
     mySysInfo.EUCount = 24;
     mySysInfo.SubSliceCount = 3;
+    mySysInfo.DualSubSliceCount = 3;
     mySysInfo.ThreadCount = 24 * 7;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -3166,7 +3167,8 @@ TEST_F(KernelTests, givenKernelWithSimdEqual1WhenKernelCreatedThenMaxWorgGroupSi
     std::unique_ptr<MockKernel> pKernel(new MockKernel(pProgram, *pKernelInfo, *pClDevice));
 
     auto deviceMaxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize;
-    auto maxThreadsPerWG = HwHelper::get(pKernel->getHardwareInfo().platform.eRenderCoreFamily).getMaxThreadsForWorkgroup(pKernel->getHardwareInfo(), static_cast<uint32_t>(pClDevice->getDevice().getDeviceInfo().maxNumEUsPerSubSlice));
+    auto deviceInfo = pClDevice->getDevice().getDeviceInfo();
+    auto maxThreadsPerWG = HwHelper::get(pKernel->getHardwareInfo().platform.eRenderCoreFamily).getMaxThreadsForWorkgroupInDSSOrSS(pKernel->getHardwareInfo(), static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice));
 
     EXPECT_LT(pKernel->getMaxKernelWorkGroupSize(), deviceMaxWorkGroupSize);
     EXPECT_EQ(pKernel->getMaxKernelWorkGroupSize(), maxThreadsPerWG);
