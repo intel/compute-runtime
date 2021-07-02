@@ -45,6 +45,13 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #define TGLLP_TYPED_TEST(method)
 #define TGLLP_SUPPORTED_TEST(cmdSetBase) false
 #endif
+#ifdef TESTS_XE_HP_CORE
+#define XEHP_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_XE_HP_CORE>::GfxFamily>();
+#define XEHP_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_XE_HP_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
+#else
+#define XEHP_TYPED_TEST(method)
+#define XEHP_SUPPORTED_TEST(cmdSetBase) false
+#endif
 
 #define FAMILY_SELECTOR(family, methodName)                \
     switch (family) {                                      \
@@ -59,6 +66,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
         break;                                             \
     case IGFX_GEN12LP_CORE:                                \
         TGLLP_TYPED_TEST(methodName)                       \
+        break;                                             \
+    case IGFX_XE_HP_CORE:                                  \
+        XEHP_TYPED_TEST(methodName)                        \
         break;                                             \
     default:                                               \
         ASSERT_TRUE((false && "Unknown hardware family")); \
@@ -345,6 +355,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
             break;                                             \
         case IGFX_GEN12LP_CORE:                                \
             supported = TGLLP_SUPPORTED_TEST(cmdSetBase);      \
+            break;                                             \
+        case IGFX_XE_HP_CORE:                                  \
+            supported = XEHP_SUPPORTED_TEST(cmdSetBase);       \
             break;                                             \
         default:                                               \
             ASSERT_TRUE((false && "Unknown hardware family")); \
@@ -779,6 +792,10 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #define GEN12LPTEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN12LP_CORE, test_fixture, test_name)
 #define GEN12LPTEST_P(test_fixture, test_name) GENTEST_P(IGFX_GEN12LP_CORE, test_fixture, test_name)
 #endif
+#ifdef TESTS_XE_HP_CORE
+#define XE_HP_CORE_TEST_F(test_fixture, test_name) GENTEST_F(IGFX_XE_HP_CORE, test_fixture, test_name)
+#define XE_HP_CORE_TEST_P(test_fixture, test_name) GENTEST_P(IGFX_XE_HP_CORE, test_fixture, test_name)
+#endif
 #ifdef TESTS_GEN8
 #define BDWTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
@@ -908,6 +925,16 @@ extern GFXCORE_FAMILY renderCoreFamily;
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
                       IGFX_GEN12LP_CORE,          \
                       IGFX_ALDERLAKE_S)
+#endif
+#ifdef TESTS_XEHP
+#define XEHPTEST_F(test_fixture, test_name)                          \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_XE_HP_CORE, IGFX_XE_HP_SDV)
+#define XEHPTEST_P(test_suite_name, test_name)    \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_XE_HP_CORE,            \
+                      IGFX_XE_HP_SDV)
 #endif
 #define HWTEST_TYPED_TEST(CaseName, TestName)                                                                  \
     CHECK_TEST_NAME_LENGTH(CaseName, TestName)                                                                 \
@@ -1068,12 +1095,15 @@ using IsGen9 = IsGfxCore<IGFX_GEN9_CORE>;
 using IsGen11HP = IsGfxCore<IGFX_GEN11_CORE>;
 using IsGen11LP = IsGfxCore<IGFX_GEN11LP_CORE>;
 using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
+using IsXeHpCore = IsGfxCore<IGFX_XE_HP_CORE>;
 
 using IsAtMostGen11 = IsAtMostGfxCore<IGFX_GEN11LP_CORE>;
 
 using IsAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;
 
 using IsAtLeastGen12lp = IsAtLeastGfxCore<IGFX_GEN12LP_CORE>;
+
+using IsAtLeastXeHpCore = IsAtLeastGfxCore<IGFX_XE_HP_CORE>;
 
 using IsADLS = IsProduct<IGFX_ALDERLAKE_S>;
 using IsBXT = IsProduct<IGFX_BROXTON>;
@@ -1087,3 +1117,4 @@ using IsLKF = IsProduct<IGFX_LAKEFIELD>;
 using IsSKL = IsProduct<IGFX_SKYLAKE>;
 using IsTGLLP = IsProduct<IGFX_TIGERLAKE_LP>;
 using IsRKL = IsProduct<IGFX_ROCKETLAKE>;
+using IsXEHP = IsProduct<IGFX_XE_HP_SDV>;
