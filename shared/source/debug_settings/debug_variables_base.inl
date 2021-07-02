@@ -294,6 +294,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicInComputeWalker, -1, "set SYSTOL
 
 /*EXPERIMENTAL TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableCustomLocalMemoryAlignment, 0, "Align local memory allocations to a given value. Works only with allocations at least as big as the value.  0: no effect, 2097152: 2 megabytes, 1073741824: 1 gigabyte")
+DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalUseAtomicsForNativeSectionCleanup, -1, "-1: default (disabled), 0: use store data op, 1: use atomic op")
 
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")

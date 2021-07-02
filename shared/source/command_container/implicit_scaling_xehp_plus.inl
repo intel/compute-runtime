@@ -30,8 +30,13 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool nativeCrossTileAtomicSyn
     UNRECOVERABLE_IF(staticPartitioning && (tileCount != partitionCount));
 
     auto synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
-    return static_cast<size_t>(WalkerPartition::estimateSpaceRequiredInCommandBuffer<GfxFamily>(
-        false, 16u, synchronizeBeforeExecution, nativeCrossTileAtomicSync, staticPartitioning));
+    const bool useAtomicsForNativeCleanup = ImplicitScalingHelper::useAtomicsForNativeCleanup();
+    return static_cast<size_t>(WalkerPartition::estimateSpaceRequiredInCommandBuffer<GfxFamily>(false,
+                                                                                                16u,
+                                                                                                synchronizeBeforeExecution,
+                                                                                                nativeCrossTileAtomicSync,
+                                                                                                staticPartitioning,
+                                                                                                useAtomicsForNativeCleanup));
 }
 
 template <typename GfxFamily>
@@ -50,6 +55,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
     bool staticPartitioning = false;
     partitionCount = WalkerPartition::computePartitionCountAndSetPartitionType<GfxFamily>(&walkerCmd, tileCount, preferStaticPartitioning, usesImages, &staticPartitioning);
     const bool synchronizeBeforeExecution = ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired();
+    const bool useAtomicsForNativeCleanup = ImplicitScalingHelper::useAtomicsForNativeCleanup();
     if (staticPartitioning) {
         UNRECOVERABLE_IF(tileCount != partitionCount);
         WalkerPartition::constructStaticallyPartitionedCommandBuffer<GfxFamily>(commandStream.getSpace(0u),
@@ -61,7 +67,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                 synchronizeBeforeExecution,
                                                                                 useSecondaryBatchBuffer,
                                                                                 nativeCrossTileAtomicSync,
-                                                                                workPartitionAllocationGpuVa);
+                                                                                workPartitionAllocationGpuVa,
+                                                                                useAtomicsForNativeCleanup);
     } else {
         if (DebugManager.flags.ExperimentalSetWalkerPartitionCount.get()) {
             partitionCount = DebugManager.flags.ExperimentalSetWalkerPartitionCount.get();
@@ -75,7 +82,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                  &walkerCmd, totalProgrammedSize,
                                                                                  partitionCount, tileCount,
                                                                                  false, synchronizeBeforeExecution, useSecondaryBatchBuffer,
-                                                                                 nativeCrossTileAtomicSync);
+                                                                                 nativeCrossTileAtomicSync,
+                                                                                 useAtomicsForNativeCleanup);
     }
     commandStream.getSpace(totalProgrammedSize);
 }

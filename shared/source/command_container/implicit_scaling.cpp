@@ -34,4 +34,12 @@ bool ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired() {
     return synchronizeBeforeExecution;
 }
 
+bool ImplicitScalingHelper::useAtomicsForNativeCleanup() {
+    bool useAtomics = false;
+    int overrideUseAtomics = DebugManager.flags.ExperimentalUseAtomicsForNativeSectionCleanup.get();
+    if (overrideUseAtomics != -1) {
+        useAtomics = !!(overrideUseAtomics);
+    }
+    return useAtomics;
+}
 } // namespace NEO

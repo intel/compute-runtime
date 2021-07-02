@@ -45,3 +45,17 @@ TEST_F(ImplicitScalingTests, givenMultiTileApiEnabledWhenOsSupportOffAndForcedOn
     OSInterface::osEnableLocalMemory = false;
     EXPECT_FALSE(ImplicitScalingHelper::isImplicitScalingEnabled(twoTile, true));
 }
+
+TEST_F(ImplicitScalingTests, givenDefaultSettingsWhenCheckingAtomicsForNativeCleanupThenExpectFalse) {
+    EXPECT_FALSE(ImplicitScalingHelper::useAtomicsForNativeCleanup());
+}
+
+TEST_F(ImplicitScalingTests, givenForceNotUseAtomicsWhenCheckingAtomicsForNativeCleanupThenExpectFalse) {
+    DebugManager.flags.ExperimentalUseAtomicsForNativeSectionCleanup.set(0);
+    EXPECT_FALSE(ImplicitScalingHelper::useAtomicsForNativeCleanup());
+}
+
+TEST_F(ImplicitScalingTests, givenForceUseAtomicsWhenCheckingAtomicsForNativeCleanupThenExpectTrue) {
+    DebugManager.flags.ExperimentalUseAtomicsForNativeSectionCleanup.set(1);
+    EXPECT_TRUE(ImplicitScalingHelper::useAtomicsForNativeCleanup());
+}

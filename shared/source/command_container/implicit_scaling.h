@@ -20,6 +20,7 @@ extern bool apiSupport;
 struct ImplicitScalingHelper {
     static bool isImplicitScalingEnabled(const DeviceBitfield &devices, bool preCondition);
     static bool isSynchronizeBeforeExecutionRequired();
+    static bool useAtomicsForNativeCleanup();
 };
 
 template <typename GfxFamily>
