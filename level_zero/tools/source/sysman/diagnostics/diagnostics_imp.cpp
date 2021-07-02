@@ -29,7 +29,7 @@ ze_result_t DiagnosticsImp::diagnosticsRunTests(uint32_t start, uint32_t end, ze
 }
 
 DiagnosticsImp::DiagnosticsImp(OsSysman *pOsSysman, const std::string &initalizedDiagTest, ze_device_handle_t handle) : deviceHandle(handle) {
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
     pOsDiagnostics = OsDiagnostics::create(pOsSysman, initalizedDiagTest, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
     UNRECOVERABLE_IF(nullptr == pOsDiagnostics);

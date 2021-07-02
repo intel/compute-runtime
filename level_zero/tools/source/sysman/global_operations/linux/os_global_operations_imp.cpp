@@ -71,7 +71,7 @@ void LinuxGlobalOperationsImp::getModelName(char (&modelName)[ZES_STRING_PROPERT
 }
 
 void LinuxGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) {
-    ze_device_properties_t coreDeviceProperties;
+    ze_device_properties_t coreDeviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     pDevice->getProperties(&coreDeviceProperties);
     std::stringstream pciId;
     pciId << std::hex << coreDeviceProperties.vendorId;

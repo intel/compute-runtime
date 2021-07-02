@@ -48,7 +48,7 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
         }
 
         for (auto &deviceHandle : deviceHandles) {
-            ze_device_properties_t deviceProperties = {};
+            ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
             Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
             auto pPmt = new NiceMock<Mock<TemperaturePmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                            deviceProperties.subdeviceId);
@@ -119,7 +119,7 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenCreatePmtObjectsWhenRootTileInd
     PlatformMonitoringTech::create(deviceHandles, pFsAccess.get(), rootPciPathOfGpuDevice, mapOfSubDeviceIdToPmtObject);
     uint32_t deviceHandlesIndex = 0;
     for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
-        ze_device_properties_t deviceProperties = {};
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandles[deviceHandlesIndex++])->getProperties(&deviceProperties);
         EXPECT_NE(subDeviceIdToPmtEntry.second, nullptr);
         EXPECT_EQ(subDeviceIdToPmtEntry.first, deviceProperties.subdeviceId);
@@ -153,7 +153,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         }
 
         for (auto &deviceHandle : deviceHandles) {
-            ze_device_properties_t deviceProperties = {};
+            ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
             Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
             auto pPmt = new NiceMock<Mock<TemperaturePmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                            deviceProperties.subdeviceId);
@@ -213,7 +213,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsW
         pSysmanDeviceImp->pTempHandleContext->handleList.pop_back();
     }
     for (auto &deviceHandle : deviceHandles) {
-        ze_device_properties_t deviceProperties = {};
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
         auto pPmt = new NiceMock<Mock<TemperaturePmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                        deviceProperties.subdeviceId);
@@ -231,7 +231,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsW
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingUnsupportedSensorsTemperatureThenUnsupportedReturned) {
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     Device::fromHandle(device->toHandle())->getProperties(&deviceProperties);
     auto pPublicLinuxTemperatureImp = std::make_unique<LinuxTemperatureImp>(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                                             deviceProperties.subdeviceId);

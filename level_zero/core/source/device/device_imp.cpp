@@ -413,10 +413,11 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount * ((this->numSubDevices > 0) ? this->numSubDevices : 1);
 
-    if (NEO::DebugManager.flags.UseCyclesPerSecondTimer.get() == 0) {
-        pDeviceProperties->timerResolution = this->neoDevice->getDeviceInfo().outProfilingTimerResolution;
-    } else {
+    if ((NEO::DebugManager.flags.UseCyclesPerSecondTimer.get() == 1) ||
+        (pDeviceProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2)) {
         pDeviceProperties->timerResolution = this->neoDevice->getDeviceInfo().outProfilingTimerClock;
+    } else {
+        pDeviceProperties->timerResolution = this->neoDevice->getDeviceInfo().outProfilingTimerResolution;
     }
 
     pDeviceProperties->timestampValidBits = hardwareInfo.capabilityTable.timestampValidBits;

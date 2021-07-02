@@ -32,7 +32,7 @@ void StandbyImp::init() {
 }
 
 StandbyImp::StandbyImp(OsSysman *pOsSysman, ze_device_handle_t handle) : deviceHandle(handle) {
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
     pOsStandby = OsStandby::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
     UNRECOVERABLE_IF(nullptr == pOsStandby);

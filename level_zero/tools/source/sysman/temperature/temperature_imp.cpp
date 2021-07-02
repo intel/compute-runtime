@@ -36,7 +36,7 @@ void TemperatureImp::init() {
 }
 
 TemperatureImp::TemperatureImp(const ze_device_handle_t &deviceHandle, OsSysman *pOsSysman, zes_temp_sensors_t type) {
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
     pOsTemperature = OsTemperature::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                            deviceProperties.subdeviceId, type);

@@ -219,7 +219,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitAndcloseSysCa
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTmapOfSubDeviceIdToPmtObjectWouldContainValidEntries) {
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     for (const auto &deviceHandle : deviceHandles) {
-        ze_device_properties_t deviceProperties = {};
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
         auto pPmt = new PublicPlatformMonitoringTech(pTestFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                      deviceProperties.subdeviceId);
@@ -239,7 +239,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenValidSyscallsWhenDoingPMTInitThenPMTmapOfS
 TEST_F(ZesPmtFixtureMultiDevice, GivenOpenSyscallFailWhenDoingPMTInitThenPMTmapOfSubDeviceIdToPmtObjectWouldBeEmpty) {
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     for (const auto &deviceHandle : deviceHandles) {
-        ze_device_properties_t deviceProperties = {};
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
         auto pPmt = new PublicPlatformMonitoringTech(pTestFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                      deviceProperties.subdeviceId);
@@ -257,7 +257,7 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenOpenSyscallFailWhenDoingPMTInitThenPMTmapO
 TEST_F(ZesPmtFixtureMultiDevice, GivenNoPMTHandleInmapOfSubDeviceIdToPmtObjectWhenCallingreleasePmtObjectThenMapWouldGetEmpty) {
     auto mapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
     for (const auto &deviceHandle : deviceHandles) {
-        ze_device_properties_t deviceProperties = {};
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
         pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, nullptr);
     }

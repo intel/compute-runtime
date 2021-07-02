@@ -250,7 +250,8 @@ bool testKernelTimestampHostQuery(ze_context_handle_t &context,
 }
 
 bool testKernelTimestampApendQuery(ze_context_handle_t &context,
-                                   ze_device_handle_t &device) {
+                                   ze_device_handle_t &device,
+                                   ze_device_properties_t devProperties) {
 
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
@@ -332,20 +333,29 @@ bool testKernelTimestampApendQuery(ze_context_handle_t &context,
 
     ze_kernel_timestamp_result_t *kernelTsResults = reinterpret_cast<ze_kernel_timestamp_result_t *>(timestampBuffer);
 
-    ze_device_properties_t devProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &devProperties));
 
     uint64_t timerResolution = devProperties.timerResolution;
     uint64_t kernelDuration = kernelTsResults->context.kernelEnd - kernelTsResults->context.kernelStart;
-    std::cout << "Kernel timestamp statistics: \n"
-              << std::fixed
-              << " Global start : " << std::dec << kernelTsResults->global.kernelStart << " cycles\n"
-              << " Kernel start: " << std::dec << kernelTsResults->context.kernelStart << " cycles\n"
-              << " Kernel end: " << std::dec << kernelTsResults->context.kernelEnd << " cycles\n"
-              << " Global end: " << std::dec << kernelTsResults->global.kernelEnd << " cycles\n"
-              << " timerResolution clock: " << std::dec << timerResolution << " cycles/s\n"
-              << " Kernel duration : " << std::dec << kernelDuration << " cycles, " << kernelDuration * (1000000000.0 / static_cast<double>(timerResolution)) << " ns\n";
-
+    if (devProperties.stype == ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2) {
+        std::cout << "Kernel timestamp statistics (V1.2 and later): \n"
+                  << std::fixed
+                  << " Global start : " << std::dec << kernelTsResults->global.kernelStart << " cycles\n"
+                  << " Kernel start: " << std::dec << kernelTsResults->context.kernelStart << " cycles\n"
+                  << " Kernel end: " << std::dec << kernelTsResults->context.kernelEnd << " cycles\n"
+                  << " Global end: " << std::dec << kernelTsResults->global.kernelEnd << " cycles\n"
+                  << " timerResolution clock: " << std::dec << timerResolution << " cycles/s\n"
+                  << " Kernel duration : " << std::dec << kernelDuration << " cycles, " << kernelDuration * (1000000000.0 / static_cast<double>(timerResolution)) << " ns\n";
+    } else {
+        std::cout << "Kernel timestamp statistics (prior to V1.2): \n"
+                  << std::fixed
+                  << " Global start : " << std::dec << kernelTsResults->global.kernelStart << " cycles\n"
+                  << " Kernel start: " << std::dec << kernelTsResults->context.kernelStart << " cycles\n"
+                  << " Kernel end: " << std::dec << kernelTsResults->context.kernelEnd << " cycles\n"
+                  << " Global end: " << std::dec << kernelTsResults->global.kernelEnd << " cycles\n"
+                  << " timerResolution: " << std::dec << timerResolution << " ns\n"
+                  << " Kernel duration : " << std::dec << kernelDuration << " cycles, " << kernelDuration * timerResolution << " ns\n";
+    }
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
@@ -361,6 +371,7 @@ void printResult(bool result, std::string &currentTest) {
     std::cout << "\nZello Timestamp: " << currentTest.c_str()
               << "  Results validation "
               << (result ? "PASSED" : "FAILED")
+              << std::endl
               << std::endl;
 }
 
@@ -379,8 +390,13 @@ int main(int argc, char *argv[]) {
     bool result;
     std::string currentTest;
 
-    currentTest = "Test Append Write of Global Timestamp";
-    result = testKernelTimestampApendQuery(context, device);
+    currentTest = "Test Append Write of Global Timestamp: Default Device Properties Structure";
+    deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    result = testKernelTimestampApendQuery(context, device, deviceProperties);
+    printResult(result, currentTest);
+    currentTest = "Test Append Write of Global Timestamp: V1.2 (and later) Device Properties Structure";
+    deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2};
+    result = testKernelTimestampApendQuery(context, device, deviceProperties);
     printResult(result, currentTest);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));

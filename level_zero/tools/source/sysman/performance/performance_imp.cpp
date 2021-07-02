@@ -32,7 +32,7 @@ void PerformanceImp::init() {
 }
 
 PerformanceImp::PerformanceImp(OsSysman *pOsSysman, ze_device_handle_t handle, zes_engine_type_flag_t domain) {
-    ze_device_properties_t deviceProperties = {};
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     Device::fromHandle(handle)->getProperties(&deviceProperties);
     pOsPerformance = OsPerformance::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                            deviceProperties.subdeviceId, domain);

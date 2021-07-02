@@ -199,7 +199,7 @@ void PlatformMonitoringTech::create(const std::vector<ze_device_handle_t> &devic
                                     std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject) {
     if (ZE_RESULT_SUCCESS == PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, rootPciPathOfGpuDevice)) {
         for (const auto &deviceHandle : deviceHandles) {
-            ze_device_properties_t deviceProperties = {};
+            ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
             Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
             auto pPmt = new PlatformMonitoringTech(pFsAccess, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                    deviceProperties.subdeviceId);

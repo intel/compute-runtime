@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ ze_result_t GlobalOperationsImp::processesGetState(uint32_t *pCount, zes_process
 
 ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pProperties) {
     Device *device = pOsGlobalOperations->getDevice();
-    ze_device_properties_t deviceProperties;
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     device->getProperties(&deviceProperties);
     sysmanProperties.core = deviceProperties;
     uint32_t count = 0;

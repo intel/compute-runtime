@@ -362,6 +362,7 @@ TEST_F(DeviceTest, givenDeviceCachePropertiesThenAllPropertiesAreAssigned) {
 
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenAllPropertiesAreAssigned) {
     ze_device_properties_t deviceProperties, devicePropertiesBefore;
+    deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
     deviceProperties.type = ZE_DEVICE_TYPE_FPGA;
     memset(&deviceProperties.vendorId, std::numeric_limits<int>::max(), sizeof(deviceProperties.vendorId));
@@ -406,7 +407,7 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
 }
 
 TEST_F(DeviceTest, WhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnSubslicesSupported) {
-    ze_device_properties_t deviceProperties;
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     deviceProperties.type = ZE_DEVICE_TYPE_GPU;
 
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSubSlicesSupported = 48;
@@ -421,7 +422,7 @@ TEST_F(DeviceTest, WhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnSubs
 TEST_F(DeviceTest, GivenDebugApiUsedSetWhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnMaxSubslicesSupported) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DebugApiUsed.set(1);
-    ze_device_properties_t deviceProperties;
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     deviceProperties.type = ZE_DEVICE_TYPE_GPU;
 
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxSubSlicesSupported = 48;
@@ -434,7 +435,7 @@ TEST_F(DeviceTest, GivenDebugApiUsedSetWhenGettingDevicePropertiesThenSubslicesP
 }
 
 TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCorrectlyReturned) {
-    ze_device_properties_t deviceProperties;
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     deviceProperties.maxMemAllocSize = 0;
     device->getProperties(&deviceProperties);
     EXPECT_EQ(deviceProperties.maxMemAllocSize, this->neoDevice->getDeviceInfo().maxMemAllocSize);
@@ -474,7 +475,7 @@ TEST_F(DeviceHwInfoTest, givenDeviceWithNoPageFaultSupportThenFlagIsNotSet) {
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     setDriverAndDevice();
 
-    ze_device_properties_t deviceProps;
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     device->getProperties(&deviceProps);
     EXPECT_FALSE(deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
 }
@@ -485,13 +486,13 @@ TEST_F(DeviceHwInfoTest, givenDeviceWithPageFaultSupportThenFlagIsSet) {
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
     setDriverAndDevice();
 
-    ze_device_properties_t deviceProps;
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     device->getProperties(&deviceProps);
     EXPECT_TRUE(deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
 }
 
 TEST_F(DeviceTest, whenGetDevicePropertiesCalledThenCorrectDevicePropertyEccFlagSet) {
-    ze_device_properties_t deviceProps;
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
     device->getProperties(&deviceProps);
     auto expected = (this->neoDevice->getDeviceInfo().errorCorrectionSupport) ? ZE_DEVICE_PROPERTY_FLAG_ECC : static_cast<ze_device_property_flag_t>(0u);
@@ -510,7 +511,7 @@ TEST_F(DeviceTest, givenCommandQueuePropertiesCallThenCallSucceeds) {
 }
 
 TEST_F(DeviceTest, givenCallToDevicePropertiesThenTimestampValidBitsAreCorrectlyAssigned) {
-    ze_device_properties_t deviceProps;
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
     device->getProperties(&deviceProps);
     EXPECT_EQ(36u, deviceProps.timestampValidBits);
@@ -619,7 +620,7 @@ TEST_F(GlobalTimestampTest, whenGetProfilingTimerClockandProfilingTimerResolutio
     EXPECT_EQ(timerClock, static_cast<uint64_t>(1000000000.0 / timerResolution));
 }
 
-TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionThenDefaultTimerResolutionInNanoSecondsIsReturned) {
+TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithLegacyDevicePropertiesStructThenDefaultTimerResolutionInNanoSecondsIsReturned) {
     neoDevice->setOSTime(new FalseCpuGpuTime());
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
@@ -629,10 +630,26 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionThenDefaultTimerResolu
     double timerResolution = neoDevice->getProfilingTimerResolution();
     EXPECT_NE(timerResolution, 0.0);
 
-    ze_device_properties_t deviceProps = {};
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t res = driverHandle.get()->devices[0]->getProperties(&deviceProps);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(deviceProps.timerResolution, static_cast<uint64_t>(timerResolution));
+}
+
+TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithDeviceProperties_1_2_StructThenDefaultTimerResolutionInCyclesPerSecondsIsReturned) {
+    neoDevice->setOSTime(new FalseCpuGpuTime());
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    std::unique_ptr<L0::DriverHandleImp> driverHandle = std::make_unique<L0::DriverHandleImp>();
+    driverHandle->initialize(std::move(devices));
+
+    uint64_t timerClock = neoDevice->getProfilingTimerClock();
+    EXPECT_NE(timerClock, 0u);
+
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2};
+    ze_result_t res = driverHandle.get()->devices[0]->getProperties(&deviceProps);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(deviceProps.timerResolution, timerClock);
 }
 
 TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecondTimerSetThenTimerResolutionInCyclesPerSecondsIsReturned) {
@@ -648,7 +665,7 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecond
     uint64_t timerClock = neoDevice->getProfilingTimerClock();
     EXPECT_NE(timerClock, 0u);
 
-    ze_device_properties_t deviceProps = {};
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t res = driverHandle.get()->devices[0]->getProperties(&deviceProps);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(deviceProps.timerResolution, timerClock);
@@ -1018,7 +1035,7 @@ TEST_F(MultipleDevicesTest, whenRetriecingSubDevicePropertiesThenCorrectFlagIsSe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(numSubDevices, count);
 
-    ze_device_properties_t deviceProps;
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
     L0::Device *subdevice0 = static_cast<L0::Device *>(subDevices[0]);
     subdevice0->getProperties(&deviceProps);
@@ -1243,7 +1260,7 @@ TEST(DevicePropertyFlagIsIntegratedTest, givenIntegratedDeviceThenCorrectDeviceP
     driverHandle->initialize(std::move(devices));
     auto device = driverHandle->devices[0];
 
-    ze_device_properties_t deviceProps;
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
     device->getProperties(&deviceProps);
     EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_INTEGRATED, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
@@ -1261,7 +1278,7 @@ TEST(DevicePropertyFlagDiscreteDeviceTest, givenDiscreteDeviceThenCorrectDeviceP
     driverHandle->initialize(std::move(devices));
     auto device = driverHandle->devices[0];
 
-    ze_device_properties_t deviceProps;
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
     device->getProperties(&deviceProps);
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);

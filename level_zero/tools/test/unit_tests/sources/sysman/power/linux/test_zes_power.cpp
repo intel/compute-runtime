@@ -52,7 +52,7 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
         }
 
         for (auto &deviceHandle : deviceHandles) {
-            ze_device_properties_t deviceProperties = {};
+            ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
             Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
             auto pPmt = new NiceMock<Mock<PowerPmt>>(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
                                                      deviceProperties.subdeviceId);
