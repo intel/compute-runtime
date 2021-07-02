@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/device_binary_format/elf/elf.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include <inttypes.h>
@@ -40,7 +41,20 @@ static constexpr ConstStringRef spv = ".spv";
 static constexpr ConstStringRef debugInfo = ".debug_info";
 static constexpr ConstStringRef zeInfo = ".ze_info";
 static constexpr ConstStringRef gtpinInfo = ".gtpin_info";
+static constexpr ConstStringRef noteIntelGT = ".note.intelgt.compat";
 } // namespace SectionsNamesZebin
+
+static constexpr ConstStringRef IntelGtNoteOwnerName = "IntelGT";
+struct IntelGTNote : ElfNoteSection {
+    char ownerName[8];
+    uint32_t desc;
+};
+static_assert(sizeof(IntelGTNote) == 0x18, "");
+enum IntelGTSectionType : uint32_t {
+    ProductFamily = 1,
+    GfxCore = 2,
+    TargetMetadata = 3
+};
 
 struct ZebinTargetFlags {
     union {
@@ -75,12 +89,56 @@ struct ZebinTargetFlags {
             uint8_t generatorId : 3;
 
             // bit[31:24]: MBZ, reserved for future use
-            uint8_t reserved : 8;
         };
         uint32_t packed = 0U;
     };
 };
 static_assert(sizeof(ZebinTargetFlags) == sizeof(uint32_t), "");
+
+struct ZebinTargetMetadata {
+    // bit[7:0]: dedicated for specific generator (meaning based on generatorId)
+    enum GeneratorSpecificFlags : uint8_t {
+        NONE = 0
+    };
+    // bit[22:20]: generator of this device binary
+    enum GeneratorId : uint8_t {
+        UNREGISTERED = 0,
+        IGC = 1
+    };
+
+    union {
+        struct {
+            // bit[7:0]: dedicated for specific generator (meaning based on generatorId)
+            uint8_t generatorSpecificFlags : 8;
+
+            // bit[12:8]: values [0-31], min compatbile device revision Id (stepping)
+            uint8_t minHwRevisionId : 5;
+
+            // bit[13:13]:
+            // 0 - full validation during decoding (safer decoding)
+            // 1 - no validation (faster decoding - recommended for known generators)
+            bool validateRevisionId : 1;
+
+            // bit[14:14]:
+            // 0 - ignore minHwRevisionId and maxHwRevisionId
+            // 1 - underlying device must match specified revisionId info
+            bool disableExtendedValidation : 1;
+
+            // bit[19:15]:  max compatbile device revision Id (stepping)
+            uint8_t maxHwRevisionId : 5;
+
+            // bit[22:20]: generator of this device binary
+            // 0 - Unregistered
+            // 1 - IGC
+            uint8_t generatorId : 3;
+
+            // bit[31:23]: MBZ, reserved for future use
+            uint8_t reserved : 8;
+        };
+        uint32_t packed = 0U;
+    };
+};
+static_assert(sizeof(ZebinTargetMetadata) == sizeof(uint32_t), "");
 
 namespace ZebinKernelMetadata {
 namespace Tags {

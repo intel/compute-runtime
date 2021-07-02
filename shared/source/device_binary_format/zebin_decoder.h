@@ -28,6 +28,7 @@ struct ZebinSections {
     StackVec<SectionHeaderData *, 1> constDataSections;
     StackVec<SectionHeaderData *, 1> symtabSections;
     StackVec<SectionHeaderData *, 1> spirvSections;
+    StackVec<SectionHeaderData *, 1> noteIntelGTSections;
 };
 
 using UniqueNode = StackVec<const NEO::Yaml::Node *, 1>;
@@ -40,6 +41,9 @@ struct ZeInfoKernelSections {
     UniqueNode perThreadMemoryBuffersNd;
     UniqueNode experimentalPropertiesNd;
 };
+
+bool validateTargetDevice(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice);
+std::vector<const Elf::IntelGTNote *> getIntelGTNotes(const Elf::Elf<Elf::EI_CLASS_64> &elf);
 
 DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSections &out, std::string &outErrReason, std::string &outWarning);
 DecodeError validateZebinSectionsCount(const ZebinSections &sections, std::string &outErrReason, std::string &outWarning);

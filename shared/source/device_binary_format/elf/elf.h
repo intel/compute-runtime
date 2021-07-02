@@ -32,7 +32,8 @@ enum ELF_IDENTIFIER_DATA : uint8_t {
 
 // Target machine
 enum ELF_MACHINE : uint16_t {
-    EM_NONE = 0, // No specific instrution set
+    EM_NONE = 0, // No specific instruction set
+    EM_INTELGT = 205,
 };
 
 // Elf version
@@ -314,6 +315,13 @@ struct ElfFileHeader {
 
 static_assert(sizeof(ElfFileHeader<EI_CLASS_32>) == 0x34, "");
 static_assert(sizeof(ElfFileHeader<EI_CLASS_64>) == 0x40, "");
+
+struct ElfNoteSection {
+    uint32_t nameSize;
+    uint32_t descSize;
+    uint32_t type;
+};
+static_assert(sizeof(ElfNoteSection) == 0xC, "");
 
 template <int NumBits>
 struct ElfSymbolEntryTypes;

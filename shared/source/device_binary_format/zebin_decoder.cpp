@@ -24,6 +24,57 @@
 
 namespace NEO {
 
+bool validateTargetDevice(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice) {
+    GFXCORE_FAMILY gfxCore = IGFX_UNKNOWN_CORE;
+    PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
+    Elf::ZebinTargetMetadata targetMetadata = {};
+    auto intelGTNotes = getIntelGTNotes(elf);
+    for (const auto &intelGTNote : intelGTNotes) {
+        switch (intelGTNote->type) {
+        case Elf::IntelGTSectionType::ProductFamily:
+            productFamily = static_cast<PRODUCT_FAMILY>(intelGTNote->desc);
+            break;
+        case Elf::IntelGTSectionType::GfxCore:
+            gfxCore = static_cast<GFXCORE_FAMILY>(intelGTNote->desc);
+            break;
+        case Elf::IntelGTSectionType::TargetMetadata:
+            targetMetadata.packed = intelGTNote->desc;
+            break;
+        default:
+            return false;
+        }
+    }
+    bool validForTarget = (gfxCore != IGFX_UNKNOWN_CORE) | (productFamily != IGFX_UNKNOWN);
+    validForTarget &= (gfxCore != IGFX_UNKNOWN_CORE) ? targetDevice.coreFamily == gfxCore : true;
+    validForTarget &= (productFamily != IGFX_UNKNOWN) ? targetDevice.productFamily == productFamily : true;
+    validForTarget &= (0 == targetMetadata.validateRevisionId) | ((targetDevice.stepping >= targetMetadata.minHwRevisionId) & (targetDevice.stepping <= targetMetadata.maxHwRevisionId));
+    validForTarget &= (8U == targetDevice.maxPointerSizeInBytes);
+    return validForTarget;
+}
+
+std::vector<const Elf::IntelGTNote *> getIntelGTNotes(const Elf::Elf<Elf::EI_CLASS_64> &elf) {
+    std::vector<const Elf::IntelGTNote *> intelGTNotes;
+    for (size_t i = 0; i < elf.sectionHeaders.size(); i++) {
+        auto section = elf.sectionHeaders[i];
+        if (Elf::SHT_NOTE == section.header->type && Elf::SectionsNamesZebin::noteIntelGT == elf.getSectionName(static_cast<uint32_t>(i))) {
+            auto numEntries = elf.sectionHeaders[i].header->size / sizeof(Elf::IntelGTNote);
+            for (uint32_t i = 0; i < numEntries; ++i) {
+                auto intelGTNote = reinterpret_cast<const Elf::IntelGTNote *>(section.data.begin() + i * sizeof(Elf::IntelGTNote));
+
+                bool isValidGTNote = sizeof(uint32_t) == intelGTNote->descSize;
+                isValidGTNote &= Elf::IntelGtNoteOwnerName.size() + 1 == intelGTNote->nameSize;
+                isValidGTNote &= Elf::IntelGtNoteOwnerName == ConstStringRef(intelGTNote->ownerName);
+                if (isValidGTNote) {
+                    intelGTNotes.push_back(intelGTNote);
+                } else {
+                    continue;
+                }
+            }
+        }
+    }
+    return intelGTNotes;
+}
+
 DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSections &out, std::string &outErrReason, std::string &outWarning) {
     if ((elf.elfFileHeader->shStrNdx >= elf.sectionHeaders.size()) || (NEO::Elf::SHN_UNDEF == elf.elfFileHeader->shStrNdx)) {
         outErrReason.append("DeviceBinaryFormat::Zebin : Invalid or missing shStrNdx in elf header\n");
@@ -62,6 +113,13 @@ DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSect
             break;
         case NEO::Elf::SHT_ZEBIN_SPIRV:
             out.spirvSections.push_back(&elfSectionHeader);
+            break;
+        case NEO::Elf::SHT_NOTE:
+            if (sectionName == NEO::Elf::SectionsNamesZebin::noteIntelGT) {
+                out.noteIntelGTSections.push_back(&elfSectionHeader);
+            } else {
+                outWarning.append("DeviceBinaryFormat::Zebin : Unhandled SHT_NOTE section : " + sectionName.str() + " currently supports only : " + NEO::Elf::SectionsNamesZebin::noteIntelGT.str() + ".\n");
+            }
             break;
         case NEO::Elf::SHT_STRTAB:
             // ignoring intentionally - section header names
@@ -108,6 +166,7 @@ DecodeError validateZebinSectionsCount(const ZebinSections &sections, std::strin
     valid &= validateZebinSectionsCountAtMost(sections.constDataSections, NEO::Elf::SectionsNamesZebin::dataConst, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.symtabSections, NEO::Elf::SectionsNamesZebin::symtab, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.spirvSections, NEO::Elf::SectionsNamesZebin::spv, 1U, outErrReason, outWarning);
+    valid &= validateZebinSectionsCountAtMost(sections.noteIntelGTSections, NEO::Elf::SectionsNamesZebin::noteIntelGT, 1U, outErrReason, outWarning);
     return valid ? DecodeError::Success : DecodeError::InvalidBinary;
 }
 
