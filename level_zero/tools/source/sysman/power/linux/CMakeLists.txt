@@ -6,8 +6,8 @@
 
 set(L0_SRCS_TOOLS_SYSMAN_POWER_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/os_power_imp.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/os_power_imp.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_power_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_power_imp.h
 )
 
 if(UNIX)

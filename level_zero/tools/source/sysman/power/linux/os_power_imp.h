@@ -11,6 +11,7 @@
 #include "level_zero/tools/source/sysman/power/os_power.h"
 
 #include <memory>
+#include <string>
 
 namespace L0 {
 
@@ -32,5 +33,28 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
 
   protected:
     PlatformMonitoringTech *pPmt = nullptr;
+    SysfsAccess *pSysfsAccess = nullptr;
+
+  private:
+    std::string i915HwmonDir;
+    static const std::string hwmonDir;
+    static const std::string i915;
+    static const std::string sustainedPowerLimitEnabled;
+    static const std::string sustainedPowerLimit;
+    static const std::string sustainedPowerLimitInterval;
+    static const std::string burstPowerLimitEnabled;
+    static const std::string burstPowerLimit;
+    static const std::string energyCounterNode;
+    static const std::string defaultPowerLimit;
+    static const std::string minPowerLimit;
+    static const std::string maxPowerLimit;
+    bool canControl = false;
+
+    ze_result_t getErrorCode(ze_result_t result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        return result;
+    }
 };
 } // namespace L0
