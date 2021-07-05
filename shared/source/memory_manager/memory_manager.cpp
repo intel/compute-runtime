@@ -463,7 +463,9 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     }
     if (!allocation && status == AllocationStatus::RetryInNonDevicePool) {
         allocation = allocateGraphicsMemory(allocationData);
-        this->registerSysMemAlloc(allocation);
+        if (allocation) {
+            this->registerSysMemAlloc(allocation);
+        }
     }
     FileLoggerInstance().logAllocation(allocation);
     registerAllocationInOs(allocation);
