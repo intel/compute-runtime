@@ -26,11 +26,7 @@ class MockPhysicalAddressAllocatorHw : public PhysicalAddressAllocatorHw<GfxFami
     MockPhysicalAddressAllocatorHw() : PhysicalAddressAllocatorHw<GfxFamily>(MemoryConstants::gigaByte, 4) {}
 };
 
-struct PhysicalAddressAllocatorFixture {
-    void SetUp() {}
-    void TearDown() {}
-};
-typedef Test<PhysicalAddressAllocatorFixture> PhysicalAddressAllocatorHwTest;
+using PhysicalAddressAllocatorHwTest = ::testing::Test;
 
 HWTEST_F(PhysicalAddressAllocatorHwTest, givenZeroBanksWhenPageInBankIsReservedThenMainAllocatorIsUsed) {
     size_t bankSize = 1024 * MemoryConstants::pageSize;
