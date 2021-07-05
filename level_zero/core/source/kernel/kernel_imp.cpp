@@ -883,10 +883,10 @@ ze_result_t KernelImp::setGlobalOffsetExp(uint32_t offsetX,
     return ZE_RESULT_SUCCESS;
 }
 
-uint32_t KernelImp::patchGlobalOffset() {
+void KernelImp::patchGlobalOffset() {
     const NEO::KernelDescriptor &desc = kernelImmData->getDescriptor();
     auto dst = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);
-    return NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.globalWorkOffset, this->globalOffsets);
+    NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.globalWorkOffset, this->globalOffsets);
 }
 
 void KernelImp::patchWorkDim(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) {

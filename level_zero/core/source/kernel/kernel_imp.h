@@ -124,7 +124,7 @@ struct KernelImp : Kernel {
         return this->globalOffsets;
     }
     ze_result_t setGlobalOffsetExp(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) override;
-    uint32_t patchGlobalOffset() override;
+    void patchGlobalOffset() override;
 
     void patchWorkDim(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
 

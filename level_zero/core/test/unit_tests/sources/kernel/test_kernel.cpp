@@ -1814,8 +1814,7 @@ HWTEST_F(KernelGlobalWorkOffsetTests, whenSettingGlobalOffsetThenCrossThreadData
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
-    uint32_t patchedCount = kernelImp->patchGlobalOffset();
-    EXPECT_EQ(patchedCount, 3u);
+    kernelImp->patchGlobalOffset();
 
     const NEO::KernelDescriptor &desc = kernelImp->getImmutableData()->getDescriptor();
     auto dst = ArrayRef<const uint8_t>(kernelImp->getCrossThreadData(), kernelImp->getCrossThreadDataSize());
