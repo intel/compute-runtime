@@ -60,6 +60,21 @@ if(NOT SKIP_NEO_UNIT_TESTS)
                      COMMAND echo Running AUB generation for ${product} in ${TargetDir}/${product}_aub
                      COMMAND ${aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${IGDRCL_TESTS_LISTENER_OPTION} --rev_id ${revision_id}
   )
+  if(BUILD_WITH_L0)
+    if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
+      set(l0_aub_test_cmd_prefix $<TARGET_FILE:ze_intel_gpu_aub_tests>)
+    else()
+      set(l0_aub_test_cmd_prefix LD_LIBRARY_PATH=${NEO__GMM_LIBRARY_PATH} $<TARGET_FILE:ze_intel_gpu_aub_tests>)
+    endif()
+
+    add_custom_command(
+                       TARGET run_${product}_${revision_id}_aub_tests
+                       POST_BUILD
+                       COMMAND WORKING_DIRECTORY ${TargetDir}
+                       COMMAND echo Running Level Zero AUB generation for ${product} in ${TargetDir}/${product}_aub
+                       COMMAND ${l0_aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} --rev_id ${revision_id}
+    )
+  endif()
 
   if(DO_NOT_RUN_AUB_TESTS)
     set_target_properties(run_${product}_${revision_id}_aub_tests PROPERTIES

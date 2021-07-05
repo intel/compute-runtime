@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/ptr_math.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
@@ -32,7 +33,8 @@ void setupAUB(const NEO::Device *pDevice, aub_stream::EngineType engineType) {
     NEO::AUBCommandStreamReceiver::AubFileStream aubFile;
     std::string filePath(NEO::folderAUB);
     filePath.append(Os::fileSeparator);
-    std::string baseName("simple");
+    std::string baseName(NEO::ApiSpecificConfig::getAubPrefixForSpecificApi());
+    baseName.append("simple");
     baseName.append(csTraits.name);
     baseName.append(".aub");
     filePath.append(getAubFileName(pDevice, baseName));

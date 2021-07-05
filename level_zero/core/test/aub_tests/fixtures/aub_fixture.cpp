@@ -7,7 +7,19 @@
 
 #include "aub_fixture.h"
 
+#include "shared/source/helpers/api_specific_config.h"
+
 namespace L0 {
+
+void AUBFixtureL0::prepareCopyEngines(NEO::MockDevice &device, const std::string &filename) {
+    for (auto i = 0u; i < device.engines.size(); i++) {
+        if (EngineHelpers::isBcs(device.engines[i].getEngineType())) {
+            CommandStreamReceiver *pBcsCommandStreamReceiver = nullptr;
+            pBcsCommandStreamReceiver = AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
+            device.resetCommandStreamReceiver(pBcsCommandStreamReceiver, i);
+        }
+    }
+}
 
 void AUBFixtureL0::SetUp(const HardwareInfo *hardwareInfo) {
     const HardwareInfo &hwInfo = hardwareInfo ? *hardwareInfo : *defaultHwInfo;
@@ -17,6 +29,8 @@ void AUBFixtureL0::SetUp(const HardwareInfo *hardwareInfo) {
 
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
     std::stringstream strfilename;
+
+    strfilename << NEO::ApiSpecificConfig::getAubPrefixForSpecificApi();
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
     executionEnvironment = new NEO::ExecutionEnvironment();
@@ -27,6 +41,7 @@ void AUBFixtureL0::SetUp(const HardwareInfo *hardwareInfo) {
 
     this->csr = AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, neoDevice->getDeviceBitfield());
     neoDevice->resetCommandStreamReceiver(this->csr);
+    prepareCopyEngines(*neoDevice, strfilename.str());
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));

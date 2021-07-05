@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -33,6 +34,8 @@ void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
     std::stringstream strfilename;
     auto engineType = pCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getEngineType();
+
+    strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
     pCommandStreamReceiver = AUBFixture::prepareComputeEngine(device, strfilename.str());

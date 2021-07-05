@@ -13,5 +13,6 @@ struct ApiSpecificConfig {
     static bool getHeapConfiguration();
     static bool getBindlessConfiguration();
     static ApiType getApiType();
+    static const char *getAubPrefixForSpecificApi();
 };
 } // namespace NEO

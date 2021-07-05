@@ -24,6 +24,7 @@ class AUBFixtureL0 {
   public:
     void SetUp(const HardwareInfo *hardwareInfo);
     void TearDown();
+    static void prepareCopyEngines(NEO::MockDevice &device, const std::string &filename);
 
     const uint32_t rootDeviceIndex = 0;
     NEO::ExecutionEnvironment *executionEnvironment;

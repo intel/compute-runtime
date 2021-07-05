@@ -13,6 +13,7 @@ get_property(NEO_SHARED_aub_tests_configurations GLOBAL PROPERTY NEO_SHARED_aub_
 
 list(APPEND L0_AUB_TESTS__TARGET_OBJECTS
      ${CMAKE_CURRENT_SOURCE_DIR}/aub_hello_world_test.cpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/options_aub_tests.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
      ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/main.cpp
      ${NEO_SHARED_aub_tests_configurations}
@@ -26,6 +27,10 @@ function(ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION)
 endfunction()
 
 ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
+
+if(DEFINED AUB_STREAM_PROJECT_NAME)
+  list(APPEND L0_AUB_TESTS__TARGET_OBJECTS $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>)
+endif()
 
 add_executable(${TARGET_NAME}
                ${L0_AUB_TESTS__TARGET_OBJECTS}

@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -62,6 +63,7 @@ class AUBFixture : public CommandQueueHwFixture {
 
         const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
         std::stringstream strfilename;
+        strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
         strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
         executionEnvironment = platform()->peekExecutionEnvironment();

@@ -15,4 +15,8 @@ TEST(ApiSpecificConfigL0Tests, WhenGettingApiTypeThenCorrectTypeIsReturned) {
     EXPECT_EQ(ApiSpecificConfig::L0, ApiSpecificConfig::getApiType());
 }
 
+TEST(ApiSpecificConfigL0Tests, WhenGettingAUBPrefixByApiTypeL0IsReturned) {
+    EXPECT_EQ(0, strcmp("l0_", ApiSpecificConfig::getAubPrefixForSpecificApi()));
+}
+
 } // namespace NEO

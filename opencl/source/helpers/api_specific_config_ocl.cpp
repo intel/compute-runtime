@@ -22,4 +22,8 @@ bool ApiSpecificConfig::getBindlessConfiguration() {
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
     return ApiSpecificConfig::OCL;
 }
+
+const char *ApiSpecificConfig::getAubPrefixForSpecificApi() {
+    return "ocl_";
+}
 } // namespace NEO

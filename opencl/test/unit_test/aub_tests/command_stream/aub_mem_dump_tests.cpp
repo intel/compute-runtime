@@ -14,6 +14,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_csr.h"
 
+using NEO::ApiSpecificConfig;
 using NEO::AUBCommandStreamReceiver;
 using NEO::AUBCommandStreamReceiverHw;
 using NEO::AUBFamilyMapper;
@@ -57,8 +58,9 @@ HWTEST_F(AubMemDumpTests, givenAubFileStreamWhenOpenAndCloseIsCalledThenFileName
 HWTEST_F(AubMemDumpTests, GivenHeaderThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "header.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("header.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -72,8 +74,9 @@ HWTEST_F(AubMemDumpTests, GivenHeaderThenExpectationsAreMet) {
 HWTEST_F(AubMemDumpTests, GivenReserveMaxAddressThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "reserveMaxAddress.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("reserveMaxAddress.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -95,8 +98,9 @@ HWTEST_F(AubMemDumpTests, GivenReserveMaxAddressThenExpectationsAreMet) {
 HWTEST_F(AubMemDumpTests, GivenWriteVerifyOneBytePpgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "writeVerifyOneBytePPGTT.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("writeVerifyOneBytePPGTT.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -120,8 +124,9 @@ HWTEST_F(AubMemDumpTests, GivenWriteVerifyOneBytePpgttThenExpectationsAreMet) {
 HWTEST_F(AubMemDumpTests, GivenWriteVerifyOneByteGgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "writeVerifyOneByteGGTT.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("writeVerifyOneByteGGTT.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -143,8 +148,9 @@ HWTEST_F(AubMemDumpTests, GivenWriteVerifyOneByteGgttThenExpectationsAreMet) {
 HWTEST_F(AubMemDumpTests, GivenWriteVerifySevenBytesPpgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "writeVerifySevenBytesPPGTT.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("writeVerifySevenBytesPPGTT.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
@@ -168,8 +174,9 @@ HWTEST_F(AubMemDumpTests, GivenWriteVerifySevenBytesPpgttThenExpectationsAreMet)
 HWTEST_F(AubMemDumpTests, GivenWriteVerifySevenBytesGgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
+    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, "writeVerifySevenBytesGGTT.aub"));
+    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("writeVerifySevenBytesGGTT.aub")));
     AUBCommandStreamReceiver::AubFileStream aubFile;
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 

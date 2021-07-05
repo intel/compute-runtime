@@ -25,4 +25,8 @@ ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
     return ApiSpecificConfig::L0;
 }
 
+const char *ApiSpecificConfig::getAubPrefixForSpecificApi() {
+    return "l0_";
+}
+
 } // namespace NEO
