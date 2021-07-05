@@ -50,9 +50,9 @@ class UltAubCommandStreamReceiver : public AUBCommandStreamReceiverHw<GfxFamily>
         return csr;
     }
 
-    uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled) override {
+    uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
         blitBufferCalled++;
-        return BaseClass::blitBuffer(blitPropertiesContainer, blocking, profilingEnabled);
+        return BaseClass::blitBuffer(blitPropertiesContainer, blocking, profilingEnabled, device);
     }
 
     uint32_t blitBufferCalled = 0;

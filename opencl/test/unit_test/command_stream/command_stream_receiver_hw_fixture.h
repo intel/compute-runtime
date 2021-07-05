@@ -21,11 +21,11 @@ struct BcsTests : public Test<ClDeviceFixture> {
         Test<ClDeviceFixture>::TearDown();
     }
 
-    uint32_t blitBuffer(CommandStreamReceiver *bcsCsr, const BlitProperties &blitProperties, bool blocking) {
+    uint32_t blitBuffer(CommandStreamReceiver *bcsCsr, const BlitProperties &blitProperties, bool blocking, Device &device) {
         BlitPropertiesContainer container;
         container.push_back(blitProperties);
 
-        return bcsCsr->blitBuffer(container, blocking, false);
+        return bcsCsr->blitBuffer(container, blocking, false, device);
     }
 
     TimestampPacketContainer timestampPacketContainer;

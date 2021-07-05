@@ -216,10 +216,6 @@ bool Device::createDeviceImpl() {
 
     for (auto &engine : engines) {
         auto commandStreamReceiver = engine.commandStreamReceiver;
-        auto osContext = engine.osContext;
-        if (!commandStreamReceiver->initDirectSubmission(*this, *osContext)) {
-            return false;
-        }
         commandStreamReceiver->postInitFlagsSetup();
     }
 

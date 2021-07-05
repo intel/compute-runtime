@@ -55,7 +55,7 @@ struct BlitEnqueueTests : public ::testing::Test {
 
                 BlitPropertiesContainer container;
                 container.push_back(blitProperties);
-                bcsCsr->blitBuffer(container, true, false);
+                bcsCsr->blitBuffer(container, true, false, const_cast<Device &>(device));
 
                 return BlitOperationResult::Success;
             };

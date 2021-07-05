@@ -1003,7 +1003,7 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
 }
 
 template <typename GfxFamily>
-uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled) {
+uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
@@ -1016,6 +1016,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     latestSentTaskCount = newTaskCount;
 
     getOsContext().ensureContextInitialized();
+    this->initDirectSubmission(device, getOsContext());
 
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
         BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), DebugPauseState::waitingForUserStartConfirmation, DebugPauseState::hasUserStartConfirmation);
@@ -1396,11 +1397,15 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
 
     if (startDirect) {
         if (osContext.getEngineType() == aub_stream::ENGINE_BCS) {
-            blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext);
-            ret = blitterDirectSubmission->initialize(submitOnInit);
+            if (!this->isBlitterDirectSubmissionEnabled()) {
+                blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext);
+                ret = blitterDirectSubmission->initialize(submitOnInit);
+            }
         } else {
-            directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(device, osContext);
-            ret = directSubmission->initialize(submitOnInit);
+            if (!this->isDirectSubmissionEnabled()) {
+                directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(device, osContext);
+                ret = directSubmission->initialize(submitOnInit);
+            }
         }
         osContext.setDirectSubmissionActive();
     }

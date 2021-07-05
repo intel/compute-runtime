@@ -90,8 +90,10 @@ class CommandQueueHw : public CommandQueue {
         }
 
         gpgpuEngine->osContext->ensureContextInitialized();
+        gpgpuEngine->commandStreamReceiver->initDirectSubmission(device->getDevice(), *gpgpuEngine->osContext);
         if (bcsEngine) {
             bcsEngine->osContext->ensureContextInitialized();
+            bcsEngine->commandStreamReceiver->initDirectSubmission(device->getDevice(), *bcsEngine->osContext);
         }
     }
 

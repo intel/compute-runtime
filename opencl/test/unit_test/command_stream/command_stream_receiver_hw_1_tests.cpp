@@ -870,7 +870,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     }
 
     EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
-    blitBuffer(&csr, blitProperties, true);
+    blitBuffer(&csr, blitProperties, true, *pDevice);
     EXPECT_EQ(newTaskCount, csr.taskCount);
     EXPECT_EQ(newTaskCount, csr.latestFlushedTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCount);
@@ -1089,7 +1089,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     );
 
     memoryManager->returnFakeAllocation = false;
-    blitBuffer(&csr, blitProperties, true);
+    blitBuffer(&csr, blitProperties, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -1191,7 +1191,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     );
 
     memoryManager->returnFakeAllocation = false;
-    blitBuffer(&csr, blitProperties, true);
+    blitBuffer(&csr, blitProperties, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -1279,7 +1279,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
                                                                            buffer2SlicePitch,            //dstSlicePitch
                                                                            csr.getClearColorAllocation() //clearColorAllocation
     );
-    blitBuffer(&csr, blitProperties, true);
+    blitBuffer(&csr, blitProperties, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);

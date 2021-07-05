@@ -877,13 +877,6 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAvailableWhenProgrammingEndi
     EXPECT_EQ(expectedSize, mockCsr->getCmdSizeForEpilogue(dispatchFlags));
 }
 
-HWTEST_F(DirectSubmissionTest, whenInitDirectSubmissionFailThenEngineIsNotCreated) {
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.csrFailInitDirectSubmission = true;
-    auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo);
-    EXPECT_EQ(nullptr, device);
-}
-
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionDiagnosticNotAvailableWhenDiagnosticRegistryIsUsedThenDoNotEnableDiagnostic) {
     using Dispatcher = RenderDispatcher<FamilyType>;
