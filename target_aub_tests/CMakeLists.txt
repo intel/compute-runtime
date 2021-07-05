@@ -5,6 +5,7 @@
 #
 
 add_custom_target(run_aub_tests ALL)
-set_target_properties(run_aub_tests PROPERTIES FOLDER aub_product_targets)
+set(AUB_TESTS_TARGETS_FOLDER "aub_product_targets")
+set_target_properties(run_aub_tests PROPERTIES FOLDER ${AUB_TESTS_TARGETS_FOLDER})
 
 add_subdirectories()

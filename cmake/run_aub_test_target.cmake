@@ -20,7 +20,7 @@ if(NOT SKIP_NEO_UNIT_TESTS)
 endif()
 
 add_dependencies(run_aub_tests run_${product}_${revision_id}_aub_tests)
-set_target_properties(run_${product}_${revision_id}_aub_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
+set_target_properties(run_${product}_${revision_id}_aub_tests PROPERTIES FOLDER "${AUB_TESTS_TARGETS_FOLDER}/${product}/${revision_id}")
 if(NOT SKIP_NEO_UNIT_TESTS)
   if(WIN32)
     add_dependencies(run_${product}_${revision_id}_aub_tests mock_gdi)
