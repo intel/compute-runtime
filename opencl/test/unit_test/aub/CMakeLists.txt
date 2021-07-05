@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2021 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,8 +7,7 @@
 set(IGDRCL_SRCS_aub_helper_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_center_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/aub_helper_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_tests.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_tests.cpp
 )
 
 if(NOT DEFINED AUB_STREAM_PROJECT_NAME)
