@@ -1829,9 +1829,9 @@ HWTEST_F(KernelWorkDimTests, givenGroupCountsWhenPatchingWorkDimThenCrossThreadD
     struct MockKernelWithMockCrossThreadData : public MockKernel {
       public:
         MockKernelWithMockCrossThreadData(MockModule *mockModule) : MockKernel(mockModule) {}
-        void setCrossThreadData(uint32_t _crossThreadDataSize) {
-            crossThreadData.reset(new uint8_t[_crossThreadDataSize]);
-            crossThreadDataSize = _crossThreadDataSize;
+        void setCrossThreadData(uint32_t dataSize) {
+            crossThreadData.reset(new uint8_t[dataSize]);
+            crossThreadDataSize = dataSize;
             memset(crossThreadData.get(), 0x00, crossThreadDataSize);
         }
     };
@@ -1854,27 +1854,16 @@ HWTEST_F(KernelWorkDimTests, givenGroupCountsWhenPatchingWorkDimThenCrossThreadD
     auto workDimInCrossThreadDataPtr = destinationBuffer.begin() + kernelDescriptor.payloadMappings.dispatchTraits.workDim;
     EXPECT_EQ(*workDimInCrossThreadDataPtr, 0u);
 
-    std::array<std::array<uint32_t, 7>, 8> sizesCountsWorkDim{
-        std::array<uint32_t, 7>{2, 1, 1, 1, 1, 1, 1},
-        std::array<uint32_t, 7>{1, 1, 1, 1, 1, 1, 1},
-        std::array<uint32_t, 7>{1, 2, 1, 2, 1, 1, 2},
-        std::array<uint32_t, 7>{1, 2, 1, 1, 1, 1, 2},
-        std::array<uint32_t, 7>{1, 1, 1, 1, 2, 1, 2},
-        std::array<uint32_t, 7>{1, 1, 1, 2, 2, 2, 3},
-        std::array<uint32_t, 7>{1, 1, 2, 1, 1, 1, 3},
-        std::array<uint32_t, 7>{1, 1, 1, 1, 1, 2, 3}};
-    for (auto parameters : sizesCountsWorkDim) {
+    std::array<std::array<uint32_t, 7>, 8> sizesCountsWorkDim = {{{2, 1, 1, 1, 1, 1, 1},
+                                                                  {1, 1, 1, 1, 1, 1, 1},
+                                                                  {1, 2, 1, 2, 1, 1, 2},
+                                                                  {1, 2, 1, 1, 1, 1, 2},
+                                                                  {1, 1, 1, 1, 2, 1, 2},
+                                                                  {1, 1, 1, 2, 2, 2, 3},
+                                                                  {1, 1, 2, 1, 1, 1, 3},
+                                                                  {1, 1, 1, 1, 1, 2, 3}}};
 
-        uint32_t groupSizeX = parameters[0];
-        uint32_t groupSizeY = parameters[1];
-        uint32_t groupSizeZ = parameters[2];
-
-        uint32_t groupCountX = parameters[3];
-        uint32_t groupCountY = parameters[4];
-        uint32_t groupCountZ = parameters[5];
-
-        uint32_t expectedWorkDim = parameters[6];
-
+    for (auto &[groupSizeX, groupSizeY, groupSizeZ, groupCountX, groupCountY, groupCountZ, expectedWorkDim] : sizesCountsWorkDim) {
         ze_result_t res = kernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
         EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
