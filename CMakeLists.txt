@@ -1073,7 +1073,6 @@ endif()
 
 add_subdirectory_unique(target_unit_tests)
 add_subdirectory_unique(target_aub_tests)
-add_subdirectory_unique(shared${BRANCH_DIR_SUFFIX})
 
 add_subdirectories()
 
