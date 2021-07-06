@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/topology_map.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -94,6 +95,9 @@ struct DeviceImp : public Device {
     ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) override;
     NEO::Device *getActiveDevice() const;
     void getDeviceMemoryName(std::string &memoryName);
+
+    bool toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &deviceIndex);
+    bool toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t deviceIndex);
 
     NEO::Device *neoDevice = nullptr;
     bool isSubdevice = false;

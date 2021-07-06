@@ -14,10 +14,12 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/topology_map.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -941,6 +943,65 @@ DebugSession *DeviceImp::createDebugSession(const zet_debug_config_t &config, ze
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     return debugSession.get();
+}
+
+bool DeviceImp::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &deviceIndex) {
+    auto hwInfo = neoDevice->getRootDeviceEnvironment().getHardwareInfo();
+    uint32_t subDeviceCount = NEO::HwHelper::getSubDevicesCount(hwInfo);
+    auto deviceBitfield = neoDevice->getDeviceBitfield();
+
+    if (topologyMap.size() == subDeviceCount && !isSubdevice) {
+        uint32_t sliceId = slice;
+        for (uint32_t i = 0; i < topologyMap.size(); i++) {
+            if (sliceId < topologyMap.at(i).sliceIndices.size()) {
+                slice = topologyMap.at(i).sliceIndices[sliceId];
+                deviceIndex = i;
+                return true;
+            }
+            sliceId = sliceId - static_cast<uint32_t>(topologyMap.at(i).sliceIndices.size());
+        }
+    } else if (isSubdevice) {
+        UNRECOVERABLE_IF(!deviceBitfield.any());
+        uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+
+        if (topologyMap.find(subDeviceIndex) != topologyMap.end()) {
+            if (slice < topologyMap.at(subDeviceIndex).sliceIndices.size()) {
+                deviceIndex = subDeviceIndex;
+                slice = topologyMap.at(subDeviceIndex).sliceIndices[slice];
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool DeviceImp::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t deviceIndex) {
+    auto deviceBitfield = neoDevice->getDeviceBitfield();
+
+    if (isSubdevice) {
+        UNRECOVERABLE_IF(!deviceBitfield.any());
+        deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+    }
+
+    if (topologyMap.find(deviceIndex) != topologyMap.end()) {
+        uint32_t apiSliceId = 0;
+        if (!isSubdevice) {
+            for (uint32_t devId = 0; devId < deviceIndex; devId++) {
+                apiSliceId += static_cast<uint32_t>(topologyMap.at(devId).sliceIndices.size());
+            }
+        }
+
+        for (uint32_t i = 0; i < topologyMap.at(deviceIndex).sliceIndices.size(); i++) {
+            if (static_cast<uint32_t>(topologyMap.at(deviceIndex).sliceIndices[i]) == slice) {
+                apiSliceId += i;
+                slice = apiSliceId;
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 } // namespace L0

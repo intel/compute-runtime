@@ -182,6 +182,191 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyRetu
     Os::frontEndDllName = oldFclDllName;
 }
 
+TEST(L0DeviceTest, givenFilledTopologyWhenGettingApiSliceThenCorrectSliceIdIsReturned) {
+    NEO::MockCompilerEnableGuard mock(true);
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+    map[0] = mapping;
+
+    uint32_t sliceId = hwInfo.gtSystemInfo.SliceCount - 1;
+    auto ret = deviceImp->toApiSliceId(map, sliceId, 0);
+
+    EXPECT_EQ(hwInfo.gtSystemInfo.SliceCount - 1, sliceId);
+    EXPECT_TRUE(ret);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 1;
+    }
+    map[0] = mapping;
+
+    sliceId = 1;
+    ret = deviceImp->toApiSliceId(map, sliceId, 0);
+
+    EXPECT_EQ(0u, sliceId);
+    EXPECT_TRUE(ret);
+}
+
+TEST(L0DeviceTest, givenFilledTopologyForZeroSubDeviceWhenGettingApiSliceForHigherSubDevicesThenFalseIsReturned) {
+    NEO::MockCompilerEnableGuard mock(true);
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 1;
+    }
+    map[0] = mapping;
+
+    uint32_t sliceId = 1;
+    const uint32_t deviceIndex = 2;
+    auto ret = deviceImp->toApiSliceId(map, sliceId, deviceIndex);
+    EXPECT_FALSE(ret);
+}
+
+TEST(L0DeviceTest, givenInvalidPhysicalSliceIdWhenGettingApiSliceIdThenFalseIsReturned) {
+    NEO::MockCompilerEnableGuard mock(true);
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+    map[0] = mapping;
+
+    uint32_t sliceId = hwInfo.gtSystemInfo.SliceCount + 1;
+    auto ret = deviceImp->toApiSliceId(map, sliceId, 0);
+
+    EXPECT_FALSE(ret);
+}
+
+TEST(L0DeviceTest, givenInvalidApiSliceIdWhenGettingPhysicalSliceIdThenFalseIsReturned) {
+    NEO::MockCompilerEnableGuard mock(true);
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+    map[0] = mapping;
+
+    uint32_t sliceId = hwInfo.gtSystemInfo.SliceCount + 1;
+    uint32_t deviceIndex = 0;
+    auto ret = deviceImp->toPhysicalSliceId(map, sliceId, deviceIndex);
+
+    EXPECT_FALSE(ret);
+}
+
+TEST(L0DeviceTest, givenEmptyTopologyWhenGettingApiSliceIdThenFalseIsReturned) {
+    NEO::MockCompilerEnableGuard mock(true);
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+
+    NEO::TopologyMap map;
+    uint32_t sliceId = hwInfo.gtSystemInfo.SliceCount - 1;
+    auto ret = deviceImp->toApiSliceId(map, sliceId, 0);
+
+    EXPECT_FALSE(ret);
+}
+
+TEST(L0DeviceTest, givenDeviceWithoutSubDevicesWhenGettingPhysicalSliceIdThenCorrectValuesAreReturned) {
+    NEO::MockCompilerEnableGuard mock(true);
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 1;
+    }
+    map[0] = mapping;
+
+    uint32_t sliceId = 0;
+    uint32_t deviceIndex = 10;
+    auto ret = deviceImp->toPhysicalSliceId(map, sliceId, deviceIndex);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(1u, sliceId);
+    EXPECT_EQ(0u, deviceIndex);
+}
+
+TEST(L0DeviceTest, givenTopologyNotAvaialbleWhenGettingPhysicalSliceIdThenFalseIsReturned) {
+    NEO::MockCompilerEnableGuard mock(true);
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), 1, false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    uint32_t sliceId = 0;
+    uint32_t deviceIndex = 10;
+    auto ret = deviceImp->toPhysicalSliceId(map, sliceId, deviceIndex);
+
+    EXPECT_FALSE(ret);
+}
+
 struct DeviceTest : public ::testing::Test {
     void SetUp() override {
         NEO::MockCompilerEnableGuard mock(true);
@@ -1145,6 +1330,261 @@ TEST_F(MultipleDevicesTest, givenTwoSubDevicesFromTheSameRootDeviceThenCanAccess
     L0::Device *subDevice1_0 = Device::fromHandle(subDevices1[0]);
     subDevice1_0->canAccessPeer(subDevices1[1], &canAccess);
     EXPECT_FALSE(canAccess);
+}
+
+TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWithRootDeviceThenCorrectMappingIsUsedAndApiSliceIdsForSubdeviceReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+    auto deviceImp0 = static_cast<DeviceImp *>(device0);
+    auto hwInfo = device0->getHwInfo();
+
+    ze_device_properties_t deviceProperties = {};
+    deviceImp0->getProperties(&deviceProperties);
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    EXPECT_EQ(numSubDevices * hwInfo.gtSystemInfo.SliceCount, deviceProperties.numSlices);
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+    map[0] = mapping;
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 10;
+    }
+    map[1] = mapping;
+
+    uint32_t sliceId = 0;
+    auto ret = deviceImp0->toApiSliceId(map, sliceId, 0);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(0u, sliceId);
+
+    sliceId = 10;
+    ret = deviceImp0->toApiSliceId(map, sliceId, 1);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(hwInfo.gtSystemInfo.SliceCount + 0u, sliceId);
+}
+
+TEST_F(MultipleDevicesTest, givenTopologyForSingleSubdeviceWhenGettingApiSliceIdWithRootDeviceThenCorrectApiSliceIdsForFirstSubDeviceIsReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+    auto deviceImp0 = static_cast<DeviceImp *>(device0);
+    auto hwInfo = device0->getHwInfo();
+
+    ze_device_properties_t deviceProperties = {};
+    deviceImp0->getProperties(&deviceProperties);
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    EXPECT_EQ(numSubDevices * hwInfo.gtSystemInfo.SliceCount, deviceProperties.numSlices);
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+    map[0] = mapping;
+
+    uint32_t sliceId = 0;
+    auto ret = deviceImp0->toApiSliceId(map, sliceId, 0);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(0u, sliceId);
+
+    sliceId = 0;
+    ret = deviceImp0->toApiSliceId(map, sliceId, 1);
+
+    EXPECT_FALSE(ret);
+}
+
+TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWithSubDeviceThenCorrectSliceIdsReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+    auto hwInfo = device0->getHwInfo();
+
+    uint32_t subDeviceCount = numSubDevices;
+    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
+    auto res = device0->getSubDevices(&subDeviceCount, subDevices0.data());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::Device *subDevice0 = Device::fromHandle(subDevices0[0]);
+    L0::Device *subDevice1 = Device::fromHandle(subDevices0[1]);
+
+    L0::DeviceImp *subDeviceImp0 = static_cast<DeviceImp *>(subDevice0);
+    L0::DeviceImp *subDeviceImp1 = static_cast<DeviceImp *>(subDevice1);
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+    map[0] = mapping;
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 10;
+    }
+    map[1] = mapping;
+
+    uint32_t sliceId = 0;
+    auto ret = subDeviceImp0->toApiSliceId(map, sliceId, 0);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(0u, sliceId);
+
+    sliceId = 10;
+    ret = subDeviceImp1->toApiSliceId(map, sliceId, 1);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(0u, sliceId);
+}
+
+TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingPhysicalSliceIdWithRootDeviceThenCorrectSliceIdAndDeviceIndexIsReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+    auto deviceImp0 = static_cast<DeviceImp *>(device0);
+    auto hwInfo = device0->getHwInfo();
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+    map[0] = mapping;
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 10;
+    }
+    map[1] = mapping;
+
+    uint32_t sliceId = 0;
+    uint32_t deviceIndex = 100;
+    auto ret = deviceImp0->toPhysicalSliceId(map, sliceId, deviceIndex);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(0u, sliceId);
+    EXPECT_EQ(0u, deviceIndex);
+
+    sliceId = hwInfo.gtSystemInfo.SliceCount;
+    deviceIndex = 200;
+    ret = deviceImp0->toPhysicalSliceId(map, sliceId, deviceIndex);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(10u, sliceId);
+    EXPECT_EQ(1u, deviceIndex);
+}
+
+TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingPhysicalSliceIdWithSubDeviceThenCorrectSliceIdAndDeviceIndexIsReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+    auto hwInfo = device0->getHwInfo();
+
+    uint32_t subDeviceCount = numSubDevices;
+    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
+    auto res = device0->getSubDevices(&subDeviceCount, subDevices0.data());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::Device *subDevice0 = Device::fromHandle(subDevices0[0]);
+    L0::Device *subDevice1 = Device::fromHandle(subDevices0[1]);
+
+    L0::DeviceImp *subDeviceImp0 = static_cast<DeviceImp *>(subDevice0);
+    L0::DeviceImp *subDeviceImp1 = static_cast<DeviceImp *>(subDevice1);
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 5;
+    }
+    map[0] = mapping;
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 10;
+    }
+    map[1] = mapping;
+
+    uint32_t sliceId = 0;
+    uint32_t deviceIndex = 0;
+    auto ret = subDeviceImp0->toPhysicalSliceId(map, sliceId, deviceIndex);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(5u, sliceId);
+    EXPECT_EQ(0u, deviceIndex);
+
+    sliceId = 0;
+    deviceIndex = 100;
+    ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, deviceIndex);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(10u, sliceId);
+    EXPECT_EQ(1u, deviceIndex);
+}
+
+TEST_F(MultipleDevicesTest, givenInvalidApiSliceIdWhenGettingPhysicalSliceIdThenFalseIsReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+    auto hwInfo = device0->getHwInfo();
+
+    uint32_t subDeviceCount = numSubDevices;
+    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
+    auto res = device0->getSubDevices(&subDeviceCount, subDevices0.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::Device *subDevice1 = Device::fromHandle(subDevices0[1]);
+    L0::DeviceImp *subDeviceImp1 = static_cast<DeviceImp *>(subDevice1);
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 5;
+    }
+    map[0] = mapping;
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 10;
+    }
+    map[1] = mapping;
+
+    uint32_t sliceId = hwInfo.gtSystemInfo.SliceCount;
+    uint32_t deviceIndex = 1;
+    auto ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, deviceIndex);
+
+    EXPECT_FALSE(ret);
+}
+
+TEST_F(MultipleDevicesTest, givenTopologyMapForSubdeviceZeroWhenGettingPhysicalSliceIdForSubdeviceOneThenFalseIsReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+    auto hwInfo = device0->getHwInfo();
+
+    uint32_t subDeviceCount = numSubDevices;
+    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
+    auto res = device0->getSubDevices(&subDeviceCount, subDevices0.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::Device *subDevice1 = Device::fromHandle(subDevices0[1]);
+    L0::DeviceImp *subDeviceImp1 = static_cast<DeviceImp *>(subDevice1);
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 5;
+    }
+    map[0] = mapping;
+
+    uint32_t sliceId = 0;
+    uint32_t deviceIndex = 1;
+    auto ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, deviceIndex);
+
+    EXPECT_FALSE(ret);
 }
 
 struct MultipleDevicesDifferentLocalMemorySupportTest : public MultipleDevicesTest {

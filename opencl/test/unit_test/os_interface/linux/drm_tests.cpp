@@ -719,3 +719,23 @@ TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopolo
     EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
     EXPECT_EQ(2, topologyData.maxSubSliceCount);
 }
+
+TEST(DrmQueryTest, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
+    DrmMock drmMock{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    Drm::QueryTopologyData topologyData = {};
+
+    EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
+
+    auto topologyMap = drmMock.getTopologyMap();
+
+    EXPECT_LE(1u, topologyMap.size());
+
+    for (uint32_t i = 0; i < topologyMap.size(); i++) {
+        EXPECT_EQ(drmMock.storedSVal, static_cast<int>(topologyMap.at(i).sliceIndices.size()));
+    }
+}

@@ -729,6 +729,10 @@ const std::vector<int> &Drm::getSliceMappings(uint32_t deviceIndex) {
     return topologyMap[deviceIndex].sliceIndices;
 }
 
+const TopologyMap &Drm::getTopologyMap() {
+    return topologyMap;
+}
+
 int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
     drm_i915_gem_wait wait = {};
     wait.bo_handle = waitHandle;
