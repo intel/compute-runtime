@@ -6824,23 +6824,24 @@ STATIC_ASSERT(4 == sizeof(PIPELINE_SELECT));
 typedef struct tagSTATE_COMPUTE_MODE {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint32_t DisableSupportForMultiGpuFence : BITFIELD_RANGE(0, 0);
             uint32_t ForceDisableSupportForMultiGpuAtomics : BITFIELD_RANGE(1, 1);
-            uint32_t ForceDisableSupportForMultiGpuPartialWrites
-                : BITFIELD_RANGE(2, 2);
+            uint32_t ForceDisableSupportForMultiGpuPartialWrites : BITFIELD_RANGE(2, 2);
             uint32_t ForceNonCoherent : BITFIELD_RANGE(3, 4);
-            uint32_t Reserved_37 : BITFIELD_RANGE(5, 9);
-            uint32_t BindingTableAlignment : BITFIELD_RANGE(10, 10);
+            uint32_t FastClearDisabledOnCompressedSurface : BITFIELD_RANGE(5, 5);
+            uint32_t DisableSlmReadMergeOptimization : BITFIELD_RANGE(6, 6);
+            uint32_t Reserved_39 : BITFIELD_RANGE(7, 10);
             uint32_t DisableAtomicOnClearData : BITFIELD_RANGE(11, 11);
-            uint32_t CoherentAccessL1CacheDisable : BITFIELD_RANGE(12, 12);
-            uint32_t DisableL1InvalidateForNonL1CacheableWrites
-                : BITFIELD_RANGE(13, 13);
+            uint32_t Reserved_44 : BITFIELD_RANGE(12, 12);
+            uint32_t DisableL1InvalidateForNonL1CacheableWrites : BITFIELD_RANGE(13, 13);
             uint32_t Reserved_46 : BITFIELD_RANGE(14, 14);
             uint32_t LargeGrfMode : BITFIELD_RANGE(15, 15);
             uint32_t MaskBits : BITFIELD_RANGE(16, 31);
@@ -6867,9 +6868,14 @@ typedef struct tagSTATE_COMPUTE_MODE {
         FORCE_NON_COHERENT_FORCE_CPU_NON_COHERENT = 0x1,
         FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT = 0x2,
     } FORCE_NON_COHERENT;
-    typedef enum tagBINDING_TABLE_ALIGNMENT {
-        BINDING_TABLE_ALIGNMENT_LEGACY = 0x0,
-    } BINDING_TABLE_ALIGNMENT;
+    typedef enum tagFAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE {
+        FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_ENABLED = 0x0,
+        FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_DISABLED = 0x1,
+    } FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE;
+    typedef enum tagDISABLE_SLM_READ_MERGE_OPTIMIZATION {
+        DISABLE_SLM_READ_MERGE_OPTIMIZATION_ENABLED = 0x0,
+        DISABLE_SLM_READ_MERGE_OPTIMIZATION_DISABLED = 0x1,
+    } DISABLE_SLM_READ_MERGE_OPTIMIZATION;
     typedef enum tagDISABLE_ATOMIC_ON_CLEAR_DATA {
         DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE = 0x0,
         DISABLE_ATOMIC_ON_CLEAR_DATA_DISABLE = 0x1,
@@ -6877,18 +6883,14 @@ typedef struct tagSTATE_COMPUTE_MODE {
     inline void init(void) {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common._3DCommandSubOpcode =
-            _3D_COMMAND_SUB_OPCODE_STATE_COMPUTE_MODE;
-        TheStructure.Common._3DCommandOpcode =
-            _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
+        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_COMPUTE_MODE;
+        TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
         TheStructure.Common.ForceNonCoherent = FORCE_NON_COHERENT_FORCE_DISABLED;
-        TheStructure.Common.BindingTableAlignment = BINDING_TABLE_ALIGNMENT_LEGACY;
-        TheStructure.Common.DisableAtomicOnClearData =
-            DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE;
-        TheStructure.Common.ForceDisableSupportForMultiGpuAtomics = 1;
-        TheStructure.Common.ForceDisableSupportForMultiGpuPartialWrites = 1;
+        TheStructure.Common.FastClearDisabledOnCompressedSurface = FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_ENABLED;
+        TheStructure.Common.DisableSlmReadMergeOptimization = DISABLE_SLM_READ_MERGE_OPTIMIZATION_ENABLED;
+        TheStructure.Common.DisableAtomicOnClearData = DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE;
     }
     static tagSTATE_COMPUTE_MODE sInit(void) {
         STATE_COMPUTE_MODE state;
@@ -6896,7 +6898,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 2);
+        UNRECOVERABLE_IF(index >= 2);
         return TheStructure.RawData[index];
     }
     inline void setDisableSupportForMultiGpuFence(const bool value) {
@@ -6921,37 +6923,30 @@ typedef struct tagSTATE_COMPUTE_MODE {
         TheStructure.Common.ForceNonCoherent = value;
     }
     inline FORCE_NON_COHERENT getForceNonCoherent(void) const {
-        return static_cast<FORCE_NON_COHERENT>(
-            TheStructure.Common.ForceNonCoherent);
+        return static_cast<FORCE_NON_COHERENT>(TheStructure.Common.ForceNonCoherent);
     }
-    inline void setBindingTableAlignment(const BINDING_TABLE_ALIGNMENT value) {
-        TheStructure.Common.BindingTableAlignment = value;
+    inline void setFastClearDisabledOnCompressedSurface(const FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE value) {
+        TheStructure.Common.FastClearDisabledOnCompressedSurface = value;
     }
-    inline BINDING_TABLE_ALIGNMENT getBindingTableAlignment(void) const {
-        return static_cast<BINDING_TABLE_ALIGNMENT>(
-            TheStructure.Common.BindingTableAlignment);
+    inline FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE getFastClearDisabledOnCompressedSurface(void) const {
+        return static_cast<FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE>(TheStructure.Common.FastClearDisabledOnCompressedSurface);
     }
-    inline void
-    setDisableAtomicOnClearData(const DISABLE_ATOMIC_ON_CLEAR_DATA value) {
+    inline void setDisableSlmReadMergeOptimization(const DISABLE_SLM_READ_MERGE_OPTIMIZATION value) {
+        TheStructure.Common.DisableSlmReadMergeOptimization = value;
+    }
+    inline DISABLE_SLM_READ_MERGE_OPTIMIZATION getDisableSlmReadMergeOptimization(void) const {
+        return static_cast<DISABLE_SLM_READ_MERGE_OPTIMIZATION>(TheStructure.Common.DisableSlmReadMergeOptimization);
+    }
+    inline void setDisableAtomicOnClearData(const DISABLE_ATOMIC_ON_CLEAR_DATA value) {
         TheStructure.Common.DisableAtomicOnClearData = value;
     }
     inline DISABLE_ATOMIC_ON_CLEAR_DATA getDisableAtomicOnClearData(void) const {
-        return static_cast<DISABLE_ATOMIC_ON_CLEAR_DATA>(
-            TheStructure.Common.DisableAtomicOnClearData);
+        return static_cast<DISABLE_ATOMIC_ON_CLEAR_DATA>(TheStructure.Common.DisableAtomicOnClearData);
     }
-    inline void setCoherentAccessL1CacheDisable(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x1000);
-        TheStructure.Common.CoherentAccessL1CacheDisable = value;
-    }
-    inline uint32_t getCoherentAccessL1CacheDisable(void) const {
-        return TheStructure.Common.CoherentAccessL1CacheDisable;
-    }
-    inline void
-    setDisableL1InvalidateForNonL1CacheableWrites(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x2000);
+    inline void setDisableL1InvalidateForNonL1CacheableWrites(const bool value) {
         TheStructure.Common.DisableL1InvalidateForNonL1CacheableWrites = value;
     }
-    inline uint32_t getDisableL1InvalidateForNonL1CacheableWrites(void) const {
+    inline bool getDisableL1InvalidateForNonL1CacheableWrites(void) const {
         return TheStructure.Common.DisableL1InvalidateForNonL1CacheableWrites;
     }
     inline void setLargeGrfMode(const bool value) {
@@ -6961,7 +6956,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
         return TheStructure.Common.LargeGrfMode;
     }
     inline void setMaskBits(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xffff0000L);
+        UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.MaskBits = value;
     }
     inline uint32_t getMaskBits(void) const {
