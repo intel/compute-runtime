@@ -1230,6 +1230,27 @@ TEST(BuildOptions, givenSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenOptionI
     EXPECT_EQ(std::string::npos, srcNames.find(NEO::CompilerOptions::optDisable.str()));
 }
 
+TEST(BuildOptions, givenSrcOptLevelInSrcNamesWhenMovingBuildOptionsThenOptionIsRemovedFromSrcNamesAndTranslatedOptionsStoredInDstNames) {
+    std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, BuildOptions::optLevel);
+    srcNames += "=2";
+    std::string dstNames;
+
+    auto result = moveBuildOption(dstNames, srcNames, NEO::CompilerOptions::optLevel, BuildOptions::optLevel);
+    EXPECT_TRUE(result);
+
+    EXPECT_EQ(NEO::CompilerOptions::optLevel.str() + std::string("2"), dstNames);
+    EXPECT_EQ(std::string::npos, srcNames.find(BuildOptions::optLevel.str()));
+    EXPECT_EQ(std::string::npos, srcNames.find(std::string("=2")));
+}
+
+TEST(BuildOptions, givenSrcOptLevelWithoutLevelIntegerInSrcNamesWhenMovingBuildOptionsThenFalseIsReturned) {
+    std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, BuildOptions::optLevel);
+    std::string dstNames;
+
+    auto result = moveBuildOption(dstNames, srcNames, NEO::CompilerOptions::optLevel, BuildOptions::optLevel);
+    EXPECT_FALSE(result);
+}
+
 TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPassed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);

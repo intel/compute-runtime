@@ -24,6 +24,7 @@ namespace L0 {
 
 namespace BuildOptions {
 extern NEO::ConstStringRef optDisable;
+extern NEO::ConstStringRef optLevel;
 extern NEO::ConstStringRef greaterThan4GbRequired;
 extern NEO::ConstStringRef hasBufferOffsetArg;
 extern NEO::ConstStringRef debugKernelEnable;

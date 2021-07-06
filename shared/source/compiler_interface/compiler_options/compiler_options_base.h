@@ -32,6 +32,7 @@ static constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32
 static constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
 static constexpr ConstStringRef allowZebin = "-allow-zebin";
 static constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
+static constexpr ConstStringRef optLevel = "-ze-opt-level=O";
 
 constexpr size_t nullterminateSize = 1U;
 constexpr size_t spaceSeparatorSize = 1U;

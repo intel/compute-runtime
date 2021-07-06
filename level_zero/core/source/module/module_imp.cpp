@@ -35,6 +35,7 @@ namespace L0 {
 
 namespace BuildOptions {
 NEO::ConstStringRef optDisable = "-ze-opt-disable";
+NEO::ConstStringRef optLevel = "-ze-opt-level";
 NEO::ConstStringRef greaterThan4GbRequired = "-ze-opt-greater-than-4GB-buffer-required";
 NEO::ConstStringRef hasBufferOffsetArg = "-ze-intel-has-buffer-offset-arg";
 NEO::ConstStringRef debugKernelEnable = "-ze-kernel-debug-enable";
@@ -422,6 +423,7 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
 
         apiOptions = pBuildFlags;
         moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optDisable, BuildOptions::optDisable);
+        moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optLevel, BuildOptions::optLevel);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired, BuildOptions::greaterThan4GbRequired);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::allowZebin, NEO::CompilerOptions::allowZebin);
 
@@ -698,13 +700,25 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
 }
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName) {
+    const char optDelim = ' ';
+    const char valDelim = '=';
+
     auto optInSrcPos = srcOptionSet.find(srcOptionName.begin());
     if (std::string::npos == optInSrcPos) {
         return false;
     }
 
-    srcOptionSet.erase(optInSrcPos, srcOptionName.length());
-    NEO::CompilerOptions::concatenateAppend(dstOptionsSet, dstOptionName);
+    std::string dstOptionStr(dstOptionName);
+    auto optInSrcEndPos = srcOptionSet.find(optDelim, optInSrcPos);
+    if (srcOptionName == BuildOptions::optLevel) {
+        auto valInSrcPos = srcOptionSet.find(valDelim, optInSrcPos);
+        if (std::string::npos == valInSrcPos) {
+            return false;
+        }
+        dstOptionStr += srcOptionSet.substr(valInSrcPos + 1, optInSrcEndPos);
+    }
+    srcOptionSet.erase(optInSrcPos, (optInSrcEndPos - optInSrcPos));
+    NEO::CompilerOptions::concatenateAppend(dstOptionsSet, dstOptionStr);
     return true;
 }
 
