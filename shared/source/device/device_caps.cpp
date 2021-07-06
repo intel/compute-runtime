@@ -117,7 +117,7 @@ void Device::initializeCaps() {
     }
     deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
     deviceInfo.threadsPerEUConfigs = hwHelper.getThreadsPerEUConfigs();
-    auto maxWS = hwHelper.getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) * simdSizeUsed;
+    auto maxWS = hwInfoConfig->getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) * simdSizeUsed;
 
     maxWS = Math::prevPowerOfTwo(maxWS);
     deviceInfo.maxWorkGroupSize = std::min(maxWS, 1024u);

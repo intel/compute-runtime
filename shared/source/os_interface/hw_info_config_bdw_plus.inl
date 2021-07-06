@@ -25,4 +25,9 @@ void HwInfoConfigHw<gfxProduct>::enableRenderCompression(HardwareInfo *hwInfo) {
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = hwInfo->featureTable.ftrE2ECompression;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t HwInfoConfigHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
+    return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerSubSlice);
+}
+
 } // namespace NEO

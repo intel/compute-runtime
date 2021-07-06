@@ -55,11 +55,6 @@ uint32_t HwHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
     return maxHwThreadsReturned;
 }
 
-uint32_t HwHelper::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
-    uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
-    return maxNumEUsPerSubSlice * numThreadsPerEU;
-}
-
 uint32_t HwHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
     if (DebugManager.flags.CreateMultipleSubDevices.get() > 0) {
         return DebugManager.flags.CreateMultipleSubDevices.get();

@@ -106,6 +106,17 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenRevisionEnumAndPlatformFamilyType
     }
 }
 
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenRevisionEnumThenProperMaxThreadsForWorkgroupIsReturned) {
+    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+    EXPECT_EQ(64u, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
+
+    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
+    uint32_t numThreadsPerEU = hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount;
+    EXPECT_EQ(64u * numThreadsPerEU, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
+}
+
 XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsDefaultWhenLocalMemoryIsEnabledThenReturnFalseAndDoNotProgramPipeControl) {
     hardwareInfo.featureTable.ftrLocalMemory = true;
 

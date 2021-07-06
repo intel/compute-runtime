@@ -24,6 +24,7 @@
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
@@ -78,7 +79,8 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
     imageTransformer.reset(new ImageTransformer);
     if (kernelInfoArg.kernelDescriptor.kernelAttributes.simdSize == 1u) {
         auto deviceInfo = getDevice().getDevice().getDeviceInfo();
-        maxKernelWorkGroupSize = HwHelper::get(getHardwareInfo().platform.eRenderCoreFamily).getMaxThreadsForWorkgroupInDSSOrSS(getHardwareInfo(), static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice));
+        auto &hwInfoConfig = *HwInfoConfig::get(getHardwareInfo().platform.eProductFamily);
+        maxKernelWorkGroupSize = hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(getHardwareInfo(), static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice));
     } else {
         maxKernelWorkGroupSize = static_cast<uint32_t>(clDevice.getSharedDeviceInfo().maxWorkGroupSize);
     }

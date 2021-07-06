@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -3168,7 +3169,9 @@ TEST_F(KernelTests, givenKernelWithSimdEqual1WhenKernelCreatedThenMaxWorgGroupSi
 
     auto deviceMaxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize;
     auto deviceInfo = pClDevice->getDevice().getDeviceInfo();
-    auto maxThreadsPerWG = HwHelper::get(pKernel->getHardwareInfo().platform.eRenderCoreFamily).getMaxThreadsForWorkgroupInDSSOrSS(pKernel->getHardwareInfo(), static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice));
+
+    auto &hwInfoConfig = *HwInfoConfig::get(pKernel->getHardwareInfo().platform.eProductFamily);
+    auto maxThreadsPerWG = hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(pKernel->getHardwareInfo(), static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice));
 
     EXPECT_LT(pKernel->getMaxKernelWorkGroupSize(), deviceMaxWorkGroupSize);
     EXPECT_EQ(pKernel->getMaxKernelWorkGroupSize(), maxThreadsPerWG);

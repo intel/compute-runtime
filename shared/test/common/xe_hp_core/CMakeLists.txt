@@ -16,6 +16,7 @@ if(TESTS_XE_HP_CORE)
   target_sources(${TARGET_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_xe_hp_core.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_xe_hp_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_xe_hp_core.cpp
                  ${COMPUTE_RUNTIME_ULT_XE_HP_CORE}
                  ${NEO_CORE_TESTS_XE_HP_CORE}

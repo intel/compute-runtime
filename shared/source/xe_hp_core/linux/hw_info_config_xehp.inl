@@ -9,6 +9,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/xe_hp_core/os_agnostic_hw_info_config_xe_hp_core.inl"
 
 namespace NEO {
 template <>

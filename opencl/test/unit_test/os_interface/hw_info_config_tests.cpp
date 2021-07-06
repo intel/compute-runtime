@@ -140,9 +140,16 @@ HWTEST_F(HwInfoConfigTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsC
     EXPECT_EQ(0, memcmp(&initialState, &state, sizeof(SAMPLER_STATE)));
 }
 
-HWTEST_F(HwInfoConfigTest, whenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned) {
+HWTEST_F(HwInfoConfigTest, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned) {
     auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     bool ret = hwInfoConfig->isAdditionalStateBaseAddressWARequired(pInHwInfo);
+
+    EXPECT_FALSE(ret);
+}
+
+HWTEST_F(HwInfoConfigTest, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned) {
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    bool ret = hwInfoConfig->isMaxThreadsForWorkgroupWARequired(pInHwInfo);
 
     EXPECT_FALSE(ret);
 }

@@ -85,4 +85,14 @@ bool HwInfoConfigHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const Ha
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t HwInfoConfigHw<gfxProduct>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
+    uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    return maxNumEUsPerSubSlice * numThreadsPerEU;
+}
 } // namespace NEO

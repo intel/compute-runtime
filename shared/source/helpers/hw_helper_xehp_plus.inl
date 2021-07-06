@@ -193,12 +193,4 @@ inline bool HwHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_
     return true;
 }
 
-template <typename GfxFamily>
-inline uint32_t HwHelperHw<GfxFamily>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
-    if (isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
-        return std::min(HwHelper::getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice), 64u);
-    }
-    return HwHelper::getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
-}
-
 } // namespace NEO

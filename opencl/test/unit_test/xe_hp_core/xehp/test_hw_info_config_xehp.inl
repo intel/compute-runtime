@@ -15,6 +15,7 @@
 #include "test.h"
 
 HWTEST_EXCLUDE_PRODUCT(HwHelperTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned, IGFX_XE_HP_SDV);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned, IGFX_XE_HP_SDV);
 
 using namespace NEO;
 
