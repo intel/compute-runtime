@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_wddm.h"
+#include "shared/test/common/mocks/mock_wddm.h"
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -14,9 +14,8 @@
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
-
-#include "opencl/test/unit_test/mocks/mock_wddm_residency_allocations_container.h"
-#include "opencl/test/unit_test/mocks/mock_wddm_residency_logger.h"
+#include "shared/test/common/mocks/mock_wddm_residency_allocations_container.h"
+#include "shared/test/common/mocks/mock_wddm_residency_logger.h"
 
 #include "gtest/gtest.h"
 

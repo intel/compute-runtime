@@ -9,9 +9,7 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_allocation_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_async_event_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_async_event_handler.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_csr.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_file_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_subcapture_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_block_kernel_manager.h
@@ -28,7 +26,6 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr_simulated_common_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_execution_environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
@@ -37,7 +34,6 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_ptr_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_image.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_internal_allocation_storage.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_io_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel_info.cpp
@@ -74,15 +70,9 @@ if(WIN32)
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory_base.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory_base.h
        ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory${BRANCH_DIR_SUFFIX}/mock_gmm_memory.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface20.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h
+       ${NEO_SHARED_TEST_DIRECTORY}/unit_test/os_interface/windows/mock_gdi_interface.cpp
        ${IGDRCL_SRC_tests_mock_wddm}
-       ${NEO_SOURCE_DIR}/shared/test/unit_test/os_interface/windows/mock_gdi_interface.cpp
   )
 else()
   list(APPEND IGDRCL_SRCS_tests_mocks

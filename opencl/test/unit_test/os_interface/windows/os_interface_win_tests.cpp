@@ -10,9 +10,8 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
-
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
-#include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
 TEST_F(OsInterfaceTest, GivenWindowsWhenOsSupportFor64KBpagesIsBeingQueriedThenTrueIsReturned) {
     EXPECT_TRUE(OSInterface::are64kbPagesEnabled());

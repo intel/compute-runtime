@@ -7,9 +7,9 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
-#include "opencl/test/unit_test/fixtures/mock_execution_environment_gmm_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 #include "opencl/test/unit_test/utilities/file_logger_tests.h"
 #include "test.h"

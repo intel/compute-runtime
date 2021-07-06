@@ -112,7 +112,7 @@ else()
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_calls.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_wddm.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
   )
 endif()
 

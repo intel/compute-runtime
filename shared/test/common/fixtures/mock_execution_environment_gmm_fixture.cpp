@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/fixtures/mock_execution_environment_gmm_fixture.h"
+#include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 namespace NEO {
 void MockExecutionEnvironmentGmmFixture::SetUp() {

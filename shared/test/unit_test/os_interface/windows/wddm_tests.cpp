@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
-#include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 #include "test.h"
 
 namespace NEO {

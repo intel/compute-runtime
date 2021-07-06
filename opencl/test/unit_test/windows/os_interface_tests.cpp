@@ -7,9 +7,9 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_wddm.h"
 
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "test.h"
 
 using namespace NEO;

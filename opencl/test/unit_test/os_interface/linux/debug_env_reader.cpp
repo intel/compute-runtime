@@ -8,8 +8,8 @@
 #include "shared/source/os_interface/debug_env_reader.h"
 
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 
-#include "opencl/test/unit_test/mocks/mock_io_functions.h"
 #include "test.h"
 
 #include <memory>

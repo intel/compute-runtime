@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/command_stream/aub_command_stream_receiver.h"
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"

@@ -9,8 +9,7 @@
 
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/aub/aub_stream_provider.h"
-
-#include "opencl/test/unit_test/mocks/mock_aub_file_stream.h"
+#include "shared/test/common/mocks/mock_aub_file_stream.h"
 
 namespace NEO {
 class MockAubStreamProvider : public AubStreamProvider {

@@ -8,8 +8,7 @@
 #pragma once
 
 #include "shared/source/built_ins/sip.h"
-
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include <memory>
 #include <vector>

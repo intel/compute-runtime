@@ -11,8 +11,8 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
-#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
 

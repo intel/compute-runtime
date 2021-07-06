@@ -11,7 +11,6 @@ set(IGDRCL_SRCS_tests_os_interface_windows
     ${CMAKE_CURRENT_SOURCE_DIR}/device_os_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_win_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gdi_dll_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_environment_variables.h
@@ -30,7 +29,6 @@ set(IGDRCL_SRCS_tests_os_interface_windows
     ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_address_space_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_kmdaf_listener_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_tests.h
@@ -42,6 +40,7 @@ set(IGDRCL_SRCS_tests_os_interface_windows
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_registry_reader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sys_calls.h
 )
+
 if(WIN32)
   file(GLOB IGDRCL_SRC_tests_wddm_interface "${CMAKE_CURRENT_SOURCE_DIR}/wddm2[0-9]_tests\.cpp")
   target_sources(igdrcl_tests PRIVATE
@@ -49,4 +48,5 @@ if(WIN32)
                  ${IGDRCL_SRC_tests_wddm_interface}
   )
 endif()
+
 add_subdirectories()

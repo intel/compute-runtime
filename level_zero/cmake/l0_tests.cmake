@@ -44,13 +44,12 @@ add_library(compute_runtime_mockable_extra
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/debug_helpers.cpp
             ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/mock_execution_environment_gmm_fixture.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_resource_info.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_memory_manager.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
-            ${NEO_SOURCE_DIR}/shared/source/debug_settings/debug_settings_manager.cpp
+            ${NEO_SHARED_DIRECTORY}/debug_settings/debug_settings_manager.cpp
 )
 
 set_property(TARGET compute_runtime_mockable_extra APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
@@ -79,7 +78,7 @@ if(WIN32)
                  PRIVATE
                  ${NEO_SOURCE_DIR}/shared/source/dll/windows/environment_variables.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_memory_base.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_wddm.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
   )
 
   target_link_libraries(compute_runtime_mockable_extra
@@ -92,7 +91,7 @@ if(UNIX)
                  PRIVATE
                  ${NEO_SOURCE_DIR}/opencl/source/dll/linux/allocator_helper.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_mock.cpp
-                 ${NEO_SOURCE_DIR}/shared/source/tbx/tbx_sockets_imp.cpp
+                 ${NEO_SHARED_DIRECTORY}/tbx/tbx_sockets_imp.cpp
   )
   target_link_libraries(compute_runtime_mockable_extra
                         dl

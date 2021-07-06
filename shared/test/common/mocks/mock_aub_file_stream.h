@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "opencl/source/command_stream/aub_command_stream_receiver.h"
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 
 #include "gmock/gmock.h"
 

@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_wddm.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/image.h"
@@ -19,7 +20,6 @@
 #include "opencl/source/sharings/d3d/d3d_surface.h"
 #include "opencl/source/sharings/d3d/d3d_texture.h"
 #include "opencl/test/unit_test/fixtures/d3d_test_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_wddm.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

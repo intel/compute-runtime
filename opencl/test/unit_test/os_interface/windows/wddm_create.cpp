@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_wddm.h"
+#include "shared/test/common/mocks/mock_wddm.h"
 
 namespace NEO {
 Wddm *Wddm::createWddm(std::unique_ptr<HwDeviceIdWddm> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {

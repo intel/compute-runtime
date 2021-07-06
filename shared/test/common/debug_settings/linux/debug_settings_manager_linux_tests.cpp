@@ -9,8 +9,8 @@
 #include "shared/source/utilities/debug_file_reader.h"
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 
-#include "opencl/test/unit_test/mocks/mock_io_functions.h"
 #include "test.h"
 
 #include <unordered_map>

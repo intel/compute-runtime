@@ -49,7 +49,6 @@ if(NOT SKIP_UNIT_TESTS)
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
                  ${CORE_ENABLERS}
                  ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
-                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/mock_execution_environment_gmm_fixture.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
@@ -57,9 +56,9 @@ if(NOT SKIP_UNIT_TESTS)
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_platform.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.cpp
-                 ${NEO_SOURCE_DIR}/shared/source/helpers/allow_deferred_deleter.cpp
-                 ${NEO_SOURCE_DIR}/shared/test/common/helpers/api_specific_config_shared_tests.cpp
-                 ${NEO_SOURCE_DIR}/shared/test/common/test_macros/test_checks_shared.cpp
+                 ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/api_specific_config_shared_tests.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests/ult_configuration.cpp
                  $<TARGET_OBJECTS:mock_gmm>
                  $<TARGET_OBJECTS:igdrcl_libult_common>
@@ -72,8 +71,8 @@ if(NOT SKIP_UNIT_TESTS)
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-                   ${NEO_SOURCE_DIR}/shared/test/common/mocks/linux/mock_drm_memory_manager.cpp
-                   ${NEO_SOURCE_DIR}/shared/test/common/mocks/linux/mock_drm_memory_manager.h
+                   ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.cpp
+                   ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.h
     )
     if(NOT DISABLE_WDDM_LINUX)
       target_sources(${TARGET_NAME} PRIVATE

@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 
 namespace NEO {
 namespace IoFunctions {
