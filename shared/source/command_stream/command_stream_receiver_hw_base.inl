@@ -331,7 +331,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     programHardwareContext(commandStreamCSR);
-    programComputeMode(commandStreamCSR, dispatchFlags);
+    programComputeMode(commandStreamCSR, dispatchFlags, device.getHardwareInfo());
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPreamble(commandStreamCSR, device, dispatchFlags, newL3Config);

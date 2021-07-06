@@ -12,7 +12,7 @@
 namespace NEO {
 template <typename Family>
 inline void EncodeStates<Family>::adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
-                                                         bool requiresCoherency, uint32_t threadArbitrationPolicy) {
+                                                         bool requiresCoherency, uint32_t threadArbitrationPolicy, const HardwareInfo &hwInfo) {
 }
 
 template <typename Family>

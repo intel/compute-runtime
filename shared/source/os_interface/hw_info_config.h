@@ -15,6 +15,7 @@
 namespace NEO {
 
 struct HardwareInfo;
+struct StateComputeModeProperties;
 class OSInterface;
 class HwInfoConfig;
 
@@ -42,6 +43,7 @@ class HwInfoConfig {
     virtual bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const = 0;
+    virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) = 0;
     uint32_t threadsPerEu;
 };
 
@@ -67,6 +69,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const override;
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
+    void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) override;
 
   protected:
     HwInfoConfigHw() = default;

@@ -103,7 +103,7 @@ struct EncodeStates {
                                      BindlessHeapsHelper *bindlessHeapHelper);
 
     static void adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr,
-                                       bool requiresCoherency, uint32_t threadArbitrationPolicy);
+                                       bool requiresCoherency, uint32_t threadArbitrationPolicy, const HardwareInfo &hwInfo);
 
     static size_t getAdjustStateComputeModeSize();
 };
@@ -277,7 +277,7 @@ struct EncodeSurfaceState {
 
 template <typename GfxFamily>
 struct EncodeComputeMode {
-    static void adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties);
+    static void adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo);
 
     static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
 };

@@ -13,7 +13,7 @@
 
 namespace NEO {
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
+void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     if (isComputeModeNeeded()) {
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
@@ -21,7 +21,7 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
 
         auto stateComputeMode = GfxFamily::cmdInitStateComputeMode;
         EncodeStates<GfxFamily>::adjustStateComputeMode(stream, dispatchFlags.numGrfRequired, &stateComputeMode,
-                                                        dispatchFlags.requiresCoherency, this->requiredThreadArbitrationPolicy);
+                                                        dispatchFlags.requiresCoherency, this->requiredThreadArbitrationPolicy, hwInfo);
 
         if (csrSizeRequestFlags.hasSharedHandles) {
             auto pc = stream.getSpaceForCmd<PIPE_CONTROL>();

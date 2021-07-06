@@ -71,14 +71,14 @@ GEN11TEST_F(Gen11CoherencyRequirements, GivenSettingsWhenCoherencyRequestedThenH
     expectedCmd.setDataDword(DwordBuilder::build(gen11HdcModeRegister::forceNonCoherentEnableBit, true));
 
     overrideCoherencyRequest(true, false);
-    csr->programComputeMode(stream, flags);
+    csr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(csr->getCmdSizeForComputeMode(), stream.getUsed());
 
     auto cmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(stream.getCpuBase());
     EXPECT_TRUE(memcmp(&expectedCmd, cmd, lriSize) == 0);
 
     overrideCoherencyRequest(true, true);
-    csr->programComputeMode(stream, flags);
+    csr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(csr->getCmdSizeForComputeMode() * 2, stream.getUsed());
 
     cmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(stream.getCpuBase(), lriSize));

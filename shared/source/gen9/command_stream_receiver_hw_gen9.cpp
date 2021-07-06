@@ -21,7 +21,7 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
 }
 
 template <>
-void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
+void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
 }
 
 template <>

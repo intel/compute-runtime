@@ -136,7 +136,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesThenCoherencyCmd
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask);
 
     overrideCoherencyRequest(true, false, false);
-    csr->programComputeMode(stream, flags);
+    csr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
     auto scmCmd = reinterpret_cast<char *>(stream.getCpuBase());
@@ -145,7 +145,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesThenCoherencyCmd
     auto startOffset = stream.getUsed();
 
     overrideCoherencyRequest(true, true, false);
-    csr->programComputeMode(stream, flags);
+    csr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize * 2, stream.getUsed());
 
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED);
@@ -178,7 +178,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesThenCoherencyCmdVa
     auto expectedPcCmd = FamilyType::cmdInitPipeControl;
 
     overrideCoherencyRequest(true, false, true);
-    csr->programComputeMode(stream, flags);
+    csr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
     auto scmCmd = reinterpret_cast<char *>(stream.getCpuBase());
@@ -190,7 +190,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesThenCoherencyCmdVa
     auto startOffset = stream.getUsed();
 
     overrideCoherencyRequest(true, true, true);
-    csr->programComputeMode(stream, flags);
+    csr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize * 2, stream.getUsed());
 
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED);

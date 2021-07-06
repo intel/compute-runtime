@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 
 #include "opencl/source/platform/platform.h"
@@ -26,12 +27,12 @@ GEN8TEST_F(Gen8CoherencyRequirements, WhenMemoryManagerIsInitializedThenNoCohere
 
     auto retSize = csr.getCmdSizeForComputeMode();
     EXPECT_EQ(0u, retSize);
-    csr.programComputeMode(stream, flags);
+    csr.programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(0u, stream.getUsed());
 
     flags.requiresCoherency = true;
     retSize = csr.getCmdSizeForComputeMode();
     EXPECT_EQ(0u, retSize);
-    csr.programComputeMode(stream, flags);
+    csr.programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(0u, stream.getUsed());
 }
