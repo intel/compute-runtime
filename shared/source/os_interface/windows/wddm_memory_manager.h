@@ -37,7 +37,7 @@ class WddmMemoryManager : public MemoryManager {
     void handleFenceCompletion(GraphicsAllocation *allocation) override;
 
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override;
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override;
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) override;
 
     void addAllocationToHostPtrManager(GraphicsAllocation *memory) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) override;

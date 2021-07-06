@@ -57,7 +57,7 @@ struct UnifiedSharingContextFixture : ::testing::Test {
 
 template <bool validMemoryManager>
 struct UnifiedSharingMockMemoryManager : MockMemoryManager {
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override {
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) override {
         if (!validMemoryManager) {
             return nullptr;
         }

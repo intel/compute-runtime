@@ -393,8 +393,8 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
     return createAllocationFromHandle(handle, requireSpecificBitness, false, properties.allocationType, properties.rootDeviceIndex);
 }
 
-GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) {
-    return createAllocationFromHandle(toOsHandle(handle), false, true, GraphicsAllocation::AllocationType::SHARED_IMAGE, rootDeviceIndex);
+GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) {
+    return createAllocationFromHandle(toOsHandle(handle), false, true, allocType, rootDeviceIndex);
 }
 
 void WddmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {

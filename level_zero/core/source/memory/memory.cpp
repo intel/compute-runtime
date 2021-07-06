@@ -55,6 +55,27 @@ void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
+void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle) {
+    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+
+    auto alloc = this->getMemoryManager()->createGraphicsAllocationFromNTHandle(handle, neoDevice->getRootDeviceIndex(), NEO::GraphicsAllocation::AllocationType::SHARED_BUFFER);
+
+    if (alloc == nullptr) {
+        return nullptr;
+    }
+
+    NEO::SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
+    allocData.gpuAllocations.addAllocation(alloc);
+    allocData.cpuAllocation = nullptr;
+    allocData.size = alloc->getUnderlyingBufferSize();
+    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData.device = neoDevice;
+
+    this->getSvmAllocsManager()->insertSVMAlloc(allocData);
+
+    return reinterpret_cast<void *>(alloc->getGpuAddress());
+}
+
 ze_result_t DriverHandleImp::checkMemoryAccessFromDevice(Device *device, const void *ptr) {
     auto allocation = svmAllocsManager->getSVMAlloc(ptr);
     if (allocation == nullptr) {

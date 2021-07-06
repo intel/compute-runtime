@@ -12,6 +12,7 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 
@@ -102,50 +103,12 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
-    bool relaxedSizeAllowed = false;
-    if (deviceDesc->pNext) {
-        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
-        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC) {
-            const ze_external_memory_export_desc_t *externalMemoryExportDesc =
-                reinterpret_cast<const ze_external_memory_export_desc_t *>(extendedDesc);
-            // ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF supported by default for all
-            // device allocations for the purpose of IPC, so just check correct
-            // flag is passed.
-            if (externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
-                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
-            }
-        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD) {
-            const ze_external_memory_import_fd_t *externalMemoryImportDesc =
-                reinterpret_cast<const ze_external_memory_import_fd_t *>(extendedDesc);
-            if (externalMemoryImportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
-                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
-            }
-            ze_ipc_memory_flags_t flags = {};
-            *ptr = this->driverHandle->importFdHandle(hDevice, flags, externalMemoryImportDesc->fd, nullptr);
-            if (nullptr == *ptr) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            return ZE_RESULT_SUCCESS;
-        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
-            const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
-                reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
-            if (!(relaxedLimitsDesc->flags & ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE)) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            relaxedSizeAllowed = true;
-        }
-    }
+    StructuresLookupTable lookupTable = {};
 
-    if (relaxedSizeAllowed == false &&
-        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().maxMemAllocSize)) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-    }
+    auto parseResult = prepareL0StructuresLookupTable(lookupTable, deviceDesc->pNext);
 
-    if (relaxedSizeAllowed &&
-        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize)) {
-        *ptr = nullptr;
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    if (parseResult != ZE_RESULT_SUCCESS) {
+        return parseResult;
     }
 
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
@@ -154,8 +117,39 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
 
+    if (lookupTable.isSharedHandle) {
+        if (lookupTable.sharedHandleType.isDMABUFHandle) {
+            ze_ipc_memory_flags_t flags = {};
+            *ptr = this->driverHandle->importFdHandle(hDevice, flags, lookupTable.sharedHandleType.fd, nullptr);
+            if (nullptr == *ptr) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else {
+            UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
+            *ptr = this->driverHandle->importNTHandle(hDevice, lookupTable.sharedHandleType.ntHnadle);
+            if (*ptr == nullptr) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    if (lookupTable.relaxedSizeAllowed == false &&
+        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().maxMemAllocSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+
+    if (lookupTable.relaxedSizeAllowed &&
+        (size > this->driverHandle->devices[0]->getNEODevice()->getDeviceInfo().globalMemSize)) {
+        *ptr = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
+
+    deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
+
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, this->driverHandle->rootDeviceIndices, deviceBitfields);
-    unifiedMemoryProperties.allocationFlags.flags.shareable = 1u;
+    unifiedMemoryProperties.allocationFlags.flags.shareable = lookupTable.exportMemory;
     unifiedMemoryProperties.device = neoDevice;
 
     if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {

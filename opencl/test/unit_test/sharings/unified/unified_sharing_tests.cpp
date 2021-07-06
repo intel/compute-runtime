@@ -163,7 +163,7 @@ struct UnifiedSharingCreateAllocationTests : UnifiedSharingTestsWithMemoryManage
     struct MemoryManagerCheckingAllocationMethod : MockMemoryManager {
         using MockMemoryManager::MockMemoryManager;
 
-        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override {
+        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) override {
             this->createFromNTHandleCalled = true;
             this->handle = toOsHandle(handle);
             return nullptr;
