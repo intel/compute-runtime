@@ -859,7 +859,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
 
 HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItAsSourceOrDstAllocation) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto memoryManager = csr.getMemoryManager();
+    auto memoryManager = static_cast<MockMemoryManager *>(csr.getMemoryManager());
 
     AllocationProperties properties{csr.getRootDeviceIndex(), false, 1234, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false, pDevice->getDeviceBitfield()};
     GraphicsAllocation *mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, reinterpret_cast<void *>(0x12340000));
@@ -869,7 +869,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 100, nullptr, retVal));
-
+    memoryManager->returnFakeAllocation = true;
     {
         // from hostPtr
         BuiltinOpParams builtinOpParams = {};
@@ -895,6 +895,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
         EXPECT_EQ(mapAllocation, blitProperties.dstAllocation);
     }
 
+    memoryManager->returnFakeAllocation = false;
     memoryManager->freeGraphicsMemory(mapAllocation);
 }
 
