@@ -57,11 +57,6 @@ bool HwHelperHw<Family>::isNewResidencyModelSupported() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isDirectSubmissionSupported() const {
-    return true;
-}
-
-template <>
 uint32_t HwHelperHw<Family>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_XE_HP_SDV) {
         switch (stepping) {
