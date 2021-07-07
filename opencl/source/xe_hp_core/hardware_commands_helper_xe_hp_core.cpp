@@ -14,10 +14,5 @@
 
 namespace NEO {
 
-template <>
-void HardwareCommandsHelper<XeHpFamily>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const Kernel &kernel,
-                                                    const size_t &sizeCrossThreadData, const size_t &sizePerThreadData) {
-}
-
 template struct HardwareCommandsHelper<XeHpFamily>;
 } // namespace NEO

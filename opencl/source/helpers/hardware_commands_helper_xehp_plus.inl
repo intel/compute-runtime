@@ -168,4 +168,9 @@ void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Line
     }
 }
 
+template <typename GfxFamily>
+void HardwareCommandsHelper<GfxFamily>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const Kernel &kernel,
+                                                   const size_t &sizeCrossThreadData, const size_t &sizePerThreadData) {
+}
+
 } // namespace NEO
