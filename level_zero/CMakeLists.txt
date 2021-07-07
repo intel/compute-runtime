@@ -559,6 +559,7 @@ if(BUILD_WITH_L0)
     hide_subdir(core/test/black_box_tests)
     hide_subdir(tools/test/black_box_tests)
   endif()
+  add_subdirectories()
 
   if(UNIX AND NEO_BUILD_L0_PACKAGE)
     message(STATUS "Building LevelZero package")
