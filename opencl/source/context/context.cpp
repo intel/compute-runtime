@@ -470,4 +470,8 @@ Platform *Context::getPlatformFromProperties(const cl_context_properties *proper
     }
     return nullptr;
 }
+
+bool Context::isSingleDeviceContext() {
+    return devices[0]->getNumAvailableDevices() == 1 && getNumDevices() == 1;
+}
 } // namespace NEO

@@ -59,11 +59,11 @@ bool MemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel
     return true;
 }
 
-void MemoryPropertiesHelper::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties, const HardwareInfo &hwInfo) {
+void MemoryPropertiesHelper::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties, const HardwareInfo &hwInfo, bool deviceOnlyVisibilty) {
     fillCachePolicyInProperties(allocationProperties,
                                 memoryProperties.flags.locallyUncachedResource,
                                 memoryProperties.flags.readOnly,
-                                false,
+                                deviceOnlyVisibilty,
                                 0);
 }
 

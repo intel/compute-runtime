@@ -288,7 +288,8 @@ Image *Image::create(Context *context,
                         AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
                                                                                                                   false, // allocateMemory
                                                                                                                   memoryProperties, hwInfo,
-                                                                                                                  context->getDeviceBitfieldForAllocation(rootDeviceIndex));
+                                                                                                                  context->getDeviceBitfieldForAllocation(rootDeviceIndex),
+                                                                                                                  context->isSingleDeviceContext());
 
                         allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
 
@@ -326,7 +327,8 @@ Image *Image::create(Context *context,
                     AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
                                                                                                               true, // allocateMemory
                                                                                                               memoryProperties, hwInfo,
-                                                                                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
+                                                                                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex),
+                                                                                                              context->isSingleDeviceContext());
                     allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
 
                     if (allocationInfo[rootDeviceIndex].memory && MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {

@@ -47,6 +47,9 @@ class CreateImageTest : public ClDeviceFixture,
     CreateImageTest() {
     }
     Image *createImageWithFlags(cl_mem_flags flags) {
+        return createImageWithFlags(flags, context);
+    }
+    Image *createImageWithFlags(cl_mem_flags flags, Context *context) {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(
             flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         return Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
@@ -690,8 +693,10 @@ TEST_P(CreateImageNoHostPtr, GivenMissingPitchWhenImageIsCreatedThenConstructorF
 }
 
 TEST_P(CreateImageNoHostPtr, whenImageIsCreatedThenItHasProperAccessAndCacheProperties) {
-    auto image = createImageWithFlags(flags);
-
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    auto context = std::make_unique<MockContext>();
+    auto image = createImageWithFlags(flags, context.get());
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
 
@@ -703,7 +708,6 @@ TEST_P(CreateImageNoHostPtr, whenImageIsCreatedThenItHasProperAccessAndCacheProp
 
     auto isReadOnly = isValueSet(flags, CL_MEM_READ_ONLY);
     EXPECT_NE(isReadOnly, allocation->isFlushL3Required());
-
     delete image;
 }
 

@@ -104,7 +104,8 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
                                                                                                   true, // allocateMemory
                                                                                                   memoryProperties, context->getDevice(0)->getHardwareInfo(),
-                                                                                                  context->getDeviceBitfieldForAllocation(rootDeviceIndex));
+                                                                                                  context->getDeviceBitfieldForAllocation(rootDeviceIndex),
+                                                                                                  context->isSingleDeviceContext());
         allocProperties.allocationType = GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY;
 
         alloc = context->getMemoryManager()->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);

@@ -499,3 +499,17 @@ TEST(Context, WhenSettingContextDestructorCallbackThenCallOrderIsPreserved) {
     EXPECT_EQ(2u, callbacksReturnValues[1]);
     EXPECT_EQ(1u, callbacksReturnValues[2]);
 }
+
+TEST(Context, givenContextAndDevicesWhenIsTileOnlyThenProperValueReturned) {
+    UltClDeviceFactory deviceFactoryWithSubDevices{1, 2};
+    UltClDeviceFactory deviceFactoryWithMultipleDevices{2, 0};
+    cl_device_id devices[] = {deviceFactoryWithMultipleDevices.rootDevices[0], deviceFactoryWithMultipleDevices.rootDevices[1]};
+
+    MockContext tileOnlyContext(deviceFactoryWithMultipleDevices.rootDevices[0]);
+    MockContext subDevicesContext(deviceFactoryWithSubDevices.rootDevices[0]);
+    MockContext multipleDevicesContext(ClDeviceVector(devices, 2));
+
+    EXPECT_TRUE(tileOnlyContext.isSingleDeviceContext());
+    EXPECT_FALSE(subDevicesContext.isSingleDeviceContext());
+    EXPECT_FALSE(multipleDevicesContext.isSingleDeviceContext());
+}

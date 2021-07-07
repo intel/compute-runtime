@@ -92,11 +92,11 @@ MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags fla
 AllocationProperties MemoryPropertiesHelper::getAllocationProperties(
     uint32_t rootDeviceIndex, MemoryProperties memoryProperties, bool allocateMemory, size_t size,
     GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo,
-    DeviceBitfield subDevicesBitfieldParam) {
+    DeviceBitfield subDevicesBitfieldParam, bool deviceOnlyVisibilty) {
 
     auto deviceBitfield = adjustDeviceBitfield(rootDeviceIndex, memoryProperties, subDevicesBitfieldParam);
     AllocationProperties allocationProperties(rootDeviceIndex, allocateMemory, size, type, multiStorageResource, deviceBitfield);
-    fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo);
+    fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo, deviceOnlyVisibilty);
     return allocationProperties;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class MemObjHelper {
                                                  cl_mem_flags_intel flagsIntel, cl_mem parent, const Context &context);
     static AllocationProperties getAllocationPropertiesWithImageInfo(uint32_t rootDeviceIndex, ImageInfo &imgInfo, bool allocateMemory,
                                                                      const MemoryProperties &memoryProperties,
-                                                                     const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam);
+                                                                     const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam, bool deviceOnlyVisibilty);
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags);
     static SVMAllocsManager::SvmAllocationProperties getSvmAllocationProperties(cl_mem_flags flags);
     static bool isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, Context &context,

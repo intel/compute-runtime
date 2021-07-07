@@ -15,8 +15,11 @@
 
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "test.h"
 
 using namespace NEO;
@@ -56,10 +59,10 @@ TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledT
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
-    auto allocationProperties = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+    auto allocationProperties = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {}, true);
     EXPECT_TRUE(allocationProperties.flags.allocateMemory);
 
-    auto allocationProperties2 = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+    auto allocationProperties2 = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {}, true);
     EXPECT_FALSE(allocationProperties2.flags.allocateMemory);
 }
 
@@ -69,31 +72,31 @@ TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCall
     auto pDevice = deviceFactory.rootDevices[0];
     MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, flagsIntel, 0, pDevice);
     auto allocationFlags = MemoryPropertiesHelper::getAllocationProperties(
-        0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, pDevice->getHardwareInfo(), {});
+        0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, pDevice->getHardwareInfo(), {}, true);
     EXPECT_TRUE(allocationFlags.flags.uncacheable);
 
     flagsIntel = 0;
     memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, flagsIntel, 0, pDevice);
     auto allocationFlags2 = MemoryPropertiesHelper::getAllocationProperties(
-        0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, pDevice->getHardwareInfo(), {});
+        0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, pDevice->getHardwareInfo(), {}, true);
     EXPECT_FALSE(allocationFlags2.flags.uncacheable);
 }
 
 TEST(AllocationFlagsTest, givenReadOnlyResourceFlagWhenGetAllocationFlagsIsCalledThenFlushL3FlagsAreCorrectlySet) {
     cl_mem_flags flags = CL_MEM_READ_ONLY;
-    UltDeviceFactory deviceFactory{1, 0};
+    UltDeviceFactory deviceFactory{1, 2};
     auto pDevice = deviceFactory.rootDevices[0];
     MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice);
 
     auto allocationFlags =
         MemoryPropertiesHelper::getAllocationProperties(
-            0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, pDevice->getHardwareInfo(), {});
+            0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, pDevice->getHardwareInfo(), {}, false);
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForRead);
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForWrite);
 
     memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
     auto allocationFlags2 = MemoryPropertiesHelper::getAllocationProperties(
-        0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, pDevice->getHardwareInfo(), {});
+        0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, pDevice->getHardwareInfo(), {}, false);
     EXPECT_TRUE(allocationFlags2.flags.flushL3RequiredForRead);
     EXPECT_TRUE(allocationFlags2.flags.flushL3RequiredForWrite);
 }
@@ -411,22 +414,25 @@ TEST(BaseMemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocationSucceedThenRe
 
 TEST(MemoryAllocationTest, givenMultiTileVisiblityWhenAskedForFlagsThenL3NeedsToBeFlushed) {
     HardwareInfo hwInfo(*defaultHwInfo);
-    UltDeviceFactory deviceFactory{1, 0};
-    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, deviceFactory.rootDevices[0]);
-    auto allocationFlags = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+    UltClDeviceFactory deviceFactory{1, 2};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    auto context = std::make_unique<MockContext>(pClDevice);
+    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &pClDevice->getDevice());
+    auto allocationFlags = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {}, context->isSingleDeviceContext());
     EXPECT_TRUE(allocationFlags.flags.flushL3RequiredForRead);
     EXPECT_TRUE(allocationFlags.flags.flushL3RequiredForWrite);
 }
 
 TEST(MemoryAllocationTest, givenMultiTileVisiblityAndUncachedWhenAskedForFlagsThenL3DoesNotNeedToBeFlushed) {
-    UltDeviceFactory deviceFactory{1, 0};
-    auto pDevice = deviceFactory.rootDevices[0];
+    UltClDeviceFactory deviceFactory{1, 2};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    auto context = std::make_unique<MockContext>(pClDevice);
     cl_mem_flags_intel flagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
-    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, flagsIntel, 0, pDevice);
+    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, flagsIntel, 0, &pClDevice->getDevice());
     HardwareInfo hwInfo(*defaultHwInfo);
 
     auto allocationFlags = MemoryPropertiesHelper::getAllocationProperties(
-        0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+        0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {}, context->isSingleDeviceContext());
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForRead);
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForWrite);
 }

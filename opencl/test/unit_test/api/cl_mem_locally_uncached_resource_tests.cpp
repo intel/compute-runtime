@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
@@ -350,18 +351,20 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, WhenUnsettingUn
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateAndAreNotUsedInStatelessFashionThenThoseResourcesAreNotRegistredAsResourcesForCacheFlush) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    auto context = std::make_unique<MockContext>();
     cl_int retVal = CL_SUCCESS;
-
-    MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
+    MockKernelWithInternals mockKernel(*context->getDevice(0), context.get(), true);
     auto kernel = mockKernel.mockKernel;
     auto pMultiDeviceKernel = mockKernel.mockMultiDeviceKernel;
     mockKernel.kernelInfo.setBufferStateful(0);
     mockKernel.kernelInfo.setBufferStateful(1);
 
-    auto bufferCacheable = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
+    auto bufferCacheable = clCreateBufferWithPropertiesINTEL(context.get(), propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
 
-    auto bufferUncacheableInSurfaceState = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, 0, n * sizeof(float), nullptr, nullptr);
-    auto bufferUncacheable = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheableInSurfaceState = clCreateBufferWithPropertiesINTEL(context.get(), propertiesUncacheableInSurfaceState, 0, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheable = clCreateBufferWithPropertiesINTEL(context.get(), propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
 
     retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &bufferUncacheableInSurfaceState);
     EXPECT_EQ(CL_SUCCESS, retVal);

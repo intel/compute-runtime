@@ -38,12 +38,12 @@ class MemoryPropertiesHelper {
     static AllocationProperties getAllocationProperties(
         uint32_t rootDeviceIndex, MemoryProperties memoryProperties, bool allocateMemory, size_t size,
         GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo,
-        DeviceBitfield subDevicesBitfieldParam);
+        DeviceBitfield subDevicesBitfieldParam, bool deviceOnlyVisibilty);
 
     static DeviceBitfield adjustDeviceBitfield(uint32_t rootDeviceIndex, const MemoryProperties &memoryProperties,
                                                DeviceBitfield subDevicesBitfieldParam);
 
-    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties, const HardwareInfo &hwInfo);
+    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties, const HardwareInfo &hwInfo, bool deviceOnlyVisibilty);
 
     static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly,
                                             bool deviceOnlyVisibilty, uint32_t cacheRegion);

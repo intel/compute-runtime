@@ -71,11 +71,11 @@ bool MemObjHelper::validateMemoryPropertiesForImage(const MemoryProperties &memo
 
 AllocationProperties MemObjHelper::getAllocationPropertiesWithImageInfo(
     uint32_t rootDeviceIndex, ImageInfo &imgInfo, bool allocateMemory, const MemoryProperties &memoryProperties,
-    const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam) {
+    const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam, bool deviceOnlyVisibilty) {
 
     auto deviceBitfield = MemoryPropertiesHelper::adjustDeviceBitfield(rootDeviceIndex, memoryProperties, subDevicesBitfieldParam);
     AllocationProperties allocationProperties{rootDeviceIndex, allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE, deviceBitfield};
-    MemoryPropertiesHelper::fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo);
+    MemoryPropertiesHelper::fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo, deviceOnlyVisibilty);
     return allocationProperties;
 }
 
