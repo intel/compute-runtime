@@ -44,8 +44,11 @@ TEST(StreamPropertiesTests, whenPropertyValueIsChangedThenProperStateIsSet) {
 TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet) {
     StreamProperties properties;
     for (auto requiresCoherency : ::testing::Bool()) {
-        properties.stateComputeMode.setProperties(requiresCoherency, 0u, 0u);
-        EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
+        for (auto largeGrf : ::testing::Bool()) {
+            properties.stateComputeMode.setProperties(requiresCoherency, largeGrf ? 256 : 128, 0u);
+            EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
+            EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
+        }
     }
 }
 

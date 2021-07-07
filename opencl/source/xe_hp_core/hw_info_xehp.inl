@@ -142,6 +142,14 @@ void XEHP_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFea
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
+    // non-zero values for unit tests
+    gtSysInfo->SliceCount = 2;
+    gtSysInfo->SubSliceCount = 8;
+    gtSysInfo->EUCount = 40;
+    gtSysInfo->MaxEuPerSubSlice = 40;
+    gtSysInfo->MaxSlicesSupported = 1;
+    gtSysInfo->MaxSubSlicesSupported = 1;
+
     if (setupFeatureTableAndWorkaroundTable) {
         XEHP::setupFeatureAndWorkaroundTable(hwInfo);
     }

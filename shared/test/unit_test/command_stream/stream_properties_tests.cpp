@@ -13,6 +13,7 @@ namespace NEO {
 std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeProperties &properties) {
     std::vector<StreamProperty *> allProperties;
     allProperties.push_back(&properties.isCoherencyRequired);
+    allProperties.push_back(&properties.largeGrfMode);
     return allProperties;
 }
 

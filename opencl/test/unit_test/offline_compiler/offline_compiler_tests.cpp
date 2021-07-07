@@ -815,9 +815,9 @@ TEST(OfflineCompilerTest, GivenValidParamWhenGettingHardwareInfoThenSuccessIsRet
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
     EXPECT_EQ(CL_INVALID_DEVICE, mockOfflineCompiler->getHardwareInfo("invalid"));
-    EXPECT_EQ(0u, mockOfflineCompiler->getHardwareInfo().gtSystemInfo.MaxSlicesSupported);
+    EXPECT_EQ(PRODUCT_FAMILY::IGFX_UNKNOWN, mockOfflineCompiler->getHardwareInfo().platform.eProductFamily);
     EXPECT_EQ(CL_SUCCESS, mockOfflineCompiler->getHardwareInfo(gEnvironment->devicePrefix.c_str()));
-    EXPECT_NE(0u, mockOfflineCompiler->getHardwareInfo().gtSystemInfo.MaxSlicesSupported);
+    EXPECT_NE(PRODUCT_FAMILY::IGFX_UNKNOWN, mockOfflineCompiler->getHardwareInfo().platform.eProductFamily);
 }
 
 TEST(OfflineCompilerTest, WhenStoringBinaryThenStoredCorrectly) {
@@ -1418,16 +1418,22 @@ TEST(OfflineCompilerTest, whenDeviceIsSpecifiedThenDefaultConfigFromTheDeviceIsU
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
     EXPECT_EQ(OfflineCompiler::ErrorCode::SUCCESS, retVal);
 
-    auto actualHwInfo = mockOfflineCompiler->hwInfo;
-    auto expectedHwInfo = actualHwInfo;
-    auto hwInfoConfig = defaultHardwareInfoConfigTable[expectedHwInfo.platform.eProductFamily];
+    HardwareInfo hwInfo = mockOfflineCompiler->hwInfo;
 
-    setHwInfoValuesFromConfig(hwInfoConfig, expectedHwInfo);
+    uint32_t sliceCount = 2;
+    uint32_t subSlicePerSliceCount = 4;
+    uint32_t euPerSubSliceCount = 5;
 
-    EXPECT_EQ(actualHwInfo.gtSystemInfo.SliceCount, expectedHwInfo.gtSystemInfo.SliceCount);
-    EXPECT_EQ(actualHwInfo.gtSystemInfo.SubSliceCount, expectedHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(actualHwInfo.gtSystemInfo.DualSubSliceCount, expectedHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(actualHwInfo.gtSystemInfo.EUCount, expectedHwInfo.gtSystemInfo.EUCount);
+    uint64_t hwInfoConfig = euPerSubSliceCount;
+    hwInfoConfig |= (static_cast<uint64_t>(subSlicePerSliceCount) << 16);
+    hwInfoConfig |= (static_cast<uint64_t>(sliceCount) << 32);
+
+    setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
+
+    EXPECT_EQ(sliceCount, hwInfo.gtSystemInfo.SliceCount);
+    EXPECT_EQ(subSlicePerSliceCount * sliceCount, hwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(subSlicePerSliceCount * sliceCount, hwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(euPerSubSliceCount * subSlicePerSliceCount * sliceCount, hwInfo.gtSystemInfo.EUCount);
 }
 
 struct WorkaroundApplicableForDevice {

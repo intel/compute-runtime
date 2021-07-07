@@ -35,6 +35,12 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/variable_backup.h
 )
 
+if(TESTS_XEHP_PLUS)
+  list(APPEND NEO_CORE_HELPERS_TESTS
+       ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_xehp_plus.inl
+  )
+endif()
+
 add_subdirectories()
 
 target_sources(${TARGET_NAME} PRIVATE

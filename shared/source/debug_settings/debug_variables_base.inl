@@ -209,6 +209,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushEveryEnqueueCount, -1, "If g
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushForNewResource, -1, "-1: platform specific, 0: force disable, 1: force enable")
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushForIdleGpu, -1, "-1: platform specific, 0: force disable, 1: force enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCacheFlushAfterWalkerForAllQueues, -1, "Enable cache flush after walker even if queue doesn't require it")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideKernelSizeLimitForSmallDispatch, -1, "-1: default, >=0: on XEHP+ changes the threshold for treating kernel as small during NULL LWS selection")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")
@@ -287,6 +288,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceUseCtxId, -1, "-1: default (enabl
 DECLARE_DEBUG_VARIABLE(int32_t, SetKmdWaitTimeout, -1, "-1: default (infinity), >0: amount of time units for wait function timeout")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNotifyEnableForTagUpdatePostSync, -1, "-1: default (usage determined by user fence wait call), 0: disable use of NotifyEnable flag, 1: enable use NotifyEnable flag")
 DECLARE_DEBUG_VARIABLE(int32_t, Force32BitDriverSupport, -1, "-1: default, 0: disable, 1: enable, Forces the driver to support 32 bit.")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicPipelineSelect, -1, "set SYSTOLIC MODE ENABLE in PIPELINE_SELECT cmd, -1:default, 0:disable, 1:enable")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicInComputeWalker, -1, "set SYSTOLIC MODE ENABLE in COMPUTE_WALKER cmd, -1:default, 0:disable, 1:enable")
 
 /*EXPERIMENTAL TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableCustomLocalMemoryAlignment, 0, "Align local memory allocations to a given value. Works only with allocations at least as big as the value.  0: no effect, 2097152: 2 megabytes, 1073741824: 1 gigabyte")
