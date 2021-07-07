@@ -46,6 +46,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
 
     size_t size = 0;
     if (isComputeModeNeeded()) {
+        if (isAdditionalPipeControlNeeded()) {
+            size += sizeof(typename GfxFamily::PIPE_CONTROL);
+        }
         size += sizeof(typename GfxFamily::STATE_COMPUTE_MODE);
         if (csrSizeRequestFlags.hasSharedHandles) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);

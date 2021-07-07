@@ -70,6 +70,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo);
 
     bool isComputeModeNeeded() const;
+    bool isAdditionalPipeControlNeeded() const;
     bool isPipelineSelectAlreadyProgrammed() const;
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags);
 
