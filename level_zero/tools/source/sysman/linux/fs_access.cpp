@@ -278,12 +278,10 @@ bool FsAccess::isRootUser() {
 }
 
 bool FsAccess::directoryExists(const std::string path) {
-    ::DIR *pDir = ::opendir(path.c_str());
-    if (pDir != NULL) {
-        ::closedir(pDir);
-        return true;
+    if (accessSyscall(path.c_str(), F_OK)) {
+        return false;
     }
-    return false;
+    return true;
 }
 
 // Procfs Access
@@ -564,7 +562,7 @@ bool SysfsAccess::fileExists(const std::string file) {
 }
 
 bool SysfsAccess::directoryExists(const std::string path) {
-    return FsAccess::fileExists(fullPath(path).c_str());
+    return FsAccess::directoryExists(fullPath(path).c_str());
 }
 
 bool SysfsAccess::isMyDeviceFile(const std::string dev) {

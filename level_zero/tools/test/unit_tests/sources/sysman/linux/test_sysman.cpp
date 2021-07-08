@@ -12,6 +12,14 @@
 namespace L0 {
 namespace ult {
 
+inline static int mockAccessFailure(const char *pathname, int mode) {
+    return -1;
+}
+
+inline static int mockAccessSuccess(const char *pathname, int mode) {
+    return 0;
+}
+
 using MockDeviceSysmanGetTest = Test<DeviceFixture>;
 TEST_F(MockDeviceSysmanGetTest, GivenValidSysmanHandleSetInDeviceStructWhenGetThisSysmanHandleThenHandlesShouldBeSimilar) {
     SysmanDeviceImp *sysman = new SysmanDeviceImp(device->toHandle());
@@ -41,21 +49,24 @@ TEST_F(SysmanDeviceFixture, GivenCreateFsAccessHandleWhenCallinggetFsAccessThenC
     EXPECT_EQ(&pLinuxSysmanImp->getFsAccess(), pLinuxSysmanImp->pFsAccess);
 }
 
-TEST_F(SysmanDeviceFixture, GivenCreateFsAccessHandleWhenCallingdirectoryExistsWithDifferentPathsThenDesiredResultsAreObtained) {
-    auto FsAccess = FsAccess::create();
+TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingDirectoryExistsWithValidAndInvalidPathThenSuccessAndFailureAreReturnedRespectively) {
+    PublicFsAccess *tempFsAccess = new PublicFsAccess();
+    tempFsAccess->accessSyscall = mockAccessSuccess;
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
-    EXPECT_TRUE(FsAccess->directoryExists(path));
+    EXPECT_TRUE(tempFsAccess->directoryExists(path));
+    tempFsAccess->accessSyscall = mockAccessFailure;
     path = "invalidDiretory";
-    EXPECT_FALSE(FsAccess->directoryExists(path));
-    delete FsAccess;
+    EXPECT_FALSE(tempFsAccess->directoryExists(path));
+    delete tempFsAccess;
 }
 
-TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallingDirectoryExistsWithInvalidPathThenFalseIsRetured) {
-    auto SysfsAccess = SysfsAccess::create("");
+TEST_F(SysmanDeviceFixture, GivenPublicSysfsAccessClassWhenCallingDirectoryExistsWithInvalidPathThenFalseIsRetured) {
+    PublicFsAccess *tempSysfsAccess = new PublicFsAccess();
+    tempSysfsAccess->accessSyscall = mockAccessFailure;
     std::string path = "invalidDiretory";
-    EXPECT_FALSE(SysfsAccess->directoryExists(path));
-    delete SysfsAccess;
+    EXPECT_FALSE(tempSysfsAccess->directoryExists(path));
+    delete tempSysfsAccess;
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPathnameWhenCallingFsAccessExistsThenSuccessIsReturned) {

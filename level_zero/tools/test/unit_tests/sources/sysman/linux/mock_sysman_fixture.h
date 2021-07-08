@@ -96,5 +96,15 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
     uint32_t subDeviceCount = 0u;
 };
 
+class PublicFsAccess : public L0::FsAccess {
+  public:
+    using FsAccess::accessSyscall;
+};
+
+class PublicSysfsAccess : public L0::SysfsAccess {
+  public:
+    using SysfsAccess::accessSyscall;
+};
+
 } // namespace ult
 } // namespace L0
