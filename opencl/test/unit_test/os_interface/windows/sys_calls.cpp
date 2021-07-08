@@ -13,6 +13,10 @@ namespace NEO {
 
 namespace SysCalls {
 
+unsigned int getProcessId() {
+    return 0xABCEDF;
+}
+
 BOOL systemPowerStatusRetVal = 1;
 BYTE systemPowerStatusACLineStatusOverride = 1;
 const wchar_t *currentLibraryPath = L"";

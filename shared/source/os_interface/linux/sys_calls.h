@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/sys_calls_common.h"
+
 #include <iostream>
 #include <poll.h>
 #include <sys/mman.h>

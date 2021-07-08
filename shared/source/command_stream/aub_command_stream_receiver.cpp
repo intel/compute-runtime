@@ -15,6 +15,7 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_inc_base.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 
 #include <algorithm>
 #include <cstring>
@@ -35,7 +36,11 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     if (subDevicesCount > 1) {
         strfilename << subDevicesCount << "tx";
     }
-    strfilename << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << rootDeviceIndex << "_" << filename << ".aub";
+    std::stringstream strExtendedFileName(filename.c_str());
+    if (DebugManager.flags.GenerateAubFilePerProcessId.get()) {
+        strExtendedFileName << "PID_" << SysCalls::getProcessId();
+    }
+    strfilename << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << rootDeviceIndex << "_" << strExtendedFileName.str() << ".aub";
 
     // clean-up any fileName issues because of the file system incompatibilities
     auto fileName = strfilename.str();

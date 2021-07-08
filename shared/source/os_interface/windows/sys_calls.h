@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2021 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/os_interface/sys_calls_common.h"
+
 #include <windows.h>
 
 namespace NEO {

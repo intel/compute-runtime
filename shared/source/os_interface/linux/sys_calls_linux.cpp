@@ -18,7 +18,13 @@
 #include <unistd.h>
 
 namespace NEO {
+
 namespace SysCalls {
+
+unsigned int getProcessId() {
+    return getpid();
+}
+
 int close(int fileDescriptor) {
     return ::close(fileDescriptor);
 }

@@ -37,6 +37,7 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time.h
     ${CMAKE_CURRENT_SOURCE_DIR}/print.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc_base.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_common.h
 )
 
 if(SUPPORT_XEHP_PLUS)

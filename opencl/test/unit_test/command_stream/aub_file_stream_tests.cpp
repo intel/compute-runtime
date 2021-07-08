@@ -26,6 +26,7 @@
 #include "test.h"
 
 #include "driver_version.h"
+#include "sys_calls.h"
 
 #include <fstream>
 #include <memory>
@@ -999,4 +1000,14 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePath
     uint32_t rootDeviceIndex = 123u;
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", rootDeviceIndex);
     EXPECT_NE(std::string::npos, fullName.find("_123_aubfile.aub"));
+}
+
+HWTEST_F(AubFileStreamTests, givenGenerateAubFilePerProcessIdDebugFlagAndAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedRootDeviceIndex) {
+    DebugManagerStateRestore stateRestore;
+
+    DebugManager.flags.GenerateAubFilePerProcessId.set(1);
+    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", 1u);
+    std::stringstream strExtendedFileName("_1_aubfile");
+    strExtendedFileName << "_PID_" << SysCalls::getProcessId() << ".aub";
+    EXPECT_NE(std::string::npos, fullName.find(strExtendedFileName.str()));
 }
