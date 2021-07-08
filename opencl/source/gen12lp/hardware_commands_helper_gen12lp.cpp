@@ -15,13 +15,14 @@
 #include "opencl/source/helpers/hardware_commands_helper_bdw_plus.inl"
 
 namespace NEO {
+using FamilyType = TGLLPFamily;
 
 template <>
-size_t HardwareCommandsHelper<TGLLPFamily>::getSizeRequiredCS() {
-    size_t size = 2 * sizeof(typename TGLLPFamily::MEDIA_STATE_FLUSH) +
-                  sizeof(typename TGLLPFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD);
+size_t HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() {
+    size_t size = 2 * sizeof(typename FamilyType::MEDIA_STATE_FLUSH) +
+                  sizeof(typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD);
     return size;
 }
 
-template struct HardwareCommandsHelper<TGLLPFamily>;
+template struct HardwareCommandsHelper<FamilyType>;
 } // namespace NEO

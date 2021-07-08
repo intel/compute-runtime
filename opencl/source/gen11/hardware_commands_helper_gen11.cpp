@@ -13,6 +13,7 @@
 #include "opencl/source/helpers/hardware_commands_helper_bdw_plus.inl"
 
 namespace NEO {
+using FamilyType = ICLFamily;
 
-template struct HardwareCommandsHelper<ICLFamily>;
+template struct HardwareCommandsHelper<FamilyType>;
 } // namespace NEO

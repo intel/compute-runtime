@@ -14,6 +14,7 @@
 #include <cstdint>
 
 namespace NEO {
+using FamilyType = SKLFamily;
 
-template struct HardwareCommandsHelper<SKLFamily>;
+template struct HardwareCommandsHelper<FamilyType>;
 } // namespace NEO
