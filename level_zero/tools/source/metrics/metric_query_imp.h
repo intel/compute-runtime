@@ -77,6 +77,7 @@ struct MetricsLibrary {
     void initialize();
 
     bool createContext();
+    bool createContextForDevice(Device &device);
     virtual bool getContextData(Device &device, ContextCreateData_1_0 &contextData);
 
     ConfigurationHandle_1_0 createConfiguration(const zet_metric_group_handle_t metricGroup,

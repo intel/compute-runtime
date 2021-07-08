@@ -230,7 +230,22 @@ void MetricsLibrary::getSubDeviceClientOptions(
 }
 
 bool MetricsLibrary::createContext() {
+
     auto &device = metricContext.getDevice();
+    bool status = true;
+
+    if (device.isMultiDeviceCapable()) {
+        const auto &deviceImp = *static_cast<DeviceImp *>(&device);
+        for (auto subDevice : deviceImp.subDevices) {
+            status &= createContextForDevice(*subDevice);
+        }
+    } else {
+        status = createContextForDevice(device);
+    }
+    return status;
+}
+
+bool MetricsLibrary::createContextForDevice(Device &device) {
     const auto &hwHelper = device.getHwHelper();
     const auto &asyncComputeEngines = hwHelper.getGpgpuEngineInstances(device.getHwInfo());
     ContextCreateData_1_0 createData = {};
