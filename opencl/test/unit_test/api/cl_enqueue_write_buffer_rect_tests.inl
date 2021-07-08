@@ -23,7 +23,7 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenInvalidBufferWhenWritingRectangularRe
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {10, 10, 0};
-    char ptr[10];
+    char ptr[10] = {};
 
     auto retVal = clEnqueueWriteBufferRect(
         pCommandQueue,
@@ -49,7 +49,7 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenNullCommandQueueWhenWritingRectangula
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {10, 10, 0};
-    char ptr[10];
+    char ptr[10] = {};
 
     auto retVal = clEnqueueWriteBufferRect(
         nullptr,
@@ -108,7 +108,7 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenNullHostPtrWhenWritingRectangularRegi
 TEST_F(clEnqueueWriteBufferRectTests, GivenCorrectParametersWhenWritingRectangularRegionThenSuccessIsReturned) {
     MockBuffer buffer{};
     buffer.size = 100;
-    char ptr[10];
+    char ptr[10] = {};
 
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
@@ -136,7 +136,7 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenCorrectParametersWhenWritingRectangul
 TEST_F(clEnqueueWriteBufferRectTests, GivenQueueIncapableWhenWritingRectangularRegionThenInvalidOperationIsReturned) {
     MockBuffer buffer{};
     buffer.size = 100;
-    char ptr[10];
+    char ptr[10] = {};
 
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};

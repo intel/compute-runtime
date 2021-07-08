@@ -18,7 +18,7 @@ using clGetKernelSuggestedLocalWorkSizeTests = api_tests;
 namespace ULT {
 
 TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenInvalidInputWhenCallingGetKernelSuggestedLocalWorkSizeThenErrorIsReturned) {
-    size_t globalWorkOffset[3];
+    size_t globalWorkOffset[3] = {};
     size_t globalWorkSize[3] = {1, 1, 1};
     size_t suggestedLocalWorkSize[3];
     cl_uint workDim = 1;

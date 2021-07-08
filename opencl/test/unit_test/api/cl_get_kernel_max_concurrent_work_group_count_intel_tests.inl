@@ -19,8 +19,8 @@ using clGetKernelMaxConcurrentWorkGroupCountTests = api_tests;
 namespace ULT {
 
 TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenInvalidInputWhenCallingGetKernelMaxConcurrentWorkGroupCountThenErrorIsReturned) {
-    size_t globalWorkOffset[3];
-    size_t localWorkSize[3];
+    size_t globalWorkOffset[3] = {};
+    size_t localWorkSize[3] = {};
     size_t suggestedWorkGroupCount;
     cl_uint workDim = 1;
     retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(nullptr, pMultiDeviceKernel, workDim,
