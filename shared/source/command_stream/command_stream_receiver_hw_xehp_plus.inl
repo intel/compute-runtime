@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
@@ -25,9 +26,18 @@ template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {}
 
 template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize() const {
-    return sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC) +
-           sizeof(PIPE_CONTROL);
+size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
+    size_t size = sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
+    size += sizeof(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+    size += sizeof(PIPE_CONTROL);
+
+    auto &hwInfo = *device.getRootDeviceEnvironment().getHardwareInfo();
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+        size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
+    }
+
+    return size;
 }
 
 template <typename GfxFamily>

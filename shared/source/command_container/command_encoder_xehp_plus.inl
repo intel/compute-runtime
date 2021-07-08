@@ -25,6 +25,7 @@
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "pipe_control_args.h"
 
@@ -472,6 +473,13 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
     auto pCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));
     *pCmd = sbaCmd;
 
+    auto &hwInfo = container.getDevice()->getHardwareInfo();
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+        pCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));
+        *pCmd = sbaCmd;
+    }
+
     if (container.isHeapDirty(HeapType::SURFACE_STATE)) {
         auto heap = container.getIndirectHeap(HeapType::SURFACE_STATE);
         auto cmd = Family::cmdInitStateBindingTablePoolAlloc;
@@ -485,7 +493,21 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
 }
 
 template <typename Family>
-void EncodeStateBaseAddress<Family>::addStateBaseAddressIfRequired(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, const HardwareInfo &hwInfo) {}
+size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container) {
+    auto &hwInfo = device.getHardwareInfo();
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    size_t size = sizeof(typename Family::STATE_BASE_ADDRESS);
+    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+        size += sizeof(typename Family::STATE_BASE_ADDRESS);
+    }
+
+    if (container.isHeapDirty(HeapType::SURFACE_STATE)) {
+        size += sizeof(typename Family::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+    }
+
+    return size;
+}
 
 template <typename Family>
 void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, void *const stateComputeModePtr, StateComputeModeProperties &properties) {
@@ -650,5 +672,4 @@ template <typename Family>
 inline size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device) {
     return 0u;
 }
-
 } // namespace NEO

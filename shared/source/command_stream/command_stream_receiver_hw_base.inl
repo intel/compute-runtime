@@ -774,7 +774,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = getRequiredCmdSizeForPreamble(device);
-    size += getRequiredStateBaseAddressSize();
+    size += getRequiredStateBaseAddressSize(device);
     if (!this->isStateSipSent || device.isDebuggerActive()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device);
     }

@@ -387,7 +387,9 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
 }
 
 template <typename Family>
-void EncodeStateBaseAddress<Family>::addStateBaseAddressIfRequired(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, const HardwareInfo &hwInfo) {}
+size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container) {
+    return sizeof(typename Family::STATE_BASE_ADDRESS) + 2 * EncodeWA<Family>::getAdditionalPipelineSelectSize(device);
+}
 
 template <typename Family>
 void EncodeL3State<Family>::encode(CommandContainer &container, bool enableSLM) {

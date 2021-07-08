@@ -6,6 +6,7 @@
 
 target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_command_encoder.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_atomic.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_command_buffer.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel.cpp

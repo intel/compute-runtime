@@ -11,6 +11,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/state_base_address.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 
@@ -48,6 +49,14 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
                                                                         NEO::MemoryCompressionState::NotApplicable,
                                                                         false,
                                                                         1u);
+        *pSbaCmd = sbaCmd;
+
+        auto &hwInfo = neoDevice->getHardwareInfo();
+        auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+            auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
+            *pSbaCmd = sbaCmd;
+        }
 
         if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
 
@@ -61,7 +70,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
             device->getL0Debugger()->programSbaTrackingCommands(commandStream, sbaAddresses);
         }
-        *pSbaCmd = sbaCmd;
 
         auto heap = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::GLOBAL_SSH);
         auto cmd = GfxFamily::cmdInitStateBindingTablePoolAlloc;
@@ -81,12 +89,21 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
+
+    NEO::Device *neoDevice = device->getNEODevice();
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    size_t size = 0;
+
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
-        size_t size = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
-        return size;
-    } else {
-        return 0;
+        size += sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+
+        if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+            size += sizeof(STATE_BASE_ADDRESS);
+        }
     }
+
+    return size;
 }
 
 constexpr uint32_t maxPtssIndex = 15u;

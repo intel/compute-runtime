@@ -35,7 +35,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, Dis
 }
 
 template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize() const {
+size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
     using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
 
     size_t size = 0;
