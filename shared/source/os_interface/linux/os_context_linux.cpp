@@ -80,7 +80,7 @@ void OsContextLinux::initializeContext() {
 
 bool OsContextLinux::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    return this->getDrm().isVmBindAvailable() && hwHelper.isDirectSubmissionSupported();
+    return this->getDrm().isVmBindAvailable() && hwHelper.isDirectSubmissionSupported(hwInfo);
 }
 
 Drm &OsContextLinux::getDrm() const {

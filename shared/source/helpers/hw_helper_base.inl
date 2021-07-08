@@ -604,7 +604,7 @@ bool HwHelperHw<GfxFamily>::isNewResidencyModelSupported() const {
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isDirectSubmissionSupported() const {
+bool HwHelperHw<GfxFamily>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 

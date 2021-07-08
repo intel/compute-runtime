@@ -154,7 +154,7 @@ HWTEST_F(DrmDirectSubmissionTest, whenCheckForDirectSubmissionSupportThenProperV
     auto directSubmissionSupported = osContext->isDirectSubmissionSupported(device->getHardwareInfo());
 
     auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-    EXPECT_EQ(directSubmissionSupported, hwHelper.isDirectSubmissionSupported() && executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>()->isVmBindAvailable());
+    EXPECT_EQ(directSubmissionSupported, hwHelper.isDirectSubmissionSupported(device->getHardwareInfo()) && executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>()->isVmBindAvailable());
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenDispatchCommandBufferThenTlbIsFlushed) {

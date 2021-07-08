@@ -72,6 +72,14 @@ uint32_t HwHelperHw<Family>::getHwRevIdFromStepping(uint32_t stepping, const Har
 }
 
 template <>
+bool HwHelperHw<Family>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+    if (hwInfo.platform.usRevId < getHwRevIdFromStepping(REVISION_B, hwInfo)) {
+        return false;
+    }
+    return true;
+}
+
+template <>
 uint32_t HwHelperHw<Family>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_XE_HP_SDV) {
         switch (hwInfo.platform.usRevId) {
