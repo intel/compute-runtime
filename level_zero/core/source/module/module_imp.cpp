@@ -208,6 +208,7 @@ bool ModuleTranslationUnit::processUnpackedBinary() {
 
     NEO::DecodeError decodeError;
     NEO::DeviceBinaryFormat singleDeviceBinaryFormat;
+    programInfo.levelZeroDynamicLinkProgram = true;
     std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, binary, decodeErrors, decodeWarnings);
     if (decodeWarnings.empty() == false) {
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
@@ -547,6 +548,7 @@ bool ModuleImp::linkBinary() {
             auto error = constructLinkerErrorMessage(unresolvedExternalsInfo, kernelNames);
             moduleBuildLog->appendString(error.c_str(), error.size());
         }
+        isFullyLinked = false;
         return LinkingStatus::LinkedPartially == linkStatus;
     } else {
         copyPatchedSegments(isaSegmentsForPatching);
@@ -706,6 +708,18 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                         NEO::Linker::patchAddress(relocAddress, symbolIt->second, unresolvedExternal.unresolvedRelocation);
                         numPatchedSymbols++;
                         moduleId->importedSymbolAllocations.insert(moduleHandle->exportedFunctionsSurface);
+                        // Apply the exported functions surface state from the export module to the import module if it exists.
+                        // Enables import modules to access the exported functions during kernel execution.
+                        for (auto &kernImmData : moduleId->kernelImmDatas) {
+                            kernImmData->getResidencyContainer().reserve(kernImmData->getResidencyContainer().size() +
+                                                                         ((moduleHandle->exportedFunctionsSurface != nullptr) ? 1 : 0) + moduleId->importedSymbolAllocations.size());
+
+                            if (nullptr != moduleHandle->exportedFunctionsSurface) {
+                                kernImmData->getResidencyContainer().push_back(moduleHandle->exportedFunctionsSurface);
+                            }
+                            kernImmData->getResidencyContainer().insert(kernImmData->getResidencyContainer().end(), moduleId->importedSymbolAllocations.begin(),
+                                                                        moduleId->importedSymbolAllocations.end());
+                        }
                         break;
                     }
                 }
