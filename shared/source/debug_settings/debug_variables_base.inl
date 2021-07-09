@@ -317,6 +317,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PassBoundBOToExec, -1, "Pass bound BOs to exec c
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStaticPartitioning, -1, "Divide workload into partitions during dispatch, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, UpdateTaskCountFromWait, -1, " Do not update task count after each enqueue, but send update request while wait, -1: default(disabled), 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, DeferOsContextInitialization, -1, "-1: default, 0: create all contexts immediately, 1: defer, if possible")
+DECLARE_DEBUG_VARIABLE(int32_t, UsmInitialPlacement, -1, "-1: default, 0: optimize for first CPU access, 1: optimize for first GPU access")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceHostPointerImport, -1, "-1: default, 0: disable, 1: enable, Forces the driver to import every host pointer coming into driver, WARNING this is not spec complaint.")
 DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "With this flag on, max workgroup size is deduced using SIMD32 instead of SIMD8, this causes the max wkg size to be 4 times bigger")
 DECLARE_DEBUG_VARIABLE(bool, ReturnRawGpuTimestamps, false, "Driver returns raw GPU tiemstamps instead of calculated ones.")

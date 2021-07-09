@@ -451,3 +451,92 @@ TEST(PageFaultManager, givenHwCsrWhenSelectingHandlerThenHwGpuDomainHandlerIsSet
         EXPECT_EQ(defaultHandler, reinterpret_cast<void *>(pageFaultManager->gpuDomainHandler));
     }
 }
+
+struct PageFaultManagerTestWithDebugFlag : public ::testing::TestWithParam<uint32_t> {
+    void SetUp() {
+        memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+        unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
+        pageFaultManager = std::make_unique<MockPageFaultManager>();
+        cmdQ = reinterpret_cast<void *>(0xFFFF);
+    }
+
+    MemoryProperties memoryProperties{};
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<MockMemoryManager> memoryManager;
+    std::unique_ptr<SVMAllocsManager> unifiedMemoryManager;
+    std::unique_ptr<MockPageFaultManager> pageFaultManager;
+    void *cmdQ;
+};
+
+TEST_P(PageFaultManagerTestWithDebugFlag, givenDebugFlagWhenInsertingAllocationThenItOverridesHints) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.UsmInitialPlacement.set(GetParam()); // Should be ignored by the driver, when passing hints
+    const auto expectedDomain = GetParam() == 1 ? PageFaultManager::AllocationDomain::None : PageFaultManager::AllocationDomain::Cpu;
+
+    void *allocs[] = {
+        reinterpret_cast<void *>(0x1),
+        reinterpret_cast<void *>(0x2),
+        reinterpret_cast<void *>(0x3),
+        reinterpret_cast<void *>(0x4),
+    };
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 0;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 0;
+    pageFaultManager->insertAllocation(allocs[0], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
+    EXPECT_EQ(expectedDomain, pageFaultManager->memoryData.at(allocs[0]).domain);
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 0;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
+    pageFaultManager->insertAllocation(allocs[1], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
+    EXPECT_EQ(expectedDomain, pageFaultManager->memoryData.at(allocs[1]).domain);
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 1;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 0;
+    pageFaultManager->insertAllocation(allocs[2], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
+    EXPECT_EQ(expectedDomain, pageFaultManager->memoryData.at(allocs[2]).domain);
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 1;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
+    pageFaultManager->insertAllocation(allocs[3], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
+    EXPECT_EQ(expectedDomain, pageFaultManager->memoryData.at(allocs[3]).domain);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    PageFaultManagerTestWithDebugFlag,
+    PageFaultManagerTestWithDebugFlag,
+    ::testing::Values(0, 1));
+
+TEST_F(PageFaultManagerTest, givenNoUsmInitialPlacementFlagsWHenInsertingUsmAllocationThenUseTheDefaultDomain) {
+    MemoryProperties memoryProperties{};
+    MockExecutionEnvironment executionEnvironment{};
+    auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+    auto unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
+    auto pageFaultManager = std::make_unique<MockPageFaultManager>();
+    auto cmdQ = reinterpret_cast<void *>(0xFFFF);
+    void *allocs[] = {
+        reinterpret_cast<void *>(0x1),
+        reinterpret_cast<void *>(0x2),
+        reinterpret_cast<void *>(0x3),
+        reinterpret_cast<void *>(0x4),
+    };
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 0;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 0;
+    pageFaultManager->insertAllocation(allocs[0], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
+    EXPECT_EQ(PageFaultManager::AllocationDomain::Cpu, pageFaultManager->memoryData.at(allocs[0]).domain);
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 0;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
+    pageFaultManager->insertAllocation(allocs[1], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
+    EXPECT_EQ(PageFaultManager::AllocationDomain::None, pageFaultManager->memoryData.at(allocs[1]).domain);
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 1;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 0;
+    pageFaultManager->insertAllocation(allocs[2], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
+    EXPECT_EQ(PageFaultManager::AllocationDomain::Cpu, pageFaultManager->memoryData.at(allocs[2]).domain);
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = 1;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
+    pageFaultManager->insertAllocation(allocs[3], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
+    EXPECT_EQ(PageFaultManager::AllocationDomain::Cpu, pageFaultManager->memoryData.at(allocs[3]).domain);
+}
